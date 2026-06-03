@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 28px;background:var(--paper);}
+  .gate{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--accent-tint);border-radius:var(--r-xl);padding:16px 20px;box-shadow:var(--shadow-sm);max-width:600px;border-left:3px solid var(--accent);}
+  .mark{width:42px;height:42px;border-radius:var(--r-md);background:var(--accent-wash);display:flex;align-items:center;justify-content:center;flex:none;}
+  .mark svg{width:22px;height:22px;}
+  .txt{flex:1;}
+  .tag{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.12em;color:var(--accent-ink);}
+  .ttl{font:var(--ui-lg);color:var(--ink-900);margin-top:2px;}
+  .sub{font:var(--ui-sm);color:var(--ink-600);margin-top:2px;}
+  .btns{display:flex;gap:10px;}
+  button{font:var(--ui-sm);font-weight:600;border-radius:var(--r-md);padding:9px 15px;border:1px solid transparent;cursor:pointer;}
+  .pri{background:var(--accent);color:#fff;box-shadow:var(--shadow-accent);}
+  .sec{background:var(--surface);color:var(--ink-700);border-color:var(--ink-300);}
+</style></head>
+<body class="gr-ui">
+  <div class="gate">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 16 L12 7 L20 16" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="txt">
+      <div class="tag">HITL · Gate 2 — Замысел</div>
+      <div class="ttl">Утвердите фабулу перед написанием</div>
+      <div class="sub">Главный тезис, конфликт, структура и ожидаемая эмоция готовы к вашему решению.</div>
+    </div>
+    <div class="btns">
+      <button class="sec">Вернуть</button>
+      <button class="pri">Утвердить замысел</button>
+    </div>
+  </div>
+</body></html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px 28px;background:var(--surface);}
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+  .row+.row{margin-top:14px;}
+  button{font:var(--ui-md);font-weight:600;border-radius:var(--r-md);padding:10px 18px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all var(--dur) var(--ease);}
+  .pri{background:var(--accent);color:#fff;box-shadow:var(--shadow-accent);}
+  .pri:hover{background:var(--accent-hover);}
+  .sec{background:var(--surface);color:var(--ink-800);border-color:var(--ink-300);box-shadow:var(--shadow-xs);}
+  .sec:hover{background:var(--ink-50);}
+  .ghost{background:transparent;color:var(--ink-700);}
+  .ghost:hover{background:var(--ink-100);}
+  .danger{background:var(--surface);color:var(--danger-ink);border-color:var(--danger-tint);}
+  .danger:hover{background:var(--danger-tint);}
+  .sm{font:var(--ui-sm);font-weight:600;padding:6px 12px;border-radius:var(--r-sm);}
+  .car{width:14px;height:14px;display:inline-block;}
+</style></head>
+<body class="gr-ui">
+  <div class="row">
+    <button class="pri"><svg class="car" viewBox="0 0 24 24" fill="none"><path d="M5 14 L12 7 L19 14" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Утвердить фабулу</button>
+    <button class="sec">Вернуть на доработку</button>
+    <button class="ghost">Отложить</button>
+    <button class="danger">Отклонить</button>
+  </div>
+  <div class="row">
+    <button class="pri sm">Выпустить</button>
+    <button class="sec sm">Предпросмотр</button>
+    <button class="ghost sm">Ещё варианты заголовка</button>
+    <button class="pri" disabled style="opacity:.45;box-shadow:none;cursor:not-allowed;">Недоступно</button>
+  </div>
+</body></html>

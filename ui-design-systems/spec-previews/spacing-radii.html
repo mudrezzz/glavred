@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:26px 28px;background:var(--paper);}
+  .row{display:flex;gap:16px;align-items:flex-end;}
+  .box{background:var(--surface);border:1px solid var(--ink-200);width:88px;height:64px;display:flex;align-items:center;justify-content:center;font:var(--mono-sm);color:var(--ink-500);}
+  .meta{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-500);margin-top:16px;}
+</style></head>
+<body class="gr-ui">
+  <div class="row">
+    <div class="box" style="border-radius:var(--r-xs)">6 · xs</div>
+    <div class="box" style="border-radius:var(--r-sm)">8 · sm</div>
+    <div class="box" style="border-radius:var(--r-md)">12 · md</div>
+    <div class="box" style="border-radius:var(--r-lg)">16 · lg</div>
+    <div class="box" style="border-radius:var(--r-xl)">22 · xl</div>
+    <div class="box" style="border-radius:var(--r-2xl)">28 · 2xl</div>
+    <div class="box" style="border-radius:var(--r-pill);width:64px">pill</div>
+  </div>
+  <div class="meta">Скругления — мягкие, воздушные. Поля/кнопки 12 · карточки 16–22 · чипы pill</div>
+</body></html>

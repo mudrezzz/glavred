@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:22px 28px;background:var(--paper);}
+  .card{background:var(--surface);border:1px solid var(--ink-200);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);padding:18px 20px;max-width:560px;}
+  .top{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+  .rub{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;padding:4px 9px;border-radius:var(--r-pill);background:var(--ink-100);color:var(--ink-700);}
+  .sig{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;color:var(--info-ink);background:var(--info-tint);padding:4px 9px;border-radius:var(--r-pill);}
+  .urgent{margin-left:auto;font:var(--ui-sm);font-weight:600;color:var(--accent-ink);}
+  h3{font:var(--ed-h2);font-size:23px;color:var(--ink-900);margin:0 0 6px;}
+  .why{font:var(--ui-md);color:var(--ink-600);margin:0 0 14px;}
+  .scores{display:flex;gap:8px;align-items:center;}
+  .sc{font:var(--mono-sm);background:var(--surface-sunk);border:1px solid var(--ink-200);color:var(--ink-700);padding:4px 8px;border-radius:var(--r-sm);}
+  .sc b{color:var(--ink-900);}
+  .cta{margin-left:auto;font:var(--ui-sm);font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:6px;}
+  .cta svg{width:14px;height:14px;}
+</style></head>
+<body class="gr-ui">
+  <div class="card">
+    <div class="top">
+      <span class="sig">Контраргумент</span>
+      <span class="rub">Антимнение</span>
+      <span class="urgent">Нужна реакция сегодня</span>
+    </div>
+    <h3>«AI заменит копирайтеров» — снова в топе. Пора возразить.</h3>
+    <p class="why">Три канала за сутки повторяют тезис. У автора есть сильная контрпозиция и кейс — высокий потенциал обсуждения.</p>
+    <div class="scores">
+      <span class="sc">релевантность <b>0.88</b></span>
+      <span class="sc">новизна <b>0.64</b></span>
+      <span class="sc">риск банальности <b>0.18</b></span>
+      <a class="cta" href="#">Может стать постом
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</body></html>

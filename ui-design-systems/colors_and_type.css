@@ -1,0 +1,165 @@
+/* =============================================================================
+   ГЛАВРЕД — Design System / Foundations
+   "The Quiet Newsroom" — editorial gravitas × airy modern SaaS
+   Signature motif: the editor's red pen.
+   -----------------------------------------------------------------------------
+   Type duality:
+     • Golos Text  → all UI chrome (Cyrillic-native humanist sans)
+     • Lora        → editorial content the newsroom produces (serif)
+     • JetBrains Mono → metadata, agent labels, scores, system marks
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ---------------------------------------------------------------------------
+     COLOR — warm neutral "ink on paper" scale (slightly taupe, never cold)
+     --------------------------------------------------------------------------- */
+  --paper:        #FBF9F5;  /* app background — warm paper */
+  --surface:      #FFFFFF;  /* cards, panels */
+  --surface-sunk: #F6F2EB;  /* recessed wells, code, inputs at rest */
+
+  --ink-950: #161311;
+  --ink-900: #211D19;  /* primary text */
+  --ink-800: #38322C;
+  --ink-700: #564E46;  /* strong secondary text */
+  --ink-600: #756B61;  /* secondary text */
+  --ink-500: #968B7F;  /* tertiary / placeholder */
+  --ink-400: #B4A99D;  /* disabled text, faint icons */
+  --ink-300: #D8D0C4;  /* strong borders */
+  --ink-200: #E8E2D8;  /* default borders, dividers */
+  --ink-100: #F1ECE3;  /* subtle fills, hover wells */
+  --ink-50:  #FAF7F2;
+
+  /* ---------------------------------------------------------------------------
+     COLOR — signature accent: the editor's red pen (warm vermilion)
+     --------------------------------------------------------------------------- */
+  --accent:        #DD4F2E;  /* primary brand / proofreader's mark */
+  --accent-hover:  #C5401F;  /* hover & pressed darken */
+  --accent-active: #AE3517;
+  --accent-soft:   #ED7253;  /* lighter, for on-dark accents */
+  --accent-tint:   #FAE6DD;  /* fills behind accent content */
+  --accent-wash:   #FDF3EE;  /* faintest tint, hover wells */
+  --accent-ink:    #8F2E16;  /* accent text on tint (AA) */
+
+  /* ---------------------------------------------------------------------------
+     COLOR — semantic (warm, restrained; each: base / tint / ink-on-tint)
+     --------------------------------------------------------------------------- */
+  --ok:        #1F8A5B;  /* approved / published */
+  --ok-tint:   #E3F1E9;
+  --ok-ink:    #135E3D;
+
+  --warn:      #C2890F;  /* risk / needs fact-check */
+  --warn-tint: #FBF0D4;
+  --warn-ink:  #7E5A06;
+
+  --danger:    #C8392B;  /* destructive / policy violation */
+  --danger-tint:#F9E3E0;
+  --danger-ink:#8C2017;
+
+  --info:      #2D6BC4;  /* scout signal / informational */
+  --info-tint: #E4ECF9;
+  --info-ink:  #1B4A8F;
+
+  /* ---------------------------------------------------------------------------
+     TYPEFACES
+     --------------------------------------------------------------------------- */
+  --font-ui:    'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---------------------------------------------------------------------------
+     TYPE SCALE — UI ramp (Golos Text). px + line-height + weight tokens.
+     --------------------------------------------------------------------------- */
+  --ui-3xl: 600 30px/1.2  var(--font-ui);
+  --ui-2xl: 600 24px/1.25 var(--font-ui);
+  --ui-xl:  600 20px/1.3  var(--font-ui);
+  --ui-lg:  600 17px/1.35 var(--font-ui);
+  --ui-md:  500 15px/1.5  var(--font-ui);   /* base UI text */
+  --ui-sm:  500 13px/1.45 var(--font-ui);
+  --ui-xs:  600 12px/1.3  var(--font-ui);
+
+  /* Editorial ramp (Lora) — the content the newsroom makes */
+  --ed-display: 700 52px/1.08 var(--font-serif);
+  --ed-h1:      700 38px/1.15 var(--font-serif);
+  --ed-h2:      600 28px/1.25 var(--font-serif);
+  --ed-lead:    400 21px/1.6  var(--font-serif);
+  --ed-body:    400 19px/1.72 var(--font-serif);
+  --ed-quote:   500 24px/1.45 var(--font-serif);
+
+  /* Mono ramp — system marks, agent labels, scores */
+  --mono-md: 500 13px/1.4 var(--font-mono);
+  --mono-sm: 500 11px/1.3 var(--font-mono);
+
+  /* ---------------------------------------------------------------------------
+     SPACING — 4px base
+     --------------------------------------------------------------------------- */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px; --sp-20: 80px;
+
+  /* ---------------------------------------------------------------------------
+     RADII — rounded, soft, airy (never square-cut)
+     --------------------------------------------------------------------------- */
+  --r-xs:  6px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  22px;
+  --r-2xl: 28px;
+  --r-pill: 999px;
+
+  /* ---------------------------------------------------------------------------
+     ELEVATION — soft, warm-tinted shadows (the warmth comes from ink, not gray)
+     --------------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px rgba(33,29,25,0.05);
+  --shadow-sm: 0 1px 3px rgba(33,29,25,0.07), 0 1px 2px rgba(33,29,25,0.04);
+  --shadow-md: 0 4px 16px -4px rgba(33,29,25,0.10), 0 2px 6px -3px rgba(33,29,25,0.07);
+  --shadow-lg: 0 14px 36px -10px rgba(33,29,25,0.16), 0 5px 14px -6px rgba(33,29,25,0.09);
+  --shadow-xl: 0 28px 60px -16px rgba(33,29,25,0.22), 0 10px 24px -10px rgba(33,29,25,0.10);
+  --shadow-accent: 0 8px 22px -8px rgba(221,79,46,0.50);
+  --ring-accent: 0 0 0 3px rgba(221,79,46,0.22);
+  --ring-focus:  0 0 0 3px rgba(45,107,196,0.28);
+
+  /* Motion — calm, confident; ease-out for entrances, no bounce on UI */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-soft: cubic-bezier(0.33, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 360ms;
+}
+
+/* =============================================================================
+   SEMANTIC ELEMENT DEFAULTS — apply var-driven type to real tags.
+   These make raw HTML look on-brand without per-element classes.
+   ============================================================================ */
+
+.gr-root, .gr-ui {
+  font: var(--ui-md);
+  color: var(--ink-900);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* UI headings (software chrome) — sans */
+.gr-ui h1 { font: var(--ui-3xl); color: var(--ink-900); letter-spacing: -0.02em; margin: 0; }
+.gr-ui h2 { font: var(--ui-2xl); color: var(--ink-900); letter-spacing: -0.01em; margin: 0; }
+.gr-ui h3 { font: var(--ui-xl);  color: var(--ink-900); margin: 0; }
+.gr-ui p  { font: var(--ui-md);  color: var(--ink-700); margin: 0; }
+
+/* Editorial content (what the newsroom produces) — serif */
+.gr-editorial { font: var(--ed-body); color: var(--ink-900); }
+.gr-editorial h1 { font: var(--ed-h1); letter-spacing: -0.01em; margin: 0 0 .4em; text-wrap: balance; }
+.gr-editorial h2 { font: var(--ed-h2); margin: 1.2em 0 .4em; }
+.gr-editorial p  { margin: 0 0 1em; max-width: 64ch; text-wrap: pretty; }
+.gr-editorial blockquote {
+  font: var(--ed-quote); font-style: italic; color: var(--ink-800);
+  border-left: 3px solid var(--accent); margin: 1.2em 0; padding: .1em 0 .1em 1em;
+}
+
+/* The proofreader's mark — system label */
+.gr-mark {
+  font: var(--mono-sm); text-transform: uppercase; letter-spacing: 0.10em;
+  color: var(--ink-500);
+}

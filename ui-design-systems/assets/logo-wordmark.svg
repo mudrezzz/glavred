@@ -1,0 +1,7 @@
+<svg width="248" height="64" viewBox="0 0 248 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Главред">
+  <rect width="64" height="64" rx="18" fill="#211D19"></rect>
+  <rect x="20" y="15" width="9.5" height="27" rx="4.2" fill="#FBF9F5"></rect>
+  <rect x="20" y="15" width="25" height="9.5" rx="4.2" fill="#FBF9F5"></rect>
+  <path d="M21 51 L29.5 43 L38 51" stroke="#DD4F2E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+  <text x="82" y="43" font-family="Lora, Georgia, serif" font-size="34" font-weight="700" fill="#211D19" letter-spacing="-0.5">Главред</text>
+</svg>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px 28px;background:var(--surface);}
+  .scale{display:flex;gap:0;border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .sw{flex:1;height:64px;}
+  .labels{display:flex;gap:0;margin-top:8px;}
+  .labels span{flex:1;font:var(--mono-sm);color:var(--ink-500);text-align:center;}
+  .surf{display:flex;gap:12px;margin-bottom:18px;}
+  .scard{flex:1;height:54px;border-radius:var(--r-md);display:flex;align-items:flex-end;padding:8px 10px;font:var(--mono-sm);color:var(--ink-600);}
+</style></head>
+<body class="gr-ui">
+  <div class="surf">
+    <div class="scard" style="background:var(--paper);border:1px solid var(--ink-200);">paper</div>
+    <div class="scard" style="background:var(--surface);border:1px solid var(--ink-200);">surface</div>
+    <div class="scard" style="background:var(--surface-sunk);border:1px solid var(--ink-200);">sunk</div>
+  </div>
+  <div class="scale">
+    <div class="sw" style="background:var(--ink-900)"></div>
+    <div class="sw" style="background:var(--ink-800)"></div>
+    <div class="sw" style="background:var(--ink-700)"></div>
+    <div class="sw" style="background:var(--ink-600)"></div>
+    <div class="sw" style="background:var(--ink-500)"></div>
+    <div class="sw" style="background:var(--ink-400)"></div>
+    <div class="sw" style="background:var(--ink-300)"></div>
+    <div class="sw" style="background:var(--ink-200)"></div>
+    <div class="sw" style="background:var(--ink-100)"></div>
+  </div>
+  <div class="labels">
+    <span>900</span><span>800</span><span>700</span><span>600</span><span>500</span><span>400</span><span>300</span><span>200</span><span>100</span>
+  </div>
+</body></html>

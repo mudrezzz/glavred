@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px 28px;background:var(--surface);}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .cell{display:flex;flex-direction:column;gap:8px;}
+  .dot{display:flex;align-items:center;gap:8px;font:var(--ui-sm);font-weight:600;color:var(--ink-800);}
+  .dot i{width:12px;height:12px;border-radius:50%;}
+  .tint{border-radius:var(--r-md);padding:9px 11px;font:var(--ui-sm);font-weight:600;}
+  .hex{font:var(--mono-sm);color:var(--ink-400);}
+</style></head>
+<body class="gr-ui">
+  <div class="grid">
+    <div class="cell">
+      <div class="dot"><i style="background:var(--ok)"></i>Опубликовано</div>
+      <div class="tint" style="background:var(--ok-tint);color:var(--ok-ink);">ok · #1F8A5B</div>
+    </div>
+    <div class="cell">
+      <div class="dot"><i style="background:var(--warn)"></i>Нужен фактчек</div>
+      <div class="tint" style="background:var(--warn-tint);color:var(--warn-ink);">warn · #C2890F</div>
+    </div>
+    <div class="cell">
+      <div class="dot"><i style="background:var(--danger)"></i>Нарушение политики</div>
+      <div class="tint" style="background:var(--danger-tint);color:var(--danger-ink);">danger · #C8392B</div>
+    </div>
+    <div class="cell">
+      <div class="dot"><i style="background:var(--info)"></i>Сигнал скаута</div>
+      <div class="tint" style="background:var(--info-tint);color:var(--info-ink);">info · #2D6BC4</div>
+    </div>
+  </div>
+</body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Главред — галерея токенов и компонентов</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin: 0; background: var(--paper); color: var(--ink-900); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: var(--sp-12) var(--sp-8) var(--sp-20); }
+
+  header.head { display: flex; align-items: center; gap: var(--sp-4); margin-bottom: var(--sp-3); }
+  header.head img { width: 44px; height: 44px; }
+  header.head h1 { font: var(--ui-3xl); letter-spacing: -0.02em; margin: 0; }
+  .lede { font: var(--ed-lead); color: var(--ink-700); max-width: 60ch; margin: 0 0 var(--sp-4); text-wrap: pretty; }
+  .back { display: inline-flex; align-items: center; gap: 7px; font: var(--mono-sm); text-transform: uppercase; letter-spacing: .1em; color: var(--accent-ink); text-decoration: none; }
+  .back:hover { color: var(--accent); }
+
+  .sec-label { font: var(--mono-md); text-transform: uppercase; letter-spacing: .14em; color: var(--ink-500); margin: var(--sp-12) 0 var(--sp-5); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--ink-200); display: flex; align-items: center; gap: 10px; }
+  .sec-label::before { content: ""; width: 3px; height: 16px; border-radius: 2px; background: var(--accent); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--sp-6); }
+  .grid.wide { grid-template-columns: 1fr; }
+  .grid.duo { grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); }
+
+  .card { background: var(--surface); border: 1px solid var(--ink-200); border-radius: var(--r-xl); box-shadow: var(--shadow-sm); overflow: hidden; transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .card .cap { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--ink-200); }
+  .card .cap b { font: var(--ui-sm); font-weight: 600; color: var(--ink-900); }
+  .card .cap span { font: var(--mono-sm); color: var(--ink-400); }
+  .card iframe { display: block; width: 100%; border: 0; background: var(--surface); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../START-HERE.md">← START-HERE.md</a>
+  <header class="head">
+    <img src="../assets/logo-mark.svg" alt="">
+    <h1>Галерея токенов и компонентов</h1>
+  </header>
+  <p class="lede">Живые образцы дизайн-системы «Главред». Каждая карточка — реальный HTML
+  на тех же токенах из <code>colors_and_type.css</code>. Точные значения — в
+  <code>COMPONENT-SPECS.md</code>.</p>
+
+  <div class="sec-label">Бренд</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><b>Логотип и знак</b><span>brand-logo</span></div><iframe src="brand-logo.html" height="240" loading="lazy"></iframe></div>
+  </div>
+
+  <div class="sec-label">Типографика</div>
+  <div class="grid duo">
+    <div class="card"><div class="cap"><b>UI-рампа · Golos Text</b><span>type-ui-ramp</span></div><iframe src="type-ui-ramp.html" height="360" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Дисплей · Lora</b><span>type-display</span></div><iframe src="type-display.html" height="360" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Редакционный набор · Lora</b><span>type-editorial</span></div><iframe src="type-editorial.html" height="360" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Mono · JetBrains Mono</b><span>type-mono</span></div><iframe src="type-mono.html" height="360" loading="lazy"></iframe></div>
+  </div>
+
+  <div class="sec-label">Цвет</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><b>Акцент — перо редактора</b><span>color-accent</span></div><iframe src="color-accent.html" height="300" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Чернила (ink scale)</b><span>color-ink</span></div><iframe src="color-ink.html" height="300" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Семантика</b><span>color-semantic</span></div><iframe src="color-semantic.html" height="300" loading="lazy"></iframe></div>
+  </div>
+
+  <div class="sec-label">Отступы · радиусы · тени</div>
+  <div class="grid">
+    <div class="card"><div class="cap"><b>Шкала отступов</b><span>spacing-scale</span></div><iframe src="spacing-scale.html" height="300" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Радиусы</b><span>spacing-radii</span></div><iframe src="spacing-radii.html" height="300" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Тени и кольца</b><span>spacing-elevation</span></div><iframe src="spacing-elevation.html" height="300" loading="lazy"></iframe></div>
+  </div>
+
+  <div class="sec-label">Компоненты</div>
+  <div class="grid duo">
+    <div class="card"><div class="cap"><b>Кнопки</b><span>comp-buttons</span></div><iframe src="comp-buttons.html" height="170" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Чипы и статусы</b><span>comp-chips</span></div><iframe src="comp-chips.html" height="150" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Поля ввода</b><span>comp-inputs</span></div><iframe src="comp-inputs.html" height="180" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Навигация (сайдбар)</b><span>comp-nav</span></div><iframe src="comp-nav.html" height="260" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Аватары агентов</b><span>comp-agents</span></div><iframe src="comp-agents.html" height="150" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>Карточка инсайта</b><span>comp-insight-card</span></div><iframe src="comp-insight-card.html" height="240" loading="lazy"></iframe></div>
+    <div class="card"><div class="cap"><b>HITL-гейт</b><span>comp-hitl-gate</span></div><iframe src="comp-hitl-gate.html" height="160" loading="lazy"></iframe></div>
+  </div>
+</div>
+</body>
+</html>

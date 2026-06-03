@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px 28px;background:var(--surface);}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .row+.row{margin-top:14px;}
+  .rub{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:var(--r-pill);background:var(--ink-100);color:var(--ink-700);}
+  .status{display:inline-flex;align-items:center;gap:7px;font:var(--ui-sm);font-weight:600;padding:5px 11px;border-radius:var(--r-pill);}
+  .status i{width:8px;height:8px;border-radius:50%;}
+  .ok{background:var(--ok-tint);color:var(--ok-ink);} .ok i{background:var(--ok);}
+  .wn{background:var(--warn-tint);color:var(--warn-ink);} .wn i{background:var(--warn);}
+  .dg{background:var(--danger-tint);color:var(--danger-ink);} .dg i{background:var(--danger);}
+  .nf{background:var(--info-tint);color:var(--info-ink);} .nf i{background:var(--info);}
+  .pin{background:var(--accent-tint);color:var(--accent-ink);} .pin i{background:var(--accent);}
+  .lab{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-400);width:74px;}
+</style></head>
+<body class="gr-ui">
+  <div class="row">
+    <span class="lab">рубрики</span>
+    <span class="rub">Разборы</span><span class="rub">Антимнение</span><span class="rub">Кейсы</span><span class="rub">Полевые заметки</span><span class="rub">Реакции</span>
+  </div>
+  <div class="row">
+    <span class="lab">статусы</span>
+    <span class="status nf"><i></i>Новый сигнал</span>
+    <span class="status pin"><i></i>В плане</span>
+    <span class="status wn"><i></i>Нужен фактчек</span>
+    <span class="status ok"><i></i>Опубликовано</span>
+    <span class="status dg"><i></i>Риск политики</span>
+  </div>
+</body></html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;padding:24px 28px;background:var(--surface);}
+  .row{display:flex;gap:12px;}
+  .sw{flex:1;border-radius:var(--r-md);height:88px;display:flex;flex-direction:column;justify-content:flex-end;padding:10px 12px;box-shadow:var(--shadow-xs);}
+  .name{font:var(--ui-sm);font-weight:600;}
+  .hex{font:var(--mono-sm);opacity:.8;}
+  .meta{font:var(--mono-sm);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-500);margin-top:14px;}
+</style></head>
+<body class="gr-ui">
+  <div class="row">
+    <div class="sw" style="background:var(--accent-active);color:#fff;"><span class="name">active</span><span class="hex">#AE3517</span></div>
+    <div class="sw" style="background:var(--accent-hover);color:#fff;"><span class="name">hover</span><span class="hex">#C5401F</span></div>
+    <div class="sw" style="background:var(--accent);color:#fff;box-shadow:var(--shadow-accent);"><span class="name">accent</span><span class="hex">#DD4F2E</span></div>
+    <div class="sw" style="background:var(--accent-soft);color:#fff;"><span class="name">soft</span><span class="hex">#ED7253</span></div>
+    <div class="sw" style="background:var(--accent-tint);color:var(--accent-ink);"><span class="name">tint</span><span class="hex">#FAE6DD</span></div>
+    <div class="sw" style="background:var(--accent-wash);color:var(--accent-ink);border:1px solid var(--accent-tint);"><span class="name">wash</span><span class="hex">#FDF3EE</span></div>
+  </div>
+  <div class="meta">Сигнальный акцент — киноварь «редакторского пера». Один цвет, скупо.</div>
+</body></html>
