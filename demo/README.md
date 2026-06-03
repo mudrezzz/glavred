@@ -9,9 +9,29 @@ npm install
 npm run dev
 ```
 
-It shows the baseline Glavred project foundation and the modeled editorial loop:
+It shows the brief-backed Glavred project foundation and the modeled editorial loop:
 
-`Sources -> Insights -> Plan -> Brief -> Draft -> Editing -> Release -> Analytics`
+`Editorial Radar -> Insight Cards -> Content Plan -> Post Brief -> Draft -> Editorial Checks -> Manual Export -> Learning Loop`
+
+It also shows the first MVP perimeter:
+
+- Editorial Bible
+- Sources and Insights
+- Content Plan
+- Post Brief
+- Draft and Review
+
+## First Realistic Demo Scenario
+
+Use this scenario for the next product slice:
+
+- Author: founder writing about practical AI adoption for small and medium businesses.
+- Audience: entrepreneurs who need operational clarity rather than tool hype.
+- Signal: several market posts discuss failed AI pilots caused by process gaps.
+- Editorial opportunity: turn the pattern into a post about why AI projects fail when
+  teams automate chaos.
+- Expected flow: create or load an editorial bible, add the signal, produce an insight
+  card, place it into a weekly plan, and prepare an approvable post brief.
 
 ## Reference Materials
 
@@ -27,5 +47,5 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-After `glavred.md` is filled in, define a realistic first demo scenario for the first
-working product perimeter.
+Implement enough of the scenario above for a user to move from a signal to an approved
+post brief or draft.

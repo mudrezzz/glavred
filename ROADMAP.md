@@ -2,12 +2,13 @@
 
 ## Product Vision
 
-Glavred is an AI-native editorial service for expert bloggers, founders, consultants,
-and teams who want to run a personal media system with editorial discipline.
+Glavred is an AI-native editorial office for expert bloggers, founders, consultants,
+authors, and teams who want to run a personal media system with editorial discipline.
 
 The service should help an author move from source signals to insight cards, content
-planning, approved briefs, drafts, editing checks, release, and analytics-driven
-learning.
+planning, approved post briefs, drafts, editorial checks, manual export or release, and
+analytics-driven learning. Its central promise is not "AI writes better", but "the
+author gains a repeatable editorial system".
 
 ## Source Requirements
 
@@ -17,11 +18,11 @@ Primary requirements document:
 
 Current status:
 
-- `glavred.md` exists but is empty.
-- The `ui-design-systems/` handoff contains product/design context and is accepted as a
-  secondary source only.
-- Product requirements must be confirmed from `glavred.md` before architecture or
-  feature implementation expands beyond foundation work.
+- `glavred.md` is filled and accepted as the source of truth.
+- The `ui-design-systems/` handoff contains product/design context and remains a
+  secondary source.
+- The first architecture and implementation slices should be derived from the five MVP
+  modules in the source brief.
 
 ## Status Legend
 
@@ -38,7 +39,7 @@ Current status:
 Goal:
 
 - Establish repository structure, documentation, architecture baseline, demo baseline,
-  test baseline, and Git history.
+  test baseline, Git history, and brief-backed product direction.
 
 Status:
 
@@ -83,48 +84,88 @@ Status:
   - Dependency audit passes. Done: `npm audit --audit-level=moderate`.
   - Git is initialized with an initial commit. Done.
 - Risks:
-  - Product requirements are blocked because `glavred.md` is empty.
+  - Superseded by Slice 0.2 after the source brief was filled.
 
-### Slice 0.2: Requirements Recovery and Architecture Baseline
+### Slice 0.2: Brief-Backed Bootstrap Update
 
-- Status: Ready
-- Goal: Turn the filled source brief into the first implementation architecture.
-- User value: Future slices can implement real product behavior instead of inferred
+- Status: Done
+- Goal: Update the project foundation from the filled source brief.
+- User value: Future slices can start from real product direction instead of blocked
   placeholders.
 - Scope:
-  - Fill or replace `glavred.md` with the actual product brief.
-  - Inspect `glavred.md` and `ui-design-systems/`.
-  - Define the smallest complete product perimeter.
-  - Update `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`.
-  - Add ADRs for architecture choices if needed.
-  - Define first realistic demo scenario.
-- Out of scope:
-  - Full implementation.
-- Implementation notes:
-  - Use `$architecture-design`.
-  - Use `$roadmap-slice-planning` if the brief adds substantial scope.
-- Tests:
-  - Define test strategy for the first product flow.
-- Docs:
+  - Accept `glavred.md` as the primary source requirements document.
+  - Update the domain baseline to reflect the brief's editorial loop.
+  - Capture the first five MVP modules.
   - Update README, roadmap, architecture overview, developer guide, user guide, and
     demo docs.
+  - Keep GitHub repository creation deferred.
+- Out of scope:
+  - Full product architecture.
+  - Backend persistence.
+  - AI provider integration.
+  - Real ingestion, drafting, publication, or analytics.
+- Implementation notes:
+  - Keep the foundation frontend-first with framework-independent domain logic.
+  - Model manual export in the first loop because the brief allows publication to stay
+    manual in the first version.
+- Tests:
+  - Unit tests for the updated editorial workflow.
+  - UI smoke test for the brief-backed foundation screen.
+- Docs:
+  - Updated required baseline docs.
 - Demo impact:
-  - Select the first market-relevant demo flow.
+  - Demo docs now describe the first realistic founder-blog scenario.
 - Acceptance criteria:
-  - Product requirements are no longer blocked.
-  - First implementation slice is clearly ready.
+  - Product requirements are no longer blocked. Done.
+  - MVP perimeter is clear. Done.
+  - Test command passes. Done: `npm test`.
+  - Build command passes. Done: `npm run smoke`.
+  - Dependency audit passes. Done: `npm audit --audit-level=moderate`.
 - Risks:
-  - The brief may conflict with the design handoff.
+  - The source brief is broad, so the first implementation slice still needs an
+    architecture pass before feature work.
 
-### Slice 0.3: First Working Product Perimeter
+### Slice 0.3: Architecture Baseline for the First Product Perimeter
+
+- Status: Ready
+- Goal: Define the smallest closed end-to-end product perimeter from the MVP modules.
+- User value: Implementation can begin from explicit boundaries, objects, and flows.
+- Scope:
+  - Use the source brief and design handoff.
+  - Define domain objects for editorial bible, source signal, insight card, content
+    plan item, post brief, draft, and editorial check.
+  - Decide whether the first implementation slice needs local persistence.
+  - Create or update ADRs for architecture choices.
+  - Define the first realistic demo scenario in implementation terms.
+- Out of scope:
+  - AI integration.
+  - Full source ingestion.
+  - Autoposting.
+- Implementation notes:
+  - Use `$architecture-design`.
+  - Use `$roadmap-slice-planning` if the architecture pass changes slice order.
+- Tests:
+  - Define the validation strategy for the first product flow.
+- Docs:
+  - Update architecture overview, ADRs, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - First demo should show an expert author's blog moving from a signal to an approved
+    post brief or draft.
+- Acceptance criteria:
+  - First implementation slice is clearly ready.
+  - Architecture boundaries are documented.
+- Risks:
+  - Overbuilding the editorial bible before the user can reach a first useful output.
+
+### Slice 0.4: First Working Product Perimeter
 
 - Status: Backlog
 - Goal: Implement the smallest closed end-to-end Glavred flow.
 - User value: A limited but working product can be demonstrated.
 - Scope:
-  - To be defined after Slice 0.2.
+  - To be defined in Slice 0.3.
 - Out of scope:
-  - To be defined after Slice 0.2.
+  - To be defined in Slice 0.3.
 - Implementation notes:
   - Use `$slice-implementation`.
 - Tests:
@@ -136,7 +177,7 @@ Status:
 - Acceptance criteria:
   - Product can run and demonstrate the first meaningful flow.
 - Risks:
-  - To be defined after Slice 0.2.
+  - To be defined in Slice 0.3.
 
 ## Completed Slices
 
@@ -156,19 +197,35 @@ Status:
   - `npm run smoke`: passed.
   - `npm audit --audit-level=moderate`: passed with 0 vulnerabilities.
 
+### Slice 0.2: Brief-Backed Bootstrap Update
+
+- Completed: 2026-06-03
+- Result:
+  - Accepted filled `glavred.md` as primary source requirements.
+  - Updated the domain workflow baseline to the brief-backed editorial loop.
+  - Captured the five MVP modules from the brief.
+  - Updated README, roadmap, architecture overview, developer guide, user guide, and
+    demo docs.
+  - Kept GitHub repository creation deferred.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+  - `npm audit --audit-level=moderate`: passed with 0 vulnerabilities.
+
 ## Blocked Items
 
-- Product-specific architecture and implementation are blocked until `glavred.md`
-  contains the actual source brief.
+- None for bootstrap.
 
 ## Open Questions
 
-- What exact source requirements should be placed in `glavred.md`?
 - Should the future GitHub repository be private or public?
 - Which deployment target should be assumed for the first hosted version?
 - Which AI/API providers are in scope for the first product slice?
+- Should the first product flow stop at approved post brief, or continue to draft and
+  editorial checks?
+- Should the first implementation store state in local browser storage, mocked fixtures,
+  or a backend-backed workspace?
 
 ## Next Recommended Task
 
-Fill `glavred.md`, then start `Slice 0.2: Requirements Recovery and Architecture
-Baseline`.
+Start `Slice 0.3: Architecture Baseline for the First Product Perimeter`.

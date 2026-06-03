@@ -1,28 +1,43 @@
 # Glavred
 
-Glavred is an AI-native editorial service for expert authors who want to run a personal
-media system instead of writing isolated posts by hand.
+Glavred is an AI-native editorial office for expert authors, founders, consultants,
+and teams who want to run a personal media system instead of producing isolated posts
+by hand.
 
-The current repository is a project foundation. It contains a minimal React/Vite
-application, a small domain baseline for the editorial workflow, test infrastructure,
-documentation, demo notes, and the design handoff supplied in `ui-design-systems/`.
+The product is not positioned as an AI copywriter. Its core job is to create editorial
+discipline: source signals become insight cards, insight cards become a plan, the plan
+becomes approved post briefs, briefs become drafts, drafts pass editorial checks, and
+the results feed the next cycle.
+
+The current repository is a brief-backed project foundation. It contains a minimal
+React/Vite application, a small domain baseline for the editorial workflow, test
+infrastructure, documentation, demo notes, and the design handoff supplied in
+`ui-design-systems/`.
 
 ## Source Requirements
 
 Primary source requirements file: `glavred.md`.
 
-Current status: `glavred.md` exists but is empty. Until it is filled in, product
-requirements are treated as blocked. The existing design handoff is used only as a
-secondary concept/design source.
+Current status: `glavred.md` is filled and is the source of truth for product
+direction. The existing design handoff is a secondary visual/product reference.
 
 ## Product Direction
 
-The available design handoff describes Glavred as an AI newsroom for personal media.
-The durable editorial loop is:
+The source brief defines Glavred as an AI-native editorial system for a personal or
+expert blog. The durable editorial loop is:
 
-`Sources -> Insights -> Plan -> Brief -> Draft -> Editing -> Release -> Analytics`
+`Editorial Radar -> Insight Cards -> Content Plan -> Post Brief -> Draft -> Editorial Checks -> Manual Export -> Learning Loop`
 
-Human approval gates are expected at plan approval, brief approval, and final editing.
+Human approval gates are expected at content plan approval, post brief approval, and
+final editorial checks.
+
+The first MVP perimeter is:
+
+- Editorial Bible
+- Sources and Insights
+- Content Plan
+- Post Brief
+- Draft and Review
 
 ## Quick Start
 

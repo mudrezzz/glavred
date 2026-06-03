@@ -8,7 +8,8 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Glavred' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Editorial loop' })).toBeInTheDocument();
-    expect(screen.getByText('First approval gate:')).toBeInTheDocument();
-    expect(screen.getAllByText('Plan')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'First five modules' })).toBeInTheDocument();
+    expect(screen.getByText('Approval gates:')).toBeInTheDocument();
+    expect(screen.getAllByText('Content Plan')).toHaveLength(2);
   });
 });
