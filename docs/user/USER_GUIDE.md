@@ -1,11 +1,9 @@
 # User Guide
 
-Glavred is currently at brief-backed project foundation stage.
+Glavred currently provides the first local-first editorial cabinet.
 
-The current app shows the baseline editorial loop, the five MVP modules, and the human
-approval gates defined by the product brief. It does not yet implement real source
-ingestion, insight scoring, planning, brief creation, draft editing, release, or
-analytics.
+The current app lets you move from a source signal to an insight card, a content plan
+item, and an approved post brief. Work is saved in browser local storage.
 
 ## Run Locally
 
@@ -18,17 +16,20 @@ Open the local URL printed by Vite.
 
 ## Current Supported Flow
 
-- View the project foundation screen.
-- View the baseline editorial workflow from Editorial Radar to Learning Loop.
-- View the five MVP modules.
-- Confirm that human approval is modeled at content plan, post brief, and final
-  editorial checks.
+- Edit the `Редакционная модель`.
+- Review or edit the demo source signal in `Радар`.
+- Generate an insight card.
+- Add the insight to `План`.
+- Approve the plan item through the first HITL gate.
+- Generate and edit a post brief in `Фабулы`.
+- Approve the post brief through the second HITL gate.
+- Reload the page and keep the local workspace state.
+- Reset the demo scenario from the topbar.
 
 ## Not Yet Supported
 
-- Real author onboarding.
-- Editorial bible editing.
-- Signal ingestion.
-- AI-generated insights, briefs, or drafts.
+- Real source ingestion.
+- Real AI-generated insights, briefs, or drafts.
+- Draft editing and editorial checks.
 - Publishing integrations.
 - Analytics.

@@ -11,9 +11,9 @@ The primary requirements source is `glavred.md`. The design handoff in
 `ui-design-systems/` is a secondary visual and product reference. The product-facing
 term for the author's durable rules is **Редакционная модель** / `EditorialModel`.
 
-## First Product Perimeter
+## Current Product Perimeter
 
-The first working product perimeter stops at an approved post brief:
+The current working product perimeter stops at an approved post brief:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
 
@@ -58,7 +58,7 @@ React components render state and trigger application service methods.
 
 ## Conceptual Domain Interfaces
 
-Slice 0.3 documents these contracts only; Slice 0.4 will implement them in TypeScript.
+These contracts are implemented in TypeScript for the first local-first flow.
 
 - `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
   forbidden topics, goals.

@@ -9,21 +9,14 @@ npm install
 npm run dev
 ```
 
-It shows the brief-backed Glavred project foundation and the modeled editorial loop:
+It shows the first working Glavred editorial cabinet:
 
-`Editorial Radar -> Insight Cards -> Content Plan -> Post Brief -> Draft -> Editorial Checks -> Manual Export -> Learning Loop`
+`Редакционная модель -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
 
-It also shows the first MVP perimeter:
+The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
+topbar, cards, HITL gates, plan area, brief area, and placeholders for future sections.
 
-- Editorial Model
-- Sources and Insights
-- Content Plan
-- Post Brief
-- Draft and Review
-
-## First Realistic Demo Scenario
-
-Use this scenario for Slice 0.4:
+## Demo Scenario
 
 - Author: founder writing about practical AI adoption for small and medium businesses.
 - Audience: entrepreneurs who need operational clarity rather than tool hype.
@@ -35,6 +28,19 @@ Use this scenario for Slice 0.4:
 - Expected output: an approved post brief with thesis, conflict, rubric, audience,
   evidence, risks, sources, CTA, and approval status.
 - Persistence: the approved brief should survive reload through local browser storage.
+
+## Main User Flow
+
+1. Open `Радар`.
+2. Review or edit the source signal.
+3. Click `Собрать инсайт`.
+4. Click `В план`.
+5. Approve the plan item.
+6. Click `Подготовить фабулу`.
+7. Edit the post brief if needed.
+8. Click `Утвердить фабулу`.
+9. Reload the page to confirm state persists.
+10. Use `Сбросить демо` to restore the initial scenario.
 
 ## Reference Materials
 
@@ -50,6 +56,4 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-Implement enough of the scenario above for a user to move from a source signal to an
-approved post brief. Drafting, editorial checks, publication, and analytics are later
-demo extensions.
+Drafting, editorial checks, publication, and analytics are later demo extensions.

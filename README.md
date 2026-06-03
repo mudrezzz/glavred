@@ -9,10 +9,10 @@ discipline: source signals become insight cards, insight cards become a plan, th
 becomes approved post briefs, briefs become drafts, drafts pass editorial checks, and
 the results feed the next cycle.
 
-The current repository is a brief-backed project foundation. It contains a minimal
-React/Vite application, a small domain baseline for the editorial workflow, test
-infrastructure, documentation, demo notes, and the design handoff supplied in
-`ui-design-systems/`.
+The current repository contains the first working local-first editorial cabinet. It
+implements an editable flow from source signal to insight card, content plan item, and
+approved post brief, plus tests, documentation, demo notes, and the design handoff
+supplied in `ui-design-systems/`.
 
 ## Source Requirements
 
@@ -39,8 +39,8 @@ The first MVP perimeter is:
 - Post Brief
 - Draft and Review
 
-Current architecture focus: the first working flow will stop at an approved post brief
-and use local-first browser persistence before backend or AI provider integration.
+Current working flow: the first product perimeter stops at an approved post brief and
+uses local-first browser persistence before backend or AI provider integration.
 
 ## Quick Start
 
@@ -76,4 +76,4 @@ npm run smoke
 This project is developed iteratively through small slices. Each slice should leave the
 product runnable, tested, documented, and demonstrable.
 
-GitHub repository creation is intentionally deferred until the user confirms it.
+GitHub repository: `https://github.com/mudrezzz/glavred` (private).

@@ -37,7 +37,11 @@ npm run smoke
 ## Source Layout
 
 - `src/domain/`: framework-independent domain model.
-- `src/App.tsx`: temporary brief-backed baseline application shell.
+- `src/application/`: deterministic application services for insight, planning, and
+  briefing.
+- `src/infrastructure/`: browser storage adapter.
+- `src/fixtures/`: demo workspace data.
+- `src/App.tsx`: production React editorial cabinet shell and screens.
 - `src/test/`: test setup.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
@@ -54,19 +58,20 @@ before wiring it into React views.
 
 ## Current Baseline
 
-The baseline models:
+The current app implements:
 
-- The editorial loop from radar to learning.
-- Human approval gates for content plan, post brief, and final editorial checks.
-- The five MVP modules: editorial model, sources and insights, content plan, post
-  brief, draft and review.
+- The first working flow from source signal to approved post brief.
+- Editable `Редакционная модель`, radar signal, plan item, and post brief.
+- Human approval gates for content plan and post brief.
+- Local-first workspace persistence through browser `localStorage`.
+- Polished placeholders for редактура, выпуск, and аналитика.
 
-The baseline does not yet include persistence, source ingestion, AI calls, publishing
+The app does not yet include real source ingestion, AI calls, draft editing, publishing
 integrations, or analytics.
 
-## Slice 0.4 Architecture Target
+## Architecture Boundaries
 
-The next implementation slice should build the first working flow:
+The implemented flow is:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
 
@@ -80,13 +85,12 @@ Use these boundaries:
 - React components render the workflow and call application services; they must not own
   domain rules.
 
-Do not add backend persistence, auth, real source ingestion, or AI provider calls in
-Slice 0.4. Deterministic services and fixtures are the accepted first implementation
-strategy.
+Do not call browser storage from domain code. Do not add backend persistence, auth,
+real source ingestion, or AI provider calls until their slices are planned.
 
-## Slice 0.4 Validation Strategy
+## Validation Strategy
 
-Add tests for:
+Current tests cover:
 
 - Domain transitions and approval rules.
 - Deterministic scoring, planning, and briefing services.

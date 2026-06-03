@@ -42,7 +42,7 @@ Goal:
 
 Status:
 
-- `Ready`
+- `Done`
 
 ## Slice Backlog
 
@@ -168,7 +168,7 @@ Status:
 
 ### Slice 0.4: First Working Flow to Approved Post Brief
 
-- Status: Ready
+- Status: Done
 - Goal: Implement the first closed Glavred flow from source signal to approved post
   brief.
 - User value: A user can create a limited but real editorial workflow and preserve it
@@ -212,10 +212,10 @@ Status:
   - Demo should let the user reach an approved post brief from the founder-blog
     scenario.
 - Acceptance criteria:
-  - User can start from the demo signal and end with an approved post brief.
-  - Approved state survives page reload through local storage.
-  - No real AI or backend dependency is required.
-  - Tests and smoke build pass.
+  - User can start from the demo signal and end with an approved post brief. Done.
+  - Approved state survives page reload through local storage. Done.
+  - No real AI or backend dependency is required. Done.
+  - Tests and smoke build pass. Done.
 - Risks:
   - Local storage shape may need migration when backend persistence arrives.
   - Deterministic services may look too scripted; copy should make clear this is the
@@ -223,7 +223,7 @@ Status:
 
 ### Slice 0.5: Draft and Editorial Checks
 
-- Status: Backlog
+- Status: Ready
 - Goal: Extend the approved brief into a draft and editorial review workspace.
 - User value: The product can demonstrate the next approval gate: final text review.
 - Scope:
@@ -296,13 +296,30 @@ Status:
   - `npm test`: passed.
   - `npm run smoke`: passed.
 
+### Slice 0.4: First Working Flow to Approved Post Brief
+
+- Completed: 2026-06-03
+- Result:
+  - Replaced the foundation screen with a production React/TypeScript editorial cabinet
+    aligned with the `glavred-app` design reference.
+  - Added TypeScript domain contracts for editorial model, signal, insight card, plan
+    item, post brief, workspace state, and approval status.
+  - Added deterministic services for insight, planning, and briefing.
+  - Added local-first workspace persistence through browser `localStorage`.
+  - Added editable Russian-language sections for `Редакционная модель`, `Радар`,
+    `План`, and `Фабулы`.
+  - Added polished placeholders for `Редактура`, `Выпуск`, and `Аналитика`.
+  - Added unit, integration, and UI smoke tests for the first flow.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+
 ## Blocked Items
 
 - None.
 
 ## Open Questions
 
-- Should the future GitHub repository be private or public?
 - Which deployment target should be assumed for the first hosted version?
 - Which AI/API providers are in scope after deterministic services are replaced?
 - Should the eventual backend preserve the local workspace schema or introduce a
@@ -310,4 +327,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 0.4: First Working Flow to Approved Post Brief`.
+Start `Slice 0.5: Draft and Editorial Checks`.
