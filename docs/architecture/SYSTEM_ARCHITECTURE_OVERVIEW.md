@@ -1,89 +1,135 @@
 # System Architecture Overview
 
-## Current State
+## Product Context
 
-This repository has a brief-backed, frontend-first project foundation:
+Glavred is an AI-native editorial office for personal and expert media. The product is
+not a generic post generator: it helps an author build editorial discipline by moving
+from source signals to selected topics, approved post intentions, drafts, checks, and
+learning.
 
-- React + Vite + TypeScript application shell.
-- A small domain model for the editorial workflow and MVP perimeter.
-- Vitest-based test baseline.
-- Design handoff in `ui-design-systems/`.
+The primary requirements source is `glavred.md`. The design handoff in
+`ui-design-systems/` is a secondary visual and product reference. The product-facing
+term for the author's durable rules is **Редакционная модель** / `EditorialModel`.
 
-The primary requirements file is `glavred.md`. It defines Glavred as an AI-native
-editorial office for personal and expert media, not a generic post generator.
+## First Product Perimeter
 
-## Initial Boundaries
+The first working product perimeter stops at an approved post brief:
 
-The first baseline keeps these responsibilities separate:
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
 
-- `src/domain/`: domain concepts that should not depend on React, browser APIs, or
-  infrastructure.
-- `src/App.tsx`: temporary application shell that renders the brief-backed baseline.
-- `ui-design-systems/`: reference design materials, not production source code.
-- `demo/`: demo documentation and future demo assets.
-- `docs/`: architecture, developer, contributor, user, and ADR documentation.
+This is intentionally smaller than the full product loop. Draft generation, style
+editing, anti-AI checks, fact-checking, policy review, publication, and analytics are
+future slices. Stopping at the approved brief keeps the first product useful while
+preserving the brief's core idea: the author approves the intention before any text is
+written.
 
-## Editorial Workflow Baseline
+## Major Components
 
-The current domain baseline models this loop:
+- `EditorialModel`: owns author, audience, positioning, fabula, rubrics, style rules,
+  forbidden topics, and blog goals. It is the context used to evaluate every signal,
+  plan item, and brief.
+- `EditorialRadar`: accepts manually added source signals in the first implementation.
+  Real RSS, Telegram, website, YouTube, CRM, and document ingestion are extension
+  points, not part of the first product perimeter.
+- `InsightScoring`: turns a source signal into an insight card with relevance, urgency,
+  banality risk, fact gaps, suggested rubric, and suggested author position.
+- `ContentPlanning`: turns selected insight cards into plan items with platform, date,
+  priority, format, expected effect, and approval status.
+- `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
+  author position, evidence, examples, structure, CTA, risks, sources, and approval
+  status.
+- `HitlApprovals`: enforces human approval gates for plan items and post briefs.
+- `LocalWorkspaceStore`: loads and saves the current workspace state in browser storage
+  for the first implementation slice.
 
-`Editorial Radar -> Insight Cards -> Content Plan -> Post Brief -> Draft -> Editorial Checks -> Manual Export -> Learning Loop`
+## Dependency Direction
 
-Approval gates are marked at:
+Dependencies must point inward:
 
-- Content Plan
-- Post Brief
-- Editorial Checks
+`React UI -> application services -> domain model`
 
-This model is deliberately small. It exists to establish testable domain separation,
-not to claim final product behavior.
+Infrastructure adapters sit at the edge:
 
-## MVP Perimeter From the Brief
+`React UI -> application services -> WorkspaceStore adapter -> localStorage`
 
-The first MVP should grow around five modules:
+Domain code must not import React, browser APIs, storage APIs, future AI providers, or
+network clients. Application services orchestrate domain operations and call adapters.
+React components render state and trigger application service methods.
 
-- Editorial Bible: audience, positioning, fabula, rubrics, style, boundaries, and blog
-  goals.
-- Sources and Insights: connected materials become insight cards with editorial
-  relevance and risk scoring.
-- Content Plan: AI proposes a plan that the author can approve, edit, or reject.
-- Post Brief: the author approves the thesis, conflict, structure, evidence, tone, and
-  risks before drafting.
-- Draft and Review: text is drafted and checked by style, anti-AI, fact-checking, and
-  policy review roles.
+## Conceptual Domain Interfaces
 
-## Expected Future Architecture
+Slice 0.3 documents these contracts only; Slice 0.4 will implement them in TypeScript.
 
-The next architecture pass should turn the MVP perimeter into explicit boundaries.
-Likely boundaries include:
+- `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
+  forbidden topics, goals.
+- `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
+- `InsightCard`: source signal, why it matters, audience relevance, author position,
+  rubric, urgency, score, banality risk, fact gaps.
+- `ContentPlanItem`: insight, platform, date, priority, format, expected effect,
+  approval status.
+- `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,
+  risks, sources, approval status.
+- `WorkspaceStore`: load and save current local workspace state.
 
-- Editorial bible and author profile.
-- Signal ingestion and insight scoring.
-- Planning and approval gates.
-- Brief generation and approval.
-- Draft/editing workspace.
-- Release and analytics.
-- AI provider integration layer.
-- Persistence and account/workspace model.
+## First Demo Data Flow
 
-These are candidate boundaries only. They must be narrowed in the next architecture
-slice before implementation expands.
+The first realistic demo scenario is a founder writing about practical AI adoption for
+small and medium businesses:
 
-## Assumptions
+1. The workspace starts with an `EditorialModel` for an author whose fabula is that AI
+   value comes from process redesign, not tool collecting.
+2. The author adds a `SourceSignal`: several market posts discuss failed AI pilots
+   caused by process gaps.
+3. `InsightScoring` produces an `InsightCard`: "AI pilots fail when teams automate
+   chaos", with relevance, suggested rubric, banality risk, and fact gaps.
+4. `ContentPlanning` creates a `ContentPlanItem` for a Telegram or LinkedIn post.
+5. The author approves or adjusts the plan item through a HITL gate.
+6. `Briefing` creates a `PostBrief` with thesis, conflict, evidence, structure, risks,
+   and sources.
+7. The author approves the post brief. The first product flow ends here.
+8. `LocalWorkspaceStore` persists the workspace so the approved brief survives reload.
 
-- The first production UI will be implemented with React + Vite + TypeScript because the
-  provided design handoff already uses React-style reference screens.
-- The design handoff is a visual/product context source, not a replacement for
-  `glavred.md`.
-- GitHub repository creation is deferred until explicit user confirmation.
-- Manual export is acceptable for the first product version because the brief allows
-  publication to stay manual or export-based at MVP stage.
+## Extension Points
 
-## Open Architecture Questions
+- Source ingestion adapters can later replace manual signal entry.
+- AI provider adapters can later replace deterministic insight, planning, and briefing
+  services.
+- Draft and review services can extend from approved `PostBrief` without changing the
+  earlier flow.
+- Backend persistence can replace `LocalWorkspaceStore` behind the same workspace
+  store interface.
+- Publication and analytics can attach after approved draft/release states.
 
-- What is the first end-to-end product flow?
-- Does the first version require backend persistence?
-- Which AI provider and model access pattern should be used?
-- Should release integrations be real in the first slice or represented as draft export?
-- Should the first demo flow stop at an approved post brief or continue through draft
-  and editorial checks?
+## Testing Strategy
+
+Slice 0.3 itself is documentation and ADR work, so validation is existing regression:
+
+- `npm test`
+- `npm run smoke`
+
+Slice 0.4 should add:
+
+- Unit tests for domain transitions and approval rules.
+- Unit tests for deterministic scoring/planning/briefing services.
+- Integration tests for local workspace save/load.
+- UI smoke tests for the source signal to approved post brief flow.
+- Manual demo acceptance for the founder-blog scenario.
+
+## Known Trade-offs
+
+- Approved brief is less visually complete than draft generation, but it reaches the
+  product's core differentiator earlier: approving the intention before writing.
+- Local-first persistence avoids backend scope, but it is not suitable for multi-device
+  or team collaboration.
+- Deterministic services keep the first slice testable and cheap, but real AI quality
+  remains unvalidated until a later integration slice.
+- Manual source entry is narrow, but it makes the radar and scoring concepts usable
+  before real ingestion exists.
+
+## Open Questions
+
+- Which AI provider and model access pattern should be used after deterministic
+  services are replaced?
+- Which hosted deployment target should be used after local-first development?
+- Should the first backend persistence slice preserve the local workspace format or
+  introduce a migration layer?

@@ -1,6 +1,6 @@
 // App shell — sidebar nav + topbar.
 const GR_NAV = [
-  { id: 'bible', icon: 'bible', label: 'Редакционная библия' },
+  { id: 'editorialModel', icon: 'model', label: 'Редакционная модель' },
   { id: 'radar', icon: 'radar', label: 'Радар', count: 12 },
   { id: 'plan', icon: 'plan', label: 'План', count: 5, muted: true },
   { id: 'brief', icon: 'brief', label: 'Фабулы', count: 2, muted: true },
@@ -38,7 +38,7 @@ function Sidebar({ active, onNav, author }) {
 }
 
 const GR_TITLES = {
-  bible: ['Редакционная библия', 'Конституция блога'],
+  editorialModel: ['Редакционная модель', 'Правила и контекст блога'],
   radar: ['Радар', '12 поводов за сегодня'],
   plan: ['План', 'Неделя 2–8 июня'],
   brief: ['Фабула поста', 'HITL · Gate 2 — замысел'],

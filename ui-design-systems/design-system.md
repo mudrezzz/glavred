@@ -36,7 +36,7 @@ thesis, building which reputation.*
 
 | Section | RU | What it is |
 |---|---|---|
-| **Editorial Bible** | Редакционная библия | The blog's "constitution": author, audience, fabula, style model, rubricator, forbidden topics, goals. |
+| **Editorial Model** | Редакционная модель | The blog's durable editorial context: author, audience, fabula, style model, rubricator, forbidden topics, goals. |
 | **Radar** | Радар | Stream of incoming signals → **insight cards** (event / insight / question / counter-argument / case / data / personal / pattern), each scored. |
 | **Plan** | План | Content calendar with rubrics, statuses, priorities. **HITL Gate 1.** |
 | **Briefs** | Фабулы | Where the *intent* of a post is approved before any draft exists. **HITL Gate 2.** |

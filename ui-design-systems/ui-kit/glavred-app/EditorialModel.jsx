@@ -1,5 +1,5 @@
-// Editorial Bible — the blog's "constitution". The product's core object.
-function BibleCard({ icon, title, children, tall }) {
+// Editorial Model — the product's core object for durable editorial rules.
+function EditorialModelCard({ icon, title, children, tall }) {
   return (
     <div className="card" style={{ padding: '20px 22px', gridRow: tall ? 'span 2' : 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -21,7 +21,7 @@ function TagRow({ items, tone }) {
   );
 }
 
-function BibleView() {
+function EditorialModelView() {
   return (
     <div className="page wide fade-up">
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}>
@@ -35,20 +35,20 @@ function BibleView() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
-        <BibleCard icon="bible" title="Автор">
+        <EditorialModelCard icon="model" title="Автор">
           <p style={{ font: 'var(--ui-md)', color: 'var(--ink-700)', margin: 0, lineHeight: 1.6 }}>
             Анна Корн — консультант по процессам и операционной эффективности. Образ: трезвый практик без хайпа, который видел внедрения изнутри.
           </p>
-        </BibleCard>
+        </EditorialModelCard>
 
-        <BibleCard icon="radar" title="Аудитория">
+        <EditorialModelCard icon="radar" title="Аудитория">
           <p style={{ font: 'var(--ui-md)', color: 'var(--ink-700)', margin: '0 0 12px', lineHeight: 1.6 }}>
             Основатели и операционные директора 30–45 лет, которые внедряют AI, но устали от обещаний.
           </p>
           <TagRow items={['Founders', 'COO / Ops', 'Консультанты']} />
-        </BibleCard>
+        </EditorialModelCard>
 
-        <BibleCard icon="quote" title="Рубрикатор" tall>
+        <EditorialModelCard icon="quote" title="Рубрикатор" tall>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[['Разборы', 'Объясняем сложное просто'], ['Антимнение', 'Спорим с заблуждением'], ['Кейсы', 'Применение на практике'], ['Полевые заметки', 'Личные наблюдения'], ['Методология', 'Системные фреймворки'], ['Реакции', 'Быстрый комментарий']].map(([r, d]) => (
               <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 10, borderBottom: '1px solid var(--ink-100)' }}>
@@ -57,9 +57,9 @@ function BibleView() {
               </div>
             ))}
           </div>
-        </BibleCard>
+        </EditorialModelCard>
 
-        <BibleCard icon="edit" title="Стиль автора">
+        <EditorialModelCard icon="edit" title="Стиль автора">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[['Длина фраз', 'Короткие, рубленые'], ['Ирония', 'Сухая, дозированная'], ['Начало поста', 'С наблюдения из ленты'], ['Примеры', 'Только из практики']].map(([k, v]) => (
               <div key={k} className="kv" style={{ borderTop: '1px solid var(--ink-100)', padding: '7px 0' }}>
@@ -67,13 +67,13 @@ function BibleView() {
               </div>
             ))}
           </div>
-        </BibleCard>
+        </EditorialModelCard>
 
-        <BibleCard icon="shield" title="Запреты — чего в текстах быть не должно">
+        <EditorialModelCard icon="shield" title="Запреты — чего в текстах быть не должно">
           <TagRow tone="no" items={['«важно отметить»', '«в современном мире»', 'симметричные списки', 'консалтинговый тон', 'пустые обобщения', 'политика', 'прогнозы курсов']} />
-        </BibleCard>
+        </EditorialModelCard>
       </div>
     </div>
   );
 }
-window.BibleView = BibleView;
+window.EditorialModelView = EditorialModelView;

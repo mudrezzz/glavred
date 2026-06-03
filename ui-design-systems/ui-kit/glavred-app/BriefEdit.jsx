@@ -1,4 +1,4 @@
-// Brief (Gate 2) + Editing (Gate 3) + light Bible/Release/Analytics views.
+// Brief (Gate 2) + Editing (Gate 3) + light model/release/analytics views.
 function Field({ k, children, serif }) {
   return (
     <div className="field-row">

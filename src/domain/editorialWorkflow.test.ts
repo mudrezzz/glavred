@@ -36,7 +36,7 @@ describe('EditorialWorkflow', () => {
 
   it('keeps the first MVP perimeter to five brief-defined modules', () => {
     expect(MVP_MODULES.map((module) => module.id)).toEqual([
-      'editorial_bible',
+      'editorial_model',
       'sources_and_insights',
       'content_plan',
       'post_brief',

@@ -9,7 +9,7 @@ export type EditorialStageId =
   | 'learning';
 
 export type MvpModuleId =
-  | 'editorial_bible'
+  | 'editorial_model'
   | 'sources_and_insights'
   | 'content_plan'
   | 'post_brief'
@@ -81,8 +81,8 @@ const DEFAULT_STAGES: EditorialStage[] = [
 
 export const MVP_MODULES: MvpModule[] = [
   {
-    id: 'editorial_bible',
-    label: 'Editorial Bible',
+    id: 'editorial_model',
+    label: 'Editorial Model',
     outcome: 'Audience, positioning, fabula, rubrics, style, boundaries, and blog goals.'
   },
   {

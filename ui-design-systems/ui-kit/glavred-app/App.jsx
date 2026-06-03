@@ -11,7 +11,7 @@ function App() {
   function go(view, msg) { setActive(view); if (msg) flash(msg); document.querySelector('.scroll')?.scrollTo(0, 0); }
 
   let view;
-  if (active === 'bible') view = <BibleView />;
+  if (active === 'editorialModel') view = <EditorialModelView />;
   else if (active === 'radar') view = <RadarView onPlan={(d) => go('plan', 'Тема добавлена в план недели')} />;
   else if (active === 'plan') view = <PlanView onApprove={() => flash('План недели утверждён')} onOpenPost={() => go('brief')} />;
   else if (active === 'brief') view = <BriefView onApprove={() => go('edit', 'Замысел утверждён · редакция пишет драфт')} onReject={() => go('plan', 'Фабула возвращена на доработку')} />;

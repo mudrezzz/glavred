@@ -9,3 +9,6 @@ external integrations, deployment, or user-visible product behavior.
 
 - [0000-template.md](0000-template.md)
 - [0001-use-react-vite-typescript-for-foundation.md](0001-use-react-vite-typescript-for-foundation.md)
+- [2026-06-03-stop-first-flow-at-approved-post-brief.md](2026-06-03-stop-first-flow-at-approved-post-brief.md)
+- [2026-06-03-use-local-first-persistence-for-first-flow.md](2026-06-03-use-local-first-persistence-for-first-flow.md)
+- [2026-06-03-use-deterministic-services-before-ai-integration.md](2026-06-03-use-deterministic-services-before-ai-integration.md)

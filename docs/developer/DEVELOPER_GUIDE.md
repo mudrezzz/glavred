@@ -58,8 +58,39 @@ The baseline models:
 
 - The editorial loop from radar to learning.
 - Human approval gates for content plan, post brief, and final editorial checks.
-- The five MVP modules: editorial bible, sources and insights, content plan, post
+- The five MVP modules: editorial model, sources and insights, content plan, post
   brief, draft and review.
 
 The baseline does not yet include persistence, source ingestion, AI calls, publishing
 integrations, or analytics.
+
+## Slice 0.4 Architecture Target
+
+The next implementation slice should build the first working flow:
+
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
+
+Use these boundaries:
+
+- Domain objects and pure transitions live in `src/domain/`.
+- Application services turn the demo signal into an insight card, a plan item, and a
+  post brief.
+- Infrastructure adapters handle browser `localStorage` through a `WorkspaceStore`
+  interface.
+- React components render the workflow and call application services; they must not own
+  domain rules.
+
+Do not add backend persistence, auth, real source ingestion, or AI provider calls in
+Slice 0.4. Deterministic services and fixtures are the accepted first implementation
+strategy.
+
+## Slice 0.4 Validation Strategy
+
+Add tests for:
+
+- Domain transitions and approval rules.
+- Deterministic scoring, planning, and briefing services.
+- Local workspace save/load behavior.
+- UI smoke coverage for the signal to approved post brief flow.
+
+Run `npm test` and `npm run smoke` before completing the slice.

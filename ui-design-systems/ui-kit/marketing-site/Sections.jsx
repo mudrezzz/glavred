@@ -28,7 +28,7 @@ function Hero() {
           <a className="btn btn-pri btn-lg" href="#">Собрать редакцию<Icon name="arrow" size={17} /></a>
           <a className="btn btn-sec btn-lg" href="#how">Как это работает</a>
         </div>
-        <div className="note">Редакционная библия · радар источников · 3 точки вашего контроля</div>
+        <div className="note">Редакционная модель · радар источников · 3 точки вашего контроля</div>
       </div>
       <div className="stack">
         <div className="float-card">

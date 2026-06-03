@@ -204,7 +204,7 @@ h1.ui-title { font: var(--ui-3xl); letter-spacing: -0.02em; }   /* UI-загол
 - `Shell.jsx` — `Sidebar`, `Topbar`, конфиг навигации.
 - `RadarPlan.jsx` — `RadarView`, `PlanView`, `InsightCard`.
 - `BriefEdit.jsx` — `BriefView`, `EditView`, `Placeholder`.
-- `Bible.jsx` — `BibleView`, `BibleCard`.
+- `EditorialModel.jsx` — `EditorialModelView`, `EditorialModelCard`.
 - `App.jsx` — состояние, маршрутизация между разделами, тосты.
 
 **`ui-kit/marketing-site/`** — лендинг:

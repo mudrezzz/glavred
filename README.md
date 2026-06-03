@@ -33,11 +33,14 @@ final editorial checks.
 
 The first MVP perimeter is:
 
-- Editorial Bible
+- Editorial Model
 - Sources and Insights
 - Content Plan
 - Post Brief
 - Draft and Review
+
+Current architecture focus: the first working flow will stop at an approved post brief
+and use local-first browser persistence before backend or AI provider integration.
 
 ## Quick Start
 

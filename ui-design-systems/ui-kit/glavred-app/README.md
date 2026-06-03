@@ -10,7 +10,7 @@ sharing scope via `window`. Tokens come from `../../colors_and_type.css`; compon
 styling from `app.css`.
 
 ## Core screens (click the sidebar + the primary buttons to move through the flow)
-1. **Редакционная библия** (`Bible.jsx`) — the blog's constitution: fabula, author,
+1. **Редакционная модель** (`EditorialModel.jsx`) — durable editorial context: fabula, author,
    audience, rubricator, style model, forbidden list.
 2. **Радар** (`RadarPlan.jsx`) — feed of scored **insight cards**; "В план" → Plan.
 3. **План** (`RadarPlan.jsx`) — weekly calendar + **HITL Gate 1** banner. Click a post
@@ -31,7 +31,7 @@ styling from `app.css`.
 | `Shell.jsx` | `Sidebar`, `Topbar`, nav config + per-view titles. |
 | `RadarPlan.jsx` | `RadarView`, `PlanView`, `InsightCard`. |
 | `BriefEdit.jsx` | `BriefView`, `EditView`, `Placeholder`. |
-| `Bible.jsx` | `BibleView`, `BibleCard`. |
+| `EditorialModel.jsx` | `EditorialModelView`, `EditorialModelCard`. |
 | `App.jsx` | State, routing between sections, toasts. |
 
 ## Reuse notes

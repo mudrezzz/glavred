@@ -5,7 +5,7 @@
 Glavred is an AI-native editorial office for expert bloggers, founders, consultants,
 authors, and teams who want to run a personal media system with editorial discipline.
 
-The service should help an author move from source signals to insight cards, content
+The service helps an author move from source signals to insight cards, content
 planning, approved post briefs, drafts, editorial checks, manual export or release, and
 analytics-driven learning. Its central promise is not "AI writes better", but "the
 author gains a repeatable editorial system".
@@ -21,8 +21,7 @@ Current status:
 - `glavred.md` is filled and accepted as the source of truth.
 - The `ui-design-systems/` handoff contains product/design context and remains a
   secondary source.
-- The first architecture and implementation slices should be derived from the five MVP
-  modules in the source brief.
+- Product-facing terminology uses **Редакционная модель** / `EditorialModel`.
 
 ## Status Legend
 
@@ -34,16 +33,16 @@ Current status:
 
 ## Current Iteration
 
-### Iteration 0: Project Foundation
+### Iteration 1: First Product Perimeter
 
 Goal:
 
-- Establish repository structure, documentation, architecture baseline, demo baseline,
-  test baseline, Git history, and brief-backed product direction.
+- Deliver the first working Glavred flow from source signal to approved post brief with
+  local-first persistence.
 
 Status:
 
-- `Done`
+- `Ready`
 
 ## Slice Backlog
 
@@ -127,57 +126,126 @@ Status:
 
 ### Slice 0.3: Architecture Baseline for the First Product Perimeter
 
-- Status: Ready
+- Status: Done
 - Goal: Define the smallest closed end-to-end product perimeter from the MVP modules.
 - User value: Implementation can begin from explicit boundaries, objects, and flows.
 - Scope:
   - Use the source brief and design handoff.
-  - Define domain objects for editorial bible, source signal, insight card, content
-    plan item, post brief, draft, and editorial check.
-  - Decide whether the first implementation slice needs local persistence.
-  - Create or update ADRs for architecture choices.
+  - Define the first flow from source signal to approved post brief.
+  - Define conceptual domain objects for `EditorialModel`, `SourceSignal`,
+    `InsightCard`, `ContentPlanItem`, `PostBrief`, and `WorkspaceStore`.
+  - Choose local-first persistence for the first implementation slice.
+  - Create ADRs for the approved-brief endpoint, local-first persistence, and
+    deterministic placeholder services before AI integration.
   - Define the first realistic demo scenario in implementation terms.
 - Out of scope:
+  - Runtime implementation of the domain contracts.
+  - Backend persistence.
   - AI integration.
   - Full source ingestion.
+  - Draft generation and editorial checks.
   - Autoposting.
 - Implementation notes:
-  - Use `$architecture-design`.
-  - Use `$roadmap-slice-planning` if the architecture pass changes slice order.
+  - The first flow stops at approved `PostBrief`.
+  - Use deterministic services and fixtures in Slice 0.4 before real AI providers.
+  - Keep domain, application services, infrastructure adapters, and React UI separated.
 - Tests:
-  - Define the validation strategy for the first product flow.
+  - Existing regression only for this docs/ADR slice.
+  - Validation completed with `npm test` and `npm run smoke`.
 - Docs:
-  - Update architecture overview, ADRs, developer guide, demo docs, and roadmap.
+  - Updated architecture overview, ADRs, developer guide, demo docs, and roadmap.
 - Demo impact:
-  - First demo should show an expert author's blog moving from a signal to an approved
-    post brief or draft.
+  - Demo is specified as founder-blog scenario: a practical AI adoption author turns a
+    repeated market signal about failed AI pilots into an approved post brief.
 - Acceptance criteria:
-  - First implementation slice is clearly ready.
-  - Architecture boundaries are documented.
+  - First implementation slice is clearly ready. Done.
+  - Architecture boundaries are documented. Done.
+  - ADRs capture the three key decisions. Done.
+  - Terminology uses `EditorialModel` / "Редакционная модель". Done.
 - Risks:
-  - Overbuilding the editorial bible before the user can reach a first useful output.
+  - The approved-brief endpoint is less visually complete than a draft demo, but it
+    keeps the first implementation focused on the product's core editorial control.
 
-### Slice 0.4: First Working Product Perimeter
+### Slice 0.4: First Working Flow to Approved Post Brief
+
+- Status: Ready
+- Goal: Implement the first closed Glavred flow from source signal to approved post
+  brief.
+- User value: A user can create a limited but real editorial workflow and preserve it
+  locally.
+- Scope:
+  - Add TypeScript domain contracts for `EditorialModel`, `SourceSignal`,
+    `InsightCard`, `ContentPlanItem`, `PostBrief`, and workspace state.
+  - Add deterministic application services for turning the demo signal into an insight
+    card, a plan item, and a post brief.
+  - Add a local workspace store backed by browser `localStorage`, with fixtures as the
+    initial empty/demo state.
+  - Build a Russian-language UI flow for the founder-blog demo scenario:
+    - view or edit the editorial model;
+    - add or load the source signal;
+    - review the insight card;
+    - place it into the content plan;
+    - generate and approve the post brief.
+  - Keep the UI aligned with the "quiet editorial office" design handoff.
+- Out of scope:
+  - Real AI calls.
+  - Real RSS, Telegram, YouTube, website, CRM, or document ingestion.
+  - Backend, auth, team work, and multi-device sync.
+  - Draft generation, style editing, anti-AI checks, fact-checking, policy review,
+    publication, analytics, and learning loop.
+- Implementation notes:
+  - Use `src/domain/` for domain objects and pure transitions.
+  - Use application services for deterministic scoring, planning, and briefing.
+  - Use an infrastructure adapter for `localStorage`; do not call browser storage from
+    domain code.
+  - Keep approval statuses explicit for plan items and post briefs.
+- Tests:
+  - Unit tests for domain transitions and approval rules.
+  - Unit tests for deterministic scoring/planning/briefing services.
+  - Integration tests for local workspace save/load.
+  - UI smoke tests for the signal to approved post brief flow.
+  - Run `npm test`, `npm run smoke`, and targeted tests introduced by the slice.
+- Docs:
+  - Update README, architecture overview if boundaries change, developer guide, user
+    guide, demo docs, and roadmap.
+- Demo impact:
+  - Demo should let the user reach an approved post brief from the founder-blog
+    scenario.
+- Acceptance criteria:
+  - User can start from the demo signal and end with an approved post brief.
+  - Approved state survives page reload through local storage.
+  - No real AI or backend dependency is required.
+  - Tests and smoke build pass.
+- Risks:
+  - Local storage shape may need migration when backend persistence arrives.
+  - Deterministic services may look too scripted; copy should make clear this is the
+    first working product perimeter.
+
+### Slice 0.5: Draft and Editorial Checks
 
 - Status: Backlog
-- Goal: Implement the smallest closed end-to-end Glavred flow.
-- User value: A limited but working product can be demonstrated.
+- Goal: Extend the approved brief into a draft and editorial review workspace.
+- User value: The product can demonstrate the next approval gate: final text review.
 - Scope:
-  - To be defined in Slice 0.3.
+  - Generate or fixture a draft from approved `PostBrief`.
+  - Model style, anti-AI, fact-checking, and policy checks.
+  - Add final text approval gate.
 - Out of scope:
-  - To be defined in Slice 0.3.
+  - Real AI provider integration unless Slice 0.4 explicitly prepares it.
+  - Autoposting and analytics.
 - Implementation notes:
-  - Use `$slice-implementation`.
+  - Build on the approved `PostBrief` object from Slice 0.4.
 - Tests:
-  - Unit, integration, smoke, and possibly e2e tests for the selected flow.
+  - Unit tests for check states.
+  - UI smoke tests for final text approval.
 - Docs:
-  - Update README, developer guide, user guide, demo docs, and roadmap.
+  - Update user, developer, demo docs, and roadmap.
 - Demo impact:
-  - Demo should show the selected working flow.
+  - Demo moves from approved brief to reviewed draft.
 - Acceptance criteria:
-  - Product can run and demonstrate the first meaningful flow.
+  - User can approve a final text after seeing editor notes and risks.
 - Risks:
-  - To be defined in Slice 0.3.
+  - Draft quality cannot be validated until AI integration is introduced.
 
 ## Completed Slices
 
@@ -212,20 +280,34 @@ Status:
   - `npm run smoke`: passed.
   - `npm audit --audit-level=moderate`: passed with 0 vulnerabilities.
 
+### Slice 0.3: Architecture Baseline for the First Product Perimeter
+
+- Completed: 2026-06-03
+- Result:
+  - Defined the first product perimeter from source signal to approved post brief.
+  - Chose local-first persistence for the first implementation slice.
+  - Chose deterministic services and fixtures before AI provider integration.
+  - Documented component responsibilities, dependency direction, conceptual interfaces,
+    extension points, test strategy, and demo flow.
+  - Created ADRs for the key architectural decisions.
+  - Standardized product-facing terminology on `EditorialModel` / "Редакционная
+    модель".
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+
 ## Blocked Items
 
-- None for bootstrap.
+- None.
 
 ## Open Questions
 
 - Should the future GitHub repository be private or public?
 - Which deployment target should be assumed for the first hosted version?
-- Which AI/API providers are in scope for the first product slice?
-- Should the first product flow stop at approved post brief, or continue to draft and
-  editorial checks?
-- Should the first implementation store state in local browser storage, mocked fixtures,
-  or a backend-backed workspace?
+- Which AI/API providers are in scope after deterministic services are replaced?
+- Should the eventual backend preserve the local workspace schema or introduce a
+  migration layer?
 
 ## Next Recommended Task
 
-Start `Slice 0.3: Architecture Baseline for the First Product Perimeter`.
+Start `Slice 0.4: First Working Flow to Approved Post Brief`.
