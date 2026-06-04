@@ -4,7 +4,8 @@ Glavred currently provides the first local-first editorial cabinet.
 
 The current app lets you move from a source signal to an insight card, a content plan
 item, an approved post brief, a deterministic draft, editorial checks, and an approved
-final text. Work is saved in browser local storage.
+final text, prepare a manual release package, and capture editorial learning notes.
+Work is saved in browser local storage.
 
 ## Run Locally
 
@@ -29,6 +30,16 @@ Open the local URL printed by Vite.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the final text through the
   third HITL gate.
+- Open `Выпуск`.
+- Click `Подготовить выпуск`.
+- Review Telegram/LinkedIn targets, release checklist, final text, and Markdown
+  preview.
+- Mark checklist items, click `Готово к выпуску`, then use `Скопировать текст` or
+  `Скачать Markdown`.
+- Open `Аналитика`.
+- Click `Подготовить аналитику`.
+- Enter manual metrics and editorial conclusions.
+- Click `Зафиксировать выводы`.
 - Reload the page and keep the local workspace state.
 - Reset the demo scenario from the topbar.
 
@@ -36,5 +47,5 @@ Open the local URL printed by Vite.
 
 - Real source ingestion.
 - Real AI-generated insights, briefs, or drafts.
-- Export or publishing integrations.
-- Analytics.
+- Autoposting and real platform publishing integrations.
+- Real metrics ingestion or AI analytics.

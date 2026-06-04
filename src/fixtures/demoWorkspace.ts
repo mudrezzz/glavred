@@ -43,6 +43,8 @@ export function createDemoWorkspace(): WorkspaceState {
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null,
     activeSection: 'radar',
     updatedAt: new Date().toISOString()
   };

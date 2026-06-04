@@ -37,8 +37,8 @@ Current status:
 
 Goal:
 
-- Deliver the first working Glavred flow from source signal to approved final text
-  with local-first persistence.
+- Deliver the first working Glavred flow from source signal to manual export-ready
+  release package and captured editorial learning note with local-first persistence.
 
 Status:
 
@@ -259,7 +259,7 @@ Status:
 
 ### Slice 0.6: Manual Export and Release Prep
 
-- Status: Ready
+- Status: Done
 - Goal: Let the user prepare an approved final text for manual release.
 - User value: The current editorial loop becomes practically usable because the
   approved text can be copied/exported with release metadata.
@@ -284,12 +284,86 @@ Status:
 - Demo impact:
   - Demo reaches "approved final text ready for manual release".
 - Acceptance criteria:
-  - User can move from approved final text to a release-ready manual export state.
-  - State survives reload.
-  - Tests and smoke build pass.
+  - User can move from approved final text to a release-ready manual export state. Done.
+  - State survives reload. Done.
+  - Copy + Markdown export are available without backend or platform APIs. Done.
+  - Tests and smoke build pass. Done.
 - Risks:
   - Without real publication APIs, release value is limited to operational readiness
     and copy/export convenience.
+
+### Slice 0.7: Analytics Placeholder to Learning Notes
+
+- Status: Done
+- Goal: Turn `Аналитика` from a placeholder into local analytics prep and editorial
+  learning notes after manual export.
+- User value: The editorial loop starts feeding the next cycle with manual metrics and
+  captured conclusions, even before real platform analytics exist.
+- Scope:
+  - Activate `Аналитика` as a working section.
+  - Show exported release package context and manual metric fields.
+  - Add fields for observed result, audience reaction, working theses, trust rubrics,
+    quality audience topics, stronger author voice, repeat formats, and series
+    candidates.
+  - Add deterministic learning note state and local persistence.
+  - Let the user mark a learning note as captured.
+- Out of scope:
+  - Real metrics ingestion.
+  - Platform APIs.
+  - AI analysis.
+  - Backend, auth, and team work.
+- Tests:
+  - Unit tests for learning note transitions.
+  - Storage tests for learning note persistence.
+  - UI tests for empty state before exported release and captured learning note after
+    export.
+- Docs:
+  - Update README, user guide, developer guide, demo docs, architecture overview, and
+    roadmap.
+- Demo impact:
+  - Demo reaches "manual release exported -> editorial learning captured".
+- Acceptance criteria:
+  - User can add and save a learning note after manual export. Done.
+  - Manual metrics and editorial fields are visible and editable. Done.
+  - State survives reload. Done.
+  - Tests and smoke build pass. Done.
+- Risks:
+  - Without real analytics, learning quality depends on manual input.
+
+### Slice 0.8: AI Provider Architecture Baseline
+
+- Status: Ready
+- Goal: Define the architecture for replacing deterministic services with AI provider
+  adapters without changing the current local-first UI flow.
+- User value: The project can start AI integration from explicit boundaries, prompts,
+  fallback behavior, and test strategy instead of wiring providers directly into React.
+- Scope:
+  - Document provider boundaries for insight, briefing, drafting, checks, and analytics
+    prep.
+  - Define provider-agnostic interfaces and deterministic fallback strategy in docs.
+  - Add ADR for AI provider abstraction and no direct provider calls from React.
+  - Update roadmap with the first implementation slice for AI-assisted drafting or
+    insight scoring.
+- Out of scope:
+  - Real AI provider calls.
+  - API keys and secrets.
+  - Backend, auth, team work, and deployment.
+- Tests:
+  - Existing regression only, because this is architecture/docs work.
+  - Run `npm test` and `npm run smoke`.
+- Docs:
+  - Update architecture overview, ADRs, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - Demo behavior remains deterministic; docs clarify how AI will replace services
+    later.
+- Acceptance criteria:
+  - AI provider boundaries are decision-complete.
+  - React remains provider-free.
+  - Deterministic fallback remains the default runtime behavior.
+  - Tests and smoke build pass.
+- Risks:
+  - Without a selected provider, the architecture may need refinement once the first
+    real integration is chosen.
 
 ## Completed Slices
 
@@ -377,6 +451,42 @@ Status:
   - `npm test`: passed.
   - `npm run smoke`: passed.
 
+### Slice 0.6: Manual Export and Release Prep
+
+- Completed: 2026-06-04
+- Result:
+  - Added runtime contracts for release targets, release checklist items, release
+    packages, and release status.
+  - Added deterministic release package generation from approved final text.
+  - Activated `Выпуск` with final text, Telegram/LinkedIn targets, Markdown preview,
+    release checklist, copy action, and Markdown download.
+  - Added release readiness and manual exported transitions.
+  - Extended local-first persistence with backward-compatible normalization for
+    workspaces without release state.
+  - Updated README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+
+### Slice 0.7: Analytics Prep and Editorial Learning Notes
+
+- Completed: 2026-06-04
+- Result:
+  - Added runtime contracts for analytics status, manual metric snapshots, and
+    editorial learning notes.
+  - Added deterministic analytics prep scaffold after exported release packages.
+  - Activated `Аналитика` with manual metrics, editorial conclusion fields, release
+    context, and captured learning status.
+  - Added learning note capture and edit transitions.
+  - Extended local-first persistence with backward-compatible normalization for
+    workspaces without analytics state.
+  - Updated README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+
 ## Blocked Items
 
 - None.
@@ -390,4 +500,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 0.6: Manual Export and Release Prep`.
+Start `Slice 0.8: AI Provider Architecture Baseline`.

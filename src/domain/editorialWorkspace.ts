@@ -2,6 +2,9 @@ export type ApprovalStatus = 'draft' | 'approved' | 'rejected';
 export type DraftStatus = 'draft' | 'revised';
 export type EditorialCheckType = 'style' | 'antiAi' | 'factCheck' | 'policy';
 export type EditorialCheckStatus = 'passed' | 'warning' | 'failed';
+export type ReleaseStatus = 'draft' | 'ready' | 'exported';
+export type ReleaseTarget = 'telegram' | 'linkedin';
+export type AnalyticsStatus = 'draft' | 'captured';
 
 export interface EditorialModel {
   author: string;
@@ -104,6 +107,47 @@ export interface FinalText {
   approvedAt: string;
 }
 
+export interface ReleaseChecklistItem {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+export interface ReleasePackage {
+  id: string;
+  finalTextId: string;
+  targets: ReleaseTarget[];
+  markdown: string;
+  checklist: ReleaseChecklistItem[];
+  status: ReleaseStatus;
+  updatedAt: string;
+}
+
+export interface ManualMetricSnapshot {
+  views: number;
+  reactions: number;
+  comments: number;
+  saves: number;
+  leads: number;
+}
+
+export interface EditorialLearningNote {
+  id: string;
+  releasePackageId: string;
+  metricSnapshot: ManualMetricSnapshot;
+  observedResult: string;
+  audienceReaction: string;
+  workingTheses: string;
+  trustRubrics: string;
+  qualityAudienceTopics: string;
+  strongerVoice: string;
+  repeatFormats: string;
+  seriesCandidates: string;
+  status: AnalyticsStatus;
+  updatedAt: string;
+  capturedAt: string | null;
+}
+
 export interface WorkspaceState {
   editorialModel: EditorialModel;
   sourceSignal: SourceSignal;
@@ -114,6 +158,8 @@ export interface WorkspaceState {
   editorialChecks: EditorialCheck[];
   editorNotes: EditorNote[];
   finalText: FinalText | null;
+  releasePackage: ReleasePackage | null;
+  editorialLearningNote: EditorialLearningNote | null;
   activeSection: WorkspaceSection;
   updatedAt: string;
 }
@@ -172,4 +218,56 @@ export function approveFinalText(postDraft: PostDraft): FinalText {
 
 export function markCheckResolved(check: EditorialCheck): EditorialCheck {
   return { ...check, status: 'passed' };
+}
+
+export function toggleReleaseChecklistItem(
+  releasePackage: ReleasePackage,
+  itemId: string
+): ReleasePackage {
+  return {
+    ...releasePackage,
+    checklist: releasePackage.checklist.map((item) =>
+      item.id === itemId ? { ...item, done: !item.done } : item
+    ),
+    status: 'draft',
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function markReleaseReady(releasePackage: ReleasePackage): ReleasePackage {
+  const allItemsDone = releasePackage.checklist.every((item) => item.done);
+
+  if (!allItemsDone) {
+    return { ...releasePackage, status: 'draft', updatedAt: new Date().toISOString() };
+  }
+
+  return { ...releasePackage, status: 'ready', updatedAt: new Date().toISOString() };
+}
+
+export function markReleaseExported(releasePackage: ReleasePackage): ReleasePackage {
+  return { ...releasePackage, status: 'exported', updatedAt: new Date().toISOString() };
+}
+
+export function markLearningNoteCaptured(note: EditorialLearningNote): EditorialLearningNote {
+  const now = new Date().toISOString();
+
+  return {
+    ...note,
+    status: 'captured',
+    updatedAt: now,
+    capturedAt: now
+  };
+}
+
+export function updateLearningNote(
+  note: EditorialLearningNote,
+  patch: Partial<Omit<EditorialLearningNote, 'id' | 'releasePackageId' | 'updatedAt' | 'capturedAt'>>
+): EditorialLearningNote {
+  return {
+    ...note,
+    ...patch,
+    status: 'draft',
+    updatedAt: new Date().toISOString(),
+    capturedAt: null
+  };
 }

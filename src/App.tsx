@@ -2,21 +2,31 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   createContentPlanItem,
   createEditorNotes,
+  createEditorialLearningNote,
   createInsightCard,
   createPostBrief,
   createPostDraft,
+  createReleasePackage,
   runEditorialChecks
 } from './application/editorialServices';
 import {
   approveFinalText,
   approvePlanItem,
   approvePostBrief,
+  markLearningNoteCaptured,
+  markReleaseExported,
+  markReleaseReady,
   reviseDraft,
+  toggleReleaseChecklistItem,
+  updateLearningNote,
   type EditorialCheck,
+  type EditorialLearningNote,
   type EditorialModel,
   type FinalText,
+  type ManualMetricSnapshot,
   type PostBrief,
   type PostDraft,
+  type ReleasePackage,
   type SourceSignal,
   type WorkspaceSection,
   type WorkspaceState
@@ -31,8 +41,8 @@ const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: st
   { id: 'plan', icon: 'plan', label: 'План', count: '1' },
   { id: 'brief', icon: 'brief', label: 'Фабулы', count: '1' },
   { id: 'edit', icon: 'edit', label: 'Редактура' },
-  { id: 'release', icon: 'release', label: 'Выпуск', disabled: true },
-  { id: 'analytics', icon: 'analytics', label: 'Аналитика', disabled: true }
+  { id: 'release', icon: 'release', label: 'Выпуск' },
+  { id: 'analytics', icon: 'analytics', label: 'Аналитика' }
 ];
 
 const TITLES: Record<WorkspaceSection, [string, string]> = {
@@ -41,7 +51,7 @@ const TITLES: Record<WorkspaceSection, [string, string]> = {
   plan: ['План', 'HITL · Gate 1'],
   brief: ['Фабула поста', 'HITL · Gate 2'],
   edit: ['Редактура', 'HITL · Gate 3'],
-  release: ['Выпуск', 'Следующий этап'],
+  release: ['Выпуск', 'Manual export'],
   analytics: ['Аналитика', 'Редакционные выводы']
 };
 
@@ -190,27 +200,97 @@ export function App() {
                 const postDraft = reviseDraft(workspace.postDraft, body);
                 const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
                 const editorNotes = createEditorNotes(editorialChecks);
-                patchWorkspace({ postDraft, editorialChecks, editorNotes, finalText: null });
+                patchWorkspace({
+                  postDraft,
+                  editorialChecks,
+                  editorNotes,
+                  finalText: null,
+                  releasePackage: null,
+                  editorialLearningNote: null
+                });
               }}
               onApproveFinal={() => {
                 if (!workspace.postDraft) return;
                 const finalText = approveFinalText(workspace.postDraft);
-                patchWorkspace({ finalText }, 'Финальный текст утвержден');
+                patchWorkspace(
+                  { finalText, releasePackage: null, editorialLearningNote: null },
+                  'Финальный текст утвержден'
+                );
               }}
             />
           )}
           {active === 'release' && (
-            <Placeholder
-              icon="release"
-              title="Выпуск"
-              text="Публикация и адаптация под площадки остаются будущим расширением после редакторского пайплайна."
+            <ReleaseView
+              workspace={workspace}
+              onGoEdit={() => go('edit')}
+              onCreatePackage={() => {
+                if (!workspace.finalText || workspace.finalText.approvalStatus !== 'approved') return;
+                const releasePackage = createReleasePackage(workspace.finalText, workspace.contentPlanItem);
+                patchWorkspace(
+                  { releasePackage, editorialLearningNote: null },
+                  'Пакет ручного выпуска подготовлен'
+                );
+              }}
+              onToggleChecklist={(itemId) => {
+                if (!workspace.releasePackage) return;
+                patchWorkspace({
+                  releasePackage: toggleReleaseChecklistItem(workspace.releasePackage, itemId),
+                  editorialLearningNote: null
+                });
+              }}
+              onMarkReady={() => {
+                if (!workspace.releasePackage) return;
+                const releasePackage = markReleaseReady(workspace.releasePackage);
+                patchWorkspace(
+                  { releasePackage, editorialLearningNote: null },
+                  releasePackage.status === 'ready' ? 'Выпуск готов' : 'Закройте чеклист выпуска'
+                );
+              }}
+              onCopy={async () => {
+                if (!workspace.releasePackage || !workspace.finalText) return;
+                await copyToClipboard(workspace.finalText.body);
+                patchWorkspace(
+                  {
+                    releasePackage: markReleaseExported(markManualExportDone(workspace.releasePackage)),
+                    editorialLearningNote: null
+                  },
+                  'Текст скопирован для ручного выпуска'
+                );
+              }}
+              onDownload={() => {
+                if (!workspace.releasePackage) return;
+                downloadMarkdown(workspace.releasePackage);
+                patchWorkspace(
+                  {
+                    releasePackage: markReleaseExported(markManualExportDone(workspace.releasePackage)),
+                    editorialLearningNote: null
+                  },
+                  'Markdown скачан для ручного выпуска'
+                );
+              }}
             />
           )}
           {active === 'analytics' && (
-            <Placeholder
-              icon="analytics"
-              title="Аналитика"
-              text="Здесь будут не просмотры ради просмотров, а редакционные выводы для следующего цикла."
+            <AnalyticsView
+              workspace={workspace}
+              onGoRelease={() => go('release')}
+              onCreateNote={() => {
+                if (!workspace.releasePackage || !workspace.finalText) return;
+                const editorialLearningNote = createEditorialLearningNote(
+                  workspace.releasePackage,
+                  workspace.finalText,
+                  workspace.contentPlanItem
+                );
+                patchWorkspace({ editorialLearningNote }, 'Аналитика подготовлена');
+              }}
+              onChangeNote={(editorialLearningNote) => patchWorkspace({ editorialLearningNote })}
+              onCapture={() => {
+                if (!workspace.editorialLearningNote) return;
+                patchWorkspace(
+                  { editorialLearningNote: markLearningNoteCaptured(workspace.editorialLearningNote) },
+                  'Редакционные выводы зафиксированы'
+                );
+              }}
             />
           )}
         </div>
@@ -799,6 +879,316 @@ function CheckCard({ check }: { check: EditorialCheck }) {
   );
 }
 
+function ReleaseView({
+  workspace,
+  onGoEdit,
+  onCreatePackage,
+  onToggleChecklist,
+  onMarkReady,
+  onCopy,
+  onDownload
+}: {
+  workspace: WorkspaceState;
+  onGoEdit: () => void;
+  onCreatePackage: () => void;
+  onToggleChecklist: (itemId: string) => void;
+  onMarkReady: () => void;
+  onCopy: () => void;
+  onDownload: () => void;
+}) {
+  const finalText = workspace.finalText;
+  const releasePackage = workspace.releasePackage;
+  const allChecklistDone = releasePackage?.checklist.every((item) => item.done) ?? false;
+
+  if (!finalText || finalText.approvalStatus !== 'approved') {
+    return (
+      <div className="page fade-up">
+        <section className="card edit-empty">
+          <div className="placeholder-icon">
+            <Icon name="edit" size={28} />
+          </div>
+          <h2>Сначала утвердите финальный текст</h2>
+          <p>Выпуск открывается после Gate 3: утвержденного текста в разделе «Редактура».</p>
+          <button className="btn btn-pri" type="button" onClick={onGoEdit}>
+            <Icon name="edit" size={16} />
+            Перейти в редактуру
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (!releasePackage) {
+    return (
+      <div className="page wide fade-up">
+        <section className="card draft-start">
+          <span className="rub">Manual export</span>
+          <h2>{finalText.title}</h2>
+          <p>Финальный текст утвержден. Подготовьте пакет выпуска для Telegram и LinkedIn без автопостинга.</p>
+          <button className="btn btn-pri" type="button" onClick={onCreatePackage}>
+            <Icon name="release" size={16} />
+            Подготовить выпуск
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page wide fade-up">
+      <HitlGate
+        tag="Release · Manual export"
+        title={`Статус: ${releaseStatusLabel(releasePackage.status)}`}
+        subtitle="Пакет выпуска не публикует пост автоматически. Он готовит текст, markdown и чеклист для ручной публикации."
+        action="Готово к выпуску"
+        disabled={!allChecklistDone}
+        onAction={onMarkReady}
+      />
+      <div className="release-grid">
+        <section className="release-doc">
+          <div className="doc-head">
+            <div>
+              <span className="rub">Финальный текст</span>
+              <h2>{finalText.title}</h2>
+            </div>
+            <span className={`pill ${releasePackage.status === 'exported' ? 'ok' : 'pin'}`}>
+              <i />
+              {releaseStatusLabel(releasePackage.status)}
+            </span>
+          </div>
+          <pre className="release-text">{finalText.body}</pre>
+          <div className="markdown-preview">
+            <div className="doc-head">
+              <h3>Markdown export</h3>
+              <div className="actions">
+                <button className="btn btn-sec btn-sm" type="button" onClick={onCopy}>
+                  <Icon name="check" size={14} />
+                  Скопировать текст
+                </button>
+                <button className="btn btn-pri btn-sm" type="button" onClick={onDownload}>
+                  <Icon name="release" size={14} />
+                  Скачать Markdown
+                </button>
+              </div>
+            </div>
+            <pre>{releasePackage.markdown}</pre>
+          </div>
+        </section>
+        <aside className="edit-side">
+          <section className="panel">
+            <h4>Площадки</h4>
+            <div className="target-list">
+              {releasePackage.targets.map((target) => (
+                <span className="sig info" key={target}>
+                  {targetLabel(target)}
+                </span>
+              ))}
+            </div>
+          </section>
+          <section className="panel">
+            <h4>Release checklist</h4>
+            <div className="release-checklist">
+              {releasePackage.checklist.map((item) => (
+                <label className="check-row" key={item.id}>
+                  <input
+                    type="checkbox"
+                    checked={item.done}
+                    onChange={() => onToggleChecklist(item.id)}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+          <section className="panel">
+            <h4>Метаданные</h4>
+            <dl className="meta-list">
+              <dt>Обновлено</dt>
+              <dd>{releasePackage.updatedAt}</dd>
+              <dt>Статус</dt>
+              <dd>{releaseStatusLabel(releasePackage.status)}</dd>
+              <dt>Тип выпуска</dt>
+              <dd>ручной export</dd>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsView({
+  workspace,
+  onGoRelease,
+  onCreateNote,
+  onChangeNote,
+  onCapture
+}: {
+  workspace: WorkspaceState;
+  onGoRelease: () => void;
+  onCreateNote: () => void;
+  onChangeNote: (note: EditorialLearningNote) => void;
+  onCapture: () => void;
+}) {
+  const releasePackage = workspace.releasePackage;
+  const note = workspace.editorialLearningNote;
+
+  if (!releasePackage || releasePackage.status !== 'exported') {
+    return (
+      <div className="page fade-up">
+        <section className="card edit-empty">
+          <div className="placeholder-icon">
+            <Icon name="release" size={28} />
+          </div>
+          <h2>Сначала завершите ручной выпуск</h2>
+          <p>Аналитика открывается после статуса «Экспортировано вручную» в разделе «Выпуск».</p>
+          <button className="btn btn-pri" type="button" onClick={onGoRelease}>
+            <Icon name="release" size={16} />
+            Перейти в выпуск
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className="page wide fade-up">
+        <section className="card draft-start">
+          <span className="rub">Analytics prep</span>
+          <h2>Подготовить редакционные выводы</h2>
+          <p>
+            Метрики вводятся вручную. Этот слой фиксирует не просмотры ради просмотров,
+            а выводы для следующего редакционного цикла.
+          </p>
+          <button className="btn btn-pri" type="button" onClick={onCreateNote}>
+            <Icon name="analytics" size={16} />
+            Подготовить аналитику
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  const currentNote = note;
+
+  function patchNote(patch: Partial<EditorialLearningNote>) {
+    onChangeNote(updateLearningNote(currentNote, patch));
+  }
+
+  function patchMetric(metric: keyof ManualMetricSnapshot, value: string) {
+    patchNote({
+      metricSnapshot: {
+        ...currentNote.metricSnapshot,
+        [metric]: Number(value) || 0
+      }
+    });
+  }
+
+  return (
+    <div className="page wide fade-up">
+      <HitlGate
+        tag="Analytics · Learning"
+        title={`Статус: ${analyticsStatusLabel(note.status)}`}
+        subtitle="Площадочные API не подключены: редакция вручную заносит метрики и фиксирует выводы."
+        action="Зафиксировать выводы"
+        onAction={onCapture}
+      />
+      <div className="analytics-grid">
+        <section className="analytics-doc">
+          <div className="doc-head">
+            <div>
+              <span className="rub">Ручные метрики</span>
+              <h2>Редакционный разбор выпуска</h2>
+            </div>
+            <span className={`pill ${note.status === 'captured' ? 'ok' : 'pin'}`}>
+              <i />
+              {analyticsStatusLabel(note.status)}
+            </span>
+          </div>
+          <div className="metric-grid">
+            <MetricInput label="Просмотры" value={note.metricSnapshot.views} onChange={(value) => patchMetric('views', value)} />
+            <MetricInput label="Реакции" value={note.metricSnapshot.reactions} onChange={(value) => patchMetric('reactions', value)} />
+            <MetricInput label="Комментарии" value={note.metricSnapshot.comments} onChange={(value) => patchMetric('comments', value)} />
+            <MetricInput label="Сохранения" value={note.metricSnapshot.saves} onChange={(value) => patchMetric('saves', value)} />
+            <MetricInput label="Лиды" value={note.metricSnapshot.leads} onChange={(value) => patchMetric('leads', value)} />
+          </div>
+          <div className="learning-fields">
+            <LearningTextArea label="Что сработало" value={note.observedResult} onChange={(observedResult) => patchNote({ observedResult })} />
+            <LearningTextArea label="Реакция аудитории" value={note.audienceReaction} onChange={(audienceReaction) => patchNote({ audienceReaction })} />
+            <LearningTextArea label="Какие тезисы работают" value={note.workingTheses} onChange={(workingTheses) => patchNote({ workingTheses })} />
+            <LearningTextArea label="Какие рубрики усиливают доверие" value={note.trustRubrics} onChange={(trustRubrics) => patchNote({ trustRubrics })} />
+            <LearningTextArea label="Какие темы приводят качественную аудиторию" value={note.qualityAudienceTopics} onChange={(qualityAudienceTopics) => patchNote({ qualityAudienceTopics })} />
+            <LearningTextArea label="Где автор звучит сильнее" value={note.strongerVoice} onChange={(strongerVoice) => patchNote({ strongerVoice })} />
+            <LearningTextArea label="Какие форматы стоит повторить" value={note.repeatFormats} onChange={(repeatFormats) => patchNote({ repeatFormats })} />
+            <LearningTextArea label="Что развить в серию" value={note.seriesCandidates} onChange={(seriesCandidates) => patchNote({ seriesCandidates })} />
+          </div>
+        </section>
+        <aside className="edit-side">
+          <section className="panel">
+            <h4>Контекст выпуска</h4>
+            <dl className="meta-list">
+              <dt>Release</dt>
+              <dd>{note.releasePackageId}</dd>
+              <dt>Статус</dt>
+              <dd>{releaseStatusLabel(releasePackage.status)}</dd>
+              <dt>Площадки</dt>
+              <dd>{releasePackage.targets.map(targetLabel).join(' + ')}</dd>
+            </dl>
+          </section>
+          <section className="panel">
+            <h4>Learning note</h4>
+            <span className={`pill ${note.status === 'captured' ? 'ok' : 'pin'}`}>
+              <i />
+              {analyticsStatusLabel(note.status)}
+            </span>
+            <dl className="meta-list analytics-meta">
+              <dt>Обновлено</dt>
+              <dd>{note.updatedAt}</dd>
+              <dt>Зафиксировано</dt>
+              <dd>{note.capturedAt ?? 'еще нет'}</dd>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function MetricInput({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: number;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="metric-input">
+      <span>{label}</span>
+      <input type="number" min="0" value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function LearningTextArea({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="learning-field">
+      <span>{label}</span>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
 function HitlGate({
   tag,
   title,
@@ -902,4 +1292,52 @@ function checkStatusLabel(status: string): string {
   if (status === 'passed') return 'Пройдено';
   if (status === 'warning') return 'Есть warning';
   return 'Блокер';
+}
+
+function releaseStatusLabel(status: string): string {
+  if (status === 'ready') return 'Готово к выпуску';
+  if (status === 'exported') return 'Экспортировано вручную';
+  return 'Черновик выпуска';
+}
+
+function analyticsStatusLabel(status: string): string {
+  if (status === 'captured') return 'Выводы зафиксированы';
+  return 'Черновик аналитики';
+}
+
+function targetLabel(target: string): string {
+  if (target === 'telegram') return 'Telegram';
+  if (target === 'linkedin') return 'LinkedIn';
+  return target;
+}
+
+function markManualExportDone(releasePackage: ReleasePackage): ReleasePackage {
+  return {
+    ...releasePackage,
+    checklist: releasePackage.checklist.map((item) =>
+      item.id === 'manual-exported' ? { ...item, done: true } : item
+    )
+  };
+}
+
+async function copyToClipboard(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      // Markdown preview stays visible for manual copy when clipboard access is unavailable.
+    }
+  }
+}
+
+function downloadMarkdown(releasePackage: ReleasePackage): void {
+  if (!window.URL?.createObjectURL) return;
+
+  const blob = new Blob([releasePackage.markdown], { type: 'text/markdown;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${releasePackage.id}.md`;
+  link.click();
+  window.URL.revokeObjectURL(url);
 }

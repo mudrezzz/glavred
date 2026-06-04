@@ -38,7 +38,7 @@ npm run smoke
 
 - `src/domain/`: framework-independent domain model.
 - `src/application/`: deterministic application services for insight, planning,
-  briefing, drafting, and editorial checks.
+  briefing, drafting, editorial checks, release packaging, and analytics prep.
 - `src/infrastructure/`: browser storage adapter.
 - `src/fixtures/`: demo workspace data.
 - `src/App.tsx`: production React editorial cabinet shell and screens.
@@ -60,27 +60,30 @@ before wiring it into React views.
 
 The current app implements:
 
-- The first working flow from source signal to approved final text.
+- The first working flow from source signal to captured editorial learning note.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
-- Human approval gates for content plan, post brief, and final text.
+- Human approval gates for content plan, post brief, final text, and release readiness.
 - Deterministic style, anti-AI, fact-check, and policy checks for the draft.
+- Manual release package with Telegram/LinkedIn targets, checklist, text copy, and
+  Markdown download.
+- Local analytics prep with manual metrics and captured editorial learning notes.
 - Local-first workspace persistence through browser `localStorage`.
-- Polished placeholders for выпуск and аналитика.
 
 The app does not yet include real source ingestion, AI calls, publishing integrations,
-export, or analytics.
+autoposting, or real metrics ingestion.
 
 ## Architecture Boundaries
 
 The implemented flow is:
 
-`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText`
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.
 - Application services turn the demo signal into an insight card, a plan item, a post
-  brief, a deterministic draft, editorial checks, and editor notes.
+  brief, a deterministic draft, editorial checks, editor notes, a release package, and
+  an editorial learning scaffold.
 - Infrastructure adapters handle browser `localStorage` through a `WorkspaceStore`
   interface.
 - React components render the workflow and call application services; they must not own
@@ -94,8 +97,9 @@ real source ingestion, or AI provider calls until their slices are planned.
 Current tests cover:
 
 - Domain transitions and approval rules.
-- Deterministic scoring, planning, briefing, drafting, and editorial check services.
+- Deterministic scoring, planning, briefing, drafting, editorial check, and release
+  packaging services, plus analytics prep.
 - Local workspace save/load behavior.
-- UI smoke coverage for the signal to approved final text flow.
+- UI smoke coverage for the signal to captured learning note flow.
 
 Run `npm test` and `npm run smoke` before completing the slice.

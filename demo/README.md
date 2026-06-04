@@ -11,11 +11,11 @@ npm run dev
 
 It shows the first working Glavred editorial cabinet:
 
-`Редакционная модель -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText`
+`Редакционная модель -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
-topbar, cards, HITL gates, plan area, brief area, editorial review area, and
-placeholders for future release and analytics sections.
+topbar, cards, HITL gates, plan area, brief area, editorial review area, manual release
+area, and analytics prep area.
 
 ## Demo Scenario
 
@@ -26,11 +26,13 @@ placeholders for future release and analytics sections.
   teams automate chaos.
 - Expected flow: create or load an editorial model, add the signal, produce an insight
   card, place it into a weekly plan, prepare an approvable post brief, generate a
-  draft, review editorial checks, and approve the final text.
-- Expected output: an approved final text based on an approved post brief with thesis,
-  conflict, rubric, audience, evidence, risks, sources, CTA, and approval status.
-- Persistence: the approved final text should survive reload through local browser
-  storage.
+  draft, review editorial checks, approve the final text, and prepare a manual release
+  package, then capture editorial learning notes.
+- Expected output: an approved final text packaged for manual export with
+  Telegram/LinkedIn targets, release checklist, Markdown preview, export status,
+  manual metrics, and captured editorial conclusions.
+- Persistence: the manual release package and learning note should survive reload
+  through local browser storage.
 
 ## Main User Flow
 
@@ -47,8 +49,17 @@ placeholders for future release and analytics sections.
 11. Review checks and editor notes.
 12. Edit the draft text.
 13. Click `Утвердить текст`.
-14. Reload the page to confirm state persists.
-15. Use `Сбросить демо` to restore the initial scenario.
+14. Open `Выпуск`.
+15. Click `Подготовить выпуск`.
+16. Review targets, checklist, final text, and Markdown preview.
+17. Complete the checklist and click `Готово к выпуску`.
+18. Click `Скопировать текст` or `Скачать Markdown`.
+19. Open `Аналитика`.
+20. Click `Подготовить аналитику`.
+21. Enter manual metrics and editorial conclusions.
+22. Click `Зафиксировать выводы`.
+23. Reload the page to confirm state persists.
+24. Use `Сбросить демо` to restore the initial scenario.
 
 ## Reference Materials
 
@@ -64,5 +75,5 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-Manual export or publication preparation is the next logical demo extension. Real AI
-providers, publication automation, and analytics remain later steps.
+AI provider architecture is the next logical demo extension. Real platform metrics,
+publication automation, and backend sync remain later steps.

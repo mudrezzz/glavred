@@ -12,6 +12,7 @@ the results feed the next cycle.
 The current repository contains the first working local-first editorial cabinet. It
 implements an editable flow from source signal to insight card, content plan item,
 approved post brief, deterministic draft, editorial checks, and approved final text,
+manual release package, copy/Markdown export, and captured editorial learning note,
 plus tests, documentation, demo notes, and the design handoff supplied in
 `ui-design-systems/`.
 
@@ -39,10 +40,12 @@ The first MVP perimeter is:
 - Content Plan
 - Post Brief
 - Draft and Review
+- Manual Export
+- Analytics Prep
 
-Current working flow: the first product perimeter reaches an approved final text and
-uses local-first browser persistence before backend, export, analytics, or AI provider
-integration.
+Current working flow: the first product perimeter reaches a captured editorial learning
+note and uses local-first browser persistence before backend, real metrics ingestion,
+autoposting, or AI provider integration.
 
 ## Quick Start
 

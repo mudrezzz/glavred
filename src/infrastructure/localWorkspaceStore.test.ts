@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { LocalWorkspaceStore } from './localWorkspaceStore';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
-import { approveFinalText, approvePostBrief } from '../domain/editorialWorkspace';
+import {
+  approveFinalText,
+  approvePostBrief,
+  markLearningNoteCaptured,
+  markReleaseExported,
+  markReleaseReady,
+  toggleReleaseChecklistItem
+} from '../domain/editorialWorkspace';
 import {
   createContentPlanItem,
+  createEditorialLearningNote,
   createInsightCard,
   createPostBrief,
-  createPostDraft
+  createPostDraft,
+  createReleasePackage
 } from '../application/editorialServices';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
@@ -57,6 +66,8 @@ describe('LocalWorkspaceStore', () => {
     delete oldWorkspace.editorialChecks;
     delete oldWorkspace.editorNotes;
     delete oldWorkspace.finalText;
+    delete oldWorkspace.releasePackage;
+    delete oldWorkspace.editorialLearningNote;
     storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
     const store = new LocalWorkspaceStore(storage);
 
@@ -66,6 +77,8 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialChecks).toEqual([]);
     expect(loaded.editorNotes).toEqual([]);
     expect(loaded.finalText).toBeNull();
+    expect(loaded.releasePackage).toBeNull();
+    expect(loaded.editorialLearningNote).toBeNull();
   });
 
   it('saves and loads an approved final text', () => {
@@ -89,6 +102,60 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().finalText?.approvalStatus).toBe('approved');
   });
 
+  it('saves and loads a ready release package', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const planItem = createContentPlanItem(insight);
+    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const draft = createPostDraft(brief, workspace.editorialModel);
+    const finalText = approveFinalText(draft);
+    const releasePackage = createReleasePackage(finalText, planItem);
+    const completed = releasePackage.checklist.reduce(
+      (current, item) => (item.done ? current : toggleReleaseChecklistItem(current, item.id)),
+      releasePackage
+    );
+
+    store.save({
+      ...workspace,
+      insightCard: insight,
+      contentPlanItem: planItem,
+      postBrief: brief,
+      postDraft: draft,
+      finalText,
+      releasePackage: markReleaseReady(completed)
+    });
+
+    expect(store.load().releasePackage?.status).toBe('ready');
+  });
+
+  it('saves and loads a captured editorial learning note', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const planItem = createContentPlanItem(insight);
+    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const draft = createPostDraft(brief, workspace.editorialModel);
+    const finalText = approveFinalText(draft);
+    const releasePackage = markReleaseExported(createReleasePackage(finalText, planItem));
+    const editorialLearningNote = markLearningNoteCaptured(
+      createEditorialLearningNote(releasePackage, finalText, planItem)
+    );
+
+    store.save({
+      ...workspace,
+      insightCard: insight,
+      contentPlanItem: planItem,
+      postBrief: brief,
+      postDraft: draft,
+      finalText,
+      releasePackage,
+      editorialLearningNote
+    });
+
+    expect(store.load().editorialLearningNote?.status).toBe('captured');
+  });
+
   it('resets back to the demo workspace', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
     const changed = { ...createDemoWorkspace(), activeSection: 'brief' as const };
@@ -99,5 +166,7 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().postDraft).toBeNull();
     expect(store.load().editorialChecks).toEqual([]);
     expect(store.load().finalText).toBeNull();
+    expect(store.load().releasePackage).toBeNull();
+    expect(store.load().editorialLearningNote).toBeNull();
   });
 });

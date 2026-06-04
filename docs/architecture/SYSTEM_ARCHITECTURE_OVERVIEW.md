@@ -13,14 +13,16 @@ term for the author's durable rules is **Редакционная модель**
 
 ## Current Product Perimeter
 
-The current working product perimeter reaches an approved final text:
+The current working product perimeter reaches a captured editorial learning note:
 
-`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText`
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 This is intentionally smaller than the full product loop. Real AI provider calls,
-publication/export automation, and analytics are future slices. The current flow keeps
-the brief's core idea intact: the author approves the intention before text is written,
-then reviews deterministic draft/check outputs before final approval.
+publication automation, backend sync, and real metrics ingestion are future slices.
+The current flow keeps the brief's core idea intact: the author approves the intention
+before text is written, reviews deterministic draft/check outputs before final
+approval, prepares copy/Markdown for manual release, and captures manual editorial
+learning.
 
 ## Major Components
 
@@ -40,8 +42,12 @@ then reviews deterministic draft/check outputs before final approval.
 - `Drafting`: turns an approved post brief into a deterministic editable draft.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before final approval.
+- `ReleasePackaging`: turns approved final text into platform targets, Markdown
+  preview, release checklist, and manual export status.
+- `AnalyticsPrep`: turns an exported release package into manual metric fields and an
+  editorial learning note.
 - `HitlApprovals`: enforces human approval gates for plan items, post briefs, and
-  final text.
+  final text, plus release readiness and learning capture gates.
 - `LocalWorkspaceStore`: loads and saves the current workspace state in browser storage
   for the first implementation slice.
 
@@ -76,6 +82,10 @@ These contracts are implemented in TypeScript for the first local-first flow.
 - `EditorialCheck`: type, title, check status, summary, findings.
 - `EditorNote`: agent, tone, text, target.
 - `FinalText`: draft, title, body, approval status, approved time.
+- `ReleasePackage`: final text, targets, Markdown, checklist, release status, updated
+  time.
+- `EditorialLearningNote`: release package, manual metrics, editorial conclusions,
+  analytics status, updated time, captured time.
 - `WorkspaceStore`: load and save current local workspace state.
 
 ## First Demo Data Flow
@@ -98,7 +108,11 @@ small and medium businesses:
 9. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
 10. The author edits the draft and approves the final text through the third HITL gate.
-11. `LocalWorkspaceStore` persists the workspace so the approved final text survives
+11. `ReleasePackaging` creates a manual release package for Telegram and LinkedIn.
+12. The author completes a release checklist and copies text or downloads Markdown.
+13. `AnalyticsPrep` creates a manual metrics and editorial learning workspace.
+14. The author captures the editorial learning note.
+15. `LocalWorkspaceStore` persists the workspace so the learning note survives
    reload.
 
 ## Extension Points
@@ -108,17 +122,19 @@ small and medium businesses:
   drafting, and check services.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace
   store interface.
-- Publication and analytics can attach after approved draft/release states.
+- Platform publication APIs can attach after the manual release package.
+- Real analytics ingestion can replace manual metric entry behind the analytics prep
+  shape.
 
 ## Testing Strategy
 
 Current validation covers:
 
 - Unit tests for domain transitions and approval rules.
-- Unit tests for deterministic scoring, planning, briefing, drafting, and editorial
-  check services.
+- Unit tests for deterministic scoring, planning, briefing, drafting, editorial check,
+  release packaging, and analytics prep services.
 - Integration tests for local workspace save/load.
-- UI smoke tests for the source signal to approved final text flow.
+- UI smoke tests for the source signal to captured editorial learning note flow.
 - Manual demo acceptance for the founder-blog scenario.
 
 ## Known Trade-offs
@@ -127,6 +143,10 @@ Current validation covers:
   not validate real AI quality yet.
 - Local-first persistence avoids backend scope, but it is not suitable for multi-device
   or team collaboration.
+- Manual export is intentionally limited: it gives operational readiness and Markdown,
+  not real platform publishing.
+- Analytics prep uses manual metrics, so it is useful for workflow shape but not yet a
+  live dashboard.
 - Manual source entry is narrow, but it makes the radar and scoring concepts usable
   before real ingestion exists.
 
