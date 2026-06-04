@@ -1,4 +1,7 @@
 export type ApprovalStatus = 'draft' | 'approved' | 'rejected';
+export type DraftStatus = 'draft' | 'revised';
+export type EditorialCheckType = 'style' | 'antiAi' | 'factCheck' | 'policy';
+export type EditorialCheckStatus = 'passed' | 'warning' | 'failed';
 
 export interface EditorialModel {
   author: string;
@@ -65,12 +68,52 @@ export interface PostBrief {
   approvalStatus: ApprovalStatus;
 }
 
+export interface PostDraft {
+  id: string;
+  briefId: string;
+  title: string;
+  body: string;
+  version: number;
+  status: DraftStatus;
+  updatedAt: string;
+}
+
+export interface EditorialCheck {
+  id: string;
+  type: EditorialCheckType;
+  title: string;
+  status: EditorialCheckStatus;
+  summary: string;
+  findings: string[];
+}
+
+export interface EditorNote {
+  id: string;
+  agent: string;
+  tone: string;
+  text: string;
+  target: string;
+}
+
+export interface FinalText {
+  id: string;
+  draftId: string;
+  title: string;
+  body: string;
+  approvalStatus: ApprovalStatus;
+  approvedAt: string;
+}
+
 export interface WorkspaceState {
   editorialModel: EditorialModel;
   sourceSignal: SourceSignal;
   insightCard: InsightCard | null;
   contentPlanItem: ContentPlanItem | null;
   postBrief: PostBrief | null;
+  postDraft: PostDraft | null;
+  editorialChecks: EditorialCheck[];
+  editorNotes: EditorNote[];
+  finalText: FinalText | null;
   activeSection: WorkspaceSection;
   updatedAt: string;
 }
@@ -106,3 +149,27 @@ export function rejectPostBrief(postBrief: PostBrief): PostBrief {
   return { ...postBrief, approvalStatus: 'rejected' };
 }
 
+export function reviseDraft(postDraft: PostDraft, body: string): PostDraft {
+  return {
+    ...postDraft,
+    body,
+    version: postDraft.version + 1,
+    status: 'revised',
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function approveFinalText(postDraft: PostDraft): FinalText {
+  return {
+    id: `final-${postDraft.id}`,
+    draftId: postDraft.id,
+    title: postDraft.title,
+    body: postDraft.body,
+    approvalStatus: 'approved',
+    approvedAt: new Date().toISOString()
+  };
+}
+
+export function markCheckResolved(check: EditorialCheck): EditorialCheck {
+  return { ...check, status: 'passed' };
+}

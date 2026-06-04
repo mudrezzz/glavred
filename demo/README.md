@@ -11,10 +11,11 @@ npm run dev
 
 It shows the first working Glavred editorial cabinet:
 
-`Редакционная модель -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
+`Редакционная модель -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText`
 
 The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
-topbar, cards, HITL gates, plan area, brief area, and placeholders for future sections.
+topbar, cards, HITL gates, plan area, brief area, editorial review area, and
+placeholders for future release and analytics sections.
 
 ## Demo Scenario
 
@@ -24,10 +25,12 @@ topbar, cards, HITL gates, plan area, brief area, and placeholders for future se
 - Editorial opportunity: turn the pattern into a post about why AI projects fail when
   teams automate chaos.
 - Expected flow: create or load an editorial model, add the signal, produce an insight
-  card, place it into a weekly plan, and prepare an approvable post brief.
-- Expected output: an approved post brief with thesis, conflict, rubric, audience,
-  evidence, risks, sources, CTA, and approval status.
-- Persistence: the approved brief should survive reload through local browser storage.
+  card, place it into a weekly plan, prepare an approvable post brief, generate a
+  draft, review editorial checks, and approve the final text.
+- Expected output: an approved final text based on an approved post brief with thesis,
+  conflict, rubric, audience, evidence, risks, sources, CTA, and approval status.
+- Persistence: the approved final text should survive reload through local browser
+  storage.
 
 ## Main User Flow
 
@@ -39,8 +42,13 @@ topbar, cards, HITL gates, plan area, brief area, and placeholders for future se
 6. Click `Подготовить фабулу`.
 7. Edit the post brief if needed.
 8. Click `Утвердить фабулу`.
-9. Reload the page to confirm state persists.
-10. Use `Сбросить демо` to restore the initial scenario.
+9. Open `Редактура`.
+10. Click `Написать драфт`.
+11. Review checks and editor notes.
+12. Edit the draft text.
+13. Click `Утвердить текст`.
+14. Reload the page to confirm state persists.
+15. Use `Сбросить демо` to restore the initial scenario.
 
 ## Reference Materials
 
@@ -56,4 +64,5 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-Drafting, editorial checks, publication, and analytics are later demo extensions.
+Manual export or publication preparation is the next logical demo extension. Real AI
+providers, publication automation, and analytics remain later steps.

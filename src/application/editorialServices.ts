@@ -1,8 +1,11 @@
 import type {
   ContentPlanItem,
+  EditorialCheck,
   EditorialModel,
+  EditorNote,
   InsightCard,
   PostBrief,
+  PostDraft,
   SourceSignal
 } from '../domain/editorialWorkspace';
 
@@ -87,3 +90,146 @@ export function createPostBrief(
   };
 }
 
+export function createPostDraft(postBrief: PostBrief, model: EditorialModel): PostDraft {
+  const body = [
+    postBrief.title,
+    '',
+    'Рынок снова спорит, какой AI-инструмент выбрать. Но в большинстве проваленных пилотов проблема начинается раньше: команда пытается автоматизировать процесс, который еще не описан.',
+    '',
+    `Тезис: ${postBrief.thesis}`,
+    '',
+    `Конфликт: ${postBrief.conflict}`,
+    '',
+    `Моя позиция: ${postBrief.authorPosition}`,
+    '',
+    'Что важно проверить перед новым пилотом:',
+    ...postBrief.evidence.map((item, index) => `${index + 1}. ${item}`),
+    '',
+    'Как это выглядит на практике:',
+    ...postBrief.examples.map((item) => `- ${item}`),
+    '',
+    'Структура решения:',
+    ...postBrief.structure.map((item) => `- ${item}`),
+    '',
+    `Для аудитории: ${model.audience}`,
+    '',
+    `Вывод и CTA: ${postBrief.cta}`
+  ].join('\n');
+
+  return {
+    id: `draft-${postBrief.id}`,
+    briefId: postBrief.id,
+    title: postBrief.title,
+    body,
+    version: 1,
+    status: 'draft',
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function runEditorialChecks(
+  draft: PostDraft,
+  postBrief: PostBrief,
+  model: EditorialModel
+): EditorialCheck[] {
+  const hasFactGaps =
+    postBrief.evidence.some((item) => item.toLowerCase().includes('факт')) ||
+    postBrief.sources.some((item) => item.toLowerCase().includes('рыночн'));
+  const mentionsForbiddenTopic = model.forbiddenTopics.some((topic) =>
+    draft.body.toLowerCase().includes(topic.toLowerCase())
+  );
+
+  return [
+    {
+      id: 'check-style',
+      type: 'style',
+      title: 'Стиль',
+      status: draft.body.length > 700 ? 'passed' : 'warning',
+      summary: 'Текст держит спокойный практический голос автора и не уходит в витринный тон.',
+      findings: [
+        `Сверено с правилами: ${model.styleRules.slice(0, 2).join(', ')}.`,
+        'Главный тезис вынесен в начало, структура читается как разбор.'
+      ]
+    },
+    {
+      id: 'check-anti-ai',
+      type: 'antiAi',
+      title: 'Анти-AI',
+      status: 'passed',
+      summary: 'Стерильных вводных и обобщенного AI-тона не найдено.',
+      findings: [
+        'Есть авторская позиция, конфликт и практические примеры.',
+        'Драфт не начинается с пустой фразы вроде "в современном мире".'
+      ]
+    },
+    {
+      id: 'check-fact',
+      type: 'factCheck',
+      title: 'Фактчек',
+      status: hasFactGaps ? 'warning' : 'passed',
+      summary: hasFactGaps
+        ? 'Есть фактические места, которые лучше подтвердить перед публикацией.'
+        : 'Критичных неподтвержденных фактов не найдено.',
+      findings: hasFactGaps
+        ? [
+            'Нужен внешний отчет или публичный кейс для усиления тезиса.',
+            'Источники из фабулы стоит проверить перед выпуском.'
+          ]
+        : ['Текст опирается на утвержденную фабулу и авторские наблюдения.']
+    },
+    {
+      id: 'check-policy',
+      type: 'policy',
+      title: 'Политика',
+      status: mentionsForbiddenTopic ? 'failed' : 'passed',
+      summary: mentionsForbiddenTopic
+        ? 'Драфт задел одну из запретных тем редакционной модели.'
+        : 'Запретные темы и позиционирование соблюдены.',
+      findings: mentionsForbiddenTopic
+        ? ['Проверьте формулировки рядом с запретными темами редакционной модели.']
+        : ['Текст остается в рамках практического AI-внедрения для бизнеса.']
+    }
+  ];
+}
+
+export function createEditorNotes(checks: EditorialCheck[]): EditorNote[] {
+  const factCheck = checks.find((check) => check.type === 'factCheck');
+  const policy = checks.find((check) => check.type === 'policy');
+
+  return [
+    {
+      id: 'note-chief-editor',
+      agent: 'Главный редактор',
+      tone: 'жестко, но по делу',
+      target: 'лид',
+      text: 'Лид уже держит конфликт. Перед финалом проверьте, не смягчил ли автор главный тезис.'
+    },
+    {
+      id: 'note-style-editor',
+      agent: 'Стиль-редактор',
+      tone: 'сухо и практично',
+      target: 'структура',
+      text: 'Список проверок помогает SMB-аудитории. Не превращайте его в абстрактный консалтинг.'
+    },
+    {
+      id: 'note-fact-editor',
+      agent: 'Фактчек',
+      tone: factCheck?.status === 'warning' ? 'требует внимания' : 'спокойно',
+      target: 'доказательства',
+      text:
+        factCheck?.status === 'warning'
+          ? 'Перед выпуском добавьте внешний источник или явно пометьте пример как авторское наблюдение.'
+          : 'Фактических блокеров нет.'
+    },
+    {
+      id: 'note-policy-editor',
+      agent: 'Policy review',
+      tone: policy?.status === 'failed' ? 'блокер' : 'без блокеров',
+      target: 'риски',
+      text:
+        policy?.status === 'failed'
+          ? 'Есть пересечение с запретами редакционной модели, финальное утверждение лучше отложить.'
+          : 'Запретные темы не задеты, позиция автора сохранена.'
+    }
+  ];
+}

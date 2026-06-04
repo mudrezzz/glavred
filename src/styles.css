@@ -763,6 +763,244 @@ input:focus {
   color: var(--ink-800);
 }
 
+.edit-empty,
+.draft-start {
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.edit-empty h2,
+.draft-start h2,
+.doc h2 {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--ed-h2);
+  font-size: 28px;
+  line-height: 1.16;
+}
+
+.edit-empty p,
+.draft-start p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--ink-600);
+  line-height: 1.55;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.tab {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-600);
+  cursor: pointer;
+  font: var(--ui-sm);
+  font-weight: 600;
+}
+
+.tab.active {
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  color: var(--ink-900);
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 22px;
+  align-items: start;
+}
+
+.doc {
+  min-width: 0;
+  padding: 28px 32px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.doc-head,
+.final-status,
+.check-head,
+.note-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-head {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.draft-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.draft-editor .k {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.draft-editor textarea {
+  min-height: 620px;
+  border-color: transparent;
+  background: var(--paper);
+  font: var(--ed-body);
+  font-size: 18px;
+  line-height: 1.62;
+}
+
+.edit-side {
+  display: grid;
+  gap: 14px;
+  position: sticky;
+  top: 12px;
+}
+
+.checks,
+.notes {
+  display: grid;
+  gap: 12px;
+}
+
+.check,
+.note,
+.info-block {
+  padding: 13px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.check-warning {
+  border-color: var(--warn-tint);
+  background: var(--warn-tint);
+}
+
+.check-failed {
+  border-color: var(--danger-tint);
+  background: var(--danger-tint);
+}
+
+.ci,
+.av {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  background: var(--ink-900);
+  color: var(--paper);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.check-head b,
+.note-head b {
+  display: block;
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.check-head span,
+.note-head span,
+.final-status span:last-child {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+}
+
+.check p,
+.note p {
+  margin: 10px 0;
+  color: var(--ink-700);
+  font: var(--ui-sm);
+  line-height: 1.5;
+}
+
+.check .bullets,
+.info-block .bullets {
+  color: var(--ink-700);
+  font: var(--ui-sm);
+}
+
+.brief-snapshot {
+  display: grid;
+  gap: 18px;
+}
+
+.brief-snapshot .lead {
+  margin: 0;
+  color: var(--ink-800);
+  font: var(--ed-body);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.info-block h4 {
+  margin: 0 0 8px;
+  color: var(--ink-900);
+  font: var(--ui-md);
+  font-weight: 700;
+}
+
+.final-empty {
+  min-height: 300px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.final-empty p {
+  margin: 0 auto;
+  color: var(--ink-600);
+}
+
+.final-doc {
+  display: grid;
+  gap: 18px;
+}
+
+.final-status {
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ink-200);
+}
+
+.final-doc pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--ink-900);
+  font: var(--ed-body);
+  font-size: 18px;
+  line-height: 1.62;
+}
+
 .empty-state {
   padding: 24px;
   color: var(--ink-600);
@@ -866,8 +1104,18 @@ input:focus {
 
   .model-grid,
   .brief-grid,
+  .edit-grid,
+  .snapshot-grid,
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .doc {
+    padding: 22px;
+  }
+
+  .edit-side {
+    position: static;
   }
 
   .week,
@@ -891,4 +1139,3 @@ input:focus {
     animation: none;
   }
 }
-

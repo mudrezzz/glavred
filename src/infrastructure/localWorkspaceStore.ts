@@ -14,7 +14,7 @@ export class LocalWorkspaceStore implements WorkspaceStore {
     }
 
     try {
-      return JSON.parse(raw) as WorkspaceState;
+      return normalizeWorkspace(JSON.parse(raw) as Partial<WorkspaceState>);
     } catch {
       return createDemoWorkspace();
     }
@@ -31,3 +31,22 @@ export class LocalWorkspaceStore implements WorkspaceStore {
   }
 }
 
+export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceState {
+  const demo = createDemoWorkspace();
+
+  return {
+    ...demo,
+    ...saved,
+    editorialModel: saved.editorialModel ?? demo.editorialModel,
+    sourceSignal: saved.sourceSignal ?? demo.sourceSignal,
+    insightCard: saved.insightCard ?? null,
+    contentPlanItem: saved.contentPlanItem ?? null,
+    postBrief: saved.postBrief ?? null,
+    postDraft: saved.postDraft ?? null,
+    editorialChecks: saved.editorialChecks ?? [],
+    editorNotes: saved.editorNotes ?? [],
+    finalText: saved.finalText ?? null,
+    activeSection: saved.activeSection ?? demo.activeSection,
+    updatedAt: saved.updatedAt ?? demo.updatedAt
+  };
+}

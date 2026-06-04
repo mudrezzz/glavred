@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { LocalWorkspaceStore } from './localWorkspaceStore';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
-import { approvePostBrief } from '../domain/editorialWorkspace';
+import { approveFinalText, approvePostBrief } from '../domain/editorialWorkspace';
 import {
   createContentPlanItem,
   createInsightCard,
-  createPostBrief
+  createPostBrief,
+  createPostDraft
 } from '../application/editorialServices';
+
+const STORAGE_KEY = 'glavred.workspace.v1';
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -46,6 +49,46 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().postBrief?.approvalStatus).toBe('approved');
   });
 
+  it('loads a Slice 0.4 workspace without draft fields', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete oldWorkspace.postDraft;
+    delete oldWorkspace.editorialChecks;
+    delete oldWorkspace.editorNotes;
+    delete oldWorkspace.finalText;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+
+    const loaded = store.load();
+
+    expect(loaded.postDraft).toBeNull();
+    expect(loaded.editorialChecks).toEqual([]);
+    expect(loaded.editorNotes).toEqual([]);
+    expect(loaded.finalText).toBeNull();
+  });
+
+  it('saves and loads an approved final text', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const planItem = createContentPlanItem(insight);
+    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const draft = createPostDraft(brief, workspace.editorialModel);
+    const finalText = approveFinalText(draft);
+
+    store.save({
+      ...workspace,
+      insightCard: insight,
+      contentPlanItem: planItem,
+      postBrief: brief,
+      postDraft: draft,
+      finalText
+    });
+
+    expect(store.load().finalText?.approvalStatus).toBe('approved');
+  });
+
   it('resets back to the demo workspace', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
     const changed = { ...createDemoWorkspace(), activeSection: 'brief' as const };
@@ -53,6 +96,8 @@ describe('LocalWorkspaceStore', () => {
 
     expect(store.reset().activeSection).toBe('radar');
     expect(store.load().activeSection).toBe('radar');
+    expect(store.load().postDraft).toBeNull();
+    expect(store.load().editorialChecks).toEqual([]);
+    expect(store.load().finalText).toBeNull();
   });
 });
-

@@ -13,15 +13,14 @@ term for the author's durable rules is **Редакционная модель**
 
 ## Current Product Perimeter
 
-The current working product perimeter stops at an approved post brief:
+The current working product perimeter reaches an approved final text:
 
-`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief`
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText`
 
-This is intentionally smaller than the full product loop. Draft generation, style
-editing, anti-AI checks, fact-checking, policy review, publication, and analytics are
-future slices. Stopping at the approved brief keeps the first product useful while
-preserving the brief's core idea: the author approves the intention before any text is
-written.
+This is intentionally smaller than the full product loop. Real AI provider calls,
+publication/export automation, and analytics are future slices. The current flow keeps
+the brief's core idea intact: the author approves the intention before text is written,
+then reviews deterministic draft/check outputs before final approval.
 
 ## Major Components
 
@@ -38,7 +37,11 @@ written.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
-- `HitlApprovals`: enforces human approval gates for plan items and post briefs.
+- `Drafting`: turns an approved post brief into a deterministic editable draft.
+- `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
+  notes before final approval.
+- `HitlApprovals`: enforces human approval gates for plan items, post briefs, and
+  final text.
 - `LocalWorkspaceStore`: loads and saves the current workspace state in browser storage
   for the first implementation slice.
 
@@ -69,6 +72,10 @@ These contracts are implemented in TypeScript for the first local-first flow.
   approval status.
 - `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,
   risks, sources, approval status.
+- `PostDraft`: brief, title, body, version, draft status, updated time.
+- `EditorialCheck`: type, title, check status, summary, findings.
+- `EditorNote`: agent, tone, text, target.
+- `FinalText`: draft, title, body, approval status, approved time.
 - `WorkspaceStore`: load and save current local workspace state.
 
 ## First Demo Data Flow
@@ -86,43 +93,40 @@ small and medium businesses:
 5. The author approves or adjusts the plan item through a HITL gate.
 6. `Briefing` creates a `PostBrief` with thesis, conflict, evidence, structure, risks,
    and sources.
-7. The author approves the post brief. The first product flow ends here.
-8. `LocalWorkspaceStore` persists the workspace so the approved brief survives reload.
+7. The author approves the post brief.
+8. `Drafting` creates a deterministic editable draft from the approved brief.
+9. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+   notes.
+10. The author edits the draft and approves the final text through the third HITL gate.
+11. `LocalWorkspaceStore` persists the workspace so the approved final text survives
+   reload.
 
 ## Extension Points
 
 - Source ingestion adapters can later replace manual signal entry.
-- AI provider adapters can later replace deterministic insight, planning, and briefing
-  services.
-- Draft and review services can extend from approved `PostBrief` without changing the
-  earlier flow.
+- AI provider adapters can later replace deterministic insight, planning, briefing,
+  drafting, and check services.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace
   store interface.
 - Publication and analytics can attach after approved draft/release states.
 
 ## Testing Strategy
 
-Slice 0.3 itself is documentation and ADR work, so validation is existing regression:
-
-- `npm test`
-- `npm run smoke`
-
-Slice 0.4 should add:
+Current validation covers:
 
 - Unit tests for domain transitions and approval rules.
-- Unit tests for deterministic scoring/planning/briefing services.
+- Unit tests for deterministic scoring, planning, briefing, drafting, and editorial
+  check services.
 - Integration tests for local workspace save/load.
-- UI smoke tests for the source signal to approved post brief flow.
+- UI smoke tests for the source signal to approved final text flow.
 - Manual demo acceptance for the founder-blog scenario.
 
 ## Known Trade-offs
 
-- Approved brief is less visually complete than draft generation, but it reaches the
-  product's core differentiator earlier: approving the intention before writing.
+- Deterministic draft and check outputs are useful for a controlled demo, but they do
+  not validate real AI quality yet.
 - Local-first persistence avoids backend scope, but it is not suitable for multi-device
   or team collaboration.
-- Deterministic services keep the first slice testable and cheap, but real AI quality
-  remains unvalidated until a later integration slice.
 - Manual source entry is narrow, but it makes the radar and scoring concepts usable
   before real ingestion exists.
 

@@ -3,7 +3,8 @@
 Glavred currently provides the first local-first editorial cabinet.
 
 The current app lets you move from a source signal to an insight card, a content plan
-item, and an approved post brief. Work is saved in browser local storage.
+item, an approved post brief, a deterministic draft, editorial checks, and an approved
+final text. Work is saved in browser local storage.
 
 ## Run Locally
 
@@ -23,6 +24,11 @@ Open the local URL printed by Vite.
 - Approve the plan item through the first HITL gate.
 - Generate and edit a post brief in `Фабулы`.
 - Approve the post brief through the second HITL gate.
+- Open `Редактура`.
+- Click `Написать драфт`.
+- Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
+- Read editor notes, edit the draft manually, and approve the final text through the
+  third HITL gate.
 - Reload the page and keep the local workspace state.
 - Reset the demo scenario from the topbar.
 
@@ -30,6 +36,5 @@ Open the local URL printed by Vite.
 
 - Real source ingestion.
 - Real AI-generated insights, briefs, or drafts.
-- Draft editing and editorial checks.
-- Publishing integrations.
+- Export or publishing integrations.
 - Analytics.

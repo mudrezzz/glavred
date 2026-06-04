@@ -39,8 +39,11 @@ export function createDemoWorkspace(): WorkspaceState {
     insightCard: null,
     contentPlanItem: null,
     postBrief: null,
+    postDraft: null,
+    editorialChecks: [],
+    editorNotes: [],
+    finalText: null,
     activeSection: 'radar',
     updatedAt: new Date().toISOString()
   };
 }
-

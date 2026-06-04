@@ -10,9 +10,10 @@ becomes approved post briefs, briefs become drafts, drafts pass editorial checks
 the results feed the next cycle.
 
 The current repository contains the first working local-first editorial cabinet. It
-implements an editable flow from source signal to insight card, content plan item, and
-approved post brief, plus tests, documentation, demo notes, and the design handoff
-supplied in `ui-design-systems/`.
+implements an editable flow from source signal to insight card, content plan item,
+approved post brief, deterministic draft, editorial checks, and approved final text,
+plus tests, documentation, demo notes, and the design handoff supplied in
+`ui-design-systems/`.
 
 ## Source Requirements
 
@@ -39,8 +40,9 @@ The first MVP perimeter is:
 - Post Brief
 - Draft and Review
 
-Current working flow: the first product perimeter stops at an approved post brief and
-uses local-first browser persistence before backend or AI provider integration.
+Current working flow: the first product perimeter reaches an approved final text and
+uses local-first browser persistence before backend, export, analytics, or AI provider
+integration.
 
 ## Quick Start
 

@@ -37,8 +37,8 @@ Current status:
 
 Goal:
 
-- Deliver the first working Glavred flow from source signal to approved post brief with
-  local-first persistence.
+- Deliver the first working Glavred flow from source signal to approved final text
+  with local-first persistence.
 
 Status:
 
@@ -223,29 +223,73 @@ Status:
 
 ### Slice 0.5: Draft and Editorial Checks
 
-- Status: Ready
+- Status: Done
 - Goal: Extend the approved brief into a draft and editorial review workspace.
 - User value: The product can demonstrate the next approval gate: final text review.
 - Scope:
-  - Generate or fixture a draft from approved `PostBrief`.
+  - Add runtime contracts for `PostDraft`, `EditorialCheck`, `EditorNote`, and
+    `FinalText`.
+  - Generate a deterministic draft from approved `PostBrief`.
   - Model style, anti-AI, fact-checking, and policy checks.
-  - Add final text approval gate.
+  - Add editor notes and final text approval gate.
+  - Make `Редактура` an active product section.
+  - Preserve draft/check/final state in local storage with fallback for Slice 0.4
+    workspaces.
 - Out of scope:
-  - Real AI provider integration unless Slice 0.4 explicitly prepares it.
-  - Autoposting and analytics.
+  - Real AI provider integration.
+  - Autoposting, manual export implementation, and analytics.
 - Implementation notes:
   - Build on the approved `PostBrief` object from Slice 0.4.
+  - Warnings do not block final approval because the human editor remains in control.
 - Tests:
-  - Unit tests for check states.
-  - UI smoke tests for final text approval.
+  - Unit tests for draft generation, editorial checks, final approval, and revision.
+  - Storage tests for old workspace normalization and final text persistence.
+  - UI smoke tests for final text approval and persistence after reload.
 - Docs:
-  - Update user, developer, demo docs, and roadmap.
+  - Updated README, architecture overview, user guide, developer guide, demo docs, and
+    roadmap.
 - Demo impact:
-  - Demo moves from approved brief to reviewed draft.
+  - Demo moves from approved brief to reviewed and approved final text.
 - Acceptance criteria:
-  - User can approve a final text after seeing editor notes and risks.
+  - User can approve a final text after seeing editor notes and risks. Done.
+  - Approved final text survives reload. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Risks:
   - Draft quality cannot be validated until AI integration is introduced.
+
+### Slice 0.6: Manual Export and Release Prep
+
+- Status: Ready
+- Goal: Let the user prepare an approved final text for manual release.
+- User value: The current editorial loop becomes practically usable because the
+  approved text can be copied/exported with release metadata.
+- Scope:
+  - Activate `Выпуск` as a working section.
+  - Show approved final text, platform, release checklist, and manual export actions.
+  - Add deterministic platform adaptation metadata for Telegram and LinkedIn without
+    changing the text body automatically.
+  - Add release readiness status and local persistence.
+  - Keep analytics as a placeholder.
+- Out of scope:
+  - Autoposting.
+  - Real platform APIs.
+  - Backend, auth, team work, and AI provider integration.
+- Tests:
+  - Unit tests for release readiness transitions.
+  - Storage tests for release state.
+  - UI tests for opening `Выпуск`, viewing approved final text, and marking manual
+    export ready.
+- Docs:
+  - Update README, user guide, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - Demo reaches "approved final text ready for manual release".
+- Acceptance criteria:
+  - User can move from approved final text to a release-ready manual export state.
+  - State survives reload.
+  - Tests and smoke build pass.
+- Risks:
+  - Without real publication APIs, release value is limited to operational readiness
+    and copy/export convenience.
 
 ## Completed Slices
 
@@ -314,6 +358,25 @@ Status:
   - `npm test`: passed.
   - `npm run smoke`: passed.
 
+### Slice 0.5: Draft and Editorial Checks
+
+- Completed: 2026-06-03
+- Result:
+  - Added runtime contracts for post drafts, editorial checks, editor notes, final
+    text, draft status, check type, and check status.
+  - Added deterministic draft generation from approved post briefs.
+  - Added deterministic style, anti-AI, fact-check, and policy checks plus editor
+    notes.
+  - Activated `Редактура` with tabs for `Фабула`, `Драфт`, and `Финал`.
+  - Added manual draft editing and final text approval through HITL Gate 3.
+  - Extended local-first persistence with backward-compatible normalization for Slice
+    0.4 workspaces.
+  - Updated README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+
 ## Blocked Items
 
 - None.
@@ -327,4 +390,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 0.5: Draft and Editorial Checks`.
+Start `Slice 0.6: Manual Export and Release Prep`.
