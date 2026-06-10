@@ -332,7 +332,57 @@ Status:
   - Data URLs can grow quickly; this remains demo-only until a real storage boundary is
     designed.
 
-### Slice 1.0.3: Author Memory External Sources and Import Design
+### Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline
+
+- Status: Done
+- Goal: Create a public GitHub Wiki with real screenshots and user-facing
+  explanations of the current product.
+- User value: A user can understand what Glavred does through a visual walkthrough
+  instead of reading only repository docs.
+- Scope:
+  - Convert `mudrezzz/glavred` to a public GitHub repository so Wiki can be used.
+  - Add `docs/wiki/` as the source of truth for GitHub Wiki pages.
+  - Add Playwright-based screenshot generation for the real local Vite interface.
+  - Capture screenshots for author memory, composer controls, link preview,
+    correction/evidence flow, approved brief, editorial final text, release, and
+    analytics.
+  - Publish `docs/wiki/` to `mudrezzz/glavred.wiki.git`.
+  - Link the wiki from README, user guide, developer guide, and demo docs.
+- Out of scope:
+  - Product runtime changes.
+  - New user-facing features.
+  - Real AI calls, backend, import, or analytics ingestion.
+  - Automated GitHub Actions deployment for wiki updates.
+- Implementation notes:
+  - Keep wiki source in the main repository for review and versioning.
+  - `npm run docs:screenshots` should reset browser local storage in Playwright and
+    produce reproducible screenshots from the permanent AI Product Manager demo.
+  - `npm run docs:wiki:publish` should publish the wiki source to the separate GitHub
+    Wiki repository.
+  - Perform a quick secret/env sweep before changing repository visibility to public.
+- Tests:
+  - `npm test` passed.
+  - `npm run smoke` passed.
+  - `npm run docs:screenshots` passed.
+  - Wiki publish verified through GitHub Wiki availability.
+- Docs:
+  - Add wiki pages under `docs/wiki/`.
+  - Update README, user guide, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - The current AI Product Manager demo is now documented with real screenshots.
+  - The demo remains local-first and deterministic.
+- Acceptance criteria:
+  - `mudrezzz/glavred` is public. Done.
+  - GitHub Wiki is published and available. Done.
+  - Wiki pages use real screenshots from the current interface. Done.
+  - Screenshots can be regenerated with `npm run docs:screenshots`. Done.
+  - Existing tests and smoke build pass. Done.
+- Risks:
+  - Screenshots can drift when UI changes; future user-visible slices should refresh
+    them.
+  - GitHub Wiki is a separate repository; publication requires a separate push.
+
+### Slice 1.0.4: Author Memory External Sources and Import Design
 
 - Status: Backlog
 - Goal: Design how external author material enters author memory without turning import
@@ -485,6 +535,7 @@ Status:
   2026-06-10.
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
+- Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -503,4 +554,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.3: Author Memory External Sources and Import Design`.
+Start `Slice 1.0.4: Author Memory External Sources and Import Design`.

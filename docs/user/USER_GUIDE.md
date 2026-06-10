@@ -12,6 +12,11 @@ notes.
 
 Work is saved in browser local storage.
 
+For a visual walkthrough with real interface screenshots, use the GitHub Wiki:
+
+- GitHub Wiki: `https://github.com/mudrezzz/glavred/wiki`
+- Wiki source in this repository: `docs/wiki/Home.md`
+
 ## Run Locally
 
 ```bash
@@ -20,6 +25,16 @@ npm run dev
 ```
 
 Open the local URL printed by Vite.
+
+## Visual Wiki
+
+The wiki explains the current product through real screenshots:
+
+- `Память автора`: quick thoughts, links, files, targeted corrections, evidence, and
+  confidence.
+- Production flow: `Радар -> План -> Фабулы`.
+- Release and analytics: final text, manual export, and captured learning note.
+- Local-first demo: reset, persistence, and screenshot refresh commands.
 
 ## Demo Context
 

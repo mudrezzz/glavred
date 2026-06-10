@@ -34,6 +34,18 @@ Run build smoke test:
 npm run smoke
 ```
 
+Refresh wiki screenshots:
+
+```bash
+npm run docs:screenshots
+```
+
+Publish GitHub Wiki from `docs/wiki/`:
+
+```bash
+npm run docs:wiki:publish
+```
+
 ## Source Layout
 
 - `src/domain/`: framework-independent domain model.
@@ -46,6 +58,7 @@ npm run smoke
 - `src/test/`: test setup.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
+- `docs/wiki/`: source files for the GitHub Wiki, including screenshot assets.
 - `demo/`: demo notes and future demo assets.
 
 ## Requirements Status
@@ -76,6 +89,22 @@ The current app implements:
 
 The app does not yet include real source ingestion, AI calls, publishing integrations,
 autoposting, or real metrics ingestion.
+
+## Wiki Documentation Workflow
+
+The GitHub Wiki is generated from `docs/wiki/`. Keep the source in the main
+repository so wiki changes are reviewed, tested, and versioned with the product.
+
+`npm run docs:screenshots` starts Vite on a dedicated local port, opens the app in
+Playwright, resets browser `localStorage`, walks through the demo flow, and writes PNG
+files to `docs/wiki/assets/screenshots/`.
+
+`npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
+repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
+repository must be public before publishing the wiki in the current GitHub setup.
+
+When user-visible UI changes, update the matching wiki page and refresh screenshots in
+the same slice.
 
 ## Revised Product Direction
 

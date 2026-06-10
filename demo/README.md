@@ -49,6 +49,22 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
+## Visual Walkthrough
+
+The visual user walkthrough is published in the GitHub Wiki:
+
+- `https://github.com/mudrezzz/glavred/wiki`
+
+The source pages live in `docs/wiki/`, and screenshots are generated from the real
+local app:
+
+```bash
+npm run docs:screenshots
+```
+
+The wiki covers the same AI Product Manager demo: author memory, production flow,
+manual release, and analytics learning note.
+
 ## Main User Flow
 
 1. Open `Память автора`.

@@ -87,6 +87,18 @@ Run the smoke build:
 npm run smoke
 ```
 
+Update user wiki screenshots:
+
+```bash
+npm run docs:screenshots
+```
+
+Publish the GitHub Wiki from `docs/wiki/`:
+
+```bash
+npm run docs:wiki:publish
+```
+
 ## Documentation
 
 - [Roadmap](ROADMAP.md)
@@ -97,10 +109,12 @@ npm run smoke
 - [Developer guide](docs/developer/DEVELOPER_GUIDE.md)
 - [User guide](docs/user/USER_GUIDE.md)
 - [Demo](demo/README.md)
+- [GitHub Wiki](https://github.com/mudrezzz/glavred/wiki)
+- [Wiki source](docs/wiki/Home.md)
 
 ## Development Model
 
 This project is developed iteratively through small slices. Each slice should leave the
 product runnable, tested, documented, and demonstrable.
 
-GitHub repository: `https://github.com/mudrezzz/glavred` (private).
+GitHub repository: `https://github.com/mudrezzz/glavred` (public).
