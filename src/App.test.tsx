@@ -91,7 +91,7 @@ describe('App', () => {
     expect(screen.getByLabelText('Заголовок')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'Заголовок можно убрать' } });
-    fireEvent.click(screen.getByRole('button', { name: /Убрать заголовок/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Заголовок/i }));
 
     expect(screen.queryByLabelText('Заголовок')).not.toBeInTheDocument();
   });

@@ -516,19 +516,8 @@ select:focus {
 .optional-tools {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-}
-
-.optional-title {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  align-items: flex-start;
-}
-
-.optional-title label {
-  width: 100%;
 }
 
 .composer-actions,

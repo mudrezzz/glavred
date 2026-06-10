@@ -85,6 +85,7 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
       '<path d="M10.3 21a2 2 0 0 0 3.4 0"/><path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    minus: '<path d="M5 12h14"/>',
     mic:
       '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
     reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/>',
@@ -716,49 +717,39 @@ function AuthorMemoryView({
             </div>
             {!isManualCorrection && (
               <div className="optional-tools">
-                <div className="optional-title">
-                  {showTitle ? (
-                    <label>
-                      Заголовок
-                      <input value={title} onChange={(event) => setTitle(event.target.value)} />
-                      <button
-                        className="link-button"
-                        type="button"
-                        onClick={() => {
-                          setShowTitle(false);
-                          setTitle('');
-                        }}
-                      >
-                        Убрать заголовок
-                      </button>
-                    </label>
-                  ) : (
-                    <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowTitle(true)}>
-                      <Icon name="plus" size={14} />
-                      Заголовок
-                    </button>
-                  )}
-                </div>
-                {!showFile ? (
-                  <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowFile(true)}>
-                    <Icon name="plus" size={14} />
-                    Файл
-                  </button>
-                ) : (
-                  <button
-                    className="link-button"
-                    type="button"
-                    onClick={() => {
-                      setShowFile(false);
+                <button
+                  className="btn btn-sec btn-sm"
+                  type="button"
+                  onClick={() => {
+                    setShowTitle((current) => !current);
+                    if (showTitle) setTitle('');
+                  }}
+                >
+                  <Icon name={showTitle ? 'minus' : 'plus'} size={14} />
+                  Заголовок
+                </button>
+                <button
+                  className="btn btn-sec btn-sm"
+                  type="button"
+                  onClick={() => {
+                    setShowFile((current) => !current);
+                    if (showFile) {
                       setAttachments([]);
                       setAttachmentError('');
-                    }}
-                  >
-                    Убрать файл
-                  </button>
-                )}
+                    }
+                  }}
+                >
+                  <Icon name={showFile ? 'minus' : 'plus'} size={14} />
+                  Файл
+                </button>
               </div>
             )}
+            {!isManualCorrection && showTitle ? (
+              <label>
+                Заголовок
+                <input value={title} onChange={(event) => setTitle(event.target.value)} />
+              </label>
+            ) : null}
             {!isManualCorrection && showFile ? (
               <FileAttachmentPicker
                 attachments={attachments}
