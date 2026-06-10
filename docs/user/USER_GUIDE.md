@@ -40,6 +40,9 @@ The seeded notes cover:
 - Open `Память автора`.
 - Review seeded notes and the `Как система поняла автора` panel.
 - Add a thought without a title, or reveal `+ Заголовок` if a title helps.
+- Add a small local file through `+ Файл` when a thought or link reaction needs
+  supporting material. Files are limited to 1 MB in the local demo.
+- Remove an attached file before saving, or remove/replace it while editing a note.
 - Add a link reaction and check the local preview before saving.
 - Use search and type filters above the feed when the memory grows.
 - Expand long notes with `Показать полностью` and collapse them back with `Свернуть`.
@@ -79,7 +82,6 @@ The seeded notes cover:
 ## Not Yet Supported
 
 - Real AI classification of author memory.
-- File attachments on notes; planned next as `+ Файл` for local demo evidence.
 - Real analysis of attached documents, images, screenshots, PDFs, or text files.
 - Context chat.
 - Topic/fabula matrix.

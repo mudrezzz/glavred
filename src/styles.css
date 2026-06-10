@@ -513,8 +513,17 @@ select:focus {
   text-transform: none;
 }
 
+.optional-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .optional-title {
   display: flex;
+  min-width: 0;
+  flex: 1;
   align-items: flex-start;
 }
 
@@ -600,6 +609,82 @@ select:focus {
 .conflict-box p {
   margin: 0;
   color: var(--ink-700);
+}
+
+.file-picker {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px dashed var(--ink-300);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.file-picker p {
+  margin: 0;
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.form-error {
+  color: var(--danger);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.attachment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.attachment-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.attachment-card img,
+.attachment-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-sm);
+}
+
+.attachment-card img {
+  object-fit: cover;
+}
+
+.attachment-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-100);
+  color: var(--ink-700);
+  font: var(--mono-sm);
+  font-weight: 700;
+}
+
+.attachment-card b,
+.attachment-card small {
+  display: block;
+}
+
+.attachment-card b {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.attachment-card small {
+  margin-top: 2px;
+  color: var(--ink-500);
+  font: var(--mono-sm);
 }
 
 .memory-toolbar {
@@ -1677,6 +1762,15 @@ select:focus {
   .gbtns,
   .gbtns .btn {
     width: 100%;
+  }
+
+  .attachment-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .attachment-card .link-button {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 

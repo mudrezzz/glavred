@@ -96,6 +96,83 @@ describe('App', () => {
     expect(screen.queryByLabelText('Заголовок')).not.toBeInTheDocument();
   });
 
+  it('attaches a small file to a thought note and persists it after reload', async () => {
+    const { unmount } = render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
+    fireEvent.change(screen.getByLabelText('Файл'), {
+      target: { files: [new File(['AI-B2B research memo'], 'research-memo.txt', { type: 'text/plain' })] }
+    });
+
+    await waitFor(() => expect(screen.getByText('research-memo.txt')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText('Заметка автора'), {
+      target: { value: 'Прикладываю короткую исследовательскую заметку про adoption review.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Добавить в память/i }));
+
+    await waitFor(() => expect(screen.getAllByText('research-memo.txt').length).toBeGreaterThan(0));
+
+    unmount();
+    render(<App />);
+
+    expect(screen.getByText('research-memo.txt')).toBeInTheDocument();
+  });
+
+  it('rejects oversized author-memory attachments', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
+    fireEvent.change(screen.getByLabelText('Файл'), {
+      target: {
+        files: [new File([new Uint8Array(1024 * 1024 + 1)], 'too-large.pdf', { type: 'application/pdf' })]
+      }
+    });
+
+    await waitFor(() => expect(screen.getByText(/Файл больше 1 MB/i)).toBeInTheDocument());
+    expect(screen.queryByText('too-large.pdf')).not.toBeInTheDocument();
+  });
+
+  it('removes an attachment before saving a note', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
+    fireEvent.change(screen.getByLabelText('Файл'), {
+      target: { files: [new File(['draft'], 'remove-me.md', { type: 'text/markdown' })] }
+    });
+
+    await waitFor(() => expect(screen.getByText('remove-me.md')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Удалить файл/i }));
+
+    expect(screen.queryByText('remove-me.md')).not.toBeInTheDocument();
+  });
+
+  it('replaces an attachment while editing a note', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
+    fireEvent.change(screen.getByLabelText('Файл'), {
+      target: { files: [new File(['old'], 'old-context.txt', { type: 'text/plain' })] }
+    });
+    await waitFor(() => expect(screen.getByText('old-context.txt')).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Заметка автора'), {
+      target: { value: 'Заметка с файлом, который надо заменить.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Добавить в память/i }));
+
+    await waitFor(() => expect(screen.getAllByText('old-context.txt').length).toBeGreaterThan(0));
+    fireEvent.click(screen.getAllByRole('button', { name: /Редактировать/i })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Удалить файл/i }));
+    fireEvent.change(screen.getByLabelText('Файл заметки'), {
+      target: { files: [new File(['new'], 'new-context.txt', { type: 'text/plain' })] }
+    });
+    await waitFor(() => expect(screen.getByText('new-context.txt')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
+
+    expect(screen.queryByText('old-context.txt')).not.toBeInTheDocument();
+    expect(screen.getByText('new-context.txt')).toBeInTheDocument();
+  });
+
   it('shows a local link preview in the composer and saved note feed', () => {
     render(<App />);
 

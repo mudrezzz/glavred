@@ -37,7 +37,10 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   return {
     ...demo,
     ...saved,
-    authorNotes: saved.authorNotes ?? demo.authorNotes,
+    authorNotes: (saved.authorNotes ?? demo.authorNotes).map((note) => ({
+      ...note,
+      attachments: note.attachments ?? []
+    })),
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel: saved.editorialModel ?? demo.editorialModel,

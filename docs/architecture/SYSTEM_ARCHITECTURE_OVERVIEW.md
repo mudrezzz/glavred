@@ -25,8 +25,8 @@ The durable model is:
 `AuthorMemory -> AuthorPositionModel -> EditorialSystem -> ContentProduction -> Release -> Learning`
 
 - `AuthorMemory`: a lightweight internal feed of thoughts, reactions, links,
-  corrections, archive notes, and post-release learning. It must allow loose
-  stream-of-consciousness input.
+  corrections, small local attachments, archive notes, and post-release learning. It
+  must allow loose stream-of-consciousness input.
 - `AuthorPositionModel`: a transparent, evidence-backed digest of that memory:
   persona, style, audience, goals, metrics, topics, fabulas, platforms, formats,
   Content Design Records, and validators.
@@ -126,6 +126,8 @@ to use deterministic fallback or provider-backed behavior.
 Current implemented production contracts:
 
 - `AuthorNote`: free author thought, link reaction, or manual correction.
+- `AuthorAttachment`: optional local demo file attached to an author note, with file
+  name, MIME type, size, data URL, creation date, and local-only marker.
 - `AuthorMemoryEvent`: normalized memory event with detected author signals.
 - `AuthorPositionAssertion`: evidence-backed inferred statement about persona, style,
   audience, topic, or principle.
@@ -220,7 +222,9 @@ research experience building AI-B2B products:
 2. `createAuthorMemoryEvent` normalizes notes into memory events with detected signals.
 3. `inferAuthorPositionAssertions` shows evidence-backed assertions about the author's
    persona, style, audience, topics, and product principle.
-4. The author can add another thought, link reaction, or manual correction.
+4. The author can add another thought, link reaction, file-backed note, or manual
+   correction. Attached files are supporting material only; they are not parsed or
+   analyzed in the current perimeter.
 5. The existing production flow uses the same demo context: a `SourceSignal` about the
    gap between AI-B2B demos and adoption.
 6. `InsightScoring` produces an `InsightCard`.

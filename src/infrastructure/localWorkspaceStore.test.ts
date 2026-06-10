@@ -65,6 +65,19 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.authorPositionAssertions).toHaveLength(5);
   });
 
+  it('normalizes old author notes without attachments', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = {
+      ...workspace,
+      authorNotes: workspace.authorNotes.map(({ attachments: _attachments, ...note }) => note)
+    };
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+
+    expect(store.load().authorNotes.every((note) => Array.isArray(note.attachments))).toBe(true);
+  });
+
   it('saves and loads author memory state', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
     const workspace = createDemoWorkspace();
@@ -78,6 +91,7 @@ describe('LocalWorkspaceStore', () => {
           body: 'Не согласен: вывод про образ нужно привязать к adoption, а не к модели.',
           sourceUrl: '',
           tags: ['manual-correction'],
+          attachments: [],
           capturedAt: '2026-06-10T12:00:00.000Z',
           targetType: 'assertion' as const,
           targetId: 'assertion-persona-ai-product-manager',
@@ -91,6 +105,36 @@ describe('LocalWorkspaceStore', () => {
 
     expect(store.load().authorNotes[0].targetId).toBe('assertion-persona-ai-product-manager');
     expect(store.load().authorNotes[0].title).toBe('');
+  });
+
+  it('saves and loads author note attachments', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changed = {
+      ...workspace,
+      authorNotes: [
+        {
+          ...workspace.authorNotes[0],
+          id: 'note-with-attachment',
+          attachments: [
+            {
+              id: 'attachment-roundtrip',
+              fileName: 'roundtrip.txt',
+              mimeType: 'text/plain',
+              sizeBytes: 42,
+              dataUrl: 'data:text/plain;base64,cm91bmR0cmlw',
+              createdAt: '2026-06-10T12:00:00.000Z',
+              localOnly: true
+            }
+          ]
+        },
+        ...workspace.authorNotes.slice(1)
+      ]
+    };
+
+    store.save(changed);
+
+    expect(store.load().authorNotes[0].attachments[0].fileName).toBe('roundtrip.txt');
   });
 
   it('loads a Slice 0.4 workspace without draft/release/analytics fields', () => {

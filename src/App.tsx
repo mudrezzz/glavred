@@ -21,6 +21,7 @@ import {
   reviseDraft,
   toggleReleaseChecklistItem,
   updateLearningNote,
+  type AuthorAttachment,
   type AuthorNote,
   type AuthorNoteType,
   type AuthorPositionAssertion,
@@ -434,6 +435,7 @@ type SpeechRecognitionWindow = Window &
     SpeechRecognition?: new () => SpeechRecognitionLike;
     webkitSpeechRecognition?: new () => SpeechRecognitionLike;
   };
+const MAX_AUTHOR_ATTACHMENT_BYTES = 1024 * 1024;
 
 function AuthorMemoryView({
   notes,
@@ -446,10 +448,13 @@ function AuthorMemoryView({
 }) {
   const [type, setType] = useState<AuthorNoteType>('thought');
   const [showTitle, setShowTitle] = useState(false);
+  const [showFile, setShowFile] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [tags, setTags] = useState('');
+  const [attachments, setAttachments] = useState<AuthorAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState('');
   const [correctionTarget, setCorrectionTarget] = useState<CorrectionTarget | null>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<MemoryTypeFilter>('all');
@@ -460,6 +465,8 @@ function AuthorMemoryView({
   const [editBody, setEditBody] = useState('');
   const [editSourceUrl, setEditSourceUrl] = useState('');
   const [editTags, setEditTags] = useState('');
+  const [editAttachments, setEditAttachments] = useState<AuthorAttachment[]>([]);
+  const [editAttachmentError, setEditAttachmentError] = useState('');
   const [pendingDeleteNote, setPendingDeleteNote] = useState<AuthorNote | null>(null);
   const [pendingConflict, setPendingConflict] = useState<PendingCorrectionConflict | null>(null);
   const correctionTargets = useMemo(() => buildCorrectionTargets(assertions), [assertions]);
@@ -486,6 +493,7 @@ function AuthorMemoryView({
       body: trimmedBody,
       sourceUrl: type === 'linkReaction' ? linkPreview.normalizedUrl : '',
       tags: isManualCorrection ? ['manual-correction'] : splitTags(tags),
+      attachments: isManualCorrection ? [] : attachments,
       capturedAt: new Date().toISOString(),
       targetType: selectedTarget?.type,
       targetId: selectedTarget?.id,
@@ -501,12 +509,26 @@ function AuthorMemoryView({
     resetComposer();
   }
 
+  function changeNoteType(nextType: AuthorNoteType) {
+    setType(nextType);
+    if (nextType === 'manualCorrection') {
+      setShowFile(false);
+      setAttachments([]);
+      setAttachmentError('');
+      setSourceUrl('');
+      setTags('');
+    }
+  }
+
   function resetComposer() {
     setShowTitle(false);
+    setShowFile(false);
     setTitle('');
     setBody('');
     setSourceUrl('');
     setTags('');
+    setAttachments([]);
+    setAttachmentError('');
     setCorrectionTarget(null);
     setType('thought');
   }
@@ -515,9 +537,12 @@ function AuthorMemoryView({
     setType('manualCorrection');
     setCorrectionTarget(target);
     setShowTitle(false);
+    setShowFile(false);
     setTitle('');
     setSourceUrl('');
     setTags('');
+    setAttachments([]);
+    setAttachmentError('');
     setBody('');
   }
 
@@ -527,6 +552,8 @@ function AuthorMemoryView({
     setEditBody(note.body);
     setEditSourceUrl(note.sourceUrl);
     setEditTags(note.tags.join(', '));
+    setEditAttachments(note.attachments ?? []);
+    setEditAttachmentError('');
   }
 
   function saveEdit(note: AuthorNote) {
@@ -540,7 +567,8 @@ function AuthorMemoryView({
               title: editTitle.trim(),
               body: editBody.trim(),
               sourceUrl: item.type === 'linkReaction' ? buildLinkPreview(editSourceUrl).normalizedUrl : '',
-              tags: splitTags(editTags)
+              tags: splitTags(editTags),
+              attachments: item.type === 'manualCorrection' ? [] : editAttachments
             }
           : item
       ),
@@ -610,6 +638,28 @@ function AuthorMemoryView({
     recognition.start();
   }
 
+  async function attachComposerFile(file: File | undefined) {
+    const result = await createAuthorAttachment(file);
+    if ('error' in result) {
+      setAttachmentError(result.error);
+      return;
+    }
+
+    setAttachments([result.attachment]);
+    setAttachmentError('');
+  }
+
+  async function attachEditFile(file: File | undefined) {
+    const result = await createAuthorAttachment(file);
+    if ('error' in result) {
+      setEditAttachmentError(result.error);
+      return;
+    }
+
+    setEditAttachments([result.attachment]);
+    setEditAttachmentError('');
+  }
+
   return (
     <div className="page wide fade-up">
       <div className="sec-head">
@@ -627,7 +677,7 @@ function AuthorMemoryView({
             <div className="form-row">
               <label>
                 Тип записи
-                <select value={type} onChange={(event) => setType(event.target.value as AuthorNoteType)}>
+                <select value={type} onChange={(event) => changeNoteType(event.target.value as AuthorNoteType)}>
                   <option value="thought">Мысль</option>
                   <option value="linkReaction">Реакция на ссылку</option>
                   <option value="manualCorrection">Ручная корректировка</option>
@@ -665,30 +715,62 @@ function AuthorMemoryView({
               ) : null}
             </div>
             {!isManualCorrection && (
-              <div className="optional-title">
-                {showTitle ? (
-                  <label>
-                    Заголовок
-                    <input value={title} onChange={(event) => setTitle(event.target.value)} />
-                    <button
-                      className="link-button"
-                      type="button"
-                      onClick={() => {
-                        setShowTitle(false);
-                        setTitle('');
-                      }}
-                    >
-                      Убрать заголовок
+              <div className="optional-tools">
+                <div className="optional-title">
+                  {showTitle ? (
+                    <label>
+                      Заголовок
+                      <input value={title} onChange={(event) => setTitle(event.target.value)} />
+                      <button
+                        className="link-button"
+                        type="button"
+                        onClick={() => {
+                          setShowTitle(false);
+                          setTitle('');
+                        }}
+                      >
+                        Убрать заголовок
+                      </button>
+                    </label>
+                  ) : (
+                    <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowTitle(true)}>
+                      <Icon name="plus" size={14} />
+                      Заголовок
                     </button>
-                  </label>
-                ) : (
-                  <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowTitle(true)}>
+                  )}
+                </div>
+                {!showFile ? (
+                  <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowFile(true)}>
                     <Icon name="plus" size={14} />
-                    Заголовок
+                    Файл
+                  </button>
+                ) : (
+                  <button
+                    className="link-button"
+                    type="button"
+                    onClick={() => {
+                      setShowFile(false);
+                      setAttachments([]);
+                      setAttachmentError('');
+                    }}
+                  >
+                    Убрать файл
                   </button>
                 )}
               </div>
             )}
+            {!isManualCorrection && showFile ? (
+              <FileAttachmentPicker
+                attachments={attachments}
+                error={attachmentError}
+                inputLabel="Файл"
+                onAttach={attachComposerFile}
+                onRemove={() => {
+                  setAttachments([]);
+                  setAttachmentError('');
+                }}
+              />
+            ) : null}
             {type === 'linkReaction' && linkPreview.isValid ? <LinkPreviewCard preview={linkPreview} /> : null}
             <label>
               {isManualCorrection ? 'Корректировка' : 'Заметка автора'}
@@ -784,6 +866,8 @@ function AuthorMemoryView({
                 assertions={assertions}
                 editingId={editingId}
                 editBody={editBody}
+                editAttachmentError={editAttachmentError}
+                editAttachments={editAttachments}
                 editSourceUrl={editSourceUrl}
                 editTags={editTags}
                 editTitle={editTitle}
@@ -797,6 +881,11 @@ function AuthorMemoryView({
                 onChangeEditTags={setEditTags}
                 onChangeEditTitle={setEditTitle}
                 onDelete={requestDelete}
+                onEditAttach={attachEditFile}
+                onEditRemoveAttachment={() => {
+                  setEditAttachments([]);
+                  setEditAttachmentError('');
+                }}
                 onSaveEdit={saveEdit}
                 onToggleExpanded={() => toggleExpanded(note.id)}
               />
@@ -858,6 +947,8 @@ function AuthorMemoryView({
 function AuthorNoteCard({
   assertions,
   editBody,
+  editAttachmentError,
+  editAttachments,
   editSourceUrl,
   editTags,
   editTitle,
@@ -871,11 +962,15 @@ function AuthorNoteCard({
   onChangeEditTags,
   onChangeEditTitle,
   onDelete,
+  onEditAttach,
+  onEditRemoveAttachment,
   onSaveEdit,
   onToggleExpanded
 }: {
   assertions: AuthorPositionAssertion[];
   editBody: string;
+  editAttachmentError: string;
+  editAttachments: AuthorAttachment[];
   editSourceUrl: string;
   editTags: string;
   editTitle: string;
@@ -889,11 +984,14 @@ function AuthorNoteCard({
   onChangeEditTags: (value: string) => void;
   onChangeEditTitle: (value: string) => void;
   onDelete: (note: AuthorNote) => void;
+  onEditAttach: (file: File | undefined) => Promise<void>;
+  onEditRemoveAttachment: () => void;
   onSaveEdit: (note: AuthorNote) => void;
   onToggleExpanded: () => void;
 }) {
   const isEditing = editingId === note.id;
   const preview = buildLinkPreview(note.sourceUrl);
+  const noteAttachments = note.attachments ?? [];
   const bodyIsLong = note.body.length > 420;
   const visibleBody = !bodyIsLong || expanded ? note.body : `${note.body.slice(0, 420)}...`;
 
@@ -932,6 +1030,15 @@ function AuthorNoteCard({
             Теги
             <input value={editTags} onChange={(event) => onChangeEditTags(event.target.value)} />
           </label>
+          {note.type !== 'manualCorrection' ? (
+            <FileAttachmentPicker
+              attachments={editAttachments}
+              error={editAttachmentError}
+              inputLabel="Файл заметки"
+              onAttach={onEditAttach}
+              onRemove={onEditRemoveAttachment}
+            />
+          ) : null}
           <div className="inline-actions">
             <button className="btn btn-pri btn-sm" type="button" onClick={() => onSaveEdit(note)} disabled={!editBody.trim()}>
               Сохранить
@@ -952,6 +1059,7 @@ function AuthorNoteCard({
             </button>
           ) : null}
           {preview.isValid ? <LinkPreviewCard preview={preview} /> : null}
+          {noteAttachments.length > 0 ? <AttachmentList attachments={noteAttachments} /> : null}
           <div className="tag-row">
             {note.tags.map((tag) => (
               <span className="rub" key={tag}>
@@ -1016,6 +1124,73 @@ function LinkPreviewCard({ preview }: { preview: LinkPreview }) {
       <b>{preview.title}</b>
       <small>{preview.normalizedUrl}</small>
     </a>
+  );
+}
+
+function FileAttachmentPicker({
+  attachments,
+  error,
+  inputLabel,
+  onAttach,
+  onRemove
+}: {
+  attachments: AuthorAttachment[];
+  error: string;
+  inputLabel: string;
+  onAttach: (file: File | undefined) => Promise<void>;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="file-picker">
+      <label>
+        {inputLabel}
+        <input
+          accept=".txt,.md,.pdf,.doc,.docx,image/*"
+          aria-label={inputLabel}
+          type="file"
+          onChange={(event) => {
+            void onAttach(event.target.files?.[0]);
+            event.target.value = '';
+          }}
+        />
+      </label>
+      <p>До 1 MB. Файл хранится локально как материал к заметке и пока не анализируется.</p>
+      {error ? <span className="form-error">{error}</span> : null}
+      {attachments.length > 0 ? <AttachmentList attachments={attachments} onRemove={onRemove} /> : null}
+    </div>
+  );
+}
+
+function AttachmentList({
+  attachments,
+  onRemove
+}: {
+  attachments: AuthorAttachment[];
+  onRemove?: () => void;
+}) {
+  return (
+    <div className="attachment-list">
+      {attachments.map((attachment) => (
+        <div className="attachment-card" key={attachment.id}>
+          {attachment.mimeType.startsWith('image/') ? (
+            <img alt="" src={attachment.dataUrl} />
+          ) : (
+            <span className="attachment-icon">{attachmentTypeLabel(attachment)}</span>
+          )}
+          <div>
+            <b>{attachment.fileName}</b>
+            <small>
+              {attachment.mimeType || 'file'} · {formatBytes(attachment.sizeBytes)} · локально
+            </small>
+          </div>
+          {onRemove ? (
+            <button className="link-button danger" type="button" onClick={onRemove}>
+              Удалить файл
+            </button>
+          ) : null}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -2067,6 +2242,52 @@ function hasCorrectionConflict(value: string): boolean {
   return ['не согласен', 'неверно', 'противоречит', 'убрать', 'заменить', 'не так'].some((marker) =>
     normalized.includes(marker)
   );
+}
+
+async function createAuthorAttachment(
+  file: File | undefined
+): Promise<{ attachment: AuthorAttachment } | { error: string }> {
+  if (!file) {
+    return { error: 'Файл не выбран.' };
+  }
+
+  if (file.size > MAX_AUTHOR_ATTACHMENT_BYTES) {
+    return { error: 'Файл больше 1 MB. Для локального демо добавьте ссылку или короткую выдержку.' };
+  }
+
+  return {
+    attachment: {
+      id: `attachment-${Date.now()}`,
+      fileName: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      sizeBytes: file.size,
+      dataUrl: await readFileAsDataUrl(file),
+      createdAt: new Date().toISOString(),
+      localOnly: true
+    }
+  };
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function attachmentTypeLabel(attachment: AuthorAttachment): string {
+  if (attachment.mimeType.includes('pdf')) return 'PDF';
+  if (attachment.mimeType.includes('word') || attachment.fileName.match(/\.docx?$/i)) return 'DOC';
+  if (attachment.mimeType.startsWith('text/') || attachment.fileName.match(/\.(md|txt)$/i)) return 'TXT';
+  return 'FILE';
 }
 
 function getSpeechRecognitionConstructor() {

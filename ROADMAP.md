@@ -279,7 +279,7 @@ Status:
 
 ### Slice 1.0.2: Author Memory File Attachments
 
-- Status: Ready
+- Status: Done
 - Goal: Add optional file attachments to manually captured author-memory notes.
 - User value: The author can attach a document, screenshot, text file, or image to a
   thought or link reaction without turning it into a full external-import workflow.
@@ -308,25 +308,25 @@ Status:
   - `createAuthorMemoryEvent` may add a generic `attached-material` signal, but
     assertion text should still be inferred only from note text and tags.
 - Tests:
-  - UI tests for `+ Файл` reveal/hide.
-  - UI tests for attaching a small file and seeing it in the saved note card.
-  - UI tests for rejecting an oversized file.
-  - UI tests for image/file preview and remove-before-save.
-  - UI tests for removing/replacing an attachment while editing a note.
-  - Storage tests for save/load/reset with attachment metadata.
-  - `npm test` and `npm run smoke`.
+  - UI tests for `+ Файл` reveal/hide. Done.
+  - UI tests for attaching a small file and seeing it in the saved note card. Done.
+  - UI tests for rejecting an oversized file. Done.
+  - UI tests for image/file preview and remove-before-save. Done.
+  - UI tests for removing/replacing an attachment while editing a note. Done.
+  - Storage tests for save/load/reset with attachment metadata. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Docs:
   - Update README, user guide, developer guide, demo docs, and roadmap.
 - Demo impact:
   - Demo should show an AI Product Manager attaching a small research note or screenshot
     to a memory item as supporting material.
 - Acceptance criteria:
-  - The author can add a file to a thought or link reaction through `+ Файл`.
-  - Attachments survive reload in the local demo within the size limit.
-  - Oversized files are rejected clearly.
-  - Attachments are visible in the feed and editable/removable.
-  - UI does not claim that attached files are analyzed yet.
-  - `npm test` and `npm run smoke` pass.
+  - The author can add a file to a thought or link reaction through `+ Файл`. Done.
+  - Attachments survive reload in the local demo within the size limit. Done.
+  - Oversized files are rejected clearly. Done.
+  - Attachments are visible in the feed and editable/removable. Done.
+  - UI does not claim that attached files are analyzed yet. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Risks:
   - Browser `localStorage` is not a real file store; size limits must stay explicit.
   - Data URLs can grow quickly; this remains demo-only until a real storage boundary is
@@ -484,6 +484,7 @@ Status:
 - Slice 1.0: Author Memory Feed and Position Evidence Baseline. Completed
   2026-06-10.
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
+- Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
 
 ## Blocked Items
 
@@ -502,4 +503,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.2: Author Memory File Attachments`.
+Start `Slice 1.0.3: Author Memory External Sources and Import Design`.

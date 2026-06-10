@@ -77,6 +77,7 @@ describe('editorial workspace domain', () => {
       body: 'Еще одна мысль: evals нужны не только команде, но и пользователю как интерфейс доверия к AI-фиче.',
       sourceUrl: '',
       tags: ['evals', 'trust'],
+      attachments: [],
       capturedAt: '2026-06-10T12:00:00.000Z'
     };
     const notes = [note, ...workspace.authorNotes];
@@ -95,6 +96,7 @@ describe('editorial workspace domain', () => {
       body: 'Не согласен: вывод про стиль нужно сделать жестче и привязать к anti-demo позиции.',
       sourceUrl: '',
       tags: ['manual-correction'],
+      attachments: [],
       capturedAt: '2026-06-10T12:00:00.000Z',
       targetType: 'assertion' as const,
       targetId: 'assertion-style-research-notes',
@@ -106,6 +108,34 @@ describe('editorial workspace domain', () => {
     expect(event.summary).toContain('Не согласен');
     expect(note.targetType).toBe('assertion');
     expect(note.targetId).toBe('assertion-style-research-notes');
+  });
+
+  it('marks notes with attachments as attached material without analyzing file content', () => {
+    const note = {
+      id: 'note-with-attachment',
+      type: 'thought' as const,
+      title: '',
+      body: 'Прикладываю материал к мысли про workflow risk.',
+      sourceUrl: '',
+      tags: ['workflow'],
+      attachments: [
+        {
+          id: 'attachment-test',
+          fileName: 'workflow-note.txt',
+          mimeType: 'text/plain',
+          sizeBytes: 128,
+          dataUrl: 'data:text/plain;base64,d29ya2Zsb3c=',
+          createdAt: '2026-06-10T12:00:00.000Z',
+          localOnly: true
+        }
+      ],
+      capturedAt: '2026-06-10T12:00:00.000Z'
+    };
+
+    const event = createAuthorMemoryEvent(note);
+
+    expect(event.detectedSignals).toContain('attached-material');
+    expect(event.detectedSignals).toContain('workflow-risk');
   });
 
   it('creates a deterministic draft with thesis, conflict, and CTA from an approved brief', () => {

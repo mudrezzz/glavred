@@ -436,6 +436,10 @@ function detectAuthorSignals(note: AuthorNote): string[] {
   const normalized = `${note.title} ${note.body} ${note.tags.join(' ')}`.toLowerCase();
   const signals: string[] = [];
 
+  if ((note.attachments ?? []).length > 0) {
+    signals.push('attached-material');
+  }
+
   if (matches(normalized, ['workflow', 'процесс', 'сценар', 'risk', 'риск'])) {
     signals.push('workflow-risk');
   }

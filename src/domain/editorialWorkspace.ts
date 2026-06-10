@@ -16,10 +16,21 @@ export interface AuthorNote {
   body: string;
   sourceUrl: string;
   tags: string[];
+  attachments: AuthorAttachment[];
   capturedAt: string;
   targetType?: 'assertion' | 'evidence';
   targetId?: string;
   targetTitle?: string;
+}
+
+export interface AuthorAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  dataUrl: string;
+  createdAt: string;
+  localOnly: boolean;
 }
 
 export interface AuthorMemoryEvent {
