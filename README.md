@@ -20,6 +20,11 @@ previews, targeted corrections, search/filtering, lazy feed loading, long-note
 collapse, edit/delete actions, memory summary, and browser voice-input fallback are
 available before any production workflow starts.
 
+The next planned author-memory increment is optional `+ Файл` support for attaching a
+small local document, screenshot, text file, or image to a manually captured note.
+Those attachments will be stored as local demo evidence only; real document parsing
+and AI analysis are explicitly deferred.
+
 The current product circle re-centers the system around author memory and
 validator-backed editorial entities before adding real AI provider integration.
 

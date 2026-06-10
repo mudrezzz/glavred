@@ -94,6 +94,9 @@ New conceptual entities:
   corrections, archive annotations, and learning events.
 - `AuthorNote.targetType`, `targetId`, and `targetTitle` are optional metadata used
   only when a manual correction targets an inferred assertion or evidence item.
+- Planned next: `AuthorAttachment` and `AuthorNote.attachments` for small local demo
+  files attached through `+ Файл`. Initial attachments should be supporting material,
+  not automatically analyzed evidence.
 - `AuthorPositionAssertion` for transparent claims about how the author thinks or
   writes, with evidence.
 - `Topic`, `Fabula`, `TopicFabulaMatrix`, `ContentDesignRecord`, and
@@ -129,6 +132,11 @@ Use these boundaries:
 
 Do not call browser storage from domain code. Do not add backend persistence, auth,
 real source ingestion, or AI provider calls until their slices are planned.
+
+When file attachments are added, keep the first implementation local-first and
+size-limited. Real PDF/DOCX parsing, OCR, image understanding, text extraction,
+chunking, and AI analysis belong to a later attachment-analysis slice after storage and
+provider boundaries are ready.
 
 ## AI Provider Architecture Baseline
 

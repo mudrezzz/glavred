@@ -79,6 +79,8 @@ The seeded notes cover:
 ## Not Yet Supported
 
 - Real AI classification of author memory.
+- File attachments on notes; planned next as `+ Файл` for local demo evidence.
+- Real analysis of attached documents, images, screenshots, PDFs, or text files.
 - Context chat.
 - Topic/fabula matrix.
 - Archive import and uniqueness checks.

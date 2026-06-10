@@ -277,7 +277,62 @@ Status:
     choice rather than building a full merge engine.
   - Browser speech recognition support varies; the fallback state must be explicit.
 
-### Slice 1.0.2: Author Memory External Sources and Import Design
+### Slice 1.0.2: Author Memory File Attachments
+
+- Status: Ready
+- Goal: Add optional file attachments to manually captured author-memory notes.
+- User value: The author can attach a document, screenshot, text file, or image to a
+  thought or link reaction without turning it into a full external-import workflow.
+- Scope:
+  - Add `+ Файл` next to `+ Заголовок` in the author-memory composer.
+  - Attach files to `Мысль` and `Реакция на ссылку`; keep `Ручная корректировка`
+    focused on short targeted corrections.
+  - Add `AuthorAttachment` and `AuthorNote.attachments`.
+  - Store local demo attachments as metadata plus `dataUrl` with a strict size limit.
+  - Show attachment preview in note cards: icon/type, filename, size, and local preview
+    for images when possible.
+  - Allow removing an attachment before saving.
+  - Allow editing a note to remove or replace its attachment.
+  - Keep attachment content out of deterministic author-position inference for this
+    slice.
+- Out of scope:
+  - Real document parsing.
+  - OCR, transcript extraction, PDF/DOCX analysis, image understanding, or AI analysis.
+  - Backend file storage and cloud upload.
+  - External source import and migration from Telegram/social/blog/docs.
+- Implementation notes:
+  - Suggested local-first file limit: 1 MB per attachment for the browser demo.
+  - Oversized files should be rejected with clear UI copy and should not be persisted.
+  - Attachments must preserve provenance fields: file name, MIME type, size, created
+    date, and whether the content is locally stored as a demo `dataUrl`.
+  - `createAuthorMemoryEvent` may add a generic `attached-material` signal, but
+    assertion text should still be inferred only from note text and tags.
+- Tests:
+  - UI tests for `+ Файл` reveal/hide.
+  - UI tests for attaching a small file and seeing it in the saved note card.
+  - UI tests for rejecting an oversized file.
+  - UI tests for image/file preview and remove-before-save.
+  - UI tests for removing/replacing an attachment while editing a note.
+  - Storage tests for save/load/reset with attachment metadata.
+  - `npm test` and `npm run smoke`.
+- Docs:
+  - Update README, user guide, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - Demo should show an AI Product Manager attaching a small research note or screenshot
+    to a memory item as supporting material.
+- Acceptance criteria:
+  - The author can add a file to a thought or link reaction through `+ Файл`.
+  - Attachments survive reload in the local demo within the size limit.
+  - Oversized files are rejected clearly.
+  - Attachments are visible in the feed and editable/removable.
+  - UI does not claim that attached files are analyzed yet.
+  - `npm test` and `npm run smoke` pass.
+- Risks:
+  - Browser `localStorage` is not a real file store; size limits must stay explicit.
+  - Data URLs can grow quickly; this remains demo-only until a real storage boundary is
+    designed.
+
+### Slice 1.0.3: Author Memory External Sources and Import Design
 
 - Status: Backlog
 - Goal: Design how external author material enters author memory without turning import
@@ -328,6 +383,25 @@ Status:
 - Risks:
   - Real integrations can quickly dominate the product; keep the first implementation
     focused on source configuration and reviewed import, not automation.
+
+### Deferred: Attachment Analysis and Evidence Extraction
+
+- Status: Deferred
+- Goal: Return to author-memory attachments and add real extraction/analysis once
+  storage and AI/provider boundaries are ready.
+- Reason deferred:
+  - Slice 1.0.2 stores attachments as supporting material only.
+  - Real analysis requires document parsing, OCR/image understanding where relevant,
+    provenance, chunking, confidence, and validator/evidence integration.
+- Re-open when:
+  - File storage boundaries are designed beyond local demo `dataUrl`.
+  - AI/provider or deterministic parser boundaries exist for attachment extraction.
+  - The validator framework can show evidence from extracted attachment fragments.
+- Expected future scope:
+  - Extract text from supported document types.
+  - Generate attachment-derived `AuthorMemoryEvent` signals.
+  - Link assertions to exact attachment fragments with evidence provenance.
+  - Let the author approve or reject extracted evidence before it affects position.
 
 ### Slice 1.1: Topics and Fabulas as Editorial Entities
 
@@ -428,4 +502,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.2: Author Memory External Sources and Import Design`.
+Start `Slice 1.0.2: Author Memory File Attachments`.

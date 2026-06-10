@@ -97,9 +97,14 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-The next demo extension should first design external author-memory sources and import
-review without connecting real APIs. Topics and fabulas as structured editorial
-entities remain the next product layer after that planning work.
+The next demo extension should add `+ Файл` to author memory so the AI Product Manager
+can attach a small research note, screenshot, image, or text file to a manually
+captured thought. The attachment should be visible as supporting material, but it
+should not be analyzed yet.
+
+After that, the product should design external author-memory sources and import review
+without connecting real APIs. Topics and fabulas as structured editorial entities
+remain the next product layer after that planning work.
 
 Real provider calls, API keys, platform metrics, publication automation, and backend
-sync remain later steps.
+sync remain later steps. Real attachment parsing and AI analysis are also deferred.
