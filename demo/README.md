@@ -17,6 +17,10 @@ The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar
 topbar, cards, HITL gates, plan area, brief area, editorial review area, manual release
 area, and analytics prep area.
 
+Slice 0.8 does not change the demo runtime. Drafts, checks, release prep, and analytics
+prep are still deterministic and local-first. AI provider behavior is documented as a
+future drafting boundary only.
+
 ## Demo Scenario
 
 - Author: founder writing about practical AI adoption for small and medium businesses.
@@ -75,5 +79,7 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-AI provider architecture is the next logical demo extension. Real platform metrics,
-publication automation, and backend sync remain later steps.
+The next demo extension is an AI drafting adapter skeleton. It should make draft
+generation pass through a provider-agnostic application boundary while keeping the
+current deterministic fallback available. Real provider calls, API keys, platform
+metrics, publication automation, and backend sync remain later steps.

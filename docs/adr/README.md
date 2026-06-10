@@ -12,3 +12,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-03-stop-first-flow-at-approved-post-brief.md](2026-06-03-stop-first-flow-at-approved-post-brief.md)
 - [2026-06-03-use-local-first-persistence-for-first-flow.md](2026-06-03-use-local-first-persistence-for-first-flow.md)
 - [2026-06-03-use-deterministic-services-before-ai-integration.md](2026-06-03-use-deterministic-services-before-ai-integration.md)
+- [2026-06-04-use-provider-agnostic-ai-boundary-for-drafting.md](2026-06-04-use-provider-agnostic-ai-boundary-for-drafting.md)

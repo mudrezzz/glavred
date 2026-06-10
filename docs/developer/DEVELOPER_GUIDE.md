@@ -92,6 +92,55 @@ Use these boundaries:
 Do not call browser storage from domain code. Do not add backend persistence, auth,
 real source ingestion, or AI provider calls until their slices are planned.
 
+## AI Provider Architecture Baseline
+
+Slice 0.8 defines the first AI boundary without adding runtime provider calls. The
+first replacement target is drafting from an approved `PostBrief`.
+
+Rules for future AI-assisted drafting:
+
+- React components must not call AI providers, SDKs, prompt builders, or provider
+  network clients directly.
+- Domain modules must stay provider-free and should not import provider request,
+  response, error, or metadata types.
+- Application services own the orchestration decision: use a provider adapter when it
+  is available and allowed, or use the deterministic `createPostDraft` fallback.
+- Infrastructure adapters own provider-specific calls, authentication, SDK imports,
+  response normalization, and provider error mapping.
+- Local-first deterministic behavior remains the default for demo, tests, offline
+  development, and provider failure.
+
+The conceptual drafting boundary is:
+
+`approved PostBrief + EditorialModel + optional EditorialLearningNote -> DraftGenerationRequest -> DraftingProvider -> DraftGenerationResult -> PostDraft`
+
+Conceptual interfaces for the next implementation slice:
+
+- `AiProviderAdapter`: provider-specific adapter behind an application boundary.
+- `DraftGenerationRequest`: brief, editorial model, optional learning note, locale,
+  constraints, and caller context.
+- `DraftGenerationResult`: draft title/body, notes, risks, and provider metadata that
+  can be mapped into `PostDraft`.
+- `PromptTemplate`: layered prompt definition for system/context, editorial model,
+  brief, output contract, and HITL reminder.
+- `ProviderRunMetadata`: normalized run information such as provider, model, run id,
+  latency, token estimates, and fallback mode.
+- `ProviderError`: normalized error object handled by application services.
+- `AiFallbackPolicy`: fallback rules for disabled providers, missing configuration,
+  provider errors, invalid results, or local demo mode.
+
+Prompt architecture for drafting:
+
+1. System/context layer: careful editorial assistant.
+2. Editorial model layer: author, audience, position, style rules, rubrics, forbidden
+   topics, and goals.
+3. Brief layer: thesis, conflict, evidence, examples, CTA, risks, and sources.
+4. Output contract layer: draft body, notes, risks, and metadata.
+5. Human approval reminder: AI proposes a draft, but never approves final text.
+
+Slice 0.8 intentionally adds no provider SDKs, API keys, environment variables,
+backend, streaming, billing, or real provider calls.
+
 ## Validation Strategy
 
 Current tests cover:

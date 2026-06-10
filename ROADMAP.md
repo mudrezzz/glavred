@@ -332,18 +332,20 @@ Status:
 
 ### Slice 0.8: AI Provider Architecture Baseline
 
-- Status: Ready
+- Status: Done
 - Goal: Define the architecture for replacing deterministic services with AI provider
   adapters without changing the current local-first UI flow.
 - User value: The project can start AI integration from explicit boundaries, prompts,
   fallback behavior, and test strategy instead of wiring providers directly into React.
 - Scope:
-  - Document provider boundaries for insight, briefing, drafting, checks, and analytics
-    prep.
-  - Define provider-agnostic interfaces and deterministic fallback strategy in docs.
-  - Add ADR for AI provider abstraction and no direct provider calls from React.
-  - Update roadmap with the first implementation slice for AI-assisted drafting or
-    insight scoring.
+  - Document `AIProviderBoundary` and `DraftingProvider` as the first provider-backed
+    target.
+  - Define conceptual provider-agnostic interfaces for draft generation, prompt
+    templates, provider run metadata, provider errors, and fallback policy.
+  - Document prompt layers for AI-assisted drafting.
+  - Add ADR for AI provider abstraction and no direct provider calls from React or
+    domain modules.
+  - Update roadmap with the first implementation slice for AI-assisted drafting.
 - Out of scope:
   - Real AI provider calls.
   - API keys and secrets.
@@ -357,13 +359,68 @@ Status:
   - Demo behavior remains deterministic; docs clarify how AI will replace services
     later.
 - Acceptance criteria:
-  - AI provider boundaries are decision-complete.
-  - React remains provider-free.
-  - Deterministic fallback remains the default runtime behavior.
-  - Tests and smoke build pass.
+  - AI provider boundaries are decision-complete. Done.
+  - First AI target is drafting from approved `PostBrief`. Done.
+  - React and domain remain provider-free. Done.
+  - Deterministic fallback remains the default runtime behavior. Done.
+  - No provider SDKs, API keys, backend, or real AI calls are added. Done.
+  - Tests and smoke build pass. Done.
 - Risks:
   - Without a selected provider, the architecture may need refinement once the first
     real integration is chosen.
+
+### Slice 0.9: AI Drafting Adapter Skeleton
+
+- Status: Ready
+- Goal: Add a runtime provider-agnostic drafting adapter skeleton without real provider
+  calls.
+- User value: The app can exercise the future AI drafting boundary while preserving
+  deterministic local-first behavior and existing HITL review.
+- Scope:
+  - Add TypeScript contracts for `AiProviderAdapter`, `DraftGenerationRequest`,
+    `DraftGenerationResult`, `PromptTemplate`, `ProviderRunMetadata`,
+    `ProviderError`, and `AiFallbackPolicy`.
+  - Add an application drafting gateway that chooses a mock provider adapter or the
+    existing deterministic `createPostDraft` fallback.
+  - Add a mock/deterministic drafting adapter for tests and demo only.
+  - Map `DraftGenerationResult` into the existing `PostDraft` state.
+  - Keep the existing `Редактура` UI flow intact; optionally show whether the draft was
+    produced by fallback or adapter mode.
+- Out of scope:
+  - Real provider SDKs or API calls.
+  - API keys, environment requirements, backend, streaming, billing, auth, and model
+    selection UI.
+  - AI-assisted insight scoring, briefing, editorial checks, analytics, or automatic
+    approval.
+- Implementation notes:
+  - Keep provider contracts out of `src/domain/`.
+  - Put orchestration in `src/application/`.
+  - Put adapter implementation details in `src/infrastructure/` or a dedicated edge
+    module.
+  - Provider failures must return deterministic fallback and keep the existing draft
+    workflow usable.
+- Tests:
+  - Unit tests for fallback selection.
+  - Unit tests for mock adapter output.
+  - Contract tests for `DraftGenerationResult -> PostDraft`.
+  - Failure tests for provider error to deterministic fallback.
+  - UI smoke test that the user can create, edit, and approve a draft through the
+    existing HITL flow.
+- Docs:
+  - Update README, architecture overview, developer guide, user guide if UI labels
+    change, demo docs, and roadmap.
+- Demo impact:
+  - Demo should still run offline and deterministic by default, but can demonstrate the
+    adapter boundary with a mock provider mode if implemented.
+- Acceptance criteria:
+  - Runtime provider boundary exists without real provider calls.
+  - Existing draft/review/final approval flow still works.
+  - Provider failure path falls back to deterministic drafting.
+  - No SDKs, API keys, backend, or environment requirements are added.
+  - `npm test` and `npm run smoke` pass.
+- Risks:
+  - Mock provider behavior may look identical to deterministic output unless metadata
+    or UI labels make the boundary visible.
 
 ## Completed Slices
 
@@ -487,6 +544,27 @@ Status:
   - `npm test`: passed.
   - `npm run smoke`: passed.
 
+### Slice 0.8: AI Provider Architecture Baseline
+
+- Completed: 2026-06-04
+- Result:
+  - Documented `AIProviderBoundary` and `DraftingProvider` as the first
+    provider-backed architecture target.
+  - Defined conceptual AI provider interfaces for draft generation requests/results,
+    prompt templates, provider run metadata, provider errors, and fallback policy.
+  - Documented drafting prompt layers and the rule that AI proposes drafts but never
+    approves final text.
+  - Created an ADR for provider-agnostic AI boundaries as application/infrastructure
+    concerns.
+  - Kept the current demo deterministic and local-first.
+  - Added `Slice 0.9: AI Drafting Adapter Skeleton` as the next ready implementation
+    slice.
+- Validation:
+  - `npm test`: passed.
+  - `npm run smoke`: passed.
+  - Runtime/package search for provider SDKs, API keys, env requirements, and direct
+    AI calls: no matches after documentation-only changes.
+
 ## Blocked Items
 
 - None.
@@ -500,4 +578,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 0.8: AI Provider Architecture Baseline`.
+Start `Slice 0.9: AI Drafting Adapter Skeleton`.

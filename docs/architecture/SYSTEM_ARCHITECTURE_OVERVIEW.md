@@ -24,6 +24,11 @@ before text is written, reviews deterministic draft/check outputs before final
 approval, prepares copy/Markdown for manual release, and captures manual editorial
 learning.
 
+Slice 0.8 adds an architecture baseline for future AI-assisted services without
+changing runtime behavior. The first AI replacement target is drafting. The current
+demo and local-first app remain deterministic until a later implementation slice adds
+an adapter skeleton.
+
 ## Major Components
 
 - `EditorialModel`: owns author, audience, positioning, fabula, rubrics, style rules,
@@ -40,6 +45,12 @@ learning.
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
 - `Drafting`: turns an approved post brief into a deterministic editable draft.
+- `AIProviderBoundary`: defines how future provider-backed services can replace
+  deterministic application services without leaking provider details into React or
+  domain code.
+- `DraftingProvider`: the first planned provider-backed boundary. It accepts an
+  approved `PostBrief`, `EditorialModel`, and optional `EditorialLearningNote`, then
+  returns a `PostDraft`-compatible result or falls back to deterministic drafting.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before final approval.
 - `ReleasePackaging`: turns approved final text into platform targets, Markdown
@@ -65,6 +76,14 @@ Domain code must not import React, browser APIs, storage APIs, future AI provide
 network clients. Application services orchestrate domain operations and call adapters.
 React components render state and trigger application service methods.
 
+Future AI provider integration follows the same rule:
+
+`React UI -> application drafting service -> AI provider boundary -> infrastructure provider adapter`
+
+The domain model remains provider-free. React never calls provider SDKs, network
+clients, or prompt builders directly. Application services choose between a provider
+adapter and the deterministic fallback through an explicit fallback policy.
+
 ## Conceptual Domain Interfaces
 
 These contracts are implemented in TypeScript for the first local-first flow.
@@ -88,6 +107,46 @@ These contracts are implemented in TypeScript for the first local-first flow.
   analytics status, updated time, captured time.
 - `WorkspaceStore`: load and save current local workspace state.
 
+## Conceptual AI Provider Interfaces
+
+These interfaces are documented for future implementation and are not runtime
+TypeScript contracts in Slice 0.8:
+
+- `AiProviderAdapter`: infrastructure-side adapter that performs provider-specific
+  calls for one capability, such as draft generation.
+- `DraftGenerationRequest`: approved `PostBrief`, `EditorialModel`, optional previous
+  `EditorialLearningNote`, locale, output constraints, and caller context.
+- `DraftGenerationResult`: title, draft body, notes, risks, provider metadata, and a
+  shape that can be mapped into `PostDraft`.
+- `PromptTemplate`: stable prompt layers and variables used by the application
+  service before calling an adapter.
+- `ProviderRunMetadata`: provider name, model name if known, run id if available,
+  latency, token estimates when available, and fallback status.
+- `ProviderError`: normalized error information that does not expose SDK-specific
+  exceptions to React or domain code.
+- `AiFallbackPolicy`: rules for when to use deterministic fallback, including disabled
+  provider mode, missing configuration, provider error, invalid result, or local demo
+  mode.
+
+## Drafting Prompt Architecture
+
+Future AI-assisted drafting should compose prompts in layers:
+
+1. System/context layer: the assistant acts as a careful editorial assistant, not as
+   the final approving editor.
+2. Editorial model layer: author, audience, positioning, fabula, style rules,
+   forbidden topics, rubrics, and goals.
+3. Brief layer: thesis, conflict, author position, evidence, examples, structure, CTA,
+   risks, and sources.
+4. Output contract layer: draft title, body, editorial notes, risk notes, and provider
+   run metadata.
+5. Human approval reminder: AI can propose a draft, but cannot approve final text or
+   bypass HITL gates.
+
+All generated content for the current product should remain in Russian unless a later
+slice explicitly introduces multilingual behavior. The provider must preserve the
+author's position and must not imply autopublishing.
+
 ## First Demo Data Flow
 
 The first realistic demo scenario is a founder writing about practical AI adoption for
@@ -104,7 +163,9 @@ small and medium businesses:
 6. `Briefing` creates a `PostBrief` with thesis, conflict, evidence, structure, risks,
    and sources.
 7. The author approves the post brief.
-8. `Drafting` creates a deterministic editable draft from the approved brief.
+8. `Drafting` creates a deterministic editable draft from the approved brief. In a
+   future AI slice, this step can call `DraftingProvider`; the current demo keeps the
+   deterministic fallback.
 9. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
 10. The author edits the draft and approves the final text through the third HITL gate.
@@ -119,7 +180,7 @@ small and medium businesses:
 
 - Source ingestion adapters can later replace manual signal entry.
 - AI provider adapters can later replace deterministic insight, planning, briefing,
-  drafting, and check services.
+  drafting, and check services. Drafting is the first planned replacement target.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace
   store interface.
 - Platform publication APIs can attach after the manual release package.
@@ -137,6 +198,14 @@ Current validation covers:
 - UI smoke tests for the source signal to captured editorial learning note flow.
 - Manual demo acceptance for the founder-blog scenario.
 
+For the first AI-assisted drafting implementation, add:
+
+- Unit tests for deterministic fallback selection.
+- Unit tests for a mock drafting adapter.
+- Contract tests for `DraftGenerationResult -> PostDraft` mapping.
+- Failure tests proving provider errors return deterministic fallback.
+- UI smoke coverage proving an AI-assisted draft still follows the existing HITL flow.
+
 ## Known Trade-offs
 
 - Deterministic draft and check outputs are useful for a controlled demo, but they do
@@ -149,6 +218,9 @@ Current validation covers:
   live dashboard.
 - Manual source entry is narrow, but it makes the radar and scoring concepts usable
   before real ingestion exists.
+- Provider selection is intentionally deferred. This keeps the first AI boundary
+  provider-agnostic, but the prompt and metadata contracts may need refinement once a
+  concrete API is chosen.
 
 ## Open Questions
 
