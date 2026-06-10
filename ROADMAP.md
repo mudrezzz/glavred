@@ -2,13 +2,24 @@
 
 ## Product Vision
 
-Glavred is an AI-native editorial office for expert bloggers, founders, consultants,
-authors, and teams who want to run a personal media system with editorial discipline.
+Glavred is an AI-native editorial office for expert authors who want a repeatable
+personal media system without losing their own position.
 
-The service helps an author move from source signals to insight cards, content
-planning, approved post briefs, drafts, editorial checks, manual export or release, and
-analytics-driven learning. Its central promise is not "AI writes better", but "the
-author gains a repeatable editorial system".
+The central promise is not "AI writes better". The central promise is:
+
+> The author captures raw thoughts, reactions, corrections, and released work; Glavred
+> turns that material into a transparent author position model; the production pipeline
+> uses that model to plan, validate, draft, release, and learn.
+
+The durable product loop is:
+
+`Author Memory -> Author Position Model -> Editorial System -> Content Production -> Release -> Learning`
+
+The already implemented production loop remains valuable:
+
+`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+
+It is now treated as a downstream production layer, not the product center.
 
 ## Source Requirements
 
@@ -18,10 +29,13 @@ Primary requirements document:
 
 Current status:
 
-- `glavred.md` is filled and accepted as the source of truth.
+- `glavred.md` is filled and remains the historical source requirements document.
+- The June 2026 product revision centers the project on `AuthorMemory` and
+  `AuthorPositionModel`; see `docs/architecture/AUTHOR_POSITION_CONCEPT.md`.
 - The `ui-design-systems/` handoff contains product/design context and remains a
   secondary source.
-- Product-facing terminology uses **Редакционная модель** / `EditorialModel`.
+- Product-facing terminology keeps **Редакционная модель** / `EditorialModel`, but this
+  aggregate should evolve into structured author-position entities.
 
 ## Status Legend
 
@@ -30,540 +44,244 @@ Current status:
 - `In Progress`: currently being worked on
 - `Blocked`: cannot proceed without clarification or dependency
 - `Done`: completed and validated
+- `Deferred`: intentionally postponed because a prior product layer is missing
 
 ## Current Iteration
 
-### Iteration 1: First Product Perimeter
+### Iteration 2: Author Position Operating System
 
 Goal:
 
-- Deliver the first working Glavred flow from source signal to manual export-ready
-  release package and captured editorial learning note with local-first persistence.
+- Re-center Glavred around author memory, author position, structured editorial
+  entities, validators, and context chat before adding real AI drafting.
 
 Status:
 
-- `Done`
+- `Ready`
 
 ## Slice Backlog
 
 ### Slice 0.1: Bootstrap Project Structure
 
 - Status: Done
-- Goal: Create initial project structure and documentation control files.
-- User value: The project can be developed consistently in future sessions without
-  re-explaining the process.
-- Scope:
-  - Keep `AGENTS.md` as project operating instructions.
-  - Create React/Vite/TypeScript baseline.
-  - Create baseline domain workflow model.
-  - Create unit and smoke test infrastructure.
-  - Update `README.md`, `ROADMAP.md`, architecture docs, contributor docs, developer
-    docs, user docs, and demo docs.
-  - Initialize Git and create an initial local commit.
-- Out of scope:
-  - GitHub repository creation.
-  - Production product logic.
-  - Final architecture decisions before `glavred.md` is filled in.
-- Implementation notes:
-  - Use React + Vite + TypeScript because the provided design handoff already uses
-    React-like reference screens.
-  - Keep domain workflow separate from UI from the first slice.
-- Tests:
-  - Unit tests for the editorial workflow.
-  - UI smoke test for the baseline app.
-  - Build smoke test.
-- Docs:
-  - Baseline docs must explain source requirements status and next task.
-- Demo impact:
-  - Demo docs point to the current local app and design references.
-- Acceptance criteria:
-  - Repository contains a runnable frontend baseline. Done.
-  - Test command passes. Done: `npm test`.
-  - Build command passes. Done: `npm run smoke`.
-  - Dependency audit passes. Done: `npm audit --audit-level=moderate`.
-  - Git is initialized with an initial commit. Done.
-- Risks:
-  - Superseded by Slice 0.2 after the source brief was filled.
+- Goal: Create initial React/Vite/TypeScript project structure, docs, tests, demo, and
+  Git baseline.
+- Validation: `npm test`, `npm run smoke`, and `npm audit --audit-level=moderate`
+  passed.
 
 ### Slice 0.2: Brief-Backed Bootstrap Update
 
 - Status: Done
-- Goal: Update the project foundation from the filled source brief.
-- User value: Future slices can start from real product direction instead of blocked
-  placeholders.
-- Scope:
-  - Accept `glavred.md` as the primary source requirements document.
-  - Update the domain baseline to reflect the brief's editorial loop.
-  - Capture the first five MVP modules.
-  - Update README, roadmap, architecture overview, developer guide, user guide, and
-    demo docs.
-  - Keep GitHub repository creation deferred.
-- Out of scope:
-  - Full product architecture.
-  - Backend persistence.
-  - AI provider integration.
-  - Real ingestion, drafting, publication, or analytics.
-- Implementation notes:
-  - Keep the foundation frontend-first with framework-independent domain logic.
-  - Model manual export in the first loop because the brief allows publication to stay
-    manual in the first version.
-- Tests:
-  - Unit tests for the updated editorial workflow.
-  - UI smoke test for the brief-backed foundation screen.
-- Docs:
-  - Updated required baseline docs.
-- Demo impact:
-  - Demo docs now describe the first realistic founder-blog scenario.
-- Acceptance criteria:
-  - Product requirements are no longer blocked. Done.
-  - MVP perimeter is clear. Done.
-  - Test command passes. Done: `npm test`.
-  - Build command passes. Done: `npm run smoke`.
-  - Dependency audit passes. Done: `npm audit --audit-level=moderate`.
-- Risks:
-  - The source brief is broad, so the first implementation slice still needs an
-    architecture pass before feature work.
+- Goal: Accept `glavred.md` as the primary requirements source and update the baseline
+  from the filled brief.
+- Validation: `npm test`, `npm run smoke`, and `npm audit --audit-level=moderate`
+  passed.
 
 ### Slice 0.3: Architecture Baseline for the First Product Perimeter
 
 - Status: Done
-- Goal: Define the smallest closed end-to-end product perimeter from the MVP modules.
-- User value: Implementation can begin from explicit boundaries, objects, and flows.
-- Scope:
-  - Use the source brief and design handoff.
-  - Define the first flow from source signal to approved post brief.
-  - Define conceptual domain objects for `EditorialModel`, `SourceSignal`,
-    `InsightCard`, `ContentPlanItem`, `PostBrief`, and `WorkspaceStore`.
-  - Choose local-first persistence for the first implementation slice.
-  - Create ADRs for the approved-brief endpoint, local-first persistence, and
-    deterministic placeholder services before AI integration.
-  - Define the first realistic demo scenario in implementation terms.
-- Out of scope:
-  - Runtime implementation of the domain contracts.
-  - Backend persistence.
-  - AI integration.
-  - Full source ingestion.
-  - Draft generation and editorial checks.
-  - Autoposting.
-- Implementation notes:
-  - The first flow stops at approved `PostBrief`.
-  - Use deterministic services and fixtures in Slice 0.4 before real AI providers.
-  - Keep domain, application services, infrastructure adapters, and React UI separated.
-- Tests:
-  - Existing regression only for this docs/ADR slice.
-  - Validation completed with `npm test` and `npm run smoke`.
-- Docs:
-  - Updated architecture overview, ADRs, developer guide, demo docs, and roadmap.
-- Demo impact:
-  - Demo is specified as founder-blog scenario: a practical AI adoption author turns a
-    repeated market signal about failed AI pilots into an approved post brief.
-- Acceptance criteria:
-  - First implementation slice is clearly ready. Done.
-  - Architecture boundaries are documented. Done.
-  - ADRs capture the three key decisions. Done.
-  - Terminology uses `EditorialModel` / "Редакционная модель". Done.
-- Risks:
-  - The approved-brief endpoint is less visually complete than a draft demo, but it
-    keeps the first implementation focused on the product's core editorial control.
+- Goal: Define the first local-first flow from source signal to approved post brief.
+- Validation: `npm test` and `npm run smoke` passed.
 
 ### Slice 0.4: First Working Flow to Approved Post Brief
 
 - Status: Done
-- Goal: Implement the first closed Glavred flow from source signal to approved post
-  brief.
-- User value: A user can create a limited but real editorial workflow and preserve it
-  locally.
-- Scope:
-  - Add TypeScript domain contracts for `EditorialModel`, `SourceSignal`,
-    `InsightCard`, `ContentPlanItem`, `PostBrief`, and workspace state.
-  - Add deterministic application services for turning the demo signal into an insight
-    card, a plan item, and a post brief.
-  - Add a local workspace store backed by browser `localStorage`, with fixtures as the
-    initial empty/demo state.
-  - Build a Russian-language UI flow for the founder-blog demo scenario:
-    - view or edit the editorial model;
-    - add or load the source signal;
-    - review the insight card;
-    - place it into the content plan;
-    - generate and approve the post brief.
-  - Keep the UI aligned with the "quiet editorial office" design handoff.
-- Out of scope:
-  - Real AI calls.
-  - Real RSS, Telegram, YouTube, website, CRM, or document ingestion.
-  - Backend, auth, team work, and multi-device sync.
-  - Draft generation, style editing, anti-AI checks, fact-checking, policy review,
-    publication, analytics, and learning loop.
-- Implementation notes:
-  - Use `src/domain/` for domain objects and pure transitions.
-  - Use application services for deterministic scoring, planning, and briefing.
-  - Use an infrastructure adapter for `localStorage`; do not call browser storage from
-    domain code.
-  - Keep approval statuses explicit for plan items and post briefs.
-- Tests:
-  - Unit tests for domain transitions and approval rules.
-  - Unit tests for deterministic scoring/planning/briefing services.
-  - Integration tests for local workspace save/load.
-  - UI smoke tests for the signal to approved post brief flow.
-  - Run `npm test`, `npm run smoke`, and targeted tests introduced by the slice.
-- Docs:
-  - Update README, architecture overview if boundaries change, developer guide, user
-    guide, demo docs, and roadmap.
-- Demo impact:
-  - Demo should let the user reach an approved post brief from the founder-blog
-    scenario.
-- Acceptance criteria:
-  - User can start from the demo signal and end with an approved post brief. Done.
-  - Approved state survives page reload through local storage. Done.
-  - No real AI or backend dependency is required. Done.
-  - Tests and smoke build pass. Done.
-- Risks:
-  - Local storage shape may need migration when backend persistence arrives.
-  - Deterministic services may look too scripted; copy should make clear this is the
-    first working product perimeter.
+- Goal: Implement the first working editorial cabinet from signal to approved post
+  brief with local-first persistence.
+- Validation: `npm test` and `npm run smoke` passed.
 
 ### Slice 0.5: Draft and Editorial Checks
 
 - Status: Done
-- Goal: Extend the approved brief into a draft and editorial review workspace.
-- User value: The product can demonstrate the next approval gate: final text review.
-- Scope:
-  - Add runtime contracts for `PostDraft`, `EditorialCheck`, `EditorNote`, and
-    `FinalText`.
-  - Generate a deterministic draft from approved `PostBrief`.
-  - Model style, anti-AI, fact-checking, and policy checks.
-  - Add editor notes and final text approval gate.
-  - Make `Редактура` an active product section.
-  - Preserve draft/check/final state in local storage with fallback for Slice 0.4
-    workspaces.
-- Out of scope:
-  - Real AI provider integration.
-  - Autoposting, manual export implementation, and analytics.
-- Implementation notes:
-  - Build on the approved `PostBrief` object from Slice 0.4.
-  - Warnings do not block final approval because the human editor remains in control.
-- Tests:
-  - Unit tests for draft generation, editorial checks, final approval, and revision.
-  - Storage tests for old workspace normalization and final text persistence.
-  - UI smoke tests for final text approval and persistence after reload.
-- Docs:
-  - Updated README, architecture overview, user guide, developer guide, demo docs, and
-    roadmap.
-- Demo impact:
-  - Demo moves from approved brief to reviewed and approved final text.
-- Acceptance criteria:
-  - User can approve a final text after seeing editor notes and risks. Done.
-  - Approved final text survives reload. Done.
-  - `npm test` and `npm run smoke` pass. Done.
-- Risks:
-  - Draft quality cannot be validated until AI integration is introduced.
+- Goal: Extend approved briefs into deterministic drafts, editorial checks, and
+  approved final text.
+- Validation: `npm test` and `npm run smoke` passed.
 
 ### Slice 0.6: Manual Export and Release Prep
 
 - Status: Done
-- Goal: Let the user prepare an approved final text for manual release.
-- User value: The current editorial loop becomes practically usable because the
-  approved text can be copied/exported with release metadata.
-- Scope:
-  - Activate `Выпуск` as a working section.
-  - Show approved final text, platform, release checklist, and manual export actions.
-  - Add deterministic platform adaptation metadata for Telegram and LinkedIn without
-    changing the text body automatically.
-  - Add release readiness status and local persistence.
-  - Keep analytics as a placeholder.
-- Out of scope:
-  - Autoposting.
-  - Real platform APIs.
-  - Backend, auth, team work, and AI provider integration.
-- Tests:
-  - Unit tests for release readiness transitions.
-  - Storage tests for release state.
-  - UI tests for opening `Выпуск`, viewing approved final text, and marking manual
-    export ready.
-- Docs:
-  - Update README, user guide, developer guide, demo docs, and roadmap.
-- Demo impact:
-  - Demo reaches "approved final text ready for manual release".
-- Acceptance criteria:
-  - User can move from approved final text to a release-ready manual export state. Done.
-  - State survives reload. Done.
-  - Copy + Markdown export are available without backend or platform APIs. Done.
-  - Tests and smoke build pass. Done.
-- Risks:
-  - Without real publication APIs, release value is limited to operational readiness
-    and copy/export convenience.
-
-### Slice 0.7: Analytics Placeholder to Learning Notes
-
-- Status: Done
-- Goal: Turn `Аналитика` from a placeholder into local analytics prep and editorial
-  learning notes after manual export.
-- User value: The editorial loop starts feeding the next cycle with manual metrics and
-  captured conclusions, even before real platform analytics exist.
-- Scope:
-  - Activate `Аналитика` as a working section.
-  - Show exported release package context and manual metric fields.
-  - Add fields for observed result, audience reaction, working theses, trust rubrics,
-    quality audience topics, stronger author voice, repeat formats, and series
-    candidates.
-  - Add deterministic learning note state and local persistence.
-  - Let the user mark a learning note as captured.
-- Out of scope:
-  - Real metrics ingestion.
-  - Platform APIs.
-  - AI analysis.
-  - Backend, auth, and team work.
-- Tests:
-  - Unit tests for learning note transitions.
-  - Storage tests for learning note persistence.
-  - UI tests for empty state before exported release and captured learning note after
-    export.
-- Docs:
-  - Update README, user guide, developer guide, demo docs, architecture overview, and
-    roadmap.
-- Demo impact:
-  - Demo reaches "manual release exported -> editorial learning captured".
-- Acceptance criteria:
-  - User can add and save a learning note after manual export. Done.
-  - Manual metrics and editorial fields are visible and editable. Done.
-  - State survives reload. Done.
-  - Tests and smoke build pass. Done.
-- Risks:
-  - Without real analytics, learning quality depends on manual input.
-
-### Slice 0.8: AI Provider Architecture Baseline
-
-- Status: Done
-- Goal: Define the architecture for replacing deterministic services with AI provider
-  adapters without changing the current local-first UI flow.
-- User value: The project can start AI integration from explicit boundaries, prompts,
-  fallback behavior, and test strategy instead of wiring providers directly into React.
-- Scope:
-  - Document `AIProviderBoundary` and `DraftingProvider` as the first provider-backed
-    target.
-  - Define conceptual provider-agnostic interfaces for draft generation, prompt
-    templates, provider run metadata, provider errors, and fallback policy.
-  - Document prompt layers for AI-assisted drafting.
-  - Add ADR for AI provider abstraction and no direct provider calls from React or
-    domain modules.
-  - Update roadmap with the first implementation slice for AI-assisted drafting.
-- Out of scope:
-  - Real AI provider calls.
-  - API keys and secrets.
-  - Backend, auth, team work, and deployment.
-- Tests:
-  - Existing regression only, because this is architecture/docs work.
-  - Run `npm test` and `npm run smoke`.
-- Docs:
-  - Update architecture overview, ADRs, developer guide, demo docs, and roadmap.
-- Demo impact:
-  - Demo behavior remains deterministic; docs clarify how AI will replace services
-    later.
-- Acceptance criteria:
-  - AI provider boundaries are decision-complete. Done.
-  - First AI target is drafting from approved `PostBrief`. Done.
-  - React and domain remain provider-free. Done.
-  - Deterministic fallback remains the default runtime behavior. Done.
-  - No provider SDKs, API keys, backend, or real AI calls are added. Done.
-  - Tests and smoke build pass. Done.
-- Risks:
-  - Without a selected provider, the architecture may need refinement once the first
-    real integration is chosen.
-
-### Slice 0.9: AI Drafting Adapter Skeleton
-
-- Status: Ready
-- Goal: Add a runtime provider-agnostic drafting adapter skeleton without real provider
-  calls.
-- User value: The app can exercise the future AI drafting boundary while preserving
-  deterministic local-first behavior and existing HITL review.
-- Scope:
-  - Add TypeScript contracts for `AiProviderAdapter`, `DraftGenerationRequest`,
-    `DraftGenerationResult`, `PromptTemplate`, `ProviderRunMetadata`,
-    `ProviderError`, and `AiFallbackPolicy`.
-  - Add an application drafting gateway that chooses a mock provider adapter or the
-    existing deterministic `createPostDraft` fallback.
-  - Add a mock/deterministic drafting adapter for tests and demo only.
-  - Map `DraftGenerationResult` into the existing `PostDraft` state.
-  - Keep the existing `Редактура` UI flow intact; optionally show whether the draft was
-    produced by fallback or adapter mode.
-- Out of scope:
-  - Real provider SDKs or API calls.
-  - API keys, environment requirements, backend, streaming, billing, auth, and model
-    selection UI.
-  - AI-assisted insight scoring, briefing, editorial checks, analytics, or automatic
-    approval.
-- Implementation notes:
-  - Keep provider contracts out of `src/domain/`.
-  - Put orchestration in `src/application/`.
-  - Put adapter implementation details in `src/infrastructure/` or a dedicated edge
-    module.
-  - Provider failures must return deterministic fallback and keep the existing draft
-    workflow usable.
-- Tests:
-  - Unit tests for fallback selection.
-  - Unit tests for mock adapter output.
-  - Contract tests for `DraftGenerationResult -> PostDraft`.
-  - Failure tests for provider error to deterministic fallback.
-  - UI smoke test that the user can create, edit, and approve a draft through the
-    existing HITL flow.
-- Docs:
-  - Update README, architecture overview, developer guide, user guide if UI labels
-    change, demo docs, and roadmap.
-- Demo impact:
-  - Demo should still run offline and deterministic by default, but can demonstrate the
-    adapter boundary with a mock provider mode if implemented.
-- Acceptance criteria:
-  - Runtime provider boundary exists without real provider calls.
-  - Existing draft/review/final approval flow still works.
-  - Provider failure path falls back to deterministic drafting.
-  - No SDKs, API keys, backend, or environment requirements are added.
-  - `npm test` and `npm run smoke` pass.
-- Risks:
-  - Mock provider behavior may look identical to deterministic output unless metadata
-    or UI labels make the boundary visible.
-
-## Completed Slices
-
-### Slice 0.1: Bootstrap Project Structure
-
-- Completed: 2026-06-03
-- Result:
-  - Created React/Vite/TypeScript application baseline.
-  - Added framework-independent editorial workflow domain model.
-  - Added Vitest and Testing Library baseline tests.
-  - Updated README, roadmap, architecture overview, ADRs, contributor guide,
-    developer guide, user guide, and demo docs.
-  - Confirmed GitHub repository creation is deferred.
-  - Initialized local Git repository and created the initial baseline commit.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-  - `npm audit --audit-level=moderate`: passed with 0 vulnerabilities.
-
-### Slice 0.2: Brief-Backed Bootstrap Update
-
-- Completed: 2026-06-03
-- Result:
-  - Accepted filled `glavred.md` as primary source requirements.
-  - Updated the domain workflow baseline to the brief-backed editorial loop.
-  - Captured the five MVP modules from the brief.
-  - Updated README, roadmap, architecture overview, developer guide, user guide, and
-    demo docs.
-  - Kept GitHub repository creation deferred.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-  - `npm audit --audit-level=moderate`: passed with 0 vulnerabilities.
-
-### Slice 0.3: Architecture Baseline for the First Product Perimeter
-
-- Completed: 2026-06-03
-- Result:
-  - Defined the first product perimeter from source signal to approved post brief.
-  - Chose local-first persistence for the first implementation slice.
-  - Chose deterministic services and fixtures before AI provider integration.
-  - Documented component responsibilities, dependency direction, conceptual interfaces,
-    extension points, test strategy, and demo flow.
-  - Created ADRs for the key architectural decisions.
-  - Standardized product-facing terminology on `EditorialModel` / "Редакционная
-    модель".
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-
-### Slice 0.4: First Working Flow to Approved Post Brief
-
-- Completed: 2026-06-03
-- Result:
-  - Replaced the foundation screen with a production React/TypeScript editorial cabinet
-    aligned with the `glavred-app` design reference.
-  - Added TypeScript domain contracts for editorial model, signal, insight card, plan
-    item, post brief, workspace state, and approval status.
-  - Added deterministic services for insight, planning, and briefing.
-  - Added local-first workspace persistence through browser `localStorage`.
-  - Added editable Russian-language sections for `Редакционная модель`, `Радар`,
-    `План`, and `Фабулы`.
-  - Added polished placeholders for `Редактура`, `Выпуск`, and `Аналитика`.
-  - Added unit, integration, and UI smoke tests for the first flow.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-
-### Slice 0.5: Draft and Editorial Checks
-
-- Completed: 2026-06-03
-- Result:
-  - Added runtime contracts for post drafts, editorial checks, editor notes, final
-    text, draft status, check type, and check status.
-  - Added deterministic draft generation from approved post briefs.
-  - Added deterministic style, anti-AI, fact-check, and policy checks plus editor
-    notes.
-  - Activated `Редактура` with tabs for `Фабула`, `Драфт`, and `Финал`.
-  - Added manual draft editing and final text approval through HITL Gate 3.
-  - Extended local-first persistence with backward-compatible normalization for Slice
-    0.4 workspaces.
-  - Updated README, architecture overview, developer guide, user guide, demo docs, and
-    roadmap.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-
-### Slice 0.6: Manual Export and Release Prep
-
-- Completed: 2026-06-04
-- Result:
-  - Added runtime contracts for release targets, release checklist items, release
-    packages, and release status.
-  - Added deterministic release package generation from approved final text.
-  - Activated `Выпуск` with final text, Telegram/LinkedIn targets, Markdown preview,
-    release checklist, copy action, and Markdown download.
-  - Added release readiness and manual exported transitions.
-  - Extended local-first persistence with backward-compatible normalization for
-    workspaces without release state.
-  - Updated README, architecture overview, developer guide, user guide, demo docs, and
-    roadmap.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
+- Goal: Prepare approved final text for manual release through copy and Markdown
+  export.
+- Validation: `npm test` and `npm run smoke` passed.
 
 ### Slice 0.7: Analytics Prep and Editorial Learning Notes
 
-- Completed: 2026-06-04
-- Result:
-  - Added runtime contracts for analytics status, manual metric snapshots, and
-    editorial learning notes.
-  - Added deterministic analytics prep scaffold after exported release packages.
-  - Activated `Аналитика` with manual metrics, editorial conclusion fields, release
-    context, and captured learning status.
-  - Added learning note capture and edit transitions.
-  - Extended local-first persistence with backward-compatible normalization for
-    workspaces without analytics state.
-  - Updated README, architecture overview, developer guide, user guide, demo docs, and
-    roadmap.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
+- Status: Done
+- Goal: Turn analytics into local manual metrics and captured editorial learning after
+  manual export.
+- Validation: `npm test` and `npm run smoke` passed.
 
 ### Slice 0.8: AI Provider Architecture Baseline
 
-- Completed: 2026-06-04
-- Result:
-  - Documented `AIProviderBoundary` and `DraftingProvider` as the first
-    provider-backed architecture target.
-  - Defined conceptual AI provider interfaces for draft generation requests/results,
-    prompt templates, provider run metadata, provider errors, and fallback policy.
-  - Documented drafting prompt layers and the rule that AI proposes drafts but never
-    approves final text.
-  - Created an ADR for provider-agnostic AI boundaries as application/infrastructure
-    concerns.
-  - Kept the current demo deterministic and local-first.
-  - Added `Slice 0.9: AI Drafting Adapter Skeleton` as the next ready implementation
-    slice.
-- Validation:
-  - `npm test`: passed.
-  - `npm run smoke`: passed.
-  - Runtime/package search for provider SDKs, API keys, env requirements, and direct
-    AI calls: no matches after documentation-only changes.
+- Status: Done
+- Goal: Document provider-agnostic AI boundaries and deterministic fallback.
+- Note: This remains valid, but implementation is deferred until author position and
+  validators are stronger.
+- Validation: `npm test` and `npm run smoke` passed.
+
+### Slice 0.9: Author Position Product Reframe
+
+- Status: Done
+- Goal: Reframe project documents around author memory, author position, structured
+  editorial entities, validators, and context chat.
+- User value: Future implementation starts from the stronger product premise: AI must
+  help the author preserve and apply their own position, not generate generic content.
+- Scope:
+  - Add author position concept documentation.
+  - Add ADR for centering the product on author memory and position.
+  - Update README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+  - Defer AI drafting adapter implementation.
+- Out of scope:
+  - Runtime TypeScript changes.
+  - UI changes.
+  - AI provider integration.
+  - Backend, auth, team work, and real ingestion.
+- Tests:
+  - Documentation-only regression: `npm test` passed; `npm run smoke` passed.
+- Docs:
+  - This slice is docs-only and updates the project direction.
+- Demo impact:
+  - Current demo behavior remains unchanged.
+  - Next demo should expose author memory and author position controls above the
+    current production layer.
+- Acceptance criteria:
+  - Product docs identify `AuthorMemory` and `AuthorPositionModel` as the center. Done.
+  - Roadmap no longer points to AI drafting adapter as the next implementation. Done.
+  - AI provider integration is deferred until author-position constraints exist. Done.
+  - Current working production flow remains documented. Done.
+  - `npm test` and `npm run smoke` pass. Done.
+- Risks:
+  - The existing UI still reflects the old signal-first model until the next
+    implementation slice.
+
+### Slice 1.0: Author Memory Feed and Position Evidence Baseline
+
+- Status: Ready
+- Goal: Add the first working author memory layer above the existing production flow.
+- User value: The author can capture loose thoughts and reactions, and the product can
+  start showing how those notes become evidence for author position.
+- Scope:
+  - Add runtime contracts for `AuthorNote`, `AuthorMemoryEvent`,
+    `AuthorPositionAssertion`, and evidence links.
+  - Add local-first persistence fields with backward-compatible workspace
+    normalization.
+  - Add a new active section for author memory as an internal feed.
+  - Support at least three note types: raw thought, link reaction, and manual
+    correction.
+  - Add deterministic classification from notes into draft author-position assertions.
+  - Show evidence links from assertions back to source notes.
+  - Keep current production flow working.
+- Out of scope:
+  - Real AI classification.
+  - Context chat.
+  - Topic/fabula matrix.
+  - Archive import.
+  - Backend and multi-workspace sync.
+- Implementation notes:
+  - Keep note capture loose and low-friction.
+  - Keep assertions structured and editable.
+  - Treat every author correction as potential future memory input, but implement only
+    the minimal correction type in this slice.
+- Tests:
+  - Unit tests for note creation and deterministic classification.
+  - Unit tests for evidence linking.
+  - Storage tests for old workspace normalization and author memory persistence.
+  - UI smoke tests for creating notes and seeing evidence-backed assertions.
+  - Run `npm test` and `npm run smoke`.
+- Docs:
+  - Update README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+- Demo impact:
+  - Demo starts with the author memory feed before radar/production.
+- Acceptance criteria:
+  - User can add author notes and link reactions.
+  - System shows first evidence-backed author-position assertions.
+  - State survives reload.
+  - Existing signal-to-learning production flow still works.
+  - `npm test` and `npm run smoke` pass.
+- Risks:
+  - Deterministic classification may feel simplistic; UI copy should make clear this is
+    the first baseline before AI assistance.
+
+### Slice 1.1: Topics and Fabulas as Editorial Entities
+
+- Status: Backlog
+- Goal: Replace coarse rubric/fabula settings with editable topic and fabula cards.
+- Scope:
+  - Add `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrix`.
+  - Show topic cards with rules, purpose, audience value, and author stance.
+  - Show fabula cards with dramaturgy, structure, and proof requirements.
+  - Add default all-enabled compatibility matrix with manual toggles.
+  - Route content-plan suggestions through topic/fabula compatibility.
+- Tests:
+  - Unit tests for weight ranges and compatibility.
+  - UI smoke tests for editing topic/fabula cards.
+
+### Slice 1.2: Validator Framework Baseline
+
+- Status: Backlog
+- Goal: Introduce generic validator results across author position, topics, fabulas,
+  and production artifacts.
+- Scope:
+  - Add `ValidatorDefinition`, `ValidatorResult`, score/status/evidence model.
+  - Add first validators for author position clarity, anti-AI style, audience value,
+    and goal consistency.
+  - Show compact red/yellow/green indicators with evidence drill-down.
+
+### Slice 1.3: Context Chat Wizard Skeleton
+
+- Status: Backlog
+- Goal: Add right-side section-aware chat skeleton for guided setup.
+- Scope:
+  - Add chat shell synchronized with active section.
+  - Use deterministic suggestions first.
+  - Convert accepted suggestions into structured entities.
+  - Keep AI provider calls out of scope until provider integration is re-opened.
+
+### Slice 1.4: Content Plan as Broadcast Grid
+
+- Status: Backlog
+- Goal: Make the content plan reflect topic, fabula, platform, format, and tempo
+  weights.
+- Scope:
+  - Add advisory weight conflict detection.
+  - Let manual grid edits override abstract weights.
+  - Surface conflicts when the grid no longer satisfies declared strategy.
+
+### Slice 1.5: Archive and Uniqueness Baseline
+
+- Status: Backlog
+- Goal: Treat released and imported posts as author memory and uniqueness material.
+- Scope:
+  - Add archive records.
+  - Link archive posts to author-position evidence.
+  - Add deterministic uniqueness checks against archive titles/body snippets.
+
+### Deferred: AI Drafting Adapter Skeleton
+
+- Status: Deferred
+- Goal: Add a runtime provider-agnostic drafting adapter skeleton without real provider
+  calls.
+- Reason deferred:
+  - AI drafting should be constrained by author memory, author position, topic/fabula
+    entities, and validators first.
+- Re-open when:
+  - `AuthorMemory`, first `AuthorPositionModel`, topics/fabulas, and validator
+    baseline are implemented.
+
+## Completed Slices
+
+- Slice 0.1: Bootstrap Project Structure. Completed 2026-06-03.
+- Slice 0.2: Brief-Backed Bootstrap Update. Completed 2026-06-03.
+- Slice 0.3: Architecture Baseline for the First Product Perimeter. Completed
+  2026-06-03.
+- Slice 0.4: First Working Flow to Approved Post Brief. Completed 2026-06-03.
+- Slice 0.5: Draft and Editorial Checks. Completed 2026-06-03.
+- Slice 0.6: Manual Export and Release Prep. Completed 2026-06-04.
+- Slice 0.7: Analytics Prep and Editorial Learning Notes. Completed 2026-06-04.
+- Slice 0.8: AI Provider Architecture Baseline. Completed 2026-06-04.
+- Slice 0.9: Author Position Product Reframe. Completed 2026-06-10.
 
 ## Blocked Items
 
@@ -571,11 +289,15 @@ Status:
 
 ## Open Questions
 
-- Which deployment target should be assumed for the first hosted version?
-- Which AI/API providers are in scope after deterministic services are replaced?
-- Should the eventual backend preserve the local workspace schema or introduce a
-  migration layer?
+- Which author memory event types beyond raw thoughts, link reactions, and corrections
+  should be first-class?
+- Should topic/fabula/platform weights initially be advisory only, or hard validation
+  constraints?
+- How much of the context chat should ship before real AI provider calls?
+- What is the minimum useful archive import for uniqueness and author-position
+  evidence?
+- Which hosted deployment target should be used after local-first development?
 
 ## Next Recommended Task
 
-Start `Slice 0.9: AI Drafting Adapter Skeleton`.
+Start `Slice 1.0: Author Memory Feed and Position Evidence Baseline`.

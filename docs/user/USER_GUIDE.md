@@ -7,6 +7,21 @@ item, an approved post brief, a deterministic draft, editorial checks, and an ap
 final text, prepare a manual release package, and capture editorial learning notes.
 Work is saved in browser local storage.
 
+The product direction is being expanded. The next version should make the author's
+own thoughts, reactions, corrections, topics, fabulas, rules, and validators the center
+of the experience. The current flow remains usable, but it will become the production
+layer below an author memory and author position workspace.
+
+Planned next user-facing areas:
+
+- an internal author memory feed for loose thoughts, links, reactions, and corrections;
+- editable topic cards with rules, weight ranges, and validator indicators;
+- editable fabula cards and a topic/fabula compatibility matrix;
+- Content Design Records for durable content rules;
+- structured audience, persona, goal, platform, and metric settings;
+- right-side context chat synchronized with the selected section;
+- validator indicators with evidence and suggested fixes.
+
 ## Run Locally
 
 ```bash

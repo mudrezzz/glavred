@@ -21,6 +21,10 @@ Slice 0.8 does not change the demo runtime. Drafts, checks, release prep, and an
 prep are still deterministic and local-first. AI provider behavior is documented as a
 future drafting boundary only.
 
+The next demo direction changes the product center. The current flow stays as the
+production layer, but the demo should add author memory and author-position controls
+above it before adding real AI drafting.
+
 ## Demo Scenario
 
 - Author: founder writing about practical AI adoption for small and medium businesses.
@@ -79,7 +83,15 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-The next demo extension is an AI drafting adapter skeleton. It should make draft
-generation pass through a provider-agnostic application boundary while keeping the
-current deterministic fallback available. Real provider calls, API keys, platform
-metrics, publication automation, and backend sync remain later steps.
+The next demo extension is an author memory and position baseline:
+
+- a lightweight internal feed for raw thoughts, link reactions, and manual
+  corrections;
+- a first transparent author-position panel that shows what the system inferred and
+  which notes support it;
+- topic and fabula cards as structured entities, not freeform settings;
+- early validator indicators with evidence.
+
+The AI drafting adapter skeleton is deferred until these constraints exist. Real
+provider calls, API keys, platform metrics, publication automation, and backend sync
+remain later steps.

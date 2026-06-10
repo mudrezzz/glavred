@@ -1,3 +1,11 @@
+## Revision note: 2026-06-10
+
+The original brief below remains the historical source requirement document. The
+current product direction has been refined: Glavred is now centered on `AuthorMemory`
+and `AuthorPositionModel`, while the signal-to-release workflow is treated as a
+downstream production layer. The active concept is documented in
+`docs/architecture/AUTHOR_POSITION_CONCEPT.md` and `ROADMAP.md`.
+
 ## Концепт: AI-издательство «Главред»
 
 Идея сильная: это не “генератор постов”, а **операционная система для авторского медиа**, где блогер не сидит перед пустым листом, а управляет редакцией. Главная метафора:

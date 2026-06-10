@@ -3,64 +3,103 @@
 ## Product Context
 
 Glavred is an AI-native editorial office for personal and expert media. The product is
-not a generic post generator: it helps an author build editorial discipline by moving
-from source signals to selected topics, approved post intentions, drafts, checks, and
-learning.
+not a generic post generator and not a source-signal compiler. It helps an author
+capture raw thoughts, reactions, corrections, archive material, and post-release
+learning, turn them into a transparent author position model, and use that model to
+plan, validate, draft, and release content.
 
 The primary requirements source is `glavred.md`. The design handoff in
-`ui-design-systems/` is a secondary visual and product reference. The product-facing
-term for the author's durable rules is **Редакционная модель** / `EditorialModel`.
+`ui-design-systems/` is a secondary visual and product reference. The June 2026 product
+revision adds `AuthorMemory` and `AuthorPositionModel` as the conceptual center of the
+system. The existing **Редакционная модель** / `EditorialModel` should evolve into a
+set of structured, validator-backed editorial entities rather than remain a single
+configuration block.
 
-## Current Product Perimeter
+The revised product concept is documented in
+`docs/architecture/AUTHOR_POSITION_CONCEPT.md`.
 
-The current working product perimeter reaches a captured editorial learning note:
+## Strategic Product Model
+
+The durable model is:
+
+`AuthorMemory -> AuthorPositionModel -> EditorialSystem -> ContentProduction -> Release -> Learning`
+
+- `AuthorMemory`: a lightweight internal feed of thoughts, reactions, links,
+  corrections, archive notes, and post-release learning. It must allow loose
+  stream-of-consciousness input.
+- `AuthorPositionModel`: a transparent, evidence-backed digest of that memory:
+  persona, style, audience, goals, metrics, topics, fabulas, platforms, formats,
+  Content Design Records, and validators.
+- `EditorialSystem`: structured rules, weights, compatibility matrices, and
+  validation contracts that describe how the author publishes.
+- `ContentProduction`: the already implemented downstream layer: signals, insights,
+  plan items, briefs, drafts, checks, release, and analytics prep.
+
+The main product risk is generic AI compilation. Glavred avoids it by making the
+author's own position explicit, editable, evidence-backed, and continuously validated.
+
+## Current Implemented Perimeter
+
+The current implemented perimeter reaches a captured editorial learning note:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
-This is intentionally smaller than the full product loop. Real AI provider calls,
-publication automation, backend sync, and real metrics ingestion are future slices.
-The current flow keeps the brief's core idea intact: the author approves the intention
-before text is written, reviews deterministic draft/check outputs before final
-approval, prepares copy/Markdown for manual release, and captures manual editorial
-learning.
+This remains useful as a production layer. It is no longer the conceptual center of the
+product. Future slices should add author memory, author position, structured editorial
+entities, and validator results above this flow, then route production decisions
+through them.
 
-Slice 0.8 adds an architecture baseline for future AI-assisted services without
-changing runtime behavior. The first AI replacement target is drafting. The current
-demo and local-first app remain deterministic until a later implementation slice adds
-an adapter skeleton.
+Real AI provider calls, publication automation, backend sync, and real metrics
+ingestion remain future slices. The near-term priority is not provider integration; it
+is making the author's own position explicit enough that AI can later assist without
+turning the product into generic content generation.
 
 ## Major Components
 
-- `EditorialModel`: owns author, audience, positioning, fabula, rubrics, style rules,
-  forbidden topics, and blog goals. It is the context used to evaluate every signal,
-  plan item, and brief.
-- `EditorialRadar`: accepts manually added source signals in the first implementation.
-  Real RSS, Telegram, website, YouTube, CRM, and document ingestion are extension
-  points, not part of the first product perimeter.
+- `AuthorMemory`: captures raw author notes, reactions, links, archive annotations,
+  manual corrections, rejected angles, draft revisions, and post-release learning
+  events.
+- `AuthorPositionModel`: aggregates memory into transparent rules and assertions about
+  persona, style, audience, goals, topics, fabulas, platforms, and formats. Every
+  assertion should have evidence.
+- `EditorialModel`: current implemented aggregate for author, audience, positioning,
+  fabula, rubrics, style rules, forbidden topics, and blog goals. It should be
+  decomposed into author-position entities in the next product circle.
+- `TopicCatalog`: stores editable topic cards with purpose, audience value, author
+  stance, rules, validator requirements, and weight ranges for planning.
+- `FabulaCatalog`: stores reusable post dramaturgy patterns with structure, conflict,
+  proof requirements, validator requirements, weight ranges, and compatibility with
+  topics.
+- `ContentDesignRecords`: stores durable content decisions that apply across posts,
+  similar to ADRs in software projects.
+- `PlatformProfiles`: stores platform and format rules, local validator requirements,
+  and planning weights.
+- `ValidatorFramework`: evaluates entities and production artifacts, returning score,
+  status, evidence, and fix guidance.
+- `ContextChat`: future right-side assistant synchronized with the active product
+  section. It proposes structured entities and checks consistency, but the author
+  approves or corrects.
+- `EditorialRadar`: collects external and manual material. Radar output is fuel for
+  author memory and content production, not the only source of posts.
 - `InsightScoring`: turns a source signal into an insight card with relevance, urgency,
-  banality risk, fact gaps, suggested rubric, and suggested author position.
-- `ContentPlanning`: turns selected insight cards into plan items with platform, date,
-  priority, format, expected effect, and approval status.
+  banality risk, fact gaps, suggested topic, and suggested author position.
+- `ContentPlanning`: turns selected insight cards and author constraints into plan
+  items with platform, date, priority, format, expected effect, and approval status.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
-- `Drafting`: turns an approved post brief into a deterministic editable draft.
-- `AIProviderBoundary`: defines how future provider-backed services can replace
-  deterministic application services without leaking provider details into React or
-  domain code.
-- `DraftingProvider`: the first planned provider-backed boundary. It accepts an
-  approved `PostBrief`, `EditorialModel`, and optional `EditorialLearningNote`, then
-  returns a `PostDraft`-compatible result or falls back to deterministic drafting.
+- `Drafting`: turns an approved post brief into an editable draft.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before final approval.
 - `ReleasePackaging`: turns approved final text into platform targets, Markdown
   preview, release checklist, and manual export status.
 - `AnalyticsPrep`: turns an exported release package into manual metric fields and an
   editorial learning note.
-- `HitlApprovals`: enforces human approval gates for plan items, post briefs, and
-  final text, plus release readiness and learning capture gates.
-- `LocalWorkspaceStore`: loads and saves the current workspace state in browser storage
-  for the first implementation slice.
+- `AIProviderBoundary`: defines how future provider-backed services can replace
+  deterministic application services without leaking provider details into React or
+  domain code.
+- `LocalWorkspaceStore`: loads and saves the current workspace state in browser
+  storage for the first implementation circles.
 
 ## Dependency Direction
 
@@ -72,21 +111,18 @@ Infrastructure adapters sit at the edge:
 
 `React UI -> application services -> WorkspaceStore adapter -> localStorage`
 
+Future provider integration follows the same rule:
+
+`React UI -> application service -> provider boundary -> infrastructure provider adapter`
+
 Domain code must not import React, browser APIs, storage APIs, future AI providers, or
-network clients. Application services orchestrate domain operations and call adapters.
-React components render state and trigger application service methods.
-
-Future AI provider integration follows the same rule:
-
-`React UI -> application drafting service -> AI provider boundary -> infrastructure provider adapter`
-
-The domain model remains provider-free. React never calls provider SDKs, network
-clients, or prompt builders directly. Application services choose between a provider
-adapter and the deterministic fallback through an explicit fallback policy.
+network clients. React components render state and trigger application service methods.
+Application services orchestrate domain operations, call adapters, and decide whether
+to use deterministic fallback or provider-backed behavior.
 
 ## Conceptual Domain Interfaces
 
-These contracts are implemented in TypeScript for the first local-first flow.
+Current implemented production contracts:
 
 - `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
   forbidden topics, goals.
@@ -107,19 +143,42 @@ These contracts are implemented in TypeScript for the first local-first flow.
   analytics status, updated time, captured time.
 - `WorkspaceStore`: load and save current local workspace state.
 
+Future author-position contracts:
+
+- `AuthorNote`: raw thought, reaction, link note, correction, archive annotation, or
+  learning note.
+- `AuthorMemoryEvent`: normalized event produced by notes, radar corrections, draft
+  revisions, release learning, or archive imports.
+- `AuthorPositionAssertion`: structured claim about the author's position with linked
+  evidence and confidence.
+- `Topic`: topic card with purpose, audience value, author stance, rules, validator
+  set, and weight range.
+- `Fabula`: narrative pattern with structure, conflict, proof requirements, validator
+  set, and weight range.
+- `TopicFabulaMatrix`: compatibility map between topics and fabulas.
+- `ContentDesignRecord`: durable content rule with rationale, scope, status, evidence,
+  and validator impact.
+- `PlatformProfile`: platform, formats, format rules, weight range, and compatibility
+  with fabulas.
+- `ValidatorResult`: validator id, target, status, score, evidence, and suggested
+  fixes.
+- `ContextChatSession`: active section, messages, proposed structured changes, and
+  approval state.
+
 ## Conceptual AI Provider Interfaces
 
 These interfaces are documented for future implementation and are not runtime
 TypeScript contracts in Slice 0.8:
 
 - `AiProviderAdapter`: infrastructure-side adapter that performs provider-specific
-  calls for one capability, such as draft generation.
-- `DraftGenerationRequest`: approved `PostBrief`, `EditorialModel`, optional previous
-  `EditorialLearningNote`, locale, output constraints, and caller context.
+  calls for one capability.
+- `DraftGenerationRequest`: approved `PostBrief`, `EditorialModel` or future
+  `AuthorPositionModel`, optional previous learning context, locale, output
+  constraints, and caller context.
 - `DraftGenerationResult`: title, draft body, notes, risks, provider metadata, and a
   shape that can be mapped into `PostDraft`.
-- `PromptTemplate`: stable prompt layers and variables used by the application
-  service before calling an adapter.
+- `PromptTemplate`: stable prompt layers and variables used by the application service
+  before calling an adapter.
 - `ProviderRunMetadata`: provider name, model name if known, run id if available,
   latency, token estimates when available, and fallback status.
 - `ProviderError`: normalized error information that does not expose SDK-specific
@@ -128,61 +187,67 @@ TypeScript contracts in Slice 0.8:
   provider mode, missing configuration, provider error, invalid result, or local demo
   mode.
 
-## Drafting Prompt Architecture
+## Validator Architecture
 
-Future AI-assisted drafting should compose prompts in layers:
+Validators are a common product layer, not only draft checks.
 
-1. System/context layer: the assistant acts as a careful editorial assistant, not as
-   the final approving editor.
-2. Editorial model layer: author, audience, positioning, fabula, style rules,
-   forbidden topics, rubrics, and goals.
-3. Brief layer: thesis, conflict, author position, evidence, examples, structure, CTA,
-   risks, and sources.
-4. Output contract layer: draft title, body, editorial notes, risk notes, and provider
-   run metadata.
-5. Human approval reminder: AI can propose a draft, but cannot approve final text or
-   bypass HITL gates.
+They should evaluate:
 
-All generated content for the current product should remain in Russian unless a later
-slice explicitly introduces multilingual behavior. The provider must preserve the
-author's position and must not imply autopublishing.
+- author position;
+- persona and alter ego;
+- style and anti-AI quality;
+- audience value;
+- goal fit;
+- topic rules;
+- fabula rules;
+- platform and format rules;
+- Content Design Record compliance;
+- uniqueness against archive;
+- evidence quality and fact gaps.
+
+Each validator result should include status, score, summary, evidence, and suggested
+fixes. The UI should show compact colored indicators with progressive disclosure into
+evidence and remediation.
 
 ## First Demo Data Flow
 
-The first realistic demo scenario is a founder writing about practical AI adoption for
+The current demo remains the founder-blog scenario about practical AI adoption for
 small and medium businesses:
 
-1. The workspace starts with an `EditorialModel` for an author whose fabula is that AI
-   value comes from process redesign, not tool collecting.
-2. The author adds a `SourceSignal`: several market posts discuss failed AI pilots
+1. The workspace starts with an `EditorialModel` for an author whose position is that
+   AI value comes from process redesign, not tool collecting.
+2. The author reviews a `SourceSignal`: several market posts discuss failed AI pilots
    caused by process gaps.
-3. `InsightScoring` produces an `InsightCard`: "AI pilots fail when teams automate
-   chaos", with relevance, suggested rubric, banality risk, and fact gaps.
-4. `ContentPlanning` creates a `ContentPlanItem` for a Telegram or LinkedIn post.
+3. `InsightScoring` produces an `InsightCard`.
+4. `ContentPlanning` creates a plan item.
 5. The author approves or adjusts the plan item through a HITL gate.
-6. `Briefing` creates a `PostBrief` with thesis, conflict, evidence, structure, risks,
-   and sources.
+6. `Briefing` creates a post brief.
 7. The author approves the post brief.
-8. `Drafting` creates a deterministic editable draft from the approved brief. In a
-   future AI slice, this step can call `DraftingProvider`; the current demo keeps the
-   deterministic fallback.
+8. `Drafting` creates an editable draft.
 9. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-10. The author edits the draft and approves the final text through the third HITL gate.
-11. `ReleasePackaging` creates a manual release package for Telegram and LinkedIn.
-12. The author completes a release checklist and copies text or downloads Markdown.
+10. The author edits the draft and approves the final text.
+11. `ReleasePackaging` creates a manual release package.
+12. The author copies text or downloads Markdown.
 13. `AnalyticsPrep` creates a manual metrics and editorial learning workspace.
 14. The author captures the editorial learning note.
-15. `LocalWorkspaceStore` persists the workspace so the learning note survives
-   reload.
+
+In the revised concept, each correction made during this flow should later become an
+`AuthorMemoryEvent`. The next demo circle should expose that memory layer directly.
 
 ## Extension Points
 
+- Author memory can ingest notes, links, archive posts, corrections, and analytics
+  learning before production artifacts are created.
 - Source ingestion adapters can later replace manual signal entry.
+- Validator adapters can later replace deterministic checks while preserving
+  evidence-backed `ValidatorResult` contracts.
+- Context chat can later create or revise structured entities, but should not bypass
+  explicit author approval.
 - AI provider adapters can later replace deterministic insight, planning, briefing,
-  drafting, and check services. Drafting is the first planned replacement target.
-- Backend persistence can replace `LocalWorkspaceStore` behind the same workspace
-  store interface.
+  drafting, and check services after author position and validators exist.
+- Backend persistence can replace `LocalWorkspaceStore` behind the same workspace store
+  interface.
 - Platform publication APIs can attach after the manual release package.
 - Real analytics ingestion can replace manual metric entry behind the analytics prep
   shape.
@@ -198,7 +263,16 @@ Current validation covers:
 - UI smoke tests for the source signal to captured editorial learning note flow.
 - Manual demo acceptance for the founder-blog scenario.
 
-For the first AI-assisted drafting implementation, add:
+For the author-position product circle, add:
+
+- Unit tests for author note classification and evidence linking.
+- Unit tests for topic/fabula weight ranges and compatibility matrix behavior.
+- Unit tests for validator score/status aggregation.
+- Integration tests for local persistence of author memory and position entities.
+- UI smoke tests for the author memory feed, topic/fabula cards, and validator
+  indicators.
+
+For later AI-assisted drafting, add:
 
 - Unit tests for deterministic fallback selection.
 - Unit tests for a mock drafting adapter.
@@ -208,24 +282,24 @@ For the first AI-assisted drafting implementation, add:
 
 ## Known Trade-offs
 
-- Deterministic draft and check outputs are useful for a controlled demo, but they do
-  not validate real AI quality yet.
+- The current `EditorialModel` is too coarse for the revised concept. It should be
+  migrated carefully into smaller entities without breaking the existing demo flow.
+- Author memory must stay loose enough for stream-of-consciousness input, while the
+  position model must be structured enough for validation.
+- Validator indicators can become noisy if every rule is shown at once. The UI needs
+  progressive disclosure from colored status to evidence.
 - Local-first persistence avoids backend scope, but it is not suitable for multi-device
   or team collaboration.
-- Manual export is intentionally limited: it gives operational readiness and Markdown,
-  not real platform publishing.
-- Analytics prep uses manual metrics, so it is useful for workflow shape but not yet a
-  live dashboard.
-- Manual source entry is narrow, but it makes the radar and scoring concepts usable
-  before real ingestion exists.
-- Provider selection is intentionally deferred. This keeps the first AI boundary
-  provider-agnostic, but the prompt and metadata contracts may need refinement once a
-  concrete API is chosen.
+- Provider selection is intentionally deferred. This keeps AI integration from being
+  attached to an underdeveloped author-position model.
 
 ## Open Questions
 
-- Which AI provider and model access pattern should be used after deterministic
-  services are replaced?
+- Which author memory event types should be implemented first: raw thoughts,
+  link-reactions, radar corrections, archive annotations, or release learning?
+- Should topic/fabula/platform weights initially be advisory only, or should they
+  produce hard validation failures in the content plan?
+- How much of the context chat should be implemented before real AI provider calls?
 - Which hosted deployment target should be used after local-first development?
 - Should the first backend persistence slice preserve the local workspace format or
   introduce a migration layer?

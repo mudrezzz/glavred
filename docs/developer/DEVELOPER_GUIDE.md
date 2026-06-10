@@ -72,6 +72,33 @@ The current app implements:
 The app does not yet include real source ingestion, AI calls, publishing integrations,
 autoposting, or real metrics ingestion.
 
+## Revised Product Direction
+
+The next product circle re-centers Glavred around:
+
+`AuthorMemory -> AuthorPositionModel -> EditorialSystem -> ContentProduction`
+
+The existing production flow remains valid, but it is downstream. Future development
+should first capture the author's raw thoughts, reactions, corrections, and archive
+material, then turn them into structured, evidence-backed entities that constrain the
+content pipeline.
+
+New conceptual entities:
+
+- `AuthorNote` and `AuthorMemoryEvent` for loose thoughts, links, reactions,
+  corrections, archive annotations, and learning events.
+- `AuthorPositionAssertion` for transparent claims about how the author thinks or
+  writes, with evidence.
+- `Topic`, `Fabula`, `TopicFabulaMatrix`, `ContentDesignRecord`, and
+  `PlatformProfile` as structured editorial entities.
+- `ValidatorResult` as a common score/status/evidence contract across setup,
+  planning, drafting, release, and archive uniqueness.
+- `ContextChatSession` for a future right-side assistant synchronized with the active
+  section.
+
+Do not model these as one large prompt or one freeform settings textarea. The product
+requires small entities, explicit rules, validator scores, and evidence links.
+
 ## Architecture Boundaries
 
 The implemented flow is:
@@ -96,6 +123,11 @@ real source ingestion, or AI provider calls until their slices are planned.
 
 Slice 0.8 defines the first AI boundary without adding runtime provider calls. The
 first replacement target is drafting from an approved `PostBrief`.
+
+After the June 2026 product revision, this boundary remains valid but is no longer the
+next implementation priority. AI-assisted drafting should wait until author memory,
+author position, topic/fabula entities, and validator contracts are strong enough to
+constrain generation.
 
 Rules for future AI-assisted drafting:
 
