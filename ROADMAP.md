@@ -334,7 +334,7 @@ Status:
 
 ### Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline
 
-- Status: Blocked
+- Status: Done
 - Goal: Create a public GitHub Wiki with real screenshots and user-facing
   explanations of the current product.
 - User value: A user can understand what Glavred does through a visual walkthrough
@@ -365,8 +365,7 @@ Status:
   - `npm test` passed.
   - `npm run smoke` passed.
   - `npm run docs:screenshots` passed.
-  - `npm run docs:wiki:publish` is blocked until a first temporary Wiki page is saved
-    through the GitHub web UI.
+  - `npm run docs:wiki:publish` passed after first-page Wiki initialization.
 - Docs:
   - Add wiki pages under `docs/wiki/`.
   - Update README, user guide, developer guide, demo docs, and roadmap.
@@ -375,8 +374,7 @@ Status:
   - The demo remains local-first and deterministic.
 - Acceptance criteria:
   - `mudrezzz/glavred` is public. Done.
-  - GitHub Wiki is published and available. Blocked by GitHub first-page UI
-    bootstrap.
+  - GitHub Wiki is published and available. Done.
   - Wiki pages use real screenshots from the current interface. Done.
   - Screenshots can be regenerated with `npm run docs:screenshots`. Done.
   - Existing tests and smoke build pass. Done.
@@ -539,15 +537,11 @@ Status:
   2026-06-10.
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
+- Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
+
 ## Blocked Items
 
-- Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline.
-  - Blocker: GitHub creates `mudrezzz/glavred.wiki.git` only after the first Wiki page
-    is saved through the GitHub web UI.
-  - Ready work: repo is public; `docs/wiki/` source exists; screenshots are generated;
-    README/user/developer/demo docs link to the wiki workflow.
-  - Unblock step: open `https://github.com/mudrezzz/glavred/wiki` while signed in,
-    create and save a temporary `Home` page, then run `npm run docs:wiki:publish`.
+- None.
 
 ## Open Questions
 
@@ -562,6 +556,4 @@ Status:
 
 ## Next Recommended Task
 
-Finish `Slice 1.0.3` by initializing the first GitHub Wiki page in the web UI, then
-run `npm run docs:wiki:publish`. After that, start `Slice 1.0.4: Author Memory
-External Sources and Import Design`.
+Start `Slice 1.0.4: Author Memory External Sources and Import Design`.
