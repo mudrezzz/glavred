@@ -206,9 +206,132 @@ Status:
   - Deterministic classification may feel simplistic; UI copy should make clear this is
     the first baseline before AI assistance.
 
-### Slice 1.1: Topics and Fabulas as Editorial Entities
+### Slice 1.0.1: Author Memory UX Hardening
 
 - Status: Ready
+- Goal: Make author memory fast, forgiving, and believable as the product's main
+  entry point.
+- User value: The author can capture thoughts with less friction, understand what the
+  system inferred, correct it in place, and manage a growing feed without losing
+  context.
+- Scope:
+  - Add a short instruction under `Авторская память` explaining how to use memory.
+  - Make note title optional through a `+ Заголовок` reveal action with remove/hide
+    behavior.
+  - Add local link previews for URLs in the composer and note feed.
+  - Split `Ручная корректировка` into a separate correction flow:
+    - target an inferred author-position block or concrete evidence item;
+    - hide unrelated fields such as link/title;
+    - let the user write only the correction;
+    - show a conflict-resolution prompt when the correction contradicts existing
+      evidence.
+  - Add `Корректировать` actions to every inferred assertion and evidence item.
+  - Add search and type filters above the memory feed.
+  - Add lazy feed display with `Показать еще` for large note sets.
+  - Collapse long notes with `Показать полностью` / `Свернуть`.
+  - Add edit and delete actions for notes with evidence-aware confirmation.
+  - Add a memory summary: total notes, notes by type, this month, this year.
+  - Add a voice-input affordance for notes with browser capability fallback.
+- Out of scope:
+  - Real AI classification.
+  - Real link metadata fetching through backend.
+  - Import-source settings, migration, and ingestion from Telegram/social/blog/docs.
+  - Audio storage, transcription backend, and voice model integration.
+  - Topic/fabula entities and validator framework.
+- Implementation notes:
+  - Keep the flow local-first and deterministic.
+  - Link previews can initially use parsed URL/domain metadata because browser-only
+    fetching is limited by CORS.
+  - Voice input can use browser speech recognition when available and show a disabled
+    fallback otherwise.
+  - Corrections should become author-memory notes themselves, not hidden UI state.
+  - Search belongs directly above the feed, after the composer and before note cards.
+- Tests:
+  - UI tests for optional title, adding a note without a title, and title reveal/hide.
+  - UI tests for link preview in composer and persisted note feed.
+  - UI tests for manual correction mode and correction actions from assertions/evidence.
+  - UI tests for search/filter, lazy loading, long-note expansion, edit, and delete.
+  - UI tests for memory summary and voice-input affordance fallback.
+  - Storage regression for preserving edited/deleted author-memory state.
+  - `npm test` and `npm run smoke`.
+- Docs:
+  - Update README, user guide, developer guide, demo docs, and roadmap.
+- Demo impact:
+  - The AI Product Manager demo should feel like a lived-in memory feed, not a static
+    fixture.
+  - Demo notes should be searchable, partially collapsed when long, and correctable
+    through evidence-backed assertions.
+- Acceptance criteria:
+  - The author can add a quick thought without a title.
+  - Link notes show a recognizable preview before and after saving.
+  - Manual correction is targeted at what the system inferred, not modeled as a
+    generic note form.
+  - The feed remains usable with many notes through search, filters, lazy loading, and
+    collapsed long text.
+  - Notes can be edited and deleted without breaking assertions or storage.
+  - Voice affordance is visible but does not promise unavailable transcription
+    backends.
+  - `npm test` and `npm run smoke` pass.
+- Risks:
+  - Correction conflict handling can become too complex; keep it to a small HITL
+    choice rather than building a full merge engine.
+  - Browser speech recognition support varies; the fallback state must be explicit.
+
+### Slice 1.0.2: Author Memory External Sources and Import Design
+
+- Status: Backlog
+- Goal: Design how external author material enters author memory without turning import
+  into an opaque dump of data.
+- User value: The author can see where their prior thoughts may come from, choose
+  trusted sources, understand import status, and keep imported material explainable as
+  evidence for author position.
+- Scope:
+  - Define import-source concepts for Telegram channel, social network, blog/site,
+    article archive, document/report, and manual file upload.
+  - Design source settings UX: source type, name, URL/file reference, import mode,
+    status, last checked/imported time, and user notes.
+  - Define migration/import states: `planned`, `connected`, `needsReview`,
+    `imported`, `paused`, `failed`.
+  - Define how imported items become `AuthorNote` or archive records.
+  - Define deduplication and evidence rules so imported material does not flood the
+    author-position model.
+  - Define review workflow before imported material starts influencing assertions.
+  - Decide what can be local-first in the browser and what requires future backend or
+    manual export/import.
+  - Add an implementation-ready roadmap for the first minimal import surface.
+- Out of scope:
+  - Real Telegram/social/blog API integrations.
+  - OAuth, backend workers, crawler infrastructure, and scheduled ingestion.
+  - Bulk document parsing beyond conceptual contracts.
+  - Automatic author-position updates from unreviewed imported material.
+- Implementation notes:
+  - Treat this as a product/architecture slice unless the design becomes small enough
+    for a minimal local UI shell.
+  - Imported material must preserve provenance: source, captured date, original link,
+    and why it was accepted as evidence.
+  - User review remains mandatory before imported material strengthens assertions.
+- Tests:
+  - If docs-only: `npm test` and `npm run smoke` as regression.
+  - If a UI shell is included: UI tests for source settings, source status, and no-op
+    local persistence.
+- Docs:
+  - Update architecture overview, developer guide, user guide, demo docs, and roadmap.
+  - Add ADR if the slice decides local-first/manual-import boundaries.
+- Demo impact:
+  - Demo should show possible AI Product Manager source channels without pretending
+    that real ingestion is already connected.
+- Acceptance criteria:
+  - Import is separated from day-to-day author-memory capture.
+  - Source provenance, review, deduplication, and influence on assertions are described.
+  - The next implementation step for imports is small and explicit.
+  - `npm test` and `npm run smoke` pass.
+- Risks:
+  - Real integrations can quickly dominate the product; keep the first implementation
+    focused on source configuration and reviewed import, not automation.
+
+### Slice 1.1: Topics and Fabulas as Editorial Entities
+
+- Status: Backlog
 - Goal: Replace coarse rubric/fabula settings with editable topic and fabula cards.
 - Scope:
   - Add `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrix`.
@@ -304,4 +427,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.1: Topics and Fabulas as Editorial Entities`.
+Start `Slice 1.0.1: Author Memory UX Hardening`.
