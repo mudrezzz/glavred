@@ -44,3 +44,7 @@ npm run docs:wiki:publish
 
 Перед публикацией основной репозиторий должен быть public, иначе GitHub Wiki может
 быть недоступна в выбранном режиме проекта.
+
+Для самой первой публикации GitHub требует один ручной web UI шаг: откройте
+`https://github.com/mudrezzz/glavred/wiki`, нажмите `Create the first page`, сохраните
+временную страницу `Home`, затем снова запустите `npm run docs:wiki:publish`.

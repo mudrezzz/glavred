@@ -334,7 +334,7 @@ Status:
 
 ### Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline
 
-- Status: Done
+- Status: Blocked
 - Goal: Create a public GitHub Wiki with real screenshots and user-facing
   explanations of the current product.
 - User value: A user can understand what Glavred does through a visual walkthrough
@@ -346,7 +346,8 @@ Status:
   - Capture screenshots for author memory, composer controls, link preview,
     correction/evidence flow, approved brief, editorial final text, release, and
     analytics.
-  - Publish `docs/wiki/` to `mudrezzz/glavred.wiki.git`.
+  - Publish `docs/wiki/` to `mudrezzz/glavred.wiki.git` after the first GitHub Wiki
+    page is initialized through the web UI.
   - Link the wiki from README, user guide, developer guide, and demo docs.
 - Out of scope:
   - Product runtime changes.
@@ -358,13 +359,14 @@ Status:
   - `npm run docs:screenshots` should reset browser local storage in Playwright and
     produce reproducible screenshots from the permanent AI Product Manager demo.
   - `npm run docs:wiki:publish` should publish the wiki source to the separate GitHub
-    Wiki repository.
+    Wiki repository after GitHub creates the backing `*.wiki.git` remote.
   - Perform a quick secret/env sweep before changing repository visibility to public.
 - Tests:
   - `npm test` passed.
   - `npm run smoke` passed.
   - `npm run docs:screenshots` passed.
-  - Wiki publish verified through GitHub Wiki availability.
+  - `npm run docs:wiki:publish` is blocked until a first temporary Wiki page is saved
+    through the GitHub web UI.
 - Docs:
   - Add wiki pages under `docs/wiki/`.
   - Update README, user guide, developer guide, demo docs, and roadmap.
@@ -373,14 +375,16 @@ Status:
   - The demo remains local-first and deterministic.
 - Acceptance criteria:
   - `mudrezzz/glavred` is public. Done.
-  - GitHub Wiki is published and available. Done.
+  - GitHub Wiki is published and available. Blocked by GitHub first-page UI
+    bootstrap.
   - Wiki pages use real screenshots from the current interface. Done.
   - Screenshots can be regenerated with `npm run docs:screenshots`. Done.
   - Existing tests and smoke build pass. Done.
 - Risks:
   - Screenshots can drift when UI changes; future user-visible slices should refresh
     them.
-  - GitHub Wiki is a separate repository; publication requires a separate push.
+  - GitHub Wiki backing repo is created lazily by GitHub and cannot be bootstrapped by
+    REST/GraphQL/git push alone.
 
 ### Slice 1.0.4: Author Memory External Sources and Import Design
 
@@ -535,11 +539,15 @@ Status:
   2026-06-10.
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
-- Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
-
 ## Blocked Items
 
-- None.
+- Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline.
+  - Blocker: GitHub creates `mudrezzz/glavred.wiki.git` only after the first Wiki page
+    is saved through the GitHub web UI.
+  - Ready work: repo is public; `docs/wiki/` source exists; screenshots are generated;
+    README/user/developer/demo docs link to the wiki workflow.
+  - Unblock step: open `https://github.com/mudrezzz/glavred/wiki` while signed in,
+    create and save a temporary `Home` page, then run `npm run docs:wiki:publish`.
 
 ## Open Questions
 
@@ -554,4 +562,6 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.4: Author Memory External Sources and Import Design`.
+Finish `Slice 1.0.3` by initializing the first GitHub Wiki page in the web UI, then
+run `npm run docs:wiki:publish`. After that, start `Slice 1.0.4: Author Memory
+External Sources and Import Design`.

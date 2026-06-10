@@ -12,7 +12,8 @@ notes.
 
 Work is saved in browser local storage.
 
-For a visual walkthrough with real interface screenshots, use the GitHub Wiki:
+For a visual walkthrough with real interface screenshots, use the GitHub Wiki after it
+has been initialized:
 
 - GitHub Wiki: `https://github.com/mudrezzz/glavred/wiki`
 - Wiki source in this repository: `docs/wiki/Home.md`

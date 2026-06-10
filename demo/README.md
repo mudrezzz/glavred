@@ -65,6 +65,10 @@ npm run docs:screenshots
 The wiki covers the same AI Product Manager demo: author memory, production flow,
 manual release, and analytics learning note.
 
+If the GitHub Wiki has not been initialized yet, GitHub redirects the URL back to the
+repository. Create the first temporary Wiki page in the web UI once, then run
+`npm run docs:wiki:publish`.
+
 ## Main User Flow
 
 1. Open `Память автора`.

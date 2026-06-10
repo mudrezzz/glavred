@@ -109,7 +109,8 @@ npm run docs:wiki:publish
 - [Developer guide](docs/developer/DEVELOPER_GUIDE.md)
 - [User guide](docs/user/USER_GUIDE.md)
 - [Demo](demo/README.md)
-- [GitHub Wiki](https://github.com/mudrezzz/glavred/wiki)
+- [GitHub Wiki](https://github.com/mudrezzz/glavred/wiki) (available after the first
+  GitHub Wiki page is initialized through the web UI)
 - [Wiki source](docs/wiki/Home.md)
 
 ## Development Model

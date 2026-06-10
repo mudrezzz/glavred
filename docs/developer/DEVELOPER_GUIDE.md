@@ -103,6 +103,11 @@ files to `docs/wiki/assets/screenshots/`.
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
 repository must be public before publishing the wiki in the current GitHub setup.
 
+GitHub creates the backing `*.wiki.git` repository only after the first wiki page is
+saved through the web UI. For the first publish, open
+`https://github.com/mudrezzz/glavred/wiki`, click `Create the first page`, save a
+temporary `Home` page, and then rerun `npm run docs:wiki:publish`.
+
 When user-visible UI changes, update the matching wiki page and refresh screenshots in
 the same slice.
 

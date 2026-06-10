@@ -54,7 +54,23 @@ async function main() {
   }
 
   git(['commit', '-m', 'Update Glavred user wiki'], { cwd: publishDir, stdio: 'inherit' });
-  git(['push', '-u', 'origin', 'master'], { cwd: publishDir, stdio: 'inherit' });
+  try {
+    git(['push', '-u', 'origin', 'master'], { cwd: publishDir, stdio: 'inherit' });
+  } catch (error) {
+    console.error(
+      [
+        '',
+        'GitHub Wiki publish failed.',
+        'If this is the first wiki publish, GitHub requires one manual web UI bootstrap step:',
+        '1. Open https://github.com/mudrezzz/glavred/wiki while signed in.',
+        '2. Click "Create the first page".',
+        '3. Save any temporary Home page.',
+        '4. Run npm run docs:wiki:publish again.',
+        ''
+      ].join('\n')
+    );
+    throw error;
+  }
 }
 
 main().catch((error) => {
