@@ -1,7 +1,10 @@
 import type {
+  AuthorMemoryEvent,
+  AuthorNote,
+  AuthorPositionAssertion,
   ContentPlanItem,
-  EditorialLearningNote,
   EditorialCheck,
+  EditorialLearningNote,
   EditorialModel,
   EditorNote,
   FinalText,
@@ -13,40 +16,143 @@ import type {
   SourceSignal
 } from '../domain/editorialWorkspace';
 
+export function createAuthorMemoryEvent(note: AuthorNote): AuthorMemoryEvent {
+  return {
+    id: `memory-${note.id}`,
+    noteId: note.id,
+    type: note.type,
+    summary: summarizeAuthorNote(note),
+    detectedSignals: detectAuthorSignals(note),
+    createdAt: new Date().toISOString()
+  };
+}
+
+export function inferAuthorPositionAssertions(
+  notes: AuthorNote[],
+  events: AuthorMemoryEvent[]
+): AuthorPositionAssertion[] {
+  const evidence = (noteIds: string[], reason: string) =>
+    Array.from(new Set(noteIds))
+      .map((noteId) => notes.find((note) => note.id === noteId))
+      .filter((note): note is AuthorNote => Boolean(note))
+      .map((note) => ({
+        noteId: note.id,
+        quote: excerpt(note.body),
+        reason
+      }));
+
+  const signalNotes = (signal: string) =>
+    events.filter((event) => event.detectedSignals.includes(signal)).map((event) => event.noteId);
+
+  const workflowNotes = signalNotes('workflow-risk');
+  const evalNotes = signalNotes('evals');
+  const adoptionNotes = signalNotes('adoption');
+  const trustNotes = signalNotes('trust');
+  const confidenceNotes = signalNotes('confidence-boundaries');
+
+  return [
+    {
+      id: 'assertion-persona-ai-product-manager',
+      type: 'persona',
+      title: 'AI Product Manager с исследовательской оптикой',
+      statement:
+        'Автор смотрит на AI-B2B продукт как на исследование workflow, adoption, доверия и экономики внедрения, а не как на демонстрацию модели.',
+      confidence: confidenceFor([...workflowNotes, ...adoptionNotes, ...trustNotes]),
+      evidence: evidence(
+        [...workflowNotes, ...adoptionNotes, ...trustNotes],
+        'Заметки фиксируют продуктовую, а не инструментальную оптику автора.'
+      ),
+      status: 'inferred'
+    },
+    {
+      id: 'assertion-style-research-notes',
+      type: 'style',
+      title: 'Стиль: исследовательские заметки без демо-магии',
+      statement:
+        'Тон должен быть спокойным, наблюдательным и проверяющим: меньше хайпа, больше границ применимости, evidence и честных trade-offs.',
+      confidence: confidenceFor([...evalNotes, ...trustNotes, ...confidenceNotes]),
+      evidence: evidence(
+        [...evalNotes, ...trustNotes, ...confidenceNotes],
+        'Evidence показывает интерес автора к проверкам, границам уверенности и доверию.'
+      ),
+      status: 'inferred'
+    },
+    {
+      id: 'assertion-audience-ai-b2b-builders',
+      type: 'audience',
+      title: 'Аудитория: строители AI-B2B продуктов',
+      statement:
+        'Блог должен говорить с AI PM, founders, CPO и B2B SaaS командами, которым нужно довести AI-функцию от пилота до повторяемого adoption.',
+      confidence: confidenceFor([...adoptionNotes, ...workflowNotes]),
+      evidence: evidence(
+        [...adoptionNotes, ...workflowNotes],
+        'Заметки явно привязаны к GTM, adoption и продуктовым решениям после пилота.'
+      ),
+      status: 'inferred'
+    },
+    {
+      id: 'assertion-topic-ai-b2b-product-system',
+      type: 'topic',
+      title: 'Главная тема: система AI-B2B продукта',
+      statement:
+        'Сильные темы автора: workflow risk, evals как продуктовая функция, trust loop, adoption после пилота и объяснение границ уверенности.',
+      confidence: confidenceFor([...workflowNotes, ...evalNotes, ...trustNotes, ...confidenceNotes]),
+      evidence: evidence(
+        [...workflowNotes, ...evalNotes, ...trustNotes, ...confidenceNotes],
+        'Повторяются темы workflow, evals, trust loop и confidence boundaries.'
+      ),
+      status: 'inferred'
+    },
+    {
+      id: 'assertion-principle-no-demo-magic',
+      type: 'principle',
+      title: 'Принцип: демо не равно продукт',
+      statement:
+        'AI-фича становится продуктом только тогда, когда у нее есть evals, объяснимые границы, rollback, adoption loop и понятная экономика внедрения.',
+      confidence: confidenceFor([...evalNotes, ...adoptionNotes, ...confidenceNotes]),
+      evidence: evidence(
+        [...evalNotes, ...adoptionNotes, ...confidenceNotes],
+        'Заметки противопоставляют красивое демо реальному productization.'
+      ),
+      status: 'inferred'
+    }
+  ];
+}
+
 export function createInsightCard(signal: SourceSignal, model: EditorialModel): InsightCard {
-  const score = signal.summary.toLowerCase().includes('процесс') ? 0.91 : 0.74;
+  const score = signal.summary.toLowerCase().includes('workflow') ? 0.92 : 0.78;
 
   return {
-    id: 'insight-ai-process-chaos',
+    id: 'insight-ai-demo-to-adoption',
     signalId: signal.id,
-    title: 'AI-пилоты проваливаются, когда команды автоматизируют хаос',
+    title: 'AI-B2B пилоты ломаются между красивым демо и повторяемым adoption',
     whyItMatters:
-      'Сигнал точно ложится на фабулу автора: ценность AI появляется не от покупки инструментов, а от перестройки процессов.',
+      'Сигнал ложится на позицию автора: AI-фича становится продуктом не в момент демо, а когда команда научилась измерять качество, встраивать workflow и доводить пользователя до повторяемого результата.',
     audienceRelevance: model.audience,
     authorPosition:
-      'Выигрывают не те, кто быстрее подключил инструмент, а те, кто навел порядок в работе до автоматизации.',
-    rubric: 'Разборы',
-    urgency: 'Вечнозеленая тема с актуальным рыночным поводом',
+      'Слабое место AI-B2B продукта обычно не модель, а отсутствие product loop: evals, trust, adoption, rollback и ясная экономика внедрения.',
+    rubric: 'Product research notes',
+    urgency: 'Вечнозеленая тема с актуальным рынком AI-пилотов',
     score,
-    banalityRisk: 0.22,
+    banalityRisk: 0.18,
     factGaps: [
-      'Нужен один подтвержденный пример провала AI-пилота из публичного источника',
-      'Нужна цифра или отчет о доле команд, внедряющих AI без процессных изменений'
+      'Нужен публичный пример AI-B2B пилота, который не дошел до регулярного использования после демо',
+      'Нужен отчет или интервью о роли evals, trust и change management в adoption AI-функций'
     ]
   };
 }
 
 export function createContentPlanItem(insight: InsightCard): ContentPlanItem {
   return {
-    id: 'plan-ai-process-chaos',
+    id: 'plan-ai-demo-to-adoption',
     insightId: insight.id,
     title: insight.title,
-    platform: 'Telegram + LinkedIn',
-    date: '2026-06-05',
+    platform: 'Telegram',
+    date: '2026-06-12',
     priority: 'Высокий',
-    format: 'Разбор',
+    format: 'Исследовательская заметка',
     expectedEffect:
-      'Усилить репутацию автора как практичного операционного эксперта и собрать обсуждение от основателей.',
+      'Показать AI PM и founders, что productization начинается после вау-демо: с evals, adoption loop и доверия пользователя.',
     approvalStatus: 'draft'
   };
 }
@@ -57,39 +163,39 @@ export function createPostBrief(
   model: EditorialModel
 ): PostBrief {
   return {
-    id: 'brief-ai-process-chaos',
+    id: 'brief-ai-demo-to-adoption',
     planItemId: planItem.id,
-    title: 'Почему AI-пилоты проваливаются, когда команда автоматизирует хаос',
+    title: 'Почему AI-B2B демо еще не продукт',
     rubric: insight.rubric,
     audience: model.audience,
     thesis:
-      'AI не чинит беспорядок в процессах. Он делает его быстрее, дороже и заметнее.',
+      'AI-B2B продукт начинается не с впечатляющего демо, а с доказуемого workflow improvement, evals и доверия пользователя к границам системы.',
     conflict:
-      'Рынок обсуждает инструменты и модели, но игнорирует операционную дисциплину, без которой AI-пилоты превращаются в имитацию прогресса.',
+      'Команды празднуют момент, когда модель впервые красиво отвечает в демо, но настоящий риск появляется позже: пользователь не понимает, когда фиче верить, как встроить ее в работу и что делать при ошибке.',
     authorPosition: insight.authorPosition,
     evidence: [
-      'Повторяющийся паттерн из рыночных постов: пилот запущен, но процесс не изменен',
-      'Наблюдение автора: автоматизация работает только там, где уже описаны роли, входы и решения',
-      'Факт-геп из радара: нужен внешний отчет или публичный кейс для усиления тезиса'
+      'Авторская заметка: workflow risk важнее выбора модели, потому что плохой сценарий ускоряется вместе с AI',
+      'Авторская заметка: evals должны быть продуктовой функцией, а не внутренней таблицей команды',
+      'Реакция на интервью: AI-фича должна объяснять границы уверенности, иначе enterprise users не переносят ее в регулярную работу'
     ],
     examples: [
-      'Команда подключила AI к хаотичному найму и получила больше быстрых, но непроверенных кандидатов',
-      'Отдел продаж автоматизировал follow-up, не договорившись о критериях качества лида'
+      'Sales copilot выглядит сильным в демо, но менеджеры не используют подсказки, если не видят источник уверенности и способ отката',
+      'Support automation снижает нагрузку только тогда, когда команда заранее описала escalation path и критерии качества ответа'
     ],
     structure: [
-      'Лид: рынок снова спорит, какой AI-инструмент выбрать',
-      'Поворот: проблема не в инструменте, а в процессе, который он ускоряет',
-      'Разбор: что именно ломается в AI-пилотах без операционной базы',
-      'Практический критерий: когда процесс готов к автоматизации',
-      'Вывод: сначала дисциплина, потом AI'
+      'Лид: красивое AI demo почти всегда обманывает команду ощущением готового продукта',
+      'Поворот: продукт начинается после демо, когда появляются evals, trust loop и adoption work',
+      'Разбор: где ломается путь от pilot к регулярному использованию',
+      'Практический критерий: что проверить перед тем, как считать AI-фичу продуктовой',
+      'Вывод: AI PM должен проектировать не ответ модели, а систему доверия и использования'
     ],
-    cta: 'Предложить читателю проверить один процесс перед следующим AI-пилотом.',
+    cta: 'Предложить читателю проверить одну AI-фичу: есть ли у нее evals, понятные границы уверенности и rollback path.',
     risks: [
-      'Не звучать как противник AI-инструментов',
-      'Не уйти в абстрактный консалтинг без практического критерия',
-      'Подтвердить фактические обобщения источниками'
+      'Не звучать как противник быстрых прототипов: демо полезно, но не равно productization',
+      'Не уйти в академичность без практического критерия для AI PM',
+      'Подтвердить публичными примерами или явно пометить наблюдения как research notes автора'
     ],
-    sources: [planItem.platform, 'Рыночные посты о провалах AI-пилотов', 'Заметки автора'],
+    sources: [planItem.platform, 'Авторская память', 'Customer interviews о внедрении AI-функций'],
     approvalStatus: 'draft'
   };
 }
@@ -98,7 +204,7 @@ export function createPostDraft(postBrief: PostBrief, model: EditorialModel): Po
   const body = [
     postBrief.title,
     '',
-    'Рынок снова спорит, какой AI-инструмент выбрать. Но в большинстве проваленных пилотов проблема начинается раньше: команда пытается автоматизировать процесс, который еще не описан.',
+    'Красивое AI-демо почти всегда создает ложное ощущение готового продукта.',
     '',
     `Тезис: ${postBrief.thesis}`,
     '',
@@ -106,13 +212,13 @@ export function createPostDraft(postBrief: PostBrief, model: EditorialModel): Po
     '',
     `Моя позиция: ${postBrief.authorPosition}`,
     '',
-    'Что важно проверить перед новым пилотом:',
+    'Что должно быть до уверенного rollout:',
     ...postBrief.evidence.map((item, index) => `${index + 1}. ${item}`),
     '',
-    'Как это выглядит на практике:',
+    'Как это выглядит в B2B:',
     ...postBrief.examples.map((item) => `- ${item}`),
     '',
-    'Структура решения:',
+    'Структура заметки:',
     ...postBrief.structure.map((item) => `- ${item}`),
     '',
     `Для аудитории: ${model.audience}`,
@@ -136,11 +242,12 @@ export function runEditorialChecks(
   postBrief: PostBrief,
   model: EditorialModel
 ): EditorialCheck[] {
+  const normalizedBody = draft.body.toLowerCase();
   const hasFactGaps =
-    postBrief.evidence.some((item) => item.toLowerCase().includes('факт')) ||
-    postBrief.sources.some((item) => item.toLowerCase().includes('рыночн'));
+    postBrief.evidence.some((item) => item.toLowerCase().includes('публич')) ||
+    postBrief.sources.some((item) => item.toLowerCase().includes('interview'));
   const mentionsForbiddenTopic = model.forbiddenTopics.some((topic) =>
-    draft.body.toLowerCase().includes(topic.toLowerCase())
+    normalizedBody.includes(topic.toLowerCase())
   );
 
   return [
@@ -149,10 +256,10 @@ export function runEditorialChecks(
       type: 'style',
       title: 'Стиль',
       status: draft.body.length > 700 ? 'passed' : 'warning',
-      summary: 'Текст держит спокойный практический голос автора и не уходит в витринный тон.',
+      summary: 'Текст держит исследовательский голос AI Product Manager и не уходит в рекламный тон.',
       findings: [
         `Сверено с правилами: ${model.styleRules.slice(0, 2).join(', ')}.`,
-        'Главный тезис вынесен в начало, структура читается как разбор.'
+        'Главный тезис вынесен в начало, структура читается как research note.'
       ]
     },
     {
@@ -162,7 +269,7 @@ export function runEditorialChecks(
       status: 'passed',
       summary: 'Стерильных вводных и обобщенного AI-тона не найдено.',
       findings: [
-        'Есть авторская позиция, конфликт и практические примеры.',
+        'Есть авторская позиция, конфликт и практические B2B-примеры.',
         'Драфт не начинается с пустой фразы вроде "в современном мире".'
       ]
     },
@@ -172,12 +279,12 @@ export function runEditorialChecks(
       title: 'Фактчек',
       status: hasFactGaps ? 'warning' : 'passed',
       summary: hasFactGaps
-        ? 'Есть фактические места, которые лучше подтвердить перед публикацией.'
+        ? 'Есть места, которые лучше подтвердить внешним примером или явно оставить как авторское наблюдение.'
         : 'Критичных неподтвержденных фактов не найдено.',
       findings: hasFactGaps
         ? [
-            'Нужен внешний отчет или публичный кейс для усиления тезиса.',
-            'Источники из фабулы стоит проверить перед выпуском.'
+            'Нужен публичный пример AI-B2B пилота, который не дошел до регулярного использования.',
+            'Customer interview лучше цитировать обезличенно или заменить на проверяемый источник.'
           ]
         : ['Текст опирается на утвержденную фабулу и авторские наблюдения.']
     },
@@ -191,7 +298,7 @@ export function runEditorialChecks(
         : 'Запретные темы и позиционирование соблюдены.',
       findings: mentionsForbiddenTopic
         ? ['Проверьте формулировки рядом с запретными темами редакционной модели.']
-        : ['Текст остается в рамках практического AI-внедрения для бизнеса.']
+        : ['Текст остается в рамках AI product management и B2B product research.']
     }
   ];
 }
@@ -206,14 +313,14 @@ export function createEditorNotes(checks: EditorialCheck[]): EditorNote[] {
       agent: 'Главный редактор',
       tone: 'жестко, но по делу',
       target: 'лид',
-      text: 'Лид уже держит конфликт. Перед финалом проверьте, не смягчил ли автор главный тезис.'
+      text: 'Лид держит конфликт. Перед финалом проверьте, не смягчил ли автор тезис про разницу между демо и продуктом.'
     },
     {
       id: 'note-style-editor',
       agent: 'Стиль-редактор',
-      tone: 'сухо и практично',
+      tone: 'исследовательски',
       target: 'структура',
-      text: 'Список проверок помогает SMB-аудитории. Не превращайте его в абстрактный консалтинг.'
+      text: 'Формат research note подходит TG-блогу AI PM. Не превращайте заметку в чеклист без авторского наблюдения.'
     },
     {
       id: 'note-fact-editor',
@@ -222,7 +329,7 @@ export function createEditorNotes(checks: EditorialCheck[]): EditorNote[] {
       target: 'доказательства',
       text:
         factCheck?.status === 'warning'
-          ? 'Перед выпуском добавьте внешний источник или явно пометьте пример как авторское наблюдение.'
+          ? 'Перед выпуском добавьте публичный пример или явно пометьте customer interview как обезличенное наблюдение.'
           : 'Фактических блокеров нет.'
     },
     {
@@ -260,7 +367,7 @@ export function createReleasePackage(
     `- Площадки: ${platformLabel}`,
     `- Формат: ${contentPlanItem?.format ?? 'Ручной выпуск'}`,
     `- Дата плана: ${contentPlanItem?.date ?? 'не задана'}`,
-    `- Статус: ручной экспорт подготовлен`,
+    '- Статус: ручной экспорт подготовлен',
     `- Утверждено: ${finalText.approvedAt}`
   ].join('\n');
 
@@ -279,21 +386,6 @@ export function createReleasePackage(
     status: 'draft',
     updatedAt: new Date().toISOString()
   };
-}
-
-function resolveReleaseTargets(platform: string): ReleaseTarget[] {
-  const normalized = platform.toLowerCase();
-  const targets: ReleaseTarget[] = [];
-
-  if (normalized.includes('telegram')) {
-    targets.push('telegram');
-  }
-
-  if (normalized.includes('linkedin')) {
-    targets.push('linkedin');
-  }
-
-  return targets.length > 0 ? targets : ['telegram'];
 }
 
 export function createEditorialLearningNote(
@@ -327,4 +419,69 @@ export function createEditorialLearningNote(
     updatedAt: new Date().toISOString(),
     capturedAt: null
   };
+}
+
+function summarizeAuthorNote(note: AuthorNote): string {
+  const prefix: Record<AuthorNote['type'], string> = {
+    thought: 'Мысль автора',
+    linkReaction: 'Реакция на источник',
+    manualCorrection: 'Ручная корректировка'
+  };
+
+  return `${prefix[note.type]}: ${note.title}`;
+}
+
+function detectAuthorSignals(note: AuthorNote): string[] {
+  const normalized = `${note.title} ${note.body} ${note.tags.join(' ')}`.toLowerCase();
+  const signals: string[] = [];
+
+  if (matches(normalized, ['workflow', 'процесс', 'сценар', 'risk', 'риск'])) {
+    signals.push('workflow-risk');
+  }
+
+  if (matches(normalized, ['eval', 'оценк', 'метрик', 'провер', 'quality'])) {
+    signals.push('evals');
+  }
+
+  if (matches(normalized, ['adoption', 'gtm', 'пилот', 'внедрен', 'rollout'])) {
+    signals.push('adoption');
+  }
+
+  if (matches(normalized, ['trust', 'довер', 'enterprise', 'rollback', 'evidence'])) {
+    signals.push('trust');
+  }
+
+  if (matches(normalized, ['уверенн', 'confidence', 'границ', 'не знает', 'объясн'])) {
+    signals.push('confidence-boundaries');
+  }
+
+  return signals.length > 0 ? signals : ['author-observation'];
+}
+
+function matches(value: string, needles: string[]): boolean {
+  return needles.some((needle) => value.includes(needle));
+}
+
+function excerpt(value: string): string {
+  return value.length > 180 ? `${value.slice(0, 177)}...` : value;
+}
+
+function confidenceFor(noteIds: string[]): number {
+  const unique = new Set(noteIds);
+  return Math.min(0.95, 0.62 + unique.size * 0.08);
+}
+
+function resolveReleaseTargets(platform: string): ReleaseTarget[] {
+  const normalized = platform.toLowerCase();
+  const targets: ReleaseTarget[] = [];
+
+  if (normalized.includes('telegram')) {
+    targets.push('telegram');
+  }
+
+  if (normalized.includes('linkedin')) {
+    targets.push('linkedin');
+  }
+
+  return targets.length > 0 ? targets : ['telegram'];
 }

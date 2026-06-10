@@ -10,21 +10,21 @@ transparent author position model, and use that model to plan, validate, draft, 
 release content.
 
 The current repository contains the first working local-first editorial cabinet. It
-implements an editable flow from source signal to insight card, content plan item,
-approved post brief, deterministic draft, editorial checks, and approved final text,
-manual release package, copy/Markdown export, and captured editorial learning note,
-plus tests, documentation, demo notes, and the design handoff supplied in
-`ui-design-systems/`.
+implements author memory, evidence-backed author-position assertions, and an editable
+production flow from source signal to insight card, content plan item, approved post
+brief, deterministic draft, editorial checks, approved final text, manual release
+package, copy/Markdown export, and captured editorial learning note.
 
-The next product circle re-centers the system around author memory and validator-backed
-editorial entities before adding real AI provider integration.
+The current product circle re-centers the system around author memory and
+validator-backed editorial entities before adding real AI provider integration.
 
 ## Source Requirements
 
 Primary source requirements file: `glavred.md`.
 
-Current status: `glavred.md` is filled and is the source of truth for product
-direction. The existing design handoff is a secondary visual/product reference.
+Current status: `glavred.md` remains the historical product brief. The active June
+2026 product revision is documented in the architecture docs and roadmap. The existing
+design handoff is a secondary visual/product reference.
 
 ## Product Direction
 
@@ -54,6 +54,11 @@ The revised core modules are:
 Current working flow: the first implementation still reaches a captured editorial
 learning note and uses local-first browser persistence before backend, real metrics
 ingestion, autoposting, or AI provider integration.
+
+Permanent demo example: a Telegram blog by an AI Product Manager who shares research
+experience building AI-B2B products. The demo starts with author notes about workflow
+risk, evals, trust, adoption, and confidence boundaries, then routes the same example
+through the existing production flow.
 
 ## Quick Start
 

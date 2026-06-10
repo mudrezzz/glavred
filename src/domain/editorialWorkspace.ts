@@ -5,6 +5,44 @@ export type EditorialCheckStatus = 'passed' | 'warning' | 'failed';
 export type ReleaseStatus = 'draft' | 'ready' | 'exported';
 export type ReleaseTarget = 'telegram' | 'linkedin';
 export type AnalyticsStatus = 'draft' | 'captured';
+export type AuthorNoteType = 'thought' | 'linkReaction' | 'manualCorrection';
+export type AuthorPositionAssertionType = 'persona' | 'style' | 'audience' | 'topic' | 'principle';
+export type AuthorPositionAssertionStatus = 'inferred' | 'confirmed';
+
+export interface AuthorNote {
+  id: string;
+  type: AuthorNoteType;
+  title: string;
+  body: string;
+  sourceUrl: string;
+  tags: string[];
+  capturedAt: string;
+}
+
+export interface AuthorMemoryEvent {
+  id: string;
+  noteId: string;
+  type: AuthorNoteType;
+  summary: string;
+  detectedSignals: string[];
+  createdAt: string;
+}
+
+export interface EvidenceLink {
+  noteId: string;
+  quote: string;
+  reason: string;
+}
+
+export interface AuthorPositionAssertion {
+  id: string;
+  type: AuthorPositionAssertionType;
+  title: string;
+  statement: string;
+  confidence: number;
+  evidence: EvidenceLink[];
+  status: AuthorPositionAssertionStatus;
+}
 
 export interface EditorialModel {
   author: string;
@@ -149,6 +187,9 @@ export interface EditorialLearningNote {
 }
 
 export interface WorkspaceState {
+  authorNotes: AuthorNote[];
+  authorMemoryEvents: AuthorMemoryEvent[];
+  authorPositionAssertions: AuthorPositionAssertion[];
   editorialModel: EditorialModel;
   sourceSignal: SourceSignal;
   insightCard: InsightCard | null;
@@ -165,6 +206,7 @@ export interface WorkspaceState {
 }
 
 export type WorkspaceSection =
+  | 'memory'
   | 'editorialModel'
   | 'radar'
   | 'plan'

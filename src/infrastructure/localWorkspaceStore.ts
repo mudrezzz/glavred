@@ -37,6 +37,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   return {
     ...demo,
     ...saved,
+    authorNotes: saved.authorNotes ?? demo.authorNotes,
+    authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
+    authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel: saved.editorialModel ?? demo.editorialModel,
     sourceSignal: saved.sourceSignal ?? demo.sourceSignal,
     insightCard: saved.insightCard ?? null,

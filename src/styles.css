@@ -22,7 +22,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -394,7 +395,8 @@ button:disabled {
 }
 
 textarea,
-input {
+input,
+select {
   width: 100%;
   border: 1px solid var(--ink-200);
   border-radius: var(--r-md);
@@ -414,8 +416,13 @@ input {
   padding: 10px 13px;
 }
 
+select {
+  padding: 10px 13px;
+}
+
 textarea:focus,
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--info);
   outline: none;
   background: var(--surface);
@@ -451,6 +458,140 @@ input:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.memory-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 22px;
+  align-items: start;
+}
+
+.memory-main,
+.memory-feed,
+.assertions {
+  display: grid;
+  gap: 14px;
+}
+
+.memory-composer {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.memory-composer label,
+.memory-note .note-top {
+  display: grid;
+  gap: 7px;
+}
+
+.memory-composer label {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.memory-composer label input,
+.memory-composer label textarea,
+.memory-composer label select {
+  color: var(--ink-900);
+  font: var(--ui-md);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.memory-note {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.memory-note .note-top,
+.assertion-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.memory-note h3,
+.assertion h3 {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 700;
+}
+
+.memory-note p,
+.assertion p {
+  margin: 0;
+  color: var(--ink-700);
+  line-height: 1.55;
+}
+
+.memory-note a {
+  color: var(--info-ink);
+  font: var(--ui-sm);
+  overflow-wrap: anywhere;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.memory-side {
+  position: sticky;
+  top: 12px;
+}
+
+.assertion {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.assertion details {
+  color: var(--ink-700);
+}
+
+.assertion summary {
+  cursor: pointer;
+  color: var(--accent-ink);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.evidence-list blockquote {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.evidence-list blockquote p {
+  color: var(--ink-800);
+  font: var(--ui-sm);
+}
+
+.evidence-list cite {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  font-style: normal;
 }
 
 .insight {
@@ -1294,6 +1435,7 @@ input:focus {
   }
 
   .model-grid,
+  .memory-grid,
   .brief-grid,
   .edit-grid,
   .release-grid,

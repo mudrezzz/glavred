@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  createAuthorMemoryEvent,
   createContentPlanItem,
   createEditorNotes,
   createEditorialLearningNote,
@@ -7,6 +8,7 @@ import {
   createPostBrief,
   createPostDraft,
   createReleasePackage,
+  inferAuthorPositionAssertions,
   runEditorialChecks
 } from './application/editorialServices';
 import {
@@ -19,6 +21,9 @@ import {
   reviseDraft,
   toggleReleaseChecklistItem,
   updateLearningNote,
+  type AuthorNote,
+  type AuthorNoteType,
+  type AuthorPositionAssertion,
   type EditorialCheck,
   type EditorialLearningNote,
   type EditorialModel,
@@ -36,6 +41,7 @@ import { LocalWorkspaceStore } from './infrastructure/localWorkspaceStore';
 const store = new LocalWorkspaceStore();
 
 const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: string; disabled?: boolean }> = [
+  { id: 'memory', icon: 'memory', label: 'Память автора' },
   { id: 'editorialModel', icon: 'model', label: 'Редакционная модель' },
   { id: 'radar', icon: 'radar', label: 'Радар', count: '1' },
   { id: 'plan', icon: 'plan', label: 'План', count: '1' },
@@ -46,6 +52,7 @@ const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: st
 ];
 
 const TITLES: Record<WorkspaceSection, [string, string]> = {
+  memory: ['Память автора', 'Заметки -> позиция автора'],
   editorialModel: ['Редакционная модель', 'Правила и контекст блога'],
   radar: ['Радар', 'Источник -> инсайт'],
   plan: ['План', 'HITL · Gate 1'],
@@ -57,6 +64,8 @@ const TITLES: Record<WorkspaceSection, [string, string]> = {
 
 function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, string> = {
+    memory:
+      '<path d="M15 18h-5"/><path d="M18 14h-8"/><path d="M14 10h-4"/><path d="M20 6.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5z"/><path d="M14 2v5h5"/>',
     model:
       '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
     radar:
@@ -125,6 +134,21 @@ export function App() {
       <main className="main">
         <Topbar active={active} onReset={resetDemo} />
         <div className="scroll">
+          {active === 'memory' && (
+            <AuthorMemoryView
+              notes={workspace.authorNotes}
+              assertions={workspace.authorPositionAssertions}
+              onAddNote={(note) => {
+                const authorNotes = [note, ...workspace.authorNotes];
+                const authorMemoryEvents = [createAuthorMemoryEvent(note), ...workspace.authorMemoryEvents];
+                const authorPositionAssertions = inferAuthorPositionAssertions(authorNotes, authorMemoryEvents);
+                patchWorkspace(
+                  { authorNotes, authorMemoryEvents, authorPositionAssertions },
+                  'Заметка добавлена в память автора'
+                );
+              }}
+            />
+          )}
           {active === 'editorialModel' && (
             <EditorialModelView
               model={workspace.editorialModel}
@@ -330,7 +354,8 @@ function Sidebar({
         >
           <Icon name={item.icon} />
           <span>{item.label}</span>
-          {item.count ? <span className="count">{item.count}</span> : null}
+          {item.id === 'memory' ? <span className="count">{workspace.authorNotes.length}</span> : null}
+          {item.id !== 'memory' && item.count ? <span className="count">{item.count}</span> : null}
         </button>
       ))}
       <div className="side-foot">
@@ -369,6 +394,150 @@ function Topbar({ active, onReset }: { active: WorkspaceSection; onReset: () => 
         Сбросить демо
       </button>
     </header>
+  );
+}
+
+function AuthorMemoryView({
+  notes,
+  assertions,
+  onAddNote
+}: {
+  notes: AuthorNote[];
+  assertions: AuthorPositionAssertion[];
+  onAddNote: (note: AuthorNote) => void;
+}) {
+  const [type, setType] = useState<AuthorNoteType>('thought');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [tags, setTags] = useState('');
+
+  function submitNote() {
+    if (!title.trim() || !body.trim()) return;
+
+    onAddNote({
+      id: `note-${Date.now()}`,
+      type,
+      title: title.trim(),
+      body: body.trim(),
+      sourceUrl: sourceUrl.trim(),
+      tags: splitTags(tags),
+      capturedAt: new Date().toISOString()
+    });
+    setTitle('');
+    setBody('');
+    setSourceUrl('');
+    setTags('');
+    setType('thought');
+  }
+
+  return (
+    <div className="page wide fade-up">
+      <div className="sec-head">
+        <h2>Авторская память</h2>
+        <span className="sub">Внутренняя лента мыслей, ссылок и правок AI Product Manager</span>
+      </div>
+      <div className="memory-grid">
+        <section className="memory-main">
+          <div className="card memory-composer">
+            <div className="form-row">
+              <label>
+                Тип записи
+                <select value={type} onChange={(event) => setType(event.target.value as AuthorNoteType)}>
+                  <option value="thought">Мысль</option>
+                  <option value="linkReaction">Реакция на ссылку</option>
+                  <option value="manualCorrection">Ручная корректировка</option>
+                </select>
+              </label>
+              <label>
+                Ссылка
+                <input
+                  value={sourceUrl}
+                  onChange={(event) => setSourceUrl(event.target.value)}
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+            <label>
+              Заголовок
+              <input value={title} onChange={(event) => setTitle(event.target.value)} />
+            </label>
+            <label>
+              Заметка автора
+              <textarea value={body} onChange={(event) => setBody(event.target.value)} />
+            </label>
+            <label>
+              Теги
+              <input
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                placeholder="workflow, evals, adoption"
+              />
+            </label>
+            <button className="btn btn-pri" type="button" onClick={submitNote} disabled={!title.trim() || !body.trim()}>
+              <Icon name="plus" size={16} />
+              Добавить в память
+            </button>
+          </div>
+
+          <div className="memory-feed">
+            {notes.map((note) => (
+              <article className="card memory-note" key={note.id}>
+                <div className="note-top">
+                  <span className="sig info">{authorNoteTypeLabel(note.type)}</span>
+                  <span className="sc">{formatDate(note.capturedAt)}</span>
+                </div>
+                <h3>{note.title}</h3>
+                <p>{note.body}</p>
+                {note.sourceUrl ? <a href={note.sourceUrl}>{note.sourceUrl}</a> : null}
+                <div className="tag-row">
+                  {note.tags.map((tag) => (
+                    <span className="rub" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside className="memory-side">
+          <section className="panel">
+            <h4>Как система поняла автора</h4>
+            <div className="assertions">
+              {assertions.map((assertion) => (
+                <AssertionCard assertion={assertion} key={assertion.id} />
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function AssertionCard({ assertion }: { assertion: AuthorPositionAssertion }) {
+  return (
+    <article className="assertion">
+      <div className="assertion-head">
+        <span className="rub">{assertionTypeLabel(assertion.type)}</span>
+        <span className="sc">confidence {formatScore(assertion.confidence)}</span>
+      </div>
+      <h3>{assertion.title}</h3>
+      <p>{assertion.statement}</p>
+      <details>
+        <summary>Evidence</summary>
+        <div className="evidence-list">
+          {assertion.evidence.map((item) => (
+            <blockquote key={`${assertion.id}-${item.noteId}-${item.quote}`}>
+              <p>{item.quote}</p>
+              <cite>{item.reason}</cite>
+            </blockquote>
+          ))}
+        </div>
+      </details>
+    </article>
   );
 }
 
@@ -1271,6 +1440,13 @@ function EmptyState({ text }: { text: string }) {
   return <div className="card empty-state">{text}</div>;
 }
 
+function splitTags(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function splitLines(value: string): string[] {
   return value
     .split('\n')
@@ -1280,6 +1456,24 @@ function splitLines(value: string): string[] {
 
 function formatScore(value: number): string {
   return value.toFixed(2);
+}
+
+function formatDate(value: string): string {
+  return value.slice(0, 10);
+}
+
+function authorNoteTypeLabel(type: AuthorNoteType): string {
+  if (type === 'linkReaction') return 'Реакция';
+  if (type === 'manualCorrection') return 'Правка';
+  return 'Мысль';
+}
+
+function assertionTypeLabel(type: string): string {
+  if (type === 'persona') return 'Образ';
+  if (type === 'style') return 'Стиль';
+  if (type === 'audience') return 'Аудитория';
+  if (type === 'topic') return 'Тема';
+  return 'Принцип';
 }
 
 function statusLabel(status: string): string {

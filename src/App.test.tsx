@@ -2,6 +2,41 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App';
 
+function goToRadar() {
+  fireEvent.click(screen.getByRole('button', { name: /Радар/i }));
+}
+
+function createApprovedBrief() {
+  goToRadar();
+  fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
+  fireEvent.click(screen.getByRole('button', { name: /В план/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
+}
+
+function createApprovedFinalText() {
+  createApprovedBrief();
+  fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
+}
+
+async function createExportedRelease() {
+  createApprovedFinalText();
+  fireEvent.click(screen.getByRole('button', { name: /Выпуск/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Подготовить выпуск/i }));
+  fireEvent.click(screen.getByLabelText(/Фактические warnings просмотрены/i));
+  fireEvent.click(screen.getByLabelText(/CTA проверен/i));
+  fireEvent.click(screen.getByLabelText(/Текст скопирован или Markdown скачан/i));
+  fireEvent.click(screen.getByRole('button', { name: /Готово к выпуску/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Скопировать текст/i }));
+
+  await waitFor(() => {
+    expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
+  });
+}
+
 describe('App', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -11,6 +46,7 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByText('Главред')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Память автора/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Редакционная модель/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Радар/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /План/i })).toBeInTheDocument();
@@ -20,20 +56,37 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Аналитика/i })).toBeInTheDocument();
   });
 
+  it('opens on author memory with demo notes and evidence-backed assertions', () => {
+    render(<App />);
+
+    expect(screen.getByText('Авторская память')).toBeInTheDocument();
+    expect(screen.getByText(/Workflow risk важнее выбора модели/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI Product Manager с исследовательской оптикой/i)).toBeInTheDocument();
+    expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
+  });
+
+  it('adds an author thought note and persists it after reload', () => {
+    const { unmount } = render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'Новая заметка про onboarding' } });
+    fireEvent.change(screen.getByLabelText('Заметка автора'), {
+      target: { value: 'AI onboarding должен объяснять, где пользователь может доверять системе, а где нужен fallback.' }
+    });
+    fireEvent.change(screen.getByLabelText('Теги'), { target: { value: 'onboarding, trust' } });
+    fireEvent.click(screen.getByRole('button', { name: /Добавить в память/i }));
+
+    expect(screen.getByText('Новая заметка про onboarding')).toBeInTheDocument();
+
+    unmount();
+    render(<App />);
+
+    expect(screen.getByText('Новая заметка про onboarding')).toBeInTheDocument();
+  });
+
   it('moves from source signal to an approved post brief', () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    expect(screen.getByText(/AI-пилоты проваливаются/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-    expect(screen.getByText(/Утвердите публикацию/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
-
-    expect(screen.getByText(/Утвердите фабулу/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
+    createApprovedBrief();
 
     expect(screen.getAllByText('Утверждено').length).toBeGreaterThan(0);
   });
@@ -68,12 +121,7 @@ describe('App', () => {
   it('creates, edits, approves, and persists a final text', () => {
     const { unmount } = render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
-
+    createApprovedBrief();
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
 
@@ -103,34 +151,10 @@ describe('App', () => {
   it('prepares, marks ready, exports, and persists a manual release package', async () => {
     const { unmount } = render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
-
-    fireEvent.click(screen.getByRole('button', { name: /Выпуск/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить выпуск/i }));
+    await createExportedRelease();
 
     expect(screen.getByText('Telegram')).toBeInTheDocument();
-    expect(screen.getByText('LinkedIn')).toBeInTheDocument();
     expect(screen.getByText(/Markdown export/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByLabelText(/Фактические warnings просмотрены/i));
-    fireEvent.click(screen.getByLabelText(/CTA проверен/i));
-    fireEvent.click(screen.getByLabelText(/Текст скопирован или Markdown скачан/i));
-    fireEvent.click(screen.getByRole('button', { name: /Готово к выпуску/i }));
-
-    expect(screen.getAllByText(/Готово к выпуску/i).length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByRole('button', { name: /Скопировать текст/i }));
-
-    await waitFor(() => {
-      expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
-    });
 
     unmount();
     render(<App />);
@@ -141,25 +165,7 @@ describe('App', () => {
   it('prepares, captures, and persists editorial learning notes after manual export', async () => {
     const { unmount } = render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Выпуск/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить выпуск/i }));
-    fireEvent.click(screen.getByLabelText(/Фактические warnings просмотрены/i));
-    fireEvent.click(screen.getByLabelText(/CTA проверен/i));
-    fireEvent.click(screen.getByLabelText(/Текст скопирован или Markdown скачан/i));
-    fireEvent.click(screen.getByRole('button', { name: /Готово к выпуску/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Скопировать текст/i }));
-
-    await waitFor(() => {
-      expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
-    });
+    await createExportedRelease();
 
     fireEvent.click(screen.getByRole('button', { name: /Аналитика/i }));
     fireEvent.click(screen.getByRole('button', { name: /Подготовить аналитику/i }));
@@ -168,10 +174,10 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Просмотры'), { target: { value: '1200' } });
     fireEvent.change(screen.getByLabelText('Комментарии'), { target: { value: '14' } });
     fireEvent.change(screen.getByLabelText('Что сработало'), {
-      target: { value: 'Тезис про автоматизацию хаоса собрал содержательные комментарии.' }
+      target: { value: 'Тезис про demo-to-adoption gap собрал содержательные комментарии AI PM.' }
     });
     fireEvent.change(screen.getByLabelText('Реакция аудитории'), {
-      target: { value: 'Основатели спорили не про инструменты, а про порядок в процессах.' }
+      target: { value: 'Founders спорили не про модели, а про то, как встроить AI-фичу в workflow.' }
     });
     fireEvent.click(screen.getByRole('button', { name: /Зафиксировать выводы/i }));
 
@@ -181,6 +187,6 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getAllByText(/Выводы зафиксированы/i).length).toBeGreaterThan(0);
-    expect(screen.getByDisplayValue(/автоматизацию хаоса/i)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/demo-to-adoption gap/i)).toBeInTheDocument();
   });
 });

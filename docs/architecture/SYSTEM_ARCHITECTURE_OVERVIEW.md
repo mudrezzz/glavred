@@ -40,14 +40,15 @@ author's own position explicit, editable, evidence-backed, and continuously vali
 
 ## Current Implemented Perimeter
 
-The current implemented perimeter reaches a captured editorial learning note:
+The current implemented perimeter now starts with author memory and reaches a captured
+editorial learning note:
 
-`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
-This remains useful as a production layer. It is no longer the conceptual center of the
-product. Future slices should add author memory, author position, structured editorial
-entities, and validator results above this flow, then route production decisions
-through them.
+The source-to-release part remains useful as a production layer. It is no longer the
+conceptual center of the product. Author memory and first author-position assertions
+now sit above that flow; future slices should add structured topics, fabulas, and
+validator results, then route more production decisions through them.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -124,6 +125,11 @@ to use deterministic fallback or provider-backed behavior.
 
 Current implemented production contracts:
 
+- `AuthorNote`: free author thought, link reaction, or manual correction.
+- `AuthorMemoryEvent`: normalized memory event with detected author signals.
+- `AuthorPositionAssertion`: evidence-backed inferred statement about persona, style,
+  audience, topic, or principle.
+- `EvidenceLink`: link from a position assertion back to source notes.
 - `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
   forbidden topics, goals.
 - `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
@@ -145,12 +151,6 @@ Current implemented production contracts:
 
 Future author-position contracts:
 
-- `AuthorNote`: raw thought, reaction, link note, correction, archive annotation, or
-  learning note.
-- `AuthorMemoryEvent`: normalized event produced by notes, radar corrections, draft
-  revisions, release learning, or archive imports.
-- `AuthorPositionAssertion`: structured claim about the author's position with linked
-  evidence and confidence.
 - `Topic`: topic card with purpose, audience value, author stance, rules, validator
   set, and weight range.
 - `Fabula`: narrative pattern with structure, conflict, proof requirements, validator
@@ -211,29 +211,26 @@ evidence and remediation.
 
 ## First Demo Data Flow
 
-The current demo remains the founder-blog scenario about practical AI adoption for
-small and medium businesses:
+The permanent demo scenario is a Telegram blog by an AI Product Manager who shares
+research experience building AI-B2B products:
 
-1. The workspace starts with an `EditorialModel` for an author whose position is that
-   AI value comes from process redesign, not tool collecting.
-2. The author reviews a `SourceSignal`: several market posts discuss failed AI pilots
-   caused by process gaps.
-3. `InsightScoring` produces an `InsightCard`.
-4. `ContentPlanning` creates a plan item.
-5. The author approves or adjusts the plan item through a HITL gate.
-6. `Briefing` creates a post brief.
-7. The author approves the post brief.
-8. `Drafting` creates an editable draft.
-9. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+1. The workspace opens on `AuthorMemory` with six seeded notes about workflow risk,
+   evals as a product function, failed demo magic, GTM/adoption correction, enterprise
+   trust, and confidence boundaries.
+2. `createAuthorMemoryEvent` normalizes notes into memory events with detected signals.
+3. `inferAuthorPositionAssertions` shows evidence-backed assertions about the author's
+   persona, style, audience, topics, and product principle.
+4. The author can add another thought, link reaction, or manual correction.
+5. The existing production flow uses the same demo context: a `SourceSignal` about the
+   gap between AI-B2B demos and adoption.
+6. `InsightScoring` produces an `InsightCard`.
+7. `ContentPlanning` creates a Telegram plan item.
+8. The author approves the plan and post brief through HITL gates.
+9. `Drafting` creates an editable research-note draft.
+10. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-10. The author edits the draft and approves the final text.
-11. `ReleasePackaging` creates a manual release package.
-12. The author copies text or downloads Markdown.
-13. `AnalyticsPrep` creates a manual metrics and editorial learning workspace.
-14. The author captures the editorial learning note.
-
-In the revised concept, each correction made during this flow should later become an
-`AuthorMemoryEvent`. The next demo circle should expose that memory layer directly.
+11. The author approves final text, prepares a manual Telegram release package, and
+   captures analytics learning.
 
 ## Extension Points
 
@@ -256,6 +253,7 @@ In the revised concept, each correction made during this flow should later becom
 
 Current validation covers:
 
+- Unit tests for author memory event creation and evidence-backed assertions.
 - Unit tests for domain transitions and approval rules.
 - Unit tests for deterministic scoring, planning, briefing, drafting, editorial check,
   release packaging, and analytics prep services.

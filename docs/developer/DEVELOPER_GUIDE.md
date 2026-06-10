@@ -37,8 +37,9 @@ npm run smoke
 ## Source Layout
 
 - `src/domain/`: framework-independent domain model.
-- `src/application/`: deterministic application services for insight, planning,
-  briefing, drafting, editorial checks, release packaging, and analytics prep.
+- `src/application/`: deterministic application services for author memory inference,
+  insight, planning, briefing, drafting, editorial checks, release packaging, and
+  analytics prep.
 - `src/infrastructure/`: browser storage adapter.
 - `src/fixtures/`: demo workspace data.
 - `src/App.tsx`: production React editorial cabinet shell and screens.
@@ -60,6 +61,8 @@ before wiring it into React views.
 
 The current app implements:
 
+- Author memory feed with thought, link-reaction, and manual-correction notes.
+- Evidence-backed author-position assertions inferred from demo notes.
 - The first working flow from source signal to captured editorial learning note.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
 - Human approval gates for content plan, post brief, final text, and release readiness.
@@ -103,14 +106,15 @@ requires small entities, explicit rules, validator scores, and evidence links.
 
 The implemented flow is:
 
-`SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.
-- Application services turn the demo signal into an insight card, a plan item, a post
-  brief, a deterministic draft, editorial checks, editor notes, a release package, and
-  an editorial learning scaffold.
+- Application services normalize author notes into memory events, infer
+  evidence-backed author-position assertions, and turn the demo signal into an insight
+  card, a plan item, a post brief, a deterministic draft, editorial checks, editor
+  notes, a release package, and an editorial learning scaffold.
 - Infrastructure adapters handle browser `localStorage` through a `WorkspaceStore`
   interface.
 - React components render the workflow and call application services; they must not own
@@ -177,6 +181,8 @@ backend, streaming, billing, or real provider calls.
 
 Current tests cover:
 
+- Author memory event creation, assertion inference, evidence links, persistence, and
+  UI smoke behavior.
 - Domain transitions and approval rules.
 - Deterministic scoring, planning, briefing, drafting, editorial check, and release
   packaging services, plus analytics prep.

@@ -40,25 +40,56 @@ function createMemoryStorage(): Storage {
 }
 
 describe('LocalWorkspaceStore', () => {
-  it('loads the demo workspace when nothing is saved', () => {
+  it('loads the AI Product Manager demo workspace when nothing is saved', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
 
-    expect(store.load().sourceSignal.title).toContain('Провалы AI-пилотов');
+    expect(store.load().activeSection).toBe('memory');
+    expect(store.load().editorialModel.author).toContain('AI Product Manager');
+    expect(store.load().authorNotes).toHaveLength(6);
   });
 
-  it('saves and loads an approved post brief', () => {
+  it('loads an old workspace without author memory fields', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete oldWorkspace.authorNotes;
+    delete oldWorkspace.authorMemoryEvents;
+    delete oldWorkspace.authorPositionAssertions;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+
+    const loaded = store.load();
+
+    expect(loaded.authorNotes).toHaveLength(6);
+    expect(loaded.authorMemoryEvents.length).toBeGreaterThan(0);
+    expect(loaded.authorPositionAssertions).toHaveLength(5);
+  });
+
+  it('saves and loads author memory state', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
     const workspace = createDemoWorkspace();
-    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
-    const planItem = createContentPlanItem(insight);
-    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const changed = {
+      ...workspace,
+      authorNotes: [
+        {
+          id: 'note-test',
+          type: 'thought' as const,
+          title: 'Новая мысль',
+          body: 'AI feature должен объяснять confidence.',
+          sourceUrl: '',
+          tags: ['confidence'],
+          capturedAt: '2026-06-10T12:00:00.000Z'
+        },
+        ...workspace.authorNotes
+      ]
+    };
 
-    store.save({ ...workspace, insightCard: insight, contentPlanItem: planItem, postBrief: brief });
+    store.save(changed);
 
-    expect(store.load().postBrief?.approvalStatus).toBe('approved');
+    expect(store.load().authorNotes[0].title).toBe('Новая мысль');
   });
 
-  it('loads a Slice 0.4 workspace without draft fields', () => {
+  it('loads a Slice 0.4 workspace without draft/release/analytics fields', () => {
     const storage = createMemoryStorage();
     const workspace = createDemoWorkspace();
     const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
@@ -79,6 +110,18 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.finalText).toBeNull();
     expect(loaded.releasePackage).toBeNull();
     expect(loaded.editorialLearningNote).toBeNull();
+  });
+
+  it('saves and loads an approved post brief', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const planItem = createContentPlanItem(insight);
+    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+
+    store.save({ ...workspace, insightCard: insight, contentPlanItem: planItem, postBrief: brief });
+
+    expect(store.load().postBrief?.approvalStatus).toBe('approved');
   });
 
   it('saves and loads an approved final text', () => {
@@ -158,11 +201,12 @@ describe('LocalWorkspaceStore', () => {
 
   it('resets back to the demo workspace', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
-    const changed = { ...createDemoWorkspace(), activeSection: 'brief' as const };
+    const changed = { ...createDemoWorkspace(), activeSection: 'brief' as const, authorNotes: [] };
     store.save(changed);
 
-    expect(store.reset().activeSection).toBe('radar');
-    expect(store.load().activeSection).toBe('radar');
+    expect(store.reset().activeSection).toBe('memory');
+    expect(store.load().activeSection).toBe('memory');
+    expect(store.load().authorNotes).toHaveLength(6);
     expect(store.load().postDraft).toBeNull();
     expect(store.load().editorialChecks).toEqual([]);
     expect(store.load().finalText).toBeNull();

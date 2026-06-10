@@ -1,26 +1,16 @@
 # User Guide
 
-Glavred currently provides the first local-first editorial cabinet.
+Glavred currently provides a local-first editorial cabinet with author memory and a
+working production flow.
 
-The current app lets you move from a source signal to an insight card, a content plan
-item, an approved post brief, a deterministic draft, editorial checks, and an approved
-final text, prepare a manual release package, and capture editorial learning notes.
+The app starts with `Память автора`: loose thoughts, link reactions, and manual
+corrections that become evidence-backed assertions about the author's position. From
+there, the user can still move through the production flow from source signal to
+insight card, content plan item, approved post brief, deterministic draft, editorial
+checks, approved final text, manual release package, and captured editorial learning
+notes.
+
 Work is saved in browser local storage.
-
-The product direction is being expanded. The next version should make the author's
-own thoughts, reactions, corrections, topics, fabulas, rules, and validators the center
-of the experience. The current flow remains usable, but it will become the production
-layer below an author memory and author position workspace.
-
-Planned next user-facing areas:
-
-- an internal author memory feed for loose thoughts, links, reactions, and corrections;
-- editable topic cards with rules, weight ranges, and validator indicators;
-- editable fabula cards and a topic/fabula compatibility matrix;
-- Content Design Records for durable content rules;
-- structured audience, persona, goal, platform, and metric settings;
-- right-side context chat synchronized with the selected section;
-- validator indicators with evidence and suggested fixes.
 
 ## Run Locally
 
@@ -31,8 +21,26 @@ npm run dev
 
 Open the local URL printed by Vite.
 
+## Demo Context
+
+The permanent demo is a Telegram blog by an AI Product Manager who shares research
+experience building AI-B2B products.
+
+The seeded notes cover:
+
+- workflow risk instead of model choice;
+- evals as a product function;
+- demo magic failing after pilot;
+- manual correction from support automation to GTM/adoption;
+- enterprise trust through evidence and rollback;
+- confidence boundaries from customer interviews.
+
 ## Current Supported Flow
 
+- Open `Память автора`.
+- Review seeded notes and the `Как система поняла автора` panel.
+- Add a thought, link reaction, or manual correction.
+- Review evidence behind author-position assertions.
 - Edit the `Редакционная модель`.
 - Review or edit the demo source signal in `Радар`.
 - Generate an insight card.
@@ -47,19 +55,22 @@ Open the local URL printed by Vite.
   third HITL gate.
 - Open `Выпуск`.
 - Click `Подготовить выпуск`.
-- Review Telegram/LinkedIn targets, release checklist, final text, and Markdown
-  preview.
+- Review Telegram target, release checklist, final text, and Markdown preview.
 - Mark checklist items, click `Готово к выпуску`, then use `Скопировать текст` or
   `Скачать Markdown`.
 - Open `Аналитика`.
 - Click `Подготовить аналитику`.
 - Enter manual metrics and editorial conclusions.
 - Click `Зафиксировать выводы`.
-- Reload the page and keep the local workspace state.
+- Reload the page and confirm local workspace state persists.
 - Reset the demo scenario from the topbar.
 
 ## Not Yet Supported
 
+- Real AI classification of author memory.
+- Context chat.
+- Topic/fabula matrix.
+- Archive import and uniqueness checks.
 - Real source ingestion.
 - Real AI-generated insights, briefs, or drafts.
 - Autoposting and real platform publishing integrations.

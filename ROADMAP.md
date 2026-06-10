@@ -157,7 +157,7 @@ Status:
 
 ### Slice 1.0: Author Memory Feed and Position Evidence Baseline
 
-- Status: Ready
+- Status: Done
 - Goal: Add the first working author memory layer above the existing production flow.
 - User value: The author can capture loose thoughts and reactions, and the product can
   start showing how those notes become evidence for author position.
@@ -184,29 +184,31 @@ Status:
   - Treat every author correction as potential future memory input, but implement only
     the minimal correction type in this slice.
 - Tests:
-  - Unit tests for note creation and deterministic classification.
-  - Unit tests for evidence linking.
-  - Storage tests for old workspace normalization and author memory persistence.
-  - UI smoke tests for creating notes and seeing evidence-backed assertions.
-  - Run `npm test` and `npm run smoke`.
+  - Unit tests for note creation and deterministic classification. Done.
+  - Unit tests for evidence linking. Done.
+  - Storage tests for old workspace normalization and author memory persistence. Done.
+  - UI smoke tests for creating notes and seeing evidence-backed assertions. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Docs:
   - Update README, architecture overview, developer guide, user guide, demo docs, and
     roadmap.
 - Demo impact:
   - Demo starts with the author memory feed before radar/production.
+  - Permanent demo example is the TG-blog of an AI Product Manager building AI-B2B
+    products.
 - Acceptance criteria:
-  - User can add author notes and link reactions.
-  - System shows first evidence-backed author-position assertions.
-  - State survives reload.
-  - Existing signal-to-learning production flow still works.
-  - `npm test` and `npm run smoke` pass.
+  - User can add author notes and link reactions. Done.
+  - System shows first evidence-backed author-position assertions. Done.
+  - State survives reload. Done.
+  - Existing signal-to-learning production flow still works. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Risks:
   - Deterministic classification may feel simplistic; UI copy should make clear this is
     the first baseline before AI assistance.
 
 ### Slice 1.1: Topics and Fabulas as Editorial Entities
 
-- Status: Backlog
+- Status: Ready
 - Goal: Replace coarse rubric/fabula settings with editable topic and fabula cards.
 - Scope:
   - Add `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrix`.
@@ -282,6 +284,8 @@ Status:
 - Slice 0.7: Analytics Prep and Editorial Learning Notes. Completed 2026-06-04.
 - Slice 0.8: AI Provider Architecture Baseline. Completed 2026-06-04.
 - Slice 0.9: Author Position Product Reframe. Completed 2026-06-10.
+- Slice 1.0: Author Memory Feed and Position Evidence Baseline. Completed
+  2026-06-10.
 
 ## Blocked Items
 
@@ -300,4 +304,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0: Author Memory Feed and Position Evidence Baseline`.
+Start `Slice 1.1: Topics and Fabulas as Editorial Entities`.

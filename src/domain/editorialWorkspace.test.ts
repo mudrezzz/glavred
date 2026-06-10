@@ -14,6 +14,7 @@ import {
 } from './editorialWorkspace';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
+  createAuthorMemoryEvent,
   createContentPlanItem,
   createEditorNotes,
   createEditorialLearningNote,
@@ -21,6 +22,7 @@ import {
   createPostBrief,
   createPostDraft,
   createReleasePackage,
+  inferAuthorPositionAssertions,
   runEditorialChecks
 } from '../application/editorialServices';
 
@@ -37,16 +39,52 @@ describe('editorial workspace domain', () => {
     expect(rejectPostBrief(brief).approvalStatus).toBe('rejected');
   });
 
-  it('creates deterministic outputs for the founder-blog demo signal', () => {
+  it('creates deterministic outputs for the AI Product Manager demo signal', () => {
     const workspace = createDemoWorkspace();
     const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
     const planItem = createContentPlanItem(insight);
     const brief = createPostBrief(planItem, insight, workspace.editorialModel);
 
-    expect(insight.title).toContain('AI-пилоты');
+    expect(insight.title).toContain('AI-B2B');
     expect(insight.score).toBeGreaterThan(0.8);
+    expect(planItem.platform).toBe('Telegram');
     expect(planItem.approvalStatus).toBe('draft');
-    expect(brief.thesis).toContain('AI не чинит беспорядок');
+    expect(brief.thesis).toContain('AI-B2B продукт');
+  });
+
+  it('creates author memory events and evidence-backed position assertions', () => {
+    const workspace = createDemoWorkspace();
+    const note = workspace.authorNotes[0];
+    const event = createAuthorMemoryEvent(note);
+    const assertions = inferAuthorPositionAssertions(workspace.authorNotes, workspace.authorMemoryEvents);
+
+    expect(note.type).toBe('thought');
+    expect(note.title).toContain('Workflow risk');
+    expect(note.tags).toContain('workflow');
+    expect(event.noteId).toBe(note.id);
+    expect(event.detectedSignals).toContain('workflow-risk');
+    expect(assertions).toHaveLength(5);
+    expect(assertions[0].evidence.length).toBeGreaterThan(0);
+    expect(assertions.some((assertion) => assertion.statement.includes('AI-B2B'))).toBe(true);
+  });
+
+  it('strengthens author-position evidence when a relevant note is added', () => {
+    const workspace = createDemoWorkspace();
+    const note = {
+      id: 'note-extra-evals',
+      type: 'thought' as const,
+      title: 'Evals как доверие',
+      body: 'Еще одна мысль: evals нужны не только команде, но и пользователю как интерфейс доверия к AI-фиче.',
+      sourceUrl: '',
+      tags: ['evals', 'trust'],
+      capturedAt: '2026-06-10T12:00:00.000Z'
+    };
+    const notes = [note, ...workspace.authorNotes];
+    const events = [createAuthorMemoryEvent(note), ...workspace.authorMemoryEvents];
+    const assertions = inferAuthorPositionAssertions(notes, events);
+    const topicAssertion = assertions.find((assertion) => assertion.type === 'topic');
+
+    expect(topicAssertion?.evidence.some((item) => item.noteId === note.id)).toBe(true);
   });
 
   it('creates a deterministic draft with thesis, conflict, and CTA from an approved brief', () => {
@@ -82,13 +120,13 @@ describe('editorial workspace domain', () => {
     const planItem = createContentPlanItem(insight);
     const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
     const draft = createPostDraft(brief, workspace.editorialModel);
-    const revised = reviseDraft(draft, `${draft.body}\n\nРучная правка главного редактора.`);
+    const revised = reviseDraft(draft, `${draft.body}\n\nРучная редакторская правка перед финалом.`);
     const finalText = approveFinalText(revised);
 
     expect(revised.version).toBe(2);
     expect(revised.status).toBe('revised');
     expect(finalText.approvalStatus).toBe('approved');
-    expect(finalText.body).toContain('Ручная правка');
+    expect(finalText.body).toContain('Ручная редакторская правка');
   });
 
   it('creates a release package from approved final text with platform targets and markdown', () => {
@@ -100,10 +138,10 @@ describe('editorial workspace domain', () => {
     const finalText = approveFinalText(draft);
     const releasePackage = createReleasePackage(finalText, planItem);
 
-    expect(releasePackage.targets).toEqual(['telegram', 'linkedin']);
+    expect(releasePackage.targets).toEqual(['telegram']);
     expect(releasePackage.markdown).toContain(finalText.title);
     expect(releasePackage.markdown).toContain(finalText.body);
-    expect(releasePackage.markdown).toContain('Telegram + LinkedIn');
+    expect(releasePackage.markdown).toContain('Telegram');
     expect(releasePackage.status).toBe('draft');
   });
 
@@ -166,13 +204,13 @@ describe('editorial workspace domain', () => {
     const note = createEditorialLearningNote(exported, finalText, planItem);
     const captured = markLearningNoteCaptured(note);
     const updated = updateLearningNote(captured, {
-      observedResult: 'Тезис про хаос процессов собрал комментарии основателей.'
+      observedResult: 'Тезис про demo-to-adoption gap собрал комментарии AI PM и founders.'
     });
 
     expect(captured.status).toBe('captured');
     expect(captured.capturedAt).not.toBeNull();
     expect(updated.status).toBe('draft');
     expect(updated.capturedAt).toBeNull();
-    expect(updated.observedResult).toContain('хаос процессов');
+    expect(updated.observedResult).toContain('demo-to-adoption');
   });
 });
