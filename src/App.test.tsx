@@ -133,6 +133,18 @@ describe('App', () => {
     expect(screen.queryByText(/Корректировка спорит с текущим evidence/i)).not.toBeInTheDocument();
   });
 
+  it('preselects the exact evidence target when correcting evidence', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getAllByText('Evidence')[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /Корректировать evidence/i })[0]);
+
+    const targetSelect = screen.getByLabelText('Что корректируем') as HTMLSelectElement;
+
+    expect(targetSelect.value).toMatch(/^evidence:/);
+    expect(targetSelect.selectedOptions[0].textContent).toContain('Evidence ·');
+  });
+
   it('searches, filters, and lazily expands the author memory feed', () => {
     render(<App />);
 

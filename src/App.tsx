@@ -997,13 +997,7 @@ function AssertionCard({
               <button
                 className="link-button"
                 type="button"
-                onClick={() =>
-                  onCorrect({
-                    type: 'evidence',
-                    id: item.noteId,
-                    title: `${assertion.title}: ${item.quote.slice(0, 60)}`
-                  })
-                }
+                onClick={() => onCorrect(buildEvidenceCorrectionTarget(assertion, item))}
               >
                 Корректировать evidence
               </button>
@@ -2049,12 +2043,19 @@ function isEvidenceNote(noteId: string, assertions: AuthorPositionAssertion[]): 
 function buildCorrectionTargets(assertions: AuthorPositionAssertion[]): CorrectionTarget[] {
   return assertions.flatMap((assertion) => [
     { type: 'assertion' as const, id: assertion.id, title: assertion.title },
-    ...assertion.evidence.map((item) => ({
-      type: 'evidence' as const,
-      id: `${assertion.id}:${item.noteId}`,
-      title: `${assertion.title}: ${item.quote.slice(0, 60)}`
-    }))
+    ...assertion.evidence.map((item) => buildEvidenceCorrectionTarget(assertion, item))
   ]);
+}
+
+function buildEvidenceCorrectionTarget(
+  assertion: AuthorPositionAssertion,
+  item: { noteId: string; quote: string }
+): CorrectionTarget {
+  return {
+    type: 'evidence',
+    id: `${assertion.id}:${item.noteId}`,
+    title: `${assertion.title}: ${item.quote.slice(0, 60)}`
+  };
 }
 
 function correctionTargetKey(target: CorrectionTarget): string {
