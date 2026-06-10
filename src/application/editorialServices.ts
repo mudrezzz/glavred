@@ -428,7 +428,8 @@ function summarizeAuthorNote(note: AuthorNote): string {
     manualCorrection: 'Ручная корректировка'
   };
 
-  return `${prefix[note.type]}: ${note.title}`;
+  const title = note.title.trim() || excerpt(note.body);
+  return `${prefix[note.type]}: ${title}`;
 }
 
 function detectAuthorSignals(note: AuthorNote): string[] {

@@ -447,6 +447,13 @@ select:focus {
   font: var(--ui-sm);
 }
 
+.section-help {
+  max-width: 78ch;
+  margin: 6px 0 0;
+  color: var(--ink-600);
+  line-height: 1.55;
+}
+
 .signal-editor {
   display: grid;
   gap: 14px;
@@ -481,12 +488,14 @@ select:focus {
 }
 
 .memory-composer label,
+.note-edit label,
 .memory-note .note-top {
   display: grid;
   gap: 7px;
 }
 
-.memory-composer label {
+.memory-composer label,
+.note-edit label {
   color: var(--ink-500);
   font: var(--mono-sm);
   letter-spacing: 0.08em;
@@ -495,11 +504,126 @@ select:focus {
 
 .memory-composer label input,
 .memory-composer label textarea,
-.memory-composer label select {
+.memory-composer label select,
+.note-edit label input,
+.note-edit label textarea {
   color: var(--ink-900);
   font: var(--ui-md);
   letter-spacing: 0;
   text-transform: none;
+}
+
+.optional-title {
+  display: flex;
+  align-items: flex-start;
+}
+
+.optional-title label {
+  width: 100%;
+}
+
+.composer-actions,
+.inline-actions,
+.note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-actions {
+  justify-content: flex-end;
+}
+
+.link-button {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  cursor: pointer;
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.link-button:hover {
+  color: var(--accent);
+}
+
+.link-button.danger {
+  color: var(--danger);
+}
+
+.link-preview {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+  color: inherit;
+  text-decoration: none;
+}
+
+.link-preview span {
+  color: var(--info-ink);
+  font: var(--mono-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.link-preview b {
+  color: var(--ink-900);
+  font: var(--ui-md);
+}
+
+.link-preview small {
+  color: var(--ink-500);
+  font: var(--ui-sm);
+  overflow-wrap: anywhere;
+}
+
+.conflict-box {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--danger-tint);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-md);
+  background: var(--danger-tint);
+}
+
+.conflict-box b {
+  color: var(--ink-900);
+}
+
+.conflict-box p {
+  margin: 0;
+  color: var(--ink-700);
+}
+
+.memory-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 12px;
+  padding: 14px;
+}
+
+.memory-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+  color: var(--ink-500);
+}
+
+.memory-search input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .memory-note {
@@ -513,6 +637,10 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.memory-note .note-top {
+  flex-wrap: wrap;
 }
 
 .memory-note h3,
@@ -536,6 +664,25 @@ select:focus {
   overflow-wrap: anywhere;
 }
 
+.note-actions {
+  margin-left: auto;
+}
+
+.note-edit {
+  display: grid;
+  gap: 12px;
+}
+
+.target-chip {
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;
@@ -545,6 +692,34 @@ select:focus {
 .memory-side {
   position: sticky;
   top: 12px;
+  display: grid;
+  gap: 14px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.summary-item {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.summary-item b {
+  color: var(--ink-900);
+  font: var(--ui-xl);
+}
+
+.summary-item span {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  text-transform: uppercase;
 }
 
 .assertion {
@@ -592,6 +767,37 @@ select:focus {
   color: var(--ink-500);
   font: var(--mono-sm);
   font-style: normal;
+}
+
+.load-more {
+  justify-self: center;
+}
+
+.confirm-popover {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(27 27 24 / 30%);
+}
+
+.confirm-popover .card {
+  max-width: 430px;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+
+.confirm-popover h3,
+.confirm-popover p {
+  margin: 0;
+}
+
+.confirm-popover p {
+  color: var(--ink-700);
+  line-height: 1.5;
 }
 
 .insight {
@@ -1436,6 +1642,7 @@ select:focus {
 
   .model-grid,
   .memory-grid,
+  .memory-toolbar,
   .brief-grid,
   .edit-grid,
   .release-grid,

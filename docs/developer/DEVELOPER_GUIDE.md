@@ -61,7 +61,9 @@ before wiring it into React views.
 
 The current app implements:
 
-- Author memory feed with thought, link-reaction, and manual-correction notes.
+- Author memory feed with titleless thought capture, link-reaction previews,
+  targeted manual corrections, search/filtering, lazy display, edit/delete actions,
+  memory summary, and browser speech-recognition fallback.
 - Evidence-backed author-position assertions inferred from demo notes.
 - The first working flow from source signal to captured editorial learning note.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
@@ -90,6 +92,8 @@ New conceptual entities:
 
 - `AuthorNote` and `AuthorMemoryEvent` for loose thoughts, links, reactions,
   corrections, archive annotations, and learning events.
+- `AuthorNote.targetType`, `targetId`, and `targetTitle` are optional metadata used
+  only when a manual correction targets an inferred assertion or evidence item.
 - `AuthorPositionAssertion` for transparent claims about how the author thinks or
   writes, with evidence.
 - `Topic`, `Fabula`, `TopicFabulaMatrix`, `ContentDesignRecord`, and
@@ -119,6 +123,9 @@ Use these boundaries:
   interface.
 - React components render the workflow and call application services; they must not own
   domain rules.
+- The author-memory UI may use browser-only helpers for local link previews, derived
+  titles, search filters, summary counts, and voice-input capability detection. These
+  helpers must not fetch external metadata or bypass local-first storage.
 
 Do not call browser storage from domain code. Do not add backend persistence, auth,
 real source ingestion, or AI provider calls until their slices are planned.

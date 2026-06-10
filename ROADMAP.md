@@ -208,7 +208,7 @@ Status:
 
 ### Slice 1.0.1: Author Memory UX Hardening
 
-- Status: Ready
+- Status: Done
 - Goal: Make author memory fast, forgiving, and believable as the product's main
   entry point.
 - User value: The author can capture thoughts with less friction, understand what the
@@ -247,13 +247,13 @@ Status:
   - Corrections should become author-memory notes themselves, not hidden UI state.
   - Search belongs directly above the feed, after the composer and before note cards.
 - Tests:
-  - UI tests for optional title, adding a note without a title, and title reveal/hide.
-  - UI tests for link preview in composer and persisted note feed.
-  - UI tests for manual correction mode and correction actions from assertions/evidence.
-  - UI tests for search/filter, lazy loading, long-note expansion, edit, and delete.
-  - UI tests for memory summary and voice-input affordance fallback.
-  - Storage regression for preserving edited/deleted author-memory state.
-  - `npm test` and `npm run smoke`.
+  - UI tests for optional title, adding a note without a title, and title reveal/hide. Done.
+  - UI tests for link preview in composer and persisted note feed. Done.
+  - UI tests for manual correction mode and correction actions from assertions/evidence. Done.
+  - UI tests for search/filter, lazy loading, long-note expansion, edit, and delete. Done.
+  - UI tests for memory summary and voice-input affordance fallback. Done.
+  - Storage regression for preserving author-memory target metadata. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Docs:
   - Update README, user guide, developer guide, demo docs, and roadmap.
 - Demo impact:
@@ -262,16 +262,16 @@ Status:
   - Demo notes should be searchable, partially collapsed when long, and correctable
     through evidence-backed assertions.
 - Acceptance criteria:
-  - The author can add a quick thought without a title.
-  - Link notes show a recognizable preview before and after saving.
+  - The author can add a quick thought without a title. Done.
+  - Link notes show a recognizable preview before and after saving. Done.
   - Manual correction is targeted at what the system inferred, not modeled as a
-    generic note form.
+    generic note form. Done.
   - The feed remains usable with many notes through search, filters, lazy loading, and
-    collapsed long text.
-  - Notes can be edited and deleted without breaking assertions or storage.
+    collapsed long text. Done.
+  - Notes can be edited and deleted without breaking assertions or storage. Done.
   - Voice affordance is visible but does not promise unavailable transcription
-    backends.
-  - `npm test` and `npm run smoke` pass.
+    backends. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Risks:
   - Correction conflict handling can become too complex; keep it to a small HITL
     choice rather than building a full merge engine.
@@ -409,6 +409,7 @@ Status:
 - Slice 0.9: Author Position Product Reframe. Completed 2026-06-10.
 - Slice 1.0: Author Memory Feed and Position Evidence Baseline. Completed
   2026-06-10.
+- Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 
 ## Blocked Items
 
@@ -427,4 +428,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.1: Author Memory UX Hardening`.
+Start `Slice 1.0.2: Author Memory External Sources and Import Design`.

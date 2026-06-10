@@ -39,7 +39,18 @@ The seeded notes cover:
 
 - Open `Память автора`.
 - Review seeded notes and the `Как система поняла автора` panel.
-- Add a thought, link reaction, or manual correction.
+- Add a thought without a title, or reveal `+ Заголовок` if a title helps.
+- Add a link reaction and check the local preview before saving.
+- Use search and type filters above the feed when the memory grows.
+- Expand long notes with `Показать полностью` and collapse them back with `Свернуть`.
+- Edit or delete notes from the card actions; evidence-backed notes ask for
+  confirmation before deletion.
+- Use `Корректировать` on an inferred assertion or evidence item to create a targeted
+  manual correction.
+- If a correction contradicts current evidence, choose `Смержить`, `Заменить вывод`,
+  or `Откатить корректировку`.
+- Use `Голосом` when the browser supports speech recognition; otherwise the button
+  stays disabled and the text area remains the fallback.
 - Review evidence behind author-position assertions.
 - Edit the `Редакционная модель`.
 - Review or edit the demo source signal in `Радар`.

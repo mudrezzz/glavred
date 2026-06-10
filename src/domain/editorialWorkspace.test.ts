@@ -87,6 +87,27 @@ describe('editorial workspace domain', () => {
     expect(topicAssertion?.evidence.some((item) => item.noteId === note.id)).toBe(true);
   });
 
+  it('supports titleless notes and targeted manual correction metadata', () => {
+    const note = {
+      id: 'note-titleless-correction',
+      type: 'manualCorrection' as const,
+      title: '',
+      body: 'Не согласен: вывод про стиль нужно сделать жестче и привязать к anti-demo позиции.',
+      sourceUrl: '',
+      tags: ['manual-correction'],
+      capturedAt: '2026-06-10T12:00:00.000Z',
+      targetType: 'assertion' as const,
+      targetId: 'assertion-style-research-notes',
+      targetTitle: 'Стиль: исследовательские заметки без демо-магии'
+    };
+
+    const event = createAuthorMemoryEvent(note);
+
+    expect(event.summary).toContain('Не согласен');
+    expect(note.targetType).toBe('assertion');
+    expect(note.targetId).toBe('assertion-style-research-notes');
+  });
+
   it('creates a deterministic draft with thesis, conflict, and CTA from an approved brief', () => {
     const workspace = createDemoWorkspace();
     const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);

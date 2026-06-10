@@ -84,6 +84,8 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
       '<path d="M10.3 21a2 2 0 0 0 3.4 0"/><path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    mic:
+      '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
     reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/>',
     caret: '<path d="M4 16 L12 7 L20 16"/>'
   };
@@ -138,13 +140,12 @@ export function App() {
             <AuthorMemoryView
               notes={workspace.authorNotes}
               assertions={workspace.authorPositionAssertions}
-              onAddNote={(note) => {
-                const authorNotes = [note, ...workspace.authorNotes];
-                const authorMemoryEvents = [createAuthorMemoryEvent(note), ...workspace.authorMemoryEvents];
+              onChangeNotes={(authorNotes, message) => {
+                const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
                 const authorPositionAssertions = inferAuthorPositionAssertions(authorNotes, authorMemoryEvents);
                 patchWorkspace(
                   { authorNotes, authorMemoryEvents, authorPositionAssertions },
-                  'Заметка добавлена в память автора'
+                  message
                 );
               }}
             />
@@ -397,45 +398,228 @@ function Topbar({ active, onReset }: { active: WorkspaceSection; onReset: () => 
   );
 }
 
+type MemoryTypeFilter = AuthorNoteType | 'all';
+type CorrectionTarget = {
+  type: 'assertion' | 'evidence';
+  id: string;
+  title: string;
+};
+type PendingCorrectionConflict = {
+  noteId: string;
+  targetTitle: string;
+};
+type LinkPreview = {
+  isValid: boolean;
+  domain: string;
+  normalizedUrl: string;
+  title: string;
+};
+type SpeechRecognitionEventLike = {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+};
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  start: () => void;
+};
+type SpeechRecognitionWindow = Window &
+  typeof globalThis & {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+
 function AuthorMemoryView({
   notes,
   assertions,
-  onAddNote
+  onChangeNotes
 }: {
   notes: AuthorNote[];
   assertions: AuthorPositionAssertion[];
-  onAddNote: (note: AuthorNote) => void;
+  onChangeNotes: (notes: AuthorNote[], message?: string) => void;
 }) {
   const [type, setType] = useState<AuthorNoteType>('thought');
+  const [showTitle, setShowTitle] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [tags, setTags] = useState('');
+  const [correctionTarget, setCorrectionTarget] = useState<CorrectionTarget | null>(null);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<MemoryTypeFilter>('all');
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [expandedNoteIds, setExpandedNoteIds] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [editSourceUrl, setEditSourceUrl] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [pendingDeleteNote, setPendingDeleteNote] = useState<AuthorNote | null>(null);
+  const [pendingConflict, setPendingConflict] = useState<PendingCorrectionConflict | null>(null);
+  const correctionTargets = useMemo(() => buildCorrectionTargets(assertions), [assertions]);
+  const summary = useMemo(() => getMemorySummary(notes), [notes]);
+  const filteredNotes = useMemo(() => filterAuthorNotes(notes, query, filter), [filter, notes, query]);
+  const visibleNotes = filteredNotes.slice(0, visibleCount);
+  const linkPreview = buildLinkPreview(sourceUrl);
+  const isManualCorrection = type === 'manualCorrection';
+  const voiceRecognition = getSpeechRecognitionConstructor();
+  const canUseVoice = Boolean(voiceRecognition);
 
   function submitNote() {
-    if (!title.trim() || !body.trim()) return;
+    const trimmedBody = body.trim();
+    const selectedTarget = isManualCorrection ? correctionTarget : null;
 
-    onAddNote({
+    if (!trimmedBody) return;
+    if (type === 'linkReaction' && !linkPreview.isValid) return;
+    if (isManualCorrection && !selectedTarget) return;
+
+    const note: AuthorNote = {
       id: `note-${Date.now()}`,
       type,
-      title: title.trim(),
-      body: body.trim(),
-      sourceUrl: sourceUrl.trim(),
-      tags: splitTags(tags),
-      capturedAt: new Date().toISOString()
-    });
+      title: showTitle ? title.trim() : '',
+      body: trimmedBody,
+      sourceUrl: type === 'linkReaction' ? linkPreview.normalizedUrl : '',
+      tags: isManualCorrection ? ['manual-correction'] : splitTags(tags),
+      capturedAt: new Date().toISOString(),
+      targetType: selectedTarget?.type,
+      targetId: selectedTarget?.id,
+      targetTitle: selectedTarget?.title
+    };
+
+    onChangeNotes([note, ...notes], 'Память автора обновлена');
+
+    if (isManualCorrection && selectedTarget && hasCorrectionConflict(trimmedBody)) {
+      setPendingConflict({ noteId: note.id, targetTitle: selectedTarget.title });
+    }
+
+    resetComposer();
+  }
+
+  function resetComposer() {
+    setShowTitle(false);
     setTitle('');
     setBody('');
     setSourceUrl('');
     setTags('');
+    setCorrectionTarget(null);
     setType('thought');
+  }
+
+  function beginCorrection(target: CorrectionTarget) {
+    setType('manualCorrection');
+    setCorrectionTarget(target);
+    setShowTitle(false);
+    setTitle('');
+    setSourceUrl('');
+    setTags('');
+    setBody('');
+  }
+
+  function beginEdit(note: AuthorNote) {
+    setEditingId(note.id);
+    setEditTitle(note.title);
+    setEditBody(note.body);
+    setEditSourceUrl(note.sourceUrl);
+    setEditTags(note.tags.join(', '));
+  }
+
+  function saveEdit(note: AuthorNote) {
+    if (!editBody.trim()) return;
+
+    onChangeNotes(
+      notes.map((item) =>
+        item.id === note.id
+          ? {
+              ...item,
+              title: editTitle.trim(),
+              body: editBody.trim(),
+              sourceUrl: item.type === 'linkReaction' ? buildLinkPreview(editSourceUrl).normalizedUrl : '',
+              tags: splitTags(editTags)
+            }
+          : item
+      ),
+      'Заметка обновлена'
+    );
+    setEditingId(null);
+  }
+
+  function requestDelete(note: AuthorNote) {
+    if (isEvidenceNote(note.id, assertions)) {
+      setPendingDeleteNote(note);
+      return;
+    }
+
+    deleteNote(note.id);
+  }
+
+  function deleteNote(noteId: string) {
+    onChangeNotes(
+      notes.filter((note) => note.id !== noteId),
+      'Заметка удалена'
+    );
+    setPendingDeleteNote(null);
+  }
+
+  function resolveCorrectionConflict(mode: 'merge' | 'replace' | 'rollback') {
+    if (!pendingConflict) return;
+
+    if (mode === 'rollback') {
+      onChangeNotes(
+        notes.filter((note) => note.id !== pendingConflict.noteId),
+        'Корректировка отменена'
+      );
+    }
+
+    if (mode === 'replace') {
+      onChangeNotes(
+        notes.map((note) =>
+          note.id === pendingConflict.noteId
+            ? { ...note, tags: Array.from(new Set([...note.tags, 'replace-inference'])) }
+            : note
+        ),
+        'Корректировка помечена как замена вывода'
+      );
+    }
+
+    setPendingConflict(null);
+  }
+
+  function toggleExpanded(noteId: string) {
+    setExpandedNoteIds((current) =>
+      current.includes(noteId) ? current.filter((id) => id !== noteId) : [...current, noteId]
+    );
+  }
+
+  function startVoiceInput() {
+    if (!voiceRecognition) return;
+
+    const recognition = new voiceRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (!transcript) return;
+      setBody((current) => `${current}${current ? '\n' : ''}${transcript}`);
+    };
+    recognition.start();
   }
 
   return (
     <div className="page wide fade-up">
       <div className="sec-head">
-        <h2>Авторская память</h2>
-        <span className="sub">Внутренняя лента мыслей, ссылок и правок AI Product Manager</span>
+        <div>
+          <h2>Авторская память</h2>
+          <p className="section-help">
+            Фиксируйте мысли, реакции на ссылки и ручные правки без обязательной структуры. Система связывает
+            записи с выводами о вашей позиции, а вы можете уточнять эти выводы прямо из evidence.
+          </p>
+        </div>
       </div>
       <div className="memory-grid">
         <section className="memory-main">
@@ -449,75 +633,345 @@ function AuthorMemoryView({
                   <option value="manualCorrection">Ручная корректировка</option>
                 </select>
               </label>
-              <label>
-                Ссылка
-                <input
-                  value={sourceUrl}
-                  onChange={(event) => setSourceUrl(event.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
+              {isManualCorrection ? (
+                <label>
+                  Что корректируем
+                  <select
+                    value={correctionTarget ? correctionTargetKey(correctionTarget) : ''}
+                    onChange={(event) =>
+                      setCorrectionTarget(
+                        correctionTargets.find((target) => correctionTargetKey(target) === event.target.value) ?? null
+                      )
+                    }
+                  >
+                    <option value="">Выберите вывод или evidence</option>
+                    {correctionTargets.map((target) => (
+                      <option key={correctionTargetKey(target)} value={correctionTargetKey(target)}>
+                        {target.type === 'assertion' ? 'Вывод' : 'Evidence'} · {target.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              {type === 'linkReaction' ? (
+                <label>
+                  Ссылка
+                  <input
+                    value={sourceUrl}
+                    onChange={(event) => setSourceUrl(event.target.value)}
+                    placeholder="https://..."
+                  />
+                </label>
+              ) : null}
             </div>
+            {!isManualCorrection && (
+              <div className="optional-title">
+                {showTitle ? (
+                  <label>
+                    Заголовок
+                    <input value={title} onChange={(event) => setTitle(event.target.value)} />
+                    <button
+                      className="link-button"
+                      type="button"
+                      onClick={() => {
+                        setShowTitle(false);
+                        setTitle('');
+                      }}
+                    >
+                      Убрать заголовок
+                    </button>
+                  </label>
+                ) : (
+                  <button className="btn btn-sec btn-sm" type="button" onClick={() => setShowTitle(true)}>
+                    <Icon name="plus" size={14} />
+                    Заголовок
+                  </button>
+                )}
+              </div>
+            )}
+            {type === 'linkReaction' && linkPreview.isValid ? <LinkPreviewCard preview={linkPreview} /> : null}
             <label>
-              Заголовок
-              <input value={title} onChange={(event) => setTitle(event.target.value)} />
-            </label>
-            <label>
-              Заметка автора
+              {isManualCorrection ? 'Корректировка' : 'Заметка автора'}
               <textarea value={body} onChange={(event) => setBody(event.target.value)} />
             </label>
-            <label>
-              Теги
+            {!isManualCorrection ? (
+              <label>
+                Теги
+                <input
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  placeholder="workflow, evals, adoption"
+                />
+              </label>
+            ) : null}
+            <div className="composer-actions">
+              <button
+                className="btn btn-sec"
+                type="button"
+                onClick={startVoiceInput}
+                disabled={!canUseVoice}
+                title={canUseVoice ? 'Добавить голосом' : 'Голосовой ввод недоступен в этом браузере'}
+              >
+                <Icon name="mic" size={16} />
+                Голосом
+              </button>
+              <button
+                className="btn btn-pri"
+                type="button"
+                onClick={submitNote}
+                disabled={
+                  !body.trim() ||
+                  (type === 'linkReaction' && !linkPreview.isValid) ||
+                  (isManualCorrection && !correctionTarget)
+                }
+              >
+                <Icon name="plus" size={16} />
+                Добавить в память
+              </button>
+            </div>
+            {pendingConflict ? (
+              <div className="conflict-box" role="status">
+                <b>Корректировка спорит с текущим evidence</b>
+                <p>
+                  Вы уточняете: {pendingConflict.targetTitle}. Выберите, как зафиксировать позицию в памяти.
+                </p>
+                <div className="inline-actions">
+                  <button className="btn btn-sec btn-sm" type="button" onClick={() => resolveCorrectionConflict('merge')}>
+                    Смержить
+                  </button>
+                  <button className="btn btn-sec btn-sm" type="button" onClick={() => resolveCorrectionConflict('replace')}>
+                    Заменить вывод
+                  </button>
+                  <button className="btn btn-sec btn-sm" type="button" onClick={() => resolveCorrectionConflict('rollback')}>
+                    Откатить корректировку
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="card memory-toolbar">
+            <div className="memory-search">
+              <Icon name="search" size={16} />
               <input
-                value={tags}
-                onChange={(event) => setTags(event.target.value)}
-                placeholder="workflow, evals, adoption"
+                aria-label="Поиск по памяти"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setVisibleCount(5);
+                }}
+                placeholder="Искать по заметкам, тегам, ссылкам..."
               />
-            </label>
-            <button className="btn btn-pri" type="button" onClick={submitNote} disabled={!title.trim() || !body.trim()}>
-              <Icon name="plus" size={16} />
-              Добавить в память
-            </button>
+            </div>
+            <select
+              aria-label="Фильтр типа заметки"
+              value={filter}
+              onChange={(event) => {
+                setFilter(event.target.value as MemoryTypeFilter);
+                setVisibleCount(5);
+              }}
+            >
+              <option value="all">Все</option>
+              <option value="thought">Мысли</option>
+              <option value="linkReaction">Ссылки</option>
+              <option value="manualCorrection">Правки</option>
+            </select>
           </div>
 
           <div className="memory-feed">
-            {notes.map((note) => (
-              <article className="card memory-note" key={note.id}>
-                <div className="note-top">
-                  <span className="sig info">{authorNoteTypeLabel(note.type)}</span>
-                  <span className="sc">{formatDate(note.capturedAt)}</span>
-                </div>
-                <h3>{note.title}</h3>
-                <p>{note.body}</p>
-                {note.sourceUrl ? <a href={note.sourceUrl}>{note.sourceUrl}</a> : null}
-                <div className="tag-row">
-                  {note.tags.map((tag) => (
-                    <span className="rub" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </article>
+            {visibleNotes.map((note) => (
+              <AuthorNoteCard
+                assertions={assertions}
+                editingId={editingId}
+                editBody={editBody}
+                editSourceUrl={editSourceUrl}
+                editTags={editTags}
+                editTitle={editTitle}
+                expanded={expandedNoteIds.includes(note.id)}
+                key={note.id}
+                note={note}
+                onBeginEdit={beginEdit}
+                onCancelEdit={() => setEditingId(null)}
+                onChangeEditBody={setEditBody}
+                onChangeEditSourceUrl={setEditSourceUrl}
+                onChangeEditTags={setEditTags}
+                onChangeEditTitle={setEditTitle}
+                onDelete={requestDelete}
+                onSaveEdit={saveEdit}
+                onToggleExpanded={() => toggleExpanded(note.id)}
+              />
             ))}
+            {filteredNotes.length === 0 ? <EmptyState text="По этому запросу в памяти ничего не найдено." /> : null}
+            {visibleCount < filteredNotes.length ? (
+              <button className="btn btn-sec load-more" type="button" onClick={() => setVisibleCount((count) => count + 5)}>
+                Показать еще
+              </button>
+            ) : null}
           </div>
         </section>
 
         <aside className="memory-side">
+          <section className="panel memory-summary">
+            <h4>Сводка памяти</h4>
+            <div className="summary-grid">
+              <SummaryItem label="Всего" value={summary.total} />
+              <SummaryItem label="Мысли" value={summary.thoughts} />
+              <SummaryItem label="Ссылки" value={summary.links} />
+              <SummaryItem label="Правки" value={summary.corrections} />
+              <SummaryItem label="Месяц" value={summary.thisMonth} />
+              <SummaryItem label="Год" value={summary.thisYear} />
+            </div>
+          </section>
           <section className="panel">
             <h4>Как система поняла автора</h4>
             <div className="assertions">
               {assertions.map((assertion) => (
-                <AssertionCard assertion={assertion} key={assertion.id} />
+                <AssertionCard assertion={assertion} key={assertion.id} onCorrect={beginCorrection} />
               ))}
             </div>
           </section>
         </aside>
       </div>
+      {pendingDeleteNote ? (
+        <div className="confirm-popover" role="dialog" aria-label="Подтверждение удаления">
+          <div className="card">
+            <h3>Удалить заметку из evidence?</h3>
+            <p>
+              Заметка "{deriveNoteTitle(pendingDeleteNote)}" участвует в выводах о позиции автора. После удаления
+              assertions будут пересчитаны.
+            </p>
+            <div className="inline-actions">
+              <button className="btn btn-sec btn-sm" type="button" onClick={() => setPendingDeleteNote(null)}>
+                Отмена
+              </button>
+              <button className="btn btn-pri btn-sm" type="button" onClick={() => deleteNote(pendingDeleteNote.id)}>
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function AssertionCard({ assertion }: { assertion: AuthorPositionAssertion }) {
+function AuthorNoteCard({
+  assertions,
+  editBody,
+  editSourceUrl,
+  editTags,
+  editTitle,
+  editingId,
+  expanded,
+  note,
+  onBeginEdit,
+  onCancelEdit,
+  onChangeEditBody,
+  onChangeEditSourceUrl,
+  onChangeEditTags,
+  onChangeEditTitle,
+  onDelete,
+  onSaveEdit,
+  onToggleExpanded
+}: {
+  assertions: AuthorPositionAssertion[];
+  editBody: string;
+  editSourceUrl: string;
+  editTags: string;
+  editTitle: string;
+  editingId: string | null;
+  expanded: boolean;
+  note: AuthorNote;
+  onBeginEdit: (note: AuthorNote) => void;
+  onCancelEdit: () => void;
+  onChangeEditBody: (value: string) => void;
+  onChangeEditSourceUrl: (value: string) => void;
+  onChangeEditTags: (value: string) => void;
+  onChangeEditTitle: (value: string) => void;
+  onDelete: (note: AuthorNote) => void;
+  onSaveEdit: (note: AuthorNote) => void;
+  onToggleExpanded: () => void;
+}) {
+  const isEditing = editingId === note.id;
+  const preview = buildLinkPreview(note.sourceUrl);
+  const bodyIsLong = note.body.length > 420;
+  const visibleBody = !bodyIsLong || expanded ? note.body : `${note.body.slice(0, 420)}...`;
+
+  return (
+    <article className="card memory-note">
+      <div className="note-top">
+        <span className="sig info">{authorNoteTypeLabel(note.type)}</span>
+        <span className="sc">{formatDate(note.capturedAt)}</span>
+        {isEvidenceNote(note.id, assertions) ? <span className="sc">evidence</span> : null}
+        <div className="note-actions">
+          <button className="link-button" type="button" onClick={() => onBeginEdit(note)}>
+            Редактировать
+          </button>
+          <button className="link-button danger" type="button" onClick={() => onDelete(note)}>
+            Удалить
+          </button>
+        </div>
+      </div>
+      {isEditing ? (
+        <div className="note-edit">
+          <label>
+            Заголовок
+            <input value={editTitle} onChange={(event) => onChangeEditTitle(event.target.value)} />
+          </label>
+          {note.type === 'linkReaction' ? (
+            <label>
+              Ссылка
+              <input value={editSourceUrl} onChange={(event) => onChangeEditSourceUrl(event.target.value)} />
+            </label>
+          ) : null}
+          <label>
+            Текст
+            <textarea value={editBody} onChange={(event) => onChangeEditBody(event.target.value)} />
+          </label>
+          <label>
+            Теги
+            <input value={editTags} onChange={(event) => onChangeEditTags(event.target.value)} />
+          </label>
+          <div className="inline-actions">
+            <button className="btn btn-pri btn-sm" type="button" onClick={() => onSaveEdit(note)} disabled={!editBody.trim()}>
+              Сохранить
+            </button>
+            <button className="btn btn-sec btn-sm" type="button" onClick={onCancelEdit}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h3>{deriveNoteTitle(note)}</h3>
+          {note.targetTitle ? <span className="target-chip">Корректировка: {note.targetTitle}</span> : null}
+          <p>{visibleBody}</p>
+          {bodyIsLong ? (
+            <button className="link-button" type="button" onClick={onToggleExpanded}>
+              {expanded ? 'Свернуть' : 'Показать полностью'}
+            </button>
+          ) : null}
+          {preview.isValid ? <LinkPreviewCard preview={preview} /> : null}
+          <div className="tag-row">
+            {note.tags.map((tag) => (
+              <span className="rub" key={tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </article>
+  );
+}
+
+function AssertionCard({
+  assertion,
+  onCorrect
+}: {
+  assertion: AuthorPositionAssertion;
+  onCorrect: (target: CorrectionTarget) => void;
+}) {
   return (
     <article className="assertion">
       <div className="assertion-head">
@@ -526,6 +980,13 @@ function AssertionCard({ assertion }: { assertion: AuthorPositionAssertion }) {
       </div>
       <h3>{assertion.title}</h3>
       <p>{assertion.statement}</p>
+      <button
+        className="btn btn-sec btn-sm"
+        type="button"
+        onClick={() => onCorrect({ type: 'assertion', id: assertion.id, title: assertion.title })}
+      >
+        Корректировать
+      </button>
       <details>
         <summary>Evidence</summary>
         <div className="evidence-list">
@@ -533,11 +994,43 @@ function AssertionCard({ assertion }: { assertion: AuthorPositionAssertion }) {
             <blockquote key={`${assertion.id}-${item.noteId}-${item.quote}`}>
               <p>{item.quote}</p>
               <cite>{item.reason}</cite>
+              <button
+                className="link-button"
+                type="button"
+                onClick={() =>
+                  onCorrect({
+                    type: 'evidence',
+                    id: item.noteId,
+                    title: `${assertion.title}: ${item.quote.slice(0, 60)}`
+                  })
+                }
+              >
+                Корректировать evidence
+              </button>
             </blockquote>
           ))}
         </div>
       </details>
     </article>
+  );
+}
+
+function LinkPreviewCard({ preview }: { preview: LinkPreview }) {
+  return (
+    <a className="link-preview" href={preview.normalizedUrl} target="_blank" rel="noreferrer">
+      <span>{preview.domain}</span>
+      <b>{preview.title}</b>
+      <small>{preview.normalizedUrl}</small>
+    </a>
+  );
+}
+
+function SummaryItem({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="summary-item">
+      <b>{value}</b>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -1474,6 +1967,110 @@ function assertionTypeLabel(type: string): string {
   if (type === 'audience') return 'Аудитория';
   if (type === 'topic') return 'Тема';
   return 'Принцип';
+}
+
+function deriveNoteTitle(note: AuthorNote): string {
+  if (note.title.trim()) return note.title;
+
+  const normalized = note.body.replace(/\s+/g, ' ').trim();
+  if (!normalized) return authorNoteTypeLabel(note.type);
+
+  return normalized.length > 64 ? `${normalized.slice(0, 61)}...` : normalized;
+}
+
+function buildLinkPreview(value: string): LinkPreview {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return { isValid: false, domain: '', normalizedUrl: '', title: '' };
+  }
+
+  try {
+    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const domain = url.hostname.replace(/^www\./, '');
+
+    return {
+      isValid: true,
+      domain,
+      normalizedUrl: url.toString(),
+      title: `Ссылка из ${domain}`
+    };
+  } catch {
+    return { isValid: false, domain: '', normalizedUrl: trimmed, title: '' };
+  }
+}
+
+function getMemorySummary(notes: AuthorNote[]) {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  return notes.reduce(
+    (summary, note) => {
+      const capturedAt = new Date(note.capturedAt);
+      const isSameYear = capturedAt.getFullYear() === currentYear;
+
+      return {
+        total: summary.total + 1,
+        thoughts: summary.thoughts + (note.type === 'thought' ? 1 : 0),
+        links: summary.links + (note.type === 'linkReaction' ? 1 : 0),
+        corrections: summary.corrections + (note.type === 'manualCorrection' ? 1 : 0),
+        thisMonth: summary.thisMonth + (isSameYear && capturedAt.getMonth() === currentMonth ? 1 : 0),
+        thisYear: summary.thisYear + (isSameYear ? 1 : 0)
+      };
+    },
+    { total: 0, thoughts: 0, links: 0, corrections: 0, thisMonth: 0, thisYear: 0 }
+  );
+}
+
+function filterAuthorNotes(notes: AuthorNote[], query: string, filter: MemoryTypeFilter): AuthorNote[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return notes.filter((note) => {
+    const matchesType = filter === 'all' || note.type === filter;
+    const haystack = [
+      note.title,
+      note.body,
+      note.sourceUrl,
+      note.targetTitle ?? '',
+      ...note.tags
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return matchesType && (!normalizedQuery || haystack.includes(normalizedQuery));
+  });
+}
+
+function isEvidenceNote(noteId: string, assertions: AuthorPositionAssertion[]): boolean {
+  return assertions.some((assertion) => assertion.evidence.some((item) => item.noteId === noteId));
+}
+
+function buildCorrectionTargets(assertions: AuthorPositionAssertion[]): CorrectionTarget[] {
+  return assertions.flatMap((assertion) => [
+    { type: 'assertion' as const, id: assertion.id, title: assertion.title },
+    ...assertion.evidence.map((item) => ({
+      type: 'evidence' as const,
+      id: `${assertion.id}:${item.noteId}`,
+      title: `${assertion.title}: ${item.quote.slice(0, 60)}`
+    }))
+  ]);
+}
+
+function correctionTargetKey(target: CorrectionTarget): string {
+  return `${target.type}:${target.id}`;
+}
+
+function hasCorrectionConflict(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return ['не согласен', 'неверно', 'противоречит', 'убрать', 'заменить', 'не так'].some((marker) =>
+    normalized.includes(marker)
+  );
+}
+
+function getSpeechRecognitionConstructor() {
+  const speechWindow = window as SpeechRecognitionWindow;
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
 }
 
 function statusLabel(status: string): string {

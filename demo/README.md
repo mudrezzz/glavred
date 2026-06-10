@@ -44,35 +44,44 @@ The demo starts with six notes:
 The app shows inferred author-position assertions with evidence links back to these
 notes.
 
+The author memory workspace also demonstrates the hardened UX: titleless capture,
+optional title reveal, local link preview, targeted correction from assertions and
+evidence, search/filtering, lazy loading, long-note collapse, edit/delete actions,
+summary counters, and a browser voice-input fallback.
+
 ## Main User Flow
 
 1. Open `Память автора`.
 2. Review seeded notes and `Как система поняла автора`.
-3. Add a new thought, link reaction, or manual correction.
-4. Open `Радар`.
-5. Review or edit the source signal.
-6. Click `Собрать инсайт`.
-7. Click `В план`.
-8. Approve the plan item.
-9. Click `Подготовить фабулу`.
-10. Edit the post brief if needed.
-11. Click `Утвердить фабулу`.
-12. Open `Редактура`.
-13. Click `Написать драфт`.
-14. Review checks and editor notes.
-15. Edit the draft text.
-16. Click `Утвердить текст`.
-17. Open `Выпуск`.
-18. Click `Подготовить выпуск`.
-19. Review target, checklist, final text, and Markdown preview.
-20. Complete the checklist and click `Готово к выпуску`.
-21. Click `Скопировать текст` or `Скачать Markdown`.
-22. Open `Аналитика`.
-23. Click `Подготовить аналитику`.
-24. Enter manual metrics and editorial conclusions.
-25. Click `Зафиксировать выводы`.
-26. Reload the page to confirm state persists.
-27. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+3. Add a quick thought without a title, or reveal `+ Заголовок` when needed.
+4. Switch to `Реакция на ссылку`, paste a URL, and confirm the local link preview.
+5. Use `Корректировать` from an assertion or evidence item to create a targeted manual
+   correction.
+6. Try search, type filters, `Показать еще`, long-note expansion, edit, and delete.
+7. Open `Радар`.
+8. Review or edit the source signal.
+9. Click `Собрать инсайт`.
+10. Click `В план`.
+11. Approve the plan item.
+12. Click `Подготовить фабулу`.
+13. Edit the post brief if needed.
+14. Click `Утвердить фабулу`.
+15. Open `Редактура`.
+16. Click `Написать драфт`.
+17. Review checks and editor notes.
+18. Edit the draft text.
+19. Click `Утвердить текст`.
+20. Open `Выпуск`.
+21. Click `Подготовить выпуск`.
+22. Review target, checklist, final text, and Markdown preview.
+23. Complete the checklist and click `Готово к выпуску`.
+24. Click `Скопировать текст` or `Скачать Markdown`.
+25. Open `Аналитика`.
+26. Click `Подготовить аналитику`.
+27. Enter manual metrics and editorial conclusions.
+28. Click `Зафиксировать выводы`.
+29. Reload the page to confirm state persists.
+30. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 
@@ -88,12 +97,9 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-The next demo extension is topics and fabulas as structured editorial entities:
-
-- topic cards with purpose, audience value, rules, and weight ranges;
-- fabula cards with dramaturgy, proof requirements, and weight ranges;
-- a default all-enabled topic/fabula compatibility matrix;
-- routing the current production flow through those entities.
+The next demo extension should first design external author-memory sources and import
+review without connecting real APIs. Topics and fabulas as structured editorial
+entities remain the next product layer after that planning work.
 
 Real provider calls, API keys, platform metrics, publication automation, and backend
 sync remain later steps.

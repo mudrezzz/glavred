@@ -73,12 +73,15 @@ describe('LocalWorkspaceStore', () => {
       authorNotes: [
         {
           id: 'note-test',
-          type: 'thought' as const,
-          title: 'Новая мысль',
-          body: 'AI feature должен объяснять confidence.',
+          type: 'manualCorrection' as const,
+          title: '',
+          body: 'Не согласен: вывод про образ нужно привязать к adoption, а не к модели.',
           sourceUrl: '',
-          tags: ['confidence'],
-          capturedAt: '2026-06-10T12:00:00.000Z'
+          tags: ['manual-correction'],
+          capturedAt: '2026-06-10T12:00:00.000Z',
+          targetType: 'assertion' as const,
+          targetId: 'assertion-persona-ai-product-manager',
+          targetTitle: 'AI Product Manager с исследовательской оптикой'
         },
         ...workspace.authorNotes
       ]
@@ -86,7 +89,8 @@ describe('LocalWorkspaceStore', () => {
 
     store.save(changed);
 
-    expect(store.load().authorNotes[0].title).toBe('Новая мысль');
+    expect(store.load().authorNotes[0].targetId).toBe('assertion-persona-ai-product-manager');
+    expect(store.load().authorNotes[0].title).toBe('');
   });
 
   it('loads a Slice 0.4 workspace without draft/release/analytics fields', () => {

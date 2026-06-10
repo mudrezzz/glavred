@@ -17,6 +17,9 @@ export interface AuthorNote {
   sourceUrl: string;
   tags: string[];
   capturedAt: string;
+  targetType?: 'assertion' | 'evidence';
+  targetId?: string;
+  targetTitle?: string;
 }
 
 export interface AuthorMemoryEvent {
