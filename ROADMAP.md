@@ -386,7 +386,7 @@ Status:
 
 ### Slice 1.0.4: Author Memory External Sources and Import Design
 
-- Status: Backlog
+- Status: Done
 - Goal: Design how external author material enters author memory without turning import
   into an opaque dump of data.
 - User value: The author can see where their prior thoughts may come from, choose
@@ -406,6 +406,13 @@ Status:
   - Decide what can be local-first in the browser and what requires future backend or
     manual export/import.
   - Add an implementation-ready roadmap for the first minimal import surface.
+  - Design bulk actions for large archives:
+    - select page;
+    - select all by active filter;
+    - group by source/date/tag/duplicate risk/evidence risk;
+    - `Добавить все`;
+    - archive-safe bulk accept;
+    - undo latest bulk action.
 - Out of scope:
   - Real Telegram/social/blog API integrations.
   - OAuth, backend workers, crawler infrastructure, and scheduled ingestion.
@@ -417,24 +424,77 @@ Status:
   - Imported material must preserve provenance: source, captured date, original link,
     and why it was accepted as evidence.
   - User review remains mandatory before imported material strengthens assertions.
+  - Large historical imports default to archive-safe behavior, not immediate active
+    memory or assertion influence.
 - Tests:
-  - If docs-only: `npm test` and `npm run smoke` as regression.
-  - If a UI shell is included: UI tests for source settings, source status, and no-op
-    local persistence.
+  - Docs-only regression: `npm test` passed; `npm run smoke` passed.
 - Docs:
   - Update architecture overview, developer guide, user guide, demo docs, and roadmap.
-  - Add ADR if the slice decides local-first/manual-import boundaries.
+  - Add ADR for review-before-influence and archive-safe bulk import.
+  - Add `docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md`.
+  - Add a GitHub Wiki page for planned external sources.
 - Demo impact:
   - Demo should show possible AI Product Manager source channels without pretending
     that real ingestion is already connected.
+  - Demo import scenario includes a large Telegram archive, customer interview notes,
+    blog essays, a talk document, and manual research uploads.
 - Acceptance criteria:
-  - Import is separated from day-to-day author-memory capture.
-  - Source provenance, review, deduplication, and influence on assertions are described.
-  - The next implementation step for imports is small and explicit.
-  - `npm test` and `npm run smoke` pass.
+  - Import is separated from day-to-day author-memory capture. Done.
+  - Source provenance, review, deduplication, and influence on assertions are described. Done.
+  - Bulk import and `Добавить все` are designed for large archives. Done.
+  - Unreviewed and archive-only imports do not affect assertions by default. Done.
+  - The next implementation step for imports is small and explicit. Done.
+  - `npm test` and `npm run smoke` pass. Done.
 - Risks:
   - Real integrations can quickly dominate the product; keep the first implementation
     focused on source configuration and reviewed import, not automation.
+  - Bulk import can hide low-quality material if summary and filters are weak; keep
+    confirmation and evidence policy visible.
+
+### Slice 1.0.5: External Sources Local UI Shell
+
+- Status: Ready
+- Goal: Add a local-first, mock-backed UI shell for external source settings and import
+  review without real integrations.
+- User value: The author can see how source settings, review queue, grouping, and
+  `Добавить все` will work before backend/API integrations exist.
+- Scope:
+  - Add `Источники`, `Очередь разбора`, and `Архив` work areas inside `Память автора`
+    or an adjacent memory workspace.
+  - Add demo source cards for the AI Product Manager scenario.
+  - Add mock imported candidates with source, date, tags, duplicate risk, suggested
+    target, provenance, and evidence policy.
+  - Add filters, grouping, individual review actions, selection, `Выбрать все по
+    фильтру`, `Добавить все`, and undo for the latest bulk action.
+  - Persist local source settings, candidates, archive records, and bulk action state
+    in the existing workspace storage.
+  - Keep unreviewed and archive-only records from changing current author-position
+    assertions.
+- Out of scope:
+  - Real Telegram/social/blog integrations.
+  - OAuth, crawler, backend workers, scheduled ingestion, and AI analysis.
+  - Parsing actual uploaded archive files.
+- Implementation notes:
+  - Use deterministic mock candidates.
+  - Default large-bulk destination should be archive.
+  - Bulk confirmation must show count, filters, duplicate risk, destination, and
+    evidence impact.
+- Tests:
+  - Unit tests for candidate review and bulk status transitions.
+  - Storage tests for old workspace normalization and import state persistence.
+  - UI tests for source cards, filters, grouping, select-all-by-filter, `Добавить все`,
+    undo, and no assertion change from unreviewed/archive-only candidates.
+  - `npm test`, `npm run smoke`, and screenshot/wiki refresh if UI is user-visible.
+- Docs:
+  - Update README, user guide, developer guide, demo docs, wiki, and roadmap.
+- Demo impact:
+  - Demo gains a visible import planning shell with AI Product Manager source examples.
+- Acceptance criteria:
+  - User can inspect source settings and mock candidates.
+  - User can bulk-archive candidates through `Добавить все`.
+  - User can undo the latest bulk action.
+  - Imported/archive-only candidates do not change `Как система поняла автора`.
+  - State survives reload.
 
 ### Deferred: Attachment Analysis and Evidence Extraction
 
@@ -538,6 +598,7 @@ Status:
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
 - Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
+- Slice 1.0.4: Author Memory External Sources and Import Design. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -556,4 +617,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.4: Author Memory External Sources and Import Design`.
+Start `Slice 1.0.5: External Sources Local UI Shell`.

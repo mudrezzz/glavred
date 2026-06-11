@@ -49,6 +49,24 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
+## Planned External Sources Scenario
+
+The next import layer is designed around the same AI Product Manager demo. Planned
+source examples:
+
+- Telegram channel archive with about 1,000 historical posts about AI-B2B product
+  work.
+- Customer interview notes about pilot-to-adoption friction.
+- Blog/site essays about evals, trust loops, and enterprise rollout.
+- A talk document about AI product discovery and confidence boundaries.
+- Manual upload of research notes and screenshots.
+
+The intended UX does not require reviewing every archived Telegram post. The import
+queue should group candidates by source, date, tag, duplicate risk, or evidence risk,
+then allow `Выбрать все по фильтру` and `Добавить все`. For large archives, the safe
+default is accepting material into archive, not immediately strengthening the live
+author-position model.
+
 ## Visual Walkthrough
 
 The visual user walkthrough is published in the GitHub Wiki:

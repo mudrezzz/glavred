@@ -18,6 +18,9 @@ configuration block.
 The revised product concept is documented in
 `docs/architecture/AUTHOR_POSITION_CONCEPT.md`.
 
+The external source and import-review concept is documented in
+`docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md`.
+
 ## Strategic Product Model
 
 The durable model is:
@@ -82,6 +85,17 @@ turning the product into generic content generation.
   approves or corrects.
 - `EditorialRadar`: collects external and manual material. Radar output is fuel for
   author memory and content production, not the only source of posts.
+- `ExternalSourceSettings`: stores planned or connected source configurations for
+  Telegram, social profiles, blogs, documents, article archives, and manual uploads.
+- `ImportReviewQueue`: holds imported candidates before they affect author memory,
+  archive, or author-position assertions.
+- `ImportCandidateGroups`: groups large imports by source, date, tag, duplicate
+  cluster, evidence risk, or status so the author can review patterns instead of
+  every item.
+- `BulkImportActions`: records reversible bulk choices such as `Добавить все`,
+  accepting selected items into archive, or ignoring selected items as evidence.
+- `ArchiveRecords`: stores accepted historical posts and long-form materials with
+  provenance and evidence policy.
 - `InsightScoring`: turns a source signal into an insight card with relevance, urgency,
   banality risk, fact gaps, suggested topic, and suggested author position.
 - `ContentPlanning`: turns selected insight cards and author constraints into plan
@@ -166,6 +180,18 @@ Future author-position contracts:
   fixes.
 - `ContextChatSession`: active section, messages, proposed structured changes, and
   approval state.
+- `AuthorExternalSource`: source settings for Telegram, social, blog/site, document,
+  article archive, or manual upload.
+- `ImportedMemoryCandidate`: imported item waiting for review, grouping, or bulk
+  action.
+- `ImportCandidateGroup`: grouped candidate set used for large archives.
+- `BulkImportSelection`: selected candidates by explicit ids or active filter.
+- `BulkImportAction`: reversible record of a group operation.
+- `ArchiveRecord`: accepted historical material with provenance and evidence policy.
+- `Provenance`: source, original link or file reference, import date, acceptance date,
+  acceptance mode, and author reason.
+- `EvidencePolicy`: whether imported material can support assertions, is archive-only,
+  or is ignored as evidence.
 
 ## Conceptual AI Provider Interfaces
 
@@ -225,21 +251,28 @@ research experience building AI-B2B products:
 4. The author can add another thought, link reaction, file-backed note, or manual
    correction. Attached files are supporting material only; they are not parsed or
    analyzed in the current perimeter.
-5. The existing production flow uses the same demo context: a `SourceSignal` about the
+5. Future external source settings can describe the author's Telegram channel,
+   interview notes, blog archive, and talks. Imported candidates must go through review
+   or bulk archive acceptance before they influence memory or assertions.
+6. The existing production flow uses the same demo context: a `SourceSignal` about the
    gap between AI-B2B demos and adoption.
-6. `InsightScoring` produces an `InsightCard`.
-7. `ContentPlanning` creates a Telegram plan item.
-8. The author approves the plan and post brief through HITL gates.
-9. `Drafting` creates an editable research-note draft.
-10. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+7. `InsightScoring` produces an `InsightCard`.
+8. `ContentPlanning` creates a Telegram plan item.
+9. The author approves the plan and post brief through HITL gates.
+10. `Drafting` creates an editable research-note draft.
+11. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-11. The author approves final text, prepares a manual Telegram release package, and
+12. The author approves final text, prepares a manual Telegram release package, and
    captures analytics learning.
 
 ## Extension Points
 
 - Author memory can ingest notes, links, archive posts, corrections, and analytics
   learning before production artifacts are created.
+- External source import can add candidates to a review queue, but unreviewed material
+  must not strengthen author-position assertions.
+- Bulk import can accept many historical items into archive, while preserving
+  provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.

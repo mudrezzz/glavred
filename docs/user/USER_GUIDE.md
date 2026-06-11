@@ -51,6 +51,32 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
+## Planned External Sources
+
+External source import is designed but not implemented yet.
+
+The planned UX keeps source import inside `Память автора` and separates it from the
+current manual note feed:
+
+- `Источники`: configure places where the author already leaves thoughts, such as a
+  Telegram channel, social profile, blog/site, article archive, document, or manual
+  upload.
+- `Очередь разбора`: review imported candidates before they become memory or archive
+  records.
+- `Архив`: keep accepted historical posts and long-form materials with source
+  provenance.
+
+For large archives, the planned queue supports group work:
+
+- select one item, a page, or all items matching the active filter;
+- group by source, date, tag, duplicate cluster, or evidence risk;
+- use `Добавить все` with a confirmation summary;
+- accept many items into archive without reading every post;
+- undo the latest bulk action when available.
+
+Unreviewed imported material will not change `Как система поняла автора`. Bulk-added
+archive material will also stay distinguishable from manually reviewed evidence.
+
 ## Current Supported Flow
 
 - Open `Память автора`.
@@ -102,6 +128,7 @@ The seeded notes cover:
 - Context chat.
 - Topic/fabula matrix.
 - Archive import and uniqueness checks.
+- External source settings and bulk import review.
 - Real source ingestion.
 - Real AI-generated insights, briefs, or drafts.
 - Autoposting and real platform publishing integrations.

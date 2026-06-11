@@ -16,6 +16,8 @@ Glavred - локальный редакционный кабинет для эк
 - [Production flow](02-production-flow): путь от радара до утвержденной фабулы поста.
 - [Выпуск и аналитика](03-release-and-analytics): ручной export и learning note.
 - [Local-first demo](04-local-first-demo): запуск, reset и пересъемка скриншотов.
+- [External sources](05-external-sources): planned UX for source settings, review
+  queue, bulk import, and archive-safe `Добавить все`.
 
 ## Главная идея
 

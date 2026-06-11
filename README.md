@@ -48,6 +48,8 @@ The revised core modules are:
 
 - Author Memory: free internal feed of thoughts, links, reactions, corrections, and
   learning events.
+- External Sources and Import Review: planned source settings, review queue, bulk
+  import, and archive-safe handling for large historical archives.
 - Author Position Model: transparent, evidence-backed model of how the author thinks
   and writes.
 - Topics and Fabulas: editable editorial entities with weights, compatibility matrix,
@@ -103,6 +105,7 @@ npm run docs:wiki:publish
 
 - [Roadmap](ROADMAP.md)
 - [Author position concept](docs/architecture/AUTHOR_POSITION_CONCEPT.md)
+- [External source import concept](docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md)
 - [System architecture overview](docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md)
 - [Architecture decision records](docs/adr/README.md)
 - [Contributor guide](docs/contributor/CONTRIBUTING.md)
