@@ -587,9 +587,88 @@ Status:
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
 
-### Slice 1.2: Validator Framework Baseline
+### Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs
 
 - Status: Ready
+- Goal: Repair the `Редакционная модель` interface before building validators on top of
+  it, and lock frontend UX decisions in ADRs.
+- User value: The author gets one coherent cabinet UX: structured rules, explicit
+  edit/save flows, compact entity lists, and a validation panel instead of freeform
+  text blocks and inconsistent controls.
+- Scope:
+  - Replace the current accidental hero quote with an explicit project profile header:
+    project name, short description, setup status, and entity counters.
+  - Add `ProjectProfile` or equivalent workspace fields for project name and project
+    description; seed demo as `TG-блог AI Product Manager`.
+  - Rename `Обзор` to `Издательство`.
+  - Rebuild `Издательство` as a single-column workflow with a right-side validation
+    panel.
+  - Replace large textareas for author/audience/position/style/goals/forbidden topics
+    with structured rule lists.
+  - Add rule-level UX: compact display, `+ Правило`, `Редактировать`, `Сохранить`,
+    `Отменить`, `Удалить`.
+  - Hide `Legacy-рубрики` from the UI; keep legacy fields only as storage/service
+    compatibility fallback.
+  - Expand `Стиль` into explicit rule groups: voice, language, rhythm, anti-AI
+    patterns, and examples of allowed/forbidden phrasing.
+  - Rebuild `Темы` as a compact single-column list: one row per topic, expand for
+    details, edit/save/cancel for changes.
+  - Rebuild `Фабулы` with the same compact list/detail/edit pattern.
+  - Keep `Матрица`, but add explicit draft/save/cancel behavior for compatibility
+    changes.
+  - Add a right-side validation panel on every internal tab with deterministic demo
+    checks and visible summary.
+  - Make all internal tabs reuse the same `.tabs` visual pattern already used in
+    `Память автора`.
+  - Create frontend UX ADRs:
+    - reuse existing product interaction patterns;
+    - editorial settings are structured rules, not textareas;
+    - important entity edits use read/edit/save/cancel;
+    - editorial setup screens use single-column workflow plus validation panel;
+    - no anonymous hero text from domain fields;
+    - compact list first, details on demand;
+    - validation is a first-class UX surface.
+- Out of scope:
+  - Real AI validation calls.
+  - Full validator framework contracts from Slice 1.2.
+  - Context chat.
+  - Platform/format weights.
+  - Rewriting downstream production flow.
+- Implementation notes:
+  - Treat this as UX repair, not new product depth.
+  - Preserve the topic/fabula runtime contracts from Slice 1.1.
+  - Existing local workspaces must normalize missing project/rule fields from demo
+    data.
+  - Deterministic validation panel can be simple, but it must demonstrate project,
+    author, style, topic, fabula, and matrix checks on the seeded demo.
+- Tests:
+  - Unit/storage tests for new project profile and structured rule normalization.
+  - UI tests for tab styling class reuse, rule add/edit/delete, topic expand/edit/save,
+    fabula expand/edit/save, matrix draft/save/cancel, and validation panel visibility.
+  - Regression test that downstream `Радар -> План -> Фабулы` still works.
+  - `npm test -- --run` and `npm run smoke`.
+- Docs:
+  - Add ADRs under `docs/adr/`.
+  - Update README, user guide, developer guide, architecture overview, demo docs, and
+    wiki docs if screenshots are refreshed.
+- Demo impact:
+  - Demo should show `TG-блог AI Product Manager` as the explicit project profile.
+  - Demo validation panel should identify at least one green, one yellow, and one
+    actionable recommendation.
+- Acceptance criteria:
+  - No two-column textarea grid remains in `Редакционная модель`.
+  - Internal tabs visually match the existing `Память автора` tab pattern.
+  - `Издательство`, `Темы`, `Фабулы`, and `Матрица` all have a right-side validation
+    panel.
+  - Author/audience/style/goals are represented as editable rules.
+  - Topics and fabulas use compact list/detail/edit/save UX.
+  - Matrix changes require explicit save/cancel.
+  - Frontend UX ADRs are accepted and linked from developer docs.
+  - Existing local-first production flow remains working.
+
+### Slice 1.2: Validator Framework Baseline
+
+- Status: Backlog
 - Goal: Introduce generic validator results across author position, topics, fabulas,
   and production artifacts.
 - Scope:
@@ -678,4 +757,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.2: Validator Framework Baseline`.
+Start `Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs`.
