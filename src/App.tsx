@@ -20,6 +20,7 @@ import {
   bulkAcceptCandidatesToArchive,
   bulkRejectCandidates,
   filterImportCandidates,
+  getTopicFabulaWarnings,
   groupImportCandidates,
   ignoreCandidateForEvidence,
   markCandidateAcceptedToArchive,
@@ -27,6 +28,7 @@ import {
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
+  normalizeWeightRange,
   rejectCandidate,
   reviseDraft,
   toggleReleaseChecklistItem,
@@ -43,6 +45,7 @@ import {
   type EditorialLearningNote,
   type EditorialModel,
   type EvidencePolicy,
+  type Fabula,
   type FinalText,
   type ImportedMemoryCandidate,
   type ImportCandidateFilters,
@@ -54,6 +57,8 @@ import {
   type PostDraft,
   type ReleasePackage,
   type SourceSignal,
+  type Topic,
+  type TopicFabulaMatrixEntry,
   type WorkspaceSection,
   type WorkspaceState
 } from './domain/editorialWorkspace';
@@ -175,7 +180,13 @@ export function App() {
           {active === 'editorialModel' && (
             <EditorialModelView
               model={workspace.editorialModel}
-              onChange={(editorialModel) => patchWorkspace({ editorialModel })}
+              topics={workspace.topics}
+              fabulas={workspace.fabulas}
+              matrix={workspace.topicFabulaMatrix}
+              onModelChange={(editorialModel) => patchWorkspace({ editorialModel })}
+              onTopicsChange={(topics) => patchWorkspace({ topics })}
+              onFabulasChange={(fabulas) => patchWorkspace({ fabulas })}
+              onMatrixChange={(topicFabulaMatrix) => patchWorkspace({ topicFabulaMatrix })}
             />
           )}
           {active === 'radar' && (
@@ -183,12 +194,25 @@ export function App() {
               workspace={workspace}
               onSignalChange={(sourceSignal) => patchWorkspace({ sourceSignal })}
               onCreateInsight={() => {
-                const insightCard = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+                const insightCard = createInsightCard(
+                  workspace.sourceSignal,
+                  workspace.editorialModel,
+                  workspace.topics,
+                  workspace.fabulas,
+                  workspace.topicFabulaMatrix
+                );
                 patchWorkspace({ insightCard }, 'Карточка инсайта собрана');
               }}
               onPlan={() => {
                 const insightCard =
-                  workspace.insightCard ?? createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+                  workspace.insightCard ??
+                  createInsightCard(
+                    workspace.sourceSignal,
+                    workspace.editorialModel,
+                    workspace.topics,
+                    workspace.fabulas,
+                    workspace.topicFabulaMatrix
+                  );
                 const contentPlanItem = createContentPlanItem(insightCard);
                 patchWorkspace(
                   { insightCard, contentPlanItem, activeSection: 'plan' },
@@ -212,7 +236,10 @@ export function App() {
                 const postBrief = createPostBrief(
                   workspace.contentPlanItem,
                   workspace.insightCard,
-                  workspace.editorialModel
+                  workspace.editorialModel,
+                  workspace.topics,
+                  workspace.fabulas,
+                  workspace.topicFabulaMatrix
                 );
                 patchWorkspace({ postBrief, activeSection: 'brief' }, 'Фабула подготовлена');
               }}
@@ -2103,48 +2130,306 @@ function BulkActionDialog({
 
 function EditorialModelView({
   model,
-  onChange
+  topics,
+  fabulas,
+  matrix,
+  onModelChange,
+  onTopicsChange,
+  onFabulasChange,
+  onMatrixChange
 }: {
   model: EditorialModel;
-  onChange: (model: EditorialModel) => void;
+  topics: Topic[];
+  fabulas: Fabula[];
+  matrix: TopicFabulaMatrixEntry[];
+  onModelChange: (model: EditorialModel) => void;
+  onTopicsChange: (topics: Topic[]) => void;
+  onFabulasChange: (fabulas: Fabula[]) => void;
+  onMatrixChange: (matrix: TopicFabulaMatrixEntry[]) => void;
 }) {
+  const [tab, setTab] = useState<'overview' | 'topics' | 'fabulas' | 'matrix'>('overview');
+  const warnings = getTopicFabulaWarnings(topics, fabulas, matrix);
+  const enabledPairs = matrix.filter((entry) => entry.enabled).length;
+
+  function updateTopic(topic: Topic) {
+    onTopicsChange(topics.map((item) => (item.id === topic.id ? topic : item)));
+  }
+
+  function updateFabula(fabula: Fabula) {
+    onFabulasChange(fabulas.map((item) => (item.id === fabula.id ? fabula : item)));
+  }
+
+  function toggleMatrix(topicId: string, fabulaId: string) {
+    onMatrixChange(
+      matrix.map((entry) =>
+        entry.topicId === topicId && entry.fabulaId === fabulaId
+          ? { ...entry, enabled: !entry.enabled }
+          : entry
+      )
+    );
+  }
+
   return (
     <div className="page wide fade-up">
       <section className="model-hero">
         <blockquote>{model.fabula}</blockquote>
-        <span className="gr-mark">Фабула блога · ядро решений редакции</span>
+        <span className="gr-mark">
+          Темы: {topics.length} · Фабулы: {fabulas.length} · Активные связки: {enabledPairs}
+        </span>
       </section>
-      <div className="model-grid">
-        <TextAreaCard title="Автор" value={model.author} onChange={(author) => onChange({ ...model, author })} />
-        <TextAreaCard
-          title="Аудитория"
-          value={model.audience}
-          onChange={(audience) => onChange({ ...model, audience })}
-        />
-        <TextAreaCard
-          title="Позиционирование"
-          value={model.positioning}
-          onChange={(positioning) => onChange({ ...model, positioning })}
-        />
-        <TextAreaCard
-          title="Фабула"
-          value={model.fabula}
-          onChange={(fabula) => onChange({ ...model, fabula })}
-        />
-        <ListCard title="Рубрики" items={model.rubrics} onChange={(rubrics) => onChange({ ...model, rubrics })} />
-        <ListCard
-          title="Стиль автора"
-          items={model.styleRules}
-          onChange={(styleRules) => onChange({ ...model, styleRules })}
-        />
-        <ListCard
-          title="Запреты"
-          items={model.forbiddenTopics}
-          onChange={(forbiddenTopics) => onChange({ ...model, forbiddenTopics })}
-        />
-        <ListCard title="Цели блога" items={model.goals} onChange={(goals) => onChange({ ...model, goals })} />
+      <div className="memory-tabs model-tabs" role="tablist" aria-label="Редакционная модель">
+        {[
+          ['overview', 'Обзор'],
+          ['topics', 'Темы'],
+          ['fabulas', 'Фабулы'],
+          ['matrix', 'Матрица']
+        ].map(([id, label]) => (
+          <button
+            aria-selected={tab === id}
+            className={tab === id ? 'active' : ''}
+            key={id}
+            role="tab"
+            type="button"
+            onClick={() => setTab(id as typeof tab)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+      {warnings.length > 0 ? (
+        <section className="gate model-warning">
+          <b>Нужна настройка матрицы</b>
+          <p>{warnings.map((warning) => warning.title).join(', ')} временно не участвуют в планировании.</p>
+        </section>
+      ) : null}
+      {tab === 'overview' ? (
+        <div className="model-grid">
+          <TextAreaCard title="Автор" value={model.author} onChange={(author) => onModelChange({ ...model, author })} />
+          <TextAreaCard
+            title="Аудитория"
+            value={model.audience}
+            onChange={(audience) => onModelChange({ ...model, audience })}
+          />
+          <TextAreaCard
+            title="Позиционирование"
+            value={model.positioning}
+            onChange={(positioning) => onModelChange({ ...model, positioning })}
+          />
+          <TextAreaCard
+            title="Фабула блога"
+            value={model.fabula}
+            onChange={(fabula) => onModelChange({ ...model, fabula })}
+          />
+          <ListCard title="Legacy-рубрики" items={model.rubrics} onChange={(rubrics) => onModelChange({ ...model, rubrics })} />
+          <ListCard
+            title="Стиль автора"
+            items={model.styleRules}
+            onChange={(styleRules) => onModelChange({ ...model, styleRules })}
+          />
+          <ListCard
+            title="Запреты"
+            items={model.forbiddenTopics}
+            onChange={(forbiddenTopics) => onModelChange({ ...model, forbiddenTopics })}
+          />
+          <ListCard title="Цели блога" items={model.goals} onChange={(goals) => onModelChange({ ...model, goals })} />
+        </div>
+      ) : null}
+      {tab === 'topics' ? (
+        <div className="entity-grid">
+          {topics.map((topic) => (
+            <TopicCard key={topic.id} topic={topic} onChange={updateTopic} />
+          ))}
+        </div>
+      ) : null}
+      {tab === 'fabulas' ? (
+        <div className="entity-grid">
+          {fabulas.map((fabula) => (
+            <FabulaCard key={fabula.id} fabula={fabula} onChange={updateFabula} />
+          ))}
+        </div>
+      ) : null}
+      {tab === 'matrix' ? (
+        <TopicFabulaMatrixView
+          fabulas={fabulas}
+          matrix={matrix}
+          topics={topics}
+          warnings={warnings}
+          onToggle={toggleMatrix}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function TopicCard({ topic, onChange }: { topic: Topic; onChange: (topic: Topic) => void }) {
+  return (
+    <article className="card entity-card">
+      <div className="entity-head">
+        <span className="sig info">Тема</span>
+        <select value={topic.status} onChange={(event) => onChange({ ...topic, status: event.target.value as Topic['status'] })}>
+          <option value="active">Активна</option>
+          <option value="paused">Пауза</option>
+        </select>
+      </div>
+      <TextInput label="Название" value={topic.title} onChange={(title) => onChange({ ...topic, title })} />
+      <TextAreaInline label="Описание" value={topic.description} onChange={(description) => onChange({ ...topic, description })} />
+      <TextAreaInline label="Зачем пишем" value={topic.purpose} onChange={(purpose) => onChange({ ...topic, purpose })} />
+      <TextAreaInline
+        label="Ценность для читателя"
+        value={topic.audienceValue}
+        onChange={(audienceValue) => onChange({ ...topic, audienceValue })}
+      />
+      <TextAreaInline
+        label="Позиция автора"
+        value={topic.authorStance}
+        onChange={(authorStance) => onChange({ ...topic, authorStance })}
+      />
+      <WeightRangeEditor
+        value={topic.weightRange}
+        onChange={(weightRange) => onChange({ ...topic, weightRange })}
+      />
+      <ListCard title="Правила темы" items={topic.rules} onChange={(rules) => onChange({ ...topic, rules })} />
+      <ListCard
+        title="Запретные углы"
+        items={topic.forbiddenAngles}
+        onChange={(forbiddenAngles) => onChange({ ...topic, forbiddenAngles })}
+      />
+    </article>
+  );
+}
+
+function FabulaCard({ fabula, onChange }: { fabula: Fabula; onChange: (fabula: Fabula) => void }) {
+  return (
+    <article className="card entity-card">
+      <div className="entity-head">
+        <span className="sig info">Фабула</span>
+        <select value={fabula.status} onChange={(event) => onChange({ ...fabula, status: event.target.value as Fabula['status'] })}>
+          <option value="active">Активна</option>
+          <option value="paused">Пауза</option>
+        </select>
+      </div>
+      <TextInput label="Название" value={fabula.title} onChange={(title) => onChange({ ...fabula, title })} />
+      <TextAreaInline label="Описание" value={fabula.description} onChange={(description) => onChange({ ...fabula, description })} />
+      <TextAreaInline label="Драматургия" value={fabula.dramaturgy} onChange={(dramaturgy) => onChange({ ...fabula, dramaturgy })} />
+      <WeightRangeEditor
+        value={fabula.weightRange}
+        onChange={(weightRange) => onChange({ ...fabula, weightRange })}
+      />
+      <ListCard title="Структура" items={fabula.structure} onChange={(structure) => onChange({ ...fabula, structure })} />
+      <ListCard
+        title="Доказательства"
+        items={fabula.proofRequirements}
+        onChange={(proofRequirements) => onChange({ ...fabula, proofRequirements })}
+      />
+      <ListCard title="Правила фабулы" items={fabula.rules} onChange={(rules) => onChange({ ...fabula, rules })} />
+    </article>
+  );
+}
+
+function TopicFabulaMatrixView({
+  topics,
+  fabulas,
+  matrix,
+  warnings,
+  onToggle
+}: {
+  topics: Topic[];
+  fabulas: Fabula[];
+  matrix: TopicFabulaMatrixEntry[];
+  warnings: ReturnType<typeof getTopicFabulaWarnings>;
+  onToggle: (topicId: string, fabulaId: string) => void;
+}) {
+  const enabled = (topicId: string, fabulaId: string) =>
+    matrix.find((entry) => entry.topicId === topicId && entry.fabulaId === fabulaId)?.enabled ?? true;
+
+  return (
+    <section className="card matrix-card">
+      <div className="entity-head">
+        <div>
+          <span className="sig info">Матрица совместимости</span>
+          <h3>Какие фабулы применимы к каким темам</h3>
+        </div>
+        <span className="pill ok">
+          <i />
+          {matrix.filter((entry) => entry.enabled).length} связок
+        </span>
+      </div>
+      <div className="matrix-table" style={{ gridTemplateColumns: `minmax(220px, 1.2fr) repeat(${fabulas.length}, minmax(140px, 1fr))` }}>
+        <div className="matrix-cell matrix-corner">Тема / фабула</div>
+        {fabulas.map((fabula) => (
+          <div className="matrix-cell matrix-head" key={fabula.id}>
+            {fabula.title}
+          </div>
+        ))}
+        {topics.map((topic) => (
+          <div className="matrix-row" key={topic.id} style={{ display: 'contents' }}>
+            <div className="matrix-cell matrix-topic">{topic.title}</div>
+            {fabulas.map((fabula) => (
+              <label className="matrix-cell matrix-check" key={`${topic.id}-${fabula.id}`}>
+                <input
+                  checked={enabled(topic.id, fabula.id)}
+                  type="checkbox"
+                  onChange={() => onToggle(topic.id, fabula.id)}
+                />
+                <span>{enabled(topic.id, fabula.id) ? 'Да' : 'Нет'}</span>
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+      {warnings.length > 0 ? (
+        <div className="matrix-warnings">
+          {warnings.map((warning) => (
+            <p key={`${warning.targetType}-${warning.targetId}`}>
+              <b>{warning.title}</b>: {warning.message}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="panel-note">Все активные темы и фабулы имеют хотя бы одну совместимую связку.</p>
+      )}
+    </section>
+  );
+}
+
+function WeightRangeEditor({ value, onChange }: { value: Topic['weightRange']; onChange: (value: Topic['weightRange']) => void }) {
+  return (
+    <div className="weight-editor">
+      <label>
+        Вес от %
+        <input
+          type="number"
+          value={value.min}
+          onChange={(event) => onChange(normalizeWeightRange({ ...value, min: Number(event.target.value) }))}
+        />
+      </label>
+      <label>
+        до %
+        <input
+          type="number"
+          value={value.max}
+          onChange={(event) => onChange(normalizeWeightRange({ ...value, max: Number(event.target.value) }))}
+        />
+      </label>
+    </div>
+  );
+}
+
+function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="inline-field">
+      <span>{label}</span>
+      <input value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function TextAreaInline({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="inline-field">
+      <span>{label}</span>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
   );
 }
 

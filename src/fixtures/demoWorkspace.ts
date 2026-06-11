@@ -1,11 +1,135 @@
 import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
+import { createDefaultTopicFabulaMatrix } from '../domain/editorialWorkspace';
 import type {
   ArchiveRecord,
   AuthorExternalSource,
   AuthorNote,
+  Fabula,
   ImportedMemoryCandidate,
+  Topic,
   WorkspaceState
 } from '../domain/editorialWorkspace';
+
+const demoTopics: Topic[] = [
+  {
+    id: 'topic-ai-product-discovery',
+    title: 'AI product discovery',
+    description: 'Как находить AI-B2B возможности через реальные workflow, интервью и ограничения внедрения.',
+    purpose: 'Помогать AI PM выбирать не эффектные демо, а проверяемые продуктовые гипотезы.',
+    audienceValue: 'Читатель получает способ понять, где AI действительно меняет рабочий процесс.',
+    authorStance: 'Discovery начинается с bottleneck, риска и поведения пользователя, а не с выбора модели.',
+    rules: ['Начинать с наблюдения из workflow', 'Показывать trade-off между скоростью и качеством', 'Заканчивать проверяемым критерием'],
+    forbiddenAngles: ['model-first hype', 'обещания универсальной автоматизации'],
+    weightRange: { min: 20, max: 30 },
+    status: 'active'
+  },
+  {
+    id: 'topic-evals-quality-loop',
+    title: 'Evals & quality loop',
+    description: 'Evals как продуктовая функция, а не внутренняя таблица ML-команды.',
+    purpose: 'Показывать, как качество AI-фичи становится видимым для команды и пользователя.',
+    audienceValue: 'Читатель понимает, какие проверки нужны до rollout и после него.',
+    authorStance: 'Без evals, failure modes и ownership AI-фича остается демо.',
+    rules: ['Называть критерий качества', 'Отделять product evals от offline benchmark', 'Показывать владельца проверки'],
+    forbiddenAngles: ['абстрактные benchmark без связи с пользователем'],
+    weightRange: { min: 20, max: 30 },
+    status: 'active'
+  },
+  {
+    id: 'topic-enterprise-trust-rollout',
+    title: 'Enterprise trust & rollout',
+    description: 'Доверие, rollback, explainability и границы уверенности в enterprise AI.',
+    purpose: 'Разобрать, почему enterprise adoption требует доказательств и безопасного отката.',
+    audienceValue: 'Читатель видит, что доверие проектируется как часть продукта.',
+    authorStance: 'Enterprise users принимают AI через evidence, control и понятную ответственность.',
+    rules: ['Показывать источник доверия', 'Объяснять rollback path', 'Не скрывать uncertainty'],
+    forbiddenAngles: ['магическое доверие к модели', 'AI как черный ящик без ответственности'],
+    weightRange: { min: 15, max: 25 },
+    status: 'active'
+  },
+  {
+    id: 'topic-gtm-adoption-economics',
+    title: 'GTM/adoption economics',
+    description: 'Как AI-фича проходит путь от пилота к регулярному использованию и экономике внедрения.',
+    purpose: 'Связать продуктовую ценность AI с adoption, retention и операционными затратами.',
+    audienceValue: 'Читатель получает язык для разговора с founders, CPO и sales без demo magic.',
+    authorStance: 'Пилот ценен только если понятны adoption ritual, cost of operation и метрика результата.',
+    rules: ['Отделять vanity usage от настоящего adoption', 'Показывать экономику эксплуатации', 'Не обещать headcount cuts первым тезисом'],
+    forbiddenAngles: ['продажи через страх увольнений', 'ROI без операционных допущений'],
+    weightRange: { min: 15, max: 25 },
+    status: 'active'
+  },
+  {
+    id: 'topic-workflow-automation-architecture',
+    title: 'Workflow automation architecture',
+    description: 'Архитектура AI workflow: human-in-loop, escalation, observability, ownership.',
+    purpose: 'Показывать, из каких контуров состоит надежная AI-автоматизация.',
+    audienceValue: 'Читатель получает практическую карту проектирования AI workflow.',
+    authorStance: 'AI автоматизирует не задачу в вакууме, а контур принятия решений с проверками.',
+    rules: ['Рисовать контур решения', 'Указывать человека в петле', 'Фиксировать failure mode'],
+    forbiddenAngles: ['полная автономия без контроля', 'замена процесса одной кнопкой'],
+    weightRange: { min: 10, max: 20 },
+    status: 'active'
+  }
+];
+
+const demoFabulas: Fabula[] = [
+  {
+    id: 'fabula-research-note',
+    title: 'Исследовательская заметка',
+    description: 'Наблюдение из практики, которое превращается в аккуратный продуктовый вывод.',
+    dramaturgy: 'От конкретного наблюдения к принципу, который можно проверить в своем продукте.',
+    structure: ['Сцена или сигнал', 'Что в нем неочевидно', 'Продуктовый принцип', 'Как проверить у себя'],
+    proofRequirements: ['Авторская заметка', 'Минимум один пример из интервью или пилота'],
+    rules: ['Держать тон исследования', 'Не превращать вывод в чеклист без позиции'],
+    weightRange: { min: 25, max: 35 },
+    status: 'active'
+  },
+  {
+    id: 'fabula-myth-breakdown',
+    title: 'Разбор мифа',
+    description: 'Пост, который разбирает популярное заблуждение об AI-B2B продуктах.',
+    dramaturgy: 'Сначала формулируется миф, затем показывается, где он ломается в реальном workflow.',
+    structure: ['Миф', 'Почему он кажется правдой', 'Где ломается', 'Более точная формулировка'],
+    proofRequirements: ['Контрпример', 'Риск для продукта или GTM'],
+    rules: ['Не высмеивать аудиторию', 'Давать замену мифу'],
+    weightRange: { min: 15, max: 25 },
+    status: 'active'
+  },
+  {
+    id: 'fabula-practical-framework',
+    title: 'Практический фреймворк',
+    description: 'Схема или набор вопросов для PM/founder, который проектирует AI-фичу.',
+    dramaturgy: 'От проблемы к рабочему фреймворку с критериями проверки.',
+    structure: ['Когда применять', '3-5 элементов фреймворка', 'Как проверить', 'Что может пойти не так'],
+    proofRequirements: ['Связь с темой', 'Минимум один failure mode'],
+    rules: ['Фреймворк должен быть применим за один рабочий созвон', 'Не добавлять декоративные шаги'],
+    weightRange: { min: 20, max: 30 },
+    status: 'active'
+  },
+  {
+    id: 'fabula-pilot-postmortem',
+    title: 'Postmortem пилота',
+    description: 'Разбор провала или риска AI-пилота без обвинений и задним числом.',
+    dramaturgy: 'Что обещали, что произошло, какой системный урок забрать.',
+    structure: ['Контекст пилота', 'Ожидание', 'Разрыв', 'Причина', 'Урок для следующего запуска'],
+    proofRequirements: ['Сигнал из источника', 'Проверяемый урок'],
+    rules: ['Не раскрывать приватные детали', 'Фокусироваться на системе, а не на виноватых'],
+    weightRange: { min: 10, max: 20 },
+    status: 'active'
+  },
+  {
+    id: 'fabula-position-manifesto',
+    title: 'Позиционный манифест',
+    description: 'Сильный авторский тезис о том, как надо строить AI-B2B продукты.',
+    dramaturgy: 'От несогласия с рынком к ясной авторской позиции и критерию качества.',
+    structure: ['С чем не согласен', 'Почему это важно', 'Моя позиция', 'Критерий для читателя'],
+    proofRequirements: ['Evidence из памяти автора', 'Ограничения тезиса'],
+    rules: ['Позиция должна быть острой, но не декларативной', 'Добавлять границы применимости'],
+    weightRange: { min: 10, max: 20 },
+    status: 'active'
+  }
+];
 
 const demoAuthorNotes: AuthorNote[] = [
   {
@@ -492,6 +616,9 @@ export function createDemoWorkspace(): WorkspaceState {
         'Превращать наблюдения из интервью и пилотов в ясные продуктовые принципы'
       ]
     },
+    topics: demoTopics,
+    fabulas: demoFabulas,
+    topicFabulaMatrix: createDefaultTopicFabulaMatrix(demoTopics, demoFabulas),
     sourceSignal: {
       id: 'signal-ai-demo-to-adoption-gap',
       type: 'Повторяющийся паттерн',

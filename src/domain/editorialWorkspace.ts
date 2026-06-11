@@ -28,6 +28,7 @@ export type ImportReviewStatus =
 export type ImportCandidateGroupType = 'source' | 'status' | 'duplicateRisk' | 'evidencePolicy' | 'tag';
 export type ImportRiskLevel = 'low' | 'medium' | 'high';
 export type BulkImportActionType = 'bulkAcceptToArchive' | 'bulkReject';
+export type EditorialEntityStatus = 'active' | 'paused';
 
 export interface AuthorNote {
   id: string;
@@ -89,6 +90,54 @@ export interface EditorialModel {
   goals: string[];
 }
 
+export interface WeightRange {
+  min: number;
+  max: number;
+}
+
+export interface Topic {
+  id: string;
+  title: string;
+  description: string;
+  purpose: string;
+  audienceValue: string;
+  authorStance: string;
+  rules: string[];
+  forbiddenAngles: string[];
+  weightRange: WeightRange;
+  status: EditorialEntityStatus;
+}
+
+export interface Fabula {
+  id: string;
+  title: string;
+  description: string;
+  dramaturgy: string;
+  structure: string[];
+  proofRequirements: string[];
+  rules: string[];
+  weightRange: WeightRange;
+  status: EditorialEntityStatus;
+}
+
+export interface TopicFabulaMatrixEntry {
+  topicId: string;
+  fabulaId: string;
+  enabled: boolean;
+}
+
+export interface TopicFabulaWarning {
+  targetType: 'topic' | 'fabula';
+  targetId: string;
+  title: string;
+  message: string;
+}
+
+export interface CompatibleTopicFabula {
+  topic: Topic;
+  fabula: Fabula;
+}
+
 export interface SourceSignal {
   id: string;
   type: string;
@@ -111,6 +160,10 @@ export interface InsightCard {
   score: number;
   banalityRisk: number;
   factGaps: string[];
+  topicId?: string;
+  topicTitle?: string;
+  fabulaId?: string;
+  fabulaTitle?: string;
 }
 
 export interface ContentPlanItem {
@@ -123,6 +176,10 @@ export interface ContentPlanItem {
   format: string;
   expectedEffect: string;
   approvalStatus: ApprovalStatus;
+  topicId?: string;
+  topicTitle?: string;
+  fabulaId?: string;
+  fabulaTitle?: string;
 }
 
 export interface PostBrief {
@@ -141,6 +198,10 @@ export interface PostBrief {
   risks: string[];
   sources: string[];
   approvalStatus: ApprovalStatus;
+  topicId?: string;
+  topicTitle?: string;
+  fabulaId?: string;
+  fabulaTitle?: string;
 }
 
 export interface PostDraft {
@@ -291,6 +352,9 @@ export interface WorkspaceState {
   authorMemoryEvents: AuthorMemoryEvent[];
   authorPositionAssertions: AuthorPositionAssertion[];
   editorialModel: EditorialModel;
+  topics: Topic[];
+  fabulas: Fabula[];
+  topicFabulaMatrix: TopicFabulaMatrixEntry[];
   sourceSignal: SourceSignal;
   insightCard: InsightCard | null;
   contentPlanItem: ContentPlanItem | null;
@@ -323,6 +387,100 @@ export interface WorkspaceStore {
   load(): WorkspaceState;
   save(workspace: WorkspaceState): void;
   reset(): WorkspaceState;
+}
+
+export function normalizeWeightRange(range: WeightRange): WeightRange {
+  const min = clampPercent(range.min);
+  const max = clampPercent(range.max);
+
+  return min <= max ? { min, max } : { min: max, max: min };
+}
+
+export function createDefaultTopicFabulaMatrix(
+  topics: Topic[],
+  fabulas: Fabula[]
+): TopicFabulaMatrixEntry[] {
+  return topics.flatMap((topic) =>
+    fabulas.map((fabula) => ({
+      topicId: topic.id,
+      fabulaId: fabula.id,
+      enabled: true
+    }))
+  );
+}
+
+export function completeTopicFabulaMatrix(
+  topics: Topic[],
+  fabulas: Fabula[],
+  matrix: TopicFabulaMatrixEntry[]
+): TopicFabulaMatrixEntry[] {
+  const existing = new Map(matrix.map((entry) => [`${entry.topicId}:${entry.fabulaId}`, entry.enabled]));
+
+  return topics.flatMap((topic) =>
+    fabulas.map((fabula) => {
+      const key = `${topic.id}:${fabula.id}`;
+
+      return {
+        topicId: topic.id,
+        fabulaId: fabula.id,
+        enabled: existing.get(key) ?? true
+      };
+    })
+  );
+}
+
+export function isTopicFabulaEnabled(
+  matrix: TopicFabulaMatrixEntry[],
+  topicId: string,
+  fabulaId: string
+): boolean {
+  return matrix.find((entry) => entry.topicId === topicId && entry.fabulaId === fabulaId)?.enabled ?? true;
+}
+
+export function selectCompatibleTopicFabula(
+  topics: Topic[],
+  fabulas: Fabula[],
+  matrix: TopicFabulaMatrixEntry[]
+): CompatibleTopicFabula | null {
+  const activeTopics = topics.filter((topic) => topic.status === 'active');
+  const activeFabulas = fabulas.filter((fabula) => fabula.status === 'active');
+
+  for (const topic of activeTopics) {
+    const fabula = activeFabulas.find((item) => isTopicFabulaEnabled(matrix, topic.id, item.id));
+
+    if (fabula) {
+      return { topic, fabula };
+    }
+  }
+
+  return null;
+}
+
+export function getTopicFabulaWarnings(
+  topics: Topic[],
+  fabulas: Fabula[],
+  matrix: TopicFabulaMatrixEntry[]
+): TopicFabulaWarning[] {
+  const activeTopics = topics.filter((topic) => topic.status === 'active');
+  const activeFabulas = fabulas.filter((fabula) => fabula.status === 'active');
+  const topicWarnings = activeTopics
+    .filter((topic) => !activeFabulas.some((fabula) => isTopicFabulaEnabled(matrix, topic.id, fabula.id)))
+    .map((topic) => ({
+      targetType: 'topic' as const,
+      targetId: topic.id,
+      title: topic.title,
+      message: 'У темы нет активных фабул. Она не попадет в план, пока матрица не включит хотя бы одну связку.'
+    }));
+  const fabulaWarnings = activeFabulas
+    .filter((fabula) => !activeTopics.some((topic) => isTopicFabulaEnabled(matrix, topic.id, fabula.id)))
+    .map((fabula) => ({
+      targetType: 'fabula' as const,
+      targetId: fabula.id,
+      title: fabula.title,
+      message: 'Фабула не применима ни к одной активной теме. Она не будет использоваться в планировании.'
+    }));
+
+  return [...topicWarnings, ...fabulaWarnings];
 }
 
 export function approvePlanItem(planItem: ContentPlanItem): ContentPlanItem {
@@ -634,6 +792,14 @@ export function groupImportCandidates(
       ? 'high'
       : items.some((item) => item.duplicateRisk === 'medium')
         ? 'medium'
-        : 'low'
+      : 'low'
   }));
+}
+
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(value)));
 }

@@ -379,6 +379,129 @@ button:disabled {
   gap: 16px;
 }
 
+.model-tabs {
+  margin-bottom: 18px;
+}
+
+.model-warning {
+  margin-bottom: 18px;
+}
+
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.entity-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.entity-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.entity-head h3 {
+  margin: 8px 0 0;
+  font: var(--h3);
+}
+
+.entity-head select {
+  max-width: 150px;
+}
+
+.inline-field {
+  display: grid;
+  gap: 8px;
+}
+
+.inline-field span,
+.weight-editor label {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.inline-field textarea {
+  min-height: 84px;
+}
+
+.weight-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.weight-editor label {
+  display: grid;
+  gap: 8px;
+}
+
+.matrix-card {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  overflow: auto;
+}
+
+.matrix-table {
+  display: grid;
+  min-width: 860px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.matrix-cell {
+  min-height: 58px;
+  padding: 12px;
+  border-right: 1px solid var(--ink-200);
+  border-bottom: 1px solid var(--ink-200);
+  background: var(--surface);
+}
+
+.matrix-head,
+.matrix-corner {
+  background: var(--surface-sunk);
+  color: var(--ink-600);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrix-topic {
+  font-weight: 700;
+}
+
+.matrix-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-700);
+  font: var(--ui-sm);
+}
+
+.matrix-check input {
+  width: auto;
+}
+
+.matrix-warnings {
+  display: grid;
+  gap: 8px;
+}
+
+.matrix-warnings p {
+  margin: 0;
+  color: var(--warn);
+  font: var(--ui-sm);
+}
+
 .edit-card {
   display: grid;
   gap: 10px;
@@ -1906,6 +2029,7 @@ select:focus {
   }
 
   .model-grid,
+  .entity-grid,
   .memory-grid,
   .memory-toolbar,
   .source-grid,
@@ -1918,6 +2042,10 @@ select:focus {
   .learning-fields,
   .snapshot-grid,
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .weight-editor {
     grid-template-columns: 1fr;
   }
 

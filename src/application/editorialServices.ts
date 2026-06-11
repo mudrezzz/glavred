@@ -7,14 +7,18 @@ import type {
   EditorialLearningNote,
   EditorialModel,
   EditorNote,
+  Fabula,
   FinalText,
   InsightCard,
   PostBrief,
   PostDraft,
   ReleasePackage,
   ReleaseTarget,
-  SourceSignal
+  SourceSignal,
+  Topic,
+  TopicFabulaMatrixEntry
 } from '../domain/editorialWorkspace';
+import { selectCompatibleTopicFabula } from '../domain/editorialWorkspace';
 
 export function createAuthorMemoryEvent(note: AuthorNote): AuthorMemoryEvent {
   return {
@@ -119,8 +123,16 @@ export function inferAuthorPositionAssertions(
   ];
 }
 
-export function createInsightCard(signal: SourceSignal, model: EditorialModel): InsightCard {
+export function createInsightCard(
+  signal: SourceSignal,
+  model: EditorialModel,
+  topics: Topic[] = [],
+  fabulas: Fabula[] = [],
+  matrix: TopicFabulaMatrixEntry[] = []
+): InsightCard {
   const score = signal.summary.toLowerCase().includes('workflow') ? 0.92 : 0.78;
+  const pair = selectCompatibleTopicFabula(topics, fabulas, matrix);
+  const rubric = pair?.topic.title ?? model.rubrics[0] ?? 'Product research notes';
 
   return {
     id: 'insight-ai-demo-to-adoption',
@@ -131,14 +143,18 @@ export function createInsightCard(signal: SourceSignal, model: EditorialModel): 
     audienceRelevance: model.audience,
     authorPosition:
       'Слабое место AI-B2B продукта обычно не модель, а отсутствие product loop: evals, trust, adoption, rollback и ясная экономика внедрения.',
-    rubric: 'Product research notes',
+    rubric,
     urgency: 'Вечнозеленая тема с актуальным рынком AI-пилотов',
     score,
     banalityRisk: 0.18,
     factGaps: [
       'Нужен публичный пример AI-B2B пилота, который не дошел до регулярного использования после демо',
       'Нужен отчет или интервью о роли evals, trust и change management в adoption AI-функций'
-    ]
+    ],
+    topicId: pair?.topic.id,
+    topicTitle: pair?.topic.title,
+    fabulaId: pair?.fabula.id,
+    fabulaTitle: pair?.fabula.title
   };
 }
 
@@ -153,20 +169,37 @@ export function createContentPlanItem(insight: InsightCard): ContentPlanItem {
     format: 'Исследовательская заметка',
     expectedEffect:
       'Показать AI PM и founders, что productization начинается после вау-демо: с evals, adoption loop и доверия пользователя.',
-    approvalStatus: 'draft'
+    approvalStatus: 'draft',
+    topicId: insight.topicId,
+    topicTitle: insight.topicTitle ?? insight.rubric,
+    fabulaId: insight.fabulaId,
+    fabulaTitle: insight.fabulaTitle
   };
 }
 
 export function createPostBrief(
   planItem: ContentPlanItem,
   insight: InsightCard,
-  model: EditorialModel
+  model: EditorialModel,
+  topics: Topic[] = [],
+  fabulas: Fabula[] = [],
+  matrix: TopicFabulaMatrixEntry[] = []
 ): PostBrief {
+  const pair =
+    planItem.topicId && planItem.fabulaId
+      ? {
+          topic: topics.find((topic) => topic.id === planItem.topicId),
+          fabula: fabulas.find((fabula) => fabula.id === planItem.fabulaId)
+        }
+      : selectCompatibleTopicFabula(topics, fabulas, matrix);
+  const topic = pair?.topic ?? topics.find((item) => item.id === insight.topicId);
+  const fabula = pair?.fabula ?? fabulas.find((item) => item.id === insight.fabulaId);
+
   return {
     id: 'brief-ai-demo-to-adoption',
     planItemId: planItem.id,
     title: 'Почему AI-B2B демо еще не продукт',
-    rubric: insight.rubric,
+    rubric: topic?.title ?? insight.rubric,
     audience: model.audience,
     thesis:
       'AI-B2B продукт начинается не с впечатляющего демо, а с доказуемого workflow improvement, evals и доверия пользователя к границам системы.',
@@ -183,6 +216,9 @@ export function createPostBrief(
       'Support automation снижает нагрузку только тогда, когда команда заранее описала escalation path и критерии качества ответа'
     ],
     structure: [
+      ...(fabula
+        ? [`Фабула: ${fabula.title}. ${fabula.dramaturgy}`]
+        : []),
       'Лид: красивое AI demo почти всегда обманывает команду ощущением готового продукта',
       'Поворот: продукт начинается после демо, когда появляются evals, trust loop и adoption work',
       'Разбор: где ломается путь от pilot к регулярному использованию',
@@ -196,7 +232,11 @@ export function createPostBrief(
       'Подтвердить публичными примерами или явно пометить наблюдения как research notes автора'
     ],
     sources: [planItem.platform, 'Авторская память', 'Customer interviews о внедрении AI-функций'],
-    approvalStatus: 'draft'
+    approvalStatus: 'draft',
+    topicId: topic?.id ?? insight.topicId,
+    topicTitle: topic?.title ?? insight.topicTitle,
+    fabulaId: fabula?.id ?? insight.fabulaId,
+    fabulaTitle: fabula?.title ?? insight.fabulaTitle
   };
 }
 

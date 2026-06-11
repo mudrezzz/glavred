@@ -6,8 +6,12 @@ import {
   acceptCandidateToArchive,
   acceptCandidateToMemory,
   bulkAcceptCandidatesToArchive,
+  completeTopicFabulaMatrix,
+  createDefaultTopicFabulaMatrix,
   filterImportCandidates,
+  getTopicFabulaWarnings,
   groupImportCandidates,
+  normalizeWeightRange,
   markCandidateAcceptedToMemory,
   markLearningNoteCaptured,
   markReleaseExported,
@@ -48,15 +52,49 @@ describe('editorial workspace domain', () => {
 
   it('creates deterministic outputs for the AI Product Manager demo signal', () => {
     const workspace = createDemoWorkspace();
-    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const insight = createInsightCard(
+      workspace.sourceSignal,
+      workspace.editorialModel,
+      workspace.topics,
+      workspace.fabulas,
+      workspace.topicFabulaMatrix
+    );
     const planItem = createContentPlanItem(insight);
-    const brief = createPostBrief(planItem, insight, workspace.editorialModel);
+    const brief = createPostBrief(
+      planItem,
+      insight,
+      workspace.editorialModel,
+      workspace.topics,
+      workspace.fabulas,
+      workspace.topicFabulaMatrix
+    );
 
     expect(insight.title).toContain('AI-B2B');
     expect(insight.score).toBeGreaterThan(0.8);
+    expect(insight.topicTitle).toBe('AI product discovery');
+    expect(insight.fabulaTitle).toBe('Исследовательская заметка');
     expect(planItem.platform).toBe('Telegram');
     expect(planItem.approvalStatus).toBe('draft');
+    expect(planItem.topicTitle).toBe('AI product discovery');
     expect(brief.thesis).toContain('AI-B2B продукт');
+    expect(brief.topicTitle).toBe('AI product discovery');
+    expect(brief.structure[0]).toContain('Исследовательская заметка');
+  });
+
+  it('normalizes topic and fabula weights and detects compatibility warnings', () => {
+    const workspace = createDemoWorkspace();
+    const topic = workspace.topics[0];
+    const fabula = workspace.fabulas[0];
+    const fullMatrix = createDefaultTopicFabulaMatrix(workspace.topics, workspace.fabulas);
+    const isolatedMatrix = completeTopicFabulaMatrix(workspace.topics, workspace.fabulas, fullMatrix).map((entry) =>
+      entry.topicId === topic.id || entry.fabulaId === fabula.id ? { ...entry, enabled: false } : entry
+    );
+    const warnings = getTopicFabulaWarnings(workspace.topics, workspace.fabulas, isolatedMatrix);
+
+    expect(normalizeWeightRange({ min: 120, max: -10 })).toEqual({ min: 0, max: 100 });
+    expect(fullMatrix).toHaveLength(workspace.topics.length * workspace.fabulas.length);
+    expect(warnings.some((warning) => warning.targetType === 'topic' && warning.targetId === topic.id)).toBe(true);
+    expect(warnings.some((warning) => warning.targetType === 'fabula' && warning.targetId === fabula.id)).toBe(true);
   });
 
   it('creates author memory events and evidence-backed position assertions', () => {

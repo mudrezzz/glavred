@@ -551,21 +551,45 @@ Status:
 
 ### Slice 1.1: Topics and Fabulas as Editorial Entities
 
-- Status: Backlog
+- Status: Done
 - Goal: Replace coarse rubric/fabula settings with editable topic and fabula cards.
+- User value: The author can shape what the blog is about and which post dramaturgies
+  are allowed before content planning starts.
 - Scope:
   - Add `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrix`.
   - Show topic cards with rules, purpose, audience value, and author stance.
   - Show fabula cards with dramaturgy, structure, and proof requirements.
   - Add default all-enabled compatibility matrix with manual toggles.
   - Route content-plan suggestions through topic/fabula compatibility.
+- Out of scope:
+  - Real validators, context chat, AI generation, and hard planning enforcement.
+- Implementation notes:
+  - The UI lives inside `Редакционная модель` as `Обзор`, `Темы`, `Фабулы`, and
+    `Матрица`.
+  - Weight ranges are advisory and normalized to `0..100`.
+  - Legacy `EditorialModel.rubrics` and `EditorialModel.fabula` remain for
+    compatibility.
 - Tests:
   - Unit tests for weight ranges and compatibility.
   - UI smoke tests for editing topic/fabula cards.
+- Docs:
+  - README, architecture overview, user guide, developer guide, demo docs, and roadmap
+    updated.
+- Demo impact:
+  - Demo now includes five AI Product Manager topics, five fabulas, and an all-enabled
+    compatibility matrix.
+- Acceptance criteria:
+  - `Редакционная модель` exposes editable topic and fabula cards.
+  - Matrix toggles compatibility and shows warnings for disconnected entities.
+  - Old local workspaces load without topic/fabula fields.
+  - Existing source-to-learning flow remains working.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
 
 ### Slice 1.2: Validator Framework Baseline
 
-- Status: Backlog
+- Status: Ready
 - Goal: Introduce generic validator results across author position, topics, fabulas,
   and production artifacts.
 - Scope:
@@ -635,6 +659,7 @@ Status:
 - Slice 1.0.4: Author Memory External Sources and Import Design. Completed 2026-06-11.
 - Slice 1.0.5: External Sources Local UI Shell. Completed 2026-06-11.
 - Slice 1.0.5.1: External Sources UX Fixes. Completed 2026-06-11.
+- Slice 1.1: Topics and Fabulas as Editorial Entities. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -644,8 +669,8 @@ Status:
 
 - Which author memory event types beyond raw thoughts, link reactions, and corrections
   should be first-class?
-- Should topic/fabula/platform weights initially be advisory only, or hard validation
-  constraints?
+- Should platform weights remain advisory, or become hard validation constraints after
+  topic/fabula validator coverage exists?
 - How much of the context chat should ship before real AI provider calls?
 - What is the minimum useful archive import for uniqueness and author-position
   evidence?
@@ -653,4 +678,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.1: Topics and Fabulas as Editorial Entities`.
+Start `Slice 1.2: Validator Framework Baseline`.

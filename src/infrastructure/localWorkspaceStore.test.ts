@@ -46,6 +46,9 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().activeSection).toBe('memory');
     expect(store.load().editorialModel.author).toContain('AI Product Manager');
     expect(store.load().authorNotes).toHaveLength(6);
+    expect(store.load().topics).toHaveLength(5);
+    expect(store.load().fabulas).toHaveLength(5);
+    expect(store.load().topicFabulaMatrix).toHaveLength(25);
   });
 
   it('loads an old workspace without author memory fields', () => {
@@ -63,6 +66,22 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.authorNotes).toHaveLength(6);
     expect(loaded.authorMemoryEvents.length).toBeGreaterThan(0);
     expect(loaded.authorPositionAssertions).toHaveLength(5);
+  });
+
+  it('loads an old workspace without topic and fabula entities', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete oldWorkspace.topics;
+    delete oldWorkspace.fabulas;
+    delete oldWorkspace.topicFabulaMatrix;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.topics).toHaveLength(5);
+    expect(loaded.fabulas).toHaveLength(5);
+    expect(loaded.topicFabulaMatrix).toHaveLength(25);
   });
 
   it('normalizes old author notes without attachments', () => {
@@ -105,6 +124,39 @@ describe('LocalWorkspaceStore', () => {
 
     expect(store.load().authorNotes[0].targetId).toBe('assertion-persona-ai-product-manager');
     expect(store.load().authorNotes[0].title).toBe('');
+  });
+
+  it('saves and loads edited topic, fabula, and matrix state', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changed = {
+      ...workspace,
+      topics: [
+        {
+          ...workspace.topics[0],
+          title: 'AI workflow discovery',
+          weightRange: { min: 12, max: 34 }
+        },
+        ...workspace.topics.slice(1)
+      ],
+      fabulas: [
+        {
+          ...workspace.fabulas[0],
+          title: 'Исследовательская записка'
+        },
+        ...workspace.fabulas.slice(1)
+      ],
+      topicFabulaMatrix: workspace.topicFabulaMatrix.map((entry, index) =>
+        index === 0 ? { ...entry, enabled: false } : entry
+      )
+    };
+
+    store.save(changed);
+
+    expect(store.load().topics[0].title).toBe('AI workflow discovery');
+    expect(store.load().topics[0].weightRange).toEqual({ min: 12, max: 34 });
+    expect(store.load().fabulas[0].title).toBe('Исследовательская записка');
+    expect(store.load().topicFabulaMatrix[0].enabled).toBe(false);
   });
 
   it('saves and loads author note attachments', () => {

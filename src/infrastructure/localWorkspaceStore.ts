@@ -1,5 +1,10 @@
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
-import type { WorkspaceState, WorkspaceStore } from '../domain/editorialWorkspace';
+import {
+  completeTopicFabulaMatrix,
+  normalizeWeightRange,
+  type WorkspaceState,
+  type WorkspaceStore
+} from '../domain/editorialWorkspace';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
 
@@ -33,6 +38,14 @@ export class LocalWorkspaceStore implements WorkspaceStore {
 
 export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceState {
   const demo = createDemoWorkspace();
+  const topics = (saved.topics ?? demo.topics).map((topic) => ({
+    ...topic,
+    weightRange: normalizeWeightRange(topic.weightRange)
+  }));
+  const fabulas = (saved.fabulas ?? demo.fabulas).map((fabula) => ({
+    ...fabula,
+    weightRange: normalizeWeightRange(fabula.weightRange)
+  }));
 
   return {
     ...demo,
@@ -44,6 +57,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel: saved.editorialModel ?? demo.editorialModel,
+    topics,
+    fabulas,
+    topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
     sourceSignal: saved.sourceSignal ?? demo.sourceSignal,
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,

@@ -49,6 +49,31 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
+## Structured Editorial Model
+
+`Редакционная модель` now contains demo editorial entities for the same AI Product
+Manager blog.
+
+Demo topics:
+
+- AI product discovery;
+- Evals & quality loop;
+- Enterprise trust & rollout;
+- GTM/adoption economics;
+- Workflow automation architecture.
+
+Demo fabulas:
+
+- Исследовательская заметка;
+- Разбор мифа;
+- Практический фреймворк;
+- Postmortem пилота;
+- Позиционный манифест.
+
+The compatibility matrix starts with every pair enabled. The author can turn off
+specific topic/fabula combinations and see warnings when a topic or fabula can no
+longer participate in planning.
+
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product
@@ -103,30 +128,32 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 9. Filter candidates, use `Выбрать все по фильтру`, confirm `Добавить все`, inspect
    `Архив`, and try `Отменить последнее групповое действие`.
 10. Accept one candidate through `В память` to see it become an active memory note.
-11. Open `Радар`.
-12. Review or edit the source signal.
-13. Click `Собрать инсайт`.
-14. Click `В план`.
-15. Approve the plan item.
-16. Click `Подготовить фабулу`.
-17. Edit the post brief if needed.
-18. Click `Утвердить фабулу`.
-19. Open `Редактура`.
-20. Click `Написать драфт`.
-21. Review checks and editor notes.
-22. Edit the draft text.
-23. Click `Утвердить текст`.
-24. Open `Выпуск`.
-25. Click `Подготовить выпуск`.
-26. Review target, checklist, final text, and Markdown preview.
-27. Complete the checklist and click `Готово к выпуску`.
-28. Click `Скопировать текст` or `Скачать Markdown`.
-29. Open `Аналитика`.
-30. Click `Подготовить аналитику`.
-31. Enter manual metrics and editorial conclusions.
-32. Click `Зафиксировать выводы`.
-33. Reload the page to confirm state persists.
-34. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+11. Open `Редакционная модель`, inspect `Темы`, `Фабулы`, and `Матрица`.
+12. Edit one topic or fabula weight range, then toggle one matrix pair.
+13. Open `Радар`.
+14. Review or edit the source signal.
+15. Click `Собрать инсайт`.
+16. Click `В план`.
+17. Approve the plan item.
+18. Click `Подготовить фабулу`.
+19. Edit the post brief if needed.
+20. Click `Утвердить фабулу`.
+21. Open `Редактура`.
+22. Click `Написать драфт`.
+23. Review checks and editor notes.
+24. Edit the draft text.
+25. Click `Утвердить текст`.
+26. Open `Выпуск`.
+27. Click `Подготовить выпуск`.
+28. Review target, checklist, final text, and Markdown preview.
+29. Complete the checklist and click `Готово к выпуску`.
+30. Click `Скопировать текст` or `Скачать Markdown`.
+31. Open `Аналитика`.
+32. Click `Подготовить аналитику`.
+33. Enter manual metrics and editorial conclusions.
+34. Click `Зафиксировать выводы`.
+35. Reload the page to confirm state persists.
+36. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 
@@ -142,8 +169,8 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-Topics and fabulas as structured editorial entities are the next product layer after
-the local import shell.
+Validator indicators for topics, fabulas, author position, and production artifacts are
+the next product layer after the structured editorial model.
 
 Real provider calls, API keys, platform metrics, publication automation, and backend
 sync remain later steps. Real attachment parsing and AI analysis are also deferred.

@@ -81,6 +81,8 @@ The current app implements:
   grouping, candidate filters, archive-safe bulk actions, latest bulk undo, and archive
   records.
 - Evidence-backed author-position assertions inferred from demo notes.
+- Structured editorial entities inside `Редакционная модель`: topic cards, fabula
+  cards, advisory weight ranges, and an editable topic-fabula compatibility matrix.
 - The first working flow from source signal to captured editorial learning note.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
 - Human approval gates for content plan, post brief, final text, and release readiness.
@@ -140,8 +142,9 @@ New conceptual entities:
   `BulkImportAction`, and `ArchiveRecord` for the local import-review shell. Only
   `acceptedToMemory` candidates become `AuthorNote`; unreviewed and archive-only
   candidates do not affect `AuthorPositionAssertion`.
-- `Topic`, `Fabula`, `TopicFabulaMatrix`, `ContentDesignRecord`, and
-  `PlatformProfile` as structured editorial entities.
+- `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrixEntry` as implemented
+  structured editorial entities. `ContentDesignRecord` and `PlatformProfile` remain
+  future entities.
 - `ValidatorResult` as a common score/status/evidence contract across setup,
   planning, drafting, release, and archive uniqueness.
 - `ContextChatSession` for a future right-side assistant synchronized with the active
@@ -210,6 +213,32 @@ Rules:
   workspace so old browser states continue to load.
 - Real Telegram/social/blog APIs, OAuth, crawlers, backend workers, scheduled
   ingestion, and AI analysis are later slices.
+
+## Topic And Fabula Runtime Layer
+
+Slice 1.1 decomposes part of the old `EditorialModel` into runtime entities while
+keeping legacy fields for compatibility.
+
+Implemented entities:
+
+- `Topic`: title, description, purpose, audience value, author stance, rules,
+  forbidden angles, advisory `WeightRange`, and active/paused status.
+- `Fabula`: title, description, dramaturgy, structure, proof requirements, rules,
+  advisory `WeightRange`, and active/paused status.
+- `TopicFabulaMatrixEntry`: `topicId`, `fabulaId`, and `enabled`.
+
+Rules:
+
+- `createDefaultTopicFabulaMatrix` enables all topic/fabula pairs by default.
+- `completeTopicFabulaMatrix` fills missing entries during storage normalization.
+- `normalizeWeightRange` clamps values to `0..100` and keeps `min <= max`.
+- `getTopicFabulaWarnings` reports active topics or fabulas that have no active
+  compatible pair.
+- Deterministic insight/planning/briefing services use the first active compatible
+  topic/fabula when the workspace passes these entities in. Calls without them keep
+  the legacy rubric/fabula fallback.
+- `LocalWorkspaceStore.normalizeWorkspace` fills missing `topics`, `fabulas`, and
+  `topicFabulaMatrix` from the demo workspace so old browser state continues to load.
 
 ## AI Provider Architecture Baseline
 

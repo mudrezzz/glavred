@@ -66,13 +66,13 @@ turning the product into generic content generation.
 - `AuthorPositionModel`: aggregates memory into transparent rules and assertions about
   persona, style, audience, goals, topics, fabulas, platforms, and formats. Every
   assertion should have evidence.
-- `EditorialModel`: current implemented aggregate for author, audience, positioning,
-  fabula, rubrics, style rules, forbidden topics, and blog goals. It should be
-  decomposed into author-position entities in the next product circle.
+- `EditorialModel`: implemented aggregate for author, audience, positioning, legacy
+  fabula, legacy rubrics, style rules, forbidden topics, and blog goals. Topic and
+  fabula catalogs now carry the first structured editorial entities around it.
 - `TopicCatalog`: stores editable topic cards with purpose, audience value, author
-  stance, rules, validator requirements, and weight ranges for planning.
+  stance, rules, forbidden angles, status, and advisory weight ranges for planning.
 - `FabulaCatalog`: stores reusable post dramaturgy patterns with structure, conflict,
-  proof requirements, validator requirements, weight ranges, and compatibility with
+  proof requirements, rules, status, advisory weight ranges, and compatibility with
   topics.
 - `ContentDesignRecords`: stores durable content decisions that apply across posts,
   similar to ADRs in software projects.
@@ -148,6 +148,11 @@ Current implemented production contracts:
 - `EvidenceLink`: link from a position assertion back to source notes.
 - `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
   forbidden topics, goals.
+- `Topic`: editable topic card with purpose, audience value, author stance, rules,
+  forbidden angles, active/paused status, and advisory weight range.
+- `Fabula`: editable dramaturgy card with structure, proof requirements, rules,
+  active/paused status, and advisory weight range.
+- `TopicFabulaMatrixEntry`: compatibility toggle between one topic and one fabula.
 - `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
@@ -167,11 +172,6 @@ Current implemented production contracts:
 
 Future author-position contracts:
 
-- `Topic`: topic card with purpose, audience value, author stance, rules, validator
-  set, and weight range.
-- `Fabula`: narrative pattern with structure, conflict, proof requirements, validator
-  set, and weight range.
-- `TopicFabulaMatrix`: compatibility map between topics and fabulas.
 - `ContentDesignRecord`: durable content rule with rationale, scope, status, evidence,
   and validator impact.
 - `PlatformProfile`: platform, formats, format rules, weight range, and compatibility

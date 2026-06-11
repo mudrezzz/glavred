@@ -81,6 +81,21 @@ For large archives, the planned queue supports group work:
 Unreviewed imported material will not change `Как система поняла автора`. Bulk-added
 archive material will also stay distinguishable from manually reviewed evidence.
 
+## Topics And Fabulas
+
+`Редакционная модель` now has four internal tabs:
+
+- `Обзор`: the existing author, audience, positioning, style, boundaries, and goals.
+- `Темы`: editable topic cards with purpose, audience value, author stance, rules,
+  forbidden angles, and advisory weight range.
+- `Фабулы`: editable dramaturgy cards with structure, proof requirements, rules, and
+  advisory weight range.
+- `Матрица`: topic-fabula compatibility checkboxes.
+
+The matrix starts with every topic/fabula pair enabled. Turning off a pair removes that
+combination from deterministic planning. If a topic or fabula has no active compatible
+pair, the screen shows a warning before it silently disappears from future plans.
+
 ## Current Supported Flow
 
 - Open `Память автора`.
@@ -119,7 +134,8 @@ archive material will also stay distinguishable from manually reviewed evidence.
   `Не evidence`, open the original source, or delete it from the local archive.
 - Use `Отменить последнее групповое действие` when the latest bulk decision should be
   reverted.
-- Edit the `Редакционная модель`.
+- Open `Редакционная модель`, review `Обзор`, edit topic cards, edit fabula cards, and
+  adjust the `Матрица` when a fabula should not be used for a topic.
 - Review or edit the demo source signal in `Радар`.
 - Generate an insight card.
 - Add the insight to `План`.
@@ -148,8 +164,7 @@ archive material will also stay distinguishable from manually reviewed evidence.
 - Real AI classification of author memory.
 - Real analysis of attached documents, images, screenshots, PDFs, or text files.
 - Context chat.
-- Topic/fabula matrix.
-- Archive import and uniqueness checks.
+- Real archive ingestion and uniqueness checks.
 - Real external source ingestion, OAuth, crawlers, scheduled imports, and API-backed
   archive parsing.
 - Real AI-generated insights, briefs, or drafts.

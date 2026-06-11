@@ -27,6 +27,11 @@ review actions, `Добавить все`, archive-safe bulk acceptance, and und
 bulk action. Unreviewed and archive-only material does not change the author-position
 assertions.
 
+`Редакционная модель` now contains structured editorial entities: editable topic
+cards, fabula cards, and a topic-fabula compatibility matrix. Topics and fabulas have
+advisory weight ranges, rules, and planning context, while legacy rubric/fabula fields
+remain available for compatibility.
+
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
 

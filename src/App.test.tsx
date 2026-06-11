@@ -65,6 +65,37 @@ describe('App', () => {
     expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
   });
 
+  it('edits editorial topics, fabulas, and compatibility matrix', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
+    expect(screen.getByRole('tab', { name: /Обзор/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Темы/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Фабулы/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Матрица/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
+    expect(screen.getByDisplayValue('AI product discovery')).toBeInTheDocument();
+    fireEvent.change(screen.getAllByLabelText('Название')[0], {
+      target: { value: 'AI workflow discovery' }
+    });
+    expect(screen.getByDisplayValue('AI workflow discovery')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
+    expect(screen.getByDisplayValue('Исследовательская заметка')).toBeInTheDocument();
+    fireEvent.change(screen.getAllByLabelText('Название')[0], {
+      target: { value: 'Исследовательская записка' }
+    });
+    expect(screen.getByDisplayValue('Исследовательская записка')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
+    const firstTopicCheckboxes = screen.getAllByRole('checkbox').slice(0, 5);
+    firstTopicCheckboxes.forEach((checkbox) => fireEvent.click(checkbox));
+
+    expect(screen.getByText(/Нужна настройка матрицы/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/AI workflow discovery/i).length).toBeGreaterThan(0);
+  });
+
   it('shows external source tabs and demo source cards inside author memory', () => {
     render(<App />);
 
