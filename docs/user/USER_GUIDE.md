@@ -86,11 +86,13 @@ archive material will also stay distinguishable from manually reviewed evidence.
 `Редакционная модель` is the setup workspace for the virtual publishing project. It uses the same tab pattern as `Память автора` and has four internal tabs:
 
 - `Издательство`: project profile plus structured rule blocks for author, audience, position, style, goals, and forbidden topics.
-- `Темы`: compact one-row-per-topic list. Expand a row to see details; use `Редактировать`, `Сохранить`, and `Отменить` to commit changes.
-- `Фабулы`: the same compact list/detail/edit pattern for post dramaturgy entities.
+- `Темы`: compact one-row-per-topic list. Use `+ Тема` to create a draft row, then `Сохранить` to commit it. Expand a row to see details; use `Редактировать`, `Сохранить`, and `Отменить` to commit changes.
+- `Фабулы`: the same compact list/detail/edit pattern for post dramaturgy entities, with `+ Фабула` for new dramaturgy patterns.
 - `Матрица`: topic-fabula compatibility table. Checkbox changes stay in draft state until `Сохранить матрицу`; `Отменить` rolls the draft back.
 
-Every tab has a right-side validation panel. In the current slice it is deterministic: it checks project profile, atomic rule coverage, style/anti-AI rules, topic/fabula compatibility, and goal readiness. Later validator slices will replace this scaffold with richer evidence and scores.
+Every tab has a right-side validation panel, but it does not validate live while you are still filling the setup. Click `Проверить` when you want a review. The panel stores the latest validation snapshot and switches to `Требует повторной проверки` after you save changed rules, topics, fabulas, project profile, or matrix links. In the current slice the check is deterministic: it reviews project profile, atomic rule coverage, style/anti-AI rules, topic/fabula compatibility, and goal readiness. Later validator slices will replace this scaffold with richer evidence and scores.
+
+Deleting a topic or fabula removes it and all of its matrix links from the local workspace. Use `Пауза` when the entity should stay in the model but temporarily stop participating in planning. If a topic or fabula is already referenced by current production artifacts, Glavred warns before deletion; existing artifacts are not rewritten automatically in this slice.
 
 ## Current Supported Flow
 

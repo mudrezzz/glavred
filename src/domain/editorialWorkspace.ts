@@ -132,6 +132,13 @@ export interface EditorialValidationSummary {
   items: EditorialValidationItem[];
 }
 
+export interface EditorialValidationRun {
+  id: string;
+  revision: number;
+  checkedAt: string;
+  summary: EditorialValidationSummary;
+}
+
 export interface WeightRange {
   min: number;
   max: number;
@@ -396,6 +403,8 @@ export interface WorkspaceState {
   editorialModel: EditorialModel;
   projectProfile: ProjectProfile;
   editorialRules: EditorialRule[];
+  editorialSetupRevision: number;
+  editorialValidationRun: EditorialValidationRun | null;
   topics: Topic[];
   fabulas: Fabula[];
   topicFabulaMatrix: TopicFabulaMatrixEntry[];
@@ -540,6 +549,65 @@ export function normalizeWeightRange(range: WeightRange): WeightRange {
   const max = clampPercent(range.max);
 
   return min <= max ? { min, max } : { min: max, max: min };
+}
+
+export function createTopicDraft(): Topic {
+  return {
+    id: `topic-custom-${Date.now()}`,
+    title: '',
+    description: '',
+    purpose: '',
+    audienceValue: '',
+    authorStance: '',
+    rules: [],
+    forbiddenAngles: [],
+    weightRange: { min: 5, max: 15 },
+    status: 'active'
+  };
+}
+
+export function createFabulaDraft(): Fabula {
+  return {
+    id: `fabula-custom-${Date.now()}`,
+    title: '',
+    description: '',
+    dramaturgy: '',
+    structure: [],
+    proofRequirements: [],
+    rules: [],
+    weightRange: { min: 5, max: 15 },
+    status: 'active'
+  };
+}
+
+export function addTopic(topics: Topic[], topic: Topic): Topic[] {
+  return [...topics, { ...topic, weightRange: normalizeWeightRange(topic.weightRange) }];
+}
+
+export function addFabula(fabulas: Fabula[], fabula: Fabula): Fabula[] {
+  return [...fabulas, { ...fabula, weightRange: normalizeWeightRange(fabula.weightRange) }];
+}
+
+export function deleteTopic(
+  topics: Topic[],
+  matrix: TopicFabulaMatrixEntry[],
+  topicId: string
+): { topics: Topic[]; matrix: TopicFabulaMatrixEntry[] } {
+  return {
+    topics: topics.filter((topic) => topic.id !== topicId),
+    matrix: matrix.filter((entry) => entry.topicId !== topicId)
+  };
+}
+
+export function deleteFabula(
+  fabulas: Fabula[],
+  matrix: TopicFabulaMatrixEntry[],
+  fabulaId: string
+): { fabulas: Fabula[]; matrix: TopicFabulaMatrixEntry[] } {
+  return {
+    fabulas: fabulas.filter((fabula) => fabula.id !== fabulaId),
+    matrix: matrix.filter((entry) => entry.fabulaId !== fabulaId)
+  };
 }
 
 export function createDefaultTopicFabulaMatrix(

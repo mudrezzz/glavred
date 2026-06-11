@@ -7,7 +7,8 @@ import {
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
-  toggleReleaseChecklistItem
+  toggleReleaseChecklistItem,
+  validateEditorialSetup
 } from '../domain/editorialWorkspace';
 import {
   createContentPlanItem,
@@ -51,6 +52,8 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().topicFabulaMatrix).toHaveLength(25);
     expect(store.load().projectProfile.name).toBe('TG-блог AI Product Manager');
     expect(store.load().editorialRules.length).toBeGreaterThan(10);
+    expect(store.load().editorialSetupRevision).toBe(0);
+    expect(store.load().editorialValidationRun).toBeNull();
   });
 
   it('loads an old workspace without author memory fields', () => {
@@ -92,12 +95,16 @@ describe('LocalWorkspaceStore', () => {
     const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
     delete oldWorkspace.projectProfile;
     delete oldWorkspace.editorialRules;
+    delete oldWorkspace.editorialSetupRevision;
+    delete oldWorkspace.editorialValidationRun;
     storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
     const store = new LocalWorkspaceStore(storage);
     const loaded = store.load();
 
     expect(loaded.projectProfile.name).toBe('TG-блог AI Product Manager');
     expect(loaded.editorialRules.length).toBeGreaterThan(10);
+    expect(loaded.editorialSetupRevision).toBe(0);
+    expect(loaded.editorialValidationRun).toBeNull();
   });
 
   it('normalizes old author notes without attachments', () => {
@@ -190,13 +197,22 @@ describe('LocalWorkspaceStore', () => {
           title: 'Обновленный образ автора'
         },
         ...workspace.editorialRules.slice(1)
-      ]
+      ],
+      editorialSetupRevision: 3,
+      editorialValidationRun: {
+        id: 'validation-test',
+        revision: 3,
+        checkedAt: '2026-06-11T10:00:00.000Z',
+        summary: validateEditorialSetup(workspace)
+      }
     };
 
     store.save(changed);
 
     expect(store.load().projectProfile.name).toBe('AI Product Studio Notes');
     expect(store.load().editorialRules[0].title).toBe('Обновленный образ автора');
+    expect(store.load().editorialSetupRevision).toBe(3);
+    expect(store.load().editorialValidationRun?.id).toBe('validation-test');
   });
 
   it('saves and loads author note attachments', () => {

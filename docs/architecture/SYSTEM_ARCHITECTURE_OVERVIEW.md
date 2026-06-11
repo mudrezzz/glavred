@@ -179,6 +179,9 @@ Current implemented production contracts:
   note id.
 - `EditorialValidationSummary`: deterministic setup validation summary with
   red/yellow/green status, item summaries, and recommendations.
+- `EditorialValidationRun`: saved manual validation snapshot with run id, setup
+  revision, checked timestamp, and summary. UI marks it stale when the setup revision
+  changes.
 - `EditorialModel`: compatibility aggregate for author, audience, positioning, fabula,
   rubrics, style rules, forbidden topics, goals.
 - `Topic`: editable topic card with purpose, audience value, author stance, rules,
@@ -186,6 +189,9 @@ Current implemented production contracts:
 - `Fabula`: editable dramaturgy card with structure, proof requirements, rules,
   active/paused status, and advisory weight range.
 - `TopicFabulaMatrixEntry`: compatibility toggle between one topic and one fabula.
+- Topic/fabula helpers create local drafts, commit new entities, delete entities, and
+  keep matrix links normalized. Added entities get default enabled links; deleted
+  entities remove their matrix links without rewriting existing production artifacts.
 - `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.

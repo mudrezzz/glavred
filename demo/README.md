@@ -53,7 +53,7 @@ edit/delete actions, summary counters, and a browser voice-input fallback.
 
 `Редакционная модель` now opens as a virtual publishing workspace for the same AI Product Manager blog. The top profile is `TG-блог AI Product Manager`, with the description `Исследовательский блог о построении AI-B2B продуктов`.
 
-The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel shows deterministic green/yellow status items and recommendations before the full validator framework exists.
+The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic green/yellow status snapshot. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
 
 Demo topics:
 
@@ -74,6 +74,11 @@ Demo fabulas:
 The compatibility matrix starts with every pair enabled. The author can turn off
 specific topic/fabula combinations and see warnings when a topic or fabula can no
 longer participate in planning.
+
+The demo also supports creating a custom topic or fabula from the list toolbar. New
+entities stay as local drafts until `Сохранить`, then appear in the compatibility
+matrix with enabled links by default. Deleting an entity removes its matrix links; use
+`Пауза` instead when an entity should remain available for later.
 
 ## External Sources Scenario
 
@@ -130,32 +135,33 @@ repository. Create the first temporary Wiki page in the web UI once, then run
    `Архив`, and try `Отменить последнее групповое действие`.
 10. Accept one candidate through `В память` to see it become an active memory note.
 11. Open `Редакционная модель`, inspect `Издательство`, project profile, structured rules, and the right-side validation panel.
-12. Open `Темы` and `Фабулы`, expand one row, edit one entity, then save or cancel.
-13. Open `Матрица`, toggle one compatibility pair, then use `Сохранить матрицу` or `Отменить`.
-14. Open `Радар`.
-15. Review or edit the source signal.
-16. Click `Собрать инсайт`.
-17. Click `В план`.
-18. Approve the plan item.
-19. Click `Подготовить фабулу`.
-20. Edit the post brief if needed.
-21. Click `Утвердить фабулу`.
-22. Open `Редактура`.
-23. Click `Написать драфт`.
-24. Review checks and editor notes.
-25. Edit the draft text.
-26. Click `Утвердить текст`.
-27. Open `Выпуск`.
-28. Click `Подготовить выпуск`.
-29. Review target, checklist, final text, and Markdown preview.
-30. Complete the checklist and click `Готово к выпуску`.
-31. Click `Скопировать текст` or `Скачать Markdown`.
-32. Open `Аналитика`.
-33. Click `Подготовить аналитику`.
-34. Enter manual metrics and editorial conclusions.
-35. Click `Зафиксировать выводы`.
-36. Reload the page to confirm state persists.
-37. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+12. Open `Темы`, add a custom topic, save it, expand a row, edit or delete one entity.
+13. Open `Фабулы`, add a custom fabula, save it, then inspect its compatible topics.
+14. Open `Матрица`, toggle one compatibility pair, then use `Сохранить матрицу` or `Отменить`.
+15. Open `Радар`.
+16. Review or edit the source signal.
+17. Click `Собрать инсайт`.
+18. Click `В план`.
+19. Approve the plan item.
+20. Click `Подготовить фабулу`.
+21. Edit the post brief if needed.
+22. Click `Утвердить фабулу`.
+23. Open `Редактура`.
+24. Click `Написать драфт`.
+25. Review checks and editor notes.
+26. Edit the draft text.
+27. Click `Утвердить текст`.
+28. Open `Выпуск`.
+29. Click `Подготовить выпуск`.
+30. Review target, checklist, final text, and Markdown preview.
+31. Complete the checklist and click `Готово к выпуску`.
+32. Click `Скопировать текст` or `Скачать Markdown`.
+33. Open `Аналитика`.
+34. Click `Подготовить аналитику`.
+35. Enter manual metrics and editorial conclusions.
+36. Click `Зафиксировать выводы`.
+37. Reload the page to confirm state persists.
+38. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

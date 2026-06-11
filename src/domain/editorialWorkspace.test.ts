@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  addFabula,
+  addTopic,
   approveFinalText,
   approvePlanItem,
   approvePostBrief,
@@ -7,9 +9,13 @@ import {
   acceptCandidateToMemory,
   bulkAcceptCandidatesToArchive,
   completeTopicFabulaMatrix,
+  createFabulaDraft,
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
+  createTopicDraft,
+  deleteFabula,
   deleteEditorialRule,
+  deleteTopic,
   filterImportCandidates,
   getRulesByGroup,
   getTopicFabulaWarnings,
@@ -100,6 +106,36 @@ describe('editorial workspace domain', () => {
     expect(fullMatrix).toHaveLength(workspace.topics.length * workspace.fabulas.length);
     expect(warnings.some((warning) => warning.targetType === 'topic' && warning.targetId === topic.id)).toBe(true);
     expect(warnings.some((warning) => warning.targetType === 'fabula' && warning.targetId === fabula.id)).toBe(true);
+  });
+
+  it('creates, adds, and deletes topics and fabulas with matrix links', () => {
+    const workspace = createDemoWorkspace();
+    const now = vi.spyOn(Date, 'now').mockReturnValue(123456);
+    const topicDraft = { ...createTopicDraft(), title: 'AI trust onboarding' };
+    const fabulaDraft = { ...createFabulaDraft(), title: 'Field note' };
+    now.mockRestore();
+
+    const topicsWithNew = addTopic(workspace.topics, topicDraft);
+    const matrixWithTopic = completeTopicFabulaMatrix(topicsWithNew, workspace.fabulas, workspace.topicFabulaMatrix);
+    const topicEntries = matrixWithTopic.filter((entry) => entry.topicId === topicDraft.id);
+    const fabulasWithNew = addFabula(workspace.fabulas, fabulaDraft);
+    const matrixWithFabula = completeTopicFabulaMatrix(workspace.topics, fabulasWithNew, workspace.topicFabulaMatrix);
+    const fabulaEntries = matrixWithFabula.filter((entry) => entry.fabulaId === fabulaDraft.id);
+    const deletedTopic = deleteTopic(topicsWithNew, matrixWithTopic, topicDraft.id);
+    const deletedFabula = deleteFabula(fabulasWithNew, matrixWithFabula, fabulaDraft.id);
+
+    expect(topicDraft.id).toBe('topic-custom-123456');
+    expect(fabulaDraft.id).toBe('fabula-custom-123456');
+    expect(topicDraft.weightRange).toEqual({ min: 5, max: 15 });
+    expect(fabulaDraft.weightRange).toEqual({ min: 5, max: 15 });
+    expect(topicEntries).toHaveLength(workspace.fabulas.length);
+    expect(topicEntries.every((entry) => entry.enabled)).toBe(true);
+    expect(fabulaEntries).toHaveLength(workspace.topics.length);
+    expect(fabulaEntries.every((entry) => entry.enabled)).toBe(true);
+    expect(deletedTopic.topics.some((topic) => topic.id === topicDraft.id)).toBe(false);
+    expect(deletedTopic.matrix.some((entry) => entry.topicId === topicDraft.id)).toBe(false);
+    expect(deletedFabula.fabulas.some((fabula) => fabula.id === fabulaDraft.id)).toBe(false);
+    expect(deletedFabula.matrix.some((entry) => entry.fabulaId === fabulaDraft.id)).toBe(false);
   });
 
   it('keeps project profile and editorial rules as structured demo entities', () => {

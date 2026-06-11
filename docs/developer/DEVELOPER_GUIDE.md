@@ -244,6 +244,8 @@ Rules:
 
 Slice 1.1.1 adds `ProjectProfile`, `EditorialRule`, and lightweight
 `EditorialValidationSummary` contracts around the Slice 1.1 topic/fabula layer.
+Slice 1.1.2 adds explicit validation-run state so the UI can show a saved validation
+snapshot instead of recalculating setup feedback live.
 
 Runtime rules:
 
@@ -252,10 +254,19 @@ Runtime rules:
 - `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
   positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and
   forbidden topic.
+- `WorkspaceState.editorialSetupRevision` increments after committed editorial setup
+  changes.
+- `WorkspaceState.editorialValidationRun` stores the last manual validation snapshot:
+  run id, revision, checked timestamp, and `EditorialValidationSummary`.
 - Legacy `EditorialModel.rubrics` and `EditorialModel.fabula` remain available for
   downstream service compatibility, but the UI no longer exposes them as setup fields.
 - `validateEditorialSetup(workspace)` is deterministic scaffolding for the future
   validator framework. It returns summary status, item statuses, and recommendations.
+- Topic/fabula CRUD is explicit:
+  - `createTopicDraft()` and `createFabulaDraft()` create local draft entities.
+  - `addTopic()` and `addFabula()` commit normalized entities.
+  - `deleteTopic()` and `deleteFabula()` remove entities and their matrix links.
+  - `completeTopicFabulaMatrix()` fills newly missing links with `enabled: true`.
 - `LocalWorkspaceStore.normalizeWorkspace` fills missing project/rule fields from the
   demo workspace so older local browser states continue to load.
 

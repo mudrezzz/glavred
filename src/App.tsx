@@ -17,10 +17,17 @@ import {
   approvePostBrief,
   acceptCandidateToArchive,
   acceptCandidateToMemory,
+  addFabula,
+  addTopic,
   bulkAcceptCandidatesToArchive,
   bulkRejectCandidates,
+  completeTopicFabulaMatrix,
   createEditorialRule,
+  createFabulaDraft,
+  createTopicDraft,
+  deleteFabula,
   deleteEditorialRule,
+  deleteTopic,
   filterImportCandidates,
   getTopicFabulaWarnings,
   groupImportCandidates,
@@ -50,7 +57,7 @@ import {
   type EditorialModel,
   type EditorialRule,
   type EditorialRuleGroup,
-  type EditorialValidationSummary,
+  type EditorialValidationRun,
   type EvidencePolicy,
   type Fabula,
   type FinalText,
@@ -157,6 +164,35 @@ export function App() {
     }
   }
 
+  function patchEditorialSetup(patch: Partial<WorkspaceState>, message?: string) {
+    setWorkspace((current) => ({
+      ...current,
+      ...patch,
+      editorialSetupRevision: (current.editorialSetupRevision ?? 0) + 1,
+      updatedAt: new Date().toISOString()
+    }));
+    if (message) {
+      setToast(message);
+    }
+  }
+
+  function runEditorialValidation() {
+    setWorkspace((current) => {
+      const checkedAt = new Date().toISOString();
+      return {
+        ...current,
+        editorialValidationRun: {
+          id: `editorial-validation-${Date.now()}`,
+          revision: current.editorialSetupRevision ?? 0,
+          checkedAt,
+          summary: validateEditorialSetup(current)
+        },
+        updatedAt: checkedAt
+      };
+    });
+    setToast('Редакционная модель проверена');
+  }
+
   function go(section: WorkspaceSection) {
     patchWorkspace({ activeSection: section });
   }
@@ -195,12 +231,19 @@ export function App() {
               topics={workspace.topics}
               fabulas={workspace.fabulas}
               matrix={workspace.topicFabulaMatrix}
-              onModelChange={(editorialModel) => patchWorkspace({ editorialModel })}
-              onProjectProfileChange={(projectProfile) => patchWorkspace({ projectProfile })}
-              onEditorialRulesChange={(editorialRules) => patchWorkspace({ editorialRules })}
-              onTopicsChange={(topics) => patchWorkspace({ topics })}
-              onFabulasChange={(fabulas) => patchWorkspace({ fabulas })}
-              onMatrixChange={(topicFabulaMatrix) => patchWorkspace({ topicFabulaMatrix })}
+              onModelChange={(editorialModel) => patchEditorialSetup({ editorialModel })}
+              onProjectProfileChange={(projectProfile) => patchEditorialSetup({ projectProfile })}
+              onEditorialRulesChange={(editorialRules) => patchEditorialSetup({ editorialRules })}
+              onTopicsChange={(topics) => patchEditorialSetup({ topics })}
+              onFabulasChange={(fabulas) => patchEditorialSetup({ fabulas })}
+              onMatrixChange={(topicFabulaMatrix) => patchEditorialSetup({ topicFabulaMatrix })}
+              onTopicsAndMatrixChange={(topics, topicFabulaMatrix) =>
+                patchEditorialSetup({ topics, topicFabulaMatrix })
+              }
+              onFabulasAndMatrixChange={(fabulas, topicFabulaMatrix) =>
+                patchEditorialSetup({ fabulas, topicFabulaMatrix })
+              }
+              onRunValidation={runEditorialValidation}
             />
           )}
           {active === 'radar' && (
@@ -2162,7 +2205,10 @@ function EditorialModelView({
   onEditorialRulesChange,
   onTopicsChange,
   onFabulasChange,
-  onMatrixChange
+  onMatrixChange,
+  onTopicsAndMatrixChange,
+  onFabulasAndMatrixChange,
+  onRunValidation
 }: {
   workspace: WorkspaceState;
   model: EditorialModel;
@@ -2177,9 +2223,11 @@ function EditorialModelView({
   onTopicsChange: (topics: Topic[]) => void;
   onFabulasChange: (fabulas: Fabula[]) => void;
   onMatrixChange: (matrix: TopicFabulaMatrixEntry[]) => void;
+  onTopicsAndMatrixChange: (topics: Topic[], matrix: TopicFabulaMatrixEntry[]) => void;
+  onFabulasAndMatrixChange: (fabulas: Fabula[], matrix: TopicFabulaMatrixEntry[]) => void;
+  onRunValidation: () => void;
 }) {
   const [tab, setTab] = useState<EditorialModelTab>('publisher');
-  const validation = validateEditorialSetup(workspace);
   const warnings = getTopicFabulaWarnings(topics, fabulas, matrix);
   const enabledPairs = matrix.filter((entry) => entry.enabled).length;
 
@@ -2196,8 +2244,28 @@ function EditorialModelView({
     onTopicsChange(topics.map((item) => (item.id === topic.id ? topic : item)));
   }
 
+  function createTopic(topic: Topic) {
+    const nextTopics = addTopic(topics, topic);
+    onTopicsAndMatrixChange(nextTopics, completeTopicFabulaMatrix(nextTopics, fabulas, matrix));
+  }
+
+  function removeTopic(topicId: string) {
+    const result = deleteTopic(topics, matrix, topicId);
+    onTopicsAndMatrixChange(result.topics, result.matrix);
+  }
+
   function updateFabula(fabula: Fabula) {
     onFabulasChange(fabulas.map((item) => (item.id === fabula.id ? fabula : item)));
+  }
+
+  function createFabula(fabula: Fabula) {
+    const nextFabulas = addFabula(fabulas, fabula);
+    onFabulasAndMatrixChange(nextFabulas, completeTopicFabulaMatrix(topics, nextFabulas, matrix));
+  }
+
+  function removeFabula(fabulaId: string) {
+    const result = deleteFabula(fabulas, matrix, fabulaId);
+    onFabulasAndMatrixChange(result.fabulas, result.matrix);
   }
 
   return (
@@ -2230,16 +2298,37 @@ function EditorialModelView({
             <PublisherRulesView rules={editorialRules} onDelete={removeRule} onSave={saveRule} />
           ) : null}
           {tab === 'topics' ? (
-            <TopicListView fabulas={fabulas} matrix={matrix} topics={topics} onSave={updateTopic} />
+            <TopicListView
+              fabulas={fabulas}
+              matrix={matrix}
+              referencedTopicIds={getReferencedTopicIds(workspace)}
+              topics={topics}
+              onCreate={createTopic}
+              onDelete={removeTopic}
+              onSave={updateTopic}
+            />
           ) : null}
           {tab === 'fabulas' ? (
-            <FabulaListView fabulas={fabulas} matrix={matrix} topics={topics} onSave={updateFabula} />
+            <FabulaListView
+              fabulas={fabulas}
+              matrix={matrix}
+              referencedFabulaIds={getReferencedFabulaIds(workspace)}
+              topics={topics}
+              onCreate={createFabula}
+              onDelete={removeFabula}
+              onSave={updateFabula}
+            />
           ) : null}
           {tab === 'matrix' ? (
             <TopicFabulaMatrixView fabulas={fabulas} matrix={matrix} topics={topics} onSave={onMatrixChange} />
           ) : null}
         </div>
-        <EditorialValidationPanel validation={validation} warnings={warnings} activeTab={tab} />
+        <EditorialValidationPanel
+          activeTab={tab}
+          currentRevision={workspace.editorialSetupRevision ?? 0}
+          validationRun={workspace.editorialValidationRun}
+          onRunValidation={onRunValidation}
+        />
       </div>
     </div>
   );
@@ -2556,11 +2645,17 @@ function TopicListView({
   topics,
   fabulas,
   matrix,
+  referencedTopicIds,
+  onCreate,
+  onDelete,
   onSave
 }: {
   topics: Topic[];
   fabulas: Fabula[];
   matrix: TopicFabulaMatrixEntry[];
+  referencedTopicIds: Set<string>;
+  onCreate: (topic: Topic) => void;
+  onDelete: (topicId: string) => void;
   onSave: (topic: Topic) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(topics[0]?.id ?? null);
@@ -2573,15 +2668,79 @@ function TopicListView({
     setDraft({ ...topic, rules: [...topic.rules], forbiddenAngles: [...topic.forbiddenAngles] });
   }
 
+  function startCreate() {
+    if (editingId === 'new' && draft) {
+      setExpandedId(draft.id);
+      return;
+    }
+
+    const topic = createTopicDraft();
+    setExpandedId(topic.id);
+    setEditingId('new');
+    setDraft(topic);
+  }
+
   function save() {
     if (!draft) return;
-    onSave({ ...draft, weightRange: normalizeWeightRange(draft.weightRange) });
+    const normalized = { ...draft, weightRange: normalizeWeightRange(draft.weightRange) };
+    if (editingId === 'new') {
+      onCreate(normalized);
+      setExpandedId(normalized.id);
+    } else {
+      onSave(normalized);
+    }
     setEditingId(null);
     setDraft(null);
   }
 
+  function remove(topic: Topic) {
+    const hasProductionReferences = referencedTopicIds.has(topic.id);
+    const message = hasProductionReferences
+      ? `Тема "${topic.title}" уже используется в текущих производственных артефактах. Удаление уберет тему и ее связи в матрице, но не перепишет уже созданные инсайты, планы или фабулы постов. Удалить?`
+      : `Удалить тему "${topic.title}" и все ее связи в матрице?`;
+
+    if (!window.confirm(message)) return;
+
+    onDelete(topic.id);
+    if (expandedId === topic.id) setExpandedId(null);
+    if (editingId === topic.id) {
+      setEditingId(null);
+      setDraft(null);
+    }
+  }
+
   return (
     <div className="entity-list">
+      <div className="entity-list-toolbar">
+        <span className="mono-label">{topics.length} тем</span>
+        <button className="btn btn-sec btn-sm" type="button" onClick={startCreate}>
+          + Тема
+        </button>
+      </div>
+      {editingId === 'new' && draft ? (
+        <article className="card entity-row">
+          <div className="entity-row-main">
+            <span className="entity-title-placeholder">{draft.title.trim() || 'Новая тема'}</span>
+            <div className="entity-row-meta">
+              <span className="entity-meta-chip">{draft.weightRange.min}-{draft.weightRange.max}%</span>
+              <span className={`status-chip ${draft.status}`}>{draft.status === 'active' ? 'активно' : 'пауза'}</span>
+              <span className="entity-meta-chip">{draft.rules.length} правил</span>
+              <span className="entity-meta-chip">{fabulas.length} фабул</span>
+            </div>
+            <ValidationBadge status={draft.title.trim() ? 'green' : 'yellow'} />
+          </div>
+          <TopicEditor
+            topic={draft}
+            onCancel={() => {
+              setEditingId(null);
+              setDraft(null);
+              setExpandedId(topics[0]?.id ?? null);
+            }}
+            onChange={setDraft}
+            onSave={save}
+          />
+        </article>
+      ) : null}
       {topics.map((topic) => {
         const compatibleCount = countCompatibleFabulas(topic.id, matrix);
         const isExpanded = expandedId === topic.id;
@@ -2596,10 +2755,12 @@ function TopicListView({
               >
                 {topic.title}
               </button>
-              <span>{topic.weightRange.min}-{topic.weightRange.max}%</span>
-              <span className={`status-chip ${topic.status}`}>{topic.status === 'active' ? 'активно' : 'пауза'}</span>
-              <span>{topic.rules.length} правил</span>
-              <span>{compatibleCount} фабул</span>
+              <div className="entity-row-meta">
+                <span className="entity-meta-chip">{topic.weightRange.min}-{topic.weightRange.max}%</span>
+                <span className={`status-chip ${topic.status}`}>{topic.status === 'active' ? 'активно' : 'пауза'}</span>
+                <span className="entity-meta-chip">{topic.rules.length} правил</span>
+                <span className="entity-meta-chip">{compatibleCount} фабул</span>
+              </div>
               <ValidationBadge status={compatibleCount > 0 ? 'green' : 'red'} />
             </div>
             {isExpanded ? (
@@ -2615,24 +2776,29 @@ function TopicListView({
                 />
               ) : (
                 <div className="entity-details">
-                  <p>{topic.description}</p>
-                  <dl className="meta-list">
-                    <dt>Зачем</dt>
-                    <dd>{topic.purpose}</dd>
-                    <dt>Ценность</dt>
-                    <dd>{topic.audienceValue}</dd>
-                    <dt>Позиция автора</dt>
-                    <dd>{topic.authorStance}</dd>
-                    <dt>Правила</dt>
-                    <dd>{topic.rules.join('; ')}</dd>
-                    <dt>Запреты</dt>
-                    <dd>{topic.forbiddenAngles.join('; ')}</dd>
-                    <dt>Совместимые фабулы</dt>
-                    <dd>{fabulas.filter((fabula) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((fabula) => fabula.title).join(', ')}</dd>
-                  </dl>
+                  <div className="entity-details-scroll">
+                    <p>{topic.description}</p>
+                    <dl className="entity-detail-list">
+                      <dt>Зачем</dt>
+                      <dd>{topic.purpose}</dd>
+                      <dt>Ценность</dt>
+                      <dd>{topic.audienceValue}</dd>
+                      <dt>Позиция автора</dt>
+                      <dd>{topic.authorStance}</dd>
+                      <dt>Правила</dt>
+                      <dd>{topic.rules.join('; ')}</dd>
+                      <dt>Запреты</dt>
+                      <dd>{topic.forbiddenAngles.join('; ')}</dd>
+                      <dt>Совместимые фабулы</dt>
+                      <dd>{fabulas.filter((fabula) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((fabula) => fabula.title).join(', ')}</dd>
+                    </dl>
+                  </div>
                   <div className="inline-actions">
                     <button className="btn btn-sec btn-sm" type="button" onClick={() => startEdit(topic)}>
                       Редактировать
+                    </button>
+                    <button className="btn btn-sec btn-sm danger-text" type="button" onClick={() => remove(topic)}>
+                      Удалить
                     </button>
                   </div>
                 </div>
@@ -2658,43 +2824,45 @@ function TopicEditor({
 }) {
   return (
     <div className="entity-edit-form">
-      <label>
-        Название
-        <input value={topic.title} onChange={(event) => onChange({ ...topic, title: event.target.value })} />
-      </label>
-      <label>
-        Описание
-        <textarea value={topic.description} onChange={(event) => onChange({ ...topic, description: event.target.value })} />
-      </label>
-      <label>
-        Зачем эта тема
-        <textarea value={topic.purpose} onChange={(event) => onChange({ ...topic, purpose: event.target.value })} />
-      </label>
-      <label>
-        Ценность для аудитории
-        <textarea value={topic.audienceValue} onChange={(event) => onChange({ ...topic, audienceValue: event.target.value })} />
-      </label>
-      <label>
-        Позиция автора
-        <textarea value={topic.authorStance} onChange={(event) => onChange({ ...topic, authorStance: event.target.value })} />
-      </label>
-      <WeightRangeEditor value={topic.weightRange} onChange={(weightRange) => onChange({ ...topic, weightRange })} />
-      <label>
-        Правила
-        <textarea value={topic.rules.join('\n')} onChange={(event) => onChange({ ...topic, rules: splitLines(event.target.value) })} />
-      </label>
-      <label>
-        Запреты
-        <textarea
-          value={topic.forbiddenAngles.join('\n')}
-          onChange={(event) => onChange({ ...topic, forbiddenAngles: splitLines(event.target.value) })}
-        />
-      </label>
+      <div className="entity-edit-scroll">
+        <label>
+          Название
+          <input value={topic.title} onChange={(event) => onChange({ ...topic, title: event.target.value })} />
+        </label>
+        <label>
+          Описание
+          <textarea value={topic.description} onChange={(event) => onChange({ ...topic, description: event.target.value })} />
+        </label>
+        <label>
+          Зачем эта тема
+          <textarea value={topic.purpose} onChange={(event) => onChange({ ...topic, purpose: event.target.value })} />
+        </label>
+        <label>
+          Ценность для аудитории
+          <textarea value={topic.audienceValue} onChange={(event) => onChange({ ...topic, audienceValue: event.target.value })} />
+        </label>
+        <label>
+          Позиция автора
+          <textarea value={topic.authorStance} onChange={(event) => onChange({ ...topic, authorStance: event.target.value })} />
+        </label>
+        <WeightRangeEditor value={topic.weightRange} onChange={(weightRange) => onChange({ ...topic, weightRange })} />
+        <label>
+          Правила
+          <textarea value={topic.rules.join('\n')} onChange={(event) => onChange({ ...topic, rules: splitLines(event.target.value) })} />
+        </label>
+        <label>
+          Запреты
+          <textarea
+            value={topic.forbiddenAngles.join('\n')}
+            onChange={(event) => onChange({ ...topic, forbiddenAngles: splitLines(event.target.value) })}
+          />
+        </label>
+      </div>
       <div className="inline-actions">
         <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>
           Отменить
         </button>
-        <button className="btn btn-pri btn-sm" type="button" onClick={onSave}>
+        <button className="btn btn-pri btn-sm" type="button" onClick={onSave} disabled={!topic.title.trim()}>
           Сохранить
         </button>
       </div>
@@ -2706,11 +2874,17 @@ function FabulaListView({
   fabulas,
   topics,
   matrix,
+  referencedFabulaIds,
+  onCreate,
+  onDelete,
   onSave
 }: {
   fabulas: Fabula[];
   topics: Topic[];
   matrix: TopicFabulaMatrixEntry[];
+  referencedFabulaIds: Set<string>;
+  onCreate: (fabula: Fabula) => void;
+  onDelete: (fabulaId: string) => void;
   onSave: (fabula: Fabula) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(fabulas[0]?.id ?? null);
@@ -2723,15 +2897,80 @@ function FabulaListView({
     setDraft({ ...fabula, rules: [...fabula.rules], structure: [...fabula.structure], proofRequirements: [...fabula.proofRequirements] });
   }
 
+  function startCreate() {
+    if (editingId === 'new' && draft) {
+      setExpandedId(draft.id);
+      return;
+    }
+
+    const fabula = createFabulaDraft();
+    setExpandedId(fabula.id);
+    setEditingId('new');
+    setDraft(fabula);
+  }
+
   function save() {
     if (!draft) return;
-    onSave({ ...draft, weightRange: normalizeWeightRange(draft.weightRange) });
+    const normalized = { ...draft, weightRange: normalizeWeightRange(draft.weightRange) };
+    if (editingId === 'new') {
+      onCreate(normalized);
+      setExpandedId(normalized.id);
+    } else {
+      onSave(normalized);
+    }
     setEditingId(null);
     setDraft(null);
   }
 
+  function remove(fabula: Fabula) {
+    const hasProductionReferences = referencedFabulaIds.has(fabula.id);
+    const message = hasProductionReferences
+      ? `Фабула "${fabula.title}" уже используется в текущих производственных артефактах. Удаление уберет фабулу и ее связи в матрице, но не перепишет уже созданные инсайты, планы или фабулы постов. Удалить?`
+      : `Удалить фабулу "${fabula.title}" и все ее связи в матрице?`;
+
+    if (!window.confirm(message)) return;
+
+    onDelete(fabula.id);
+    if (expandedId === fabula.id) setExpandedId(null);
+    if (editingId === fabula.id) {
+      setEditingId(null);
+      setDraft(null);
+    }
+  }
+
   return (
     <div className="entity-list">
+      <div className="entity-list-toolbar">
+        <span className="mono-label">{fabulas.length} фабул</span>
+        <button className="btn btn-sec btn-sm" type="button" onClick={startCreate}>
+          + Фабула
+        </button>
+      </div>
+      {editingId === 'new' && draft ? (
+        <article className="card entity-row">
+          <div className="entity-row-main">
+            <span className="entity-title-placeholder">{draft.title.trim() || 'Новая фабула'}</span>
+            <div className="entity-row-meta">
+              <span className="entity-meta-chip">{draft.weightRange.min}-{draft.weightRange.max}%</span>
+              <span className={`status-chip ${draft.status}`}>{draft.status === 'active' ? 'активно' : 'пауза'}</span>
+              <span className="entity-meta-chip">{draft.rules.length} правил</span>
+              <span className="entity-meta-chip">{draft.proofRequirements.length} proof</span>
+              <span className="entity-meta-chip">{topics.length} тем</span>
+            </div>
+            <ValidationBadge status={draft.title.trim() ? 'green' : 'yellow'} />
+          </div>
+          <FabulaEditor
+            fabula={draft}
+            onCancel={() => {
+              setEditingId(null);
+              setDraft(null);
+              setExpandedId(fabulas[0]?.id ?? null);
+            }}
+            onChange={setDraft}
+            onSave={save}
+          />
+        </article>
+      ) : null}
       {fabulas.map((fabula) => {
         const compatibleCount = countCompatibleTopics(fabula.id, matrix);
         const isExpanded = expandedId === fabula.id;
@@ -2746,11 +2985,13 @@ function FabulaListView({
               >
                 {fabula.title}
               </button>
-              <span>{fabula.weightRange.min}-{fabula.weightRange.max}%</span>
-              <span className={`status-chip ${fabula.status}`}>{fabula.status === 'active' ? 'активно' : 'пауза'}</span>
-              <span>{fabula.rules.length} правил</span>
-              <span>{fabula.proofRequirements.length} proof</span>
-              <span>{compatibleCount} тем</span>
+              <div className="entity-row-meta">
+                <span className="entity-meta-chip">{fabula.weightRange.min}-{fabula.weightRange.max}%</span>
+                <span className={`status-chip ${fabula.status}`}>{fabula.status === 'active' ? 'активно' : 'пауза'}</span>
+                <span className="entity-meta-chip">{fabula.rules.length} правил</span>
+                <span className="entity-meta-chip">{fabula.proofRequirements.length} proof</span>
+                <span className="entity-meta-chip">{compatibleCount} тем</span>
+              </div>
               <ValidationBadge status={compatibleCount > 0 ? 'green' : 'red'} />
             </div>
             {isExpanded ? (
@@ -2766,22 +3007,27 @@ function FabulaListView({
                 />
               ) : (
                 <div className="entity-details">
-                  <p>{fabula.description}</p>
-                  <dl className="meta-list">
-                    <dt>Драматургия</dt>
-                    <dd>{fabula.dramaturgy}</dd>
-                    <dt>Структура</dt>
-                    <dd>{fabula.structure.join('; ')}</dd>
-                    <dt>Proof requirements</dt>
-                    <dd>{fabula.proofRequirements.join('; ')}</dd>
-                    <dt>Правила</dt>
-                    <dd>{fabula.rules.join('; ')}</dd>
-                    <dt>Применимые темы</dt>
-                    <dd>{topics.filter((topic) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((topic) => topic.title).join(', ')}</dd>
-                  </dl>
+                  <div className="entity-details-scroll">
+                    <p>{fabula.description}</p>
+                    <dl className="entity-detail-list">
+                      <dt>Драматургия</dt>
+                      <dd>{fabula.dramaturgy}</dd>
+                      <dt>Структура</dt>
+                      <dd>{fabula.structure.join('; ')}</dd>
+                      <dt>Proof requirements</dt>
+                      <dd>{fabula.proofRequirements.join('; ')}</dd>
+                      <dt>Правила</dt>
+                      <dd>{fabula.rules.join('; ')}</dd>
+                      <dt>Применимые темы</dt>
+                      <dd>{topics.filter((topic) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((topic) => topic.title).join(', ')}</dd>
+                    </dl>
+                  </div>
                   <div className="inline-actions">
                     <button className="btn btn-sec btn-sm" type="button" onClick={() => startEdit(fabula)}>
                       Редактировать
+                    </button>
+                    <button className="btn btn-sec btn-sm danger-text" type="button" onClick={() => remove(fabula)}>
+                      Удалить
                     </button>
                   </div>
                 </div>
@@ -2807,39 +3053,41 @@ function FabulaEditor({
 }) {
   return (
     <div className="entity-edit-form">
-      <label>
-        Название
-        <input value={fabula.title} onChange={(event) => onChange({ ...fabula, title: event.target.value })} />
-      </label>
-      <label>
-        Описание
-        <textarea value={fabula.description} onChange={(event) => onChange({ ...fabula, description: event.target.value })} />
-      </label>
-      <label>
-        Драматургия
-        <textarea value={fabula.dramaturgy} onChange={(event) => onChange({ ...fabula, dramaturgy: event.target.value })} />
-      </label>
-      <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
-      <label>
-        Структура
-        <textarea value={fabula.structure.join('\n')} onChange={(event) => onChange({ ...fabula, structure: splitLines(event.target.value) })} />
-      </label>
-      <label>
-        Proof requirements
-        <textarea
-          value={fabula.proofRequirements.join('\n')}
-          onChange={(event) => onChange({ ...fabula, proofRequirements: splitLines(event.target.value) })}
-        />
-      </label>
-      <label>
-        Правила
-        <textarea value={fabula.rules.join('\n')} onChange={(event) => onChange({ ...fabula, rules: splitLines(event.target.value) })} />
-      </label>
+      <div className="entity-edit-scroll">
+        <label>
+          Название
+          <input value={fabula.title} onChange={(event) => onChange({ ...fabula, title: event.target.value })} />
+        </label>
+        <label>
+          Описание
+          <textarea value={fabula.description} onChange={(event) => onChange({ ...fabula, description: event.target.value })} />
+        </label>
+        <label>
+          Драматургия
+          <textarea value={fabula.dramaturgy} onChange={(event) => onChange({ ...fabula, dramaturgy: event.target.value })} />
+        </label>
+        <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
+        <label>
+          Структура
+          <textarea value={fabula.structure.join('\n')} onChange={(event) => onChange({ ...fabula, structure: splitLines(event.target.value) })} />
+        </label>
+        <label>
+          Proof requirements
+          <textarea
+            value={fabula.proofRequirements.join('\n')}
+            onChange={(event) => onChange({ ...fabula, proofRequirements: splitLines(event.target.value) })}
+          />
+        </label>
+        <label>
+          Правила
+          <textarea value={fabula.rules.join('\n')} onChange={(event) => onChange({ ...fabula, rules: splitLines(event.target.value) })} />
+        </label>
+      </div>
       <div className="inline-actions">
         <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>
           Отменить
         </button>
-        <button className="btn btn-pri btn-sm" type="button" onClick={onSave}>
+        <button className="btn btn-pri btn-sm" type="button" onClick={onSave} disabled={!fabula.title.trim()}>
           Сохранить
         </button>
       </div>
@@ -2890,82 +3138,100 @@ function TopicFabulaMatrixView({
           </button>
         </div>
       </div>
-      <table className="matrix-table">
-        <thead>
-          <tr>
-            <th>Тема</th>
-            {fabulas.map((fabula) => (
-              <th key={fabula.id}>{fabula.title}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {topics.map((topic) => (
-            <tr key={topic.id}>
-              <th>{topic.title}</th>
-              {fabulas.map((fabula) => {
-                const entry = draft.find((item) => item.topicId === topic.id && item.fabulaId === fabula.id);
-                return (
-                  <td key={fabula.id}>
-                    <label className="matrix-check">
-                      <input
-                        checked={Boolean(entry?.enabled)}
-                        type="checkbox"
-                        onChange={() => toggle(topic.id, fabula.id)}
-                      />
-                      <span>{entry?.enabled ? 'да' : 'нет'}</span>
-                    </label>
-                  </td>
-                );
-              })}
+      <div className="matrix-scroll" data-testid="topic-fabula-matrix-scroll">
+        <table className="matrix-table">
+          <thead>
+            <tr>
+              <th className="matrix-sticky matrix-topic-head" scope="col">Тема</th>
+              {fabulas.map((fabula) => (
+                <th className="matrix-fabula-head" key={fabula.id} scope="col">{fabula.title}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {topics.map((topic) => (
+              <tr key={topic.id}>
+                <th className="matrix-sticky matrix-topic-cell" scope="row">{topic.title}</th>
+                {fabulas.map((fabula) => {
+                  const entry = draft.find((item) => item.topicId === topic.id && item.fabulaId === fabula.id);
+                  return (
+                    <td className="matrix-toggle-cell" key={fabula.id}>
+                      <label className="matrix-check">
+                        <input
+                          aria-label={`${topic.title} · ${fabula.title}`}
+                          checked={Boolean(entry?.enabled)}
+                          type="checkbox"
+                          onChange={() => toggle(topic.id, fabula.id)}
+                        />
+                      </label>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
 
 function EditorialValidationPanel({
-  validation,
-  warnings,
-  activeTab
+  validationRun,
+  currentRevision,
+  activeTab,
+  onRunValidation
 }: {
-  validation: EditorialValidationSummary;
-  warnings: ReturnType<typeof getTopicFabulaWarnings>;
+  validationRun: EditorialValidationRun | null;
+  currentRevision: number;
   activeTab: EditorialModelTab;
+  onRunValidation: () => void;
 }) {
+  const validation = validationRun?.summary ?? null;
+  const isStale = Boolean(validationRun && validationRun.revision !== currentRevision);
+  const runState = !validationRun ? 'Еще не проверено' : isStale ? 'Требует повторной проверки' : 'Проверено';
+
   return (
     <aside className="card validation-panel">
       <div className="validation-head">
         <span className="mono-label">Проверка</span>
-        <ValidationBadge status={validation.status} />
-        <h3>{validation.title}</h3>
-        <p>{validation.summary}</p>
+        <span className={`validation-run-state ${!validationRun ? 'empty' : isStale ? 'stale' : 'fresh'}`}>
+          {runState}
+        </span>
+        {validation ? <ValidationBadge status={validation.status} /> : null}
+        <h3>{validation?.title ?? 'Проверка еще не запускалась'}</h3>
+        <p>
+          {validation
+            ? validation.summary
+            : 'Заполните или отредактируйте правила, темы, фабулы и матрицу, затем запустите проверку вручную.'}
+        </p>
+        {isStale ? (
+          <p className="validation-stale-note">
+            После последней проверки были сохранены изменения. Запустите проверку повторно, чтобы получить актуальный вывод.
+          </p>
+        ) : null}
+        <button className="btn btn-pri btn-sm" type="button" onClick={onRunValidation}>
+          Проверить
+        </button>
       </div>
-      <div className="validation-items">
-        {validation.items.map((item) => (
-          <article className="validation-item" key={item.id}>
-            <div>
-              <ValidationBadge status={item.status} />
-              <b>{item.title}</b>
-            </div>
-            <p>{item.summary}</p>
-            <small>{item.recommendation}</small>
-          </article>
-        ))}
-      </div>
-      {warnings.length > 0 ? (
-        <div className="validation-warnings">
-          <b>Связки требуют внимания</b>
-          {warnings.slice(0, 4).map((warning) => (
-            <p key={`${warning.targetType}-${warning.targetId}`}>{warning.message}</p>
+      {validation ? (
+        <div className="validation-items">
+          {validation.items.map((item) => (
+            <article className="validation-item" key={item.id}>
+              <div>
+                <ValidationBadge status={item.status} />
+                <b>{item.title}</b>
+              </div>
+              <p>{item.summary}</p>
+              <small>{item.recommendation}</small>
+            </article>
           ))}
         </div>
       ) : null}
       <p className="validation-note">
-        Вкладка: {editorialTabLabel(activeTab)}. Проверка deterministic, без AI provider.
+        Вкладка: {editorialTabLabel(activeTab)}. Проверка deterministic, без AI provider. Результат обновляется только по кнопке.
       </p>
+      {validationRun ? <p className="validation-note">Последняя проверка: {formatDateTime(validationRun.checkedAt)}</p> : null}
     </aside>
   );
 }
@@ -3022,6 +3288,22 @@ function editorialTabLabel(tab: EditorialModelTab): string {
   if (tab === 'topics') return 'Темы';
   if (tab === 'fabulas') return 'Фабулы';
   return 'Матрица';
+}
+
+function getReferencedTopicIds(workspace: WorkspaceState): Set<string> {
+  return new Set(
+    [workspace.insightCard?.topicId, workspace.contentPlanItem?.topicId, workspace.postBrief?.topicId].filter(
+      Boolean
+    ) as string[]
+  );
+}
+
+function getReferencedFabulaIds(workspace: WorkspaceState): Set<string> {
+  return new Set(
+    [workspace.insightCard?.fabulaId, workspace.contentPlanItem?.fabulaId, workspace.postBrief?.fabulaId].filter(
+      Boolean
+    ) as string[]
+  );
 }
 
 function countCompatibleFabulas(topicId: string, matrix: TopicFabulaMatrixEntry[]): number {
@@ -3882,6 +4164,16 @@ function formatScore(value: number): string {
 
 function formatDate(value: string): string {
   return value.slice(0, 10);
+}
+
+function formatDateTime(value: string): string {
+  return new Date(value).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function authorNoteTypeLabel(type: AuthorNoteType): string {

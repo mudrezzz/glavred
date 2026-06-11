@@ -676,7 +676,7 @@ Status:
 
 ### Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes
 
-- Status: Ready
+- Status: Done
 - Goal: Fix the `Редакционная модель` layout problems found after Slice 1.1.1 and
   make validation explicitly author-triggered.
 - User value: The author can edit topics, fabulas, and matrix links without broken
@@ -713,7 +713,8 @@ Status:
   - UI test that matrix has a horizontal scroll container and sticky topic column
     structure.
   - Regression tests for topic/fabula edit/save/cancel and matrix save/cancel.
-  - `npm test -- --run` and `npm run smoke`.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
 - Docs:
   - Update user guide and developer guide for manual validation.
   - Update ADR references if implementation changes the interaction contract.
@@ -721,16 +722,59 @@ Status:
   - Demo `Редакционная модель` should be usable at realistic viewport widths with
     long AI Product Manager topics and fabulas.
 - Acceptance criteria:
-  - Validation panel does not create fresh conclusions while the author types.
-  - The author can run validation manually.
-  - After saved changes, the panel clearly asks to rerun validation.
-  - Topic and fabula list rows, previews, and edit forms do not overflow their cards.
-  - Matrix remains readable with horizontal scroll and sticky topic names.
-  - Existing production flow remains working.
+  - Validation panel does not create fresh conclusions while the author types. Done.
+  - The author can run validation manually. Done.
+  - After saved changes, the panel clearly asks to rerun validation. Done.
+  - Topic and fabula list rows, previews, and edit forms do not overflow their cards. Done.
+  - Matrix remains readable with horizontal scroll and sticky topic names. Done.
+  - Existing production flow remains working. Done.
+
+### Slice 1.1.3: Add and Delete Topics and Fabulas
+
+- Status: Done
+- Goal: Add missing create/delete actions for topic and fabula entities inside
+  `Редакционная модель`.
+- User value: The author can evolve the editorial system without editing seeded demo
+  entities only.
+- Scope:
+  - Add `+ Тема` and `+ Фабула` actions above compact entity lists.
+  - Keep new entities as local drafts until `Сохранить`.
+  - Disable save until a title is provided.
+  - Add saved entities to the compatibility matrix with default enabled links.
+  - Add `Удалить` actions in expanded topic/fabula details with confirmation.
+  - Delete related matrix links while leaving already-created production artifacts
+    unchanged.
+- Out of scope:
+  - Validator framework.
+  - Context chat suggestions for new entities.
+  - Rebuilding existing production artifacts after entity deletion.
+- Implementation notes:
+  - Use `status: paused` for temporary exclusion and physical delete for unwanted
+    entities.
+  - Show a stronger confirmation when the entity is referenced by current production
+    artifacts.
+- Tests:
+  - Domain tests for topic/fabula draft creation, add, delete, and matrix link
+    normalization. Done.
+  - UI tests for adding and deleting topics/fabulas and seeing matrix updates. Done.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+- Docs:
+  - README, user guide, developer guide, architecture overview, demo docs, and roadmap
+    updated.
+- Demo impact:
+  - Demo author can add a custom topic/fabula and confirm that matrix links appear by
+    default.
+- Acceptance criteria:
+  - `+ Тема` creates a draft topic and saves it into the list. Done.
+  - `+ Фабула` creates a draft fabula and saves it into the list. Done.
+  - New entities appear in the matrix with default enabled links. Done.
+  - Delete removes the entity and its matrix links after confirmation. Done.
+  - Manual validation snapshot becomes stale after committed add/delete. Done.
 
 ### Slice 1.2: Validator Framework Baseline
 
-- Status: Backlog
+- Status: Ready
 - Goal: Introduce generic validator results across author position, topics, fabulas,
   and production artifacts.
 - Scope:
@@ -820,4 +864,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes`.
+Start `Slice 1.2: Validator Framework Baseline`.

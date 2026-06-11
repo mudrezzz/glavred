@@ -731,6 +731,8 @@ export function createDemoWorkspace(): WorkspaceState {
     },
     projectProfile: demoProjectProfile,
     editorialRules: demoEditorialRules,
+    editorialSetupRevision: 0,
+    editorialValidationRun: null,
     topics: demoTopics,
     fabulas: demoFabulas,
     topicFabulaMatrix: createDefaultTopicFabulaMatrix(demoTopics, demoFabulas),

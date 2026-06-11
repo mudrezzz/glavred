@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
 function goToRadar() {
@@ -74,6 +74,9 @@ describe('App', () => {
     expect(screen.getByRole('tab', { name: /Темы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Фабулы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Матрица/i })).toBeInTheDocument();
+    expect(screen.getByText(/Еще не проверено/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Редакционная модель требует внимания/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Проверить$/i }));
     expect(screen.getByText(/Редакционная модель требует внимания/i)).toBeInTheDocument();
     expect(screen.queryByText(/Legacy-рубрики/i)).not.toBeInTheDocument();
 
@@ -86,11 +89,14 @@ describe('App', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
     expect(screen.getByText('Тестовое правило автора')).toBeInTheDocument();
+    expect(screen.getByText(/Требует повторной проверки/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
     expect(screen.getByText('AI product discovery')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /AI product discovery/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+    expect(screen.getByText('AI product discovery').closest('.entity-row-main')?.querySelector('.entity-row-meta')).toBeTruthy();
+    expect(document.querySelector('.entity-details-scroll')).toBeInTheDocument();
+    const topicRow = screen.getByText('AI product discovery').closest('article') as HTMLElement;
+    fireEvent.click(within(topicRow).getByRole('button', { name: /^Редактировать$/i }));
     fireEvent.change(screen.getByLabelText('Название'), {
       target: { value: 'AI workflow discovery' }
     });
@@ -98,18 +104,66 @@ describe('App', () => {
     expect(screen.getByText('AI workflow discovery')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Исследовательская заметка/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+    const fabulaRow = screen.getByText('Исследовательская заметка').closest('article') as HTMLElement;
+    fireEvent.click(within(fabulaRow).getByRole('button', { name: /^Редактировать$/i }));
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Исследовательская записка' } });
     fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
     expect(screen.getByText('Исследовательская записка')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
+    expect(screen.getByTestId('topic-fabula-matrix-scroll')).toBeInTheDocument();
+    expect(document.querySelector('.matrix-sticky')).toBeTruthy();
     fireEvent.click(screen.getAllByRole('checkbox')[0]);
 
     expect(screen.getByText(/Есть несохраненные изменения/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Сохранить матрицу/i }));
     expect(screen.queryByText(/Есть несохраненные изменения/i)).not.toBeInTheDocument();
+  });
+
+  it('adds and deletes topics and fabulas with matrix updates', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Проверить$/i }));
+
+    fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
+    fireEvent.click(screen.getByRole('button', { name: /\+ Тема/i }));
+    expect(screen.getByRole('button', { name: /^Сохранить$/i })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'AI trust onboarding' } });
+    expect(screen.getByDisplayValue('AI trust onboarding')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText(/Требует повторной проверки/i)).toBeInTheDocument();
+    expect(screen.getByText('AI trust onboarding')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
+    expect(screen.getByText('AI trust onboarding')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
+    fireEvent.click(screen.getByRole('button', { name: /AI trust onboarding/i }));
+    const topicRow = screen.getByText('AI trust onboarding').closest('article') as HTMLElement;
+    fireEvent.click(within(topicRow).getByRole('button', { name: /^Удалить$/i }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('AI trust onboarding'));
+    expect(screen.queryByText('AI trust onboarding')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
+    fireEvent.click(screen.getByRole('button', { name: /\+ Фабула/i }));
+    expect(screen.getByRole('button', { name: /^Сохранить$/i })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Контрольный разбор внедрения' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText('Контрольный разбор внедрения')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
+    expect(screen.getByText('Контрольный разбор внедрения')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Контрольный разбор внедрения/i }));
+    const fabulaRow = screen.getByText('Контрольный разбор внедрения').closest('article') as HTMLElement;
+    fireEvent.click(within(fabulaRow).getByRole('button', { name: /^Удалить$/i }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Контрольный разбор внедрения'));
+    expect(screen.queryByText('Контрольный разбор внедрения')).not.toBeInTheDocument();
+
+    confirm.mockRestore();
   });
 
   it('shows external source tabs and demo source cards inside author memory', () => {

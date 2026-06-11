@@ -30,8 +30,12 @@ assertions.
 `Редакционная модель` now behaves like the workspace of a virtual publishing project:
 an explicit project profile, editable atomic rules for author/audience/position/style/
 goals/boundaries, compact topic and fabula lists, a topic-fabula compatibility matrix,
-and a deterministic validation panel on every tab. Legacy rubric/fabula fields remain
-available only for storage and service compatibility.
+and a deterministic validation panel on every tab. Validation is explicit: the author
+clicks `Проверить`, gets a saved snapshot, and sees `Требует повторной проверки` after
+committed setup changes. Topics and fabulas can be added or deleted directly from their
+lists; deletion removes compatibility matrix links but does not rewrite already-created
+production artifacts. Legacy rubric/fabula fields remain available only for storage and
+service compatibility.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
@@ -65,8 +69,8 @@ The revised core modules are:
   import, and archive-safe handling for large historical archives.
 - Author Position Model: transparent, evidence-backed model of how the author thinks
   and writes.
-- Topics and Fabulas: editable editorial entities with weights, compatibility matrix,
-  rules, and validators.
+- Topics and Fabulas: addable/removable editorial entities with weights,
+  compatibility matrix, rules, and validators.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for
   software projects.
 - Audience, goal, metrics, platforms, and formats: structured rules, not freeform
