@@ -60,8 +60,11 @@ Individual actions:
 The queue supports large-archive work:
 
 - checkbox per candidate;
-- `Выбрать все на странице`;
-- `Выбрать все по фильтру`;
+- `Выбрать все на странице`, which switches to `Снять выделение со страницы` after
+  the current page is selected;
+- `Выбрать все по фильтру`, which switches to `Снять выделение по фильтру` after the
+  filtered set is selected;
+- `Сбросить выделение`;
 - `Добавить все`;
 - `Принять выбранные в архив`;
 - `Отклонить выбранные`;
@@ -75,6 +78,19 @@ destination for large batches is archive, not active memory.
 
 Archive records keep source, title, excerpt, original date, accepted date, acceptance
 mode, and evidence policy.
+
+Archive cards are actionable:
+
+- `Добавить в память` turns a specific archive record into an active `AuthorNote`.
+- `Вернуть в очередь` sends the record back to review as a candidate.
+- `Не evidence` keeps it out of evidence.
+- `Открыть источник` opens the original URL when available.
+- `Удалить из архива` removes the local archive record.
+
+The queue status filters `Принятые из очереди` and `Bulk archive из очереди` show
+candidates that were processed from the queue. The `Архив` tab can also contain seeded
+or historical records that never existed as queue candidates, so the two views are not
+expected to be identical.
 
 Archive records are useful context for future search, uniqueness, and evidence review,
 but they do not rewrite `Как система поняла автора` until a specific item is accepted

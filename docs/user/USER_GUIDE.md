@@ -71,6 +71,8 @@ manual note feed through internal tabs:
 For large archives, the planned queue supports group work:
 
 - select one item, a page, or all items matching the active filter;
+- clear the current selection from the same toolbar when the selected set is no longer
+  needed;
 - group by source, date, tag, duplicate cluster, or evidence risk;
 - use `Добавить все` with a confirmation summary;
 - accept many items into archive without reading every post;
@@ -107,8 +109,15 @@ archive material will also stay distinguishable from manually reviewed evidence.
   memory. Use `В архив`, `Отклонить`, or `Не evidence` for non-active material.
 - Use `Выбрать все по фильтру` and `Добавить все` for large archive-safe batches.
   Confirm the summary before applying the bulk action.
-- Open `Архив` to see accepted archive records with provenance. Use
-  `Отменить последнее групповое действие` when the latest bulk decision should be
+- After a page or filter selection, use `Сбросить выделение` or the switched
+  `Снять выделение...` action to clear selected candidates.
+- Queue statuses `Принятые из очереди` and `Bulk archive из очереди` show candidates
+  that were processed from the queue. The separate `Архив` tab also includes seeded
+  historical archive records that never existed as queue candidates.
+- Open `Архив` to see accepted archive records with provenance. From an archive card
+  you can add a record into active memory, return it to the review queue, mark it
+  `Не evidence`, open the original source, or delete it from the local archive.
+- Use `Отменить последнее групповое действие` when the latest bulk decision should be
   reverted.
 - Edit the `Редакционная модель`.
 - Review or edit the demo source signal in `Радар`.

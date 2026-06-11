@@ -504,6 +504,32 @@ Status:
   - `npm test`, `npm run smoke`, `npm run docs:screenshots`, and
     `npm run docs:wiki:publish` passed.
 
+### Slice 1.0.5.1: External Sources UX Fixes
+
+- Status: Done
+- Goal: Remove confusing behavior from the first external sources shell after manual
+  review.
+- User value: The author can understand the import summary, clear candidate selection,
+  and work with the archive instead of seeing it as a dead-end duplicate of the queue.
+- Scope:
+  - Fix mojibake in the import summary and manual-check toast.
+  - Make page/filter select-all actions switch into clear-selection actions after they
+    are active.
+  - Add an explicit `Сбросить выделение` action.
+  - Clarify queue status filters for items accepted from the queue.
+  - Make archive records actionable: add to memory, return to queue, mark `Не evidence`,
+    open source, and delete from local archive.
+- Tests:
+  - UI tests for clearing candidate selection.
+  - UI tests for archive actions and returning an archive record to the review queue.
+- Docs:
+  - Update user guide and wiki external sources page.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run docs:screenshots` passed.
+  - `npm run docs:wiki:publish` passed.
+
 ### Deferred: Attachment Analysis and Evidence Extraction
 
 - Status: Deferred
@@ -608,6 +634,7 @@ Status:
 - Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
 - Slice 1.0.4: Author Memory External Sources and Import Design. Completed 2026-06-11.
 - Slice 1.0.5: External Sources Local UI Shell. Completed 2026-06-11.
+- Slice 1.0.5.1: External Sources UX Fixes. Completed 2026-06-11.
 
 ## Blocked Items
 

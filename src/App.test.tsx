@@ -68,6 +68,9 @@ describe('App', () => {
   it('shows external source tabs and demo source cards inside author memory', () => {
     render(<App />);
 
+    expect(screen.getByText('Импорт и архив')).toBeInTheDocument();
+    expect(screen.getAllByText('Источники').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Кандидаты').length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /Лента|Р›РµРЅС‚Р°/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Источники|РСЃС‚РѕС‡РЅРёРєРё/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i })).toBeInTheDocument();
@@ -78,6 +81,39 @@ describe('App', () => {
     expect(screen.getByText('TG archive · AI Product Manager')).toBeInTheDocument();
     expect(screen.getByText('Customer interviews · AI adoption')).toBeInTheDocument();
     expect(screen.getByText('Blog essays · Evals and trust')).toBeInTheDocument();
+  });
+
+  it('allows clearing import candidate selection', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Выбрать все по фильтру|Р’С‹Р±СЂР°С‚СЊ РІСЃРµ РїРѕ С„РёР»СЊС‚СЂСѓ/i }));
+
+    expect(screen.getByRole('button', { name: /Сбросить выделение/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Снять выделение по фильтру/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Сбросить выделение/i }));
+
+    expect(screen.queryByRole('button', { name: /Сбросить выделение/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/выбрано 0/i)).toBeInTheDocument();
+  });
+
+  it('makes archive records actionable and can return an archive record to review queue', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Архив|РђСЂС…РёРІ/i }));
+    const archiveRecord = screen.getByText(/Старый пост про пилоты/i).closest('article');
+    expect(archiveRecord).toBeInTheDocument();
+
+    expect(within(archiveRecord as HTMLElement).getByRole('button', { name: /Добавить в память/i })).toBeInTheDocument();
+    expect(within(archiveRecord as HTMLElement).getByRole('button', { name: /Вернуть в очередь/i })).toBeInTheDocument();
+    expect(within(archiveRecord as HTMLElement).getByRole('button', { name: /Не evidence/i })).toBeInTheDocument();
+    expect(within(archiveRecord as HTMLElement).getByRole('button', { name: /Удалить из архива/i })).toBeInTheDocument();
+
+    fireEvent.click(within(archiveRecord as HTMLElement).getByRole('button', { name: /Вернуть в очередь/i }));
+
+    expect(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText(/Старый пост про пилоты/i)).toBeInTheDocument();
   });
 
   it('bulk archives filtered import candidates and can undo the latest bulk action', () => {

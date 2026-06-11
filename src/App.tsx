@@ -841,10 +841,102 @@ function AuthorMemoryView({
     setSelectedCandidateIds(Array.from(new Set(candidateIds)));
   }
 
+  function unselectCandidates(candidateIds: string[]) {
+    const idsToRemove = new Set(candidateIds);
+    setSelectedCandidateIds((current) => current.filter((candidateId) => !idsToRemove.has(candidateId)));
+  }
+
+  function clearCandidateSelection() {
+    setSelectedCandidateIds([]);
+  }
+
   function openQueueForSource(sourceId?: string) {
     setCandidateFilters((current) => ({ ...current, sourceId: sourceId ?? 'all', reviewStatus: 'new' }));
     setSelectedCandidateIds([]);
     setTab('queue');
+  }
+
+  function acceptArchiveRecordToMemory(record: ArchiveRecord) {
+    const source = externalSources.find((item) => item.id === record.sourceId) ?? externalSources[0];
+    const note: AuthorNote = {
+      id: `note-archive-${record.id}-${Date.now()}`,
+      type: 'linkReaction',
+      title: record.title,
+      body: record.bodyExcerpt,
+      sourceUrl: record.originalUrl || source.url,
+      tags: ['archive', 'imported'],
+      attachments: [],
+      capturedAt: new Date().toISOString()
+    };
+    const authorNotes = [note, ...notes];
+    const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
+    const authorPositionAssertions = inferAuthorPositionAssertions(authorNotes, authorMemoryEvents);
+
+    patchImportState(
+      {
+        authorNotes,
+        authorMemoryEvents,
+        authorPositionAssertions
+      },
+      'Архивная запись добавлена в память автора'
+    );
+  }
+
+  function restoreArchiveRecordToQueue(record: ArchiveRecord) {
+    const source = externalSources.find((item) => item.id === record.sourceId) ?? externalSources[0];
+    const existingCandidateId = record.id.replace(/^archive-/, '');
+    const existingCandidate = importCandidates.find((candidate) => candidate.id === existingCandidateId);
+    const restoredCandidate: ImportedMemoryCandidate = existingCandidate
+      ? {
+          ...existingCandidate,
+          reviewStatus: 'new',
+          evidencePolicy: record.evidencePolicy === 'ignored' ? 'ignored' : 'archiveOnly'
+        }
+      : {
+          id: `restored-${record.id}`,
+          sourceId: record.sourceId,
+          title: record.title,
+          excerpt: record.bodyExcerpt,
+          originalUrl: record.originalUrl,
+          capturedAt: record.publishedAt,
+          detectedTags: ['archive'],
+          duplicateRisk: 'medium',
+          suggestedTarget: `Возвращено из архива ${source.title} для ручного review`,
+          reviewStatus: 'new',
+          evidencePolicy: record.evidencePolicy === 'ignored' ? 'ignored' : 'archiveOnly'
+        };
+
+    patchImportState(
+      {
+        archiveRecords: archiveRecords.filter((item) => item.id !== record.id),
+        importCandidates: existingCandidate
+          ? importCandidates.map((candidate) => (candidate.id === existingCandidateId ? restoredCandidate : candidate))
+          : [restoredCandidate, ...importCandidates]
+      },
+      'Архивная запись возвращена в очередь разбора'
+    );
+    setCandidateFilters((current) => ({ ...current, reviewStatus: 'new', sourceId: record.sourceId }));
+    setTab('queue');
+  }
+
+  function ignoreArchiveRecord(record: ArchiveRecord) {
+    patchImportState(
+      {
+        archiveRecords: archiveRecords.map((item) =>
+          item.id === record.id ? { ...item, evidencePolicy: 'ignored' } : item
+        )
+      },
+      'Архивная запись помечена как не evidence'
+    );
+  }
+
+  function deleteArchiveRecord(recordId: string) {
+    patchImportState(
+      {
+        archiveRecords: archiveRecords.filter((record) => record.id !== recordId)
+      },
+      'Архивная запись удалена'
+    );
   }
 
   return (
@@ -1089,7 +1181,7 @@ function AuthorMemoryView({
                   {
                     externalSources: externalSources.map((item) => (item.id === source.id ? source : item))
                   },
-                  'РЎС‚Р°С‚СѓСЃ РґРµРјРѕ-РёСЃС‚РѕС‡РЅРёРєР° РѕР±РЅРѕРІР»РµРЅ'
+                  'Статус демо-источника обновлен'
                 )
               }
             />
@@ -1113,33 +1205,45 @@ function AuthorMemoryView({
               onChangeGroupMode={setGroupMode}
               onChangeViewMode={setImportViewMode}
               onIgnoreEvidence={(candidate) =>
-                replaceImportCandidate(ignoreCandidateForEvidence(candidate), 'РљР°РЅРґРёРґР°С‚ РїРѕРјРµС‡РµРЅ РєР°Рє РЅРµ evidence')
+                replaceImportCandidate(ignoreCandidateForEvidence(candidate), 'Кандидат помечен как не evidence')
               }
               onOpenBulk={(action) => setPendingBulkAction(action)}
-              onReject={(candidate) => replaceImportCandidate(rejectCandidate(candidate), 'РљР°РЅРґРёРґР°С‚ РѕС‚РєР»РѕРЅРµРЅ')}
+              onReject={(candidate) => replaceImportCandidate(rejectCandidate(candidate), 'Кандидат отклонен')}
+              onClearSelection={clearCandidateSelection}
               onSelect={toggleCandidateSelection}
               onSelectAllFiltered={() => selectCandidates(filteredCandidates.map((candidate) => candidate.id))}
               onSelectPage={() => selectCandidates(filteredCandidates.slice(0, 10).map((candidate) => candidate.id))}
+              onUnselectAllFiltered={() => unselectCandidates(filteredCandidates.map((candidate) => candidate.id))}
+              onUnselectPage={() => unselectCandidates(filteredCandidates.slice(0, 10).map((candidate) => candidate.id))}
             />
           ) : null}
-          {tab === 'archive' ? <ArchiveView records={archiveRecords} sources={externalSources} /> : null}
+          {tab === 'archive' ? (
+            <ArchiveView
+              records={archiveRecords}
+              sources={externalSources}
+              onAcceptToMemory={acceptArchiveRecordToMemory}
+              onDelete={deleteArchiveRecord}
+              onIgnoreEvidence={ignoreArchiveRecord}
+              onRestoreToQueue={restoreArchiveRecordToQueue}
+            />
+          ) : null}
         </section>
 
         <aside className="memory-side">
           <section className="panel import-summary">
-            <h4>РРјРїРѕСЂС‚ Рё Р°СЂС…РёРІ</h4>
+            <h4>Импорт и архив</h4>
             <div className="summary-grid">
-              <SummaryItem label="РСЃС‚РѕС‡РЅРёРєРё" value={importSummary.sources} />
-              <SummaryItem label="РљР°РЅРґРёРґР°С‚С‹" value={importSummary.candidates} />
+              <SummaryItem label="Источники" value={importSummary.sources} />
+              <SummaryItem label="Кандидаты" value={importSummary.candidates} />
               <SummaryItem label="Review" value={importSummary.needsReview} />
-              <SummaryItem label="РђСЂС…РёРІ" value={importSummary.archived} />
+              <SummaryItem label="Архив" value={importSummary.archived} />
               <SummaryItem label="Bulk" value={importSummary.bulkAccepted} />
               <SummaryItem label="Undo" value={importSummary.undoAvailable} />
             </div>
-            <p className="panel-note">РђСЂС…РёРІРЅС‹Рµ Рё РЅРµСЂР°Р·РѕР±СЂР°РЅРЅС‹Рµ РјР°С‚РµСЂРёР°Р»С‹ РЅРµ РјРµРЅСЏСЋС‚ РІС‹РІРѕРґС‹ Рѕ РїРѕР·РёС†РёРё Р°РІС‚РѕСЂР°.</p>
+            <p className="panel-note">Архивные и неразобранные материалы не меняют выводы о позиции автора.</p>
             {bulkImportActions.some((action) => action.canUndo) ? (
               <button className="btn btn-sec btn-sm" type="button" onClick={undoLatestBulkAction}>
-                РћС‚РјРµРЅРёС‚СЊ РїРѕСЃР»РµРґРЅРµРµ РіСЂСѓРїРїРѕРІРѕРµ РґРµР№СЃС‚РІРёРµ
+                Отменить последнее групповое действие
               </button>
             ) : null}
           </section>
@@ -1585,9 +1689,12 @@ function ImportQueueView({
   onIgnoreEvidence,
   onOpenBulk,
   onReject,
+  onClearSelection,
   onSelect,
   onSelectAllFiltered,
-  onSelectPage
+  onSelectPage,
+  onUnselectAllFiltered,
+  onUnselectPage
 }: {
   candidates: ImportedMemoryCandidate[];
   filteredCandidates: ImportedMemoryCandidate[];
@@ -1605,13 +1712,23 @@ function ImportQueueView({
   onIgnoreEvidence: (candidate: ImportedMemoryCandidate) => void;
   onOpenBulk: (action: PendingBulkAction) => void;
   onReject: (candidate: ImportedMemoryCandidate) => void;
+  onClearSelection: () => void;
   onSelect: (candidateId: string) => void;
   onSelectAllFiltered: () => void;
   onSelectPage: () => void;
+  onUnselectAllFiltered: () => void;
+  onUnselectPage: () => void;
 }) {
   const actionableSelected = selectedCandidateIds.filter((id) =>
     candidates.some((candidate) => candidate.id === id && candidate.reviewStatus === 'new')
   );
+  const pageCandidateIds = filteredCandidates.slice(0, 10).map((candidate) => candidate.id);
+  const filteredCandidateIds = filteredCandidates.map((candidate) => candidate.id);
+  const allPageSelected =
+    pageCandidateIds.length > 0 && pageCandidateIds.every((candidateId) => selectedCandidateIds.includes(candidateId));
+  const allFilteredSelected =
+    filteredCandidateIds.length > 0 &&
+    filteredCandidateIds.every((candidateId) => selectedCandidateIds.includes(candidateId));
 
   function patchFilters(patch: ImportCandidateFilters) {
     onChangeFilters({ ...filters, ...patch });
@@ -1645,8 +1762,8 @@ function ImportQueueView({
               <option value="all">Все</option>
               <option value="new">Новые</option>
               <option value="acceptedToMemory">В памяти</option>
-              <option value="acceptedToArchive">В архиве</option>
-              <option value="bulkAcceptedToArchive">Bulk archive</option>
+              <option value="acceptedToArchive">Принятые из очереди</option>
+              <option value="bulkAcceptedToArchive">Bulk archive из очереди</option>
               <option value="rejected">Отклонены</option>
               <option value="ignoredForEvidence">Не evidence</option>
             </select>
@@ -1688,12 +1805,21 @@ function ImportQueueView({
           <span>
             Показано {filteredCandidates.length} из {candidates.length}; выбрано {selectedCandidateIds.length}
           </span>
-          <button className="btn btn-sec btn-sm" type="button" onClick={onSelectPage}>
-            Выбрать все на странице
+          <button className="btn btn-sec btn-sm" type="button" onClick={allPageSelected ? onUnselectPage : onSelectPage}>
+            {allPageSelected ? 'Снять выделение со страницы' : 'Выбрать все на странице'}
           </button>
-          <button className="btn btn-sec btn-sm" type="button" onClick={onSelectAllFiltered}>
-            Выбрать все по фильтру
+          <button
+            className="btn btn-sec btn-sm"
+            type="button"
+            onClick={allFilteredSelected ? onUnselectAllFiltered : onSelectAllFiltered}
+          >
+            {allFilteredSelected ? 'Снять выделение по фильтру' : 'Выбрать все по фильтру'}
           </button>
+          {selectedCandidateIds.length > 0 ? (
+            <button className="btn btn-sec btn-sm" type="button" onClick={onClearSelection}>
+              Сбросить выделение
+            </button>
+          ) : null}
           <button
             className="btn btn-pri btn-sm"
             type="button"
@@ -1868,10 +1994,18 @@ function CandidateCard({
 
 function ArchiveView({
   records,
-  sources
+  sources,
+  onAcceptToMemory,
+  onDelete,
+  onIgnoreEvidence,
+  onRestoreToQueue
 }: {
   records: ArchiveRecord[];
   sources: AuthorExternalSource[];
+  onAcceptToMemory: (record: ArchiveRecord) => void;
+  onDelete: (recordId: string) => void;
+  onIgnoreEvidence: (record: ArchiveRecord) => void;
+  onRestoreToQueue: (record: ArchiveRecord) => void;
 }) {
   return (
     <div className="archive-list">
@@ -1884,6 +2018,7 @@ function ArchiveView({
           <div className="candidate-head">
             <span className="sig info">{sources.find((source) => source.id === record.sourceId)?.title ?? record.sourceId}</span>
             <span className="sc">{record.acceptanceMode === 'bulk' ? 'bulk accepted' : 'manual accepted'}</span>
+            <span className="sc">{record.id.startsWith('archive-seeded') ? 'исторический архив' : 'из очереди'}</span>
             <span className="sc">{evidencePolicyLabel(record.evidencePolicy)}</span>
           </div>
           <h3>{record.title}</h3>
@@ -1896,6 +2031,25 @@ function ArchiveView({
             <dt>Original</dt>
             <dd>{record.originalUrl || 'local archive record'}</dd>
           </dl>
+          <div className="inline-actions">
+            <button className="btn btn-pri btn-sm" type="button" onClick={() => onAcceptToMemory(record)}>
+              Добавить в память
+            </button>
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => onRestoreToQueue(record)}>
+              Вернуть в очередь
+            </button>
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => onIgnoreEvidence(record)}>
+              Не evidence
+            </button>
+            {record.originalUrl ? (
+              <a className="btn btn-sec btn-sm" href={record.originalUrl} target="_blank" rel="noreferrer">
+                Открыть источник
+              </a>
+            ) : null}
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => onDelete(record.id)}>
+              Удалить из архива
+            </button>
+          </div>
         </article>
       ))}
       {records.length === 0 ? <EmptyState text="Архив пока пуст." /> : null}
