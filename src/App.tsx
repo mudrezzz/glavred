@@ -19,6 +19,8 @@ import {
   acceptCandidateToMemory,
   bulkAcceptCandidatesToArchive,
   bulkRejectCandidates,
+  createEditorialRule,
+  deleteEditorialRule,
   filterImportCandidates,
   getTopicFabulaWarnings,
   groupImportCandidates,
@@ -33,7 +35,9 @@ import {
   reviseDraft,
   toggleReleaseChecklistItem,
   undoLastBulkImportAction,
+  updateEditorialRule,
   updateLearningNote,
+  validateEditorialSetup,
   type ArchiveRecord,
   type AuthorExternalSource,
   type AuthorAttachment,
@@ -44,6 +48,9 @@ import {
   type EditorialCheck,
   type EditorialLearningNote,
   type EditorialModel,
+  type EditorialRule,
+  type EditorialRuleGroup,
+  type EditorialValidationSummary,
   type EvidencePolicy,
   type Fabula,
   type FinalText,
@@ -55,10 +62,12 @@ import {
   type ManualMetricSnapshot,
   type PostBrief,
   type PostDraft,
+  type ProjectProfile,
   type ReleasePackage,
   type SourceSignal,
   type Topic,
   type TopicFabulaMatrixEntry,
+  type WeightRange,
   type WorkspaceSection,
   type WorkspaceState
 } from './domain/editorialWorkspace';
@@ -179,11 +188,16 @@ export function App() {
           )}
           {active === 'editorialModel' && (
             <EditorialModelView
+              workspace={workspace}
               model={workspace.editorialModel}
+              projectProfile={workspace.projectProfile}
+              editorialRules={workspace.editorialRules}
               topics={workspace.topics}
               fabulas={workspace.fabulas}
               matrix={workspace.topicFabulaMatrix}
               onModelChange={(editorialModel) => patchWorkspace({ editorialModel })}
+              onProjectProfileChange={(projectProfile) => patchWorkspace({ projectProfile })}
+              onEditorialRulesChange={(editorialRules) => patchWorkspace({ editorialRules })}
               onTopicsChange={(topics) => patchWorkspace({ topics })}
               onFabulasChange={(fabulas) => patchWorkspace({ fabulas })}
               onMatrixChange={(topicFabulaMatrix) => patchWorkspace({ topicFabulaMatrix })}
@@ -2128,28 +2142,55 @@ function BulkActionDialog({
   );
 }
 
+type EditorialModelTab = 'publisher' | 'topics' | 'fabulas' | 'matrix';
+
+const EDITORIAL_TABS: Array<[EditorialModelTab, string]> = [
+  ['publisher', 'Издательство'],
+  ['topics', 'Темы'],
+  ['fabulas', 'Фабулы'],
+  ['matrix', 'Матрица']
+];
+
 function EditorialModelView({
-  model,
+  workspace,
+  projectProfile,
+  editorialRules,
   topics,
   fabulas,
   matrix,
-  onModelChange,
+  onProjectProfileChange,
+  onEditorialRulesChange,
   onTopicsChange,
   onFabulasChange,
   onMatrixChange
 }: {
+  workspace: WorkspaceState;
   model: EditorialModel;
+  projectProfile: ProjectProfile;
+  editorialRules: EditorialRule[];
   topics: Topic[];
   fabulas: Fabula[];
   matrix: TopicFabulaMatrixEntry[];
   onModelChange: (model: EditorialModel) => void;
+  onProjectProfileChange: (profile: ProjectProfile) => void;
+  onEditorialRulesChange: (rules: EditorialRule[]) => void;
   onTopicsChange: (topics: Topic[]) => void;
   onFabulasChange: (fabulas: Fabula[]) => void;
   onMatrixChange: (matrix: TopicFabulaMatrixEntry[]) => void;
 }) {
-  const [tab, setTab] = useState<'overview' | 'topics' | 'fabulas' | 'matrix'>('overview');
+  const [tab, setTab] = useState<EditorialModelTab>('publisher');
+  const validation = validateEditorialSetup(workspace);
   const warnings = getTopicFabulaWarnings(topics, fabulas, matrix);
   const enabledPairs = matrix.filter((entry) => entry.enabled).length;
+
+  function saveRule(rule: EditorialRule) {
+    const exists = editorialRules.some((item) => item.id === rule.id);
+    onEditorialRulesChange(exists ? updateEditorialRule(editorialRules, rule) : [rule, ...editorialRules]);
+  }
+
+  function removeRule(ruleId: string) {
+    onEditorialRulesChange(deleteEditorialRule(editorialRules, ruleId));
+  }
 
   function updateTopic(topic: Topic) {
     onTopicsChange(topics.map((item) => (item.id === topic.id ? topic : item)));
@@ -2159,170 +2200,650 @@ function EditorialModelView({
     onFabulasChange(fabulas.map((item) => (item.id === fabula.id ? fabula : item)));
   }
 
-  function toggleMatrix(topicId: string, fabulaId: string) {
-    onMatrixChange(
-      matrix.map((entry) =>
-        entry.topicId === topicId && entry.fabulaId === fabulaId
-          ? { ...entry, enabled: !entry.enabled }
-          : entry
-      )
-    );
-  }
-
   return (
     <div className="page wide fade-up">
-      <section className="model-hero">
-        <blockquote>{model.fabula}</blockquote>
-        <span className="gr-mark">
-          Темы: {topics.length} · Фабулы: {fabulas.length} · Активные связки: {enabledPairs}
-        </span>
-      </section>
-      <div className="memory-tabs model-tabs" role="tablist" aria-label="Редакционная модель">
-        {[
-          ['overview', 'Обзор'],
-          ['topics', 'Темы'],
-          ['fabulas', 'Фабулы'],
-          ['matrix', 'Матрица']
-        ].map(([id, label]) => (
+      <ProjectProfileHeader
+        enabledPairs={enabledPairs}
+        fabulaCount={fabulas.length}
+        profile={projectProfile}
+        topicCount={topics.length}
+        warningCount={warnings.length}
+        onSave={onProjectProfileChange}
+      />
+      <div className="tabs memory-tabs model-tabs" role="tablist" aria-label="Редакционная модель">
+        {EDITORIAL_TABS.map(([id, label]) => (
           <button
             aria-selected={tab === id}
-            className={tab === id ? 'active' : ''}
+            className={`tab${tab === id ? ' active' : ''}`}
             key={id}
             role="tab"
             type="button"
-            onClick={() => setTab(id as typeof tab)}
+            onClick={() => setTab(id)}
           >
             {label}
           </button>
         ))}
       </div>
-      {warnings.length > 0 ? (
-        <section className="gate model-warning">
-          <b>Нужна настройка матрицы</b>
-          <p>{warnings.map((warning) => warning.title).join(', ')} временно не участвуют в планировании.</p>
-        </section>
-      ) : null}
-      {tab === 'overview' ? (
-        <div className="model-grid">
-          <TextAreaCard title="Автор" value={model.author} onChange={(author) => onModelChange({ ...model, author })} />
-          <TextAreaCard
-            title="Аудитория"
-            value={model.audience}
-            onChange={(audience) => onModelChange({ ...model, audience })}
-          />
-          <TextAreaCard
-            title="Позиционирование"
-            value={model.positioning}
-            onChange={(positioning) => onModelChange({ ...model, positioning })}
-          />
-          <TextAreaCard
-            title="Фабула блога"
-            value={model.fabula}
-            onChange={(fabula) => onModelChange({ ...model, fabula })}
-          />
-          <ListCard title="Legacy-рубрики" items={model.rubrics} onChange={(rubrics) => onModelChange({ ...model, rubrics })} />
-          <ListCard
-            title="Стиль автора"
-            items={model.styleRules}
-            onChange={(styleRules) => onModelChange({ ...model, styleRules })}
-          />
-          <ListCard
-            title="Запреты"
-            items={model.forbiddenTopics}
-            onChange={(forbiddenTopics) => onModelChange({ ...model, forbiddenTopics })}
-          />
-          <ListCard title="Цели блога" items={model.goals} onChange={(goals) => onModelChange({ ...model, goals })} />
+      <div className="editorial-workspace">
+        <div className="editorial-main">
+          {tab === 'publisher' ? (
+            <PublisherRulesView rules={editorialRules} onDelete={removeRule} onSave={saveRule} />
+          ) : null}
+          {tab === 'topics' ? (
+            <TopicListView fabulas={fabulas} matrix={matrix} topics={topics} onSave={updateTopic} />
+          ) : null}
+          {tab === 'fabulas' ? (
+            <FabulaListView fabulas={fabulas} matrix={matrix} topics={topics} onSave={updateFabula} />
+          ) : null}
+          {tab === 'matrix' ? (
+            <TopicFabulaMatrixView fabulas={fabulas} matrix={matrix} topics={topics} onSave={onMatrixChange} />
+          ) : null}
         </div>
-      ) : null}
-      {tab === 'topics' ? (
-        <div className="entity-grid">
-          {topics.map((topic) => (
-            <TopicCard key={topic.id} topic={topic} onChange={updateTopic} />
-          ))}
-        </div>
-      ) : null}
-      {tab === 'fabulas' ? (
-        <div className="entity-grid">
-          {fabulas.map((fabula) => (
-            <FabulaCard key={fabula.id} fabula={fabula} onChange={updateFabula} />
-          ))}
-        </div>
-      ) : null}
-      {tab === 'matrix' ? (
-        <TopicFabulaMatrixView
-          fabulas={fabulas}
-          matrix={matrix}
-          topics={topics}
-          warnings={warnings}
-          onToggle={toggleMatrix}
-        />
-      ) : null}
+        <EditorialValidationPanel validation={validation} warnings={warnings} activeTab={tab} />
+      </div>
     </div>
   );
 }
 
-function TopicCard({ topic, onChange }: { topic: Topic; onChange: (topic: Topic) => void }) {
+const RULE_SECTIONS: Array<{ title: string; description: string; groups: EditorialRuleGroup[] }> = [
+  {
+    title: 'Автор',
+    description: 'Характеристики образа автора, которые потом должны проверяться в тексте.',
+    groups: ['author']
+  },
+  {
+    title: 'Аудитория',
+    description: 'Кому пишем и какую пользу читатель должен получать.',
+    groups: ['audience']
+  },
+  {
+    title: 'Позиция',
+    description: 'Что автор утверждает, с чем спорит и какую оптику удерживает.',
+    groups: ['positioning']
+  },
+  {
+    title: 'Стиль',
+    description: 'Голос, язык, ритм, anti-AI-паттерны и запрещенные формулировки.',
+    groups: ['styleVoice', 'styleLanguage', 'styleRhythm', 'antiAiPattern']
+  },
+  {
+    title: 'Цели',
+    description: 'Зачем существует блог и что должно поддерживаться каждым выпуском.',
+    groups: ['goal']
+  },
+  {
+    title: 'Запреты',
+    description: 'Темы, углы и обещания, которые нельзя протаскивать в публикации.',
+    groups: ['forbiddenTopic']
+  }
+];
+
+function ProjectProfileHeader({
+  profile,
+  topicCount,
+  fabulaCount,
+  enabledPairs,
+  warningCount,
+  onSave
+}: {
+  profile: ProjectProfile;
+  topicCount: number;
+  fabulaCount: number;
+  enabledPairs: number;
+  warningCount: number;
+  onSave: (profile: ProjectProfile) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(profile);
+
+  useEffect(() => {
+    if (!editing) setDraft(profile);
+  }, [editing, profile]);
+
+  function save() {
+    onSave(draft);
+    setEditing(false);
+  }
+
   return (
-    <article className="card entity-card">
-      <div className="entity-head">
-        <span className="sig info">Тема</span>
-        <select value={topic.status} onChange={(event) => onChange({ ...topic, status: event.target.value as Topic['status'] })}>
-          <option value="active">Активна</option>
+    <section className="card project-profile-header">
+      <div className="project-profile-main">
+        <span className="mono-label">Проект</span>
+        {editing ? (
+          <div className="profile-edit-grid">
+            <label>
+              Название
+              <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+            </label>
+            <label>
+              Описание
+              <textarea
+                value={draft.description}
+                onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+              />
+            </label>
+            <label>
+              Статус настройки
+              <select
+                value={draft.setupStatus}
+                onChange={(event) =>
+                  setDraft({ ...draft, setupStatus: event.target.value as ProjectProfile['setupStatus'] })
+                }
+              >
+                <option value="draft">Черновик</option>
+                <option value="needsReview">Нужна проверка</option>
+                <option value="validated">Проверено</option>
+              </select>
+            </label>
+          </div>
+        ) : (
+          <>
+            <h2>{profile.name}</h2>
+            <p>{profile.description}</p>
+          </>
+        )}
+      </div>
+      <div className="project-profile-meta">
+        <div>
+          <b>{topicCount}</b>
+          <span>тем</span>
+        </div>
+        <div>
+          <b>{fabulaCount}</b>
+          <span>фабул</span>
+        </div>
+        <div>
+          <b>{enabledPairs}</b>
+          <span>активных связок</span>
+        </div>
+        <div className={warningCount > 0 ? 'warn' : 'ok'}>
+          <b>{warningCount}</b>
+          <span>предупреждений</span>
+        </div>
+      </div>
+      <div className="inline-actions">
+        {editing ? (
+          <>
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => setEditing(false)}>
+              Отменить
+            </button>
+            <button className="btn btn-pri btn-sm" type="button" onClick={save}>
+              Сохранить
+            </button>
+          </>
+        ) : (
+          <button className="btn btn-sec btn-sm" type="button" onClick={() => setEditing(true)}>
+            Редактировать проект
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PublisherRulesView({
+  rules,
+  onSave,
+  onDelete
+}: {
+  rules: EditorialRule[];
+  onSave: (rule: EditorialRule) => void;
+  onDelete: (ruleId: string) => void;
+}) {
+  return (
+    <div className="rule-sections">
+      {RULE_SECTIONS.map((section) => (
+        <RuleSection key={section.title} rules={rules} section={section} onDelete={onDelete} onSave={onSave} />
+      ))}
+    </div>
+  );
+}
+
+function RuleSection({
+  section,
+  rules,
+  onSave,
+  onDelete
+}: {
+  section: { title: string; description: string; groups: EditorialRuleGroup[] };
+  rules: EditorialRule[];
+  onSave: (rule: EditorialRule) => void;
+  onDelete: (ruleId: string) => void;
+}) {
+  const sectionRules = rules.filter((rule) => section.groups.includes(rule.group));
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<EditorialRule | null>(null);
+
+  function startAdd() {
+    const group = section.groups[0];
+    setEditingId('new');
+    setDraft(createEditorialRule(group, '', ''));
+  }
+
+  function startEdit(rule: EditorialRule) {
+    setEditingId(rule.id);
+    setDraft({ ...rule });
+  }
+
+  function cancel() {
+    setEditingId(null);
+    setDraft(null);
+  }
+
+  function save() {
+    if (!draft) return;
+    onSave(draft);
+    cancel();
+  }
+
+  return (
+    <section className="card rule-section">
+      <div className="rule-section-head">
+        <div>
+          <span className="mono-label">{section.title}</span>
+          <p>{section.description}</p>
+        </div>
+        <button className="btn btn-sec btn-sm" type="button" onClick={startAdd}>
+          + Правило
+        </button>
+      </div>
+      <div className="rule-list">
+        {editingId === 'new' && draft ? (
+          <RuleEditor
+            availableGroups={section.groups}
+            rule={draft}
+            onCancel={cancel}
+            onChange={setDraft}
+            onSave={save}
+          />
+        ) : null}
+        {sectionRules.map((rule) =>
+          editingId === rule.id && draft ? (
+            <RuleEditor
+              availableGroups={section.groups}
+              key={rule.id}
+              rule={draft}
+              onCancel={cancel}
+              onChange={setDraft}
+              onSave={save}
+            />
+          ) : (
+            <article className="rule-card" key={rule.id}>
+              <div className="rule-card-main">
+                <div className="rule-head">
+                  <b>{rule.title}</b>
+                  <span className={`status-chip ${rule.status}`}>{rule.status === 'active' ? 'активно' : 'пауза'}</span>
+                </div>
+                <p>{rule.statement}</p>
+                <span className="sub">{editorialRuleGroupLabel(rule.group)}</span>
+              </div>
+              <div className="inline-actions">
+                <button className="btn btn-sec btn-sm" type="button" onClick={() => startEdit(rule)}>
+                  Редактировать
+                </button>
+                <button className="btn btn-sec btn-sm danger-text" type="button" onClick={() => onDelete(rule.id)}>
+                  Удалить
+                </button>
+              </div>
+            </article>
+          )
+        )}
+        {sectionRules.length === 0 && editingId !== 'new' ? <EmptyState text="В этом блоке пока нет правил." /> : null}
+      </div>
+    </section>
+  );
+}
+
+function RuleEditor({
+  rule,
+  availableGroups,
+  onChange,
+  onSave,
+  onCancel
+}: {
+  rule: EditorialRule;
+  availableGroups: EditorialRuleGroup[];
+  onChange: (rule: EditorialRule) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <article className="rule-card rule-edit">
+      <label>
+        Тип правила
+        <select
+          value={rule.group}
+          onChange={(event) => onChange({ ...rule, group: event.target.value as EditorialRuleGroup })}
+        >
+          {availableGroups.map((group) => (
+            <option key={group} value={group}>
+              {editorialRuleGroupLabel(group)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Название
+        <input value={rule.title} onChange={(event) => onChange({ ...rule, title: event.target.value })} />
+      </label>
+      <label>
+        Правило
+        <textarea value={rule.statement} onChange={(event) => onChange({ ...rule, statement: event.target.value })} />
+      </label>
+      <label>
+        Статус
+        <select
+          value={rule.status}
+          onChange={(event) => onChange({ ...rule, status: event.target.value as EditorialRule['status'] })}
+        >
+          <option value="active">Активно</option>
           <option value="paused">Пауза</option>
         </select>
+      </label>
+      <div className="inline-actions">
+        <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>
+          Отменить
+        </button>
+        <button className="btn btn-pri btn-sm" type="button" onClick={onSave} disabled={!rule.title.trim() || !rule.statement.trim()}>
+          Сохранить
+        </button>
       </div>
-      <TextInput label="Название" value={topic.title} onChange={(title) => onChange({ ...topic, title })} />
-      <TextAreaInline label="Описание" value={topic.description} onChange={(description) => onChange({ ...topic, description })} />
-      <TextAreaInline label="Зачем пишем" value={topic.purpose} onChange={(purpose) => onChange({ ...topic, purpose })} />
-      <TextAreaInline
-        label="Ценность для читателя"
-        value={topic.audienceValue}
-        onChange={(audienceValue) => onChange({ ...topic, audienceValue })}
-      />
-      <TextAreaInline
-        label="Позиция автора"
-        value={topic.authorStance}
-        onChange={(authorStance) => onChange({ ...topic, authorStance })}
-      />
-      <WeightRangeEditor
-        value={topic.weightRange}
-        onChange={(weightRange) => onChange({ ...topic, weightRange })}
-      />
-      <ListCard title="Правила темы" items={topic.rules} onChange={(rules) => onChange({ ...topic, rules })} />
-      <ListCard
-        title="Запретные углы"
-        items={topic.forbiddenAngles}
-        onChange={(forbiddenAngles) => onChange({ ...topic, forbiddenAngles })}
-      />
     </article>
   );
 }
 
-function FabulaCard({ fabula, onChange }: { fabula: Fabula; onChange: (fabula: Fabula) => void }) {
+function TopicListView({
+  topics,
+  fabulas,
+  matrix,
+  onSave
+}: {
+  topics: Topic[];
+  fabulas: Fabula[];
+  matrix: TopicFabulaMatrixEntry[];
+  onSave: (topic: Topic) => void;
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(topics[0]?.id ?? null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Topic | null>(null);
+
+  function startEdit(topic: Topic) {
+    setExpandedId(topic.id);
+    setEditingId(topic.id);
+    setDraft({ ...topic, rules: [...topic.rules], forbiddenAngles: [...topic.forbiddenAngles] });
+  }
+
+  function save() {
+    if (!draft) return;
+    onSave({ ...draft, weightRange: normalizeWeightRange(draft.weightRange) });
+    setEditingId(null);
+    setDraft(null);
+  }
+
   return (
-    <article className="card entity-card">
-      <div className="entity-head">
-        <span className="sig info">Фабула</span>
-        <select value={fabula.status} onChange={(event) => onChange({ ...fabula, status: event.target.value as Fabula['status'] })}>
-          <option value="active">Активна</option>
-          <option value="paused">Пауза</option>
-        </select>
+    <div className="entity-list">
+      {topics.map((topic) => {
+        const compatibleCount = countCompatibleFabulas(topic.id, matrix);
+        const isExpanded = expandedId === topic.id;
+        const isEditing = editingId === topic.id && draft;
+        return (
+          <article className="card entity-row" key={topic.id}>
+            <div className="entity-row-main">
+              <button
+                className="entity-title-button"
+                type="button"
+                onClick={() => setExpandedId(isExpanded ? null : topic.id)}
+              >
+                {topic.title}
+              </button>
+              <span>{topic.weightRange.min}-{topic.weightRange.max}%</span>
+              <span className={`status-chip ${topic.status}`}>{topic.status === 'active' ? 'активно' : 'пауза'}</span>
+              <span>{topic.rules.length} правил</span>
+              <span>{compatibleCount} фабул</span>
+              <ValidationBadge status={compatibleCount > 0 ? 'green' : 'red'} />
+            </div>
+            {isExpanded ? (
+              isEditing ? (
+                <TopicEditor
+                  topic={draft}
+                  onCancel={() => {
+                    setEditingId(null);
+                    setDraft(null);
+                  }}
+                  onChange={setDraft}
+                  onSave={save}
+                />
+              ) : (
+                <div className="entity-details">
+                  <p>{topic.description}</p>
+                  <dl className="meta-list">
+                    <dt>Зачем</dt>
+                    <dd>{topic.purpose}</dd>
+                    <dt>Ценность</dt>
+                    <dd>{topic.audienceValue}</dd>
+                    <dt>Позиция автора</dt>
+                    <dd>{topic.authorStance}</dd>
+                    <dt>Правила</dt>
+                    <dd>{topic.rules.join('; ')}</dd>
+                    <dt>Запреты</dt>
+                    <dd>{topic.forbiddenAngles.join('; ')}</dd>
+                    <dt>Совместимые фабулы</dt>
+                    <dd>{fabulas.filter((fabula) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((fabula) => fabula.title).join(', ')}</dd>
+                  </dl>
+                  <div className="inline-actions">
+                    <button className="btn btn-sec btn-sm" type="button" onClick={() => startEdit(topic)}>
+                      Редактировать
+                    </button>
+                  </div>
+                </div>
+              )
+            ) : null}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function TopicEditor({
+  topic,
+  onChange,
+  onSave,
+  onCancel
+}: {
+  topic: Topic;
+  onChange: (topic: Topic) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="entity-edit-form">
+      <label>
+        Название
+        <input value={topic.title} onChange={(event) => onChange({ ...topic, title: event.target.value })} />
+      </label>
+      <label>
+        Описание
+        <textarea value={topic.description} onChange={(event) => onChange({ ...topic, description: event.target.value })} />
+      </label>
+      <label>
+        Зачем эта тема
+        <textarea value={topic.purpose} onChange={(event) => onChange({ ...topic, purpose: event.target.value })} />
+      </label>
+      <label>
+        Ценность для аудитории
+        <textarea value={topic.audienceValue} onChange={(event) => onChange({ ...topic, audienceValue: event.target.value })} />
+      </label>
+      <label>
+        Позиция автора
+        <textarea value={topic.authorStance} onChange={(event) => onChange({ ...topic, authorStance: event.target.value })} />
+      </label>
+      <WeightRangeEditor value={topic.weightRange} onChange={(weightRange) => onChange({ ...topic, weightRange })} />
+      <label>
+        Правила
+        <textarea value={topic.rules.join('\n')} onChange={(event) => onChange({ ...topic, rules: splitLines(event.target.value) })} />
+      </label>
+      <label>
+        Запреты
+        <textarea
+          value={topic.forbiddenAngles.join('\n')}
+          onChange={(event) => onChange({ ...topic, forbiddenAngles: splitLines(event.target.value) })}
+        />
+      </label>
+      <div className="inline-actions">
+        <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>
+          Отменить
+        </button>
+        <button className="btn btn-pri btn-sm" type="button" onClick={onSave}>
+          Сохранить
+        </button>
       </div>
-      <TextInput label="Название" value={fabula.title} onChange={(title) => onChange({ ...fabula, title })} />
-      <TextAreaInline label="Описание" value={fabula.description} onChange={(description) => onChange({ ...fabula, description })} />
-      <TextAreaInline label="Драматургия" value={fabula.dramaturgy} onChange={(dramaturgy) => onChange({ ...fabula, dramaturgy })} />
-      <WeightRangeEditor
-        value={fabula.weightRange}
-        onChange={(weightRange) => onChange({ ...fabula, weightRange })}
-      />
-      <ListCard title="Структура" items={fabula.structure} onChange={(structure) => onChange({ ...fabula, structure })} />
-      <ListCard
-        title="Доказательства"
-        items={fabula.proofRequirements}
-        onChange={(proofRequirements) => onChange({ ...fabula, proofRequirements })}
-      />
-      <ListCard title="Правила фабулы" items={fabula.rules} onChange={(rules) => onChange({ ...fabula, rules })} />
-    </article>
+    </div>
+  );
+}
+
+function FabulaListView({
+  fabulas,
+  topics,
+  matrix,
+  onSave
+}: {
+  fabulas: Fabula[];
+  topics: Topic[];
+  matrix: TopicFabulaMatrixEntry[];
+  onSave: (fabula: Fabula) => void;
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(fabulas[0]?.id ?? null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Fabula | null>(null);
+
+  function startEdit(fabula: Fabula) {
+    setExpandedId(fabula.id);
+    setEditingId(fabula.id);
+    setDraft({ ...fabula, rules: [...fabula.rules], structure: [...fabula.structure], proofRequirements: [...fabula.proofRequirements] });
+  }
+
+  function save() {
+    if (!draft) return;
+    onSave({ ...draft, weightRange: normalizeWeightRange(draft.weightRange) });
+    setEditingId(null);
+    setDraft(null);
+  }
+
+  return (
+    <div className="entity-list">
+      {fabulas.map((fabula) => {
+        const compatibleCount = countCompatibleTopics(fabula.id, matrix);
+        const isExpanded = expandedId === fabula.id;
+        const isEditing = editingId === fabula.id && draft;
+        return (
+          <article className="card entity-row" key={fabula.id}>
+            <div className="entity-row-main">
+              <button
+                className="entity-title-button"
+                type="button"
+                onClick={() => setExpandedId(isExpanded ? null : fabula.id)}
+              >
+                {fabula.title}
+              </button>
+              <span>{fabula.weightRange.min}-{fabula.weightRange.max}%</span>
+              <span className={`status-chip ${fabula.status}`}>{fabula.status === 'active' ? 'активно' : 'пауза'}</span>
+              <span>{fabula.rules.length} правил</span>
+              <span>{fabula.proofRequirements.length} proof</span>
+              <span>{compatibleCount} тем</span>
+              <ValidationBadge status={compatibleCount > 0 ? 'green' : 'red'} />
+            </div>
+            {isExpanded ? (
+              isEditing ? (
+                <FabulaEditor
+                  fabula={draft}
+                  onCancel={() => {
+                    setEditingId(null);
+                    setDraft(null);
+                  }}
+                  onChange={setDraft}
+                  onSave={save}
+                />
+              ) : (
+                <div className="entity-details">
+                  <p>{fabula.description}</p>
+                  <dl className="meta-list">
+                    <dt>Драматургия</dt>
+                    <dd>{fabula.dramaturgy}</dd>
+                    <dt>Структура</dt>
+                    <dd>{fabula.structure.join('; ')}</dd>
+                    <dt>Proof requirements</dt>
+                    <dd>{fabula.proofRequirements.join('; ')}</dd>
+                    <dt>Правила</dt>
+                    <dd>{fabula.rules.join('; ')}</dd>
+                    <dt>Применимые темы</dt>
+                    <dd>{topics.filter((topic) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((topic) => topic.title).join(', ')}</dd>
+                  </dl>
+                  <div className="inline-actions">
+                    <button className="btn btn-sec btn-sm" type="button" onClick={() => startEdit(fabula)}>
+                      Редактировать
+                    </button>
+                  </div>
+                </div>
+              )
+            ) : null}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function FabulaEditor({
+  fabula,
+  onChange,
+  onSave,
+  onCancel
+}: {
+  fabula: Fabula;
+  onChange: (fabula: Fabula) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="entity-edit-form">
+      <label>
+        Название
+        <input value={fabula.title} onChange={(event) => onChange({ ...fabula, title: event.target.value })} />
+      </label>
+      <label>
+        Описание
+        <textarea value={fabula.description} onChange={(event) => onChange({ ...fabula, description: event.target.value })} />
+      </label>
+      <label>
+        Драматургия
+        <textarea value={fabula.dramaturgy} onChange={(event) => onChange({ ...fabula, dramaturgy: event.target.value })} />
+      </label>
+      <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
+      <label>
+        Структура
+        <textarea value={fabula.structure.join('\n')} onChange={(event) => onChange({ ...fabula, structure: splitLines(event.target.value) })} />
+      </label>
+      <label>
+        Proof requirements
+        <textarea
+          value={fabula.proofRequirements.join('\n')}
+          onChange={(event) => onChange({ ...fabula, proofRequirements: splitLines(event.target.value) })}
+        />
+      </label>
+      <label>
+        Правила
+        <textarea value={fabula.rules.join('\n')} onChange={(event) => onChange({ ...fabula, rules: splitLines(event.target.value) })} />
+      </label>
+      <div className="inline-actions">
+        <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>
+          Отменить
+        </button>
+        <button className="btn btn-pri btn-sm" type="button" onClick={onSave}>
+          Сохранить
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -2330,82 +2851,143 @@ function TopicFabulaMatrixView({
   topics,
   fabulas,
   matrix,
-  warnings,
-  onToggle
+  onSave
 }: {
   topics: Topic[];
   fabulas: Fabula[];
   matrix: TopicFabulaMatrixEntry[];
-  warnings: ReturnType<typeof getTopicFabulaWarnings>;
-  onToggle: (topicId: string, fabulaId: string) => void;
+  onSave: (matrix: TopicFabulaMatrixEntry[]) => void;
 }) {
-  const enabled = (topicId: string, fabulaId: string) =>
-    matrix.find((entry) => entry.topicId === topicId && entry.fabulaId === fabulaId)?.enabled ?? true;
+  const [draft, setDraft] = useState(matrix);
+  const isDirty = !sameMatrix(draft, matrix);
+
+  useEffect(() => {
+    setDraft(matrix);
+  }, [matrix]);
+
+  function toggle(topicId: string, fabulaId: string) {
+    setDraft((current) =>
+      current.map((entry) =>
+        entry.topicId === topicId && entry.fabulaId === fabulaId ? { ...entry, enabled: !entry.enabled } : entry
+      )
+    );
+  }
 
   return (
     <section className="card matrix-card">
-      <div className="entity-head">
+      <div className="matrix-head">
         <div>
-          <span className="sig info">Матрица совместимости</span>
-          <h3>Какие фабулы применимы к каким темам</h3>
+          <h3>Матрица совместимости</h3>
+          <p>Связки определяют, какие фабулы допустимы для каждой темы. Изменения применяются только после сохранения.</p>
         </div>
-        <span className="pill ok">
-          <i />
-          {matrix.filter((entry) => entry.enabled).length} связок
-        </span>
+        <div className="matrix-actions">
+          {isDirty ? <span className="dirty-note">Есть несохраненные изменения</span> : null}
+          <button className="btn btn-sec btn-sm" type="button" onClick={() => setDraft(matrix)} disabled={!isDirty}>
+            Отменить
+          </button>
+          <button className="btn btn-pri btn-sm" type="button" onClick={() => onSave(draft)} disabled={!isDirty}>
+            Сохранить матрицу
+          </button>
+        </div>
       </div>
-      <div className="matrix-table" style={{ gridTemplateColumns: `minmax(220px, 1.2fr) repeat(${fabulas.length}, minmax(140px, 1fr))` }}>
-        <div className="matrix-cell matrix-corner">Тема / фабула</div>
-        {fabulas.map((fabula) => (
-          <div className="matrix-cell matrix-head" key={fabula.id}>
-            {fabula.title}
-          </div>
-        ))}
-        {topics.map((topic) => (
-          <div className="matrix-row" key={topic.id} style={{ display: 'contents' }}>
-            <div className="matrix-cell matrix-topic">{topic.title}</div>
+      <table className="matrix-table">
+        <thead>
+          <tr>
+            <th>Тема</th>
             {fabulas.map((fabula) => (
-              <label className="matrix-cell matrix-check" key={`${topic.id}-${fabula.id}`}>
-                <input
-                  checked={enabled(topic.id, fabula.id)}
-                  type="checkbox"
-                  onChange={() => onToggle(topic.id, fabula.id)}
-                />
-                <span>{enabled(topic.id, fabula.id) ? 'Да' : 'Нет'}</span>
-              </label>
+              <th key={fabula.id}>{fabula.title}</th>
             ))}
-          </div>
-        ))}
-      </div>
-      {warnings.length > 0 ? (
-        <div className="matrix-warnings">
-          {warnings.map((warning) => (
-            <p key={`${warning.targetType}-${warning.targetId}`}>
-              <b>{warning.title}</b>: {warning.message}
-            </p>
+          </tr>
+        </thead>
+        <tbody>
+          {topics.map((topic) => (
+            <tr key={topic.id}>
+              <th>{topic.title}</th>
+              {fabulas.map((fabula) => {
+                const entry = draft.find((item) => item.topicId === topic.id && item.fabulaId === fabula.id);
+                return (
+                  <td key={fabula.id}>
+                    <label className="matrix-check">
+                      <input
+                        checked={Boolean(entry?.enabled)}
+                        type="checkbox"
+                        onChange={() => toggle(topic.id, fabula.id)}
+                      />
+                      <span>{entry?.enabled ? 'да' : 'нет'}</span>
+                    </label>
+                  </td>
+                );
+              })}
+            </tr>
           ))}
-        </div>
-      ) : (
-        <p className="panel-note">Все активные темы и фабулы имеют хотя бы одну совместимую связку.</p>
-      )}
+        </tbody>
+      </table>
     </section>
   );
 }
 
-function WeightRangeEditor({ value, onChange }: { value: Topic['weightRange']; onChange: (value: Topic['weightRange']) => void }) {
+function EditorialValidationPanel({
+  validation,
+  warnings,
+  activeTab
+}: {
+  validation: EditorialValidationSummary;
+  warnings: ReturnType<typeof getTopicFabulaWarnings>;
+  activeTab: EditorialModelTab;
+}) {
+  return (
+    <aside className="card validation-panel">
+      <div className="validation-head">
+        <span className="mono-label">Проверка</span>
+        <ValidationBadge status={validation.status} />
+        <h3>{validation.title}</h3>
+        <p>{validation.summary}</p>
+      </div>
+      <div className="validation-items">
+        {validation.items.map((item) => (
+          <article className="validation-item" key={item.id}>
+            <div>
+              <ValidationBadge status={item.status} />
+              <b>{item.title}</b>
+            </div>
+            <p>{item.summary}</p>
+            <small>{item.recommendation}</small>
+          </article>
+        ))}
+      </div>
+      {warnings.length > 0 ? (
+        <div className="validation-warnings">
+          <b>Связки требуют внимания</b>
+          {warnings.slice(0, 4).map((warning) => (
+            <p key={`${warning.targetType}-${warning.targetId}`}>{warning.message}</p>
+          ))}
+        </div>
+      ) : null}
+      <p className="validation-note">
+        Вкладка: {editorialTabLabel(activeTab)}. Проверка deterministic, без AI provider.
+      </p>
+    </aside>
+  );
+}
+
+function WeightRangeEditor({ value, onChange }: { value: WeightRange; onChange: (value: WeightRange) => void }) {
   return (
     <div className="weight-editor">
       <label>
-        Вес от %
+        Минимум, %
         <input
+          min={0}
+          max={100}
           type="number"
           value={value.min}
           onChange={(event) => onChange(normalizeWeightRange({ ...value, min: Number(event.target.value) }))}
         />
       </label>
       <label>
-        до %
+        Максимум, %
         <input
+          min={0}
+          max={100}
           type="number"
           value={value.max}
           onChange={(event) => onChange(normalizeWeightRange({ ...value, max: Number(event.target.value) }))}
@@ -2415,56 +2997,51 @@ function WeightRangeEditor({ value, onChange }: { value: Topic['weightRange']; o
   );
 }
 
-function TextInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="inline-field">
-      <span>{label}</span>
-      <input value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
+function ValidationBadge({ status }: { status: 'green' | 'yellow' | 'red' }) {
+  const label = status === 'green' ? 'ок' : status === 'yellow' ? 'внимание' : 'риск';
+  return <span className={`validation-badge ${status}`}>{label}</span>;
 }
 
-function TextAreaInline({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="inline-field">
-      <span>{label}</span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
+function editorialRuleGroupLabel(group: EditorialRuleGroup): string {
+  const labels: Record<EditorialRuleGroup, string> = {
+    author: 'Образ автора',
+    audience: 'Аудитория',
+    positioning: 'Позиция',
+    styleVoice: 'Голос',
+    styleLanguage: 'Язык',
+    styleRhythm: 'Ритм',
+    antiAiPattern: 'Anti-AI',
+    goal: 'Цель',
+    forbiddenTopic: 'Запрет'
+  };
+  return labels[group];
 }
 
-function TextAreaCard({
-  title,
-  value,
-  onChange
-}: {
-  title: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="card edit-card">
-      <span>{title}</span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
+function editorialTabLabel(tab: EditorialModelTab): string {
+  if (tab === 'publisher') return 'Издательство';
+  if (tab === 'topics') return 'Темы';
+  if (tab === 'fabulas') return 'Фабулы';
+  return 'Матрица';
 }
 
-function ListCard({
-  title,
-  items,
-  onChange
-}: {
-  title: string;
-  items: string[];
-  onChange: (items: string[]) => void;
-}) {
-  return (
-    <label className="card edit-card">
-      <span>{title}</span>
-      <textarea value={items.join('\n')} onChange={(event) => onChange(splitLines(event.target.value))} />
-    </label>
-  );
+function countCompatibleFabulas(topicId: string, matrix: TopicFabulaMatrixEntry[]): number {
+  return matrix.filter((entry) => entry.topicId === topicId && entry.enabled).length;
+}
+
+function countCompatibleTopics(fabulaId: string, matrix: TopicFabulaMatrixEntry[]): number {
+  return matrix.filter((entry) => entry.fabulaId === fabulaId && entry.enabled).length;
+}
+
+function isMatrixEnabled(topicId: string, fabulaId: string, matrix: TopicFabulaMatrixEntry[]): boolean {
+  return matrix.some((entry) => entry.topicId === topicId && entry.fabulaId === fabulaId && entry.enabled);
+}
+
+function sameMatrix(left: TopicFabulaMatrixEntry[], right: TopicFabulaMatrixEntry[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((entry) => {
+    const other = right.find((item) => item.topicId === entry.topicId && item.fabulaId === entry.fabulaId);
+    return other ? other.enabled === entry.enabled : false;
+  });
 }
 
 function RadarView({

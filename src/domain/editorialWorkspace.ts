@@ -29,6 +29,18 @@ export type ImportCandidateGroupType = 'source' | 'status' | 'duplicateRisk' | '
 export type ImportRiskLevel = 'low' | 'medium' | 'high';
 export type BulkImportActionType = 'bulkAcceptToArchive' | 'bulkReject';
 export type EditorialEntityStatus = 'active' | 'paused';
+export type EditorialSetupStatus = 'draft' | 'needsReview' | 'validated';
+export type EditorialRuleGroup =
+  | 'author'
+  | 'audience'
+  | 'positioning'
+  | 'styleVoice'
+  | 'styleLanguage'
+  | 'styleRhythm'
+  | 'antiAiPattern'
+  | 'goal'
+  | 'forbiddenTopic';
+export type EditorialValidationStatus = 'green' | 'yellow' | 'red';
 
 export interface AuthorNote {
   id: string;
@@ -88,6 +100,36 @@ export interface EditorialModel {
   styleRules: string[];
   forbiddenTopics: string[];
   goals: string[];
+}
+
+export interface ProjectProfile {
+  name: string;
+  description: string;
+  setupStatus: EditorialSetupStatus;
+}
+
+export interface EditorialRule {
+  id: string;
+  group: EditorialRuleGroup;
+  title: string;
+  statement: string;
+  status: EditorialEntityStatus;
+  evidenceNoteId?: string;
+}
+
+export interface EditorialValidationItem {
+  id: string;
+  status: EditorialValidationStatus;
+  title: string;
+  summary: string;
+  recommendation: string;
+}
+
+export interface EditorialValidationSummary {
+  status: EditorialValidationStatus;
+  title: string;
+  summary: string;
+  items: EditorialValidationItem[];
 }
 
 export interface WeightRange {
@@ -352,6 +394,8 @@ export interface WorkspaceState {
   authorMemoryEvents: AuthorMemoryEvent[];
   authorPositionAssertions: AuthorPositionAssertion[];
   editorialModel: EditorialModel;
+  projectProfile: ProjectProfile;
+  editorialRules: EditorialRule[];
   topics: Topic[];
   fabulas: Fabula[];
   topicFabulaMatrix: TopicFabulaMatrixEntry[];
@@ -387,6 +431,108 @@ export interface WorkspaceStore {
   load(): WorkspaceState;
   save(workspace: WorkspaceState): void;
   reset(): WorkspaceState;
+}
+
+export function getRulesByGroup(rules: EditorialRule[], group: EditorialRuleGroup): EditorialRule[] {
+  return rules.filter((rule) => rule.group === group);
+}
+
+export function createEditorialRule(
+  group: EditorialRuleGroup,
+  title: string,
+  statement: string
+): EditorialRule {
+  return {
+    id: `rule-${group}-${Date.now()}`,
+    group,
+    title,
+    statement,
+    status: 'active'
+  };
+}
+
+export function updateEditorialRule(rules: EditorialRule[], rule: EditorialRule): EditorialRule[] {
+  return rules.map((item) => (item.id === rule.id ? rule : item));
+}
+
+export function deleteEditorialRule(rules: EditorialRule[], ruleId: string): EditorialRule[] {
+  return rules.filter((rule) => rule.id !== ruleId);
+}
+
+export function validateEditorialSetup(workspace: WorkspaceState): EditorialValidationSummary {
+  const warnings = getTopicFabulaWarnings(workspace.topics, workspace.fabulas, workspace.topicFabulaMatrix);
+  const activeRules = workspace.editorialRules.filter((rule) => rule.status === 'active');
+  const antiAiRules = getRulesByGroup(activeRules, 'antiAiPattern');
+  const goalRules = getRulesByGroup(activeRules, 'goal');
+  const styleRules = [
+    ...getRulesByGroup(activeRules, 'styleVoice'),
+    ...getRulesByGroup(activeRules, 'styleLanguage'),
+    ...getRulesByGroup(activeRules, 'styleRhythm')
+  ];
+  const items: EditorialValidationItem[] = [
+    {
+      id: 'validation-project-profile',
+      status: workspace.projectProfile.name.trim() && workspace.projectProfile.description.trim() ? 'green' : 'yellow',
+      title: 'Профиль проекта',
+      summary: workspace.projectProfile.name.trim()
+        ? `Проект задан как "${workspace.projectProfile.name}".`
+        : 'У проекта нет явного названия.',
+      recommendation: workspace.projectProfile.name.trim()
+        ? 'Использовать название как верхний контекст редакционного кабинета.'
+        : 'Добавить название проекта перед настройкой правил.'
+    },
+    {
+      id: 'validation-editorial-rules',
+      status: activeRules.length >= 10 ? 'green' : 'yellow',
+      title: 'Атомарные правила',
+      summary: `${activeRules.length} активных правил описывают издательство.`,
+      recommendation:
+        activeRules.length >= 10
+          ? 'Правил достаточно для первого deterministic review.'
+          : 'Добавить правила автора, аудитории, позиции, стиля и целей.'
+    },
+    {
+      id: 'validation-style-anti-ai',
+      status: antiAiRules.length > 0 && styleRules.length >= 3 ? 'green' : 'yellow',
+      title: 'Стиль и anti-AI',
+      summary: `${styleRules.length} style rules, ${antiAiRules.length} anti-AI rules.`,
+      recommendation:
+        antiAiRules.length > 0
+          ? 'Anti-AI правила можно использовать в будущем валидаторе редакторского тона.'
+          : 'Добавить хотя бы одно правило против стерильного AI-текста.'
+    },
+    {
+      id: 'validation-topic-fabula-matrix',
+      status: warnings.length === 0 ? 'green' : 'red',
+      title: 'Матрица тем и фабул',
+      summary: warnings.length === 0 ? 'Все активные сущности имеют связки.' : `${warnings.length} сущностей без связок.`,
+      recommendation:
+        warnings.length === 0
+          ? 'Матрица пригодна для планирования.'
+          : 'Вернуть хотя бы одну совместимую связку для каждой активной темы и фабулы.'
+    },
+    {
+      id: 'validation-goal-fit',
+      status: goalRules.length > 0 ? 'yellow' : 'red',
+      title: 'Цели блога',
+      summary: goalRules.length > 0 ? `${goalRules.length} целей заданы как правила.` : 'Цели не заданы.',
+      recommendation:
+        'Следующий слой должен сверить цели с образом автора, аудиторией, темами и будущими метриками.'
+    }
+  ];
+  const status: EditorialValidationStatus = items.some((item) => item.status === 'red')
+    ? 'red'
+    : items.some((item) => item.status === 'yellow')
+      ? 'yellow'
+      : 'green';
+
+  return {
+    status,
+    title: status === 'green' ? 'Редакционная модель согласована' : 'Редакционная модель требует внимания',
+    summary:
+      'Проверка deterministic: оценивает профиль проекта, атомарность правил, стиль, anti-AI слой, цели и матрицу совместимости.',
+    items
+  };
 }
 
 export function normalizeWeightRange(range: WeightRange): WeightRange {

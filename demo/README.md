@@ -51,8 +51,9 @@ edit/delete actions, summary counters, and a browser voice-input fallback.
 
 ## Structured Editorial Model
 
-`Редакционная модель` now contains demo editorial entities for the same AI Product
-Manager blog.
+`Редакционная модель` now opens as a virtual publishing workspace for the same AI Product Manager blog. The top profile is `TG-блог AI Product Manager`, with the description `Исследовательский блог о построении AI-B2B продуктов`.
+
+The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel shows deterministic green/yellow status items and recommendations before the full validator framework exists.
 
 Demo topics:
 
@@ -128,32 +129,33 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 9. Filter candidates, use `Выбрать все по фильтру`, confirm `Добавить все`, inspect
    `Архив`, and try `Отменить последнее групповое действие`.
 10. Accept one candidate through `В память` to see it become an active memory note.
-11. Open `Редакционная модель`, inspect `Темы`, `Фабулы`, and `Матрица`.
-12. Edit one topic or fabula weight range, then toggle one matrix pair.
-13. Open `Радар`.
-14. Review or edit the source signal.
-15. Click `Собрать инсайт`.
-16. Click `В план`.
-17. Approve the plan item.
-18. Click `Подготовить фабулу`.
-19. Edit the post brief if needed.
-20. Click `Утвердить фабулу`.
-21. Open `Редактура`.
-22. Click `Написать драфт`.
-23. Review checks and editor notes.
-24. Edit the draft text.
-25. Click `Утвердить текст`.
-26. Open `Выпуск`.
-27. Click `Подготовить выпуск`.
-28. Review target, checklist, final text, and Markdown preview.
-29. Complete the checklist and click `Готово к выпуску`.
-30. Click `Скопировать текст` or `Скачать Markdown`.
-31. Open `Аналитика`.
-32. Click `Подготовить аналитику`.
-33. Enter manual metrics and editorial conclusions.
-34. Click `Зафиксировать выводы`.
-35. Reload the page to confirm state persists.
-36. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+11. Open `Редакционная модель`, inspect `Издательство`, project profile, structured rules, and the right-side validation panel.
+12. Open `Темы` and `Фабулы`, expand one row, edit one entity, then save or cancel.
+13. Open `Матрица`, toggle one compatibility pair, then use `Сохранить матрицу` or `Отменить`.
+14. Open `Радар`.
+15. Review or edit the source signal.
+16. Click `Собрать инсайт`.
+17. Click `В план`.
+18. Approve the plan item.
+19. Click `Подготовить фабулу`.
+20. Edit the post brief if needed.
+21. Click `Утвердить фабулу`.
+22. Open `Редактура`.
+23. Click `Написать драфт`.
+24. Review checks and editor notes.
+25. Edit the draft text.
+26. Click `Утвердить текст`.
+27. Open `Выпуск`.
+28. Click `Подготовить выпуск`.
+29. Review target, checklist, final text, and Markdown preview.
+30. Complete the checklist and click `Готово к выпуску`.
+31. Click `Скопировать текст` or `Скачать Markdown`.
+32. Open `Аналитика`.
+33. Click `Подготовить аналитику`.
+34. Enter manual metrics and editorial conclusions.
+35. Click `Зафиксировать выводы`.
+36. Reload the page to confirm state persists.
+37. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

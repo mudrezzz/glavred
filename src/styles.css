@@ -387,6 +387,332 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.project-profile-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+  padding: 22px;
+}
+
+.project-profile-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.project-profile-main h2 {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--ed-h2);
+  font-size: 30px;
+  line-height: 1.12;
+}
+
+.project-profile-main p,
+.rule-section-head p,
+.matrix-head p,
+.validation-head p,
+.validation-item p,
+.validation-warnings p,
+.validation-note {
+  margin: 0;
+  color: var(--ink-600);
+  line-height: 1.5;
+}
+
+.project-profile-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(92px, 1fr));
+  gap: 10px;
+}
+
+.project-profile-meta div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.project-profile-meta b {
+  color: var(--ink-900);
+  font: var(--h3);
+}
+
+.project-profile-meta span {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.project-profile-meta .warn b {
+  color: var(--accent-dark);
+}
+
+.project-profile-meta .ok b {
+  color: var(--ok);
+}
+
+.profile-edit-grid,
+.rule-edit,
+.entity-edit-form {
+  display: grid;
+  gap: 12px;
+}
+
+.editorial-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.editorial-main,
+.rule-sections,
+.entity-list {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rule-section {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.rule-section-head,
+.matrix-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rule-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.rule-card.rule-edit {
+  grid-template-columns: 1fr;
+}
+
+.rule-card-main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rule-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.rule-head b,
+.validation-item b {
+  color: var(--ink-900);
+  font: var(--ui-md);
+  font-weight: 700;
+}
+
+.rule-card p {
+  margin: 0;
+  color: var(--ink-700);
+  line-height: 1.5;
+}
+
+.danger-text {
+  color: var(--accent-dark);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--ink-100);
+  color: var(--ink-600);
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.status-chip.active {
+  background: var(--ok-tint);
+  color: var(--ok-ink);
+}
+
+.status-chip.paused {
+  background: var(--warn-tint);
+  color: var(--warn-ink);
+}
+
+.entity-row {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+}
+
+.entity-row-main {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.7fr) repeat(5, minmax(92px, auto));
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+}
+
+.entity-title-button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-900);
+  cursor: pointer;
+  font: var(--ui-md);
+  font-weight: 700;
+  text-align: left;
+}
+
+.entity-row-main span {
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.entity-details {
+  display: grid;
+  gap: 14px;
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--ink-200);
+}
+
+.entity-details > p {
+  margin: 16px 0 0;
+  color: var(--ink-700);
+  line-height: 1.55;
+}
+
+.entity-edit-form {
+  padding: 16px;
+  border-top: 1px solid var(--ink-200);
+  background: var(--surface-sunk);
+}
+
+.validation-panel {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.validation-head,
+.validation-items,
+.validation-item,
+.validation-warnings {
+  display: grid;
+  gap: 10px;
+}
+
+.validation-head h3 {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 700;
+}
+
+.validation-item {
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.validation-item div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.validation-item small {
+  color: var(--ink-500);
+  line-height: 1.45;
+}
+
+.validation-warnings {
+  padding: 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.validation-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.validation-badge.green {
+  background: var(--ok-tint);
+  color: var(--ok-ink);
+}
+
+.validation-badge.yellow {
+  background: var(--warn-tint);
+  color: var(--warn-ink);
+}
+
+.validation-badge.red {
+  background: var(--danger-tint);
+  color: var(--danger-ink);
+}
+
+.matrix-head h3 {
+  margin: 0 0 6px;
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 700;
+}
+
+.matrix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dirty-note {
+  align-self: center;
+  color: var(--accent-dark);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.matrix-check {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font: var(--ui-sm);
+}
+
 .entity-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2030,6 +2356,10 @@ select:focus {
 
   .model-grid,
   .entity-grid,
+  .project-profile-header,
+  .project-profile-meta,
+  .editorial-workspace,
+  .entity-row-main,
   .memory-grid,
   .memory-toolbar,
   .source-grid,
@@ -2057,6 +2387,17 @@ select:focus {
 
   .edit-side {
     position: static;
+  }
+
+  .validation-panel {
+    position: static;
+  }
+
+  .rule-card,
+  .rule-section-head,
+  .matrix-head {
+    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .week,

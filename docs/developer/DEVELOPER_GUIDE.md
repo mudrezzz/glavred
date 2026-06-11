@@ -81,9 +81,9 @@ The current app implements:
   grouping, candidate filters, archive-safe bulk actions, latest bulk undo, and archive
   records.
 - Evidence-backed author-position assertions inferred from demo notes.
-- Structured editorial entities inside `Редакционная модель`: topic cards, fabula
-  cards, advisory weight ranges, and an editable topic-fabula compatibility matrix.
-- The first working flow from source signal to captured editorial learning note.
+- Structured editorial setup inside `Редакционная модель`: project profile, atomic
+  editorial rules, compact topic/fabula lists, explicit matrix save/cancel behavior,
+  and a deterministic validation panel on every internal tab.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
 - Human approval gates for content plan, post brief, final text, and release readiness.
 - Deterministic style, anti-AI, fact-check, and policy checks for the draft.
@@ -239,6 +239,39 @@ Rules:
   the legacy rubric/fabula fallback.
 - `LocalWorkspaceStore.normalizeWorkspace` fills missing `topics`, `fabulas`, and
   `topicFabulaMatrix` from the demo workspace so old browser state continues to load.
+
+## Editorial Model UX Rules
+
+Slice 1.1.1 adds `ProjectProfile`, `EditorialRule`, and lightweight
+`EditorialValidationSummary` contracts around the Slice 1.1 topic/fabula layer.
+
+Runtime rules:
+
+- `WorkspaceState.projectProfile` stores the project name, description, and setup
+  status. The seeded demo project is `TG-блог AI Product Manager`.
+- `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
+  positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and
+  forbidden topic.
+- Legacy `EditorialModel.rubrics` and `EditorialModel.fabula` remain available for
+  downstream service compatibility, but the UI no longer exposes them as setup fields.
+- `validateEditorialSetup(workspace)` is deterministic scaffolding for the future
+  validator framework. It returns summary status, item statuses, and recommendations.
+- `LocalWorkspaceStore.normalizeWorkspace` fills missing project/rule fields from the
+  demo workspace so older local browser states continue to load.
+
+Frontend rules are now ADR-backed:
+
+- Reuse existing product interaction patterns before inventing local controls.
+- Treat editorial settings as structured rules, not large textareas.
+- Use read/edit/save/cancel for important entity edits.
+- Use a single main column plus a right-side validation panel for editorial setup.
+- Do not render anonymous domain text as a hero.
+- Use compact list-first catalogs with details on demand.
+- Keep validation visible as a first-class UX surface.
+- Run editorial setup validation only after explicit `Проверить`; show stale state
+  after saved setup changes.
+- Keep editorial entity layouts contained: wrap long labels, use one shared detail
+  scroll area, and make matrix topic columns sticky during horizontal scroll.
 
 ## AI Provider Architecture Baseline
 

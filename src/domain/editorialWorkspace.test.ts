@@ -8,7 +8,10 @@ import {
   bulkAcceptCandidatesToArchive,
   completeTopicFabulaMatrix,
   createDefaultTopicFabulaMatrix,
+  createEditorialRule,
+  deleteEditorialRule,
   filterImportCandidates,
+  getRulesByGroup,
   getTopicFabulaWarnings,
   groupImportCandidates,
   normalizeWeightRange,
@@ -19,6 +22,8 @@ import {
   rejectPlanItem,
   rejectPostBrief,
   undoLastBulkImportAction,
+  updateEditorialRule,
+  validateEditorialSetup,
   reviseDraft,
   toggleReleaseChecklistItem,
   updateLearningNote
@@ -95,6 +100,31 @@ describe('editorial workspace domain', () => {
     expect(fullMatrix).toHaveLength(workspace.topics.length * workspace.fabulas.length);
     expect(warnings.some((warning) => warning.targetType === 'topic' && warning.targetId === topic.id)).toBe(true);
     expect(warnings.some((warning) => warning.targetType === 'fabula' && warning.targetId === fabula.id)).toBe(true);
+  });
+
+  it('keeps project profile and editorial rules as structured demo entities', () => {
+    const workspace = createDemoWorkspace();
+    const validation = validateEditorialSetup(workspace);
+
+    expect(workspace.projectProfile.name).toBe('TG-блог AI Product Manager');
+    expect(workspace.editorialRules.length).toBeGreaterThan(10);
+    expect(getRulesByGroup(workspace.editorialRules, 'antiAiPattern').length).toBeGreaterThan(0);
+    expect(validation.items.some((item) => item.status === 'green')).toBe(true);
+    expect(validation.items.some((item) => item.status === 'yellow')).toBe(true);
+    expect(validation.items.some((item) => item.recommendation.length > 0)).toBe(true);
+  });
+
+  it('adds, updates, and deletes editorial rules without changing unrelated rules', () => {
+    const workspace = createDemoWorkspace();
+    const rule = createEditorialRule('author', 'Тестовое правило', 'Проверять авторскую оптику.');
+    const withRule = [rule, ...workspace.editorialRules];
+    const updated = updateEditorialRule(withRule, { ...rule, statement: 'Проверять авторскую исследовательскую оптику.' });
+    const deleted = deleteEditorialRule(updated, rule.id);
+
+    expect(withRule[0].title).toBe('Тестовое правило');
+    expect(updated.find((item) => item.id === rule.id)?.statement).toContain('исследовательскую');
+    expect(deleted.find((item) => item.id === rule.id)).toBeUndefined();
+    expect(deleted.length).toBe(workspace.editorialRules.length);
   });
 
   it('creates author memory events and evidence-backed position assertions', () => {

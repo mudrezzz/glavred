@@ -589,7 +589,7 @@ Status:
 
 ### Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs
 
-- Status: Ready
+- Status: Done
 - Goal: Repair the `Редакционная модель` interface before building validators on top of
   it, and lock frontend UX decisions in ADRs.
 - User value: The author gets one coherent cabinet UX: structured rules, explicit
@@ -665,6 +665,68 @@ Status:
   - Matrix changes require explicit save/cancel.
   - Frontend UX ADRs are accepted and linked from developer docs.
   - Existing local-first production flow remains working.
+- Validation:
+  - Domain/application tests for project profile, structured rules, rule CRUD helpers,
+    and deterministic validation summary. Done.
+  - Storage tests for old workspace normalization and project/rule persistence. Done.
+  - UI tests for project header, rule add/save, compact topic/fabula edit flows,
+    matrix draft/save behavior, and validation panel visibility. Done.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+
+### Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes
+
+- Status: Ready
+- Goal: Fix the `Редакционная модель` layout problems found after Slice 1.1.1 and
+  make validation explicitly author-triggered.
+- User value: The author can edit topics, fabulas, and matrix links without broken
+  layout or premature validation feedback.
+- Scope:
+  - Add explicit `Проверить` action to the right validation panel.
+  - Store or derive validation run state so saved changes mark the latest validation
+    result as stale instead of recalculating live.
+  - Show `Еще не проверено`, `Проверено`, and `Требует повторной проверки` states.
+  - Fix topic compact rows so long names, weights, rule counts, fabula counts, and
+    validation badges wrap within the row.
+  - Fix topic preview with normal wrapping and one shared vertical scroll area for
+    long detail content.
+  - Fix topic edit forms so inputs and textareas stay inside the expanded entity.
+  - Apply the same list, preview, and edit containment fixes to fabulas.
+  - Rebuild the matrix table formatting with a horizontal scroll container, readable
+    wrapped headers, checkbox-only cells, and sticky topic column.
+- Out of scope:
+  - Real AI validation.
+  - Full `ValidatorResult` framework.
+  - Context chat.
+  - New topic/fabula semantics.
+- Implementation notes:
+  - Validation should run from saved workspace state, not from incomplete text being
+    typed in an edit form.
+  - Prefer one shared scroll area per expanded preview, not nested scrollbars per
+    field.
+  - Matrix cells should use accessible labels for topic/fabula pairs instead of
+    visible repeated `да/нет` text.
+- Tests:
+  - UI test that validation output appears only after clicking `Проверить`.
+  - UI test that saved setup changes mark validation as stale.
+  - UI tests for topic/fabula row containment and expanded preview structure.
+  - UI test that matrix has a horizontal scroll container and sticky topic column
+    structure.
+  - Regression tests for topic/fabula edit/save/cancel and matrix save/cancel.
+  - `npm test -- --run` and `npm run smoke`.
+- Docs:
+  - Update user guide and developer guide for manual validation.
+  - Update ADR references if implementation changes the interaction contract.
+- Demo impact:
+  - Demo `Редакционная модель` should be usable at realistic viewport widths with
+    long AI Product Manager topics and fabulas.
+- Acceptance criteria:
+  - Validation panel does not create fresh conclusions while the author types.
+  - The author can run validation manually.
+  - After saved changes, the panel clearly asks to rerun validation.
+  - Topic and fabula list rows, previews, and edit forms do not overflow their cards.
+  - Matrix remains readable with horizontal scroll and sticky topic names.
+  - Existing production flow remains working.
 
 ### Slice 1.2: Validator Framework Baseline
 
@@ -739,6 +801,7 @@ Status:
 - Slice 1.0.5: External Sources Local UI Shell. Completed 2026-06-11.
 - Slice 1.0.5.1: External Sources UX Fixes. Completed 2026-06-11.
 - Slice 1.1: Topics and Fabulas as Editorial Entities. Completed 2026-06-11.
+- Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -757,4 +820,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs`.
+Start `Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes`.

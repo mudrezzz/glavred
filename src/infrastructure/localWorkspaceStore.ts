@@ -57,6 +57,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel: saved.editorialModel ?? demo.editorialModel,
+    projectProfile: saved.projectProfile ?? demo.projectProfile,
+    editorialRules: saved.editorialRules ?? demo.editorialRules,
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),

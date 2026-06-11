@@ -49,6 +49,8 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().topics).toHaveLength(5);
     expect(store.load().fabulas).toHaveLength(5);
     expect(store.load().topicFabulaMatrix).toHaveLength(25);
+    expect(store.load().projectProfile.name).toBe('TG-блог AI Product Manager');
+    expect(store.load().editorialRules.length).toBeGreaterThan(10);
   });
 
   it('loads an old workspace without author memory fields', () => {
@@ -82,6 +84,20 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.topics).toHaveLength(5);
     expect(loaded.fabulas).toHaveLength(5);
     expect(loaded.topicFabulaMatrix).toHaveLength(25);
+  });
+
+  it('loads an old workspace without project profile and editorial rules', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete oldWorkspace.projectProfile;
+    delete oldWorkspace.editorialRules;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.projectProfile.name).toBe('TG-блог AI Product Manager');
+    expect(loaded.editorialRules.length).toBeGreaterThan(10);
   });
 
   it('normalizes old author notes without attachments', () => {
@@ -157,6 +173,30 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().topics[0].weightRange).toEqual({ min: 12, max: 34 });
     expect(store.load().fabulas[0].title).toBe('Исследовательская записка');
     expect(store.load().topicFabulaMatrix[0].enabled).toBe(false);
+  });
+
+  it('saves and loads project profile and editorial rules', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changed = {
+      ...workspace,
+      projectProfile: {
+        ...workspace.projectProfile,
+        name: 'AI Product Studio Notes'
+      },
+      editorialRules: [
+        {
+          ...workspace.editorialRules[0],
+          title: 'Обновленный образ автора'
+        },
+        ...workspace.editorialRules.slice(1)
+      ]
+    };
+
+    store.save(changed);
+
+    expect(store.load().projectProfile.name).toBe('AI Product Studio Notes');
+    expect(store.load().editorialRules[0].title).toBe('Обновленный образ автора');
   });
 
   it('saves and loads author note attachments', () => {

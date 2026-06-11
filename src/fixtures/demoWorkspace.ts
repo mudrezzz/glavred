@@ -4,11 +4,124 @@ import type {
   ArchiveRecord,
   AuthorExternalSource,
   AuthorNote,
+  EditorialRule,
   Fabula,
   ImportedMemoryCandidate,
+  ProjectProfile,
   Topic,
   WorkspaceState
 } from '../domain/editorialWorkspace';
+
+const demoProjectProfile: ProjectProfile = {
+  name: 'TG-блог AI Product Manager',
+  description: 'Исследовательский блог о построении AI-B2B продуктов',
+  setupStatus: 'needsReview'
+};
+
+const demoEditorialRules: EditorialRule[] = [
+  {
+    id: 'rule-author-researcher',
+    group: 'author',
+    title: 'AI Product Manager с исследовательской оптикой',
+    statement: 'Автор говорит как практик, который исследует workflow, adoption, доверие и экономику внедрения AI-B2B продуктов.',
+    status: 'active',
+    evidenceNoteId: 'note-workflow-risk'
+  },
+  {
+    id: 'rule-author-no-evangelism',
+    group: 'author',
+    title: 'Не AI-евангелист',
+    statement: 'Автор не продает магию модели, а показывает ограничения, failure modes и условия надежного rollout.',
+    status: 'active',
+    evidenceNoteId: 'note-demo-magic-fails'
+  },
+  {
+    id: 'rule-audience-builders',
+    group: 'audience',
+    title: 'Строители AI-B2B продуктов',
+    statement: 'Писать для AI PM, founders, CPO/product leaders и B2B SaaS команд, которым нужно довести AI-фичу от пилота до регулярного использования.',
+    status: 'active'
+  },
+  {
+    id: 'rule-audience-value',
+    group: 'audience',
+    title: 'Ценность для читателя',
+    statement: 'Каждый пост должен давать читателю продуктовый критерий: что проверить, где риск, как понять, что AI-фича стала продуктом.',
+    status: 'active'
+  },
+  {
+    id: 'rule-position-demo-not-product',
+    group: 'positioning',
+    title: 'Демо не равно продукт',
+    statement: 'AI-B2B продукт начинается не с красивого ответа модели, а с workflow improvement, evals, trust loop и adoption ritual.',
+    status: 'active',
+    evidenceNoteId: 'note-demo-magic-fails'
+  },
+  {
+    id: 'rule-position-workflow-first',
+    group: 'positioning',
+    title: 'Workflow важнее выбора модели',
+    statement: 'Если сценарий принятия решения не описан, AI ускоряет неясность вместо создания продуктовой ценности.',
+    status: 'active',
+    evidenceNoteId: 'note-workflow-risk'
+  },
+  {
+    id: 'rule-style-voice-research-note',
+    group: 'styleVoice',
+    title: 'Голос исследовательской заметки',
+    statement: 'Тон спокойный, наблюдательный, с авторской позицией до советов и чеклистов.',
+    status: 'active'
+  },
+  {
+    id: 'rule-style-language-concrete',
+    group: 'styleLanguage',
+    title: 'Конкретный язык продукта',
+    statement: 'Использовать слова workflow, evals, rollout, adoption, trust, rollback только когда они привязаны к сцене или решению.',
+    status: 'active'
+  },
+  {
+    id: 'rule-style-rhythm',
+    group: 'styleRhythm',
+    title: 'Ритм: тезис -> сцена -> вывод',
+    statement: 'Пост должен быстро дать конфликт, затем сцену из практики, затем критерий для читателя.',
+    status: 'active'
+  },
+  {
+    id: 'rule-anti-ai-no-generic-openers',
+    group: 'antiAiPattern',
+    title: 'Без стерильных AI-вводных',
+    statement: 'Не начинать с фраз вроде "в современном мире AI меняет все"; сразу входить в наблюдение или конфликт.',
+    status: 'active'
+  },
+  {
+    id: 'rule-goal-build-audience',
+    group: 'goal',
+    title: 'Собрать аудиторию AI product builders',
+    statement: 'Блог должен привлекать AI PM и founders, которым важны практические принципы AI-B2B productization.',
+    status: 'active'
+  },
+  {
+    id: 'rule-goal-research-experience',
+    group: 'goal',
+    title: 'Показывать исследовательский опыт',
+    statement: 'Публикации должны превращать наблюдения из интервью, пилотов и архивов в ясные продуктовые принципы.',
+    status: 'active'
+  },
+  {
+    id: 'rule-forbidden-ai-hype',
+    group: 'forbiddenTopic',
+    title: 'Запрет: AI-хайп без механики',
+    statement: 'Не публиковать тезисы о силе AI без продуктового механизма, проверки или ограничения применимости.',
+    status: 'active'
+  },
+  {
+    id: 'rule-forbidden-market-predictions',
+    group: 'forbiddenTopic',
+    title: 'Запрет: гарантированные прогнозы рынка',
+    statement: 'Не делать уверенных рыночных прогнозов без данных и явных допущений.',
+    status: 'active'
+  }
+];
 
 const demoTopics: Topic[] = [
   {
@@ -616,6 +729,8 @@ export function createDemoWorkspace(): WorkspaceState {
         'Превращать наблюдения из интервью и пилотов в ясные продуктовые принципы'
       ]
     },
+    projectProfile: demoProjectProfile,
+    editorialRules: demoEditorialRules,
     topics: demoTopics,
     fabulas: demoFabulas,
     topicFabulaMatrix: createDefaultTopicFabulaMatrix(demoTopics, demoFabulas),

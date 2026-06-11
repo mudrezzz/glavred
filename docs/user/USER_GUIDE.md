@@ -81,20 +81,16 @@ For large archives, the planned queue supports group work:
 Unreviewed imported material will not change `Как система поняла автора`. Bulk-added
 archive material will also stay distinguishable from manually reviewed evidence.
 
-## Topics And Fabulas
+## Editorial Model
 
-`Редакционная модель` now has four internal tabs:
+`Редакционная модель` is the setup workspace for the virtual publishing project. It uses the same tab pattern as `Память автора` and has four internal tabs:
 
-- `Обзор`: the existing author, audience, positioning, style, boundaries, and goals.
-- `Темы`: editable topic cards with purpose, audience value, author stance, rules,
-  forbidden angles, and advisory weight range.
-- `Фабулы`: editable dramaturgy cards with structure, proof requirements, rules, and
-  advisory weight range.
-- `Матрица`: topic-fabula compatibility checkboxes.
+- `Издательство`: project profile plus structured rule blocks for author, audience, position, style, goals, and forbidden topics.
+- `Темы`: compact one-row-per-topic list. Expand a row to see details; use `Редактировать`, `Сохранить`, and `Отменить` to commit changes.
+- `Фабулы`: the same compact list/detail/edit pattern for post dramaturgy entities.
+- `Матрица`: topic-fabula compatibility table. Checkbox changes stay in draft state until `Сохранить матрицу`; `Отменить` rolls the draft back.
 
-The matrix starts with every topic/fabula pair enabled. Turning off a pair removes that
-combination from deterministic planning. If a topic or fabula has no active compatible
-pair, the screen shows a warning before it silently disappears from future plans.
+Every tab has a right-side validation panel. In the current slice it is deterministic: it checks project profile, atomic rule coverage, style/anti-AI rules, topic/fabula compatibility, and goal readiness. Later validator slices will replace this scaffold with richer evidence and scores.
 
 ## Current Supported Flow
 
@@ -134,8 +130,9 @@ pair, the screen shows a warning before it silently disappears from future plans
   `Не evidence`, open the original source, or delete it from the local archive.
 - Use `Отменить последнее групповое действие` when the latest bulk decision should be
   reverted.
-- Open `Редакционная модель`, review `Обзор`, edit topic cards, edit fabula cards, and
-  adjust the `Матрица` when a fabula should not be used for a topic.
+- Open `Редакционная модель`, review the project profile in `Издательство`, add or edit one structured rule, and check the right-side validation panel.
+- Open `Темы` and `Фабулы`, expand one row, use `Редактировать`, then `Сохранить` or `Отменить`.
+- Open `Матрица`, toggle one compatibility checkbox, then use `Сохранить матрицу` or `Отменить`.
 - Review or edit the demo source signal in `Радар`.
 - Generate an insight card.
 - Add the insight to `План`.

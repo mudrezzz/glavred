@@ -65,35 +65,51 @@ describe('App', () => {
     expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
   });
 
-  it('edits editorial topics, fabulas, and compatibility matrix', () => {
+  it('edits editorial rules, topics, fabulas, and compatibility matrix', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
-    expect(screen.getByRole('tab', { name: /Обзор/i })).toBeInTheDocument();
+    expect(screen.getByText('TG-блог AI Product Manager')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Издательство/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Темы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Фабулы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Матрица/i })).toBeInTheDocument();
+    expect(screen.getByText(/Редакционная модель требует внимания/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Legacy-рубрики/i)).not.toBeInTheDocument();
+
+    const authorSection = screen.getByText('Автор').closest('section');
+    expect(authorSection).toBeInTheDocument();
+    fireEvent.click(within(authorSection as HTMLElement).getByRole('button', { name: /\+ Правило/i }));
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Тестовое правило автора' } });
+    fireEvent.change(screen.getByLabelText('Правило'), {
+      target: { value: 'Писать от лица практикующего AI PM, а не внешнего комментатора.' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText('Тестовое правило автора')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
-    expect(screen.getByDisplayValue('AI product discovery')).toBeInTheDocument();
-    fireEvent.change(screen.getAllByLabelText('Название')[0], {
+    expect(screen.getByText('AI product discovery')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /AI product discovery/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+    fireEvent.change(screen.getByLabelText('Название'), {
       target: { value: 'AI workflow discovery' }
     });
-    expect(screen.getByDisplayValue('AI workflow discovery')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText('AI workflow discovery')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
-    expect(screen.getByDisplayValue('Исследовательская заметка')).toBeInTheDocument();
-    fireEvent.change(screen.getAllByLabelText('Название')[0], {
-      target: { value: 'Исследовательская записка' }
-    });
-    expect(screen.getByDisplayValue('Исследовательская записка')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Исследовательская заметка/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Исследовательская записка' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText('Исследовательская записка')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
-    const firstTopicCheckboxes = screen.getAllByRole('checkbox').slice(0, 5);
-    firstTopicCheckboxes.forEach((checkbox) => fireEvent.click(checkbox));
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
 
-    expect(screen.getByText(/Нужна настройка матрицы/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/AI workflow discovery/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Есть несохраненные изменения/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить матрицу/i }));
+    expect(screen.queryByText(/Есть несохраненные изменения/i)).not.toBeInTheDocument();
   });
 
   it('shows external source tabs and demo source cards inside author memory', () => {

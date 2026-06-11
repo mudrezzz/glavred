@@ -66,9 +66,14 @@ turning the product into generic content generation.
 - `AuthorPositionModel`: aggregates memory into transparent rules and assertions about
   persona, style, audience, goals, topics, fabulas, platforms, and formats. Every
   assertion should have evidence.
-- `EditorialModel`: implemented aggregate for author, audience, positioning, legacy
-  fabula, legacy rubrics, style rules, forbidden topics, and blog goals. Topic and
-  fabula catalogs now carry the first structured editorial entities around it.
+- `ProjectProfile`: names the virtual publishing project and carries setup status and
+  top-level context for the editorial cabinet.
+- `EditorialRules`: stores atomic rules for author, audience, positioning, style,
+  anti-AI patterns, goals, and forbidden topics. These are the validator-ready
+  successor to large editorial settings textareas.
+- `EditorialModel`: compatibility aggregate for author, audience, positioning, legacy
+  fabula, legacy rubrics, style rules, forbidden topics, and blog goals. Legacy fields
+  remain available to downstream services while the UI moves toward structured rules.
 - `TopicCatalog`: stores editable topic cards with purpose, audience value, author
   stance, rules, forbidden angles, status, and advisory weight ranges for planning.
 - `FabulaCatalog`: stores reusable post dramaturgy patterns with structure, conflict,
@@ -135,6 +140,28 @@ network clients. React components render state and trigger application service m
 Application services orchestrate domain operations, call adapters, and decide whether
 to use deterministic fallback or provider-backed behavior.
 
+## Frontend UX Architecture
+
+Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions:
+
+- Product screens reuse existing cabinet controls before adding new patterns.
+- Editorial settings are structured rules, not freeform textareas.
+- Important entities use read/edit/save/cancel instead of immediate hidden commits.
+- Setup workflows use a single main column and a right-side validation panel.
+- Page headers must come from explicit project/profile entities, not anonymous domain
+  quotes.
+- Topic and fabula catalogs use compact rows with details on demand.
+- Validation is a first-class surface on every editorial setup tab.
+- Editorial setup validation is explicit: the author clicks `Проверить`, then sees a
+  validation snapshot. Saved setup changes mark that snapshot as stale until the next
+  run.
+- Editorial catalogs and matrices must contain realistic long content: wrap labels,
+  use shared scroll areas for long details, and keep matrix row context visible with a
+  sticky topic column during horizontal scroll.
+
+These rules are captured in ADRs under `docs/adr/` and should guide future validator
+and context-chat implementation.
+
 ## Conceptual Domain Interfaces
 
 Current implemented production contracts:
@@ -146,8 +173,14 @@ Current implemented production contracts:
 - `AuthorPositionAssertion`: evidence-backed inferred statement about persona, style,
   audience, topic, or principle.
 - `EvidenceLink`: link from a position assertion back to source notes.
-- `EditorialModel`: author, audience, positioning, fabula, rubrics, style rules,
-  forbidden topics, goals.
+- `ProjectProfile`: name, description, and setup status for the current editorial
+  project.
+- `EditorialRule`: group, title, statement, active/paused status, and optional evidence
+  note id.
+- `EditorialValidationSummary`: deterministic setup validation summary with
+  red/yellow/green status, item summaries, and recommendations.
+- `EditorialModel`: compatibility aggregate for author, audience, positioning, fabula,
+  rubrics, style rules, forbidden topics, goals.
 - `Topic`: editable topic card with purpose, audience value, author stance, rules,
   forbidden angles, active/paused status, and advisory weight range.
 - `Fabula`: editable dramaturgy card with structure, proof requirements, rules,
