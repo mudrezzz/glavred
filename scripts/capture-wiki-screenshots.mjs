@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -21,6 +21,15 @@ function runDevServer() {
       stdio: ['ignore', 'pipe', 'pipe']
     }
   );
+}
+
+function stopDevServer(server) {
+  if (process.platform === 'win32' && server.pid) {
+    spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
+    return;
+  }
+
+  server.kill();
 }
 
 async function waitForServer() {
@@ -119,6 +128,10 @@ async function main() {
     await page.getByRole('button', { name: /Корректировать evidence/i }).first().click();
     await screenshot(page, '04-author-memory-correction-evidence');
 
+    await page.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }).click();
+    await page.locator('.candidate-card').first().waitFor();
+    await screenshot(page, '09-external-sources-queue');
+
     await completeProductionFlow(page);
     await screenshot(page, '05-approved-post-brief');
 
@@ -135,7 +148,7 @@ async function main() {
     console.error(stderr);
     throw error;
   } finally {
-    server.kill();
+    stopDevServer(server);
   }
 
   if (!existsSync(path.join(screenshotsDir, '01-author-memory-home.png'))) {

@@ -51,12 +51,14 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
-## Planned External Sources
+## External Sources Local Shell
 
-External source import is designed but not implemented yet.
+External source import is now available as a local-first UI shell inside
+`Память автора`. It uses demo sources and mock candidates only. No Telegram API,
+OAuth, crawler, backend, scheduled ingestion, or AI analysis is connected.
 
-The planned UX keeps source import inside `Память автора` and separates it from the
-current manual note feed:
+The UX keeps source review inside `Память автора` and separates it from the current
+manual note feed through internal tabs:
 
 - `Источники`: configure places where the author already leaves thoughts, such as a
   Telegram channel, social profile, blog/site, article archive, document, or manual
@@ -97,6 +99,17 @@ archive material will also stay distinguishable from manually reviewed evidence.
 - Use `Голосом` when the browser supports speech recognition; otherwise the button
   stays disabled and the text area remains the fallback.
 - Review evidence behind author-position assertions.
+- Open the internal `Источники` tab to inspect demo source cards for the AI Product
+  Manager scenario.
+- Open `Очередь разбора`, filter candidates by source/status/evidence policy/duplicate
+  risk, and switch between `Список` and `Группы`.
+- Use `В память` for one reviewed candidate when it should become active author
+  memory. Use `В архив`, `Отклонить`, or `Не evidence` for non-active material.
+- Use `Выбрать все по фильтру` and `Добавить все` for large archive-safe batches.
+  Confirm the summary before applying the bulk action.
+- Open `Архив` to see accepted archive records with provenance. Use
+  `Отменить последнее групповое действие` when the latest bulk decision should be
+  reverted.
 - Edit the `Редакционная модель`.
 - Review or edit the demo source signal in `Радар`.
 - Generate an insight card.
@@ -128,8 +141,8 @@ archive material will also stay distinguishable from manually reviewed evidence.
 - Context chat.
 - Topic/fabula matrix.
 - Archive import and uniqueness checks.
-- External source settings and bulk import review.
-- Real source ingestion.
+- Real external source ingestion, OAuth, crawlers, scheduled imports, and API-backed
+  archive parsing.
 - Real AI-generated insights, briefs, or drafts.
 - Autoposting and real platform publishing integrations.
 - Real metrics ingestion or AI analytics.

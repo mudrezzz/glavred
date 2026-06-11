@@ -8,6 +8,26 @@ export type AnalyticsStatus = 'draft' | 'captured';
 export type AuthorNoteType = 'thought' | 'linkReaction' | 'manualCorrection';
 export type AuthorPositionAssertionType = 'persona' | 'style' | 'audience' | 'topic' | 'principle';
 export type AuthorPositionAssertionStatus = 'inferred' | 'confirmed';
+export type ExternalSourceType =
+  | 'telegramChannel'
+  | 'socialProfile'
+  | 'blogSite'
+  | 'document'
+  | 'articleArchive'
+  | 'manualUpload';
+export type ExternalSourceStatus = 'planned' | 'connected' | 'needsReview' | 'imported' | 'paused' | 'failed';
+export type ImportMode = 'manualOnly' | 'reviewedQueue' | 'archiveOnly' | 'bulkArchive';
+export type EvidencePolicy = 'canSupportAssertions' | 'archiveOnly' | 'ignored';
+export type ImportReviewStatus =
+  | 'new'
+  | 'acceptedToMemory'
+  | 'acceptedToArchive'
+  | 'bulkAcceptedToArchive'
+  | 'rejected'
+  | 'ignoredForEvidence';
+export type ImportCandidateGroupType = 'source' | 'status' | 'duplicateRisk' | 'evidencePolicy' | 'tag';
+export type ImportRiskLevel = 'low' | 'medium' | 'high';
+export type BulkImportActionType = 'bulkAcceptToArchive' | 'bulkReject';
 
 export interface AuthorNote {
   id: string;
@@ -200,6 +220,72 @@ export interface EditorialLearningNote {
   capturedAt: string | null;
 }
 
+export interface AuthorExternalSource {
+  id: string;
+  type: ExternalSourceType;
+  title: string;
+  url: string;
+  fileReference: string;
+  status: ExternalSourceStatus;
+  importMode: ImportMode;
+  lastCheckedAt: string;
+  lastImportedAt: string;
+  notes: string;
+}
+
+export interface ImportedMemoryCandidate {
+  id: string;
+  sourceId: string;
+  title: string;
+  excerpt: string;
+  originalUrl: string;
+  capturedAt: string;
+  detectedTags: string[];
+  duplicateRisk: ImportRiskLevel;
+  suggestedTarget: string;
+  reviewStatus: ImportReviewStatus;
+  evidencePolicy: EvidencePolicy;
+}
+
+export interface ImportCandidateGroup {
+  id: string;
+  type: ImportCandidateGroupType;
+  title: string;
+  candidateIds: string[];
+  summary: string;
+  riskLevel: ImportRiskLevel;
+}
+
+export interface BulkImportAction {
+  id: string;
+  action: BulkImportActionType;
+  candidateIds: string[];
+  previousStatuses: Record<string, ImportReviewStatus>;
+  createdAt: string;
+  canUndo: boolean;
+  createdArchiveRecordIds: string[];
+}
+
+export interface ArchiveRecord {
+  id: string;
+  sourceId: string;
+  title: string;
+  bodyExcerpt: string;
+  originalUrl: string;
+  publishedAt: string;
+  acceptedAt: string;
+  acceptanceMode: 'manual' | 'bulk';
+  evidencePolicy: EvidencePolicy;
+}
+
+export interface ImportCandidateFilters {
+  sourceId?: string;
+  reviewStatus?: ImportReviewStatus | 'all';
+  evidencePolicy?: EvidencePolicy | 'all';
+  duplicateRisk?: ImportRiskLevel | 'all';
+  query?: string;
+}
+
 export interface WorkspaceState {
   authorNotes: AuthorNote[];
   authorMemoryEvents: AuthorMemoryEvent[];
@@ -215,6 +301,10 @@ export interface WorkspaceState {
   finalText: FinalText | null;
   releasePackage: ReleasePackage | null;
   editorialLearningNote: EditorialLearningNote | null;
+  externalSources: AuthorExternalSource[];
+  importCandidates: ImportedMemoryCandidate[];
+  archiveRecords: ArchiveRecord[];
+  bulkImportActions: BulkImportAction[];
   activeSection: WorkspaceSection;
   updatedAt: string;
 }
@@ -326,4 +416,224 @@ export function updateLearningNote(
     updatedAt: new Date().toISOString(),
     capturedAt: null
   };
+}
+
+export function acceptCandidateToMemory(
+  candidate: ImportedMemoryCandidate,
+  source: AuthorExternalSource
+): AuthorNote {
+  return {
+    id: `note-import-${candidate.id}`,
+    type: 'linkReaction',
+    title: candidate.title,
+    body: candidate.excerpt,
+    sourceUrl: candidate.originalUrl || source.url,
+    tags: Array.from(new Set([...candidate.detectedTags, 'imported'])),
+    attachments: [],
+    capturedAt: new Date().toISOString()
+  };
+}
+
+export function markCandidateAcceptedToMemory(
+  candidate: ImportedMemoryCandidate
+): ImportedMemoryCandidate {
+  return {
+    ...candidate,
+    reviewStatus: 'acceptedToMemory',
+    evidencePolicy: 'canSupportAssertions'
+  };
+}
+
+export function acceptCandidateToArchive(
+  candidate: ImportedMemoryCandidate,
+  _source: AuthorExternalSource,
+  mode: 'manual' | 'bulk' = 'manual'
+): ArchiveRecord {
+  return {
+    id: `archive-${candidate.id}`,
+    sourceId: candidate.sourceId,
+    title: candidate.title,
+    bodyExcerpt: candidate.excerpt,
+    originalUrl: candidate.originalUrl,
+    publishedAt: candidate.capturedAt,
+    acceptedAt: new Date().toISOString(),
+    acceptanceMode: mode,
+    evidencePolicy: mode === 'bulk' ? 'archiveOnly' : candidate.evidencePolicy
+  };
+}
+
+export function markCandidateAcceptedToArchive(
+  candidate: ImportedMemoryCandidate,
+  mode: 'manual' | 'bulk' = 'manual'
+): ImportedMemoryCandidate {
+  return {
+    ...candidate,
+    reviewStatus: mode === 'bulk' ? 'bulkAcceptedToArchive' : 'acceptedToArchive',
+    evidencePolicy: 'archiveOnly'
+  };
+}
+
+export function rejectCandidate(candidate: ImportedMemoryCandidate): ImportedMemoryCandidate {
+  return {
+    ...candidate,
+    reviewStatus: 'rejected',
+    evidencePolicy: 'ignored'
+  };
+}
+
+export function ignoreCandidateForEvidence(candidate: ImportedMemoryCandidate): ImportedMemoryCandidate {
+  return {
+    ...candidate,
+    reviewStatus: 'ignoredForEvidence',
+    evidencePolicy: 'ignored'
+  };
+}
+
+export function bulkAcceptCandidatesToArchive(
+  candidates: ImportedMemoryCandidate[],
+  sources: AuthorExternalSource[]
+): {
+  candidates: ImportedMemoryCandidate[];
+  archiveRecords: ArchiveRecord[];
+  action: BulkImportAction;
+} {
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const changedCandidates = candidates.map((candidate) => markCandidateAcceptedToArchive(candidate, 'bulk'));
+  const archiveRecords = candidates.map((candidate) =>
+    acceptCandidateToArchive(
+      candidate,
+      sourceById.get(candidate.sourceId) ?? {
+        id: candidate.sourceId,
+        type: 'manualUpload',
+        title: candidate.sourceId,
+        url: '',
+        fileReference: '',
+        status: 'planned',
+        importMode: 'archiveOnly',
+        lastCheckedAt: '',
+        lastImportedAt: '',
+        notes: ''
+      },
+      'bulk'
+    )
+  );
+
+  return {
+    candidates: changedCandidates,
+    archiveRecords,
+    action: {
+      id: `bulk-archive-${Date.now()}`,
+      action: 'bulkAcceptToArchive',
+      candidateIds: candidates.map((candidate) => candidate.id),
+      previousStatuses: Object.fromEntries(candidates.map((candidate) => [candidate.id, candidate.reviewStatus])),
+      createdAt: new Date().toISOString(),
+      canUndo: true,
+      createdArchiveRecordIds: archiveRecords.map((record) => record.id)
+    }
+  };
+}
+
+export function bulkRejectCandidates(candidates: ImportedMemoryCandidate[]): {
+  candidates: ImportedMemoryCandidate[];
+  action: BulkImportAction;
+} {
+  return {
+    candidates: candidates.map(rejectCandidate),
+    action: {
+      id: `bulk-reject-${Date.now()}`,
+      action: 'bulkReject',
+      candidateIds: candidates.map((candidate) => candidate.id),
+      previousStatuses: Object.fromEntries(candidates.map((candidate) => [candidate.id, candidate.reviewStatus])),
+      createdAt: new Date().toISOString(),
+      canUndo: true,
+      createdArchiveRecordIds: []
+    }
+  };
+}
+
+export function undoLastBulkImportAction(workspace: WorkspaceState): WorkspaceState {
+  const lastAction = [...workspace.bulkImportActions].reverse().find((action) => action.canUndo);
+
+  if (!lastAction) {
+    return workspace;
+  }
+
+  return {
+    ...workspace,
+    importCandidates: workspace.importCandidates.map((candidate) =>
+      lastAction.previousStatuses[candidate.id]
+        ? { ...candidate, reviewStatus: lastAction.previousStatuses[candidate.id] }
+        : candidate
+    ),
+    archiveRecords: workspace.archiveRecords.filter(
+      (record) => !lastAction.createdArchiveRecordIds.includes(record.id)
+    ),
+    bulkImportActions: workspace.bulkImportActions.filter((action) => action.id !== lastAction.id)
+  };
+}
+
+export function filterImportCandidates(
+  candidates: ImportedMemoryCandidate[],
+  filters: ImportCandidateFilters
+): ImportedMemoryCandidate[] {
+  const query = filters.query?.trim().toLowerCase() ?? '';
+
+  return candidates.filter((candidate) => {
+    const matchesSource = !filters.sourceId || filters.sourceId === 'all' || candidate.sourceId === filters.sourceId;
+    const matchesStatus =
+      !filters.reviewStatus || filters.reviewStatus === 'all' || candidate.reviewStatus === filters.reviewStatus;
+    const matchesPolicy =
+      !filters.evidencePolicy ||
+      filters.evidencePolicy === 'all' ||
+      candidate.evidencePolicy === filters.evidencePolicy;
+    const matchesRisk =
+      !filters.duplicateRisk || filters.duplicateRisk === 'all' || candidate.duplicateRisk === filters.duplicateRisk;
+    const haystack = [
+      candidate.title,
+      candidate.excerpt,
+      candidate.originalUrl,
+      candidate.suggestedTarget,
+      ...candidate.detectedTags
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return matchesSource && matchesStatus && matchesPolicy && matchesRisk && (!query || haystack.includes(query));
+  });
+}
+
+export function groupImportCandidates(
+  candidates: ImportedMemoryCandidate[],
+  mode: ImportCandidateGroupType = 'source'
+): ImportCandidateGroup[] {
+  const grouped = candidates.reduce<Record<string, ImportedMemoryCandidate[]>>((groups, candidate) => {
+    const key =
+      mode === 'source'
+        ? candidate.sourceId
+        : mode === 'status'
+          ? candidate.reviewStatus
+          : mode === 'duplicateRisk'
+            ? candidate.duplicateRisk
+            : mode === 'evidencePolicy'
+              ? candidate.evidencePolicy
+              : candidate.detectedTags[0] ?? 'untagged';
+
+    return {
+      ...groups,
+      [key]: [...(groups[key] ?? []), candidate]
+    };
+  }, {});
+
+  return Object.entries(grouped).map(([key, items]) => ({
+    id: `${mode}-${key}`,
+    type: mode,
+    title: key,
+    candidateIds: items.map((item) => item.id),
+    summary: `${items.length} candidates`,
+    riskLevel: items.some((item) => item.duplicateRisk === 'high')
+      ? 'high'
+      : items.some((item) => item.duplicateRisk === 'medium')
+        ? 'medium'
+        : 'low'
+  }));
 }

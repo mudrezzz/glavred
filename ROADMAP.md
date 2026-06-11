@@ -453,7 +453,7 @@ Status:
 
 ### Slice 1.0.5: External Sources Local UI Shell
 
-- Status: Ready
+- Status: Done
 - Goal: Add a local-first, mock-backed UI shell for external source settings and import
   review without real integrations.
 - User value: The author can see how source settings, review queue, grouping, and
@@ -495,6 +495,14 @@ Status:
   - User can undo the latest bulk action.
   - Imported/archive-only candidates do not change `Как система поняла автора`.
   - State survives reload.
+- Validation:
+  - Unit/domain tests for candidate review, archive records, grouping, bulk archive,
+    and undo. Done.
+  - Storage tests for old workspace normalization and import state persistence. Done.
+  - UI tests for tabs, source cards, filters, `Добавить все`, undo, and accepting a
+    candidate into memory. Done.
+  - `npm test`, `npm run smoke`, `npm run docs:screenshots`, and
+    `npm run docs:wiki:publish` passed.
 
 ### Deferred: Attachment Analysis and Evidence Extraction
 
@@ -599,6 +607,7 @@ Status:
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
 - Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
 - Slice 1.0.4: Author Memory External Sources and Import Design. Completed 2026-06-11.
+- Slice 1.0.5: External Sources Local UI Shell. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -617,4 +626,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.0.5: External Sources Local UI Shell`.
+Start `Slice 1.1: Topics and Fabulas as Editorial Entities`.

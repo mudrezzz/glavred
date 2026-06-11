@@ -160,6 +160,72 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialLearningNote).toBeNull();
   });
 
+  it('loads an old workspace without external import fields', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete oldWorkspace.externalSources;
+    delete oldWorkspace.importCandidates;
+    delete oldWorkspace.archiveRecords;
+    delete oldWorkspace.bulkImportActions;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+
+    const loaded = store.load();
+
+    expect(loaded.externalSources).toHaveLength(5);
+    expect(loaded.importCandidates.length).toBeGreaterThan(10);
+    expect(loaded.archiveRecords.length).toBeGreaterThan(0);
+    expect(loaded.bulkImportActions).toEqual([]);
+  });
+
+  it('saves and loads external sources, candidates, archive records, and bulk action state', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changed = {
+      ...workspace,
+      importCandidates: [
+        {
+          ...workspace.importCandidates[0],
+          reviewStatus: 'bulkAcceptedToArchive' as const,
+          evidencePolicy: 'archiveOnly' as const
+        },
+        ...workspace.importCandidates.slice(1)
+      ],
+      archiveRecords: [
+        {
+          id: 'archive-test-roundtrip',
+          sourceId: workspace.externalSources[0].id,
+          title: 'Roundtrip archive',
+          bodyExcerpt: 'Archive record roundtrip',
+          originalUrl: '',
+          publishedAt: '2026-06-11',
+          acceptedAt: '2026-06-11T10:00:00.000Z',
+          acceptanceMode: 'bulk' as const,
+          evidencePolicy: 'archiveOnly' as const
+        },
+        ...workspace.archiveRecords
+      ],
+      bulkImportActions: [
+        {
+          id: 'bulk-roundtrip',
+          action: 'bulkAcceptToArchive' as const,
+          candidateIds: [workspace.importCandidates[0].id],
+          previousStatuses: { [workspace.importCandidates[0].id]: 'new' as const },
+          createdAt: '2026-06-11T10:00:00.000Z',
+          canUndo: true,
+          createdArchiveRecordIds: ['archive-test-roundtrip']
+        }
+      ]
+    };
+
+    store.save(changed);
+
+    expect(store.load().importCandidates[0].reviewStatus).toBe('bulkAcceptedToArchive');
+    expect(store.load().archiveRecords[0].id).toBe('archive-test-roundtrip');
+    expect(store.load().bulkImportActions[0].canUndo).toBe(true);
+  });
+
   it('saves and loads an approved post brief', () => {
     const store = new LocalWorkspaceStore(createMemoryStorage());
     const workspace = createDemoWorkspace();
@@ -260,5 +326,9 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().finalText).toBeNull();
     expect(store.load().releasePackage).toBeNull();
     expect(store.load().editorialLearningNote).toBeNull();
+    expect(store.load().externalSources).toHaveLength(5);
+    expect(store.load().importCandidates.length).toBeGreaterThan(10);
+    expect(store.load().archiveRecords.length).toBeGreaterThan(0);
+    expect(store.load().bulkImportActions).toEqual([]);
   });
 });

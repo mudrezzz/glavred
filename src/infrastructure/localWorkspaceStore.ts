@@ -54,6 +54,10 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     finalText: saved.finalText ?? null,
     releasePackage: saved.releasePackage ?? null,
     editorialLearningNote: saved.editorialLearningNote ?? null,
+    externalSources: saved.externalSources ?? demo.externalSources,
+    importCandidates: saved.importCandidates ?? demo.importCandidates,
+    archiveRecords: saved.archiveRecords ?? demo.archiveRecords,
+    bulkImportActions: saved.bulkImportActions ?? [],
     activeSection: saved.activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt
   };

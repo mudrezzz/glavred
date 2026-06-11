@@ -683,6 +683,197 @@ select:focus {
   padding: 14px;
 }
 
+.memory-tabs {
+  margin: -6px 0 18px;
+}
+
+.import-workspace,
+.source-grid,
+.candidate-list,
+.archive-list,
+.import-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.import-intro,
+.import-notice,
+.import-toolbar-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.import-intro h3,
+.source-card h3,
+.candidate-card h3,
+.archive-card h3 {
+  margin: 0;
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 700;
+}
+
+.import-intro p,
+.source-card p,
+.candidate-card p,
+.archive-card p,
+.import-notice span,
+.panel-note {
+  margin: 0;
+  color: var(--ink-700);
+  line-height: 1.5;
+}
+
+.source-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.source-card,
+.archive-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.source-head,
+.candidate-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.import-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.import-filter-grid label,
+.import-search {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.import-filter-grid input,
+.import-filter-grid select,
+.import-search input {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bulk-bar,
+.view-toggle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bulk-bar {
+  padding-top: 4px;
+  border-top: 1px solid var(--ink-200);
+}
+
+.bulk-bar span {
+  margin-right: auto;
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.candidate-card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+
+.candidate-card.muted {
+  opacity: 0.72;
+}
+
+.candidate-check {
+  padding-top: 2px;
+}
+
+.candidate-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.candidate-body {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.risk-high {
+  border-color: var(--danger-tint);
+  color: var(--danger);
+}
+
+.risk-medium {
+  border-color: var(--warn-tint);
+  color: var(--warn-ink);
+}
+
+.risk-low {
+  border-color: var(--ok-tint);
+  color: var(--ok-ink);
+}
+
+.import-group {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.import-group > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.import-group span,
+.import-group small {
+  color: var(--ink-600);
+  font: var(--ui-sm);
+  overflow-wrap: anywhere;
+}
+
+.risk-dot {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.risk-dot.medium {
+  background: var(--warn);
+}
+
+.risk-dot.high {
+  background: var(--danger);
+}
+
+.bulk-confirm {
+  max-width: 560px;
+}
+
+.import-summary {
+  display: grid;
+  gap: 12px;
+}
+
 .memory-search {
   display: flex;
   align-items: center;
@@ -1717,6 +1908,8 @@ select:focus {
   .model-grid,
   .memory-grid,
   .memory-toolbar,
+  .source-grid,
+  .import-filter-grid,
   .brief-grid,
   .edit-grid,
   .release-grid,

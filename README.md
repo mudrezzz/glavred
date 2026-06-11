@@ -20,6 +20,13 @@ file attachments, local link previews, targeted corrections, search/filtering, l
 feed loading, long-note collapse, edit/delete actions, memory summary, and browser
 voice-input fallback are available before any production workflow starts.
 
+The same author-memory workspace now includes a local-first external-source shell:
+`Лента`, `Источники`, `Очередь разбора`, and `Архив`. It uses deterministic mock
+candidates for the AI Product Manager demo, supports filtering, grouping, individual
+review actions, `Добавить все`, archive-safe bulk acceptance, and undo for the latest
+bulk action. Unreviewed and archive-only material does not change the author-position
+assertions.
+
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
 
@@ -48,7 +55,7 @@ The revised core modules are:
 
 - Author Memory: free internal feed of thoughts, links, reactions, corrections, and
   learning events.
-- External Sources and Import Review: planned source settings, review queue, bulk
+- External Sources and Import Review: local source settings shell, review queue, bulk
   import, and archive-safe handling for large historical archives.
 - Author Position Model: transparent, evidence-backed model of how the author thinks
   and writes.
@@ -112,8 +119,7 @@ npm run docs:wiki:publish
 - [Developer guide](docs/developer/DEVELOPER_GUIDE.md)
 - [User guide](docs/user/USER_GUIDE.md)
 - [Demo](demo/README.md)
-- [GitHub Wiki](https://github.com/mudrezzz/glavred/wiki) (available after the first
-  GitHub Wiki page is initialized through the web UI)
+- [GitHub Wiki](https://github.com/mudrezzz/glavred/wiki)
 - [Wiki source](docs/wiki/Home.md)
 
 ## Development Model

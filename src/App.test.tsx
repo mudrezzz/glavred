@@ -65,6 +65,59 @@ describe('App', () => {
     expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
   });
 
+  it('shows external source tabs and demo source cards inside author memory', () => {
+    render(<App />);
+
+    expect(screen.getByRole('tab', { name: /Лента|Р›РµРЅС‚Р°/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Источники|РСЃС‚РѕС‡РЅРёРєРё/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Архив|РђСЂС…РёРІ/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Источники|РСЃС‚РѕС‡РЅРёРєРё/i }));
+
+    expect(screen.getByText('TG archive · AI Product Manager')).toBeInTheDocument();
+    expect(screen.getByText('Customer interviews · AI adoption')).toBeInTheDocument();
+    expect(screen.getByText('Blog essays · Evals and trust')).toBeInTheDocument();
+  });
+
+  it('bulk archives filtered import candidates and can undo the latest bulk action', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
+    fireEvent.change(screen.getByLabelText(/Источник|РСЃС‚РѕС‡РЅРёРє/i), { target: { value: 'source-tg-archive' } });
+    fireEvent.change(screen.getByLabelText('Evidence policy'), { target: { value: 'archiveOnly' } });
+    fireEvent.click(screen.getByRole('button', { name: /Выбрать все по фильтру|Р’С‹Р±СЂР°С‚СЊ РІСЃРµ РїРѕ С„РёР»СЊС‚СЂСѓ/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Добавить все$|^Р”РѕР±Р°РІРёС‚СЊ РІСЃРµ$/i }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Подтвердить|РџРѕРґС‚РІРµСЂРґРёС‚СЊ/i }));
+
+    expect(screen.getAllByText(/Bulk archive/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /Архив|РђСЂС…РёРІ/i }));
+    expect(screen.getByText(/Почему demo magic не становится adoption/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Отменить последнее групповое действие|РћС‚РјРµРЅРёС‚СЊ РїРѕСЃР»РµРґРЅРµРµ РіСЂСѓРїРїРѕРІРѕРµ РґРµР№СЃС‚РІРёРµ/i }));
+    expect(screen.queryByText(/Почему demo magic не становится adoption/i)).not.toBeInTheDocument();
+  });
+
+  it('accepts one import candidate into author memory', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
+    fireEvent.change(screen.getByLabelText(/Источник|РСЃС‚РѕС‡РЅРёРє/i), { target: { value: 'source-blog-essays' } });
+    fireEvent.change(screen.getByLabelText('Evidence policy'), { target: { value: 'canSupportAssertions' } });
+
+    const candidate = screen.getByText(/Evals как интерфейс доверия/i).closest('article');
+    expect(candidate).toBeInTheDocument();
+    fireEvent.click(within(candidate as HTMLElement).getByRole('button', { name: /^В память$/i }));
+
+    expect(screen.getByRole('tab', { name: /Лента|Р›РµРЅС‚Р°/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getAllByText(/Evals как интерфейс доверия/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('imported').length).toBeGreaterThan(0);
+  });
+
   it('adds an author thought note without a title and persists it after reload', () => {
     const { unmount } = render(<App />);
 

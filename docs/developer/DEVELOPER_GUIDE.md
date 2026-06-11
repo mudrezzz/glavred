@@ -77,6 +77,9 @@ The current app implements:
 - Author memory feed with titleless thought capture, link-reaction previews,
   targeted manual corrections, search/filtering, lazy display, edit/delete actions,
   memory summary, and browser speech-recognition fallback.
+- Local-first external source shell inside author memory: source cards, reviewed queue,
+  grouping, candidate filters, archive-safe bulk actions, latest bulk undo, and archive
+  records.
 - Evidence-backed author-position assertions inferred from demo notes.
 - The first working flow from source signal to captured editorial learning note.
 - Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
@@ -134,8 +137,9 @@ New conceptual entities:
 - `AuthorPositionAssertion` for transparent claims about how the author thinks or
   writes, with evidence.
 - `AuthorExternalSource`, `ImportedMemoryCandidate`, `ImportCandidateGroup`,
-  `BulkImportAction`, and `ArchiveRecord` as planned import-review contracts. These
-  are documented concepts only until the local UI shell slice.
+  `BulkImportAction`, and `ArchiveRecord` for the local import-review shell. Only
+  `acceptedToMemory` candidates become `AuthorNote`; unreviewed and archive-only
+  candidates do not affect `AuthorPositionAssertion`.
 - `Topic`, `Fabula`, `TopicFabulaMatrix`, `ContentDesignRecord`, and
   `PlatformProfile` as structured editorial entities.
 - `ValidatorResult` as a common score/status/evidence contract across setup,
@@ -175,18 +179,19 @@ demo. They are stored as metadata plus `dataUrl`. Real PDF/DOCX parsing, OCR, im
 understanding, text extraction, chunking, and AI analysis belong to a later
 attachment-analysis slice after storage and provider boundaries are ready.
 
-## External Source Import Design
+## External Source Import Runtime Shell
 
-Slice 1.0.4 defines external source import as a planned architecture and UX layer. It
-does not add runtime TypeScript contracts yet.
+Slice 1.0.5 implements the first local-first UI shell for external source import. It
+adds runtime contracts and deterministic transitions, but still does not add real
+Telegram/social/blog APIs, OAuth, crawlers, backend workers, scheduled ingestion, or
+AI analysis.
 
-Conceptual import entities:
+Runtime import entities:
 
 - `AuthorExternalSource`: source settings for Telegram, social profiles, blogs,
   documents, article archives, and manual uploads.
 - `ImportedMemoryCandidate`: imported item waiting for author review.
 - `ImportCandidateGroup`: grouped candidates for large imports.
-- `BulkImportSelection`: explicit selection or selection-by-filter.
 - `BulkImportAction`: reversible bulk decision such as `Добавить все` or archive
   selected items.
 - `ArchiveRecord`: accepted historical material.
@@ -199,8 +204,10 @@ Rules:
 - Unreviewed candidates must not change `AuthorPositionAssertion`.
 - Large archives default to archive-safe acceptance, not active memory.
 - Bulk-accepted records must remain distinguishable from manually reviewed evidence.
-- The first implementation should be a local-first UI shell with mock candidates,
-  filters, grouping, selection, bulk actions, and undo.
+- `acceptCandidateToMemory` may create an `AuthorNote`; `acceptedToArchive` and
+  `bulkAcceptedToArchive` create only `ArchiveRecord`.
+- `LocalWorkspaceStore.normalizeWorkspace` fills missing import fields from the demo
+  workspace so old browser states continue to load.
 - Real Telegram/social/blog APIs, OAuth, crawlers, backend workers, scheduled
   ingestion, and AI analysis are later slices.
 

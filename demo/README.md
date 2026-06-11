@@ -49,10 +49,13 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
-## Planned External Sources Scenario
+## External Sources Scenario
 
-The next import layer is designed around the same AI Product Manager demo. Planned
-source examples:
+The import layer is implemented as a local-first UI shell around the same AI Product
+Manager demo. It uses mock candidates and source cards only; no real API, backend,
+crawler, OAuth, or AI analysis is connected.
+
+Demo source examples:
 
 - Telegram channel archive with about 1,000 historical posts about AI-B2B product
   work.
@@ -61,11 +64,10 @@ source examples:
 - A talk document about AI product discovery and confidence boundaries.
 - Manual upload of research notes and screenshots.
 
-The intended UX does not require reviewing every archived Telegram post. The import
-queue should group candidates by source, date, tag, duplicate risk, or evidence risk,
-then allow `Выбрать все по фильтру` and `Добавить все`. For large archives, the safe
-default is accepting material into archive, not immediately strengthening the live
-author-position model.
+The UX does not require reviewing every archived Telegram post. The import queue can
+filter and group candidates, then allow `Выбрать все по фильтру` and `Добавить все`.
+For large archives, the safe default is accepting material into archive, not
+immediately strengthening the live author-position model.
 
 ## Visual Walkthrough
 
@@ -97,30 +99,34 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 6. Use `Корректировать` from an assertion or evidence item to create a targeted manual
    correction.
 7. Try search, type filters, `Показать еще`, long-note expansion, edit, and delete.
-8. Open `Радар`.
-9. Review or edit the source signal.
-10. Click `Собрать инсайт`.
-11. Click `В план`.
-12. Approve the plan item.
-13. Click `Подготовить фабулу`.
-14. Edit the post brief if needed.
-15. Click `Утвердить фабулу`.
-16. Open `Редактура`.
-17. Click `Написать драфт`.
-18. Review checks and editor notes.
-19. Edit the draft text.
-20. Click `Утвердить текст`.
-21. Open `Выпуск`.
-22. Click `Подготовить выпуск`.
-23. Review target, checklist, final text, and Markdown preview.
-24. Complete the checklist and click `Готово к выпуску`.
-25. Click `Скопировать текст` or `Скачать Markdown`.
-26. Open `Аналитика`.
-27. Click `Подготовить аналитику`.
-28. Enter manual metrics and editorial conclusions.
-29. Click `Зафиксировать выводы`.
-30. Reload the page to confirm state persists.
-31. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+8. Open `Источники`, inspect demo source cards, then open `Очередь разбора`.
+9. Filter candidates, use `Выбрать все по фильтру`, confirm `Добавить все`, inspect
+   `Архив`, and try `Отменить последнее групповое действие`.
+10. Accept one candidate through `В память` to see it become an active memory note.
+11. Open `Радар`.
+12. Review or edit the source signal.
+13. Click `Собрать инсайт`.
+14. Click `В план`.
+15. Approve the plan item.
+16. Click `Подготовить фабулу`.
+17. Edit the post brief if needed.
+18. Click `Утвердить фабулу`.
+19. Open `Редактура`.
+20. Click `Написать драфт`.
+21. Review checks and editor notes.
+22. Edit the draft text.
+23. Click `Утвердить текст`.
+24. Open `Выпуск`.
+25. Click `Подготовить выпуск`.
+26. Review target, checklist, final text, and Markdown preview.
+27. Complete the checklist and click `Готово к выпуску`.
+28. Click `Скопировать текст` or `Скачать Markdown`.
+29. Open `Аналитика`.
+30. Click `Подготовить аналитику`.
+31. Enter manual metrics and editorial conclusions.
+32. Click `Зафиксировать выводы`.
+33. Reload the page to confirm state persists.
+34. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 
@@ -136,9 +142,8 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-The next demo extension should design external author-memory sources and import review
-without connecting real APIs. Topics and fabulas as structured editorial entities
-remain the next product layer after that planning work.
+Topics and fabulas as structured editorial entities are the next product layer after
+the local import shell.
 
 Real provider calls, API keys, platform metrics, publication automation, and backend
 sync remain later steps. Real attachment parsing and AI analysis are also deferred.

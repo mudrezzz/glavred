@@ -3,11 +3,18 @@ import {
   approveFinalText,
   approvePlanItem,
   approvePostBrief,
+  acceptCandidateToArchive,
+  acceptCandidateToMemory,
+  bulkAcceptCandidatesToArchive,
+  filterImportCandidates,
+  groupImportCandidates,
+  markCandidateAcceptedToMemory,
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
   rejectPlanItem,
   rejectPostBrief,
+  undoLastBulkImportAction,
   reviseDraft,
   toggleReleaseChecklistItem,
   updateLearningNote
@@ -136,6 +143,72 @@ describe('editorial workspace domain', () => {
 
     expect(event.detectedSignals).toContain('attached-material');
     expect(event.detectedSignals).toContain('workflow-risk');
+  });
+
+  it('accepts import candidates to memory as author notes', () => {
+    const workspace = createDemoWorkspace();
+    const candidate = workspace.importCandidates.find((item) => item.evidencePolicy === 'canSupportAssertions');
+    expect(candidate).toBeDefined();
+    const source = workspace.externalSources.find((item) => item.id === candidate?.sourceId);
+    expect(source).toBeDefined();
+
+    const note = acceptCandidateToMemory(candidate!, source!);
+    const updatedCandidate = markCandidateAcceptedToMemory(candidate!);
+
+    expect(note.id).toBe(`note-import-${candidate!.id}`);
+    expect(note.type).toBe('linkReaction');
+    expect(note.tags).toContain('imported');
+    expect(updatedCandidate.reviewStatus).toBe('acceptedToMemory');
+    expect(updatedCandidate.evidencePolicy).toBe('canSupportAssertions');
+  });
+
+  it('accepts import candidates to archive without creating author notes', () => {
+    const workspace = createDemoWorkspace();
+    const candidate = workspace.importCandidates[0];
+    const source = workspace.externalSources.find((item) => item.id === candidate.sourceId)!;
+    const record = acceptCandidateToArchive(candidate, source);
+
+    expect(record.id).toBe(`archive-${candidate.id}`);
+    expect(record.title).toBe(candidate.title);
+    expect(record.evidencePolicy).toBe(candidate.evidencePolicy);
+    expect(record.acceptanceMode).toBe('manual');
+  });
+
+  it('bulk archives filtered candidates and can undo the latest bulk action', () => {
+    const workspace = createDemoWorkspace();
+    const filtered = filterImportCandidates(workspace.importCandidates, {
+      sourceId: 'source-tg-archive',
+      reviewStatus: 'new',
+      evidencePolicy: 'archiveOnly',
+      duplicateRisk: 'all'
+    });
+    const result = bulkAcceptCandidatesToArchive(filtered, workspace.externalSources);
+    const changedById = new Map(result.candidates.map((candidate) => [candidate.id, candidate]));
+    const changedWorkspace = {
+      ...workspace,
+      importCandidates: workspace.importCandidates.map((candidate) => changedById.get(candidate.id) ?? candidate),
+      archiveRecords: [...result.archiveRecords, ...workspace.archiveRecords],
+      bulkImportActions: [result.action]
+    };
+    const restored = undoLastBulkImportAction(changedWorkspace);
+
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(result.candidates.every((candidate) => candidate.reviewStatus === 'bulkAcceptedToArchive')).toBe(true);
+    expect(result.archiveRecords.every((record) => record.acceptanceMode === 'bulk')).toBe(true);
+    expect(restored.bulkImportActions).toEqual([]);
+    expect(restored.archiveRecords.some((record) => result.action.createdArchiveRecordIds.includes(record.id))).toBe(false);
+    expect(restored.importCandidates.find((candidate) => candidate.id === filtered[0].id)?.reviewStatus).toBe('new');
+  });
+
+  it('groups import candidates without changing author-position assertions', () => {
+    const workspace = createDemoWorkspace();
+    const beforeAssertions = workspace.authorPositionAssertions;
+    const groups = groupImportCandidates(workspace.importCandidates, 'source');
+    const archiveOnly = workspace.importCandidates.filter((candidate) => candidate.evidencePolicy === 'archiveOnly');
+
+    expect(groups.length).toBeGreaterThan(1);
+    expect(archiveOnly.length).toBeGreaterThan(0);
+    expect(workspace.authorPositionAssertions).toBe(beforeAssertions);
   });
 
   it('creates a deterministic draft with thesis, conflict, and CTA from an approved brief', () => {
