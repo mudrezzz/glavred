@@ -805,6 +805,58 @@ Status:
   - UI tests for manual validator cards, score, evidence, and stale state. Done.
   - `npm test -- --run` passed.
 
+### Slice 1.2.1: Author Memory Sources UX Alignment
+
+- Status: Done
+- Goal: Align `Память автора -> Источники` with the product-wide operational entity
+  catalog UX.
+- User value: The author scans sources the same way as topics and fabulas: one
+  source per row, key metadata visible, details on demand, and row-level actions.
+- Scope:
+  - Replace the two-column source card grid with a single-column source list.
+  - Show type, title, status, import mode, candidate count, and last checked date in
+    each row.
+  - Expand a row to show notes and import metadata.
+  - Keep existing local/mock actions: open queue, pause/resume, and manual check.
+  - Add an ADR requiring single-column list-first layouts for operational entity
+    catalogs.
+- Out of scope:
+  - Real import integrations.
+  - Queue/archive behavior changes.
+  - New source types or import transitions.
+- Validation:
+  - UI test for single-column source list, no `.source-grid`, and source detail
+    expansion. Done.
+  - `npm test -- --run src/App.test.tsx` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run docs:screenshots` passed.
+
+### Slice 1.2.2: Source List Visual Repair and UI Guardrails
+
+- Status: Done
+- Goal: Repair the broken `Память автора -> Источники` source list layout and add
+  browser-level guardrails so similar regressions are caught before manual review.
+- User value: Source rows stay readable and operational; autosave feedback no longer
+  blocks the workspace as a permanent bottom overlay.
+- Scope:
+  - Replace the failed multi-column source row with a stable header/meta/actions/detail
+    structure.
+  - Prevent source titles from collapsing into narrow vertical columns.
+  - Make autosave/status toast event-driven and temporary instead of visible on initial
+    render.
+  - Add `npm run test:visual` as Playwright visual smoke coverage for source rows and
+    toast behavior.
+  - Add ADR for visual guardrails on operational UI surfaces.
+- Out of scope:
+  - Full pixel-perfect screenshot baselines for every screen.
+  - Redesigning queue/archive behavior.
+  - Real external source integrations.
+- Validation:
+  - UI tests for source row structure and initial toast absence. Done.
+  - Playwright visual smoke for row overflow/title collapse/actions/toast lifecycle.
+    Done.
+
 ### Slice 1.3: Context Chat Wizard Skeleton
 
 - Status: Ready
@@ -873,6 +925,8 @@ Status:
   2026-06-11.
 - Slice 1.1.3: Add and Delete Topics and Fabulas. Completed 2026-06-11.
 - Slice 1.2: Validator Framework Baseline. Completed 2026-06-11.
+- Slice 1.2.1: Author Memory Sources UX Alignment. Completed 2026-06-12.
+- Slice 1.2.2: Source List Visual Repair and UI Guardrails. Completed 2026-06-12.
 
 ## Blocked Items
 

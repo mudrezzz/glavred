@@ -24,3 +24,5 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-11-make-validation-a-first-class-ux-surface.md](2026-06-11-make-validation-a-first-class-ux-surface.md)
 - [2026-06-11-run-editorial-validation-explicitly.md](2026-06-11-run-editorial-validation-explicitly.md)
 - [2026-06-11-keep-editorial-entity-layouts-contained.md](2026-06-11-keep-editorial-entity-layouts-contained.md)
+- [2026-06-12-use-single-column-lists-for-operational-entity-catalogs.md](2026-06-12-use-single-column-lists-for-operational-entity-catalogs.md)
+- [2026-06-12-add-visual-guardrails-for-operational-ui.md](2026-06-12-add-visual-guardrails-for-operational-ui.md)

@@ -181,9 +181,10 @@ describe('App', () => {
     confirm.mockRestore();
   });
 
-  it('shows external source tabs and demo source cards inside author memory', () => {
+  it('shows external source tabs and demo sources as a single-column list inside author memory', () => {
     render(<App />);
 
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByText('Импорт и архив')).toBeInTheDocument();
     expect(screen.getAllByText('Источники').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Кандидаты').length).toBeGreaterThan(0);
@@ -197,6 +198,15 @@ describe('App', () => {
     expect(screen.getByText('TG archive · AI Product Manager')).toBeInTheDocument();
     expect(screen.getByText('Customer interviews · AI adoption')).toBeInTheDocument();
     expect(screen.getByText('Blog essays · Evals and trust')).toBeInTheDocument();
+    expect(screen.getByTestId('external-source-list')).toBeInTheDocument();
+    expect(document.querySelector('.source-grid')).toBeNull();
+    expect(document.querySelectorAll('.source-row').length).toBeGreaterThan(1);
+    expect(document.querySelector('.source-row-main')).toBeInTheDocument();
+    expect(document.querySelector('.source-row-meta-bar')).toBeInTheDocument();
+    expect(document.querySelector('.source-title-button')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Customer interviews/i }));
+    const sourceRow = screen.getByRole('button', { name: /Customer interviews/i }).closest('article') as HTMLElement;
+    expect(sourceRow.querySelector('.source-row-details')).toBeInTheDocument();
   });
 
   it('allows clearing import candidate selection', () => {

@@ -83,7 +83,7 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product
-Manager demo. It uses mock candidates and source cards only; no real API, backend,
+Manager demo. It uses mock candidates and a source list only; no real API, backend,
 crawler, OAuth, or AI analysis is connected.
 
 Demo source examples:
@@ -130,7 +130,7 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 6. Use `Корректировать` from an assertion or evidence item to create a targeted manual
    correction.
 7. Try search, type filters, `Показать еще`, long-note expansion, edit, and delete.
-8. Open `Источники`, inspect demo source cards, then open `Очередь разбора`.
+8. Open `Источники`, inspect demo source rows, then open `Очередь разбора`.
 9. Filter candidates, use `Выбрать все по фильтру`, confirm `Добавить все`, inspect
    `Архив`, and try `Отменить последнее групповое действие`.
 10. Accept one candidate through `В память` to see it become an active memory note.

@@ -153,11 +153,18 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
 export function App() {
   const [workspace, setWorkspace] = useState<WorkspaceState>(() => store.load());
   const active = workspace.activeSection;
-  const [toast, setToast] = useState('Рабочее пространство сохранено локально');
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     store.save({ ...workspace, updatedAt: new Date().toISOString() });
   }, [workspace]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+
+    const timeoutId = window.setTimeout(() => setToast(''), 2800);
+    return () => window.clearTimeout(timeoutId);
+  }, [toast]);
 
   function patchWorkspace(patch: Partial<WorkspaceState>, message?: string) {
     setWorkspace((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
@@ -1683,6 +1690,8 @@ function ExternalSourcesView({
   onOpenQueue: (sourceId?: string) => void;
   onPatchSource: (source: AuthorExternalSource) => void;
 }) {
+  const [expandedSourceId, setExpandedSourceId] = useState(sources[0]?.id ?? '');
+
   return (
     <div className="import-workspace">
       <section className="card import-intro">
@@ -1693,23 +1702,42 @@ function ExternalSourcesView({
           Кандидаты mock/deterministic; Telegram, OAuth, crawlers и AI-анализ не подключены.
         </p>
       </section>
-      <div className="source-grid">
+      <div className="source-list" data-testid="external-source-list">
         {sources.map((source) => {
           const sourceCandidates = candidates.filter((candidate) => candidate.sourceId === source.id);
           const needsReview = sourceCandidates.filter((candidate) => candidate.reviewStatus === 'new').length;
+          const isExpanded = expandedSourceId === source.id;
 
           return (
-            <article className="card source-card" key={source.id}>
-              <div className="source-head">
-                <span className="sig info">{sourceTypeLabel(source.type)}</span>
+            <article className={`card source-row${isExpanded ? ' expanded' : ''}`} data-testid="source-row" key={source.id}>
+              <div className="source-row-main">
+                <div className="source-row-title">
+                  <span className="sig info">{sourceTypeLabel(source.type)}</span>
+                  <button
+                    className="entity-title-button source-title-button"
+                    type="button"
+                    aria-expanded={isExpanded}
+                    onClick={() => setExpandedSourceId(isExpanded ? '' : source.id)}
+                  >
+                    {source.title}
+                  </button>
+                </div>
                 <span className={`pill ${source.status === 'paused' ? 'pin' : 'ok'}`}>
                   <i />
                   {sourceStatusLabel(source.status)}
                 </span>
               </div>
-              <h3>{source.title}</h3>
-              <p>{source.notes}</p>
-              <dl className="meta-list">
+              <div className="source-row-meta-bar">
+                <span className="entity-row-meta">{importModeLabel(source.importMode)}</span>
+                <span className="entity-row-meta">
+                  {sourceCandidates.length} total · {needsReview} review
+                </span>
+                <span className="entity-row-meta">checked {source.lastCheckedAt || 'нет'}</span>
+              </div>
+              {isExpanded ? (
+                <div className="source-row-details">
+                  <p>{source.notes}</p>
+                  <dl className="entity-detail-list">
                 <dt>Mode</dt>
                 <dd>{importModeLabel(source.importMode)}</dd>
                 <dt>Candidates</dt>
@@ -1720,8 +1748,10 @@ function ExternalSourcesView({
                 <dd>{source.lastCheckedAt || 'не проверялся'}</dd>
                 <dt>Imported</dt>
                 <dd>{source.lastImportedAt || 'нет импорта'}</dd>
-              </dl>
-              <div className="inline-actions">
+                  </dl>
+                </div>
+              ) : null}
+              <div className="source-row-actions">
                 <button className="btn btn-pri btn-sm" type="button" onClick={() => onOpenQueue(source.id)}>
                   Открыть очередь
                 </button>

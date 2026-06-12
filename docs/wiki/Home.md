@@ -1,30 +1,21 @@
 # Glavred Wiki
 
-Glavred - локальный редакционный кабинет для экспертного автора. Сейчас продукт
-показывает полный демо-цикл: автор фиксирует мысли, система собирает evidence-backed
-позицию, затем эта позиция используется в производстве поста, выпуске и аналитике.
+Glavred is a local-first editorial cabinet for an expert author. The current product shows a full demo loop: the author captures thoughts, the system builds an evidence-backed author position, and that position is used in post production, release, and analytics.
 
-Постоянный демо-контекст: Telegram-блог AI Product Manager, который делится
-исследовательским опытом построения AI-B2B-продуктов.
+Permanent demo context: a Telegram blog by an AI Product Manager sharing research experience in building AI-B2B products.
 
-![Память автора](assets/screenshots/01-author-memory-home.png)
+![Author memory](assets/screenshots/01-author-memory-home.png)
 
-## Что уже можно увидеть
+## What You Can See
 
-- [Память автора](01-author-memory): внутренняя лента мыслей, ссылок, файлов и
-  корректировок.
-- [Production flow](02-production-flow): путь от радара до утвержденной фабулы поста.
-- [Выпуск и аналитика](03-release-and-analytics): ручной export и learning note.
-- [Local-first demo](04-local-first-demo): запуск, reset и пересъемка скриншотов.
-- [External sources](05-external-sources): planned UX for source settings, review
-  queue, bulk import, and archive-safe `Добавить все`.
+- [Author Memory](01-author-memory): internal feed for thoughts, links, files, and corrections.
+- [Production Flow](02-production-flow): path from radar to approved post brief.
+- [Release and Analytics](03-release-and-analytics): manual export and learning note.
+- [Local-First Demo](04-local-first-demo): launch, reset, localStorage, and screenshot refresh.
+- [External Sources](05-external-sources): local source list, review queue, bulk import, and archive-safe `Добавить все`.
 
-## Главная идея
+## Core Idea
 
-Glavred не должен превращать автора в генератор generic-контента. Центральный слой -
-это авторская память: мысли, реакции, правки и опубликованные материалы. Из них
-собирается прозрачная модель авторской позиции, а production pipeline должен работать
-с этой позицией как с ограничением и источником доказательств.
+Glavred should not turn the author into a generic content generator. The central layer is author memory: thoughts, reactions, corrections, and published materials. From that material, the product builds a transparent model of the author's position.
 
-Текущий runtime остается deterministic и local-first: реальных AI provider calls,
-backend, автопостинга и real metrics ingestion пока нет.
+The runtime remains deterministic and local-first for now. There are no real AI provider calls, backend, autoposting, or real metrics ingestion yet.

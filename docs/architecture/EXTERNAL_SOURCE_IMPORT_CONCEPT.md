@@ -30,7 +30,7 @@ manual notes from unreviewed imported material.
 
 ## Source Settings UX
 
-The `Источники` tab should show source cards.
+The `Источники` tab should show a single-column source list.
 
 Source types:
 
@@ -41,7 +41,7 @@ Source types:
 - Article archive.
 - Manual upload.
 
-Each source card should show:
+Each source row should show:
 
 - source type and title;
 - URL or file reference;
@@ -250,7 +250,7 @@ Shell`.
 Recommended first runtime scope:
 
 - add a local-first `Источники` tab inside `Память автора`;
-- add mock source cards for the AI Product Manager demo;
+- add mock source rows for the AI Product Manager demo;
 - add a mock review queue with 15-30 candidates;
 - implement filters, grouping, selection, `Добавить все`, and undo locally;
 - persist source settings, candidates, groups, and bulk action state in local storage;

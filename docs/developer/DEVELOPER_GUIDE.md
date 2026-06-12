@@ -34,6 +34,12 @@ Run build smoke test:
 npm run smoke
 ```
 
+Run browser visual smoke checks for operational UI guardrails:
+
+```bash
+npm run test:visual
+```
+
 Refresh wiki screenshots:
 
 ```bash
@@ -77,7 +83,7 @@ The current app implements:
 - Author memory feed with titleless thought capture, link-reaction previews,
   targeted manual corrections, search/filtering, lazy display, edit/delete actions,
   memory summary, and browser speech-recognition fallback.
-- Local-first external source shell inside author memory: source cards, reviewed queue,
+- Local-first external source shell inside author memory: source list, reviewed queue,
   grouping, candidate filters, archive-safe bulk actions, latest bulk undo, and archive
   records.
 - Evidence-backed author-position assertions inferred from demo notes.
@@ -103,6 +109,12 @@ repository so wiki changes are reviewed, tested, and versioned with the product.
 `npm run docs:screenshots` starts Vite on a dedicated local port, opens the app in
 Playwright, resets browser `localStorage`, walks through the demo flow, and writes PNG
 files to `docs/wiki/assets/screenshots/`.
+
+`npm run test:visual` starts Vite on a dedicated local port and runs Playwright layout
+assertions for high-risk operational screens. The current guardrail checks that
+`Память автора -> Источники` rows do not overflow or collapse source titles into narrow
+columns, that row actions stay inside the row, and that autosave/status toast appears
+only after an explicit action and disappears automatically.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
@@ -286,6 +298,13 @@ Frontend rules are now ADR-backed:
 - Use a single main column plus a right-side validation panel for editorial setup.
 - Do not render anonymous domain text as a hero.
 - Use compact list-first catalogs with details on demand.
+- Use single-column lists for operational entity catalogs; avoid two-column card
+  grids for editable/reviewable entities such as sources, topics, fabulas, future
+  platforms, formats, and CDR/PDR records.
+- Add real-browser visual smoke checks when changing operational catalog layout,
+  because DOM tests do not catch collapsed text columns or overflowing actions.
+- Keep autosave/status toast event-driven and temporary; do not use a permanent bottom
+  overlay for local workspace status.
 - Keep validation visible as a first-class UX surface.
 - Run editorial setup validation only after explicit `Проверить`; show stale state
   after saved setup changes.

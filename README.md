@@ -108,6 +108,12 @@ Run the smoke build:
 npm run smoke
 ```
 
+Run browser visual smoke checks:
+
+```bash
+npm run test:visual
+```
+
 Update user wiki screenshots:
 
 ```bash

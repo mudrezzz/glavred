@@ -128,9 +128,13 @@ async function main() {
     await page.getByRole('button', { name: /Корректировать evidence/i }).first().click();
     await screenshot(page, '04-author-memory-correction-evidence');
 
+    await page.locator('[role="tab"]').nth(1).click();
+    await page.locator('[data-testid="source-row"]').first().waitFor();
+    await screenshot(page, '09-external-sources-source-list');
+
     await page.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }).click();
     await page.locator('.candidate-card').first().waitFor();
-    await screenshot(page, '09-external-sources-queue');
+    await screenshot(page, '10-external-sources-queue');
 
     await completeProductionFlow(page);
     await screenshot(page, '05-approved-post-brief');

@@ -10,7 +10,9 @@ insight card, content plan item, approved post brief, deterministic draft, edito
 checks, approved final text, manual release package, and captured editorial learning
 notes.
 
-Work is saved in browser local storage.
+Work is saved in browser local storage. Save/status messages appear only after an
+explicit action and disappear automatically; the app does not keep a permanent bottom
+toast over the workspace.
 
 For a visual walkthrough with real interface screenshots, use the GitHub Wiki after it
 has been initialized:
@@ -68,6 +70,10 @@ manual note feed through internal tabs:
 - `Архив`: keep accepted historical posts and long-form materials with source
   provenance.
 
+The `Источники` tab uses the same operational catalog pattern as topics and fabulas:
+one source per row, key metadata visible immediately, row actions attached to the
+source, and full notes/details after expanding the row.
+
 For large archives, the planned queue supports group work:
 
 - select one item, a page, or all items matching the active filter;
@@ -119,7 +125,7 @@ status, evidence, and suggested fixes.
 - Use `Голосом` when the browser supports speech recognition; otherwise the button
   stays disabled and the text area remains the fallback.
 - Review evidence behind author-position assertions.
-- Open the internal `Источники` tab to inspect demo source cards for the AI Product
+- Open the internal `Источники` tab to inspect the demo source list for the AI Product
   Manager scenario.
 - Open `Очередь разбора`, filter candidates by source/status/evidence policy/duplicate
   risk, and switch between `Список` and `Группы`.
