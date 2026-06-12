@@ -23,6 +23,7 @@ import {
   bulkRejectCandidates,
   completeTopicFabulaMatrix,
   createEditorialRule,
+  createEditorialValidationRun,
   createFabulaDraft,
   createTopicDraft,
   deleteFabula,
@@ -44,7 +45,7 @@ import {
   undoLastBulkImportAction,
   updateEditorialRule,
   updateLearningNote,
-  validateEditorialSetup,
+  validatorDefinitionTitle,
   type ArchiveRecord,
   type AuthorExternalSource,
   type AuthorAttachment,
@@ -74,6 +75,7 @@ import {
   type SourceSignal,
   type Topic,
   type TopicFabulaMatrixEntry,
+  type ValidatorResult,
   type WeightRange,
   type WorkspaceSection,
   type WorkspaceState
@@ -181,12 +183,7 @@ export function App() {
       const checkedAt = new Date().toISOString();
       return {
         ...current,
-        editorialValidationRun: {
-          id: `editorial-validation-${Date.now()}`,
-          revision: current.editorialSetupRevision ?? 0,
-          checkedAt,
-          summary: validateEditorialSetup(current)
-        },
+        editorialValidationRun: createEditorialValidationRun(current, checkedAt),
         updatedAt: checkedAt
       };
     });
@@ -3188,6 +3185,9 @@ function EditorialValidationPanel({
   onRunValidation: () => void;
 }) {
   const validation = validationRun?.summary ?? null;
+  const validatorResults = validationRun?.results ?? [];
+  const aggregateStatus = validationRun?.aggregateStatus ?? validation?.status ?? null;
+  const aggregateScore = validationRun?.aggregateScore ?? 0;
   const isStale = Boolean(validationRun && validationRun.revision !== currentRevision);
   const runState = !validationRun ? 'Еще не проверено' : isStale ? 'Требует повторной проверки' : 'Проверено';
 
@@ -3198,7 +3198,7 @@ function EditorialValidationPanel({
         <span className={`validation-run-state ${!validationRun ? 'empty' : isStale ? 'stale' : 'fresh'}`}>
           {runState}
         </span>
-        {validation ? <ValidationBadge status={validation.status} /> : null}
+        {aggregateStatus ? <ValidationBadge status={aggregateStatus} /> : null}
         <h3>{validation?.title ?? 'Проверка еще не запускалась'}</h3>
         <p>
           {validation
@@ -3215,6 +3215,24 @@ function EditorialValidationPanel({
         </button>
       </div>
       {validation ? (
+        <div className="validator-summary">
+          <div>
+            <span className="mono-label">Score</span>
+            <strong>{Math.round(aggregateScore * 100)}%</strong>
+          </div>
+          <div>
+            <span className="mono-label">Validators</span>
+            <strong>{validatorResults.length || validation.items.length}</strong>
+          </div>
+        </div>
+      ) : null}
+      {validatorResults.length > 0 ? (
+        <div className="validation-items validator-cards">
+          {validatorResults.map((result) => (
+            <ValidatorCard key={result.id} result={result} />
+          ))}
+        </div>
+      ) : validation ? (
         <div className="validation-items">
           {validation.items.map((item) => (
             <article className="validation-item" key={item.id}>
@@ -3233,6 +3251,52 @@ function EditorialValidationPanel({
       </p>
       {validationRun ? <p className="validation-note">Последняя проверка: {formatDateTime(validationRun.checkedAt)}</p> : null}
     </aside>
+  );
+}
+
+function ValidatorCard({ result }: { result: ValidatorResult }) {
+  return (
+    <article className="validation-item validator-card">
+      <div className="validator-card-head">
+        <ValidationBadge status={result.status} />
+        <div>
+          <b>{validatorDefinitionTitle(result.validatorId)}</b>
+          <span>{result.validatorId}</span>
+        </div>
+        <strong>{Math.round(result.score * 100)}%</strong>
+      </div>
+      <p>{result.summary}</p>
+      <details className="validator-details">
+        <summary>Evidence и рекомендации</summary>
+        <div className="validator-detail-block">
+          <span className="mono-label">Evidence</span>
+          {result.evidence.length > 0 ? (
+            result.evidence.map((item) => (
+              <blockquote key={item.id}>
+                <b>{item.title}</b>
+                <p>{item.quote}</p>
+                <small>{item.reason}</small>
+              </blockquote>
+            ))
+          ) : (
+            <p className="muted-text">Evidence пока нет.</p>
+          )}
+        </div>
+        <div className="validator-detail-block">
+          <span className="mono-label">Suggestions</span>
+          {result.suggestions.length > 0 ? (
+            result.suggestions.map((item) => (
+              <div className={`validator-suggestion ${item.severity}`} key={item.id}>
+                <b>{item.title}</b>
+                <p>{item.description}</p>
+              </div>
+            ))
+          ) : (
+            <p className="muted-text">Рекомендаций нет.</p>
+          )}
+        </div>
+      </details>
+    </article>
   );
 }
 

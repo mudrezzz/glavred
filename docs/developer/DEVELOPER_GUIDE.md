@@ -242,10 +242,11 @@ Rules:
 
 ## Editorial Model UX Rules
 
-Slice 1.1.1 adds `ProjectProfile`, `EditorialRule`, and lightweight
-`EditorialValidationSummary` contracts around the Slice 1.1 topic/fabula layer.
-Slice 1.1.2 adds explicit validation-run state so the UI can show a saved validation
-snapshot instead of recalculating setup feedback live.
+Slice 1.1.1 adds `ProjectProfile`, `EditorialRule`, and lightweight setup validation
+contracts around the Slice 1.1 topic/fabula layer. Slice 1.1.2 adds explicit
+validation-run state so the UI can show a saved validation snapshot instead of
+recalculating setup feedback live. Slice 1.2 replaces the ad-hoc setup check with a
+shared validator baseline.
 
 Runtime rules:
 
@@ -257,11 +258,18 @@ Runtime rules:
 - `WorkspaceState.editorialSetupRevision` increments after committed editorial setup
   changes.
 - `WorkspaceState.editorialValidationRun` stores the last manual validation snapshot:
-  run id, revision, checked timestamp, and `EditorialValidationSummary`.
+  run id, revision, checked timestamp, `ValidatorRun.results`, aggregate status,
+  aggregate score, and a compatibility `EditorialValidationSummary`.
 - Legacy `EditorialModel.rubrics` and `EditorialModel.fabula` remain available for
   downstream service compatibility, but the UI no longer exposes them as setup fields.
-- `validateEditorialSetup(workspace)` is deterministic scaffolding for the future
-  validator framework. It returns summary status, item statuses, and recommendations.
+- `runEditorialSetupValidators(workspace)` is the deterministic Slice 1.2 validator
+  runner. It returns `ValidatorRun` with `ValidatorResult[]`.
+- `createEditorialValidationRun(workspace)` wraps the runner with aggregate status,
+  aggregate score, and summary compatibility for the current UI/storage boundary.
+- `validateEditorialSetup(workspace)` remains as a summary helper for compatibility.
+- Implemented setup validators:
+  `author-position-clarity`, `anti-ai-style-coverage`, `audience-value-fit`,
+  `goal-consistency`, and `topic-fabula-coverage`.
 - Topic/fabula CRUD is explicit:
   - `createTopicDraft()` and `createFabulaDraft()` create local draft entities.
   - `addTopic()` and `addFabula()` commit normalized entities.

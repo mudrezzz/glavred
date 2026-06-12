@@ -92,10 +92,11 @@ describe('App', () => {
     expect(screen.getByText(/Требует повторной проверки/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
-    expect(screen.getByText('AI product discovery')).toBeInTheDocument();
-    expect(screen.getByText('AI product discovery').closest('.entity-row-main')?.querySelector('.entity-row-meta')).toBeTruthy();
+    const topicButton = screen.getByRole('button', { name: 'AI product discovery' });
+    expect(topicButton).toBeInTheDocument();
+    expect(topicButton.closest('.entity-row-main')?.querySelector('.entity-row-meta')).toBeTruthy();
     expect(document.querySelector('.entity-details-scroll')).toBeInTheDocument();
-    const topicRow = screen.getByText('AI product discovery').closest('article') as HTMLElement;
+    const topicRow = topicButton.closest('article') as HTMLElement;
     fireEvent.click(within(topicRow).getByRole('button', { name: /^Редактировать$/i }));
     fireEvent.change(screen.getByLabelText('Название'), {
       target: { value: 'AI workflow discovery' }
@@ -118,6 +119,20 @@ describe('App', () => {
     expect(screen.getByText(/Есть несохраненные изменения/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Сохранить матрицу/i }));
     expect(screen.queryByText(/Есть несохраненные изменения/i)).not.toBeInTheDocument();
+  });
+
+  it('shows validator cards with score, evidence, and suggestions after manual validation', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
+    expect(screen.queryByText('author-position-clarity')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Проверить$/i }));
+
+    expect(screen.getByText('author-position-clarity')).toBeInTheDocument();
+    expect(screen.getByText('topic-fabula-coverage')).toBeInTheDocument();
+    expect(screen.getByText('Score')).toBeInTheDocument();
+    expect(screen.getAllByText(/Evidence и рекомендации/i).length).toBeGreaterThan(0);
   });
 
   it('adds and deletes topics and fabulas with matrix updates', () => {

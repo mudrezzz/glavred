@@ -94,6 +94,11 @@ Every tab has a right-side validation panel, but it does not validate live while
 
 Deleting a topic or fabula removes it and all of its matrix links from the local workspace. Use `Пауза` when the entity should stay in the model but temporarily stop participating in planning. If a topic or fabula is already referenced by current production artifacts, Glavred warns before deletion; existing artifacts are not rewritten automatically in this slice.
 
+Slice 1.2 turns the manual setup check into validator cards. The current validators
+cover author-position clarity, anti-AI style coverage, audience value fit, goal
+consistency, and topic/fabula coverage. Each card shows score, red/yellow/green
+status, evidence, and suggested fixes.
+
 ## Current Supported Flow
 
 - Open `Память автора`.

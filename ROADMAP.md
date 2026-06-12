@@ -774,24 +774,47 @@ Status:
 
 ### Slice 1.2: Validator Framework Baseline
 
-- Status: Ready
+- Status: Done
 - Goal: Introduce generic validator results across author position, topics, fabulas,
-  and production artifacts.
+  and editorial setup entities.
 - Scope:
   - Add `ValidatorDefinition`, `ValidatorResult`, score/status/evidence model.
   - Add first validators for author position clarity, anti-AI style, audience value,
     and goal consistency.
   - Show compact red/yellow/green indicators with evidence drill-down.
+- Implemented:
+  - Added `ValidatorStatus`, `ValidatorTargetType`, `ValidatorEvidence`,
+    `ValidatorSuggestion`, `ValidatorDefinition`, `ValidatorResult`, and
+    `ValidatorRun`.
+  - Added deterministic `runEditorialSetupValidators(workspace)` with validators:
+    `author-position-clarity`, `anti-ai-style-coverage`, `audience-value-fit`,
+    `goal-consistency`, and `topic-fabula-coverage`.
+  - Kept validation manual through `Проверить`; live validation remains intentionally
+    disabled.
+  - Updated the right validation panel to show aggregate score, validator cards,
+    evidence, and suggested fixes.
+  - Normalized old local workspaces without `ValidatorRun.results`.
+- Out of scope:
+  - Real AI validation.
+  - Draft/release/archive validators.
+  - Context chat.
+- Validation:
+  - Domain tests for validator results, score/status, evidence, suggestions, matrix
+    red state, and anti-AI degradation. Done.
+  - Storage tests for `ValidatorRun.results` and old snapshot normalization. Done.
+  - UI tests for manual validator cards, score, evidence, and stale state. Done.
+  - `npm test -- --run` passed.
 
 ### Slice 1.3: Context Chat Wizard Skeleton
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add right-side section-aware chat skeleton for guided setup.
 - Scope:
   - Add chat shell synchronized with active section.
   - Use deterministic suggestions first.
   - Convert accepted suggestions into structured entities.
   - Keep AI provider calls out of scope until provider integration is re-opened.
+  - Use latest `ValidatorRun.results` as context for setup recommendations.
 
 ### Slice 1.4: Content Plan as Broadcast Grid
 
@@ -846,6 +869,10 @@ Status:
 - Slice 1.0.5.1: External Sources UX Fixes. Completed 2026-06-11.
 - Slice 1.1: Topics and Fabulas as Editorial Entities. Completed 2026-06-11.
 - Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs. Completed 2026-06-11.
+- Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes. Completed
+  2026-06-11.
+- Slice 1.1.3: Add and Delete Topics and Fabulas. Completed 2026-06-11.
+- Slice 1.2: Validator Framework Baseline. Completed 2026-06-11.
 
 ## Blocked Items
 
@@ -864,4 +891,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.2: Validator Framework Baseline`.
+Start `Slice 1.3: Context Chat Wizard Skeleton`.

@@ -1,7 +1,11 @@
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   completeTopicFabulaMatrix,
+  getValidatorRunScore,
+  getValidatorRunStatus,
   normalizeWeightRange,
+  summarizeValidatorRun,
+  type EditorialValidationRun,
   type WorkspaceState,
   type WorkspaceStore
 } from '../domain/editorialWorkspace';
@@ -60,7 +64,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     projectProfile: saved.projectProfile ?? demo.projectProfile,
     editorialRules: saved.editorialRules ?? demo.editorialRules,
     editorialSetupRevision: saved.editorialSetupRevision ?? demo.editorialSetupRevision,
-    editorialValidationRun: saved.editorialValidationRun ?? null,
+    editorialValidationRun: normalizeEditorialValidationRun(saved.editorialValidationRun),
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
@@ -80,5 +84,27 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     bulkImportActions: saved.bulkImportActions ?? [],
     activeSection: saved.activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt
+  };
+}
+
+function normalizeEditorialValidationRun(
+  run: Partial<EditorialValidationRun> | null | undefined
+): EditorialValidationRun | null {
+  if (!run) return null;
+
+  const results = run.results ?? [];
+  const validatorRun = {
+    id: run.id ?? `validator-run-${Date.now()}`,
+    revision: run.revision ?? 0,
+    checkedAt: run.checkedAt ?? new Date().toISOString(),
+    results
+  };
+  const summary = run.summary ?? summarizeValidatorRun(validatorRun);
+
+  return {
+    ...validatorRun,
+    aggregateStatus: run.aggregateStatus ?? summary.status ?? getValidatorRunStatus(results),
+    aggregateScore: run.aggregateScore ?? getValidatorRunScore(results),
+    summary
   };
 }

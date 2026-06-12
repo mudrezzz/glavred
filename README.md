@@ -35,7 +35,9 @@ clicks `Проверить`, gets a saved snapshot, and sees `Требует п�
 committed setup changes. Topics and fabulas can be added or deleted directly from their
 lists; deletion removes compatibility matrix links but does not rewrite already-created
 production artifacts. Legacy rubric/fabula fields remain available only for storage and
-service compatibility.
+service compatibility. Slice 1.2 replaces the earlier ad-hoc setup check with a common
+validator baseline: the manual `Проверить` action now saves a `ValidatorRun`, and each
+validator returns a score, red/yellow/green status, evidence, and suggested fixes.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

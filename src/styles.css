@@ -780,6 +780,117 @@ button:disabled {
   line-height: 1.45;
 }
 
+.validator-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.validator-summary > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-sm);
+  background: var(--surface-sunk);
+}
+
+.validator-summary strong {
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 800;
+}
+
+.validator-cards {
+  gap: 12px;
+}
+
+.validator-card {
+  overflow: hidden;
+}
+
+.validator-card-head {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start !important;
+  gap: 10px !important;
+}
+
+.validator-card-head div {
+  min-width: 0;
+  display: grid !important;
+  gap: 2px !important;
+}
+
+.validator-card-head b,
+.validator-card-head span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.validator-card-head span {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+}
+
+.validator-card-head strong {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  font-weight: 800;
+}
+
+.validator-details {
+  display: grid;
+  gap: 10px;
+}
+
+.validator-details summary {
+  cursor: pointer;
+  color: var(--accent-dark);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.validator-detail-block {
+  display: grid !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+}
+
+.validator-detail-block blockquote {
+  margin: 0;
+  padding: 10px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+}
+
+.validator-detail-block blockquote p,
+.validator-suggestion p,
+.muted-text {
+  margin: 4px 0 0;
+  color: var(--ink-600);
+  line-height: 1.45;
+}
+
+.validator-suggestion {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--ink-200);
+  background: var(--surface);
+}
+
+.validator-suggestion.warning {
+  border-color: var(--warn);
+  background: var(--warn-tint);
+}
+
+.validator-suggestion.critical {
+  border-color: var(--danger);
+  background: var(--danger-tint);
+}
+
 .validation-warnings {
   padding: 12px;
   border-left: 3px solid var(--accent);

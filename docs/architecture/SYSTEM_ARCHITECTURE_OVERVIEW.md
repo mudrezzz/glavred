@@ -177,11 +177,14 @@ Current implemented production contracts:
   project.
 - `EditorialRule`: group, title, statement, active/paused status, and optional evidence
   note id.
-- `EditorialValidationSummary`: deterministic setup validation summary with
-  red/yellow/green status, item summaries, and recommendations.
-- `EditorialValidationRun`: saved manual validation snapshot with run id, setup
-  revision, checked timestamp, and summary. UI marks it stale when the setup revision
+- `ValidatorDefinition`: validator id, title, description, and supported target types.
+- `ValidatorResult`: validator id, target, red/yellow/green status, score, summary,
+  evidence, and suggested fixes.
+- `ValidatorRun`: saved manual validation snapshot with run id, setup revision,
+  checked timestamp, and validator results. UI marks it stale when the setup revision
   changes.
+- `EditorialValidationSummary`: compatibility summary derived from the latest
+  `ValidatorRun`.
 - `EditorialModel`: compatibility aggregate for author, audience, positioning, fabula,
   rubrics, style rules, forbidden topics, goals.
 - `Topic`: editable topic card with purpose, audience value, author stance, rules,
@@ -215,8 +218,6 @@ Future author-position contracts:
   and validator impact.
 - `PlatformProfile`: platform, formats, format rules, weight range, and compatibility
   with fabulas.
-- `ValidatorResult`: validator id, target, status, score, evidence, and suggested
-  fixes.
 - `ContextChatSession`: active section, messages, proposed structured changes, and
   approval state.
 - `AuthorExternalSource`: source settings for Telegram, social, blog/site, document,
@@ -257,6 +258,16 @@ TypeScript contracts in Slice 0.8:
 ## Validator Architecture
 
 Validators are a common product layer, not only draft checks.
+
+Slice 1.2 implements the first setup-only validator runner:
+`runEditorialSetupValidators(workspace)`. It is deterministic and provider-free.
+The first validators are:
+
+- `author-position-clarity`;
+- `anti-ai-style-coverage`;
+- `audience-value-fit`;
+- `goal-consistency`;
+- `topic-fabula-coverage`.
 
 They should evaluate:
 

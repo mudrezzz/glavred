@@ -53,7 +53,7 @@ edit/delete actions, summary counters, and a browser voice-input fallback.
 
 `Редакционная модель` now opens as a virtual publishing workspace for the same AI Product Manager blog. The top profile is `TG-блог AI Product Manager`, with the description `Исследовательский блог о построении AI-B2B продуктов`.
 
-The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic green/yellow status snapshot. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
+The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic `ValidatorRun`. The panel then shows validator cards with score, red/yellow/green status, evidence, and suggested fixes. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
 
 Demo topics:
 

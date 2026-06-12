@@ -4,11 +4,11 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   approveFinalText,
   approvePostBrief,
+  createEditorialValidationRun,
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
-  toggleReleaseChecklistItem,
-  validateEditorialSetup
+  toggleReleaseChecklistItem
 } from '../domain/editorialWorkspace';
 import {
   createContentPlanItem,
@@ -107,6 +107,32 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialValidationRun).toBeNull();
   });
 
+  it('loads an old editorial validation snapshot without validator results', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = {
+      ...workspace,
+      editorialValidationRun: {
+        id: 'old-validation-summary',
+        revision: 0,
+        checkedAt: '2026-06-10T10:00:00.000Z',
+        summary: {
+          status: 'yellow' as const,
+          title: 'Old validation summary',
+          summary: 'Legacy summary without ValidatorRun results.',
+          items: []
+        }
+      }
+    };
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.editorialValidationRun?.id).toBe('old-validation-summary');
+    expect(loaded.editorialValidationRun?.results).toEqual([]);
+    expect(loaded.editorialValidationRun?.aggregateStatus).toBe('yellow');
+  });
+
   it('normalizes old author notes without attachments', () => {
     const storage = createMemoryStorage();
     const workspace = createDemoWorkspace();
@@ -200,10 +226,9 @@ describe('LocalWorkspaceStore', () => {
       ],
       editorialSetupRevision: 3,
       editorialValidationRun: {
+        ...createEditorialValidationRun(workspace, '2026-06-11T10:00:00.000Z'),
         id: 'validation-test',
-        revision: 3,
-        checkedAt: '2026-06-11T10:00:00.000Z',
-        summary: validateEditorialSetup(workspace)
+        revision: 3
       }
     };
 
@@ -213,6 +238,7 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().editorialRules[0].title).toBe('Обновленный образ автора');
     expect(store.load().editorialSetupRevision).toBe(3);
     expect(store.load().editorialValidationRun?.id).toBe('validation-test');
+    expect(store.load().editorialValidationRun?.results.length).toBe(5);
   });
 
   it('saves and loads author note attachments', () => {

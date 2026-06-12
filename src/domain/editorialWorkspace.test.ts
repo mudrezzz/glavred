@@ -12,6 +12,7 @@ import {
   createFabulaDraft,
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
+  createEditorialValidationRun,
   createTopicDraft,
   deleteFabula,
   deleteEditorialRule,
@@ -30,6 +31,7 @@ import {
   undoLastBulkImportAction,
   updateEditorialRule,
   validateEditorialSetup,
+  runEditorialSetupValidators,
   reviseDraft,
   toggleReleaseChecklistItem,
   updateLearningNote
@@ -148,6 +150,54 @@ describe('editorial workspace domain', () => {
     expect(validation.items.some((item) => item.status === 'green')).toBe(true);
     expect(validation.items.some((item) => item.status === 'yellow')).toBe(true);
     expect(validation.items.some((item) => item.recommendation.length > 0)).toBe(true);
+  });
+
+  it('runs editorial setup validators with scores, evidence, and suggestions', () => {
+    const workspace = createDemoWorkspace();
+    const run = runEditorialSetupValidators(workspace);
+    const validationRun = createEditorialValidationRun(workspace, '2026-06-11T10:00:00.000Z');
+
+    expect(run.results.map((result) => result.validatorId)).toEqual([
+      'author-position-clarity',
+      'anti-ai-style-coverage',
+      'audience-value-fit',
+      'goal-consistency',
+      'topic-fabula-coverage'
+    ]);
+    expect(run.results.every((result) => result.score >= 0 && result.score <= 1)).toBe(true);
+    expect(run.results.every((result) => Array.isArray(result.evidence))).toBe(true);
+    expect(run.results.every((result) => Array.isArray(result.suggestions))).toBe(true);
+    expect(run.results.some((result) => result.status === 'green')).toBe(true);
+    expect(run.results.some((result) => result.status === 'yellow')).toBe(true);
+    expect(run.results.some((result) => result.suggestions.length > 0)).toBe(true);
+    expect(validationRun.checkedAt).toBe('2026-06-11T10:00:00.000Z');
+    expect(validationRun.results).toHaveLength(5);
+    expect(validationRun.aggregateScore).toBeGreaterThan(0);
+  });
+
+  it('degrades validators when anti-AI rules or matrix links are missing', () => {
+    const workspace = createDemoWorkspace();
+    const withoutAntiAi = {
+      ...workspace,
+      editorialRules: workspace.editorialRules.filter((rule) => rule.group !== 'antiAiPattern')
+    };
+    const antiAiResult = runEditorialSetupValidators(withoutAntiAi).results.find(
+      (result) => result.validatorId === 'anti-ai-style-coverage'
+    );
+    const brokenMatrix = {
+      ...workspace,
+      topicFabulaMatrix: workspace.topicFabulaMatrix.map((entry) =>
+        entry.topicId === workspace.topics[0].id ? { ...entry, enabled: false } : entry
+      )
+    };
+    const matrixResult = runEditorialSetupValidators(brokenMatrix).results.find(
+      (result) => result.validatorId === 'topic-fabula-coverage'
+    );
+
+    expect(['yellow', 'red']).toContain(antiAiResult?.status);
+    expect(antiAiResult?.suggestions[0]?.id).toBe('anti-ai-missing');
+    expect(matrixResult?.status).toBe('red');
+    expect(matrixResult?.evidence.some((item) => item.sourceId === workspace.topics[0].id)).toBe(true);
   });
 
   it('adds, updates, and deletes editorial rules without changing unrelated rules', () => {
