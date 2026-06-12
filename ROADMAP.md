@@ -859,14 +859,29 @@ Status:
 
 ### Slice 1.3: Context Chat Wizard Skeleton
 
-- Status: Ready
-- Goal: Add right-side section-aware chat skeleton for guided setup.
+- Status: Done
+- Goal: Add a section-aware context chat skeleton as a collapsible overlay, not a
+  third right-side column.
 - Scope:
-  - Add chat shell synchronized with active section.
-  - Use deterministic suggestions first.
-  - Convert accepted suggestions into structured entities.
-  - Keep AI provider calls out of scope until provider integration is re-opened.
-  - Use latest `ValidatorRun.results` as context for setup recommendations.
+  - Added a global `ContextChat` collapsed button and fixed overlay drawer.
+  - Synchronized suggestions with active sidebar section and internal tabs for
+    `Память автора` / `Редакционная модель`.
+  - Added deterministic suggestions that use latest `ValidatorRun.results` and setup
+    state.
+  - Accepted `add rule/topic/fabula` suggestions open existing draft forms with prefill
+    and still require normal `Сохранить`.
+  - Added `runValidation` suggestion that invokes the existing manual validation path.
+  - Added visual smoke coverage for desktop, laptop, and mobile overlay behavior.
+  - Added ADR for collapsible overlay instead of a third column.
+- Out of scope:
+  - Real AI provider calls.
+  - Persistent chat history.
+  - Freeform chat input and autonomous edits.
+- Validation:
+  - Application tests for deterministic suggestions. Done.
+  - UI tests for collapsed/expanded state, scope changes, and draft flow opening. Done.
+  - Playwright visual smoke for context chat overlay. Done.
+  - Full regression commands listed in Slice completion notes.
 
 ### Slice 1.4: Content Plan as Broadcast Grid
 
@@ -927,6 +942,7 @@ Status:
 - Slice 1.2: Validator Framework Baseline. Completed 2026-06-11.
 - Slice 1.2.1: Author Memory Sources UX Alignment. Completed 2026-06-12.
 - Slice 1.2.2: Source List Visual Repair and UI Guardrails. Completed 2026-06-12.
+- Slice 1.3: Context Chat Wizard Skeleton. Completed 2026-06-12.
 
 ## Blocked Items
 

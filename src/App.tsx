@@ -12,6 +12,18 @@ import {
   runEditorialChecks
 } from './application/editorialServices';
 import {
+  createContextChatSuggestions,
+  createInitialContextChatMessages,
+  mapWorkspaceSectionToProductionScope,
+  type AddEditorialRulePayload,
+  type AddFabulaPayload,
+  type AddTopicPayload,
+  type ContextChatActionType,
+  type ContextChatMessage,
+  type ContextChatScope,
+  type ContextChatSuggestion
+} from './application/contextChat';
+import {
   approveFinalText,
   approvePlanItem,
   approvePostBrief,
@@ -84,6 +96,11 @@ import { LocalWorkspaceStore } from './infrastructure/localWorkspaceStore';
 
 const store = new LocalWorkspaceStore();
 
+type ContextChatIntent =
+  | { id: string; actionType: 'addEditorialRule'; payload: AddEditorialRulePayload }
+  | { id: string; actionType: 'addTopic'; payload: AddTopicPayload }
+  | { id: string; actionType: 'addFabula'; payload: AddFabulaPayload };
+
 const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: string; disabled?: boolean }> = [
   { id: 'memory', icon: 'memory', label: 'Память автора' },
   { id: 'editorialModel', icon: 'model', label: 'Редакционная модель' },
@@ -132,6 +149,8 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
     mic:
       '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
     reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/>',
+    spark: '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 16v4"/><path d="M21 18h-4"/>',
+    close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     caret: '<path d="M4 16 L12 7 L20 16"/>'
   };
 
@@ -154,6 +173,13 @@ export function App() {
   const [workspace, setWorkspace] = useState<WorkspaceState>(() => store.load());
   const active = workspace.activeSection;
   const [toast, setToast] = useState('');
+  const [memoryTab, setMemoryTab] = useState<MemoryInternalTab>('feed');
+  const [editorialModelTab, setEditorialModelTab] = useState<EditorialModelTab>('publisher');
+  const [contextChatOpen, setContextChatOpen] = useState(false);
+  const [contextChatMessages, setContextChatMessages] = useState<ContextChatMessage[]>(() =>
+    createInitialContextChatMessages('memory')
+  );
+  const [contextChatIntent, setContextChatIntent] = useState<ContextChatIntent | null>(null);
 
   useEffect(() => {
     store.save({ ...workspace, updatedAt: new Date().toISOString() });
@@ -165,6 +191,12 @@ export function App() {
     const timeoutId = window.setTimeout(() => setToast(''), 2800);
     return () => window.clearTimeout(timeoutId);
   }, [toast]);
+
+  const contextChatScope = getContextChatScope(active, memoryTab, editorialModelTab);
+  const contextChatSuggestions = useMemo(
+    () => createContextChatSuggestions(workspace, contextChatScope),
+    [workspace, contextChatScope]
+  );
 
   function patchWorkspace(patch: Partial<WorkspaceState>, message?: string) {
     setWorkspace((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
@@ -203,7 +235,85 @@ export function App() {
 
   function resetDemo() {
     setWorkspace(store.reset());
+    setMemoryTab('feed');
+    setEditorialModelTab('publisher');
+    setContextChatOpen(false);
+    setContextChatMessages(createInitialContextChatMessages('memory'));
+    setContextChatIntent(null);
     setToast('Демо-сценарий восстановлен');
+  }
+
+  function acceptContextChatSuggestion(suggestion: ContextChatSuggestion) {
+    const createdAt = new Date().toISOString();
+    setContextChatMessages((messages) => [
+      ...messages,
+      {
+        id: `ctx-author-${suggestion.id}-${createdAt}`,
+        role: 'author',
+        text: `Принять: ${suggestion.title}`,
+        createdAt,
+        suggestionId: suggestion.id
+      }
+    ]);
+
+    if (suggestion.actionType === 'runValidation') {
+      setWorkspace((current) => {
+        const checkedAt = new Date().toISOString();
+        return {
+          ...current,
+          activeSection: 'editorialModel',
+          editorialValidationRun: createEditorialValidationRun(current, checkedAt),
+          updatedAt: checkedAt
+        };
+      });
+      setEditorialModelTab(editorialModelTab === 'publisher' ? 'publisher' : editorialModelTab);
+      setToast('Редакционная модель проверена');
+      return;
+    }
+
+    if (suggestion.actionType === 'addEditorialRule' && suggestion.payload) {
+      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
+      setEditorialModelTab('publisher');
+      setContextChatIntent({
+        id: `${suggestion.id}-${createdAt}`,
+        actionType: 'addEditorialRule',
+        payload: suggestion.payload as AddEditorialRulePayload
+      });
+      return;
+    }
+
+    if (suggestion.actionType === 'addTopic' && suggestion.payload) {
+      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
+      setEditorialModelTab('topics');
+      setContextChatIntent({
+        id: `${suggestion.id}-${createdAt}`,
+        actionType: 'addTopic',
+        payload: suggestion.payload as AddTopicPayload
+      });
+      return;
+    }
+
+    if (suggestion.actionType === 'addFabula' && suggestion.payload) {
+      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
+      setEditorialModelTab('fabulas');
+      setContextChatIntent({
+        id: `${suggestion.id}-${createdAt}`,
+        actionType: 'addFabula',
+        payload: suggestion.payload as AddFabulaPayload
+      });
+      return;
+    }
+
+    setContextChatMessages((messages) => [
+      ...messages,
+      {
+        id: `ctx-assistant-${suggestion.id}-${createdAt}`,
+        role: 'assistant',
+        text: 'Эта подсказка пока только для чтения. В следующих слайсах я смогу переводить больше рекомендаций в структурные изменения.',
+        createdAt,
+        suggestionId: suggestion.id
+      }
+    ]);
   }
 
   return (
@@ -214,7 +324,9 @@ export function App() {
         <div className="scroll">
           {active === 'memory' && (
             <AuthorMemoryView
+              activeTab={memoryTab}
               workspace={workspace}
+              onChangeTab={setMemoryTab}
               onPatchWorkspace={patchWorkspace}
               onChangeNotes={(authorNotes, message) => {
                 const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
@@ -228,6 +340,8 @@ export function App() {
           )}
           {active === 'editorialModel' && (
             <EditorialModelView
+              activeTab={editorialModelTab}
+              chatIntent={contextChatIntent}
               workspace={workspace}
               model={workspace.editorialModel}
               projectProfile={workspace.projectProfile}
@@ -247,6 +361,8 @@ export function App() {
               onFabulasAndMatrixChange={(fabulas, topicFabulaMatrix) =>
                 patchEditorialSetup({ fabulas, topicFabulaMatrix })
               }
+              onChangeTab={setEditorialModelTab}
+              onChatIntentConsumed={() => setContextChatIntent(null)}
               onRunValidation={runEditorialValidation}
             />
           )}
@@ -430,6 +546,15 @@ export function App() {
           )}
         </div>
       </main>
+      <ContextChatOverlay
+        messages={contextChatMessages}
+        open={contextChatOpen}
+        scope={contextChatScope}
+        suggestions={contextChatSuggestions}
+        onAcceptSuggestion={acceptContextChatSuggestion}
+        onClose={() => setContextChatOpen(false)}
+        onOpen={() => setContextChatOpen(true)}
+      />
       {toast ? (
         <div className="toast" role="status">
           <Icon name="check" size={17} />
@@ -508,6 +633,144 @@ function Topbar({ active, onReset }: { active: WorkspaceSection; onReset: () => 
   );
 }
 
+function ContextChatOverlay({
+  messages,
+  open,
+  scope,
+  suggestions,
+  onAcceptSuggestion,
+  onClose,
+  onOpen
+}: {
+  messages: ContextChatMessage[];
+  open: boolean;
+  scope: ContextChatScope;
+  suggestions: ContextChatSuggestion[];
+  onAcceptSuggestion: (suggestion: ContextChatSuggestion) => void;
+  onClose: () => void;
+  onOpen: () => void;
+}) {
+  if (!open) {
+    return (
+      <button
+        className="context-chat-toggle"
+        data-testid="context-chat-toggle"
+        type="button"
+        aria-expanded="false"
+        onClick={onOpen}
+      >
+        <Icon name="spark" size={16} />
+        Помощник
+      </button>
+    );
+  }
+
+  return (
+    <aside className="context-chat-drawer" data-testid="context-chat-drawer" aria-label="Контекстный помощник">
+      <div className="context-chat-head">
+        <div>
+          <span className="mono-label">Context chat</span>
+          <h3>Помощник раздела</h3>
+          <p>{contextChatScopeLabel(scope)}</p>
+        </div>
+        <div className="context-chat-head-actions">
+          <button className="btn btn-sec btn-sm" type="button" onClick={onClose}>
+            Свернуть
+          </button>
+          <button className="icon-btn" type="button" aria-label="Закрыть помощника" onClick={onClose}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="context-chat-thread">
+        {messages.slice(-4).map((message) => (
+          <article className={`context-message ${message.role}`} key={message.id}>
+            <span>{contextChatRoleLabel(message.role)}</span>
+            <p>{message.text}</p>
+          </article>
+        ))}
+      </div>
+      <div className="context-chat-suggestions">
+        <div className="context-chat-section-title">
+          <span className="mono-label">Подсказки</span>
+          <b>{suggestions.length}</b>
+        </div>
+        {suggestions.map((suggestion) => (
+          <article className="context-suggestion" key={suggestion.id}>
+            <div>
+              <h4>{suggestion.title}</h4>
+              <p>{suggestion.body}</p>
+            </div>
+            <button
+              className={`btn ${suggestion.actionType === 'readOnly' ? 'btn-sec' : 'btn-pri'} btn-sm`}
+              type="button"
+              onClick={() => onAcceptSuggestion(suggestion)}
+            >
+              {contextChatActionLabel(suggestion.actionType)}
+            </button>
+          </article>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function getContextChatScope(
+  active: WorkspaceSection,
+  memoryTab: MemoryInternalTab,
+  editorialTab: EditorialModelTab
+): ContextChatScope {
+  if (active === 'memory') {
+    if (memoryTab === 'sources') return 'sources';
+    if (memoryTab === 'queue') return 'importQueue';
+    if (memoryTab === 'archive') return 'archive';
+    return 'memory';
+  }
+
+  if (active === 'editorialModel') {
+    if (editorialTab === 'topics') return 'topics';
+    if (editorialTab === 'fabulas') return 'fabulas';
+    if (editorialTab === 'matrix') return 'matrix';
+    return 'editorialPublisher';
+  }
+
+  return mapWorkspaceSectionToProductionScope(active);
+}
+
+function contextChatScopeLabel(scope: ContextChatScope): string {
+  const labels: Record<ContextChatScope, string> = {
+    memory: 'Память автора · мысли и корректировки',
+    sources: 'Память автора · источники',
+    importQueue: 'Память автора · очередь разбора',
+    archive: 'Память автора · архив',
+    editorialPublisher: 'Редакционная модель · издательство',
+    topics: 'Редакционная модель · темы',
+    fabulas: 'Редакционная модель · фабулы',
+    matrix: 'Редакционная модель · матрица',
+    production: 'Производство поста · HITL flow',
+    release: 'Выпуск · manual export',
+    analytics: 'Аналитика · learning note'
+  };
+  return labels[scope];
+}
+
+function contextChatRoleLabel(role: ContextChatMessage['role']): string {
+  if (role === 'author') return 'Вы';
+  if (role === 'system') return 'Система';
+  return 'Помощник';
+}
+
+function contextChatActionLabel(actionType: ContextChatActionType): string {
+  const labels: Record<ContextChatActionType, string> = {
+    addEditorialRule: 'Добавить правило',
+    addTopic: 'Создать черновик темы',
+    addFabula: 'Создать черновик фабулы',
+    runValidation: 'Проверить',
+    readOnly: 'Принять к сведению'
+  };
+  return labels[actionType];
+}
+
 type MemoryTypeFilter = AuthorNoteType | 'all';
 type CorrectionTarget = {
   type: 'assertion' | 'evidence';
@@ -554,11 +817,15 @@ type SpeechRecognitionWindow = Window &
 const MAX_AUTHOR_ATTACHMENT_BYTES = 1024 * 1024;
 
 function AuthorMemoryView({
+  activeTab,
   workspace,
+  onChangeTab,
   onPatchWorkspace,
   onChangeNotes
 }: {
+  activeTab: MemoryInternalTab;
   workspace: WorkspaceState;
+  onChangeTab: (tab: MemoryInternalTab) => void;
   onPatchWorkspace: (patch: Partial<WorkspaceState>, message?: string) => void;
   onChangeNotes: (notes: AuthorNote[], message?: string) => void;
 }) {
@@ -568,7 +835,8 @@ function AuthorMemoryView({
   const importCandidates = workspace.importCandidates;
   const archiveRecords = workspace.archiveRecords;
   const bulkImportActions = workspace.bulkImportActions;
-  const [tab, setTab] = useState<MemoryInternalTab>('feed');
+  const tab = activeTab;
+  const setTab = onChangeTab;
   const [type, setType] = useState<AuthorNoteType>('thought');
   const [showTitle, setShowTitle] = useState(false);
   const [showFile, setShowFile] = useState(false);
@@ -2222,6 +2490,8 @@ const EDITORIAL_TABS: Array<[EditorialModelTab, string]> = [
 ];
 
 function EditorialModelView({
+  activeTab,
+  chatIntent,
   workspace,
   projectProfile,
   editorialRules,
@@ -2235,8 +2505,12 @@ function EditorialModelView({
   onMatrixChange,
   onTopicsAndMatrixChange,
   onFabulasAndMatrixChange,
+  onChangeTab,
+  onChatIntentConsumed,
   onRunValidation
 }: {
+  activeTab: EditorialModelTab;
+  chatIntent: ContextChatIntent | null;
   workspace: WorkspaceState;
   model: EditorialModel;
   projectProfile: ProjectProfile;
@@ -2252,9 +2526,12 @@ function EditorialModelView({
   onMatrixChange: (matrix: TopicFabulaMatrixEntry[]) => void;
   onTopicsAndMatrixChange: (topics: Topic[], matrix: TopicFabulaMatrixEntry[]) => void;
   onFabulasAndMatrixChange: (fabulas: Fabula[], matrix: TopicFabulaMatrixEntry[]) => void;
+  onChangeTab: (tab: EditorialModelTab) => void;
+  onChatIntentConsumed: () => void;
   onRunValidation: () => void;
 }) {
-  const [tab, setTab] = useState<EditorialModelTab>('publisher');
+  const tab = activeTab;
+  const setTab = onChangeTab;
   const warnings = getTopicFabulaWarnings(topics, fabulas, matrix);
   const enabledPairs = matrix.filter((entry) => entry.enabled).length;
 
@@ -2322,26 +2599,36 @@ function EditorialModelView({
       <div className="editorial-workspace">
         <div className="editorial-main">
           {tab === 'publisher' ? (
-            <PublisherRulesView rules={editorialRules} onDelete={removeRule} onSave={saveRule} />
+            <PublisherRulesView
+              chatIntent={chatIntent?.actionType === 'addEditorialRule' ? chatIntent : null}
+              rules={editorialRules}
+              onChatIntentConsumed={onChatIntentConsumed}
+              onDelete={removeRule}
+              onSave={saveRule}
+            />
           ) : null}
           {tab === 'topics' ? (
             <TopicListView
+              chatIntent={chatIntent?.actionType === 'addTopic' ? chatIntent : null}
               fabulas={fabulas}
               matrix={matrix}
               referencedTopicIds={getReferencedTopicIds(workspace)}
               topics={topics}
               onCreate={createTopic}
+              onChatIntentConsumed={onChatIntentConsumed}
               onDelete={removeTopic}
               onSave={updateTopic}
             />
           ) : null}
           {tab === 'fabulas' ? (
             <FabulaListView
+              chatIntent={chatIntent?.actionType === 'addFabula' ? chatIntent : null}
               fabulas={fabulas}
               matrix={matrix}
               referencedFabulaIds={getReferencedFabulaIds(workspace)}
               topics={topics}
               onCreate={createFabula}
+              onChatIntentConsumed={onChatIntentConsumed}
               onDelete={removeFabula}
               onSave={updateFabula}
             />
@@ -2498,31 +2785,47 @@ function ProjectProfileHeader({
 }
 
 function PublisherRulesView({
+  chatIntent,
   rules,
+  onChatIntentConsumed,
   onSave,
   onDelete
 }: {
+  chatIntent: Extract<ContextChatIntent, { actionType: 'addEditorialRule' }> | null;
   rules: EditorialRule[];
+  onChatIntentConsumed: () => void;
   onSave: (rule: EditorialRule) => void;
   onDelete: (ruleId: string) => void;
 }) {
   return (
     <div className="rule-sections">
       {RULE_SECTIONS.map((section) => (
-        <RuleSection key={section.title} rules={rules} section={section} onDelete={onDelete} onSave={onSave} />
+        <RuleSection
+          chatIntent={chatIntent && section.groups.includes(chatIntent.payload.group) ? chatIntent : null}
+          key={section.title}
+          rules={rules}
+          section={section}
+          onChatIntentConsumed={onChatIntentConsumed}
+          onDelete={onDelete}
+          onSave={onSave}
+        />
       ))}
     </div>
   );
 }
 
 function RuleSection({
+  chatIntent,
   section,
   rules,
+  onChatIntentConsumed,
   onSave,
   onDelete
 }: {
+  chatIntent: Extract<ContextChatIntent, { actionType: 'addEditorialRule' }> | null;
   section: { title: string; description: string; groups: EditorialRuleGroup[] };
   rules: EditorialRule[];
+  onChatIntentConsumed: () => void;
   onSave: (rule: EditorialRule) => void;
   onDelete: (ruleId: string) => void;
 }) {
@@ -2535,6 +2838,14 @@ function RuleSection({
     setEditingId('new');
     setDraft(createEditorialRule(group, '', ''));
   }
+
+  useEffect(() => {
+    if (!chatIntent) return;
+
+    setEditingId('new');
+    setDraft(createEditorialRule(chatIntent.payload.group, chatIntent.payload.title, chatIntent.payload.statement));
+    onChatIntentConsumed();
+  }, [chatIntent, onChatIntentConsumed]);
 
   function startEdit(rule: EditorialRule) {
     setEditingId(rule.id);
@@ -2669,19 +2980,23 @@ function RuleEditor({
 }
 
 function TopicListView({
+  chatIntent,
   topics,
   fabulas,
   matrix,
   referencedTopicIds,
   onCreate,
+  onChatIntentConsumed,
   onDelete,
   onSave
 }: {
+  chatIntent: Extract<ContextChatIntent, { actionType: 'addTopic' }> | null;
   topics: Topic[];
   fabulas: Fabula[];
   matrix: TopicFabulaMatrixEntry[];
   referencedTopicIds: Set<string>;
   onCreate: (topic: Topic) => void;
+  onChatIntentConsumed: () => void;
   onDelete: (topicId: string) => void;
   onSave: (topic: Topic) => void;
 }) {
@@ -2706,6 +3021,21 @@ function TopicListView({
     setEditingId('new');
     setDraft(topic);
   }
+
+  useEffect(() => {
+    if (!chatIntent) return;
+
+    const topic = {
+      ...createTopicDraft(),
+      ...chatIntent.payload,
+      rules: chatIntent.payload.rules ? [...chatIntent.payload.rules] : [],
+      forbiddenAngles: chatIntent.payload.forbiddenAngles ? [...chatIntent.payload.forbiddenAngles] : []
+    };
+    setExpandedId(topic.id);
+    setEditingId('new');
+    setDraft(topic);
+    onChatIntentConsumed();
+  }, [chatIntent, onChatIntentConsumed]);
 
   function save() {
     if (!draft) return;
@@ -2898,19 +3228,23 @@ function TopicEditor({
 }
 
 function FabulaListView({
+  chatIntent,
   fabulas,
   topics,
   matrix,
   referencedFabulaIds,
   onCreate,
+  onChatIntentConsumed,
   onDelete,
   onSave
 }: {
+  chatIntent: Extract<ContextChatIntent, { actionType: 'addFabula' }> | null;
   fabulas: Fabula[];
   topics: Topic[];
   matrix: TopicFabulaMatrixEntry[];
   referencedFabulaIds: Set<string>;
   onCreate: (fabula: Fabula) => void;
+  onChatIntentConsumed: () => void;
   onDelete: (fabulaId: string) => void;
   onSave: (fabula: Fabula) => void;
 }) {
@@ -2935,6 +3269,22 @@ function FabulaListView({
     setEditingId('new');
     setDraft(fabula);
   }
+
+  useEffect(() => {
+    if (!chatIntent) return;
+
+    const fabula = {
+      ...createFabulaDraft(),
+      ...chatIntent.payload,
+      rules: chatIntent.payload.rules ? [...chatIntent.payload.rules] : [],
+      structure: chatIntent.payload.structure ? [...chatIntent.payload.structure] : [],
+      proofRequirements: chatIntent.payload.proofRequirements ? [...chatIntent.payload.proofRequirements] : []
+    };
+    setExpandedId(fabula.id);
+    setEditingId('new');
+    setDraft(fabula);
+    onChatIntentConsumed();
+  }, [chatIntent, onChatIntentConsumed]);
 
   function save() {
     if (!draft) return;

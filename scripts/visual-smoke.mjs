@@ -58,6 +58,54 @@ function assertLayout(result) {
   }
 }
 
+function assertChatLayout(result) {
+  const failures = [];
+
+  if (!result.toggleVisible) failures.push(`${result.viewport}: context chat toggle is not visible.`);
+  if (!result.drawerVisible) failures.push(`${result.viewport}: context chat drawer did not open.`);
+  if (result.drawerOverflow > 2) failures.push(`${result.viewport}: context chat drawer overflows horizontally by ${result.drawerOverflow}px.`);
+  if (result.drawerWidth < result.minWidth || result.drawerWidth > result.maxWidth) {
+    failures.push(`${result.viewport}: context chat drawer width ${result.drawerWidth}px is outside ${result.minWidth}-${result.maxWidth}px.`);
+  }
+  if (result.pageOverflow > 2) failures.push(`${result.viewport}: page overflows horizontally by ${result.pageOverflow}px.`);
+
+  if (failures.length) {
+    throw new Error(`Context chat visual smoke failed:\n- ${failures.join('\n- ')}`);
+  }
+}
+
+async function assertContextChatAtViewport(page, viewport, options) {
+  await page.setViewportSize(viewport);
+  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('[data-testid="context-chat-toggle"]').waitFor();
+
+  const toggleVisible = await page.locator('[data-testid="context-chat-toggle"]').isVisible();
+  await page.locator('[data-testid="context-chat-toggle"]').click();
+  await page.locator('[data-testid="context-chat-drawer"]').waitFor();
+
+  const result = await page.evaluate(
+    ({ viewportName, minWidth, maxWidth }) => {
+      const drawer = document.querySelector('[data-testid="context-chat-drawer"]');
+      const rect = drawer?.getBoundingClientRect();
+      return {
+        viewport: viewportName,
+        toggleVisible: Boolean(document.querySelector('[data-testid="context-chat-toggle"]')) || true,
+        drawerVisible: Boolean(drawer),
+        drawerWidth: rect?.width ?? 0,
+        drawerOverflow: drawer ? drawer.scrollWidth - drawer.clientWidth : 0,
+        pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        minWidth,
+        maxWidth
+      };
+    },
+    { viewportName: options.name, minWidth: options.minWidth, maxWidth: options.maxWidth }
+  );
+
+  assertChatLayout({ ...result, toggleVisible });
+}
+
 async function main() {
   const server = runDevServer();
   let stderr = '';
@@ -107,6 +155,10 @@ async function main() {
     await page.locator('.source-row-actions button').filter({ hasText: /Проверить вручную/i }).first().click();
     await page.locator('.toast').waitFor({ state: 'visible', timeout: 5000 });
     await page.waitForFunction(() => !document.querySelector('.toast'), undefined, { timeout: 6000 });
+
+    await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 500 });
+    await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 500 });
+    await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390 });
 
     await browser.close();
   } catch (error) {

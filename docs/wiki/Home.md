@@ -14,6 +14,15 @@ Permanent demo context: a Telegram blog by an AI Product Manager sharing researc
 - [Local-First Demo](04-local-first-demo): launch, reset, localStorage, and screenshot refresh.
 - [External Sources](05-external-sources): local source list, review queue, bulk import, and archive-safe `Добавить все`.
 
+## Context Chat
+
+The `Помощник` control opens a collapsible context chat overlay. It is synchronized with
+the current section and gives deterministic suggestions for the AI Product Manager demo.
+It can open draft forms for rules, topics, and fabulas, but it does not save changes
+without the normal `Сохранить` action.
+
+![Context chat expanded](assets/screenshots/11-context-chat-expanded.png)
+
 ## Core Idea
 
 Glavred should not turn the author into a generic content generator. The central layer is author memory: thoughts, reactions, corrections, and published materials. From that material, the product builds a transparent model of the author's position.

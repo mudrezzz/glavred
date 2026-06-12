@@ -174,8 +174,10 @@ the author opens a check.
 
 ## Context Chat and Wizard
 
-Each product section should have a right-side context chat synchronized with the active
-section.
+Each product section should have a context chat synchronized with the active section.
+The implementation uses a collapsible overlay instead of a permanent third right-side
+column, because many sections already reserve the right side for validation, evidence,
+summary, or release metadata.
 
 The chat is not a generic assistant. It helps the author complete the current section:
 
@@ -190,7 +192,8 @@ The chat is not a generic assistant. It helps the author complete the current se
 - validator failure correction.
 
 The onboarding wizard should happen through this chat, but the output must be
-structured entities and rules, not a freeform document.
+structured entities and rules, not a freeform document. Accepted suggestions should open
+draft/edit flows and still require explicit author save/approval.
 
 ## Relationship to Current Implementation
 

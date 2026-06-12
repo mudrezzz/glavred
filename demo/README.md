@@ -49,6 +49,11 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
+The demo also includes a collapsible `Помощник` overlay. It is synchronized with the
+current section, suggests deterministic next steps for the AI Product Manager demo, and
+can open draft forms for rules, topics, and fabulas. It does not call AI providers and
+does not save changes without the normal `Сохранить` action.
+
 ## Structured Editorial Model
 
 `Редакционная модель` now opens as a virtual publishing workspace for the same AI Product Manager blog. The top profile is `TG-блог AI Product Manager`, with the description `Исследовательский блог о построении AI-B2B продуктов`.

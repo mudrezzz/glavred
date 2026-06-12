@@ -85,9 +85,10 @@ turning the product into generic content generation.
   and planning weights.
 - `ValidatorFramework`: evaluates entities and production artifacts, returning score,
   status, evidence, and fix guidance.
-- `ContextChat`: future right-side assistant synchronized with the active product
-  section. It proposes structured entities and checks consistency, but the author
-  approves or corrects.
+- `ContextChat`: collapsible overlay assistant synchronized with the active product
+  section and internal tab. The current implementation is deterministic, provider-free,
+  and can open safe draft flows for structured entities without saving changes
+  automatically.
 - `EditorialRadar`: collects external and manual material. Radar output is fuel for
   author memory and content production, not the only source of posts.
 - `ExternalSourceSettings`: stores planned or connected source configurations for
@@ -158,6 +159,8 @@ Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions
 - Editorial catalogs and matrices must contain realistic long content: wrap labels,
   use shared scroll areas for long details, and keep matrix row context visible with a
   sticky topic column during horizontal scroll.
+- Context chat uses a collapsible overlay, not a permanent third column beside existing
+  right-side panels. It must stay covered by visual smoke checks.
 
 These rules are captured in ADRs under `docs/adr/` and should guide future validator
 and context-chat implementation.
@@ -326,8 +329,8 @@ research experience building AI-B2B products:
 - Source ingestion adapters can later replace manual signal entry.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
-- Context chat can later create or revise structured entities, but should not bypass
-  explicit author approval.
+- Context chat can open draft flows for structured entities, but should not bypass
+  explicit author review and save/cancel actions.
 - AI provider adapters can later replace deterministic insight, planning, briefing,
   drafting, and check services after author position and validators exist.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace store

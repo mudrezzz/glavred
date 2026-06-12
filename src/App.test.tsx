@@ -209,6 +209,46 @@ describe('App', () => {
     expect(sourceRow.querySelector('.source-row-details')).toBeInTheDocument();
   });
 
+  it('renders context chat collapsed by default and expands as an overlay', () => {
+    render(<App />);
+
+    expect(screen.getByTestId('context-chat-toggle')).toBeInTheDocument();
+    expect(screen.queryByTestId('context-chat-drawer')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Помощник/i }));
+
+    expect(screen.getByTestId('context-chat-drawer')).toBeInTheDocument();
+    expect(screen.getByText(/Память автора · мысли/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Свернуть/i }));
+
+    expect(screen.queryByTestId('context-chat-drawer')).not.toBeInTheDocument();
+    expect(screen.getByTestId('context-chat-toggle')).toBeInTheDocument();
+  });
+
+  it('updates context chat suggestions when the active section changes', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Помощник/i }));
+    expect(screen.getByText(/Зафиксировать сырую мысль/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Редакционная модель|Р РµРґР°РєС†РёРѕРЅРЅР°СЏ РјРѕРґРµР»СЊ/i }));
+
+    expect(screen.getByText(/Добавить anti-AI правило/i)).toBeInTheDocument();
+  });
+
+  it('opens existing draft flows from accepted context chat suggestions without saving automatically', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Редакционная модель|Р РµРґР°РєС†РёРѕРЅРЅР°СЏ РјРѕРґРµР»СЊ/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Темы|РўРµРјС‹/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Помощник/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Создать черновик темы/i }));
+
+    expect(screen.getByDisplayValue('AI trust onboarding')).toBeInTheDocument();
+    expect(screen.getByText(/5 тем|5 С‚РµРј/i)).toBeInTheDocument();
+  });
+
   it('allows clearing import candidate selection', () => {
     render(<App />);
 

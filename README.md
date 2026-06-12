@@ -78,7 +78,9 @@ The revised core modules are:
 - Audience, goal, metrics, platforms, and formats: structured rules, not freeform
   text boxes.
 - Validators: formal checks with score, status, evidence, and fix guidance.
-- Context Chat: right-side assistant synchronized with the selected product section.
+- Context Chat: collapsible overlay assistant synchronized with the selected product
+  section. It currently gives deterministic suggestions and opens safe draft forms, but
+  does not call AI providers or save changes automatically.
 
 Current working flow: the first implementation still reaches a captured editorial
 learning note and uses local-first browser persistence before backend, real metrics

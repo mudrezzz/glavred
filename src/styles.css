@@ -2632,6 +2632,115 @@ select:focus {
   color: var(--ink-600);
 }
 
+.context-chat-toggle {
+  position: fixed;
+  top: 88px;
+  right: 22px;
+  z-index: 44;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  box-shadow: var(--shadow-md);
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.context-chat-drawer {
+  position: fixed;
+  top: 78px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 60;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: clamp(360px, 34vw, 460px);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  box-shadow: var(--shadow-lg);
+}
+
+.context-chat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border-bottom: 1px solid var(--ink-200);
+}
+
+.context-chat-head h3,
+.context-suggestion h4,
+.context-message p {
+  margin: 0;
+}
+
+.context-chat-head p,
+.context-suggestion p {
+  margin: 6px 0 0;
+  color: var(--ink-700);
+  line-height: 1.45;
+}
+
+.context-chat-head-actions,
+.context-chat-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-chat-thread,
+.context-chat-suggestions {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 18px;
+  overflow: auto;
+}
+
+.context-chat-thread {
+  align-content: start;
+  border-bottom: 1px solid var(--ink-200);
+  background: var(--surface);
+}
+
+.context-message,
+.context-suggestion {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+
+.context-message span {
+  color: var(--ink-500);
+  font: var(--mono-xs);
+  text-transform: uppercase;
+}
+
+.context-message.author {
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+}
+
+.context-suggestion {
+  background: var(--surface-sunk);
+}
+
+.context-suggestion .btn {
+  justify-self: start;
+}
+
 .toast {
   position: fixed;
   bottom: 24px;
@@ -2745,6 +2854,26 @@ select:focus {
 
   .validation-panel {
     position: static;
+  }
+
+  .context-chat-toggle {
+    top: 76px;
+    right: 14px;
+    padding: 10px 13px;
+  }
+
+  .context-chat-drawer {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: 82vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+
+  .context-chat-head {
+    flex-direction: column;
   }
 
   .rule-card,

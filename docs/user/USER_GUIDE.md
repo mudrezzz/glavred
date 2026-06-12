@@ -105,6 +105,21 @@ cover author-position clarity, anti-AI style coverage, audience value fit, goal
 consistency, and topic/fabula coverage. Each card shows score, red/yellow/green
 status, evidence, and suggested fixes.
 
+## Context Chat
+
+Use the fixed `Помощник` control to open the context chat. It is collapsed by default
+so it does not consume the existing right-side panels. When expanded, it opens as an
+overlay drawer on the right; on narrow screens it behaves like a bottom sheet.
+
+The assistant is synchronized with the current sidebar section and with internal tabs in
+`Память автора` and `Редакционная модель`. In this slice it is deterministic: it reads
+the current workspace and latest validator run, then suggests safe next steps. It does
+not call an AI provider.
+
+Accepted suggestions do not save changes automatically. For example, `Создать черновик
+темы`, `Создать черновик фабулы`, and `Добавить правило` only open the existing draft
+form with prefilled fields. The author still reviews, edits, and clicks `Сохранить`.
+
 ## Current Supported Flow
 
 - Open `Память автора`.
