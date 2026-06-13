@@ -67,13 +67,16 @@ function assertChatLayout(result) {
   if (result.drawerWidth < result.minWidth || result.drawerWidth > result.maxWidth) {
     failures.push(`${result.viewport}: context chat drawer width ${result.drawerWidth}px is outside ${result.minWidth}-${result.maxWidth}px.`);
   }
-  if (result.expectedPanelAlignment && result.panelLeft && Math.abs(result.drawerLeft - result.panelLeft) > 24) {
-    failures.push(
-      `${result.viewport}: drawer left ${result.drawerLeft}px is not aligned with right panel left ${result.panelLeft}px.`
-    );
+  if (!result.hasDrawerShadow) failures.push(`${result.viewport}: context chat drawer has no visual shadow.`);
+  if (!result.hasLeftSeparation) failures.push(`${result.viewport}: context chat drawer has no left separation edge.`);
+  if (Math.abs(result.viewportRight - result.drawerRight) > result.maxRightGap) {
+    failures.push(`${result.viewport}: drawer right gap is ${Math.round(result.viewportRight - result.drawerRight)}px.`);
   }
-  if (result.expectedPanelAlignment && result.mainRight && result.drawerLeft < result.mainRight - 2) {
-    failures.push(`${result.viewport}: drawer overlaps main content by ${Math.round(result.mainRight - result.drawerLeft)}px.`);
+  if (result.suggestionButtonHeight > 64) {
+    failures.push(`${result.viewport}: suggestion action button is too tall (${result.suggestionButtonHeight}px).`);
+  }
+  if (result.firstSuggestionHeight > 360) {
+    failures.push(`${result.viewport}: first suggestion card is too tall (${result.firstSuggestionHeight}px).`);
   }
   if (result.pageOverflow > 2) failures.push(`${result.viewport}: page overflows horizontally by ${result.pageOverflow}px.`);
 
@@ -94,26 +97,37 @@ async function assertContextChatAtViewport(page, viewport, options) {
   const triggerVisible = await page.locator('[data-testid="context-chat-topbar-trigger"]').isVisible();
   await page.locator('[data-testid="context-chat-topbar-trigger"]').click();
   await page.locator('[data-testid="context-chat-drawer"]').waitFor();
+  await page.getByRole('tab', { name: /Подсказки/i }).click();
+  await page.locator('.context-suggestion').first().waitFor();
 
   const result = await page.evaluate(
-    ({ viewportName, minWidth, maxWidth, expectedPanelAlignment }) => {
+    ({ viewportName, minWidth, maxWidth, maxRightGap }) => {
       const drawer = document.querySelector('[data-testid="context-chat-drawer"]');
-      const panel = document.querySelector('.validation-panel');
-      const main = document.querySelector('.editorial-main');
+      const firstSuggestion = document.querySelector('.context-suggestion');
+      const suggestionButton = firstSuggestion?.querySelector('.btn');
       const rect = drawer?.getBoundingClientRect();
-      const panelRect = panel?.getBoundingClientRect();
-      const mainRect = main?.getBoundingClientRect();
+      const drawerStyle = drawer ? window.getComputedStyle(drawer) : null;
+      const suggestionRect = firstSuggestion?.getBoundingClientRect();
+      const suggestionButtonRect = suggestionButton?.getBoundingClientRect();
       return {
         viewport: viewportName,
         triggerVisible: Boolean(document.querySelector('[data-testid="context-chat-topbar-trigger"]')),
         drawerVisible: Boolean(drawer),
         drawerWidth: rect?.width ?? 0,
         drawerLeft: rect?.left ?? 0,
-        panelLeft: panelRect?.left ?? 0,
-        mainRight: mainRect?.right ?? 0,
+        drawerRight: rect?.right ?? 0,
+        viewportRight: window.innerWidth,
+        hasDrawerShadow: Boolean(drawerStyle && drawerStyle.boxShadow !== 'none'),
+        hasLeftSeparation: Boolean(
+          drawerStyle &&
+            drawerStyle.borderLeftStyle !== 'none' &&
+            Number.parseFloat(drawerStyle.borderLeftWidth || '0') >= 1
+        ),
+        firstSuggestionHeight: suggestionRect?.height ?? 0,
+        suggestionButtonHeight: suggestionButtonRect?.height ?? 0,
         drawerOverflow: drawer ? drawer.scrollWidth - drawer.clientWidth : 0,
         pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        expectedPanelAlignment,
+        maxRightGap,
         minWidth,
         maxWidth
       };
@@ -122,7 +136,7 @@ async function assertContextChatAtViewport(page, viewport, options) {
       viewportName: options.name,
       minWidth: options.minWidth,
       maxWidth: options.maxWidth,
-      expectedPanelAlignment: options.expectedPanelAlignment
+      maxRightGap: options.maxRightGap
     }
   );
 
@@ -179,9 +193,9 @@ async function main() {
     await page.locator('.toast').waitFor({ state: 'visible', timeout: 5000 });
     await page.waitForFunction(() => !document.querySelector('.toast'), undefined, { timeout: 6000 });
 
-    await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 390, expectedPanelAlignment: true });
-    await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 390, expectedPanelAlignment: true });
-    await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390, expectedPanelAlignment: false });
+    await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 390, maxRightGap: 24 });
+    await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 390, maxRightGap: 24 });
+    await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390, maxRightGap: 2 });
 
     await browser.close();
   } catch (error) {

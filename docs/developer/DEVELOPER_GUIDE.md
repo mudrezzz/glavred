@@ -118,8 +118,9 @@ assertions for high-risk operational screens. The current guardrail checks that
 `Память автора -> Источники` rows do not overflow or collapse source titles into narrow
 columns, that row actions stay inside the row, that autosave/status toast appears only
 after an explicit action and disappears automatically, and that the context chat overlay
-opens from the topbar, aligns to the right panel, avoids main-content overlap on laptop
-viewports, and becomes a bottom sheet on mobile.
+opens from the topbar, is anchored to the app right edge, keeps suggestion actions at a
+normal button height, has visible overlay depth, avoids horizontal overflow, and becomes
+a bottom sheet on mobile.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
@@ -312,6 +313,8 @@ Frontend rules are now ADR-backed:
   overlay for local workspace status.
 - Implement context chat as a topbar-triggered, tabbed overlay. Do not add a permanent
   third column or floating page button beside existing right-side panels.
+- Give overlay drawers visible but restrained layer separation: subtle directional
+  shadow and edge separation, not a full modal backdrop.
 - Keep validation visible as a first-class UX surface.
 - Run editorial setup validation only after explicit `Проверить`; show stale state
   after saved setup changes.

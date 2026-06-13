@@ -109,8 +109,8 @@ status, evidence, and suggested fixes.
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by
 default and has no floating page button, so it does not cover working forms or lists.
-When expanded, it opens as an overlay drawer aligned with the existing right panel; on
-narrow screens it behaves like a bottom sheet. Use the `x` button to close it.
+When expanded, it opens as an overlay drawer from the right edge of the app; on narrow
+screens it behaves like a bottom sheet. Use the `x` button to close it.
 
 The assistant is synchronized with the current sidebar section and with internal tabs in
 `Память автора` and `Редакционная модель`. It has two modes:

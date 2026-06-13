@@ -890,8 +890,8 @@ Status:
   tabbed assistant with real chat input and predictable overlay geometry.
 - User value:
   - The assistant no longer floats over random screen elements.
-  - The drawer aligns with the existing right panel instead of creating a new
-    visual column or covering main content on laptop screens.
+  - The drawer opens from the right edge of the app instead of appearing in an
+    unexpected centered position on wide screens.
   - The author can ask freeform local questions such as "generate topics" and
     get a safe draft action.
 - Scope:
@@ -903,8 +903,8 @@ Status:
     rule, and validation requests.
   - Made suggestions dismissible and removed the ambiguous `Принять к сведению`
     action from read-only suggestions.
-  - Updated drawer CSS to use right-panel widths and visual smoke checks for
-    panel alignment and main-content overlap.
+  - Updated drawer CSS to use right-edge anchoring and visual smoke checks for
+    right-edge placement, suggestion button height, and horizontal overflow.
 - Out of scope:
   - Real AI provider calls.
   - Persistent chat history.
@@ -914,7 +914,8 @@ Status:
   - Unit tests for deterministic chat replies. Done.
   - UI tests for topbar trigger, chat input, tabbed suggestions, dismiss, and
     safe draft actions. Done.
-  - Visual smoke updated to verify drawer alignment against the right panel.
+  - Visual smoke updated to verify drawer right-edge anchoring and normal suggestion
+    card/button heights.
 
 ### Slice 1.4: Content Plan as Broadcast Grid
 

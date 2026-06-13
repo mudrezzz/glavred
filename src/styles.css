@@ -2658,21 +2658,42 @@ select:focus {
 
 .context-chat-drawer {
   --context-panel-width: 360px;
-  --context-right-gutter: max(18px, calc((100vw - 256px - 1120px) / 2 + 24px));
   position: fixed;
   top: 78px;
-  right: var(--context-right-gutter);
+  right: 18px;
   bottom: 18px;
   z-index: 60;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  width: min(var(--context-panel-width), calc(100vw - 256px - 36px));
+  width: min(var(--context-panel-width), calc(100vw - 36px));
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--ink-200);
+  border-left-color: rgb(196 184 169 / 0.76);
   border-radius: var(--r-xl);
   background: var(--paper);
-  box-shadow: var(--shadow-lg);
+  box-shadow:
+    -24px 0 46px rgb(34 28 22 / 0.12),
+    -7px 0 18px rgb(34 28 22 / 0.08),
+    0 12px 34px rgb(34 28 22 / 0.12),
+    inset 1px 0 0 rgb(255 255 255 / 0.62);
+}
+
+.context-chat-drawer::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: -34px;
+  width: 34px;
+  border-radius: var(--r-xl) 0 0 var(--r-xl);
+  background: linear-gradient(90deg, rgb(251 249 245 / 0), rgb(34 28 22 / 0.065));
+  pointer-events: none;
+}
+
+.context-chat-drawer > * {
+  position: relative;
+  z-index: 1;
 }
 
 .context-chat-drawer.scope-memory,
@@ -2736,6 +2757,7 @@ select:focus {
 .context-chat-suggestions {
   display: grid;
   gap: 10px;
+  align-content: start;
   min-width: 0;
   padding: 14px 18px;
   overflow: auto;
@@ -2787,6 +2809,7 @@ select:focus {
 
 .context-suggestion {
   position: relative;
+  align-self: start;
   background: var(--surface-sunk);
 }
 
@@ -2813,6 +2836,8 @@ select:focus {
 
 .context-suggestion .btn {
   justify-self: start;
+  align-self: start;
+  min-height: 0;
 }
 
 .context-empty {
@@ -2947,6 +2972,10 @@ select:focus {
     width: auto;
     max-height: 82vh;
     border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+
+  .context-chat-drawer::before {
+    display: none;
   }
 
   .context-chat-head {
