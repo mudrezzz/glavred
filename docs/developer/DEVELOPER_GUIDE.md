@@ -90,7 +90,8 @@ The current app implements:
 - Structured editorial setup inside `Редакционная модель`: project profile, atomic
   editorial rules, compact topic/fabula lists, explicit matrix save/cancel behavior,
   and a deterministic validation panel on every internal tab.
-- Editable `Редакционная модель`, radar signal, plan item, post brief, and post draft.
+- Editable `Редакционная модель`, reviewed signals/radars, plan item, post brief, and
+  post draft.
 - Human approval gates for content plan, post brief, final text, and release readiness.
 - Deterministic style, anti-AI, fact-check, and policy checks for the draft.
 - Manual release package with Telegram/LinkedIn targets, checklist, text copy, and
@@ -160,6 +161,11 @@ New conceptual entities:
   `BulkImportAction`, and `ArchiveRecord` for the local import-review shell. Only
   `acceptedToMemory` candidates become `AuthorNote`; unreviewed and archive-only
   candidates do not affect `AuthorPositionAssertion`.
+- `RadarDefinition` for local-first radar settings: source type, scope, acceptance
+  policy, trigger mode, status, last run, and notes.
+- `SourceSignal` now supports review metadata: `radarId`, `reviewStatus`,
+  `suggestedTopicId`, `suggestedFabulaId`, `suggestedValue`, `duplicateRisk`, and
+  `authorCorrection`.
 - `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrixEntry` as implemented
   structured editorial entities. `ContentDesignRecord` and `PlatformProfile` remain
   future entities.
@@ -196,9 +202,12 @@ Use these boundaries:
 - `WorkspaceState.contentPlanItems` is the broadcast grid. `contentPlanItem` remains a
   compatibility field for the currently selected/approved slot used by post brief,
   release, and analytics services.
-- Future `Сигналы` should own radar settings and reviewed source material. Future
-  `PostCandidate` services should assemble signal/topic/fabula/audience/value/goal
-  combinations before a calendar slot becomes an approved post concept.
+- `Сигналы` owns local-first radar settings and reviewed source material. `sourceSignals`
+  is the new signal list; `sourceSignal` remains the compatibility field for the
+  currently selected approved signal used by insight, plan, brief, release, and
+  analytics services.
+- Future `PostCandidate` services should assemble signal/topic/fabula/audience/value/
+  goal combinations before a calendar slot becomes an approved post concept.
 - The author-memory UI may use browser-only helpers for local link previews, derived
   titles, search filters, summary counts, and voice-input capability detection. These
   helpers must not fetch external metadata or bypass local-first storage.
@@ -209,6 +218,19 @@ real source ingestion, or AI provider calls until their slices are planned.
 Do not deepen `План` as a standalone generator of posts. The next planning slices must
 first add the signal workspace and post candidate assemblies so the calendar shows
 material readiness rather than invented slots.
+
+Signal review transitions are pure domain helpers:
+
+- `approveSignal(signal)` marks material ready for insight generation.
+- `rejectSignal(signal)` removes it from active consideration.
+- `archiveSignal(signal)` keeps it as non-active context.
+- `correctSignal(signal, patch)` stores author corrections. In the UI, correction also
+  creates a targeted `AuthorNote` so the author-memory layer learns from review
+  choices.
+
+`LocalWorkspaceStore.normalizeWorkspace` fills missing `radars` and `sourceSignals`
+from the demo workspace and maps old `activeSection: "radar"` browser state to
+`activeSection: "signals"`.
 
 File attachments are local-first and size-limited to 1 MB per attachment in the browser
 demo. They are stored as metadata plus `dataUrl`. Real PDF/DOCX parsing, OCR, image

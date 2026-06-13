@@ -129,6 +129,46 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialValidationRun).toBeNull();
   });
 
+  it('loads an old workspace without radars and source signal queue fields', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const oldWorkspace = { ...workspace, activeSection: 'radar' } as unknown as Partial<typeof workspace> & { activeSection: string };
+    delete oldWorkspace.radars;
+    delete oldWorkspace.sourceSignals;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.activeSection).toBe('signals');
+    expect(loaded.radars).toHaveLength(4);
+    expect(loaded.sourceSignals.length).toBeGreaterThan(5);
+    expect(loaded.sourceSignal.id).toBe(workspace.sourceSignal.id);
+  });
+
+  it('saves and loads radar settings and reviewed signal state', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changedSignal = {
+      ...workspace.sourceSignals[1],
+      reviewStatus: 'approved' as const,
+      authorCorrection: 'Author moved this signal into the trust/adoption lane.'
+    };
+    const changed = {
+      ...workspace,
+      radars: [{ ...workspace.radars[0], status: 'paused' as const }, ...workspace.radars.slice(1)],
+      sourceSignal: changedSignal,
+      sourceSignals: workspace.sourceSignals.map((signal) => signal.id === changedSignal.id ? changedSignal : signal)
+    };
+
+    store.save(changed);
+    const loaded = store.load();
+
+    expect(loaded.radars[0].status).toBe('paused');
+    expect(loaded.sourceSignal.id).toBe(changedSignal.id);
+    expect(loaded.sourceSignal.reviewStatus).toBe('approved');
+    expect(loaded.sourceSignals.find((signal) => signal.id === changedSignal.id)?.authorCorrection).toContain('trust/adoption');
+  });
+
   it('loads an old editorial validation snapshot without validator results', () => {
     const storage = createMemoryStorage();
     const workspace = createDemoWorkspace();

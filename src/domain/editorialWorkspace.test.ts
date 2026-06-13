@@ -5,10 +5,13 @@ import {
   approveFinalText,
   approvePlanItem,
   approvePostBrief,
+  approveSignal,
   acceptCandidateToArchive,
   acceptCandidateToMemory,
+  archiveSignal,
   bulkAcceptCandidatesToArchive,
   completeTopicFabulaMatrix,
+  correctSignal,
   createFabulaDraft,
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
@@ -27,6 +30,7 @@ import {
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
+  rejectSignal,
   rejectPlanItem,
   rejectPostBrief,
   undoLastBulkImportAction,
@@ -94,6 +98,34 @@ describe('editorial workspace domain', () => {
     expect(brief.thesis).toContain('AI-B2B продукт');
     expect(brief.topicTitle).toBe('AI product discovery');
     expect(brief.structure[0]).toContain('Исследовательская заметка');
+  });
+
+  it('keeps demo radars and reviewed source signals as the material intake layer', () => {
+    const workspace = createDemoWorkspace();
+
+    expect(workspace.radars).toHaveLength(4);
+    expect(workspace.sourceSignals.length).toBeGreaterThan(5);
+    expect(workspace.sourceSignals.some((signal) => signal.reviewStatus === 'approved')).toBe(true);
+    expect(workspace.sourceSignals.some((signal) => signal.reviewStatus === 'new')).toBe(true);
+    expect(workspace.sourceSignal.id).toBe(workspace.sourceSignals[0].id);
+    expect(workspace.sourceSignal.reviewStatus).toBe('approved');
+  });
+
+  it('transitions source signals through approve, reject, archive, and correction states', () => {
+    const workspace = createDemoWorkspace();
+    const signal = workspace.sourceSignals.find((item) => item.reviewStatus === 'new')!;
+    const corrected = correctSignal(signal, {
+      suggestedValue: 'Trust loop value for enterprise rollout.',
+      authorCorrection: 'Move this signal to trust rollout, not generic discovery.'
+    });
+
+    expect(approveSignal(signal).reviewStatus).toBe('approved');
+    expect(rejectSignal(signal).reviewStatus).toBe('rejected');
+    expect(archiveSignal(signal).reviewStatus).toBe('archived');
+    expect(corrected.reviewStatus).toBe('corrected');
+    expect(corrected.suggestedValue).toContain('Trust loop');
+    expect(corrected.authorCorrection).toContain('trust rollout');
+    expect(corrected.title).toBe(signal.title);
   });
 
   it('creates a deterministic broadcast grid with compatible topic and fabula slots', () => {

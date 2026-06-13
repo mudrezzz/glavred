@@ -6,6 +6,8 @@ import {
   normalizeWeightRange,
   summarizeValidatorRun,
   type EditorialValidationRun,
+  type SourceSignal,
+  type WorkspaceSection,
   type WorkspaceState,
   type WorkspaceStore
 } from '../domain/editorialWorkspace';
@@ -58,6 +60,11 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
       weightWarningIds: item.weightWarningIds ?? []
     })
   );
+  const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
+  const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) =>
+    normalizeSourceSignal(signal, sourceSignal)
+  );
+  const activeSection = normalizeWorkspaceSection(saved.activeSection);
 
   return {
     ...demo,
@@ -76,7 +83,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
-    sourceSignal: saved.sourceSignal ?? demo.sourceSignal,
+    radars: saved.radars ?? demo.radars,
+    sourceSignal,
+    sourceSignals,
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
     contentPlanItems,
@@ -93,9 +102,28 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     importCandidates: saved.importCandidates ?? demo.importCandidates,
     archiveRecords: saved.archiveRecords ?? demo.archiveRecords,
     bulkImportActions: saved.bulkImportActions ?? [],
-    activeSection: saved.activeSection ?? demo.activeSection,
+    activeSection: activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt
   };
+}
+
+function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {
+  return {
+    ...fallback,
+    ...signal,
+    radarId: signal.radarId ?? fallback.radarId,
+    reviewStatus: signal.reviewStatus ?? fallback.reviewStatus ?? 'new',
+    suggestedTopicId: signal.suggestedTopicId ?? fallback.suggestedTopicId,
+    suggestedFabulaId: signal.suggestedFabulaId ?? fallback.suggestedFabulaId,
+    suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
+    duplicateRisk: signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
+    authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? ''
+  };
+}
+
+function normalizeWorkspaceSection(section: WorkspaceSection | 'radar' | undefined): WorkspaceSection | undefined {
+  if (section === 'radar') return 'signals';
+  return section;
 }
 
 function normalizeEditorialValidationRun(

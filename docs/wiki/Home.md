@@ -9,7 +9,7 @@ Permanent demo context: a Telegram blog by an AI Product Manager sharing researc
 ## What You Can See
 
 - [Author Memory](01-author-memory): internal feed for thoughts, links, files, and corrections.
-- [Production Flow](02-production-flow): path from radar to approved post brief.
+- [Production Flow](02-production-flow): path from reviewed signal to approved post brief.
 - [Release and Analytics](03-release-and-analytics): manual export and learning note.
 - [Local-First Demo](04-local-first-demo): launch, reset, localStorage, and screenshot refresh.
 - [External Sources](05-external-sources): local source list, review queue, bulk import, and archive-safe `Добавить все`.

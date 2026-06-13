@@ -5,19 +5,23 @@ Production flow начинается после авторской памяти.
 
 Рабочая цепочка:
 
-`Радар -> Инсайт -> Сетка вещания -> Утвержденная фабула поста`
+`Сигналы -> Инсайт -> Сетка вещания -> Утвержденная фабула поста`
 
-Note: this page documents the current Slice 1.4 demo flow. The next planning direction
-is to expand `Радар` into `Сигналы`, then add post candidates before the grid becomes a
-full calendar. The current grid is a working local-first prototype for slot approval
-and downstream production.
+Note: this page documents the current Slice 1.5 demo flow. `Сигналы` is implemented as
+a local-first radar and signal-review workspace. `Кандидаты постов` is visible as the
+next read-only step and becomes functional in Slice 1.6. The current grid remains a
+working local-first prototype for slot approval and downstream production.
 
 ![Утвержденная фабула](assets/screenshots/05-approved-post-brief.png)
 
-## Радар
+## Сигналы
 
-В `Радаре` пользователь видит исходный сигнал. В демо это паттерн AI-B2B-пилотов,
-которые хорошо выглядят на демо, но ломаются между pilot и регулярным использованием.
+В `Сигналы` пользователь видит радары, найденные сигналы и read-only preview
+`Кандидаты постов`. В демо это материал из памяти автора, архива, внешних источников
+и ручного исследования про AI-B2B adoption, evals, trust loop и rollout.
+
+Сигнал можно утвердить, отредактировать, отправить в архив или отклонить. Только
+утвержденный сигнал становится текущим входом для production-flow.
 
 Кнопка `Собрать инсайт` создает deterministic insight card: почему это важно, для
 кого релевантно, где позиция автора и какие риски банальности или фактические gaps

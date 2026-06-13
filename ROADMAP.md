@@ -982,7 +982,7 @@ Status:
 
 ### Slice 1.5: Signals and Radar Workspace
 
-- Status: Ready
+- Status: Done
 - Goal: Replace the single `Радар` flow with a first working `Сигналы` workspace.
 - User value: The author can see what material the system found, where it came from,
   why it was selected, and approve/correct/reject it before it becomes a post concept.
@@ -1026,18 +1026,19 @@ Status:
   - The AI Product Manager demo should show signals from memory/archive/external mock
     sources before any plan slot is approved.
 - Acceptance criteria:
-  - User can inspect demo radars.
-  - User can review found signals.
-  - User can approve, reject, archive, and correct a signal.
-  - Signal corrections become visible as author-memory input or evidence.
-  - Existing plan/brief/edit/release flow remains working.
+  - User can inspect demo radars. Done.
+  - User can review found signals. Done.
+  - User can approve, reject, archive, and correct a signal. Done.
+  - Signal corrections become visible as author-memory input or evidence. Done.
+  - Existing plan/brief/edit/release flow remains working. Done.
 - Risks:
   - The boundary between import candidates and source signals must stay clear:
     imported candidates are source material; reviewed signals are editorial triggers.
+  - `Кандидаты постов` is intentionally read-only until Slice 1.6.
 
 ### Slice 1.6: Post Candidate Assemblies
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add post candidates as explicit combinations of signal, topic, fabula,
   audience, value, goal, platform, and format.
 - User value: The author can compare several proposed post concepts for one future
@@ -1219,6 +1220,7 @@ Status:
 - Slice 1.3.1: Context Chat UX Repair and Chat Mode. Completed 2026-06-13.
 - Slice 1.4: Content Plan as Broadcast Grid. Completed 2026-06-13.
 - Slice 1.4.1: Broadcast Planning Concept Correction. Completed 2026-06-13.
+- Slice 1.5: Signals and Radar Workspace. Completed 2026-06-13.
 
 ## Blocked Items
 
@@ -1239,4 +1241,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5: Signals and Radar Workspace`.
+Start `Slice 1.6: Post Candidate Assemblies`.

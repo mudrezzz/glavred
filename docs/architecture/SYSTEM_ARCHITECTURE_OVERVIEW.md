@@ -51,16 +51,16 @@ author's own position explicit, editable, evidence-backed, and continuously vali
 The current implemented perimeter now starts with author memory and reaches a captured
 editorial learning note:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 The source-to-release part remains useful as a production layer. It is no longer the
-conceptual center of the product. Author memory and first author-position assertions
-now sit above that flow; future slices should add structured topics, fabulas, and
-validator results, then route more production decisions through them.
+conceptual center of the product. Author memory, author-position assertions,
+structured topics/fabulas, validator results, and reviewed signals now sit above that
+flow; future slices should route post candidates and calendar slots through them.
 
-Slice 1.4 added a first broadcast grid in `План`, but the deeper planning model is now
-explicitly corrected: a calendar slot is not a post concept by itself. Future planning
-work should add `Сигналы` and `Кандидаты постов` before expanding the calendar UI.
+Slice 1.5 adds the first local-first `Сигналы` workspace: demo radars, found signals,
+manual review actions, and a read-only `Кандидаты постов` preview. The deeper planning
+model still needs Slice 1.6 candidate assemblies before expanding the calendar UI.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -328,17 +328,18 @@ research experience building AI-B2B products:
 5. Future external source settings can describe the author's Telegram channel,
    interview notes, blog archive, and talks. Imported candidates must go through review
    or bulk archive acceptance before they influence memory or assertions.
-6. The existing production flow uses the same demo context: a `SourceSignal` about the
-   gap between AI-B2B demos and adoption.
-7. The next planning correction will make that signal part of `Сигналы`, then assemble
-   multiple post candidates from it.
-8. `InsightScoring` produces an `InsightCard`.
-9. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
-10. The author approves a slot and post brief through HITL gates.
-11. `Drafting` creates an editable research-note draft.
-12. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+6. `Сигналы` shows demo radars for author memory, archive, external sources, and
+   manual research.
+7. The author reviews found signals, then approves, archives, rejects, or corrects a
+   signal before it becomes production material.
+8. The approved signal becomes the compatibility `sourceSignal` for downstream flow.
+9. `InsightScoring` produces an `InsightCard`.
+10. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
+11. The author approves a slot and post brief through HITL gates.
+12. `Drafting` creates an editable research-note draft.
+13. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-13. The author approves final text, prepares a manual Telegram release package, and
+14. The author approves final text, prepares a manual Telegram release package, and
    captures analytics learning.
 
 ## Extension Points

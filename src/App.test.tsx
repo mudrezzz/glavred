@@ -2,12 +2,17 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 
-function goToRadar() {
-  fireEvent.click(screen.getByRole('button', { name: /Радар/i }));
+function goToSignals() {
+  fireEvent.click(screen.getByRole('button', { name: /Сигналы/i }));
+}
+
+function openFoundSignals() {
+  fireEvent.click(screen.getByRole('button', { name: /Найденные сигналы/i }));
 }
 
 function createApprovedBrief() {
-  goToRadar();
+  goToSignals();
+  openFoundSignals();
   fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
   fireEvent.click(screen.getByRole('button', { name: /В план/i }));
   fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
@@ -48,12 +53,52 @@ describe('App', () => {
     expect(screen.getByText('Главред')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Память автора/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Редакционная модель/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Радар/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Сигналы/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Радар/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /План/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Фабулы/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Редактура/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Выпуск/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Аналитика/i })).toBeInTheDocument();
+  });
+
+  it('shows the signals workspace with radars, reviewable signals, and post-candidate preview', () => {
+    render(<App />);
+
+    goToSignals();
+
+    expect(screen.getByRole('button', { name: /Радары|Р Р°РґР°СЂС‹/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Найденные сигналы|РќР°Р№РґРµРЅРЅС‹Рµ СЃРёРіРЅР°Р»С‹/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i })).toBeInTheDocument();
+    expect(screen.getByTestId('radar-list')).toBeInTheDocument();
+    expect(screen.getAllByText('Память автора').length).toBeGreaterThan(0);
+    expect(document.querySelector('.source-grid')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Внешние источники|Р’РЅРµС€РЅРёРµ РёСЃС‚РѕС‡РЅРёРєРё/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Открыть сигналы|РћС‚РєСЂС‹С‚СЊ СЃРёРіРЅР°Р»С‹/i }));
+
+    const signalList = screen.getByTestId('source-signal-list');
+    expect(signalList).toBeInTheDocument();
+    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'new' } });
+    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+
+    const signalRow = signalList.querySelector('article') as HTMLElement;
+    fireEvent.click(within(signalRow).getAllByRole('button')[0]);
+    fireEvent.click(within(signalRow).getByRole('button', { name: /Утвердить сигнал|РЈС‚РІРµСЂРґРёС‚СЊ СЃРёРіРЅР°Р»/i }));
+    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'approved' } });
+    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+
+    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'new' } });
+    const archiveRow = signalList.querySelector('article') as HTMLElement;
+    fireEvent.click(within(archiveRow).getAllByRole('button')[0]);
+    fireEvent.click(within(archiveRow).getByRole('button', { name: /В архив|Р’ Р°СЂС…РёРІ/i }));
+    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'archived' } });
+    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i }));
+    expect(screen.getByText(/Slice 1\.6/i)).toBeInTheDocument();
   });
 
   it('opens on author memory with demo notes and evidence-backed assertions', () => {

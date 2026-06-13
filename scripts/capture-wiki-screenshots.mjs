@@ -63,7 +63,8 @@ async function clickButton(page, name) {
 }
 
 async function completeProductionFlow(page) {
-  await clickButton(page, /Радар/i);
+  await clickButton(page, /Сигналы/i);
+  await clickButton(page, /Найденные сигналы/i);
   await clickButton(page, /Собрать инсайт/i);
   await clickButton(page, /В план/i);
   await clickButton(page, /^Утвердить$/i);

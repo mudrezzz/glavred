@@ -10,10 +10,11 @@ transparent author position model, and use that model to plan, validate, draft, 
 release content.
 
 The current repository contains the first working local-first editorial cabinet. It
-implements author memory, evidence-backed author-position assertions, and an editable
-production flow from source signal to insight card, broadcast content grid, approved
-post brief, deterministic draft, editorial checks, approved final text, manual release
-package, copy/Markdown export, and captured editorial learning note.
+implements author memory, evidence-backed author-position assertions, reviewed
+signals/radars, and an editable production flow from approved signal to insight card,
+broadcast content grid, approved post brief, deterministic draft, editorial checks,
+approved final text, manual release package, copy/Markdown export, and captured
+editorial learning note.
 
 `Память автора` is now the main entry point: titleless thought capture, optional local
 file attachments, local link previews, targeted corrections, search/filtering, lazy
@@ -45,10 +46,13 @@ and advisory weight warnings. The standalone sidebar item `Фабулы` was rem
 editorial fabulas live inside `Редакционная модель`, while a concrete `Фабула поста`
 remains an internal production step opened from an approved plan slot.
 
-The next planning correction is documented but not implemented yet: `План` should be
-treated as broadcast demand, while `Сигналы` and `Кандидаты постов` provide the material
-that fills calendar slots. The current broadcast grid remains a useful local-first
-prototype until the signal and candidate layers are added.
+`Сигналы` is now the material intake workspace: demo radars collect material from
+author memory, archive, external sources, and manual research; found signals can be
+approved, corrected, archived, or rejected before downstream production starts.
+`Кандидаты постов` is visible as the next read-only step: it explains that assemblies
+of signal, topic, fabula, audience, value, and goal arrive in Slice 1.6. The current
+broadcast grid remains a useful local-first prototype until candidate assemblies and a
+true calendar are added.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

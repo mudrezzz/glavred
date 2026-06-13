@@ -93,10 +93,11 @@ seed contains two weeks of slots with dates, Telegram as the local-first platfor
 formats, topics, fabulas, approval status, manual override state, and advisory
 weight/matrix warnings.
 
-This is a useful Slice 1.4 prototype, but it is not the final planning model. The next
-demo evolution should add `Сигналы` first: radar settings, found signals, signal review,
-and post candidate assemblies. After that, `План` can become a real calendar with
-publishing tempo, period, days/times, candidate counts, and readiness statuses.
+This is a useful Slice 1.4 prototype, but it is not the final planning model. Slice
+1.5 now adds `Сигналы`: radar settings, found signals, and explicit signal review.
+The next demo evolution should add post candidate assemblies. After that, `План` can
+become a real calendar with publishing tempo, period, days/times, candidate counts,
+and readiness statuses.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
@@ -161,23 +162,26 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 12. Open `Темы`, add a custom topic, save it, expand a row, edit or delete one entity.
 13. In `Редакционная модель`, open `Фабулы`, add a custom fabula, save it, then inspect its compatible topics.
 14. Open `Матрица`, toggle one compatibility pair, then use `Сохранить матрицу` or `Отменить`.
-15. Open `Радар`.
-16. Review or edit the source signal.
-17. Click `Собрать инсайт`.
-18. Click `В план`.
-19. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
+15. Open `Сигналы`.
+16. Inspect `Радары`.
+17. Open `Найденные сигналы`.
+18. Approve, archive, reject, or edit one signal.
+19. Open `Кандидаты постов` to see the Slice 1.6 preview.
+20. Return to `Найденные сигналы` and click `Собрать инсайт`.
+21. Click `В план`.
+22. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
-20. Click `Подготовить фабулу поста`.
-21. Edit the post brief if needed.
-22. Click `Утвердить фабулу`.
-23. Open `Редактура`.
-24. Click `Написать драфт`.
-25. Review checks and editor notes.
-26. Edit the draft text.
-27. Click `Утвердить текст`.
-28. Open `Выпуск`.
-29. Click `Подготовить выпуск`.
-30. Review target, checklist, final text, and Markdown preview.
+23. Click `Подготовить фабулу поста`.
+24. Edit the post brief if needed.
+25. Click `Утвердить фабулу`.
+26. Open `Редактура`.
+27. Click `Написать драфт`.
+28. Review checks and editor notes.
+29. Edit the draft text.
+30. Click `Утвердить текст`.
+31. Open `Выпуск`.
+32. Click `Подготовить выпуск`.
+33. Review target, checklist, final text, and Markdown preview.
 31. Complete the checklist and click `Готово к выпуску`.
 32. Click `Скопировать текст` or `Скачать Markdown`.
 33. Open `Аналитика`.

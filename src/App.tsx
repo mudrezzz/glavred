@@ -31,10 +31,12 @@ import {
   approvePlanItem,
   approvePostBrief,
   applyPlanWarnings,
+  approveSignal,
   acceptCandidateToArchive,
   acceptCandidateToMemory,
   addFabula,
   addTopic,
+  archiveSignal,
   bulkAcceptCandidatesToArchive,
   bulkRejectCandidates,
   completeTopicFabulaMatrix,
@@ -42,6 +44,7 @@ import {
   createEditorialValidationRun,
   createFabulaDraft,
   createTopicDraft,
+  correctSignal,
   deleteFabula,
   deleteEditorialRule,
   deleteTopic,
@@ -56,6 +59,7 @@ import {
   markReleaseExported,
   markReleaseReady,
   normalizeWeightRange,
+  rejectSignal,
   rejectCandidate,
   reviseDraft,
   toggleReleaseChecklistItem,
@@ -90,7 +94,9 @@ import {
   type PostBrief,
   type PostDraft,
   type ProjectProfile,
+  type RadarDefinition,
   type ReleasePackage,
+  type SignalReviewStatus,
   type SourceSignal,
   type Topic,
   type TopicFabulaMatrixEntry,
@@ -112,7 +118,7 @@ type ContextChatTab = 'chat' | 'suggestions';
 const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: string; disabled?: boolean }> = [
   { id: 'memory', icon: 'memory', label: 'Память автора' },
   { id: 'editorialModel', icon: 'model', label: 'Редакционная модель' },
-  { id: 'radar', icon: 'radar', label: 'Радар', count: '1' },
+  { id: 'signals', icon: 'radar', label: 'Сигналы' },
   { id: 'plan', icon: 'plan', label: 'План', count: '1' },
   { id: 'edit', icon: 'edit', label: 'Редактура' },
   { id: 'release', icon: 'release', label: 'Выпуск' },
@@ -122,7 +128,7 @@ const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: st
 const TITLES: Record<WorkspaceSection, [string, string]> = {
   memory: ['Память автора', 'Заметки -> позиция автора'],
   editorialModel: ['Редакционная модель', 'Правила и контекст блога'],
-  radar: ['Радар', 'Источник -> инсайт'],
+  signals: ['Сигналы', 'Радары -> сигналы -> кандидаты'],
   plan: ['План', 'HITL · Gate 1'],
   brief: ['Фабула поста', 'HITL · Gate 2'],
   edit: ['Редактура', 'HITL · Gate 3'],
@@ -244,6 +250,68 @@ export function App() {
 
   function go(section: WorkspaceSection) {
     patchWorkspace({ activeSection: section });
+  }
+
+  function applySignalUpdate(nextSignal: SourceSignal, message: string, selectAsCurrent = false) {
+    setWorkspace((current) => {
+      const sourceSignals = current.sourceSignals.map((signal) =>
+        signal.id === nextSignal.id ? nextSignal : signal
+      );
+      return {
+        ...current,
+        sourceSignal: selectAsCurrent ? nextSignal : current.sourceSignal,
+        sourceSignals,
+        updatedAt: new Date().toISOString()
+      };
+    });
+    setToast(message);
+  }
+
+  function approveSourceSignal(signal: SourceSignal) {
+    applySignalUpdate(approveSignal(signal), 'Сигнал утвержден и выбран для production-flow', true);
+  }
+
+  function rejectSourceSignal(signal: SourceSignal) {
+    applySignalUpdate(rejectSignal(signal), 'Сигнал отклонен');
+  }
+
+  function archiveSourceSignal(signal: SourceSignal) {
+    applySignalUpdate(archiveSignal(signal), 'Сигнал отправлен в архив');
+  }
+
+  function correctSourceSignal(signal: SourceSignal, patch: Partial<SourceSignal>) {
+    const nextSignal = correctSignal(signal, patch);
+    setWorkspace((current) => {
+      const correctionNote: AuthorNote = {
+        id: `note-signal-correction-${signal.id}-${Date.now()}`,
+        type: 'manualCorrection',
+        title: `Правка сигнала: ${signal.title}`,
+        body:
+          nextSignal.authorCorrection ||
+          'Автор уточнил, как этот сигнал связан с темой, фабулой или ценностью.',
+        sourceUrl: '',
+        tags: ['signal-correction'],
+        attachments: [],
+        capturedAt: new Date().toISOString(),
+        targetType: 'evidence',
+        targetId: signal.id,
+        targetTitle: signal.title
+      };
+      const authorNotes = [correctionNote, ...current.authorNotes];
+      const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
+      return {
+        ...current,
+        sourceSignals: current.sourceSignals.map((candidate) =>
+          candidate.id === nextSignal.id ? nextSignal : candidate
+        ),
+        sourceSignal: current.sourceSignal.id === nextSignal.id ? nextSignal : current.sourceSignal,
+        authorNotes,
+        authorMemoryEvents,
+        authorPositionAssertions: inferAuthorPositionAssertions(authorNotes, authorMemoryEvents),
+        updatedAt: new Date().toISOString()
+      };
+    });
+    setToast('Правка сигнала добавлена в память автора');
   }
 
   function resetDemo() {
@@ -417,10 +485,13 @@ export function App() {
               onRunValidation={runEditorialValidation}
             />
           )}
-          {active === 'radar' && (
-            <RadarView
+          {active === 'signals' && (
+            <SignalsView
               workspace={workspace}
-              onSignalChange={(sourceSignal) => patchWorkspace({ sourceSignal })}
+              onApproveSignal={approveSourceSignal}
+              onRejectSignal={rejectSourceSignal}
+              onArchiveSignal={archiveSourceSignal}
+              onCorrectSignal={correctSourceSignal}
               onCreateInsight={() => {
                 const insightCard = createInsightCard(
                   workspace.sourceSignal,
@@ -685,8 +756,9 @@ function Sidebar({
           <Icon name={item.icon} />
           <span>{item.label}</span>
           {item.id === 'memory' ? <span className="count">{workspace.authorNotes.length}</span> : null}
+          {item.id === 'signals' ? <span className="count">{workspace.sourceSignals.length}</span> : null}
           {item.id === 'plan' ? <span className="count">{workspace.contentPlanItems.length}</span> : null}
-          {item.id !== 'memory' && item.id !== 'plan' && item.count ? <span className="count">{item.count}</span> : null}
+          {item.id !== 'memory' && item.id !== 'signals' && item.id !== 'plan' && item.count ? <span className="count">{item.count}</span> : null}
         </button>
       ))}
       <div className="side-foot">
@@ -3941,6 +4013,354 @@ function sameMatrix(left: TopicFabulaMatrixEntry[], right: TopicFabulaMatrixEntr
     const other = right.find((item) => item.topicId === entry.topicId && item.fabulaId === entry.fabulaId);
     return other ? other.enabled === entry.enabled : false;
   });
+}
+
+type SignalsTab = 'radars' | 'signals' | 'candidates';
+
+function radarSourceTypeLabel(sourceType: RadarDefinition['sourceType']): string {
+  if (sourceType === 'authorMemory') return 'Память';
+  if (sourceType === 'archive') return 'Архив';
+  if (sourceType === 'externalSource') return 'Внешний источник';
+  return 'Ручной ввод';
+}
+
+function radarAcceptancePolicyLabel(policy: RadarDefinition['acceptancePolicy']): string {
+  if (policy === 'automatic') return 'Автоматически';
+  if (policy === 'automaticWithReview') return 'Авто + review';
+  return 'Вручную';
+}
+
+function radarTriggerModeLabel(mode: RadarDefinition['triggerMode']): string {
+  if (mode === 'scheduled') return 'По расписанию';
+  if (mode === 'deficitDriven') return 'По дефициту плана';
+  return 'Вручную';
+}
+
+function radarStatusLabel(status: RadarDefinition['status']): string {
+  if (status === 'active') return 'Активен';
+  if (status === 'paused') return 'Пауза';
+  return 'Нужен review';
+}
+
+function signalReviewStatusLabel(status: SignalReviewStatus | undefined): string {
+  if (status === 'approved') return 'Утвержден';
+  if (status === 'rejected') return 'Отклонен';
+  if (status === 'archived') return 'В архиве';
+  if (status === 'corrected') return 'Исправлен';
+  return 'Новый';
+}
+
+function SignalsView({
+  workspace,
+  onApproveSignal,
+  onRejectSignal,
+  onArchiveSignal,
+  onCorrectSignal,
+  onCreateInsight,
+  onPlan
+}: {
+  workspace: WorkspaceState;
+  onApproveSignal: (signal: SourceSignal) => void;
+  onRejectSignal: (signal: SourceSignal) => void;
+  onArchiveSignal: (signal: SourceSignal) => void;
+  onCorrectSignal: (signal: SourceSignal, patch: Partial<SourceSignal>) => void;
+  onCreateInsight: () => void;
+  onPlan: () => void;
+}) {
+  const [tab, setTab] = useState<SignalsTab>('radars');
+  const [expandedRadarId, setExpandedRadarId] = useState<string | null>(workspace.radars[0]?.id ?? null);
+  const [expandedSignalId, setExpandedSignalId] = useState<string | null>(workspace.sourceSignal.id);
+  const [editingSignal, setEditingSignal] = useState<SourceSignal | null>(null);
+  const [radarFilter, setRadarFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<SignalReviewStatus | 'all'>('all');
+  const [topicFilter, setTopicFilter] = useState('all');
+  const [fabulaFilter, setFabulaFilter] = useState('all');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const insight = workspace.insightCard;
+
+  const filteredSignals = workspace.sourceSignals.filter((signal) => {
+    if (radarFilter !== 'all' && signal.radarId !== radarFilter) return false;
+    if (statusFilter !== 'all' && signal.reviewStatus !== statusFilter) return false;
+    if (topicFilter !== 'all' && signal.suggestedTopicId !== topicFilter) return false;
+    if (fabulaFilter !== 'all' && signal.suggestedFabulaId !== fabulaFilter) return false;
+    if (riskFilter !== 'all' && signal.duplicateRisk !== riskFilter) return false;
+    return true;
+  });
+  const approvedSignals = workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved');
+
+  function startSignalEdit(signal: SourceSignal) {
+    setExpandedSignalId(signal.id);
+    setEditingSignal({ ...signal });
+  }
+
+  function patchEditingSignal(patch: Partial<SourceSignal>) {
+    if (!editingSignal) return;
+    setEditingSignal({ ...editingSignal, ...patch });
+  }
+
+  function saveSignalEdit() {
+    if (!editingSignal) return;
+    onCorrectSignal(editingSignal, editingSignal);
+    setExpandedSignalId(editingSignal.id);
+    setEditingSignal(null);
+  }
+
+  return (
+    <div className="page wide fade-up">
+      <div className="sec-head">
+        <h2>Сигналы</h2>
+        <span className="sub">Радары собирают материал, автор утверждает сигналы, кандидаты появятся следующим слоем</span>
+      </div>
+      <div className="tabs signals-tabs" role="tablist" aria-label="Сигналы">
+        <button className={`tab ${tab === 'radars' ? 'active' : ''}`} type="button" onClick={() => setTab('radars')}>
+          Радары
+        </button>
+        <button className={`tab ${tab === 'signals' ? 'active' : ''}`} type="button" onClick={() => setTab('signals')}>
+          Найденные сигналы
+        </button>
+        <button className={`tab ${tab === 'candidates' ? 'active' : ''}`} type="button" onClick={() => setTab('candidates')}>
+          Кандидаты постов
+        </button>
+      </div>
+
+      {tab === 'radars' ? (
+        <section className="signals-stack" data-testid="radar-list">
+          {workspace.radars.map((radar) => {
+            const matchingSignals = workspace.sourceSignals.filter((signal) => signal.radarId === radar.id);
+            const isExpanded = expandedRadarId === radar.id;
+            return (
+              <article className="card entity-row" key={radar.id}>
+                <button className="entity-row-main" type="button" onClick={() => setExpandedRadarId(isExpanded ? null : radar.id)}>
+                  <span className="pill">{radarSourceTypeLabel(radar.sourceType)}</span>
+                  <strong>{radar.title}</strong>
+                  <span>{radarAcceptancePolicyLabel(radar.acceptancePolicy)}</span>
+                  <span>{matchingSignals.length} сигналов</span>
+                  <span className={`sig ${radar.status === 'active' ? 'ok' : radar.status === 'paused' ? 'warn' : 'info'}`}>
+                    {radarStatusLabel(radar.status)}
+                  </span>
+                </button>
+                {isExpanded ? (
+                  <div className="entity-details">
+                    <p>{radar.scope}</p>
+                    <dl className="signal-meta-grid">
+                      <dt>Запуск</dt>
+                      <dd>{radarTriggerModeLabel(radar.triggerMode)}</dd>
+                      <dt>Последний run</dt>
+                      <dd>{radar.lastRunAt}</dd>
+                      <dt>Заметка</dt>
+                      <dd>{radar.notes}</dd>
+                    </dl>
+                    <div className="actions">
+                      <button className="btn btn-sec btn-sm" type="button" onClick={() => setTab('signals')}>
+                        Открыть сигналы
+                      </button>
+                      <button className="btn btn-ghost btn-sm" type="button" disabled>
+                        Проверить вручную
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+
+      {tab === 'signals' ? (
+        <section className="signals-layout">
+          <div className="signals-main">
+            <div className="card signal-filters">
+              <select aria-label="Фильтр радара" value={radarFilter} onChange={(event) => setRadarFilter(event.target.value)}>
+                <option value="all">Все радары</option>
+                {workspace.radars.map((radar) => (
+                  <option key={radar.id} value={radar.id}>
+                    {radar.title}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Фильтр статуса сигнала" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as SignalReviewStatus | 'all')}>
+                <option value="all">Все статусы</option>
+                <option value="new">Новые</option>
+                <option value="approved">Утвержденные</option>
+                <option value="corrected">Исправленные</option>
+                <option value="rejected">Отклоненные</option>
+                <option value="archived">В архиве</option>
+              </select>
+              <select aria-label="Фильтр темы сигнала" value={topicFilter} onChange={(event) => setTopicFilter(event.target.value)}>
+                <option value="all">Все темы</option>
+                {workspace.topics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.title}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Фильтр фабулы сигнала" value={fabulaFilter} onChange={(event) => setFabulaFilter(event.target.value)}>
+                <option value="all">Все фабулы</option>
+                {workspace.fabulas.map((fabula) => (
+                  <option key={fabula.id} value={fabula.id}>
+                    {fabula.title}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Фильтр риска дубля" value={riskFilter} onChange={(event) => setRiskFilter(event.target.value as 'all' | 'low' | 'medium' | 'high')}>
+                <option value="all">Любой дубль-риск</option>
+                <option value="low">Низкий</option>
+                <option value="medium">Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </div>
+            <div className="signals-stack" data-testid="source-signal-list">
+              {filteredSignals.map((signal) => {
+                const isExpanded = expandedSignalId === signal.id;
+                const editing = editingSignal?.id === signal.id ? editingSignal : null;
+                const radar = workspace.radars.find((candidate) => candidate.id === signal.radarId);
+                const topic = workspace.topics.find((candidate) => candidate.id === signal.suggestedTopicId);
+                const fabula = workspace.fabulas.find((candidate) => candidate.id === signal.suggestedFabulaId);
+                return (
+                  <article className="card entity-row signal-row" key={signal.id}>
+                    <button className="entity-row-main" type="button" onClick={() => setExpandedSignalId(isExpanded ? null : signal.id)}>
+                      <span className="pill">{radar?.title ?? 'Радар'}</span>
+                      <strong>{signal.title}</strong>
+                      <span>{topic?.title ?? 'Тема не выбрана'}</span>
+                      <span>{fabula?.title ?? 'Фабула не выбрана'}</span>
+                      <span className={`sig ${signal.reviewStatus === 'approved' ? 'ok' : signal.reviewStatus === 'rejected' ? 'danger' : 'info'}`}>
+                        {signalReviewStatusLabel(signal.reviewStatus)}
+                      </span>
+                    </button>
+                    {isExpanded ? (
+                      <div className="entity-details">
+                        {editing ? (
+                          <div className="signal-edit-form">
+                            <label>
+                              Заголовок
+                              <input value={editing.title} onChange={(event) => patchEditingSignal({ title: event.target.value })} />
+                            </label>
+                            <label>
+                              Кратко
+                              <textarea value={editing.summary} onChange={(event) => patchEditingSignal({ summary: event.target.value })} />
+                            </label>
+                            <div className="form-row">
+                              <label>
+                                Тема
+                                <select value={editing.suggestedTopicId ?? ''} onChange={(event) => patchEditingSignal({ suggestedTopicId: event.target.value })}>
+                                  {workspace.topics.map((topicOption) => (
+                                    <option key={topicOption.id} value={topicOption.id}>
+                                      {topicOption.title}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label>
+                                Фабула
+                                <select value={editing.suggestedFabulaId ?? ''} onChange={(event) => patchEditingSignal({ suggestedFabulaId: event.target.value })}>
+                                  {workspace.fabulas.map((fabulaOption) => (
+                                    <option key={fabulaOption.id} value={fabulaOption.id}>
+                                      {fabulaOption.title}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                            <label>
+                              Ценность
+                              <textarea value={editing.suggestedValue ?? ''} onChange={(event) => patchEditingSignal({ suggestedValue: event.target.value })} />
+                            </label>
+                            <label>
+                              Правка автора
+                              <textarea value={editing.authorCorrection ?? ''} onChange={(event) => patchEditingSignal({ authorCorrection: event.target.value })} />
+                            </label>
+                            <div className="actions">
+                              <button className="btn btn-pri btn-sm" type="button" onClick={saveSignalEdit}>
+                                Сохранить
+                              </button>
+                              <button className="btn btn-sec btn-sm" type="button" onClick={() => setEditingSignal(null)}>
+                                Отменить
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p>{signal.summary}</p>
+                            <dl className="signal-meta-grid">
+                              <dt>Источник</dt>
+                              <dd>{signal.source}</dd>
+                              <dt>Дата</dt>
+                              <dd>{signal.capturedAt}</dd>
+                              <dt>Ценность</dt>
+                              <dd>{signal.suggestedValue}</dd>
+                              <dt>Риск дубля</dt>
+                              <dd>{duplicateRiskLabel(signal.duplicateRisk ?? 'low')}</dd>
+                              <dt>Заметка</dt>
+                              <dd>{signal.rawNote}</dd>
+                              {signal.authorCorrection ? (
+                                <>
+                                  <dt>Правка автора</dt>
+                                  <dd>{signal.authorCorrection}</dd>
+                                </>
+                              ) : null}
+                            </dl>
+                            <div className="actions">
+                              <button className="btn btn-pri btn-sm" type="button" onClick={() => onApproveSignal(signal)}>
+                                Утвердить сигнал
+                              </button>
+                              <button className="btn btn-sec btn-sm" type="button" onClick={() => startSignalEdit(signal)}>
+                                Редактировать
+                              </button>
+                              <button className="btn btn-ghost btn-sm" type="button" onClick={() => onArchiveSignal(signal)}>
+                                В архив
+                              </button>
+                              <button className="btn btn-ghost btn-sm" type="button" onClick={() => onRejectSignal(signal)}>
+                                Отклонить
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+          <aside className="signals-aside card">
+            <h3>Сигналы перед планом</h3>
+            <p>Утвержденный сигнал становится текущим материалом для инсайта и сетки вещания.</p>
+            <div className="memory-summary-grid">
+              <div className="mini-stat"><b>{workspace.sourceSignals.length}</b><span>Всего</span></div>
+              <div className="mini-stat"><b>{approvedSignals.length}</b><span>Утверждено</span></div>
+              <div className="mini-stat"><b>{workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'new').length}</b><span>Новые</span></div>
+              <div className="mini-stat"><b>{workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'corrected').length}</b><span>Правки</span></div>
+            </div>
+            <button className="btn btn-sec" type="button" onClick={onCreateInsight}>
+              <Icon name="radar" size={16} />
+              Собрать инсайт
+            </button>
+            {insight ? (
+              <div className="signal-insight-summary">
+                <span className="sig info">{workspace.sourceSignal.type}</span>
+                <h4>{insight.title}</h4>
+                <p>{insight.whyItMatters}</p>
+                <button className="btn btn-pri btn-sm" type="button" onClick={onPlan}>
+                  <Icon name="caret" size={14} />В план
+                </button>
+              </div>
+            ) : null}
+          </aside>
+        </section>
+      ) : null}
+
+      {tab === 'candidates' ? (
+        <section className="card empty-state">
+          <span className="pill">Slice 1.6</span>
+          <h3>Кандидаты постов появятся следующим слоем</h3>
+          <p>
+            Здесь будут сборки: сигнал, тема, фабула, аудитория, ценность и цель. Сейчас слайс
+            фокусируется на радаре и ручном review сигналов, чтобы план не заполнялся без материала.
+          </p>
+        </section>
+      ) : null}
+    </div>
+  );
 }
 
 function RadarView({

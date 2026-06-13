@@ -35,15 +35,15 @@ The wiki explains the current product through real screenshots:
 
 - `Память автора`: quick thoughts, links, files, targeted corrections, evidence, and
   confidence.
-- Production flow: `Радар -> План -> Фабула поста`.
+- Production flow: `Сигналы -> Инсайт -> План -> Фабула поста`.
 - Release and analytics: final text, manual export, and captured learning note.
 - Local-first demo: reset, persistence, and screenshot refresh commands.
 
 Planning note: the current `План` screen is a local-first broadcast grid prototype.
-The next product slices will rename the old single `Радар` flow into a fuller
-`Сигналы` workspace, then add post candidates before the plan becomes a true calendar.
-Until then, the grid demonstrates slot approval and downstream production, not the
-final signal-driven planning model.
+`Сигналы` now owns radar settings and signal review. The next product slice adds
+`Кандидаты постов` before the plan becomes a true calendar. Until then, the grid
+demonstrates slot approval and downstream production, not the final signal-driven
+planning model.
 
 ## Demo Context
 
@@ -111,6 +111,34 @@ cover author-position clarity, anti-AI style coverage, audience value fit, goal
 consistency, and topic/fabula coverage. Each card shows score, red/yellow/green
 status, evidence, and suggested fixes.
 
+## Signals
+
+`Сигналы` replaces the old single `Радар` screen. It is the first review layer between
+raw material and production.
+
+The section has three internal tabs:
+
+- `Радары`: demo radar definitions for author memory, archive, external sources, and
+  manual research. Each row shows source type, acceptance policy, trigger mode, status,
+  last run, and notes.
+- `Найденные сигналы`: reviewable signals with filters by radar, status, topic,
+  fabula, and duplicate risk. Expand a signal to see provenance, suggested topic,
+  suggested fabula, value, raw note, and actions.
+- `Кандидаты постов`: read-only preview for Slice 1.6. Full candidate assemblies are
+  not implemented yet.
+
+Available signal actions:
+
+- `Утвердить сигнал`: marks the signal approved and makes it the current source signal
+  for `Собрать инсайт`.
+- `Редактировать`: lets you correct title, topic, fabula, value, and author
+  correction through save/cancel UX.
+- `В архив`: keeps the signal as non-active material.
+- `Отклонить`: marks the signal rejected.
+
+Manual corrections create author-memory input, so signal review also teaches the system
+about the author's choices. Unapproved signals do not create post concepts.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by
@@ -175,8 +203,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Open `Редакционная модель`, review the project profile in `Издательство`, add or edit one structured rule, and check the right-side validation panel.
 - Open `Темы` and `Фабулы`, expand one row, use `Редактировать`, then `Сохранить` or `Отменить`.
 - Open `Матрица`, toggle one compatibility checkbox, then use `Сохранить матрицу` or `Отменить`.
-- Review or edit the demo source signal in `Радар`.
-- Generate an insight card.
+- Open `Сигналы`.
+- Inspect `Радары`, then open `Найденные сигналы`.
+- Approve, archive, reject, or edit one signal. Approved signal becomes the current
+  input for the production flow.
+- Generate an insight card from the approved signal.
 - Add the insight to `План`.
 - Review the broadcast grid: each slot has date, platform, format, topic, fabula,
   priority, status, and advisory warnings.
@@ -206,7 +237,6 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 
 - Real AI classification of author memory.
 - Real analysis of attached documents, images, screenshots, PDFs, or text files.
-- Context chat.
 - Real archive ingestion and uniqueness checks.
 - Real external source ingestion, OAuth, crawlers, scheduled imports, and API-backed
   archive parsing.

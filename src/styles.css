@@ -1216,6 +1216,108 @@ select:focus {
   padding: 20px;
 }
 
+.signals-tabs {
+  margin-bottom: 18px;
+}
+
+.signals-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 22px;
+  align-items: start;
+}
+
+.signals-main,
+.signals-stack {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.signals-stack .entity-row-main {
+  width: 100%;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(220px, 1.4fr) minmax(140px, 0.8fr) minmax(140px, 0.8fr) auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.signals-stack .entity-row-main strong,
+.signals-stack .entity-row-main span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.signal-filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.signal-filters select,
+.signal-edit-form select,
+.signal-edit-form input,
+.signal-edit-form textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.signal-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.signal-meta-grid {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.signal-meta-grid dt {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.signal-meta-grid dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-800);
+  font: var(--ui-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.signals-aside {
+  position: sticky;
+  top: 92px;
+  display: grid;
+  gap: 16px;
+}
+
+.signals-aside h3,
+.signal-insight-summary h4 {
+  margin: 0;
+}
+
+.signals-aside p,
+.signal-insight-summary p {
+  margin: 0;
+  color: var(--ink-650);
+  font: var(--ui-sm);
+  line-height: 1.45;
+}
+
+.signal-insight-summary {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ink-200);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3077,6 +3179,10 @@ select:focus {
   .broadcast-layout,
   .broadcast-row-main,
   .broadcast-edit-grid,
+  .signals-layout,
+  .signals-stack .entity-row-main,
+  .signal-filters,
+  .signal-meta-grid,
   .project-profile-header,
   .project-profile-meta,
   .editorial-workspace,

@@ -30,6 +30,11 @@ export type ImportRiskLevel = 'low' | 'medium' | 'high';
 export type BulkImportActionType = 'bulkAcceptToArchive' | 'bulkReject';
 export type EditorialEntityStatus = 'active' | 'paused';
 export type EditorialSetupStatus = 'draft' | 'needsReview' | 'validated';
+export type RadarSourceType = 'authorMemory' | 'archive' | 'externalSource' | 'manualResearch';
+export type RadarAcceptancePolicy = 'manual' | 'automatic' | 'automaticWithReview';
+export type RadarTriggerMode = 'scheduled' | 'manual' | 'deficitDriven';
+export type RadarStatus = 'active' | 'paused' | 'needsReview';
+export type SignalReviewStatus = 'new' | 'approved' | 'rejected' | 'archived' | 'corrected';
 export type EditorialRuleGroup =
   | 'author'
   | 'audience'
@@ -242,6 +247,18 @@ export interface CompatibleTopicFabula {
   fabula: Fabula;
 }
 
+export interface RadarDefinition {
+  id: string;
+  title: string;
+  sourceType: RadarSourceType;
+  scope: string;
+  acceptancePolicy: RadarAcceptancePolicy;
+  triggerMode: RadarTriggerMode;
+  status: RadarStatus;
+  lastRunAt: string;
+  notes: string;
+}
+
 export interface SourceSignal {
   id: string;
   type: string;
@@ -250,6 +267,13 @@ export interface SourceSignal {
   capturedAt: string;
   summary: string;
   rawNote: string;
+  radarId?: string;
+  reviewStatus?: SignalReviewStatus;
+  suggestedTopicId?: string;
+  suggestedFabulaId?: string;
+  suggestedValue?: string;
+  duplicateRisk?: ImportRiskLevel;
+  authorCorrection?: string;
 }
 
 export interface InsightCard {
@@ -481,7 +505,9 @@ export interface WorkspaceState {
   topics: Topic[];
   fabulas: Fabula[];
   topicFabulaMatrix: TopicFabulaMatrixEntry[];
+  radars: RadarDefinition[];
   sourceSignal: SourceSignal;
+  sourceSignals: SourceSignal[];
   insightCard: InsightCard | null;
   contentPlanItem: ContentPlanItem | null;
   contentPlanItems: ContentPlanItem[];
@@ -505,7 +531,7 @@ export interface WorkspaceState {
 export type WorkspaceSection =
   | 'memory'
   | 'editorialModel'
-  | 'radar'
+  | 'signals'
   | 'plan'
   | 'brief'
   | 'edit'
@@ -1120,6 +1146,30 @@ export function approvePlanItem(planItem: ContentPlanItem): ContentPlanItem {
 
 export function rejectPlanItem(planItem: ContentPlanItem): ContentPlanItem {
   return { ...planItem, approvalStatus: 'rejected' };
+}
+
+export function approveSignal(signal: SourceSignal): SourceSignal {
+  return { ...signal, reviewStatus: 'approved' };
+}
+
+export function rejectSignal(signal: SourceSignal): SourceSignal {
+  return { ...signal, reviewStatus: 'rejected' };
+}
+
+export function archiveSignal(signal: SourceSignal): SourceSignal {
+  return { ...signal, reviewStatus: 'archived' };
+}
+
+export function correctSignal(signal: SourceSignal, patch: Partial<SourceSignal>): SourceSignal {
+  return {
+    ...signal,
+    ...patch,
+    reviewStatus: 'corrected',
+    authorCorrection:
+      patch.authorCorrection ??
+      signal.authorCorrection ??
+      'Автор скорректировал связку сигнала с темой, фабулой или ценностью.'
+  };
 }
 
 export function updateContentPlanItem(
