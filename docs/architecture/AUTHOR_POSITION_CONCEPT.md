@@ -175,11 +175,13 @@ the author opens a check.
 ## Context Chat and Wizard
 
 Each product section should have a context chat synchronized with the active section.
-The implementation uses a collapsible overlay instead of a permanent third right-side
-column, because many sections already reserve the right side for validation, evidence,
-summary, or release metadata.
+The implementation uses a topbar-triggered, tabbed overlay instead of a permanent third
+right-side column, because many sections already reserve the right side for validation,
+evidence, summary, or release metadata. The overlay aligns to the right panel on
+desktop/laptop screens and becomes a bottom sheet on mobile.
 
-The chat is not a generic assistant. It helps the author complete the current section:
+The chat is not a generic assistant. It has separate `Чат` and `Подсказки` modes and
+helps the author complete the current section:
 
 - goal formulation;
 - persona extraction;

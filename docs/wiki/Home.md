@@ -16,10 +16,11 @@ Permanent demo context: a Telegram blog by an AI Product Manager sharing researc
 
 ## Context Chat
 
-The `Помощник` control opens a collapsible context chat overlay. It is synchronized with
-the current section and gives deterministic suggestions for the AI Product Manager demo.
-It can open draft forms for rules, topics, and fabulas, but it does not save changes
-without the normal `Сохранить` action.
+The topbar `Помощник` control opens a tabbed context chat overlay. `Чат` accepts local
+deterministic questions such as asking to generate topics, while `Подсказки` shows
+section-aware recommendations with a counter and dismiss controls. The assistant can
+open draft forms for rules, topics, and fabulas, but it does not save changes without
+the normal `Сохранить` action.
 
 ![Context chat expanded](assets/screenshots/11-context-chat-expanded.png)
 

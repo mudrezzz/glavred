@@ -85,10 +85,10 @@ turning the product into generic content generation.
   and planning weights.
 - `ValidatorFramework`: evaluates entities and production artifacts, returning score,
   status, evidence, and fix guidance.
-- `ContextChat`: collapsible overlay assistant synchronized with the active product
-  section and internal tab. The current implementation is deterministic, provider-free,
-  and can open safe draft flows for structured entities without saving changes
-  automatically.
+- `ContextChat`: topbar-triggered, tabbed overlay assistant synchronized with the active
+  product section and internal tab. The current implementation is deterministic,
+  provider-free, supports local chat replies and suggestions, and can open safe draft
+  flows for structured entities without saving changes automatically.
 - `EditorialRadar`: collects external and manual material. Radar output is fuel for
   author memory and content production, not the only source of posts.
 - `ExternalSourceSettings`: stores planned or connected source configurations for

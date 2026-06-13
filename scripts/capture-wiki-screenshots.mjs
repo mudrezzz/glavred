@@ -132,10 +132,10 @@ async function main() {
     await page.locator('[data-testid="source-row"]').first().waitFor();
     await screenshot(page, '09-external-sources-source-list');
 
-    await page.locator('[data-testid="context-chat-toggle"]').click();
+    await page.locator('[data-testid="context-chat-topbar-trigger"]').click();
     await page.locator('[data-testid="context-chat-drawer"]').waitFor();
     await screenshot(page, '11-context-chat-expanded');
-    await page.locator('[data-testid="context-chat-drawer"]').getByRole('button', { name: /Свернуть|РЎРІРµСЂРЅСѓС‚СЊ/i }).click();
+    await page.locator('[data-testid="context-chat-drawer"]').getByRole('button', { name: /Закрыть помощника/i }).click();
 
     await page.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }).click();
     await page.locator('.candidate-card').first().waitFor();

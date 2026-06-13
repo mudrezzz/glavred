@@ -97,9 +97,9 @@ The current app implements:
   Markdown download.
 - Local analytics prep with manual metrics and captured editorial learning notes.
 - Local-first workspace persistence through browser `localStorage`.
-- Collapsible context chat overlay with deterministic section-aware suggestions. The
-  chat can open safe draft flows for rules, topics, and fabulas, but does not persist
-  chat state or call AI providers.
+- Topbar-triggered context chat overlay with deterministic section-aware chat replies
+  and suggestions. The chat can open safe draft flows for rules, topics, and fabulas,
+  but does not persist chat state or call AI providers.
 
 The app does not yet include real source ingestion, AI calls, publishing integrations,
 autoposting, or real metrics ingestion.
@@ -118,7 +118,8 @@ assertions for high-risk operational screens. The current guardrail checks that
 `Память автора -> Источники` rows do not overflow or collapse source titles into narrow
 columns, that row actions stay inside the row, that autosave/status toast appears only
 after an explicit action and disappears automatically, and that the context chat overlay
-fits desktop, laptop, and mobile viewports.
+opens from the topbar, aligns to the right panel, avoids main-content overlap on laptop
+viewports, and becomes a bottom sheet on mobile.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
@@ -309,8 +310,8 @@ Frontend rules are now ADR-backed:
   because DOM tests do not catch collapsed text columns or overflowing actions.
 - Keep autosave/status toast event-driven and temporary; do not use a permanent bottom
   overlay for local workspace status.
-- Implement context chat as a collapsible overlay. Do not add a permanent third column
-  beside existing right-side panels.
+- Implement context chat as a topbar-triggered, tabbed overlay. Do not add a permanent
+  third column or floating page button beside existing right-side panels.
 - Keep validation visible as a first-class UX surface.
 - Run editorial setup validation only after explicit `Проверить`; show stale state
   after saved setup changes.

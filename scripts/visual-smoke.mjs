@@ -61,11 +61,19 @@ function assertLayout(result) {
 function assertChatLayout(result) {
   const failures = [];
 
-  if (!result.toggleVisible) failures.push(`${result.viewport}: context chat toggle is not visible.`);
+  if (!result.triggerVisible) failures.push(`${result.viewport}: context chat topbar trigger is not visible.`);
   if (!result.drawerVisible) failures.push(`${result.viewport}: context chat drawer did not open.`);
   if (result.drawerOverflow > 2) failures.push(`${result.viewport}: context chat drawer overflows horizontally by ${result.drawerOverflow}px.`);
   if (result.drawerWidth < result.minWidth || result.drawerWidth > result.maxWidth) {
     failures.push(`${result.viewport}: context chat drawer width ${result.drawerWidth}px is outside ${result.minWidth}-${result.maxWidth}px.`);
+  }
+  if (result.expectedPanelAlignment && result.panelLeft && Math.abs(result.drawerLeft - result.panelLeft) > 24) {
+    failures.push(
+      `${result.viewport}: drawer left ${result.drawerLeft}px is not aligned with right panel left ${result.panelLeft}px.`
+    );
+  }
+  if (result.expectedPanelAlignment && result.mainRight && result.drawerLeft < result.mainRight - 2) {
+    failures.push(`${result.viewport}: drawer overlaps main content by ${Math.round(result.mainRight - result.drawerLeft)}px.`);
   }
   if (result.pageOverflow > 2) failures.push(`${result.viewport}: page overflows horizontally by ${result.pageOverflow}px.`);
 
@@ -79,31 +87,46 @@ async function assertContextChatAtViewport(page, viewport, options) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.locator('[data-testid="context-chat-toggle"]').waitFor();
+  await page.getByRole('button', { name: /Редакционная модель/i }).click();
+  await page.locator('.validation-panel').waitFor();
+  await page.locator('[data-testid="context-chat-topbar-trigger"]').waitFor();
 
-  const toggleVisible = await page.locator('[data-testid="context-chat-toggle"]').isVisible();
-  await page.locator('[data-testid="context-chat-toggle"]').click();
+  const triggerVisible = await page.locator('[data-testid="context-chat-topbar-trigger"]').isVisible();
+  await page.locator('[data-testid="context-chat-topbar-trigger"]').click();
   await page.locator('[data-testid="context-chat-drawer"]').waitFor();
 
   const result = await page.evaluate(
-    ({ viewportName, minWidth, maxWidth }) => {
+    ({ viewportName, minWidth, maxWidth, expectedPanelAlignment }) => {
       const drawer = document.querySelector('[data-testid="context-chat-drawer"]');
+      const panel = document.querySelector('.validation-panel');
+      const main = document.querySelector('.editorial-main');
       const rect = drawer?.getBoundingClientRect();
+      const panelRect = panel?.getBoundingClientRect();
+      const mainRect = main?.getBoundingClientRect();
       return {
         viewport: viewportName,
-        toggleVisible: Boolean(document.querySelector('[data-testid="context-chat-toggle"]')) || true,
+        triggerVisible: Boolean(document.querySelector('[data-testid="context-chat-topbar-trigger"]')),
         drawerVisible: Boolean(drawer),
         drawerWidth: rect?.width ?? 0,
+        drawerLeft: rect?.left ?? 0,
+        panelLeft: panelRect?.left ?? 0,
+        mainRight: mainRect?.right ?? 0,
         drawerOverflow: drawer ? drawer.scrollWidth - drawer.clientWidth : 0,
         pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        expectedPanelAlignment,
         minWidth,
         maxWidth
       };
     },
-    { viewportName: options.name, minWidth: options.minWidth, maxWidth: options.maxWidth }
+    {
+      viewportName: options.name,
+      minWidth: options.minWidth,
+      maxWidth: options.maxWidth,
+      expectedPanelAlignment: options.expectedPanelAlignment
+    }
   );
 
-  assertChatLayout({ ...result, toggleVisible });
+  assertChatLayout({ ...result, triggerVisible });
 }
 
 async function main() {
@@ -156,9 +179,9 @@ async function main() {
     await page.locator('.toast').waitFor({ state: 'visible', timeout: 5000 });
     await page.waitForFunction(() => !document.querySelector('.toast'), undefined, { timeout: 6000 });
 
-    await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 500 });
-    await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 500 });
-    await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390 });
+    await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 390, expectedPanelAlignment: true });
+    await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 390, expectedPanelAlignment: true });
+    await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390, expectedPanelAlignment: false });
 
     await browser.close();
   } catch (error) {

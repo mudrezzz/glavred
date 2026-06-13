@@ -284,6 +284,30 @@ button:disabled {
   background: var(--accent);
 }
 
+.assistant-topbar-btn {
+  position: relative;
+}
+
+.assistant-topbar-btn.active {
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+}
+
+.assistant-count {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--paper);
+  font: var(--mono-sm);
+  line-height: 1;
+}
+
 .scroll {
   flex: 1;
   overflow-y: auto;
@@ -2632,39 +2656,36 @@ select:focus {
   color: var(--ink-600);
 }
 
-.context-chat-toggle {
-  position: fixed;
-  top: 88px;
-  right: 22px;
-  z-index: 44;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 1px solid var(--ink-200);
-  border-radius: var(--r-pill);
-  background: var(--paper);
-  box-shadow: var(--shadow-md);
-  color: var(--ink-900);
-  font: var(--ui-sm);
-  font-weight: 700;
-}
-
 .context-chat-drawer {
+  --context-panel-width: 360px;
+  --context-right-gutter: max(18px, calc((100vw - 256px - 1120px) / 2 + 24px));
   position: fixed;
   top: 78px;
-  right: 18px;
+  right: var(--context-right-gutter);
   bottom: 18px;
   z-index: 60;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  width: clamp(360px, 34vw, 460px);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  width: min(var(--context-panel-width), calc(100vw - 256px - 36px));
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--ink-200);
   border-radius: var(--r-xl);
   background: var(--paper);
   box-shadow: var(--shadow-lg);
+}
+
+.context-chat-drawer.scope-memory,
+.context-chat-drawer.scope-sources,
+.context-chat-drawer.scope-importQueue,
+.context-chat-drawer.scope-archive {
+  --context-panel-width: 380px;
+}
+
+.context-chat-drawer.scope-release,
+.context-chat-drawer.scope-analytics,
+.context-chat-drawer.scope-production {
+  --context-panel-width: 340px;
 }
 
 .context-chat-head {
@@ -2674,6 +2695,16 @@ select:focus {
   gap: 14px;
   padding: 18px;
   border-bottom: 1px solid var(--ink-200);
+}
+
+.context-chat-tabs {
+  margin: 12px 18px;
+}
+
+.context-chat-tabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .context-chat-head h3,
@@ -2689,11 +2720,16 @@ select:focus {
   line-height: 1.45;
 }
 
-.context-chat-head-actions,
-.context-chat-section-title {
+.context-chat-head-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.context-chat-mode {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .context-chat-thread,
@@ -2707,8 +2743,24 @@ select:focus {
 
 .context-chat-thread {
   align-content: start;
-  border-bottom: 1px solid var(--ink-200);
   background: var(--surface);
+}
+
+.context-chat-input {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--ink-200);
+  background: var(--paper);
+}
+
+.context-chat-input textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.context-chat-input .btn {
+  justify-self: end;
 }
 
 .context-message,
@@ -2734,11 +2786,42 @@ select:focus {
 }
 
 .context-suggestion {
+  position: relative;
   background: var(--surface-sunk);
+}
+
+.context-suggestion-dismiss {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.context-suggestion h4,
+.context-suggestion p {
+  padding-right: 30px;
 }
 
 .context-suggestion .btn {
   justify-self: start;
+}
+
+.context-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--ink-200);
+  border-radius: var(--r-md);
+  color: var(--ink-600);
+  line-height: 1.45;
 }
 
 .toast {
@@ -2854,12 +2937,6 @@ select:focus {
 
   .validation-panel {
     position: static;
-  }
-
-  .context-chat-toggle {
-    top: 76px;
-    right: 14px;
-    padding: 10px 13px;
   }
 
   .context-chat-drawer {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createContextChatSuggestions } from './contextChat';
+import { createContextChatReply, createContextChatSuggestions } from './contextChat';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import { createEditorialValidationRun } from '../domain/editorialWorkspace';
 
@@ -26,6 +26,18 @@ describe('context chat suggestions', () => {
     expect(fabulaSuggestions[0]).toMatchObject({
       actionType: 'addFabula',
       payload: expect.objectContaining({ title: 'Postmortem внедрения' })
+    });
+  });
+
+  it('turns chat generation requests into safe draft actions', () => {
+    const workspace = createDemoWorkspace();
+
+    const reply = createContextChatReply(workspace, 'editorialPublisher', 'Сгенерируй темы по настройкам');
+
+    expect(reply.text).toContain('черновик');
+    expect(reply.suggestion).toMatchObject({
+      actionType: 'addTopic',
+      payload: expect.objectContaining({ title: 'AI rollout risk' })
     });
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   createAuthorMemoryEvent,
   createContentPlanItem,
@@ -12,6 +12,7 @@ import {
   runEditorialChecks
 } from './application/editorialServices';
 import {
+  createContextChatReply,
   createContextChatSuggestions,
   createInitialContextChatMessages,
   mapWorkspaceSectionToProductionScope,
@@ -100,6 +101,7 @@ type ContextChatIntent =
   | { id: string; actionType: 'addEditorialRule'; payload: AddEditorialRulePayload }
   | { id: string; actionType: 'addTopic'; payload: AddTopicPayload }
   | { id: string; actionType: 'addFabula'; payload: AddFabulaPayload };
+type ContextChatTab = 'chat' | 'suggestions';
 
 const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: string; disabled?: boolean }> = [
   { id: 'memory', icon: 'memory', label: 'Память автора' },
@@ -176,10 +178,12 @@ export function App() {
   const [memoryTab, setMemoryTab] = useState<MemoryInternalTab>('feed');
   const [editorialModelTab, setEditorialModelTab] = useState<EditorialModelTab>('publisher');
   const [contextChatOpen, setContextChatOpen] = useState(false);
+  const [contextChatTab, setContextChatTab] = useState<ContextChatTab>('chat');
   const [contextChatMessages, setContextChatMessages] = useState<ContextChatMessage[]>(() =>
     createInitialContextChatMessages('memory')
   );
   const [contextChatIntent, setContextChatIntent] = useState<ContextChatIntent | null>(null);
+  const [dismissedContextSuggestionIds, setDismissedContextSuggestionIds] = useState<string[]>([]);
 
   useEffect(() => {
     store.save({ ...workspace, updatedAt: new Date().toISOString() });
@@ -196,6 +200,10 @@ export function App() {
   const contextChatSuggestions = useMemo(
     () => createContextChatSuggestions(workspace, contextChatScope),
     [workspace, contextChatScope]
+  );
+  const visibleContextChatSuggestions = useMemo(
+    () => contextChatSuggestions.filter((suggestion) => !dismissedContextSuggestionIds.includes(suggestion.id)),
+    [contextChatSuggestions, dismissedContextSuggestionIds]
   );
 
   function patchWorkspace(patch: Partial<WorkspaceState>, message?: string) {
@@ -238,9 +246,41 @@ export function App() {
     setMemoryTab('feed');
     setEditorialModelTab('publisher');
     setContextChatOpen(false);
+    setContextChatTab('chat');
     setContextChatMessages(createInitialContextChatMessages('memory'));
     setContextChatIntent(null);
+    setDismissedContextSuggestionIds([]);
     setToast('Демо-сценарий восстановлен');
+  }
+
+  function openContextChat(tab: ContextChatTab = 'chat') {
+    setContextChatTab(tab);
+    setContextChatOpen(true);
+  }
+
+  function sendContextChatMessage(text: string) {
+    const createdAt = new Date().toISOString();
+    const reply = createContextChatReply(workspace, contextChatScope, text);
+    setContextChatMessages((messages) => [
+      ...messages,
+      {
+        id: `ctx-author-free-${createdAt}`,
+        role: 'author',
+        text,
+        createdAt
+      },
+      {
+        id: `ctx-assistant-free-${createdAt}`,
+        role: 'assistant',
+        text: reply.text,
+        createdAt,
+        suggestion: reply.suggestion
+      }
+    ]);
+  }
+
+  function dismissContextChatSuggestion(suggestionId: string) {
+    setDismissedContextSuggestionIds((ids) => (ids.includes(suggestionId) ? ids : [...ids, suggestionId]));
   }
 
   function acceptContextChatSuggestion(suggestion: ContextChatSuggestion) {
@@ -320,7 +360,13 @@ export function App() {
     <div className="app">
       <Sidebar active={active} onNav={go} workspace={workspace} />
       <main className="main">
-        <Topbar active={active} onReset={resetDemo} />
+        <Topbar
+          active={active}
+          chatOpen={contextChatOpen}
+          suggestionCount={visibleContextChatSuggestions.length}
+          onOpenChat={() => openContextChat('chat')}
+          onReset={resetDemo}
+        />
         <div className="scroll">
           {active === 'memory' && (
             <AuthorMemoryView
@@ -550,10 +596,13 @@ export function App() {
         messages={contextChatMessages}
         open={contextChatOpen}
         scope={contextChatScope}
-        suggestions={contextChatSuggestions}
+        activeTab={contextChatTab}
+        suggestions={visibleContextChatSuggestions}
         onAcceptSuggestion={acceptContextChatSuggestion}
         onClose={() => setContextChatOpen(false)}
-        onOpen={() => setContextChatOpen(true)}
+        onDismissSuggestion={dismissContextChatSuggestion}
+        onSendMessage={sendContextChatMessage}
+        onSwitchTab={setContextChatTab}
       />
       {toast ? (
         <div className="toast" role="status">
@@ -607,7 +656,19 @@ function Sidebar({
   );
 }
 
-function Topbar({ active, onReset }: { active: WorkspaceSection; onReset: () => void }) {
+function Topbar({
+  active,
+  chatOpen,
+  suggestionCount,
+  onOpenChat,
+  onReset
+}: {
+  active: WorkspaceSection;
+  chatOpen: boolean;
+  suggestionCount: number;
+  onOpenChat: () => void;
+  onReset: () => void;
+}) {
   const [title, subtitle] = TITLES[active];
 
   return (
@@ -625,48 +686,65 @@ function Topbar({ active, onReset }: { active: WorkspaceSection; onReset: () => 
         <Icon name="bell" />
         <span className="dot" />
       </button>
-      <button className="btn btn-sec btn-sm" type="button" onClick={onReset}>
+      <button
+        className={`btn btn-sec btn-sm assistant-topbar-btn${chatOpen ? ' active' : ''}`}
+        data-testid="context-chat-topbar-trigger"
+        type="button"
+        aria-expanded={chatOpen}
+        onClick={onOpenChat}
+      >
+        <Icon name="spark" size={14} />
+        Помощник
+        {suggestionCount > 0 ? <span className="assistant-count">{suggestionCount}</span> : null}
+      </button>
+      <button className="icon-btn" type="button" aria-label="Сбросить демо" onClick={onReset} title="Сбросить демо">
         <Icon name="reset" size={14} />
-        Сбросить демо
       </button>
     </header>
   );
 }
 
 function ContextChatOverlay({
+  activeTab,
   messages,
   open,
   scope,
   suggestions,
   onAcceptSuggestion,
   onClose,
-  onOpen
+  onDismissSuggestion,
+  onSendMessage,
+  onSwitchTab
 }: {
+  activeTab: ContextChatTab;
   messages: ContextChatMessage[];
   open: boolean;
   scope: ContextChatScope;
   suggestions: ContextChatSuggestion[];
   onAcceptSuggestion: (suggestion: ContextChatSuggestion) => void;
   onClose: () => void;
-  onOpen: () => void;
+  onDismissSuggestion: (suggestionId: string) => void;
+  onSendMessage: (message: string) => void;
+  onSwitchTab: (tab: ContextChatTab) => void;
 }) {
-  if (!open) {
-    return (
-      <button
-        className="context-chat-toggle"
-        data-testid="context-chat-toggle"
-        type="button"
-        aria-expanded="false"
-        onClick={onOpen}
-      >
-        <Icon name="spark" size={16} />
-        Помощник
-      </button>
-    );
+  const [draft, setDraft] = useState('');
+
+  if (!open) return null;
+
+  function submitMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    onSendMessage(text);
+    setDraft('');
   }
 
   return (
-    <aside className="context-chat-drawer" data-testid="context-chat-drawer" aria-label="Контекстный помощник">
+    <aside
+      className={`context-chat-drawer scope-${scope}`}
+      data-testid="context-chat-drawer"
+      aria-label="Контекстный помощник"
+    >
       <div className="context-chat-head">
         <div>
           <span className="mono-label">Context chat</span>
@@ -674,43 +752,92 @@ function ContextChatOverlay({
           <p>{contextChatScopeLabel(scope)}</p>
         </div>
         <div className="context-chat-head-actions">
-          <button className="btn btn-sec btn-sm" type="button" onClick={onClose}>
-            Свернуть
-          </button>
           <button className="icon-btn" type="button" aria-label="Закрыть помощника" onClick={onClose}>
             <Icon name="close" size={16} />
           </button>
         </div>
       </div>
-      <div className="context-chat-thread">
-        {messages.slice(-4).map((message) => (
-          <article className={`context-message ${message.role}`} key={message.id}>
-            <span>{contextChatRoleLabel(message.role)}</span>
-            <p>{message.text}</p>
-          </article>
-        ))}
+      <div className="context-chat-tabs tabs" role="tablist" aria-label="Режим помощника">
+        <button
+          className={`tab${activeTab === 'chat' ? ' active' : ''}`}
+          role="tab"
+          type="button"
+          aria-selected={activeTab === 'chat'}
+          onClick={() => onSwitchTab('chat')}
+        >
+          Чат
+        </button>
+        <button
+          className={`tab${activeTab === 'suggestions' ? ' active' : ''}`}
+          role="tab"
+          type="button"
+          aria-selected={activeTab === 'suggestions'}
+          onClick={() => onSwitchTab('suggestions')}
+        >
+          Подсказки
+          <span className="assistant-count">{suggestions.length}</span>
+        </button>
       </div>
-      <div className="context-chat-suggestions">
-        <div className="context-chat-section-title">
-          <span className="mono-label">Подсказки</span>
-          <b>{suggestions.length}</b>
-        </div>
-        {suggestions.map((suggestion) => (
-          <article className="context-suggestion" key={suggestion.id}>
-            <div>
-              <h4>{suggestion.title}</h4>
-              <p>{suggestion.body}</p>
-            </div>
-            <button
-              className={`btn ${suggestion.actionType === 'readOnly' ? 'btn-sec' : 'btn-pri'} btn-sm`}
-              type="button"
-              onClick={() => onAcceptSuggestion(suggestion)}
-            >
-              {contextChatActionLabel(suggestion.actionType)}
+      {activeTab === 'chat' ? (
+        <div className="context-chat-mode">
+          <div className="context-chat-thread">
+            {messages.map((message) => (
+              <article className={`context-message ${message.role}`} key={message.id}>
+                <span>{contextChatRoleLabel(message.role)}</span>
+                <p>{message.text}</p>
+                {message.suggestion && message.suggestion.actionType !== 'readOnly' ? (
+                  <button
+                    className="btn btn-pri btn-sm"
+                    type="button"
+                    onClick={() => onAcceptSuggestion(message.suggestion as ContextChatSuggestion)}
+                  >
+                    {contextChatActionLabel(message.suggestion.actionType)}
+                  </button>
+                ) : null}
+              </article>
+            ))}
+          </div>
+          <form className="context-chat-input" onSubmit={submitMessage}>
+            <textarea
+              aria-label="Сообщение помощнику"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Спросите по текущему разделу или попросите сгенерировать тему..."
+              rows={3}
+            />
+            <button className="btn btn-pri btn-sm" type="submit" disabled={!draft.trim()}>
+              Отправить
             </button>
-          </article>
-        ))}
-      </div>
+          </form>
+        </div>
+      ) : (
+        <div className="context-chat-suggestions">
+          {suggestions.length === 0 ? (
+            <p className="context-empty">Новых подсказок нет. Можно вернуться в чат и задать вопрос по разделу.</p>
+          ) : null}
+          {suggestions.map((suggestion) => (
+            <article className="context-suggestion" key={suggestion.id}>
+              <button
+                className="context-suggestion-dismiss"
+                type="button"
+                aria-label={`Скрыть подсказку: ${suggestion.title}`}
+                onClick={() => onDismissSuggestion(suggestion.id)}
+              >
+                <Icon name="close" size={14} />
+              </button>
+              <div>
+                <h4>{suggestion.title}</h4>
+                <p>{suggestion.body}</p>
+              </div>
+              {suggestion.actionType !== 'readOnly' ? (
+                <button className="btn btn-pri btn-sm" type="button" onClick={() => onAcceptSuggestion(suggestion)}>
+                  {contextChatActionLabel(suggestion.actionType)}
+                </button>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      )}
     </aside>
   );
 }

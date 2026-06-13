@@ -27,3 +27,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-12-use-single-column-lists-for-operational-entity-catalogs.md](2026-06-12-use-single-column-lists-for-operational-entity-catalogs.md)
 - [2026-06-12-add-visual-guardrails-for-operational-ui.md](2026-06-12-add-visual-guardrails-for-operational-ui.md)
 - [2026-06-12-use-collapsible-overlay-for-context-chat.md](2026-06-12-use-collapsible-overlay-for-context-chat.md)
+- [2026-06-13-context-chat-is-topbar-triggered-tabbed-overlay.md](2026-06-13-context-chat-is-topbar-triggered-tabbed-overlay.md)

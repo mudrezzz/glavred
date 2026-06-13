@@ -883,6 +883,39 @@ Status:
   - Playwright visual smoke for context chat overlay. Done.
   - Full regression commands listed in Slice completion notes.
 
+### Slice 1.3.1: Context Chat UX Repair and Chat Mode
+
+- Status: Done
+- Goal: Repair the first context chat UX so it works as a topbar-triggered,
+  tabbed assistant with real chat input and predictable overlay geometry.
+- User value:
+  - The assistant no longer floats over random screen elements.
+  - The drawer aligns with the existing right panel instead of creating a new
+    visual column or covering main content on laptop screens.
+  - The author can ask freeform local questions such as "generate topics" and
+    get a safe draft action.
+- Scope:
+  - Moved the assistant trigger into the topbar and demoted reset demo to an
+    icon action.
+  - Removed the duplicate `Свернуть` action; `x` is the single close control.
+  - Split assistant content into `Чат` and `Подсказки` tabs.
+  - Added deterministic chat replies with safe inline actions for topic, fabula,
+    rule, and validation requests.
+  - Made suggestions dismissible and removed the ambiguous `Принять к сведению`
+    action from read-only suggestions.
+  - Updated drawer CSS to use right-panel widths and visual smoke checks for
+    panel alignment and main-content overlap.
+- Out of scope:
+  - Real AI provider calls.
+  - Persistent chat history.
+  - Autonomous workspace edits.
+  - A full prompt/agent runtime.
+- Validation:
+  - Unit tests for deterministic chat replies. Done.
+  - UI tests for topbar trigger, chat input, tabbed suggestions, dismiss, and
+    safe draft actions. Done.
+  - Visual smoke updated to verify drawer alignment against the right panel.
+
 ### Slice 1.4: Content Plan as Broadcast Grid
 
 - Status: Backlog
@@ -943,6 +976,7 @@ Status:
 - Slice 1.2.1: Author Memory Sources UX Alignment. Completed 2026-06-12.
 - Slice 1.2.2: Source List Visual Repair and UI Guardrails. Completed 2026-06-12.
 - Slice 1.3: Context Chat Wizard Skeleton. Completed 2026-06-12.
+- Slice 1.3.1: Context Chat UX Repair and Chat Mode. Completed 2026-06-13.
 
 ## Blocked Items
 
@@ -961,4 +995,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.3: Context Chat Wizard Skeleton`.
+Start `Slice 1.4: Content Plan as Broadcast Grid`.

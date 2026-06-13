@@ -30,6 +30,7 @@ export interface ContextChatMessage {
   text: string;
   createdAt: string;
   suggestionId?: string;
+  suggestion?: ContextChatSuggestion;
 }
 
 export interface ContextChatSuggestion {
@@ -239,6 +240,78 @@ export function createInitialContextChatMessages(scope: ContextChatScope): Conte
   ];
 }
 
+export function createContextChatReply(
+  workspace: WorkspaceState,
+  scope: ContextChatScope,
+  text: string
+): Pick<ContextChatMessage, 'text' | 'suggestion'> {
+  const normalized = text.trim().toLowerCase();
+
+  if (!normalized) {
+    return {
+      text: 'Напишите, что хотите уточнить по текущему разделу. Я отвечу в контексте открытой вкладки.'
+    };
+  }
+
+  if (mentionsAny(normalized, ['сгенер', 'предлож', 'создай']) && mentionsAny(normalized, ['тем', 'направлен'])) {
+    return {
+      text:
+        'Могу открыть черновик новой темы. Я не сохраню ее сам: вы увидите форму темы, поправите формулировки и нажмете "Сохранить", если она подходит.',
+      suggestion: createGeneratedTopicSuggestion(scope)
+    };
+  }
+
+  if (mentionsAny(normalized, ['сгенер', 'предлож', 'создай']) && mentionsAny(normalized, ['фабул', 'сюжет', 'драматург'])) {
+    return {
+      text:
+        'Могу открыть черновик фабулы для разбора AI-B2B внедрения. Она появится как обычная форма редактирования и не попадет в модель без "Сохранить".',
+      suggestion: createGeneratedFabulaSuggestion(scope)
+    };
+  }
+
+  if (mentionsAny(normalized, ['правил', 'стиль', 'anti-ai', 'анти-ai', 'ии'])) {
+    return {
+      text:
+        'Для текущей модели полезно держать anti-AI правила атомарными: одно правило - один проверяемый признак текста. Могу открыть черновик такого правила.',
+      suggestion: publisherRuleSuggestion(workspace.editorialValidationRun?.results.find((result) => result.status !== 'green'))
+    };
+  }
+
+  if (mentionsAny(normalized, ['проверь', 'валидац', 'что не так', 'ошиб'])) {
+    return {
+      text:
+        'Лучший следующий шаг - ручная проверка модели. Она пересчитает validator results и покажет evidence, score и рекомендации, но не изменит правила сама.',
+      suggestion: runValidationSuggestion(scope, 'Пользователь попросил проверить текущую редакционную модель.')
+    };
+  }
+
+  if (scope === 'sources' || scope === 'importQueue' || scope === 'archive') {
+    return {
+      text:
+        'В источниках важно отделять архив от evidence. Неразобранные и archive-only материалы не меняют образ автора, пока вы явно не приняли кандидат в память.'
+    };
+  }
+
+  if (scope === 'topics') {
+    return {
+      text:
+        `Сейчас в модели ${workspace.topics.length} тем. В этом разделе обычно проверяют вес темы, правила, запреты и совместимые фабулы. Если тема слишком широкая, лучше разбить ее на две проверяемые сущности.`
+    };
+  }
+
+  if (scope === 'fabulas') {
+    return {
+      text:
+        `Сейчас в модели ${workspace.fabulas.length} фабул. Фабула должна описывать режиссуру поста: конфликт, ход аргумента, proof requirements и критерий хорошего финала.`
+    };
+  }
+
+  return {
+    text:
+      'Я отвечаю только в рамках текущего local-first demo: могу объяснять раздел, предлагать безопасные черновики и открывать существующие формы. Автоматически рабочее пространство не меняю.'
+  };
+}
+
 export function mapWorkspaceSectionToProductionScope(section: WorkspaceSection): ContextChatScope {
   if (section === 'release') return 'release';
   if (section === 'analytics') return 'analytics';
@@ -260,6 +333,45 @@ function publisherRuleSuggestion(firstWeakValidator?: ValidatorResult): ContextC
       group: 'antiAiPattern',
       title: 'Не заменять позицию AI-обобщением',
       statement: 'Каждый пост должен содержать авторский trade-off, evidence или ограничение применимости, а не стерильный общий совет.'
+    },
+    status: 'new'
+  };
+}
+
+function createGeneratedTopicSuggestion(scope: ContextChatScope): ContextChatSuggestion {
+  return {
+    id: `chat-topic-ai-rollout-${Date.now()}`,
+    scope,
+    title: 'Создать тему про AI rollout risk',
+    body: 'Тема про риски перехода от AI-пилота к регулярному workflow: adoption, доверие, rollback и экономика внедрения.',
+    actionType: 'addTopic',
+    payload: {
+      title: 'AI rollout risk',
+      description: 'Как доводить AI-B2B продукт от пилота до надежного рабочего процесса.',
+      purpose: 'Помогать AI PM видеть риски внедрения до того, как demo превратится в production failure.',
+      audienceValue: 'Читатель получает карту рисков: adoption, trust, evals, rollback и стоимость изменения процесса.',
+      authorStance: 'Главный риск AI-B2B не выбор модели, а способность продукта встроиться в workflow и доказать надежность.',
+      rules: ['Показывать trade-off внедрения', 'Связывать риск с workflow, а не только с технологией'],
+      forbiddenAngles: ['model-first hype', 'обещание автоматической трансформации без adoption']
+    },
+    status: 'new'
+  };
+}
+
+function createGeneratedFabulaSuggestion(scope: ContextChatScope): ContextChatSuggestion {
+  return {
+    id: `chat-fabula-rollout-postmortem-${Date.now()}`,
+    scope,
+    title: 'Создать фабулу postmortem rollout',
+    body: 'Фабула для разбора кейса, где AI-пилот выглядел успешным, но не стал регулярным рабочим процессом.',
+    actionType: 'addFabula',
+    payload: {
+      title: 'Postmortem rollout',
+      description: 'Разбор AI-пилота, который не дошел до регулярного использования.',
+      dramaturgy: 'Начать с сильного demo, затем показать friction в workflow, после этого разобрать недостающие evals, доверие и economics.',
+      structure: ['Что обещал пилот', 'Где сломался workflow', 'Каких evidence не хватило', 'Что изменить в продукте'],
+      proofRequirements: ['симптом adoption friction', 'пример пользовательского ограничения', 'вывод для product design'],
+      rules: ['Не обвинять пользователя в сопротивлении', 'Заканчивать проверяемым изменением процесса']
     },
     status: 'new'
   };
@@ -293,4 +405,8 @@ function runValidationSuggestion(scope: ContextChatScope, reason: string): Conte
     payload: { reason },
     status: 'new'
   };
+}
+
+function mentionsAny(text: string, needles: string[]): boolean {
+  return needles.some((needle) => text.includes(needle));
 }

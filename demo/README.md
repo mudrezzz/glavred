@@ -49,10 +49,11 @@ optional title reveal, local file attachments, local link preview, targeted corr
 from assertions and evidence, search/filtering, lazy loading, long-note collapse,
 edit/delete actions, summary counters, and a browser voice-input fallback.
 
-The demo also includes a collapsible `Помощник` overlay. It is synchronized with the
-current section, suggests deterministic next steps for the AI Product Manager demo, and
-can open draft forms for rules, topics, and fabulas. It does not call AI providers and
-does not save changes without the normal `Сохранить` action.
+The demo also includes a topbar `Помощник` overlay with `Чат` and `Подсказки` modes. It
+is synchronized with the current section, answers deterministic local questions,
+suggests next steps for the AI Product Manager demo, and can open draft forms for
+rules, topics, and fabulas. It does not call AI providers and does not save changes
+without the normal `Сохранить` action.
 
 ## Structured Editorial Model
 

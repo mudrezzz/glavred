@@ -1,6 +1,6 @@
 # ADR: Use Collapsible Overlay for Context Chat
 
-- Status: Accepted
+- Status: Superseded by `2026-06-13-context-chat-is-topbar-triggered-tabbed-overlay.md`
 - Date: 2026-06-12
 
 ## Context

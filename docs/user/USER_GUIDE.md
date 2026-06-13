@@ -107,14 +107,22 @@ status, evidence, and suggested fixes.
 
 ## Context Chat
 
-Use the fixed `Помощник` control to open the context chat. It is collapsed by default
-so it does not consume the existing right-side panels. When expanded, it opens as an
-overlay drawer on the right; on narrow screens it behaves like a bottom sheet.
+Use the `Помощник` button in the topbar to open the context chat. It is closed by
+default and has no floating page button, so it does not cover working forms or lists.
+When expanded, it opens as an overlay drawer aligned with the existing right panel; on
+narrow screens it behaves like a bottom sheet. Use the `x` button to close it.
 
 The assistant is synchronized with the current sidebar section and with internal tabs in
-`Память автора` and `Редакционная модель`. In this slice it is deterministic: it reads
-the current workspace and latest validator run, then suggests safe next steps. It does
-not call an AI provider.
+`Память автора` and `Редакционная модель`. It has two modes:
+
+- `Чат`: ask a question about the current section or request a safe draft, for example
+  “сгенерируй темы согласно настройкам издательства”.
+- `Подсказки`: review deterministic recommendations for the current section. The tab
+  shows a count, suggestions scroll inside the assistant, and read-only suggestions can
+  be dismissed with `x`.
+
+In this slice the assistant is deterministic: it reads the current workspace and latest
+validator run, then suggests safe next steps. It does not call an AI provider.
 
 Accepted suggestions do not save changes automatically. For example, `Создать черновик
 темы`, `Создать черновик фабулы`, and `Добавить правило` only open the existing draft
