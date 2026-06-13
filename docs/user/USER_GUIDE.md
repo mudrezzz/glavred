@@ -39,6 +39,12 @@ The wiki explains the current product through real screenshots:
 - Release and analytics: final text, manual export, and captured learning note.
 - Local-first demo: reset, persistence, and screenshot refresh commands.
 
+Planning note: the current `План` screen is a local-first broadcast grid prototype.
+The next product slices will rename the old single `Радар` flow into a fuller
+`Сигналы` workspace, then add post candidates before the plan becomes a true calendar.
+Until then, the grid demonstrates slot approval and downstream production, not the
+final signal-driven planning model.
+
 ## Demo Context
 
 The permanent demo is a Telegram blog by an AI Product Manager who shares research

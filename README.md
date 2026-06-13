@@ -45,6 +45,11 @@ and advisory weight warnings. The standalone sidebar item `Фабулы` was rem
 editorial fabulas live inside `Редакционная модель`, while a concrete `Фабула поста`
 remains an internal production step opened from an approved plan slot.
 
+The next planning correction is documented but not implemented yet: `План` should be
+treated as broadcast demand, while `Сигналы` and `Кандидаты постов` provide the material
+that fills calendar slots. The current broadcast grid remains a useful local-first
+prototype until the signal and candidate layers are added.
+
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
 
@@ -79,6 +84,10 @@ The revised core modules are:
   and writes.
 - Topics and Fabulas: addable/removable editorial entities with weights,
   compatibility matrix, rules, and validators.
+- Signals and Radars: reviewed material from author memory, archive, external sources,
+  and manual input before it becomes a post candidate.
+- Post Candidates: proposed combinations of signal, topic, fabula, audience, value,
+  goal, platform, and format.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for
   software projects.
 - Audience, goal, metrics, platforms, and formats: structured rules, not freeform
@@ -139,6 +148,7 @@ npm run docs:wiki:publish
 - [Roadmap](ROADMAP.md)
 - [Author position concept](docs/architecture/AUTHOR_POSITION_CONCEPT.md)
 - [External source import concept](docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md)
+- [Signals and broadcast planning concept](docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md)
 - [System architecture overview](docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md)
 - [Architecture decision records](docs/adr/README.md)
 - [Contributor guide](docs/contributor/CONTRIBUTING.md)

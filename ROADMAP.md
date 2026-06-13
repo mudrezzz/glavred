@@ -939,13 +939,240 @@ Status:
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
 
-### Slice 1.5: Archive and Uniqueness Baseline
+### Slice 1.4.1: Broadcast Planning Concept Correction
+
+- Status: Done
+- Goal: Correct the product model around `План` before adding deeper planning UI.
+- User value: The author understands that the plan is a broadcast demand layer, while
+  signals and post candidates provide the material that fills it.
+- Scope:
+  - Document the revised flow:
+    `Редакционная модель -> Сигналы -> Кандидаты постов -> Сетка вещания -> Фабула поста`.
+  - Mark the current Slice 1.4 broadcast grid as a useful local-first prototype, not the
+    final planning architecture.
+  - Rename the future product focus from `Радар` to `Сигналы`.
+  - Define the split between radar settings, found signals, post candidates, and
+    calendar slots.
+  - Add ADR for separating signals, candidates, and broadcast grid responsibilities.
+  - Update README, architecture overview, developer guide, user guide, demo docs, and
+    roadmap.
+- Out of scope:
+  - Runtime UI changes.
+  - Calendar implementation.
+  - Signal/radar implementation.
+  - AI/provider calls.
+- Implementation notes:
+  - This is a docs/architecture slice that makes Slice 1.5 decision-complete.
+  - The existing `contentPlanItems` compatibility layer remains valid.
+- Tests:
+  - Documentation-only regression: `npm test -- --run` passed.
+  - `npm run smoke` passed.
+- Docs:
+  - Add or update architecture docs and ADRs.
+- Demo impact:
+  - Demo documentation should explain that the current broadcast grid is temporary
+    until signal and candidate layers are implemented.
+- Acceptance criteria:
+  - Roadmap no longer points directly from Slice 1.4 to archive uniqueness. Done.
+  - Architecture describes why `Сигналы` must come before deeper `План`. Done.
+  - Next recommended task is `Slice 1.5: Signals and Radar Workspace`. Done.
+- Risks:
+  - If this correction stays docs-only too long, the UI will continue showing a
+    simplified plan that does not yet explain signal deficit or candidate readiness.
+
+### Slice 1.5: Signals and Radar Workspace
+
+- Status: Ready
+- Goal: Replace the single `Радар` flow with a first working `Сигналы` workspace.
+- User value: The author can see what material the system found, where it came from,
+  why it was selected, and approve/correct/reject it before it becomes a post concept.
+- Scope:
+  - Add top-level sidebar item `Сигналы` and retire `Радар` as a standalone production
+    screen.
+  - Add internal tabs:
+    - `Радары`;
+    - `Найденные сигналы`;
+    - `Кандидаты постов` placeholder or read-only preview if candidate implementation
+      is deferred to Slice 1.6.
+  - Add `RadarDefinition` contracts with source, scope, acceptance policy, trigger
+    mode, status, last run, and notes.
+  - Add `SourceSignal` review fields: radar id, review status, suggested topic,
+    suggested fabula, suggested value, duplicate risk, and author correction metadata.
+  - Seed demo radars for author memory, archive, external sources, and manual research.
+  - Seed demo signals for the AI Product Manager blog.
+  - Support HITL actions: approve signal, reject signal, archive signal, correct topic
+    or fabula assignment.
+  - Persist radar settings and reviewed signals in localStorage.
+  - Author corrections create or update author-memory evidence.
+- Out of scope:
+  - Real Telegram/API/OAuth/crawler integrations.
+  - Real AI analysis.
+  - Full post candidate generation.
+  - Calendar UI.
+- Implementation notes:
+  - Radars can be deterministic demo sources.
+  - Unapproved signals must not create approved post concepts.
+  - Signal approval should be explicit unless the radar policy is automatic.
+- Tests:
+  - Domain tests for radar settings and signal review transitions.
+  - Storage tests for old workspace normalization and signal persistence.
+  - UI tests for `Сигналы` tabs, radar cards/list, signal filters, approve/reject, and
+    correction flow.
+  - Regression for existing production flow.
+- Docs:
+  - Update README, architecture overview, developer guide, user guide, demo docs, wiki
+    production flow, and roadmap.
+- Demo impact:
+  - The AI Product Manager demo should show signals from memory/archive/external mock
+    sources before any plan slot is approved.
+- Acceptance criteria:
+  - User can inspect demo radars.
+  - User can review found signals.
+  - User can approve, reject, archive, and correct a signal.
+  - Signal corrections become visible as author-memory input or evidence.
+  - Existing plan/brief/edit/release flow remains working.
+- Risks:
+  - The boundary between import candidates and source signals must stay clear:
+    imported candidates are source material; reviewed signals are editorial triggers.
+
+### Slice 1.6: Post Candidate Assemblies
 
 - Status: Backlog
-- Goal: Treat released and imported posts as author memory and uniqueness material.
+- Goal: Add post candidates as explicit combinations of signal, topic, fabula,
+  audience, value, goal, platform, and format.
+- User value: The author can compare several proposed post concepts for one future
+  slot instead of approving the first generated idea.
 - Scope:
-  - Add archive records.
-  - Link archive posts to author-position evidence.
+  - Add `PostCandidate` contracts.
+  - Generate deterministic candidates from approved signals and editorial model.
+  - Respect min/max candidate count from future or temporary planning settings.
+  - Show candidates in `Сигналы -> Кандидаты постов`.
+  - Let the author approve one candidate, reject candidates, request more variants, or
+    edit the assembly.
+  - Approved candidate becomes the input for `Фабула поста`.
+- Out of scope:
+  - Full calendar view.
+  - Real AI candidate generation.
+  - Automated publishing.
+- Implementation notes:
+  - Candidate approval should synchronize the compatibility `contentPlanItem` only
+    when a concrete plan slot is selected or created.
+  - Candidate edits should be explicit save/cancel operations.
+- Tests:
+  - Domain tests for candidate generation and approval.
+  - UI tests for comparing, approving, rejecting, and editing candidates.
+  - Regression for `Фабула поста` creation from an approved candidate.
+- Docs:
+  - Update architecture, developer guide, user guide, demo docs, wiki, and roadmap.
+- Demo impact:
+  - Demo should show at least 2-3 candidate concepts for a planned AI Product Manager
+    post.
+- Acceptance criteria:
+  - User can review multiple candidates for the same editorial need.
+  - Approved candidate starts the existing post-brief flow.
+  - Rejected candidates do not affect plan or production artifacts.
+- Risks:
+  - Candidate UX can become noisy; keep the first view compact with details on demand.
+
+### Slice 1.7: Broadcast Grid Settings
+
+- Status: Backlog
+- Goal: Add high-level broadcast settings before calendar implementation.
+- User value: The author can configure publishing tempo and candidate expectations
+  once, instead of editing every post slot manually.
+- Scope:
+  - Add `План -> Настройка сетки`.
+  - Support:
+    - tempo of articles/posts;
+    - planning period: week, month, quarter;
+    - publishing days and times;
+    - min/max candidates per slot;
+    - default platform and format until dedicated platform entities exist;
+    - signal selection policy: HITL-only, automatic, or automatic with review.
+  - Save settings explicitly.
+  - Generate empty calendar slots for the chosen horizon.
+  - Show plan deficit/proficit summary based on available approved signals and
+    candidates.
+- Out of scope:
+  - Calendar zoom UI.
+  - Real radar execution.
+  - AI planning.
+- Implementation notes:
+  - Settings are general requirements for the grid, not detailed settings for every
+    post.
+  - Saved settings should mark generated slots/candidates stale when changed.
+- Tests:
+  - Domain tests for slot generation from tempo/days/period.
+  - UI tests for settings save/cancel and regenerated slot counts.
+  - Storage tests for settings persistence.
+- Docs:
+  - Update docs and wiki screenshots.
+- Demo impact:
+  - Demo should show a monthly or two-week Telegram planning setup for the AI Product
+    Manager blog.
+- Acceptance criteria:
+  - User can configure the broadcast grid at a high level.
+  - System creates slots from settings.
+  - Candidate deficit/proficit is visible.
+- Risks:
+  - Calendar settings can become platform-specific; keep platform entities deferred.
+
+### Slice 1.8: Calendar View for Broadcast Plan
+
+- Status: Backlog
+- Goal: Replace the list-only plan view with a calendar that shows slot readiness and
+  lets the author zoom into a day or slot.
+- User value: The author can see upcoming risk, ready posts, published posts, and
+  where attention is needed.
+- Scope:
+  - Add `План -> Календарь выпуска`.
+  - Support week/month/quarter/year zoom levels.
+  - Show slot statuses:
+    - empty;
+    - waiting for signal approval;
+    - has candidates;
+    - concept approved;
+    - in production;
+    - ready;
+    - published;
+    - at risk.
+  - Click a day/slot to open a detail panel below the calendar.
+  - Detail panel links to signals, candidates, post brief, editing, release, or
+    analytics depending on status.
+  - Preserve current list/grid view as a secondary operational view if useful.
+- Out of scope:
+  - Real platform publication links beyond manual/demo URLs.
+  - External calendar integrations.
+  - Real-time collaboration.
+- Implementation notes:
+  - Use status colors consistently and keep text labels available for accessibility.
+  - Calendar should summarize counts without forcing the user to inspect every slot.
+- Tests:
+  - UI tests for zoom levels, status rendering, slot detail panel, and navigation.
+  - Visual smoke tests for month and week layouts at desktop/laptop/mobile widths.
+  - Regression for downstream production flow.
+- Docs:
+  - Update user guide, wiki screenshots, demo docs, and architecture overview.
+- Demo impact:
+  - Demo should show a near-future slot that needs signal/candidate attention and one
+    approved slot ready for production.
+- Acceptance criteria:
+  - Calendar clearly shows what is ready and what needs intervention.
+  - Clicking a slot explains the next action.
+  - Existing production flow remains reachable.
+- Risks:
+  - Calendar UI can easily become too dense; start with compact slot badges and a
+    detail panel.
+
+### Slice 1.9: Archive and Uniqueness Baseline
+
+- Status: Backlog
+- Goal: Treat released and imported posts as author memory, signal material, and
+  uniqueness context.
+- Scope:
+  - Add stronger archive records for released and imported posts.
+  - Link archive posts to author-position evidence when explicitly accepted.
+  - Let archive records become signal sources.
   - Add deterministic uniqueness checks against archive titles/body snippets.
 
 ### Deferred: AI Drafting Adapter Skeleton
@@ -991,6 +1218,7 @@ Status:
 - Slice 1.3: Context Chat Wizard Skeleton. Completed 2026-06-12.
 - Slice 1.3.1: Context Chat UX Repair and Chat Mode. Completed 2026-06-13.
 - Slice 1.4: Content Plan as Broadcast Grid. Completed 2026-06-13.
+- Slice 1.4.1: Broadcast Planning Concept Correction. Completed 2026-06-13.
 
 ## Blocked Items
 
@@ -1003,10 +1231,12 @@ Status:
 - Should platform weights remain advisory, or become hard validation constraints after
   topic/fabula validator coverage exists?
 - How much of the context chat should ship before real AI provider calls?
-- What is the minimum useful archive import for uniqueness and author-position
-  evidence?
+- How should import candidates, reviewed source signals, and post candidates share
+  provenance without becoming the same entity?
+- What is the minimum useful archive import for uniqueness, source signals, and
+  author-position evidence?
 - Which hosted deployment target should be used after local-first development?
 
 ## Next Recommended Task
 
-Start `Slice 1.5: Archive and Uniqueness Baseline`.
+Start `Slice 1.5: Signals and Radar Workspace`.

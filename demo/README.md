@@ -93,6 +93,11 @@ seed contains two weeks of slots with dates, Telegram as the local-first platfor
 formats, topics, fabulas, approval status, manual override state, and advisory
 weight/matrix warnings.
 
+This is a useful Slice 1.4 prototype, but it is not the final planning model. The next
+demo evolution should add `Сигналы` first: radar settings, found signals, signal review,
+and post candidate assemblies. After that, `План` can become a real calendar with
+publishing tempo, period, days/times, candidate counts, and readiness statuses.
+
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
 approve a plan slot, click `Подготовить фабулу поста`, edit the post brief, and use

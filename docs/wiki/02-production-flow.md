@@ -7,6 +7,11 @@ Production flow начинается после авторской памяти.
 
 `Радар -> Инсайт -> Сетка вещания -> Утвержденная фабула поста`
 
+Note: this page documents the current Slice 1.4 demo flow. The next planning direction
+is to expand `Радар` into `Сигналы`, then add post candidates before the grid becomes a
+full calendar. The current grid is a working local-first prototype for slot approval
+and downstream production.
+
 ![Утвержденная фабула](assets/screenshots/05-approved-post-brief.png)
 
 ## Радар

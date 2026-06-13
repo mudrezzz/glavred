@@ -177,6 +177,11 @@ The implemented flow is:
 
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
+Planning architecture is being corrected after Slice 1.4. The broadcast grid is the
+current compatibility layer, but the intended flow is:
+
+`AuthorMemory/Archive/ExternalSources -> Сигналы -> Кандидаты постов -> BroadcastContentPlan -> approved PostBrief`
+
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.
@@ -191,12 +196,19 @@ Use these boundaries:
 - `WorkspaceState.contentPlanItems` is the broadcast grid. `contentPlanItem` remains a
   compatibility field for the currently selected/approved slot used by post brief,
   release, and analytics services.
+- Future `Сигналы` should own radar settings and reviewed source material. Future
+  `PostCandidate` services should assemble signal/topic/fabula/audience/value/goal
+  combinations before a calendar slot becomes an approved post concept.
 - The author-memory UI may use browser-only helpers for local link previews, derived
   titles, search filters, summary counts, and voice-input capability detection. These
   helpers must not fetch external metadata or bypass local-first storage.
 
 Do not call browser storage from domain code. Do not add backend persistence, auth,
 real source ingestion, or AI provider calls until their slices are planned.
+
+Do not deepen `План` as a standalone generator of posts. The next planning slices must
+first add the signal workspace and post candidate assemblies so the calendar shows
+material readiness rather than invented slots.
 
 File attachments are local-first and size-limited to 1 MB per attachment in the browser
 demo. They are stored as metadata plus `dataUrl`. Real PDF/DOCX parsing, OCR, image

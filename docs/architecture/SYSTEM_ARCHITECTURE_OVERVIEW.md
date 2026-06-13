@@ -21,11 +21,14 @@ The revised product concept is documented in
 The external source and import-review concept is documented in
 `docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md`.
 
+The revised signal and broadcast planning concept is documented in
+`docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md`.
+
 ## Strategic Product Model
 
 The durable model is:
 
-`AuthorMemory -> AuthorPositionModel -> EditorialSystem -> ContentProduction -> Release -> Learning`
+`AuthorMemory -> AuthorPositionModel -> EditorialSystem -> Signals -> ContentProduction -> Release -> Learning`
 
 - `AuthorMemory`: a lightweight internal feed of thoughts, reactions, links,
   corrections, small local attachments, archive notes, and post-release learning. It
@@ -35,8 +38,10 @@ The durable model is:
   Content Design Records, and validators.
 - `EditorialSystem`: structured rules, weights, compatibility matrices, and
   validation contracts that describe how the author publishes.
-- `ContentProduction`: the already implemented downstream layer: signals, insights,
-  plan items, briefs, drafts, checks, release, and analytics prep.
+- `Signals`: radar findings and manually supplied material from author memory,
+  archives, external sources, and manual input.
+- `ContentProduction`: the downstream layer: approved signals, post candidates,
+  broadcast slots, post briefs, drafts, checks, release, and analytics prep.
 
 The main product risk is generic AI compilation. Glavred avoids it by making the
 author's own position explicit, editable, evidence-backed, and continuously validated.
@@ -52,6 +57,10 @@ The source-to-release part remains useful as a production layer. It is no longer
 conceptual center of the product. Author memory and first author-position assertions
 now sit above that flow; future slices should add structured topics, fabulas, and
 validator results, then route more production decisions through them.
+
+Slice 1.4 added a first broadcast grid in `План`, but the deeper planning model is now
+explicitly corrected: a calendar slot is not a post concept by itself. Future planning
+work should add `Сигналы` and `Кандидаты постов` before expanding the calendar UI.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -89,8 +98,10 @@ turning the product into generic content generation.
   product section and internal tab. The current implementation is deterministic,
   provider-free, supports local chat replies and suggestions, and can open safe draft
   flows for structured entities without saving changes automatically.
-- `EditorialRadar`: collects external and manual material. Radar output is fuel for
-  author memory and content production, not the only source of posts.
+- `SignalsWorkspace`: reviews radar findings and manually supplied material before it
+  can become a post concept.
+- `EditorialRadar`: configurable source procedure inside `Сигналы`. Radar output is
+  fuel for author memory and content production, not the only source of posts.
 - `ExternalSourceSettings`: stores planned or connected source configurations for
   Telegram, social profiles, blogs, documents, article archives, and manual uploads.
 - `ImportReviewQueue`: holds imported candidates before they affect author memory,
@@ -102,11 +113,13 @@ turning the product into generic content generation.
   accepting selected items into archive, or ignoring selected items as evidence.
 - `ArchiveRecords`: stores accepted historical posts and long-form materials with
   provenance and evidence policy.
-- `InsightScoring`: turns a source signal into an insight card with relevance, urgency,
-  banality risk, fact gaps, suggested topic, and suggested author position.
-- `ContentPlanning`: turns selected insight cards and author constraints into a
-  broadcast grid with platform, date, topic, fabula, format, priority, approval status,
-  manual override state, and advisory weight conflicts.
+- `PostCandidateAssembly`: combines a reviewed signal with topic, fabula, audience,
+  value, goal, platform, and format options before a post concept is approved.
+- `InsightScoring`: turns a reviewed source signal into an insight card with relevance,
+  urgency, banality risk, fact gaps, suggested topic, and suggested author position.
+- `ContentPlanning`: describes broadcast demand and calendar status: tempo, period,
+  publishing days/times, candidate count requirements, platform/date/topic/fabula/
+  format, approval status, manual override state, and advisory conflicts.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -200,6 +213,10 @@ Current implemented production contracts:
   keep matrix links normalized. Added entities get default enabled links; deleted
   entities remove their matrix links without rewriting existing production artifacts.
 - `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
+- Future `RadarDefinition`: source, scope, acceptance policy, trigger mode, status,
+  last run, and notes.
+- Future `PostCandidate`: candidate assembly of signal, topic, fabula, audience,
+  value, goal, platform, format, confidence, risks, and approval status.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
 - `ContentPlanItem`: insight, platform, date, priority, format, expected effect,
@@ -313,13 +330,15 @@ research experience building AI-B2B products:
    or bulk archive acceptance before they influence memory or assertions.
 6. The existing production flow uses the same demo context: a `SourceSignal` about the
    gap between AI-B2B demos and adoption.
-7. `InsightScoring` produces an `InsightCard`.
-8. `ContentPlanning` creates a Telegram plan item.
-9. The author approves the plan and post brief through HITL gates.
-10. `Drafting` creates an editable research-note draft.
-11. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+7. The next planning correction will make that signal part of `Сигналы`, then assemble
+   multiple post candidates from it.
+8. `InsightScoring` produces an `InsightCard`.
+9. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
+10. The author approves a slot and post brief through HITL gates.
+11. `Drafting` creates an editable research-note draft.
+12. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-12. The author approves final text, prepares a manual Telegram release package, and
+13. The author approves final text, prepares a manual Telegram release package, and
    captures analytics learning.
 
 ## Extension Points
@@ -328,6 +347,11 @@ research experience building AI-B2B products:
   learning before production artifacts are created.
 - External source import can add candidates to a review queue, but unreviewed material
   must not strengthen author-position assertions.
+- Reviewed source material can become `SourceSignal`; unreviewed imports and archive
+  records remain source material until the author or an acceptance policy promotes
+  them.
+- Post candidate assembly can later replace direct plan-slot generation while keeping
+  current `contentPlanItems` as a compatibility layer.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
