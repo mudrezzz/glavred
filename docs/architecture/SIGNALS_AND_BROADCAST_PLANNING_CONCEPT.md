@@ -54,7 +54,7 @@ The `Сигналы` section should have three internal tabs:
    - token/budget behavior for future AI-backed radars;
    - current status and last run.
 2. `Найденные сигналы`
-   - filter by radar/source/status/topic/fabula/freshness/duplicate risk;
+   - filter by radar/source/status/search text/freshness/duplicate risk;
    - approve, reject, archive, or correct;
    - corrections become author-memory evidence.
 3. `Кандидаты постов`
@@ -112,6 +112,29 @@ Clicking a calendar day or slot should open a detail panel below the calendar:
 - if published, link to release/analytics and future platform URL.
 
 ## Radar Demand Loop
+
+## Slice 1.5.1 Correction: Radars and Raw Signals
+
+After the first `Сигналы` implementation, the product model was corrected:
+
+- a radar is a configurable search object, not a passive source card;
+- radar configuration consists of atomic trigger/search rules and optional search
+  sources;
+- rules support `AND`, `OR`, and `NOT`;
+- sources can be author archive, URL, MCP server, API, search keywords, manual source,
+  social profile, document, or open web;
+- a radar may intentionally have no explicit sources, letting a future AI/search layer
+  decide where to search from the rules;
+- a found signal is raw material and must not own topic/fabula/audience/value matching;
+- `Найденные сигналы` shows radar provenance, date, finding, evidence, search note,
+  duplicate risk, and review status;
+- topic/fabula/audience/value matching starts only in `Кандидаты постов`.
+- `Радары` and `Найденные сигналы` must use framed rows/cards so the author can see
+  which rules, evidence, metadata, and actions belong to one entity.
+
+This keeps the flow clean:
+
+`Radar rules/sources -> raw SourceSignal -> reviewed SourceSignal -> PostCandidate`.
 
 Radars should react to plan deficit:
 

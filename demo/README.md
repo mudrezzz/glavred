@@ -166,6 +166,13 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 16. Inspect `Радары`.
 17. Open `Найденные сигналы`.
 18. Approve, archive, reject, or edit one signal.
+    Slice 1.5.1 note: expand a radar to inspect atomic search rules and optional
+    sources; expand a found signal to inspect raw evidence, duplicate risk, and search
+    notes. Topic/fabula matching happens later in post candidates.
+    Slice 1.5.2 note: radar and signal rows are framed cabinet cards; metadata,
+    evidence, and actions must stay inside the same visible entity card.
+    Slice 1.5.3 note: the `Сигналы` section has its own header, stable row layout,
+    separated action footers, and visual checks for spacing and column overlap.
 19. Open `Кандидаты постов` to see the Slice 1.6 preview.
 20. Return to `Найденные сигналы` and click `Собрать инсайт`.
 21. Click `В план`.

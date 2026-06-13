@@ -705,6 +705,13 @@ const demoRadars: RadarDefinition[] = [
     id: 'radar-author-memory',
     title: 'Память автора',
     sourceType: 'authorMemory',
+    rules: [
+      { id: 'rule-author-memory-workflow', operator: 'and', negate: false, statement: 'Искать повторяющиеся мысли про workflow, adoption, evals и trust loop.', status: 'active' },
+      { id: 'rule-author-memory-no-model-hype', operator: 'and', negate: true, statement: 'Не брать материал, где главный фокус только на выборе модели.', status: 'active' }
+    ],
+    sources: [
+      { id: 'source-author-memory-feed', type: 'authorArchive', title: 'Лента памяти автора', value: 'authorNotes', notes: 'Локальные заметки и ручные корректировки автора.', status: 'active' }
+    ],
     scope: 'Мысли, ручные правки и реакции автора про AI-B2B productization.',
     acceptancePolicy: 'manual',
     triggerMode: 'deficitDriven',
@@ -716,6 +723,13 @@ const demoRadars: RadarDefinition[] = [
     id: 'radar-archive',
     title: 'Архив постов',
     sourceType: 'archive',
+    rules: [
+      { id: 'rule-archive-reusable-patterns', operator: 'and', negate: false, statement: 'Находить архивные паттерны, которые можно переосмыслить без самоповтора.', status: 'active' },
+      { id: 'rule-archive-no-duplicate-posts', operator: 'and', negate: true, statement: 'Не предлагать материал, слишком похожий на уже выпущенный пост.', status: 'active' }
+    ],
+    sources: [
+      { id: 'source-archive-released-posts', type: 'authorArchive', title: 'Архив выпущенных постов', value: 'archiveRecords', notes: 'Локальный архив релизов и импортированных материалов.', status: 'active' }
+    ],
     scope: 'Старые Telegram-посты, доклады и архивные заметки про rollout, trust и evals.',
     acceptancePolicy: 'automaticWithReview',
     triggerMode: 'deficitDriven',
@@ -727,6 +741,14 @@ const demoRadars: RadarDefinition[] = [
     id: 'radar-external-sources',
     title: 'Внешние источники',
     sourceType: 'externalSource',
+    rules: [
+      { id: 'rule-external-adoption-failures', operator: 'and', negate: false, statement: 'Искать кейсы, где AI-пилот не превратился в регулярный workflow.', status: 'active' },
+      { id: 'rule-external-evidence-required', operator: 'and', negate: false, statement: 'В сигнале должны быть фактура, цитата или наблюдение, а не только ссылка.', status: 'active' }
+    ],
+    sources: [
+      { id: 'source-external-interviews', type: 'manualSource', title: 'Customer interviews', value: 'interview notes', notes: 'Демо-заметки интервью без реального API.', status: 'active' },
+      { id: 'source-external-open-web', type: 'searchKeywords', title: 'AI adoption research', value: 'AI B2B adoption evals trust rollout', notes: 'Будущая поисковая поверхность.', status: 'active' }
+    ],
     scope: 'Customer interviews, blog essays и внешние разборы AI adoption.',
     acceptancePolicy: 'manual',
     triggerMode: 'scheduled',
@@ -738,6 +760,10 @@ const demoRadars: RadarDefinition[] = [
     id: 'radar-manual-research',
     title: 'Ручное исследование',
     sourceType: 'manualResearch',
+    rules: [
+      { id: 'rule-manual-research-product-mechanic', operator: 'and', negate: false, statement: 'Брать материалы, где видна продуктовая механика AI-B2B внедрения.', status: 'active' }
+    ],
+    sources: [],
     scope: 'Материалы, которые автор вручную занес как сырье для будущего поста.',
     acceptancePolicy: 'manual',
     triggerMode: 'manual',
@@ -747,7 +773,7 @@ const demoRadars: RadarDefinition[] = [
   }
 ];
 
-const demoSourceSignals: SourceSignal[] = [
+const demoSourceSignals: SourceSignal[] = ([
   {
     id: 'signal-ai-demo-to-adoption-gap',
     type: 'Повторяющийся паттерн',
@@ -798,6 +824,23 @@ const demoSourceSignals: SourceSignal[] = [
     suggestedFabulaId: 'fabula-research-note',
     suggestedValue: 'Показать trust loop как продуктовую часть enterprise AI rollout.',
     duplicateRisk: 'low'
+  },
+  {
+    id: 'signal-procurement-trust-loop',
+    type: 'Внешний разбор',
+    title: 'Procurement спрашивает не про модель, а про контроль риска внедрения',
+    source: 'AI adoption research digest',
+    capturedAt: '2026-06-09',
+    summary:
+      'В обсуждениях enterprise AI повторяется вопрос: как доказать, что система не создаст новый операционный риск после пилота.',
+    rawNote:
+      'Сигнал полезен для темы enterprise trust: показать, что trust loop начинается с контроля изменений, audit trail и rollback.',
+    radarId: 'radar-external-sources',
+    reviewStatus: 'new',
+    suggestedTopicId: 'topic-enterprise-trust-rollout',
+    suggestedFabulaId: 'fabula-practical-framework',
+    suggestedValue: 'Объяснить trust loop как практический контур контроля внедрения, а не как юридическую формальность.',
+    duplicateRisk: 'medium'
   },
   {
     id: 'signal-rollout-economics',
@@ -851,7 +894,19 @@ const demoSourceSignals: SourceSignal[] = [
     suggestedValue: 'Показать, какие вопросы задавать к AI demo до восторга.',
     duplicateRisk: 'medium'
   }
-];
+] as SourceSignal[]).map((signal): SourceSignal => ({
+  ...signal,
+  evidence: [
+    {
+      id: `evidence-${signal.id}`,
+      sourceTitle: signal.source,
+      sourceUrl: '',
+      quote: signal.summary,
+      summary: signal.rawNote
+    }
+  ],
+  searchNote: signal.searchNote ?? `Проверить риск дубля: ${signal.duplicateRisk ?? 'low'}.`
+}));
 
 export function createDemoWorkspace(): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);

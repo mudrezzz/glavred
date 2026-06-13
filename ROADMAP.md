@@ -527,6 +527,7 @@ Status:
 - Validation:
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
+  - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
   - `npm run docs:wiki:publish` passed.
 
@@ -1036,6 +1037,85 @@ Status:
     imported candidates are source material; reviewed signals are editorial triggers.
   - `Кандидаты постов` is intentionally read-only until Slice 1.6.
 
+### Slice 1.5.1: Radar Rules/Sources and Raw Signal UX Repair
+
+- Status: Done
+- Goal: Correct the `Сигналы` model before post candidate assemblies.
+- User value: The author can configure radars as search procedures and review raw
+  signals without confusing them with post concepts.
+- Scope:
+  - Model radars as configurable search objects with atomic rules and optional sources.
+  - Add local-first add/edit/delete/start/stop flows for radars.
+  - Show radar signal counts with the existing red count badge pattern and last run
+    date in compact rows.
+  - Treat `Найденные сигналы` as raw material: radar, date, finding, evidence,
+    search note, duplicate risk, and review status.
+  - Remove topic/fabula/value matching from signal review UI; keep compatibility fields
+    only for downstream services until Slice 1.6.
+  - Fix the right panel summary so counts are separate stat blocks, not concatenated
+    text.
+  - Add ADRs for radars as configurable search objects and signals as raw material.
+- Out of scope:
+  - Real radar execution, API, crawler, MCP execution, or AI provider calls.
+  - Post candidate assemblies.
+  - Calendar planning.
+- Validation:
+  - Domain tests for radar CRUD and raw signal evidence. Done.
+  - Storage normalization for old radars/signals. Done.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+
+### Slice 1.5.2: Signals UI Design-System Repair and Visual Guardrails
+
+- Status: Done
+- Goal: Repair the `Сигналы` UI so `Радары` and `Найденные сигналы` follow the cabinet design system.
+- User value: The author can understand which controls, metadata and evidence belong to each radar or signal.
+- Scope:
+  - Render radars and found signals as framed rows/cards with visible boundaries, stable metadata and in-card actions.
+  - Keep expanded details inside the same entity container.
+  - Make signal filters a framed toolbar.
+  - Prevent status and duplicate-risk chips from wrapping by letters.
+  - Add visual smoke coverage for `Сигналы` across desktop, laptop and mobile.
+  - Add ADR for framed cabinet lists and visual coverage.
+- Out of scope:
+  - Changing radar/signal domain behavior.
+  - Post candidate assemblies.
+  - Real radar execution, API, crawler, MCP execution or AI provider calls.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
+### Slice 1.5.3: Signals Layout Polish and Pixel Guardrails
+
+- Status: Done
+- Goal: Fix the remaining `Сигналы` layout issues after 1.5.2 and make the visual
+  guardrails measure the actual failure modes.
+- User value: The author sees a clear `Сигналы` workspace with a section header,
+  stable radar/signal rows, readable expanded cards, non-overlapping columns, and
+  actions that visibly belong to their entity.
+- Scope:
+  - Add an explicit `Сигналы` section header above the internal tabs.
+  - Stabilize radar rows with identity, body and metadata groups instead of fragile
+    pseudo-table columns.
+  - Stabilize found-signal rows so title, radar, duplicate risk and status do not
+    collide.
+  - Add footer spacing and separators for radar/signal actions.
+  - Improve radar edit form spacing for rules and sources.
+  - Keep the right panel action visually separated from summary counters.
+  - Extend visual smoke checks for section header, main/side column gap, action
+    spacing, side-panel spacing, edit-form overflow and signal title width.
+- Out of scope:
+  - New radar execution behavior.
+  - Post candidate assemblies.
+  - Real API/crawler/MCP/AI provider calls.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1221,6 +1301,9 @@ Status:
 - Slice 1.4: Content Plan as Broadcast Grid. Completed 2026-06-13.
 - Slice 1.4.1: Broadcast Planning Concept Correction. Completed 2026-06-13.
 - Slice 1.5: Signals and Radar Workspace. Completed 2026-06-13.
+- Slice 1.5.1: Radar Rules/Sources and Raw Signal UX Repair. Completed 2026-06-13.
+- Slice 1.5.2: Signals UI Design-System Repair and Visual Guardrails. Completed 2026-06-13.
+- Slice 1.5.3: Signals Layout Polish and Pixel Guardrails. Completed 2026-06-14.
 
 ## Blocked Items
 

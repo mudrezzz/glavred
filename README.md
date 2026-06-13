@@ -49,6 +49,9 @@ remains an internal production step opened from an approved plan slot.
 `Сигналы` is now the material intake workspace: demo radars collect material from
 author memory, archive, external sources, and manual research; found signals can be
 approved, corrected, archived, or rejected before downstream production starts.
+Radars are configurable search objects with atomic rules and optional sources. Found
+signals are raw evidence-backed material; topic/fabula/audience/value matching belongs
+to post candidates, not to the signal review UI.
 `Кандидаты постов` is visible as the next read-only step: it explains that assemblies
 of signal, topic, fabula, audience, value, and goal arrive in Slice 1.6. The current
 broadcast grid remains a useful local-first prototype until candidate assemblies and a
@@ -89,7 +92,8 @@ The revised core modules are:
 - Topics and Fabulas: addable/removable editorial entities with weights,
   compatibility matrix, rules, and validators.
 - Signals and Radars: reviewed material from author memory, archive, external sources,
-  and manual input before it becomes a post candidate.
+  and manual input before it becomes a post candidate. Radar and signal lists use
+  framed cabinet rows covered by visual smoke guardrails.
 - Post Candidates: proposed combinations of signal, topic, fabula, audience, value,
   goal, platform, and format.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for

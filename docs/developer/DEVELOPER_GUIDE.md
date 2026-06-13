@@ -118,10 +118,13 @@ files to `docs/wiki/assets/screenshots/`.
 assertions for high-risk operational screens. The current guardrail checks that
 `Память автора -> Источники` rows do not overflow or collapse source titles into narrow
 columns, that row actions stay inside the row, that autosave/status toast appears only
-after an explicit action and disappears automatically, and that the context chat overlay
-opens from the topbar, is anchored to the app right edge, keeps suggestion actions at a
-normal button height, has visible overlay depth, avoids horizontal overflow, and becomes
-a bottom sheet on mobile.
+after an explicit action and disappears automatically, that the context chat overlay
+opens from the topbar and keeps visible layer separation, and that `Сигналы` renders
+radars and found signals as framed rows with stable chips and no horizontal overflow.
+For `Сигналы`, visual smoke also verifies the section header, main/side column gap,
+action-button spacing, side-panel action spacing, radar edit-form overflow, and signal
+title width. These checks are intentionally stricter than ordinary smoke tests because
+the screen is dense and small spacing regressions make it unreadable.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
@@ -163,9 +166,17 @@ New conceptual entities:
   candidates do not affect `AuthorPositionAssertion`.
 - `RadarDefinition` for local-first radar settings: source type, scope, acceptance
   policy, trigger mode, status, last run, and notes.
+- `RadarSearchRule` and `RadarSearchSource` for structured radar configuration.
+  Rules are atomic and support `and`, `or`, and `negate`; sources are optional and can
+  represent archive, URL, MCP, API, search keywords, manual source, social profile,
+  document, or open web.
 - `SourceSignal` now supports review metadata: `radarId`, `reviewStatus`,
   `suggestedTopicId`, `suggestedFabulaId`, `suggestedValue`, `duplicateRisk`, and
   `authorCorrection`.
+  `suggestedTopicId`, `suggestedFabulaId`, and `suggestedValue` are temporary
+  compatibility fields. The `Найденные сигналы` UI treats signals as raw material and
+  does not expose topic/fabula matching; Slice 1.6 moves matching to `PostCandidate`.
+  New signal-facing fields are `evidence` and `searchNote`.
 - `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrixEntry` as implemented
   structured editorial entities. `ContentDesignRecord` and `PlatformProfile` remain
   future entities.
@@ -346,6 +357,9 @@ Frontend rules are now ADR-backed:
   platforms, formats, and CDR/PDR records.
 - Add real-browser visual smoke checks when changing operational catalog layout,
   because DOM tests do not catch collapsed text columns or overflowing actions.
+- Render operational cabinet lists as framed rows/cards. Metadata, expanded details,
+  and actions must stay inside the same entity container; status chips must not wrap by
+  letters or become tall badges. See ADR `cabinet-lists-require-framed-rows-and-visual-coverage`.
 - Keep autosave/status toast event-driven and temporary; do not use a permanent bottom
   overlay for local workspace status.
 - Implement context chat as a topbar-triggered, tabbed overlay. Do not add a permanent

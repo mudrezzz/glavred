@@ -121,9 +121,9 @@ The section has three internal tabs:
 - `Радары`: demo radar definitions for author memory, archive, external sources, and
   manual research. Each row shows source type, acceptance policy, trigger mode, status,
   last run, and notes.
-- `Найденные сигналы`: reviewable signals with filters by radar, status, topic,
-  fabula, and duplicate risk. Expand a signal to see provenance, suggested topic,
-  suggested fabula, value, raw note, and actions.
+- `Найденные сигналы`: reviewable raw signals with filters by radar, status, search
+  text, and duplicate risk. Expand a signal to see radar provenance, date, finding,
+  evidence, duplicate search note, author correction, and actions.
 - `Кандидаты постов`: read-only preview for Slice 1.6. Full candidate assemblies are
   not implemented yet.
 
@@ -138,6 +138,43 @@ Available signal actions:
 
 Manual corrections create author-memory input, so signal review also teaches the system
 about the author's choices. Unapproved signals do not create post concepts.
+
+### Signals correction after Slice 1.5.1
+
+`Радары` are now editable search procedures.
+
+Use this tab to:
+
+- add a radar with `+ Радар`;
+- edit its title, acceptance policy, trigger mode, rules, and sources;
+- add one rule per search instruction;
+- use `NOT` when a condition should exclude material;
+- add several sources, or leave sources empty if the rules are enough for a future AI
+  search layer;
+- start, pause, or delete a radar.
+
+`Найденные сигналы` now shows raw material only. A signal is not a post candidate yet.
+It does not ask you to choose a topic or fabula. Review the radar, date, finding,
+evidence, duplicate risk, and search note, then approve, archive, reject, or correct
+the signal.
+
+Approved signals become available for future `Кандидаты постов`. Slice 1.6 will add
+the matching layer: signal + topic + fabula + audience + value.
+
+### Signals UI after Slice 1.5.2
+
+`Радары` and `Найденные сигналы` use framed rows. The row border shows which metadata,
+details, evidence, and actions belong to the same entity. Expand one row at a time to
+inspect details without losing the surrounding list context.
+
+Status and duplicate-risk chips stay compact; if a row looks visually broken, treat it
+as a UI regression rather than expected behavior.
+
+Slice 1.5.3 adds the explicit `Сигналы` section header above the tabs and tightens the
+layout: radar rows show source, title, status, signal count, and last run as one entity;
+found-signal rows keep radar, title, date, duplicate risk, and review status readable.
+Expanded details and edit forms stay inside the same card, and actions sit in a
+separated footer.
 
 ## Context Chat
 

@@ -67,10 +67,13 @@ describe('App', () => {
 
     goToSignals();
 
+    expect(screen.getByTestId('signals-section-header')).toHaveTextContent('Сигналы');
     expect(screen.getByRole('button', { name: /Радары|Р Р°РґР°СЂС‹/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Найденные сигналы|РќР°Р№РґРµРЅРЅС‹Рµ СЃРёРіРЅР°Р»С‹/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i })).toBeInTheDocument();
     expect(screen.getByTestId('radar-list')).toBeInTheDocument();
+    expect(screen.getAllByTestId('radar-row').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('radar-row')[0]).toHaveClass('radar-card');
     expect(screen.getAllByText('Память автора').length).toBeGreaterThan(0);
     expect(document.querySelector('.source-grid')).toBeNull();
 
@@ -79,23 +82,25 @@ describe('App', () => {
 
     const signalList = screen.getByTestId('source-signal-list');
     expect(signalList).toBeInTheDocument();
-    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('source-signal-row')[0]).toHaveClass('signal-card');
 
     fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'new' } });
-    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
 
-    const signalRow = signalList.querySelector('article') as HTMLElement;
+    const signalRow = screen.getAllByTestId('source-signal-row')[0];
     fireEvent.click(within(signalRow).getAllByRole('button')[0]);
+    expect(within(signalRow).getByText('Evidence')).toBeInTheDocument();
     fireEvent.click(within(signalRow).getByRole('button', { name: /Утвердить сигнал|РЈС‚РІРµСЂРґРёС‚СЊ СЃРёРіРЅР°Р»/i }));
     fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'approved' } });
-    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'new' } });
-    const archiveRow = signalList.querySelector('article') as HTMLElement;
+    const archiveRow = screen.getAllByTestId('source-signal-row')[0];
     fireEvent.click(within(archiveRow).getAllByRole('button')[0]);
     fireEvent.click(within(archiveRow).getByRole('button', { name: /В архив|Р’ Р°СЂС…РёРІ/i }));
     fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'archived' } });
-    expect(signalList.querySelectorAll('article').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i }));
     expect(screen.getByText(/Slice 1\.6/i)).toBeInTheDocument();

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   addFabula,
+  addRadar,
   addTopic,
   approveFinalText,
   approvePlanItem,
@@ -16,7 +17,9 @@ import {
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
   createEditorialValidationRun,
+  createRadarDraft,
   createTopicDraft,
+  deleteRadar,
   deleteFabula,
   deleteEditorialRule,
   deleteTopic,
@@ -39,6 +42,8 @@ import {
   runEditorialSetupValidators,
   reviseDraft,
   toggleReleaseChecklistItem,
+  toggleRadarStatus,
+  updateRadar,
   updateLearningNote
 } from './editorialWorkspace';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
@@ -104,7 +109,11 @@ describe('editorial workspace domain', () => {
     const workspace = createDemoWorkspace();
 
     expect(workspace.radars).toHaveLength(4);
+    expect(workspace.radars[0].rules.length).toBeGreaterThan(0);
+    expect(workspace.radars[0].sources.length).toBeGreaterThan(0);
     expect(workspace.sourceSignals.length).toBeGreaterThan(5);
+    expect(workspace.sourceSignals[0].suggestedTopicId).toBeDefined();
+    expect(workspace.sourceSignals[0].evidence?.length).toBeGreaterThan(0);
     expect(workspace.sourceSignals.some((signal) => signal.reviewStatus === 'approved')).toBe(true);
     expect(workspace.sourceSignals.some((signal) => signal.reviewStatus === 'new')).toBe(true);
     expect(workspace.sourceSignal.id).toBe(workspace.sourceSignals[0].id);
@@ -126,6 +135,44 @@ describe('editorial workspace domain', () => {
     expect(corrected.suggestedValue).toContain('Trust loop');
     expect(corrected.authorCorrection).toContain('trust rollout');
     expect(corrected.title).toBe(signal.title);
+  });
+
+  it('creates, updates, toggles, and deletes configurable radars', () => {
+    const workspace = createDemoWorkspace();
+    const draft = {
+      ...createRadarDraft(),
+      title: 'AI policy radar',
+      rules: [
+        {
+          id: 'rule-policy',
+          operator: 'and' as const,
+          negate: false,
+          statement: 'Искать изменения в enterprise AI policy.',
+          status: 'active' as const
+        }
+      ],
+      sources: [
+        {
+          id: 'source-policy',
+          type: 'searchKeywords' as const,
+          title: 'Policy search',
+          value: 'enterprise AI policy rollout',
+          notes: '',
+          status: 'active' as const
+        }
+      ]
+    };
+
+    const added = addRadar(workspace.radars, draft);
+    const paused = toggleRadarStatus(draft);
+    const updated = updateRadar(added, { ...paused, notes: 'Run only on planning deficit.' });
+    const removed = deleteRadar(updated, draft.id);
+
+    expect(added).toHaveLength(workspace.radars.length + 1);
+    expect(added[added.length - 1].rules[0].statement).toContain('enterprise AI policy');
+    expect(updated.find((radar) => radar.id === draft.id)?.status).toBe('paused');
+    expect(updated.find((radar) => radar.id === draft.id)?.notes).toContain('planning deficit');
+    expect(removed.some((radar) => radar.id === draft.id)).toBe(false);
   });
 
   it('creates a deterministic broadcast grid with compatible topic and fabula slots', () => {

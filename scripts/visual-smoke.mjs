@@ -85,6 +85,172 @@ function assertChatLayout(result) {
   }
 }
 
+function assertSignalsLayout(result) {
+  const failures = [];
+
+  if (!result.sectionHeaderExists) failures.push(`${result.viewport}: signals section header is missing.`);
+  if (!result.radarRowCount) failures.push(`${result.viewport}: no radar rows rendered.`);
+  if (!result.signalRowCount) failures.push(`${result.viewport}: no signal rows rendered.`);
+  if (result.pageOverflow > 2) failures.push(`${result.viewport}: signals page overflows horizontally by ${result.pageOverflow}px.`);
+  if (result.radarOverflow > 2) failures.push(`${result.viewport}: radar row overflows by ${result.radarOverflow}px.`);
+  if (result.signalOverflow > 2) failures.push(`${result.viewport}: signal row overflows by ${result.signalOverflow}px.`);
+  if (result.workspaceGap !== null && result.workspaceGap < 16) failures.push(`${result.viewport}: signals main/side columns overlap or have too little gap (${result.workspaceGap}px).`);
+  if (!result.radarHasFrame) failures.push(`${result.viewport}: radar row has no visible frame/background.`);
+  if (!result.signalHasFrame) failures.push(`${result.viewport}: signal row has no visible frame/background.`);
+  if (result.radarStatusHeight > 44) failures.push(`${result.viewport}: radar status chip is too tall (${result.radarStatusHeight}px).`);
+  if (result.signalStatusHeight > 44) failures.push(`${result.viewport}: signal status chip is too tall (${result.signalStatusHeight}px).`);
+  if (!result.radarStatusNoWrap) failures.push(`${result.viewport}: radar status chip can wrap.`);
+  if (!result.signalStatusNoWrap) failures.push(`${result.viewport}: signal status chip can wrap.`);
+  if (!result.filterToolbarHasFrame) failures.push(`${result.viewport}: signal filter toolbar has no frame.`);
+  if (result.expandedSignalEscapesCard) failures.push(`${result.viewport}: expanded signal details escape the signal card.`);
+  if (result.radarActionMinGap !== null && result.radarActionMinGap < 8) failures.push(`${result.viewport}: radar action buttons are too close (${result.radarActionMinGap}px).`);
+  if (result.signalActionMinGap !== null && result.signalActionMinGap < 8) failures.push(`${result.viewport}: signal action buttons are too close (${result.signalActionMinGap}px).`);
+  if (result.sideActionGap !== null && result.sideActionGap < 12) failures.push(`${result.viewport}: signal side action has too little top spacing (${result.sideActionGap}px).`);
+  if (result.radarEditorOverflow > 2) failures.push(`${result.viewport}: radar editor content overflows by ${result.radarEditorOverflow}px.`);
+  if (result.radarEditorSectionGap !== null && result.radarEditorSectionGap < 12) failures.push(`${result.viewport}: radar editor sections are too cramped (${result.radarEditorSectionGap}px).`);
+  if (result.signalTitleWidth !== null && result.signalTitleWidth < 180 && result.viewport !== 'mobile') failures.push(`${result.viewport}: signal title column is too narrow (${result.signalTitleWidth}px).`);
+
+  if (failures.length) {
+    throw new Error(`Signals visual smoke failed:\n- ${failures.join('\n- ')}`);
+  }
+}
+
+async function assertSignalsAtViewport(page, viewport, viewportName) {
+  await page.setViewportSize(viewport);
+  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /Сигналы/i }).click();
+  await page.locator('[data-testid="radar-row"]').first().waitFor();
+
+  const radarResult = await page.evaluate((name) => {
+    const radarRow = document.querySelector('[data-testid="radar-row"]');
+    const radarStatus = radarRow?.querySelector('.radar-status');
+    const radarActions = Array.from(radarRow?.querySelectorAll('.radar-actions .btn') ?? []);
+    const sidePanel = document.querySelector('.signal-side-panel');
+    const sideSummary = sidePanel?.querySelector('.signal-summary-grid');
+    const sideAction = sidePanel?.querySelector('.btn.wide');
+    const main = document.querySelector('.signals-workspace-grid .memory-main');
+    const side = document.querySelector('.signals-workspace-grid .memory-side');
+    const radarStyle = radarRow ? window.getComputedStyle(radarRow) : null;
+    const radarStatusStyle = radarStatus ? window.getComputedStyle(radarStatus) : null;
+    const sideSummaryRect = sideSummary?.getBoundingClientRect();
+    const sideActionRect = sideAction?.getBoundingClientRect();
+    const mainRect = main?.getBoundingClientRect();
+    const sideRect = side?.getBoundingClientRect();
+    const actionRects = radarActions.map((element) => element.getBoundingClientRect()).sort((a, b) => a.top - b.top || a.left - b.left);
+    const sameLineGaps = actionRects
+      .slice(1)
+      .map((rect, index) => ({ rect, prev: actionRects[index] }))
+      .filter(({ rect, prev }) => Math.abs(rect.top - prev.top) < 8)
+      .map(({ rect, prev }) => Math.round(rect.left - prev.right));
+    const radarActionMinGap = sameLineGaps.length ? Math.min(...sameLineGaps) : null;
+    const workspaceGap =
+      mainRect && sideRect && Math.abs(mainRect.top - sideRect.top) < 80 ? Math.round(sideRect.left - mainRect.right) : null;
+
+    return {
+      viewport: name,
+      sectionHeaderExists: Boolean(document.querySelector('[data-testid="signals-section-header"]')),
+      radarRowCount: document.querySelectorAll('[data-testid="radar-row"]').length,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      radarOverflow: radarRow ? radarRow.scrollWidth - radarRow.clientWidth : 0,
+      workspaceGap,
+      radarHasFrame: Boolean(
+        radarStyle &&
+          radarStyle.borderStyle !== 'none' &&
+          Number.parseFloat(radarStyle.borderWidth || '0') >= 1 &&
+          radarStyle.backgroundColor !== 'rgba(0, 0, 0, 0)'
+      ),
+      radarStatusHeight: radarStatus?.getBoundingClientRect().height ?? 0,
+      radarStatusNoWrap: radarStatusStyle?.whiteSpace === 'nowrap',
+      radarActionMinGap,
+      sideActionGap: sideSummaryRect && sideActionRect ? Math.round(sideActionRect.top - sideSummaryRect.bottom) : null
+    };
+  }, viewportName);
+
+  await page.locator('[data-testid="radar-row"]').first().getByRole('button', { name: /Редактировать/i }).click();
+  await page.locator('.radar-editor').waitFor();
+  const radarEditorResult = await page.evaluate((name) => {
+    const editor = document.querySelector('.radar-editor');
+    const sections = Array.from(editor?.querySelectorAll('.radar-config-section') ?? []);
+    const sectionRects = sections.map((section) => section.getBoundingClientRect()).sort((a, b) => a.top - b.top);
+    const sectionGap =
+      sectionRects.length > 1
+        ? Math.min(...sectionRects.slice(1).map((rect, index) => Math.round(rect.top - sectionRects[index].bottom)))
+        : null;
+
+    return {
+      viewport: name,
+      radarEditorOverflow: editor ? editor.scrollWidth - editor.clientWidth : 0,
+      radarEditorSectionGap: sectionGap
+    };
+  }, viewportName);
+
+  await page.getByRole('button', { name: /Найденные сигналы/i }).click();
+  await page.locator('[data-testid="source-signal-row"]').first().waitFor();
+  await page.locator('[data-testid="source-signal-row"]').first().locator('.signal-row-main').click();
+
+  const signalResult = await page.evaluate((name) => {
+    const signalRow = document.querySelector('[data-testid="source-signal-row"]');
+    const signalStatus = signalRow?.querySelector('.signal-status');
+    const signalTitle = signalRow?.querySelector('.signal-title');
+    const signalActions = Array.from(signalRow?.querySelectorAll('.signal-actions .btn') ?? []);
+    const filterToolbar = document.querySelector('[data-testid="signal-filter-toolbar"]');
+    const signalDetails = signalRow?.querySelector('.radar-details');
+    const signalStyle = signalRow ? window.getComputedStyle(signalRow) : null;
+    const filterStyle = filterToolbar ? window.getComputedStyle(filterToolbar) : null;
+    const signalStatusStyle = signalStatus ? window.getComputedStyle(signalStatus) : null;
+    const signalRowRect = signalRow?.getBoundingClientRect();
+    const detailRect = signalDetails?.getBoundingClientRect();
+    const actionRects = signalActions.map((element) => element.getBoundingClientRect()).sort((a, b) => a.top - b.top || a.left - b.left);
+    const sameLineGaps = actionRects
+      .slice(1)
+      .map((rect, index) => ({ rect, prev: actionRects[index] }))
+      .filter(({ rect, prev }) => Math.abs(rect.top - prev.top) < 8)
+      .map(({ rect, prev }) => Math.round(rect.left - prev.right));
+    const signalActionMinGap = sameLineGaps.length ? Math.min(...sameLineGaps) : null;
+
+    return {
+      viewport: name,
+      signalRowCount: document.querySelectorAll('[data-testid="source-signal-row"]').length,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      signalOverflow: signalRow ? signalRow.scrollWidth - signalRow.clientWidth : 0,
+      signalHasFrame: Boolean(
+        signalStyle &&
+          signalStyle.borderStyle !== 'none' &&
+          Number.parseFloat(signalStyle.borderWidth || '0') >= 1 &&
+          signalStyle.backgroundColor !== 'rgba(0, 0, 0, 0)'
+      ),
+      signalStatusHeight: signalStatus?.getBoundingClientRect().height ?? 0,
+      signalStatusNoWrap: signalStatusStyle?.whiteSpace === 'nowrap',
+      signalTitleWidth: signalTitle ? Math.round(signalTitle.getBoundingClientRect().width) : null,
+      signalActionMinGap,
+      filterToolbarHasFrame: Boolean(
+        filterStyle &&
+          filterStyle.borderStyle !== 'none' &&
+          Number.parseFloat(filterStyle.borderWidth || '0') >= 1 &&
+          filterStyle.backgroundColor !== 'rgba(0, 0, 0, 0)'
+      ),
+      expandedSignalEscapesCard: Boolean(
+        signalRowRect &&
+          detailRect &&
+          (detailRect.left < signalRowRect.left - 1 ||
+            detailRect.right > signalRowRect.right + 1 ||
+            detailRect.bottom > signalRowRect.bottom + 1)
+      )
+    };
+  }, viewportName);
+
+  assertSignalsLayout({
+    ...radarResult,
+    ...radarEditorResult,
+    ...signalResult,
+    pageOverflow: Math.max(radarResult.pageOverflow, signalResult.pageOverflow),
+    radarRowCount: radarResult.radarRowCount,
+    signalRowCount: signalResult.signalRowCount
+  });
+}
+
 async function assertContextChatAtViewport(page, viewport, options) {
   await page.setViewportSize(viewport);
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
@@ -196,6 +362,9 @@ async function main() {
     await assertContextChatAtViewport(page, { width: 1440, height: 1024 }, { name: 'desktop', minWidth: 340, maxWidth: 390, maxRightGap: 24 });
     await assertContextChatAtViewport(page, { width: 1180, height: 820 }, { name: 'laptop', minWidth: 340, maxWidth: 390, maxRightGap: 24 });
     await assertContextChatAtViewport(page, { width: 390, height: 760 }, { name: 'mobile', minWidth: 360, maxWidth: 390, maxRightGap: 2 });
+    await assertSignalsAtViewport(page, { width: 1440, height: 1024 }, 'desktop');
+    await assertSignalsAtViewport(page, { width: 1180, height: 820 }, 'laptop');
+    await assertSignalsAtViewport(page, { width: 390, height: 760 }, 'mobile');
 
     await browser.close();
   } catch (error) {

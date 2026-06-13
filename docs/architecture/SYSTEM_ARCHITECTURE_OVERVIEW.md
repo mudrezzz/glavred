@@ -102,6 +102,11 @@ turning the product into generic content generation.
   can become a post concept.
 - `EditorialRadar`: configurable source procedure inside `Сигналы`. Radar output is
   fuel for author memory and content production, not the only source of posts.
+- Slice 1.5.1 correction: `EditorialRadar` owns atomic search rules and optional
+  search sources. `SourceSignal` remains raw material with radar provenance, date,
+  finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
+  audience/value matching starts in `PostCandidateAssembly`, not in the signal review
+  UI.
 - `ExternalSourceSettings`: stores planned or connected source configurations for
   Telegram, social profiles, blogs, documents, article archives, and manual uploads.
 - `ImportReviewQueue`: holds imported candidates before they affect author memory,

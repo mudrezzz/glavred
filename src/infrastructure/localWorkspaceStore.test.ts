@@ -141,6 +141,8 @@ describe('LocalWorkspaceStore', () => {
 
     expect(loaded.activeSection).toBe('signals');
     expect(loaded.radars).toHaveLength(4);
+    expect(loaded.radars[0].rules.length).toBeGreaterThan(0);
+    expect(Array.isArray(loaded.radars[0].sources)).toBe(true);
     expect(loaded.sourceSignals.length).toBeGreaterThan(5);
     expect(loaded.sourceSignal.id).toBe(workspace.sourceSignal.id);
   });

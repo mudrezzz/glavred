@@ -6,6 +6,7 @@ import {
   normalizeWeightRange,
   summarizeValidatorRun,
   type EditorialValidationRun,
+  type RadarDefinition,
   type SourceSignal,
   type WorkspaceSection,
   type WorkspaceState,
@@ -83,7 +84,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
-    radars: saved.radars ?? demo.radars,
+    radars: (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar)),
     sourceSignal,
     sourceSignals,
     insightCard: saved.insightCard ?? null,
@@ -111,6 +112,16 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
   return {
     ...fallback,
     ...signal,
+    evidence: signal.evidence ?? fallback.evidence ?? [
+      {
+        id: `evidence-${signal.id}`,
+        sourceTitle: signal.source ?? fallback.source,
+        sourceUrl: '',
+        quote: signal.summary ?? fallback.summary,
+        summary: signal.rawNote ?? fallback.rawNote
+      }
+    ],
+    searchNote: signal.searchNote ?? fallback.searchNote ?? '',
     radarId: signal.radarId ?? fallback.radarId,
     reviewStatus: signal.reviewStatus ?? fallback.reviewStatus ?? 'new',
     suggestedTopicId: signal.suggestedTopicId ?? fallback.suggestedTopicId,
@@ -118,6 +129,22 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
     suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
     duplicateRisk: signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
     authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? ''
+  };
+}
+
+function normalizeRadar(radar: RadarDefinition): RadarDefinition {
+  return {
+    ...radar,
+    rules: radar.rules ?? [
+      {
+        id: `rule-${radar.id}`,
+        operator: 'and',
+        negate: false,
+        statement: radar.scope,
+        status: 'active'
+      }
+    ],
+    sources: radar.sources ?? []
   };
 }
 

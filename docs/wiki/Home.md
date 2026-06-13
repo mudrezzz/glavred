@@ -13,6 +13,7 @@ Permanent demo context: a Telegram blog by an AI Product Manager sharing researc
 - [Release and Analytics](03-release-and-analytics): manual export and learning note.
 - [Local-First Demo](04-local-first-demo): launch, reset, localStorage, and screenshot refresh.
 - [External Sources](05-external-sources): local source list, review queue, bulk import, and archive-safe `Добавить все`.
+- [Signals](06-signals): radars, found signals, and framed cabinet-row UX.
 
 ## Context Chat
 

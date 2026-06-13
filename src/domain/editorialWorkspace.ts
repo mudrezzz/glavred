@@ -34,6 +34,17 @@ export type RadarSourceType = 'authorMemory' | 'archive' | 'externalSource' | 'm
 export type RadarAcceptancePolicy = 'manual' | 'automatic' | 'automaticWithReview';
 export type RadarTriggerMode = 'scheduled' | 'manual' | 'deficitDriven';
 export type RadarStatus = 'active' | 'paused' | 'needsReview';
+export type RadarRuleOperator = 'and' | 'or';
+export type RadarSearchSourceType =
+  | 'authorArchive'
+  | 'externalUrl'
+  | 'mcpServer'
+  | 'api'
+  | 'searchKeywords'
+  | 'manualSource'
+  | 'socialProfile'
+  | 'document'
+  | 'openWeb';
 export type SignalReviewStatus = 'new' | 'approved' | 'rejected' | 'archived' | 'corrected';
 export type EditorialRuleGroup =
   | 'author'
@@ -252,11 +263,38 @@ export interface RadarDefinition {
   title: string;
   sourceType: RadarSourceType;
   scope: string;
+  rules: RadarSearchRule[];
+  sources: RadarSearchSource[];
   acceptancePolicy: RadarAcceptancePolicy;
   triggerMode: RadarTriggerMode;
   status: RadarStatus;
   lastRunAt: string;
   notes: string;
+}
+
+export interface RadarSearchRule {
+  id: string;
+  operator: RadarRuleOperator;
+  negate: boolean;
+  statement: string;
+  status: EditorialEntityStatus;
+}
+
+export interface RadarSearchSource {
+  id: string;
+  type: RadarSearchSourceType;
+  title: string;
+  value: string;
+  notes: string;
+  status: EditorialEntityStatus;
+}
+
+export interface SignalEvidence {
+  id: string;
+  sourceTitle: string;
+  sourceUrl: string;
+  quote: string;
+  summary: string;
 }
 
 export interface SourceSignal {
@@ -267,6 +305,8 @@ export interface SourceSignal {
   capturedAt: string;
   summary: string;
   rawNote: string;
+  evidence?: SignalEvidence[];
+  searchNote?: string;
   radarId?: string;
   reviewStatus?: SignalReviewStatus;
   suggestedTopicId?: string;
@@ -1158,6 +1198,42 @@ export function rejectSignal(signal: SourceSignal): SourceSignal {
 
 export function archiveSignal(signal: SourceSignal): SourceSignal {
   return { ...signal, reviewStatus: 'archived' };
+}
+
+export function createRadarDraft(): RadarDefinition {
+  const id = `radar-custom-${Date.now()}`;
+  return {
+    id,
+    title: '',
+    sourceType: 'manualResearch',
+    scope: '',
+    rules: [],
+    sources: [],
+    acceptancePolicy: 'manual',
+    triggerMode: 'manual',
+    status: 'active',
+    lastRunAt: '',
+    notes: ''
+  };
+}
+
+export function addRadar(radars: RadarDefinition[], radar: RadarDefinition): RadarDefinition[] {
+  return [...radars, radar];
+}
+
+export function updateRadar(radars: RadarDefinition[], radar: RadarDefinition): RadarDefinition[] {
+  return radars.map((item) => (item.id === radar.id ? radar : item));
+}
+
+export function deleteRadar(radars: RadarDefinition[], radarId: string): RadarDefinition[] {
+  return radars.filter((radar) => radar.id !== radarId);
+}
+
+export function toggleRadarStatus(radar: RadarDefinition): RadarDefinition {
+  return {
+    ...radar,
+    status: radar.status === 'active' ? 'paused' : 'active'
+  };
 }
 
 export function correctSignal(signal: SourceSignal, patch: Partial<SourceSignal>): SourceSignal {

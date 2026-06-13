@@ -138,6 +138,17 @@ async function main() {
     await screenshot(page, '11-context-chat-expanded');
     await page.locator('[data-testid="context-chat-drawer"]').getByRole('button', { name: /Закрыть помощника/i }).click();
 
+    await clickButton(page, /Сигналы/i);
+    await page.locator('[data-testid="radar-row"]').first().waitFor();
+    await screenshot(page, '12-signals-radar-list');
+    await clickButton(page, /Найденные сигналы/i);
+    await page.locator('[data-testid="source-signal-row"]').first().waitFor();
+    await screenshot(page, '13-signals-found-signals');
+
+    await page.locator('.side .nav-item').filter({ hasText: /Память автора/i }).click();
+    await page.locator('[role="tab"]').nth(1).click();
+    await page.locator('[data-testid="source-row"]').first().waitFor();
+
     await page.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }).click();
     await page.locator('.candidate-card').first().waitFor();
     await screenshot(page, '10-external-sources-queue');
