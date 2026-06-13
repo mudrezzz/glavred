@@ -104,8 +104,9 @@ turning the product into generic content generation.
   provenance and evidence policy.
 - `InsightScoring`: turns a source signal into an insight card with relevance, urgency,
   banality risk, fact gaps, suggested topic, and suggested author position.
-- `ContentPlanning`: turns selected insight cards and author constraints into plan
-  items with platform, date, priority, format, expected effect, and approval status.
+- `ContentPlanning`: turns selected insight cards and author constraints into a
+  broadcast grid with platform, date, topic, fabula, format, priority, approval status,
+  manual override state, and advisory weight conflicts.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -202,7 +203,10 @@ Current implemented production contracts:
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
 - `ContentPlanItem`: insight, platform, date, priority, format, expected effect,
-  approval status.
+  approval status, topic/fabula link, manual override state, and warning links.
+- `ContentPlanSettings`: local-first tempo and format settings for the broadcast grid.
+- `PlanWeightWarning`: advisory warning when the grid diverges from topic/fabula
+  weights, matrix compatibility, or required slot fields.
 - `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,
   risks, sources, approval status.
 - `PostDraft`: brief, title, body, version, draft status, updated time.

@@ -66,8 +66,8 @@ async function completeProductionFlow(page) {
   await clickButton(page, /Радар/i);
   await clickButton(page, /Собрать инсайт/i);
   await clickButton(page, /В план/i);
-  await clickButton(page, /Утвердить план/i);
-  await clickButton(page, /Подготовить фабулу/i);
+  await clickButton(page, /^Утвердить$/i);
+  await clickButton(page, /Подготовить фабулу поста/i);
   await clickButton(page, /Утвердить фабулу/i);
 }
 

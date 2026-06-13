@@ -175,19 +175,22 @@ requires small entities, explicit rules, validator scores, and evidence links.
 
 The implemented flow is:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.
 - Application services normalize author notes into memory events, infer
   evidence-backed author-position assertions, and turn the demo signal into an insight
-  card, a plan item, a post brief, a deterministic draft, editorial checks, editor
-  notes, a release package, and an editorial learning scaffold.
+  card, a broadcast content grid, a post brief, a deterministic draft, editorial
+  checks, editor notes, a release package, and an editorial learning scaffold.
 - Infrastructure adapters handle browser `localStorage` through a `WorkspaceStore`
   interface.
 - React components render the workflow and call application services; they must not own
   domain rules.
+- `WorkspaceState.contentPlanItems` is the broadcast grid. `contentPlanItem` remains a
+  compatibility field for the currently selected/approved slot used by post brief,
+  release, and analytics services.
 - The author-memory UI may use browser-only helpers for local link previews, derived
   titles, search filters, summary counts, and voice-input capability detection. These
   helpers must not fetch external metadata or bypass local-first storage.

@@ -50,6 +50,14 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     ...fabula,
     weightRange: normalizeWeightRange(fabula.weightRange)
   }));
+  const contentPlanItems = (saved.contentPlanItems ?? (saved.contentPlanItem ? [saved.contentPlanItem] : demo.contentPlanItems)).map(
+    (item) => ({
+      ...item,
+      manualOverride: item.manualOverride ?? false,
+      sourceSignalId: item.sourceSignalId ?? saved.sourceSignal?.id ?? demo.sourceSignal.id,
+      weightWarningIds: item.weightWarningIds ?? []
+    })
+  );
 
   return {
     ...demo,
@@ -71,6 +79,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     sourceSignal: saved.sourceSignal ?? demo.sourceSignal,
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
+    contentPlanItems,
+    contentPlanSettings: saved.contentPlanSettings ?? demo.contentPlanSettings,
+    planWeightWarnings: saved.planWeightWarnings ?? [],
     postBrief: saved.postBrief ?? null,
     postDraft: saved.postDraft ?? null,
     editorialChecks: saved.editorialChecks ?? [],

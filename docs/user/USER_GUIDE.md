@@ -35,7 +35,7 @@ The wiki explains the current product through real screenshots:
 
 - `Память автора`: quick thoughts, links, files, targeted corrections, evidence, and
   confidence.
-- Production flow: `Радар -> План -> Фабулы`.
+- Production flow: `Радар -> План -> Фабула поста`.
 - Release and analytics: final text, manual export, and captured learning note.
 - Local-first demo: reset, persistence, and screenshot refresh commands.
 
@@ -172,8 +172,12 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Review or edit the demo source signal in `Радар`.
 - Generate an insight card.
 - Add the insight to `План`.
-- Approve the plan item through the first HITL gate.
-- Generate and edit a post brief in `Фабулы`.
+- Review the broadcast grid: each slot has date, platform, format, topic, fabula,
+  priority, status, and advisory warnings.
+- Expand a slot, edit it if needed, then use `Сохранить` or `Отменить`.
+- Approve one slot through the first HITL gate.
+- Generate and edit a post brief through `Подготовить фабулу поста`. This is an
+  internal production step, not a separate sidebar section.
 - Approve the post brief through the second HITL gate.
 - Open `Редактура`.
 - Click `Написать драфт`.

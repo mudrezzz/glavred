@@ -11,8 +11,8 @@ release content.
 
 The current repository contains the first working local-first editorial cabinet. It
 implements author memory, evidence-backed author-position assertions, and an editable
-production flow from source signal to insight card, content plan item, approved post
-brief, deterministic draft, editorial checks, approved final text, manual release
+production flow from source signal to insight card, broadcast content grid, approved
+post brief, deterministic draft, editorial checks, approved final text, manual release
 package, copy/Markdown export, and captured editorial learning note.
 
 `Память автора` is now the main entry point: titleless thought capture, optional local
@@ -38,6 +38,12 @@ production artifacts. Legacy rubric/fabula fields remain available only for stor
 service compatibility. Slice 1.2 replaces the earlier ad-hoc setup check with a common
 validator baseline: the manual `Проверить` action now saves a `ValidatorRun`, and each
 validator returns a score, red/yellow/green status, evidence, and suggested fixes.
+
+`План` now shows a broadcast grid rather than a single content-plan card. Slots carry
+date, platform, format, topic, fabula, priority, approval status, manual override state,
+and advisory weight warnings. The standalone sidebar item `Фабулы` was removed:
+editorial fabulas live inside `Редакционная модель`, while a concrete `Фабула поста`
+remains an internal production step opened from an approved plan slot.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

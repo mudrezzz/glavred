@@ -17,6 +17,7 @@ import {
   deleteFabula,
   deleteEditorialRule,
   deleteTopic,
+  detectBroadcastPlanConflicts,
   filterImportCandidates,
   getRulesByGroup,
   getTopicFabulaWarnings,
@@ -39,6 +40,7 @@ import {
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   createAuthorMemoryEvent,
+  createBroadcastPlan,
   createContentPlanItem,
   createEditorNotes,
   createEditorialLearningNote,
@@ -92,6 +94,36 @@ describe('editorial workspace domain', () => {
     expect(brief.thesis).toContain('AI-B2B продукт');
     expect(brief.topicTitle).toBe('AI product discovery');
     expect(brief.structure[0]).toContain('Исследовательская заметка');
+  });
+
+  it('creates a deterministic broadcast grid with compatible topic and fabula slots', () => {
+    const workspace = createDemoWorkspace();
+    const items = createBroadcastPlan(workspace);
+    const warnings = detectBroadcastPlanConflicts(workspace, items);
+
+    expect(items.length).toBeGreaterThan(1);
+    expect(items.every((item) => item.platform === 'Telegram')).toBe(true);
+    expect(items.every((item) => item.topicId && item.fabulaId)).toBe(true);
+    expect(items.every((item) => item.manualOverride === false)).toBe(true);
+    expect(warnings.every((warning) => warning.targetType !== 'slot' || !warning.message.includes('не включены'))).toBe(true);
+  });
+
+  it('detects broadcast grid conflicts for incompatible matrix pairs and paused entities', () => {
+    const workspace = createDemoWorkspace();
+    const items = createBroadcastPlan(workspace);
+    const changed = {
+      ...workspace,
+      topics: workspace.topics.map((topic, index) => index === 0 ? { ...topic, status: 'paused' as const } : topic),
+      topicFabulaMatrix: workspace.topicFabulaMatrix.map((entry) =>
+        entry.topicId === items[0].topicId && entry.fabulaId === items[0].fabulaId
+          ? { ...entry, enabled: false }
+          : entry
+      )
+    };
+    const warnings = detectBroadcastPlanConflicts(changed, items);
+
+    expect(warnings.some((warning) => warning.id.startsWith('slot-paused-topic'))).toBe(true);
+    expect(warnings.some((warning) => warning.id.startsWith('slot-matrix'))).toBe(true);
   });
 
   it('normalizes topic and fabula weights and detects compatibility warnings', () => {

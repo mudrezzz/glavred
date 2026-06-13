@@ -645,7 +645,7 @@ Status:
   - Unit/storage tests for new project profile and structured rule normalization.
   - UI tests for tab styling class reuse, rule add/edit/delete, topic expand/edit/save,
     fabula expand/edit/save, matrix draft/save/cancel, and validation panel visibility.
-  - Regression test that downstream `Радар -> План -> Фабулы` still works.
+  - Regression test that downstream `Радар -> План -> Фабула поста` still works.
   - `npm test -- --run` and `npm run smoke`.
 - Docs:
   - Add ADRs under `docs/adr/`.
@@ -919,13 +919,25 @@ Status:
 
 ### Slice 1.4: Content Plan as Broadcast Grid
 
-- Status: Backlog
+- Status: Done
 - Goal: Make the content plan reflect topic, fabula, platform, format, and tempo
   weights.
 - Scope:
-  - Add advisory weight conflict detection.
-  - Let manual grid edits override abstract weights.
-  - Surface conflicts when the grid no longer satisfies declared strategy.
+  - Add a local-first broadcast grid in `План` with multiple slots.
+  - Keep `contentPlanItem` as selected-slot compatibility for post brief, release, and
+    analytics while adding `contentPlanItems` as the primary grid.
+  - Add advisory weight, matrix, paused-entity, and incomplete-slot conflict detection.
+  - Let manual grid edits override abstract weights and surface conflicts in the right
+    `Сетка вещания` panel.
+  - Remove the standalone sidebar item `Фабулы`; editorial fabulas live inside
+    `Редакционная модель`, while `Фабула поста` remains an internal production step.
+- Validation:
+  - Domain tests for deterministic grid generation and conflict detection. Done.
+  - Storage tests for old single-item workspace normalization and grid persistence. Done.
+  - UI tests for removed sidebar item, broadcast grid edit/save/cancel, slot approval,
+    internal post-brief navigation, and downstream regression. Done.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
 
 ### Slice 1.5: Archive and Uniqueness Baseline
 
@@ -978,6 +990,7 @@ Status:
 - Slice 1.2.2: Source List Visual Repair and UI Guardrails. Completed 2026-06-12.
 - Slice 1.3: Context Chat Wizard Skeleton. Completed 2026-06-12.
 - Slice 1.3.1: Context Chat UX Repair and Chat Mode. Completed 2026-06-13.
+- Slice 1.4: Content Plan as Broadcast Grid. Completed 2026-06-13.
 
 ## Blocked Items
 
@@ -996,4 +1009,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.4: Content Plan as Broadcast Grid`.
+Start `Slice 1.5: Archive and Uniqueness Baseline`.

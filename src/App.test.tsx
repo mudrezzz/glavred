@@ -10,8 +10,8 @@ function createApprovedBrief() {
   goToRadar();
   fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
   fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-  fireEvent.click(screen.getByRole('button', { name: /Утвердить план/i }));
-  fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу поста/i }));
   fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
 }
 
@@ -50,7 +50,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Редакционная модель/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Радар/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /План/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Фабулы/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Фабулы/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Редактура/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Выпуск/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Аналитика/i })).toBeInTheDocument();
@@ -582,6 +582,32 @@ describe('App', () => {
     createApprovedBrief();
 
     expect(screen.getAllByText('Утверждено').length).toBeGreaterThan(0);
+  });
+
+  it('shows broadcast grid slots and keeps post brief as an internal production step', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /План/i }));
+
+    expect(screen.getByTestId('broadcast-grid')).toBeInTheDocument();
+    expect(screen.getByText(/Сетка на 14 дней/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Сетка вещания/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^Редактировать$/i })[0]);
+    fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'AI-B2B rollout grid slot' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Отменить$/i }));
+    expect(screen.queryByText('AI-B2B rollout grid slot')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^Редактировать$/i })[0]);
+    fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'AI-B2B rollout grid slot' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
+    expect(screen.getByText('AI-B2B rollout grid slot')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу поста/i }));
+    expect(screen.getByRole('button', { name: /Вернуться в план/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Вернуться в план/i }));
+    expect(screen.getByTestId('broadcast-grid')).toBeInTheDocument();
   });
 
   it('shows an empty editorial review state before an approved brief', () => {

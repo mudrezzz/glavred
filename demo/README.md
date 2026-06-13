@@ -11,7 +11,7 @@ npm run dev
 
 It shows the first working Glavred editorial cabinet:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
 topbar, cards, HITL gates, plan area, brief area, editorial review area, manual release
@@ -86,6 +86,18 @@ entities stay as local drafts until `Сохранить`, then appear in the com
 matrix with enabled links by default. Deleting an entity removes its matrix links; use
 `Пауза` instead when an entity should remain available for later.
 
+## Broadcast Content Plan
+
+`План` now opens as a broadcast grid for the AI Product Manager Telegram blog. The demo
+seed contains two weeks of slots with dates, Telegram as the local-first platform,
+formats, topics, fabulas, approval status, manual override state, and advisory
+weight/matrix warnings.
+
+The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
+`Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
+approve a plan slot, click `Подготовить фабулу поста`, edit the post brief, and use
+`Вернуться в план` when needed.
+
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product
@@ -142,14 +154,15 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 10. Accept one candidate through `В память` to see it become an active memory note.
 11. Open `Редакционная модель`, inspect `Издательство`, project profile, structured rules, and the right-side validation panel.
 12. Open `Темы`, add a custom topic, save it, expand a row, edit or delete one entity.
-13. Open `Фабулы`, add a custom fabula, save it, then inspect its compatible topics.
+13. In `Редакционная модель`, open `Фабулы`, add a custom fabula, save it, then inspect its compatible topics.
 14. Open `Матрица`, toggle one compatibility pair, then use `Сохранить матрицу` or `Отменить`.
 15. Open `Радар`.
 16. Review or edit the source signal.
 17. Click `Собрать инсайт`.
 18. Click `В план`.
-19. Approve the plan item.
-20. Click `Подготовить фабулу`.
+19. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
+    `Отменить`, and approve one slot.
+20. Click `Подготовить фабулу поста`.
 21. Edit the post brief if needed.
 22. Click `Утвердить фабулу`.
 23. Open `Редактура`.

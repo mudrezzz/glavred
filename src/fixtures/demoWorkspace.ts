@@ -1,4 +1,4 @@
-import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
+import { createAuthorMemoryEvent, createBroadcastPlan, inferAuthorPositionAssertions } from '../application/editorialServices';
 import { createDefaultTopicFabulaMatrix } from '../domain/editorialWorkspace';
 import type {
   ArchiveRecord,
@@ -702,7 +702,7 @@ export function createDemoWorkspace(): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);
   const authorPositionAssertions = inferAuthorPositionAssertions(demoAuthorNotes, authorMemoryEvents);
 
-  return {
+  const workspace: WorkspaceState = {
     authorNotes: demoAuthorNotes,
     authorMemoryEvents,
     authorPositionAssertions,
@@ -749,6 +749,19 @@ export function createDemoWorkspace(): WorkspaceState {
     },
     insightCard: null,
     contentPlanItem: null,
+    contentPlanItems: [],
+    contentPlanSettings: {
+      postsPerWeek: 3,
+      planningHorizonDays: 14,
+      defaultPlatform: 'Telegram',
+      allowedFormats: [
+        'Исследовательская заметка',
+        'Разбор мифа',
+        'Практический фреймворк',
+        'Postmortem пилота'
+      ]
+    },
+    planWeightWarnings: [],
     postBrief: null,
     postDraft: null,
     editorialChecks: [],
@@ -762,5 +775,10 @@ export function createDemoWorkspace(): WorkspaceState {
     bulkImportActions: [],
     activeSection: 'memory',
     updatedAt: new Date().toISOString()
+  };
+
+  return {
+    ...workspace,
+    contentPlanItems: createBroadcastPlan(workspace)
   };
 }

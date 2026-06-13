@@ -50,10 +50,32 @@ describe('LocalWorkspaceStore', () => {
     expect(store.load().topics).toHaveLength(5);
     expect(store.load().fabulas).toHaveLength(5);
     expect(store.load().topicFabulaMatrix).toHaveLength(25);
+    expect(store.load().contentPlanItems.length).toBeGreaterThan(1);
+    expect(store.load().contentPlanSettings.defaultPlatform).toBe('Telegram');
     expect(store.load().projectProfile.name).toBe('TG-блог AI Product Manager');
     expect(store.load().editorialRules.length).toBeGreaterThan(10);
     expect(store.load().editorialSetupRevision).toBe(0);
     expect(store.load().editorialValidationRun).toBeNull();
+  });
+
+  it('loads an old workspace with a single content plan item as a broadcast grid', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const contentPlanItem = createContentPlanItem(insight);
+    const oldWorkspace = { ...workspace, insightCard: insight, contentPlanItem } as Partial<typeof workspace>;
+    delete oldWorkspace.contentPlanItems;
+    delete oldWorkspace.contentPlanSettings;
+    delete oldWorkspace.planWeightWarnings;
+    storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
+    const store = new LocalWorkspaceStore(storage);
+
+    const loaded = store.load();
+
+    expect(loaded.contentPlanItems).toHaveLength(1);
+    expect(loaded.contentPlanItems[0].id).toBe(contentPlanItem.id);
+    expect(loaded.contentPlanItems[0].manualOverride).toBe(false);
+    expect(loaded.contentPlanSettings.defaultPlatform).toBe('Telegram');
   });
 
   it('loads an old workspace without author memory fields', () => {
@@ -370,6 +392,39 @@ describe('LocalWorkspaceStore', () => {
     store.save({ ...workspace, insightCard: insight, contentPlanItem: planItem, postBrief: brief });
 
     expect(store.load().postBrief?.approvalStatus).toBe('approved');
+  });
+
+  it('saves and loads broadcast grid slot overrides and warnings', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const changedSlot = {
+      ...workspace.contentPlanItems[0],
+      title: 'Manual broadcast slot',
+      manualOverride: true,
+      weightWarningIds: ['slot-test-warning']
+    };
+
+    store.save({
+      ...workspace,
+      contentPlanItems: [changedSlot, ...workspace.contentPlanItems.slice(1)],
+      contentPlanItem: changedSlot,
+      planWeightWarnings: [
+        {
+          id: 'slot-test-warning',
+          severity: 'yellow',
+          targetType: 'slot',
+          targetId: changedSlot.id,
+          message: 'Manual warning'
+        }
+      ]
+    });
+
+    const loaded = store.load();
+
+    expect(loaded.contentPlanItems[0].title).toBe('Manual broadcast slot');
+    expect(loaded.contentPlanItems[0].manualOverride).toBe(true);
+    expect(loaded.contentPlanItems[0].weightWarningIds).toContain('slot-test-warning');
+    expect(loaded.planWeightWarnings[0].id).toBe('slot-test-warning');
   });
 
   it('saves and loads an approved final text', () => {
