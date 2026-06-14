@@ -168,6 +168,62 @@ network clients. React components render state and trigger application service m
 Application services orchestrate domain operations, call adapters, and decide whether
 to use deterministic fallback or provider-backed behavior.
 
+## React UI Architecture
+
+The current React implementation intentionally carries technical debt from fast
+product exploration: `src/App.tsx` is still a large composition and implementation
+file. As of Slice 1.5.9 it contains about 6813 lines and many top-level UI
+declarations. This is now an explicit temporary baseline, not an acceptable direction
+for future feature work.
+
+Target structure:
+
+- `src/app/`: app composition root, shell, topbar/sidebar, navigation, and workspace
+  controller.
+- `src/features/author-memory`: author memory feed, assertions, import queue, and
+  archive UI.
+- `src/features/editorial-model`: project profile, rules, topics, fabulas, matrix, and
+  setup validation UI.
+- `src/features/signals`: radar setup, found signals, signal review, and post
+  candidate entry points.
+- `src/features/plan`: broadcast grid, planning settings, and future calendar UI.
+- `src/features/briefing`: post brief and concrete post-fabula approval workflow.
+- `src/features/editing`: draft, editorial checks, editor notes, and final text
+  approval.
+- `src/features/release`: manual release package, checklist, copy, and Markdown export.
+- `src/features/analytics`: manual metrics and editorial learning note UI.
+- `src/features/context-chat`: collapsible context assistant overlay, deterministic
+  suggestions, and future provider-backed chat adapter boundary.
+- `src/shared/ui`: reusable cabinet primitives such as shell sections, panels, framed
+  rows, tabs, badges, fields, action groups, metric cards, and empty states.
+- `src/shared/format`: labels, dates, status text, source names, and other formatting
+  helpers.
+
+React dependency direction is:
+
+`features -> shared/application/domain`
+
+There is no feature -> feature dependency. If two features need the same visual
+primitive, it belongs in `src/shared/ui`. If two features need the same business action,
+it belongs in application/domain services. If app-level wiring is needed, it belongs in
+`src/app/`.
+
+`App.tsx` must become a composition root only. It may connect the app shell, workspace
+controller, and feature entry components, but new large `*View`, `*Editor`, `*Panel`,
+`*Card`, `*Header`, `*Sidebar`, `*Topbar`, or `*Overlay` implementations must not be
+added there. Domain/application logic must not be written inside JSX.
+
+Architecture smoke tests enforce the temporary baseline:
+
+- `src/App.tsx <= 6900` lines for Slice 1.5.9.
+- `src/App.test.tsx <= 850` lines for Slice 1.5.9.
+- No growth in large App-level UI declarations beyond the accepted baseline.
+- The React UI architecture ADR and this SAO section must exist.
+
+Every extraction slice must lower these limits. The target after the extraction chain
+is for `App.tsx` to be a small composition root, roughly 150-250 lines, with feature
+screens owned by their feature modules.
+
 ## Frontend UX Architecture
 
 Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions:

@@ -34,6 +34,12 @@ Run build smoke test:
 npm run smoke
 ```
 
+Run React architecture guardrails:
+
+```bash
+npm run test:architecture
+```
+
 Run browser visual smoke checks for operational UI guardrails:
 
 ```bash
@@ -66,7 +72,13 @@ npm run docs:wiki:publish
   analytics prep.
 - `src/infrastructure/`: browser storage adapter.
 - `src/fixtures/`: demo workspace data.
-- `src/App.tsx`: production React editorial cabinet shell and screens.
+- `src/App.tsx`: temporary React composition and implementation baseline. New major UI
+  must move toward feature modules instead of extending this file.
+- Future `src/app/`: app shell, navigation, and workspace controller.
+- Future `src/features/*`: feature-owned screens such as author memory, editorial
+  model, signals, plan, briefing, editing, release, analytics, and context chat.
+- Future `src/shared/ui` and `src/shared/format`: shared cabinet primitives and
+  formatting helpers.
 - `src/test/`: test setup.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
@@ -236,6 +248,17 @@ Planning architecture is being corrected after Slice 1.4. The broadcast grid is 
 current compatibility layer, but the intended flow is:
 
 `AuthorMemory/Archive/ExternalSources -> Сигналы -> Кандидаты постов -> BroadcastContentPlan -> approved PostBrief`
+
+React UI now has an explicit architecture baseline. `App.tsx` is a temporary god-file
+baseline and must move toward a composition root. New large screens, editors, panels,
+cards, headers, overlays, and formatting helpers should be added to the planned
+`src/app/`, `src/features/<feature>/`, `src/shared/ui`, or `src/shared/format`
+structure, not directly to `App.tsx`.
+
+Run `npm run test:architecture` before completing any UI slice. The current guardrail
+blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline and verifies that
+the React architecture ADR and SAO section remain present. Extraction slices must lower
+those limits as code moves into feature modules.
 
 Use these boundaries:
 

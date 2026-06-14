@@ -1259,13 +1259,109 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
-### Slice 1.6: Post Candidate Assemblies
+### Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails
+
+- Status: Done
+- Goal: Stop further `App.tsx` growth before adding new product surfaces.
+- User value: The product can keep evolving without turning every UI change into a
+  high-risk edit inside one giant React file.
+- Scope:
+  - Add ADR `react-ui-uses-feature-modules-not-app-god-file`.
+  - Add `React UI Architecture` to the system architecture overview.
+  - Add `npm run test:architecture`.
+  - Guard the current temporary baseline:
+    - `src/App.tsx <= 6900` lines;
+    - `src/App.test.tsx <= 850` lines;
+    - no new large App-level UI declarations beyond the accepted baseline.
+  - Define the feature-module target structure under `src/app`, `src/features/*`,
+    `src/shared/ui`, and `src/shared/format`.
+- Out of scope:
+  - Moving components out of `App.tsx`.
+  - Runtime behavior changes.
+  - UI visual changes.
+  - Workspace, storage, demo data, domain, or application service changes.
+- Implementation notes:
+  - This is a baseline slice. The limits are intentionally temporary and must only go
+    down in later extraction slices.
+  - New large screens must be implemented in feature modules, not in `App.tsx`.
+- Validation:
+  - `npm run test:architecture` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
+- Docs:
+  - ROADMAP, ADR, SAO, and developer guide are updated.
+- Demo impact:
+  - No user-visible product behavior changes.
+- Acceptance criteria:
+  - Architecture smoke blocks unnoticed `App.tsx` growth. Done.
+  - ADR and SAO define React feature-module boundaries. Done.
+  - ROADMAP points to extraction slices before new planning functionality. Done.
+- Risks:
+  - The current monolith remains until extraction slices are completed; future work must
+    not use this baseline as permission to keep adding code to `App.tsx`.
+
+### Slice 1.5.10: Extract App Shell and Workspace Controller
 
 - Status: Ready
+- Goal: Move shell, topbar/sidebar, navigation metadata, and workspace controller logic
+  out of `App.tsx` without changing behavior.
+- User value: The product gains a smaller app composition root and a safer place to
+  wire future features.
+- Scope:
+  - Create `src/app/`.
+  - Extract app shell, sidebar/topbar, section routing metadata, and workspace state
+    controller.
+  - Keep current local-first persistence and demo behavior unchanged.
+  - Lower `App.tsx` and `App.test.tsx` architecture limits after extraction.
+- Out of scope:
+  - Extracting individual feature screens.
+  - Product behavior changes.
+- Validation:
+  - `npm run test:architecture`;
+  - `npm test -- --run`;
+  - `npm run smoke`;
+  - `npm run test:design`;
+  - `npm run test:visual`.
+
+### Slice 1.5.11: Extract Signals Feature
+
+- Status: Backlog
+- Goal: Move `Сигналы` UI into `src/features/signals` while preserving current radar
+  and signal review behavior.
+- Notes:
+  - This should be the first feature extraction because it is the most recently active
+    and visually sensitive workspace.
+
+### Slice 1.5.12: Extract Editorial Model Feature
+
+- Status: Backlog
+- Goal: Move project profile, editorial rules, topics, fabulas, matrix, and validation
+  panel into `src/features/editorial-model`.
+
+### Slice 1.5.13: Extract Author Memory Feature
+
+- Status: Backlog
+- Goal: Move author memory feed, assertions, imports, archive, attachments, and memory
+  summary into `src/features/author-memory`.
+
+### Slice 1.5.14: Extract Production Flow Features
+
+- Status: Backlog
+- Goal: Move plan, briefing, editing, release, analytics, and context chat entry points
+  into feature modules without changing the current demo flow.
+
+### Slice 1.6: Post Candidate Assemblies
+
+- Status: Backlog
 - Goal: Add post candidates as explicit combinations of signal, topic, fabula,
   audience, value, goal, platform, and format.
 - User value: The author can compare several proposed post concepts for one future
   slot instead of approving the first generated idea.
+- Dependency:
+  - Deferred until the React extraction chain starts. New product UI should not be
+    added directly to the current `App.tsx` monolith.
 - Scope:
   - Add `PostCandidate` contracts.
   - Generate deterministic candidates from approved signals and editorial model.
@@ -1455,6 +1551,8 @@ Status:
   2026-06-14.
 - Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode. Completed
   2026-06-14.
+- Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails. Completed
+  2026-06-15.
 
 ## Blocked Items
 
@@ -1475,4 +1573,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.6: Post Candidate Assemblies`.
+Start `Slice 1.5.10: Extract App Shell and Workspace Controller`.
