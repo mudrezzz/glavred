@@ -3,9 +3,9 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const APP_TSX_LIMIT = 6900;
+const APP_TSX_LIMIT = 6300;
 const APP_TEST_TSX_LIMIT = 850;
-const LARGE_APP_DECLARATION_LIMIT = 32;
+const LARGE_APP_DECLARATION_LIMIT = 30;
 
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
@@ -61,6 +61,25 @@ assert(
 );
 
 assert(fileExists(ADR_PATH), `Missing ADR: ${ADR_PATH}`);
+
+const requiredSourceFiles = [
+  "src/app/AppShell.tsx",
+  "src/app/Sidebar.tsx",
+  "src/app/Topbar.tsx",
+  "src/app/navigation.ts",
+  "src/app/useWorkspaceController.ts",
+  "src/app/contextChatScope.ts",
+  "src/shared/ui/Icon.tsx",
+];
+
+for (const requiredFile of requiredSourceFiles) {
+  assert(fileExists(requiredFile), `Missing React architecture source file: ${requiredFile}`);
+}
+
+assert(
+  !appSource.includes("LocalWorkspaceStore"),
+  "src/App.tsx must not import or instantiate LocalWorkspaceStore; use src/app/useWorkspaceController.ts."
+);
 
 const saoSource = readText(SAO_PATH);
 const requiredSaoFragments = [

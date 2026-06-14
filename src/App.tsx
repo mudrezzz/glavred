@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   createAuthorMemoryEvent,
   createBroadcastPlan,
@@ -119,961 +119,158 @@ import {
   type WorkspaceSection,
   type WorkspaceState
 } from './domain/editorialWorkspace';
-import { LocalWorkspaceStore } from './infrastructure/localWorkspaceStore';
-
-const store = new LocalWorkspaceStore();
-
-type ContextChatIntent =
-  | { id: string; actionType: 'addEditorialRule'; payload: AddEditorialRulePayload }
-  | { id: string; actionType: 'addTopic'; payload: AddTopicPayload }
-  | { id: string; actionType: 'addFabula'; payload: AddFabulaPayload };
-type ContextChatTab = 'chat' | 'suggestions';
-
-const NAV: Array<{ id: WorkspaceSection; icon: string; label: string; count?: string; disabled?: boolean }> = [
-  { id: 'memory', icon: 'memory', label: 'Память автора' },
-  { id: 'editorialModel', icon: 'model', label: 'Редакционная модель' },
-  { id: 'signals', icon: 'radar', label: 'Сигналы' },
-  { id: 'plan', icon: 'plan', label: 'План', count: '1' },
-  { id: 'edit', icon: 'edit', label: 'Редактура' },
-  { id: 'release', icon: 'release', label: 'Выпуск' },
-  { id: 'analytics', icon: 'analytics', label: 'Аналитика' }
-];
-
-const TITLES: Record<WorkspaceSection, [string, string]> = {
-  memory: ['Память автора', 'Заметки -> позиция автора'],
-  editorialModel: ['Редакционная модель', 'Правила и контекст блога'],
-  signals: ['Сигналы', 'Радары -> сигналы -> кандидаты'],
-  plan: ['План', 'HITL · Gate 1'],
-  brief: ['Фабула поста', 'HITL · Gate 2'],
-  edit: ['Редактура', 'HITL · Gate 3'],
-  release: ['Выпуск', 'Manual export'],
-  analytics: ['Аналитика', 'Редакционные выводы']
-};
-
-function Icon({ name, size = 18 }: { name: string; size?: number }) {
-  const paths: Record<string, string> = {
-    memory:
-      '<path d="M15 18h-5"/><path d="M18 14h-8"/><path d="M14 10h-4"/><path d="M20 6.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5z"/><path d="M14 2v5h5"/>',
-    model:
-      '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
-    radar:
-      '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>',
-    plan:
-      '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>',
-    brief:
-      '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
-    edit:
-      '<path d="M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M13.4 15.6a1 1 0 1 0-3-3l-5 5a2 2 0 0 0-.5.9l-.8 2.9a.5.5 0 0 0 .6.6l2.9-.8a2 2 0 0 0 .9-.5z"/>',
-    release:
-      '<path d="M14.5 21.7a.5.5 0 0 0 .9 0l6.5-19a.5.5 0 0 0-.6-.6l-19 6.5a.5.5 0 0 0 0 .9l7.9 3.2a2 2 0 0 1 1.1 1.1z"/><path d="m21.9 2.1-10.9 11"/>',
-    analytics: '<path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/>',
-    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
-    bell:
-      '<path d="M10.3 21a2 2 0 0 0 3.4 0"/><path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>',
-    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
-    minus: '<path d="M5 12h14"/>',
-    mic:
-      '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
-    reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/>',
-    spark: '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 16v4"/><path d="M21 18h-4"/>',
-    close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-    caret: '<path d="M4 16 L12 7 L20 16"/>'
-  };
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      dangerouslySetInnerHTML={{ __html: paths[name] ?? '' }}
-    />
-  );
-}
+import { AppShell } from './app/AppShell';
+import { ContextChatOverlay } from './app/ContextChatOverlay';
+import {
+  type ContextChatIntent,
+  type EditorialModelTab,
+  type MemoryInternalTab
+} from './app/contextChatScope';
+import { useWorkspaceController } from './app/useWorkspaceController';
+import { Icon } from './shared/ui/Icon';
+import { WeightRangeEditor } from './shared/ui/WeightRangeEditor';
 
 export function App() {
-  const [workspace, setWorkspace] = useState<WorkspaceState>(() => store.load());
-  const active = workspace.activeSection;
-  const [toast, setToast] = useState('');
-  const [memoryTab, setMemoryTab] = useState<MemoryInternalTab>('feed');
-  const [editorialModelTab, setEditorialModelTab] = useState<EditorialModelTab>('publisher');
-  const [contextChatOpen, setContextChatOpen] = useState(false);
-  const [contextChatTab, setContextChatTab] = useState<ContextChatTab>('chat');
-  const [contextChatMessages, setContextChatMessages] = useState<ContextChatMessage[]>(() =>
-    createInitialContextChatMessages('memory')
-  );
-  const [contextChatIntent, setContextChatIntent] = useState<ContextChatIntent | null>(null);
-  const [dismissedContextSuggestionIds, setDismissedContextSuggestionIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    store.save({ ...workspace, updatedAt: new Date().toISOString() });
-  }, [workspace]);
-
-  useEffect(() => {
-    if (!toast) return undefined;
-
-    const timeoutId = window.setTimeout(() => setToast(''), 2800);
-    return () => window.clearTimeout(timeoutId);
-  }, [toast]);
-
-  const contextChatScope = getContextChatScope(active, memoryTab, editorialModelTab);
-  const contextChatSuggestions = useMemo(
-    () => createContextChatSuggestions(workspace, contextChatScope),
-    [workspace, contextChatScope]
-  );
-  const visibleContextChatSuggestions = useMemo(
-    () => contextChatSuggestions.filter((suggestion) => !dismissedContextSuggestionIds.includes(suggestion.id)),
-    [contextChatSuggestions, dismissedContextSuggestionIds]
-  );
-
-  function patchWorkspace(patch: Partial<WorkspaceState>, message?: string) {
-    setWorkspace((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
-    if (message) {
-      setToast(message);
-    }
-  }
-
-  function patchEditorialSetup(patch: Partial<WorkspaceState>, message?: string) {
-    setWorkspace((current) => ({
-      ...current,
-      ...patch,
-      editorialSetupRevision: (current.editorialSetupRevision ?? 0) + 1,
-      updatedAt: new Date().toISOString()
-    }));
-    if (message) {
-      setToast(message);
-    }
-  }
-
-  function runEditorialValidation() {
-    setWorkspace((current) => {
-      const checkedAt = new Date().toISOString();
-      return {
-        ...current,
-        editorialValidationRun: createEditorialValidationRun(current, checkedAt),
-        updatedAt: checkedAt
-      };
-    });
-    setToast('Редакционная модель проверена');
-  }
-
-  function go(section: WorkspaceSection) {
-    patchWorkspace({ activeSection: section });
-  }
-
-  function applySignalUpdate(nextSignal: SourceSignal, message: string, selectAsCurrent = false) {
-    setWorkspace((current) => {
-      const sourceSignals = current.sourceSignals.map((signal) =>
-        signal.id === nextSignal.id ? nextSignal : signal
-      );
-      return {
-        ...current,
-        sourceSignal: selectAsCurrent ? nextSignal : current.sourceSignal,
-        sourceSignals,
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setToast(message);
-  }
-
-  function approveSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(approveSignal(signal), 'Сигнал утвержден и выбран для production-flow', true);
-  }
-
-  function rejectSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(rejectSignal(signal), 'Сигнал отклонен');
-  }
-
-  function archiveSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(archiveSignal(signal), 'Сигнал отправлен в архив');
-  }
-
-  function saveRadar(nextRadar: RadarDefinition, isNew: boolean) {
-    setWorkspace((current) => {
-      const radars = isNew ? addRadar(current.radars, nextRadar) : updateRadar(current.radars, nextRadar);
-      const sourceSignals = current.sourceSignals.map((signal) =>
-        signal.radarId === nextRadar.id ? evaluateSignalAgainstRadarFilters(signal, nextRadar, { ...current, radars }) : signal
-      );
-      const sourceSignal =
-        current.sourceSignal.radarId === nextRadar.id
-          ? sourceSignals.find((signal) => signal.id === current.sourceSignal.id) ?? current.sourceSignal
-          : current.sourceSignal;
-
-      return {
-        ...current,
-        radars,
-        sourceSignal,
-        sourceSignals,
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setToast(isNew ? 'Радар добавлен' : 'Радар сохранен');
-  }
-
-  function removeRadar(radar: RadarDefinition) {
-    setWorkspace((current) => ({
-      ...current,
-      radars: deleteRadar(current.radars, radar.id),
-      updatedAt: new Date().toISOString()
-    }));
-    setToast('Радар удален. Сигналы остаются в истории разбора.');
-  }
-
-  function switchRadarStatus(radar: RadarDefinition) {
-    const nextRadar = toggleRadarStatus(radar);
-    setWorkspace((current) => ({
-      ...current,
-      radars: updateRadar(current.radars, nextRadar),
-      updatedAt: new Date().toISOString()
-    }));
-    setToast(nextRadar.status === 'paused' ? 'Радар остановлен' : 'Радар запущен');
-  }
-
-  function correctSourceSignal(signal: SourceSignal, patch: Partial<SourceSignal>) {
-    const nextSignal = correctSignal(signal, patch);
-    setWorkspace((current) => {
-      const correctionNote: AuthorNote = {
-        id: `note-signal-correction-${signal.id}-${Date.now()}`,
-        type: 'manualCorrection',
-        title: `Правка сигнала: ${signal.title}`,
-        body:
-          nextSignal.authorCorrection ||
-          'Автор уточнил, как этот сигнал связан с темой, фабулой или ценностью.',
-        sourceUrl: '',
-        tags: ['signal-correction'],
-        attachments: [],
-        capturedAt: new Date().toISOString(),
-        targetType: 'evidence',
-        targetId: signal.id,
-        targetTitle: signal.title
-      };
-      const authorNotes = [correctionNote, ...current.authorNotes];
-      const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
-      return {
-        ...current,
-        sourceSignals: current.sourceSignals.map((candidate) =>
-          candidate.id === nextSignal.id ? nextSignal : candidate
-        ),
-        sourceSignal: current.sourceSignal.id === nextSignal.id ? nextSignal : current.sourceSignal,
-        authorNotes,
-        authorMemoryEvents,
-        authorPositionAssertions: inferAuthorPositionAssertions(authorNotes, authorMemoryEvents),
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setToast('Правка сигнала добавлена в память автора');
-  }
-
-  function resetDemo() {
-    setWorkspace(store.reset());
-    setMemoryTab('feed');
-    setEditorialModelTab('publisher');
-    setContextChatOpen(false);
-    setContextChatTab('chat');
-    setContextChatMessages(createInitialContextChatMessages('memory'));
-    setContextChatIntent(null);
-    setDismissedContextSuggestionIds([]);
-    setToast('Демо-сценарий восстановлен');
-  }
-
-  function openContextChat(tab: ContextChatTab = 'chat') {
-    setContextChatTab(tab);
-    setContextChatOpen(true);
-  }
-
-  function sendContextChatMessage(text: string) {
-    const createdAt = new Date().toISOString();
-    const reply = createContextChatReply(workspace, contextChatScope, text);
-    setContextChatMessages((messages) => [
-      ...messages,
-      {
-        id: `ctx-author-free-${createdAt}`,
-        role: 'author',
-        text,
-        createdAt
-      },
-      {
-        id: `ctx-assistant-free-${createdAt}`,
-        role: 'assistant',
-        text: reply.text,
-        createdAt,
-        suggestion: reply.suggestion
-      }
-    ]);
-  }
-
-  function dismissContextChatSuggestion(suggestionId: string) {
-    setDismissedContextSuggestionIds((ids) => (ids.includes(suggestionId) ? ids : [...ids, suggestionId]));
-  }
-
-  function acceptContextChatSuggestion(suggestion: ContextChatSuggestion) {
-    const createdAt = new Date().toISOString();
-    setContextChatMessages((messages) => [
-      ...messages,
-      {
-        id: `ctx-author-${suggestion.id}-${createdAt}`,
-        role: 'author',
-        text: `Принять: ${suggestion.title}`,
-        createdAt,
-        suggestionId: suggestion.id
-      }
-    ]);
-
-    if (suggestion.actionType === 'runValidation') {
-      setWorkspace((current) => {
-        const checkedAt = new Date().toISOString();
-        return {
-          ...current,
-          activeSection: 'editorialModel',
-          editorialValidationRun: createEditorialValidationRun(current, checkedAt),
-          updatedAt: checkedAt
-        };
-      });
-      setEditorialModelTab(editorialModelTab === 'publisher' ? 'publisher' : editorialModelTab);
-      setToast('Редакционная модель проверена');
-      return;
-    }
-
-    if (suggestion.actionType === 'addEditorialRule' && suggestion.payload) {
-      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
-      setEditorialModelTab('publisher');
-      setContextChatIntent({
-        id: `${suggestion.id}-${createdAt}`,
-        actionType: 'addEditorialRule',
-        payload: suggestion.payload as AddEditorialRulePayload
-      });
-      return;
-    }
-
-    if (suggestion.actionType === 'addTopic' && suggestion.payload) {
-      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
-      setEditorialModelTab('topics');
-      setContextChatIntent({
-        id: `${suggestion.id}-${createdAt}`,
-        actionType: 'addTopic',
-        payload: suggestion.payload as AddTopicPayload
-      });
-      return;
-    }
-
-    if (suggestion.actionType === 'addFabula' && suggestion.payload) {
-      setWorkspace((current) => ({ ...current, activeSection: 'editorialModel' }));
-      setEditorialModelTab('fabulas');
-      setContextChatIntent({
-        id: `${suggestion.id}-${createdAt}`,
-        actionType: 'addFabula',
-        payload: suggestion.payload as AddFabulaPayload
-      });
-      return;
-    }
-
-    setContextChatMessages((messages) => [
-      ...messages,
-      {
-        id: `ctx-assistant-${suggestion.id}-${createdAt}`,
-        role: 'assistant',
-        text: 'Эта подсказка пока только для чтения. В следующих слайсах я смогу переводить больше рекомендаций в структурные изменения.',
-        createdAt,
-        suggestionId: suggestion.id
-      }
-    ]);
-  }
+  const controller = useWorkspaceController();
+  const {
+    active,
+    contextChatIntent,
+    contextChatMessages,
+    contextChatOpen,
+    contextChatScope,
+    contextChatTab,
+    editorialModelTab,
+    memoryTab,
+    toast,
+    visibleContextChatSuggestions,
+    workspace
+  } = controller;
 
   return (
-    <div className="app">
-      <Sidebar active={active} onNav={go} workspace={workspace} />
-      <main className="main">
-        <Topbar
-          active={active}
-          chatOpen={contextChatOpen}
-          suggestionCount={visibleContextChatSuggestions.length}
-          onOpenChat={() => openContextChat('chat')}
-          onReset={resetDemo}
+    <AppShell
+      active={active}
+      chatOpen={contextChatOpen}
+      suggestionCount={visibleContextChatSuggestions.length}
+      toast={toast}
+      workspace={workspace}
+      onNav={controller.go}
+      onOpenChat={() => controller.openContextChat('chat')}
+      onReset={controller.resetDemo}
+      overlay={
+        <ContextChatOverlay
+          messages={contextChatMessages}
+          open={contextChatOpen}
+          scope={contextChatScope}
+          activeTab={contextChatTab}
+          suggestions={visibleContextChatSuggestions}
+          onAcceptSuggestion={controller.acceptContextChatSuggestion}
+          onClose={() => controller.setContextChatOpen(false)}
+          onDismissSuggestion={controller.dismissContextChatSuggestion}
+          onSendMessage={controller.sendContextChatMessage}
+          onSwitchTab={controller.setContextChatTab}
         />
-        <div className="scroll">
-          {active === 'memory' && (
-            <AuthorMemoryView
-              activeTab={memoryTab}
-              workspace={workspace}
-              onChangeTab={setMemoryTab}
-              onPatchWorkspace={patchWorkspace}
-              onChangeNotes={(authorNotes, message) => {
-                const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
-                const authorPositionAssertions = inferAuthorPositionAssertions(authorNotes, authorMemoryEvents);
-                patchWorkspace(
-                  { authorNotes, authorMemoryEvents, authorPositionAssertions },
-                  message
-                );
-              }}
-            />
-          )}
-          {active === 'editorialModel' && (
-            <EditorialModelView
-              activeTab={editorialModelTab}
-              chatIntent={contextChatIntent}
-              workspace={workspace}
-              model={workspace.editorialModel}
-              projectProfile={workspace.projectProfile}
-              editorialRules={workspace.editorialRules}
-              topics={workspace.topics}
-              fabulas={workspace.fabulas}
-              matrix={workspace.topicFabulaMatrix}
-              onModelChange={(editorialModel) => patchEditorialSetup({ editorialModel })}
-              onProjectProfileChange={(projectProfile) => patchEditorialSetup({ projectProfile })}
-              onEditorialRulesChange={(editorialRules) => patchEditorialSetup({ editorialRules })}
-              onTopicsChange={(topics) => patchEditorialSetup({ topics })}
-              onFabulasChange={(fabulas) => patchEditorialSetup({ fabulas })}
-              onMatrixChange={(topicFabulaMatrix) => patchEditorialSetup({ topicFabulaMatrix })}
-              onTopicsAndMatrixChange={(topics, topicFabulaMatrix) =>
-                patchEditorialSetup({ topics, topicFabulaMatrix })
-              }
-              onFabulasAndMatrixChange={(fabulas, topicFabulaMatrix) =>
-                patchEditorialSetup({ fabulas, topicFabulaMatrix })
-              }
-              onChangeTab={setEditorialModelTab}
-              onChatIntentConsumed={() => setContextChatIntent(null)}
-              onRunValidation={runEditorialValidation}
-            />
-          )}
-          {active === 'signals' && (
-            <SignalsViewV2
-              workspace={workspace}
-              onSaveRadar={saveRadar}
-              onDeleteRadar={removeRadar}
-              onToggleRadarStatus={switchRadarStatus}
-              onApproveSignal={approveSourceSignal}
-              onRejectSignal={rejectSourceSignal}
-              onArchiveSignal={archiveSourceSignal}
-              onCorrectSignal={correctSourceSignal}
-              onCreateInsight={() => {
-                const insightCard = createInsightCard(
-                  workspace.sourceSignal,
-                  workspace.editorialModel,
-                  workspace.topics,
-                  workspace.fabulas,
-                  workspace.topicFabulaMatrix
-                );
-                patchWorkspace({ insightCard }, 'Карточка инсайта собрана');
-              }}
-              onPlan={() => {
-                const insightCard =
-                  workspace.insightCard ??
-                  createInsightCard(
-                    workspace.sourceSignal,
-                    workspace.editorialModel,
-                    workspace.topics,
-                    workspace.fabulas,
-                    workspace.topicFabulaMatrix
-                  );
-                const nextWorkspace = { ...workspace, insightCard };
-                const generatedItems = createBroadcastPlan(nextWorkspace);
-                const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
-                const contentPlanItems = applyPlanWarnings(generatedItems, planWeightWarnings);
-                patchWorkspace(
-                  { insightCard, contentPlanItems, planWeightWarnings, contentPlanItem: null, activeSection: 'plan' },
-                  'Инсайт добавлен в план'
-                );
-              }}
-            />
-          )}
-          {active === 'plan' && (
-            <PlanView
-              workspace={workspace}
-              onGenerate={() => {
-                const insightCard =
-                  workspace.insightCard ??
-                  createInsightCard(
-                    workspace.sourceSignal,
-                    workspace.editorialModel,
-                    workspace.topics,
-                    workspace.fabulas,
-                    workspace.topicFabulaMatrix
-                  );
-                const nextWorkspace = { ...workspace, insightCard };
-                const generatedItems = createBroadcastPlan(nextWorkspace);
-                const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
-                const contentPlanItems = applyPlanWarnings(generatedItems, planWeightWarnings);
-                patchWorkspace(
-                  { insightCard, contentPlanItems, planWeightWarnings, contentPlanItem: null },
-                  'Сетка вещания собрана'
-                );
-              }}
-              onItemChange={(item) => {
-                const updatedItems = updateContentPlanItem(workspace.contentPlanItems, item);
-                const planWeightWarnings = detectBroadcastPlanConflicts(workspace, updatedItems);
-                const contentPlanItems = applyPlanWarnings(updatedItems, planWeightWarnings);
-                patchWorkspace({ contentPlanItems, planWeightWarnings });
-              }}
-              onApprove={(itemId) => {
-                const approvedItems = approveContentPlanSlot(workspace.contentPlanItems, itemId);
-                const planWeightWarnings = detectBroadcastPlanConflicts(workspace, approvedItems);
-                const contentPlanItems = applyPlanWarnings(approvedItems, planWeightWarnings);
-                const contentPlanItem = contentPlanItems.find((item) => item.id === itemId) ?? null;
-                patchWorkspace(
-                  { contentPlanItems, contentPlanItem, planWeightWarnings },
-                  'Слот сетки утвержден'
-                );
-              }}
-              onBrief={(item) => {
-                const insightCard =
-                  workspace.insightCard ??
-                  createInsightCard(
-                    workspace.sourceSignal,
-                    workspace.editorialModel,
-                    workspace.topics,
-                    workspace.fabulas,
-                    workspace.topicFabulaMatrix
-                  );
-                const postBrief = createPostBrief(
-                  item,
-                  insightCard,
-                  workspace.editorialModel,
-                  workspace.topics,
-                  workspace.fabulas,
-                  workspace.topicFabulaMatrix
-                );
-                patchWorkspace({ insightCard, contentPlanItem: item, postBrief, activeSection: 'brief' }, 'Фабула поста подготовлена');
-              }}
-            />
-          )}
-          {active === 'brief' && (
-            <BriefView
-              workspace={workspace}
-              onBriefChange={(postBrief) => patchWorkspace({ postBrief })}
-              onBackToPlan={() => go('plan')}
-              onApprove={() => {
-                if (!workspace.postBrief) return;
-                patchWorkspace({ postBrief: approvePostBrief(workspace.postBrief) }, 'Фабула утверждена');
-              }}
-            />
-          )}
-          {active === 'edit' && (
-            <EditView
-              workspace={workspace}
-              onGoBrief={() => go('brief')}
-              onCreateDraft={() => {
-                if (!workspace.postBrief || workspace.postBrief.approvalStatus !== 'approved') return;
-                const postDraft = createPostDraft(workspace.postBrief, workspace.editorialModel);
-                const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
-                const editorNotes = createEditorNotes(editorialChecks);
-                patchWorkspace(
-                  { postDraft, editorialChecks, editorNotes, finalText: null },
-                  'Драфт подготовлен для редакторских проверок'
-                );
-              }}
-              onDraftChange={(body) => {
-                if (!workspace.postDraft || !workspace.postBrief) return;
-                const postDraft = reviseDraft(workspace.postDraft, body);
-                const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
-                const editorNotes = createEditorNotes(editorialChecks);
-                patchWorkspace({
-                  postDraft,
-                  editorialChecks,
-                  editorNotes,
-                  finalText: null,
-                  releasePackage: null,
-                  editorialLearningNote: null
-                });
-              }}
-              onApproveFinal={() => {
-                if (!workspace.postDraft) return;
-                const finalText = approveFinalText(workspace.postDraft);
-                patchWorkspace(
-                  { finalText, releasePackage: null, editorialLearningNote: null },
-                  'Финальный текст утвержден'
-                );
-              }}
-            />
-          )}
-          {active === 'release' && (
-            <ReleaseView
-              workspace={workspace}
-              onGoEdit={() => go('edit')}
-              onCreatePackage={() => {
-                if (!workspace.finalText || workspace.finalText.approvalStatus !== 'approved') return;
-                const releasePackage = createReleasePackage(workspace.finalText, workspace.contentPlanItem);
-                patchWorkspace(
-                  { releasePackage, editorialLearningNote: null },
-                  'Пакет ручного выпуска подготовлен'
-                );
-              }}
-              onToggleChecklist={(itemId) => {
-                if (!workspace.releasePackage) return;
-                patchWorkspace({
-                  releasePackage: toggleReleaseChecklistItem(workspace.releasePackage, itemId),
-                  editorialLearningNote: null
-                });
-              }}
-              onMarkReady={() => {
-                if (!workspace.releasePackage) return;
-                const releasePackage = markReleaseReady(workspace.releasePackage);
-                patchWorkspace(
-                  { releasePackage, editorialLearningNote: null },
-                  releasePackage.status === 'ready' ? 'Выпуск готов' : 'Закройте чеклист выпуска'
-                );
-              }}
-              onCopy={async () => {
-                if (!workspace.releasePackage || !workspace.finalText) return;
-                await copyToClipboard(workspace.finalText.body);
-                patchWorkspace(
-                  {
-                    releasePackage: markReleaseExported(markManualExportDone(workspace.releasePackage)),
-                    editorialLearningNote: null
-                  },
-                  'Текст скопирован для ручного выпуска'
-                );
-              }}
-              onDownload={() => {
-                if (!workspace.releasePackage) return;
-                downloadMarkdown(workspace.releasePackage);
-                patchWorkspace(
-                  {
-                    releasePackage: markReleaseExported(markManualExportDone(workspace.releasePackage)),
-                    editorialLearningNote: null
-                  },
-                  'Markdown скачан для ручного выпуска'
-                );
-              }}
-            />
-          )}
-          {active === 'analytics' && (
-            <AnalyticsView
-              workspace={workspace}
-              onGoRelease={() => go('release')}
-              onCreateNote={() => {
-                if (!workspace.releasePackage || !workspace.finalText) return;
-                const editorialLearningNote = createEditorialLearningNote(
-                  workspace.releasePackage,
-                  workspace.finalText,
-                  workspace.contentPlanItem
-                );
-                patchWorkspace({ editorialLearningNote }, 'Аналитика подготовлена');
-              }}
-              onChangeNote={(editorialLearningNote) => patchWorkspace({ editorialLearningNote })}
-              onCapture={() => {
-                if (!workspace.editorialLearningNote) return;
-                patchWorkspace(
-                  { editorialLearningNote: markLearningNoteCaptured(workspace.editorialLearningNote) },
-                  'Редакционные выводы зафиксированы'
-                );
-              }}
-            />
-          )}
-        </div>
-      </main>
-      <ContextChatOverlay
-        messages={contextChatMessages}
-        open={contextChatOpen}
-        scope={contextChatScope}
-        activeTab={contextChatTab}
-        suggestions={visibleContextChatSuggestions}
-        onAcceptSuggestion={acceptContextChatSuggestion}
-        onClose={() => setContextChatOpen(false)}
-        onDismissSuggestion={dismissContextChatSuggestion}
-        onSendMessage={sendContextChatMessage}
-        onSwitchTab={setContextChatTab}
-      />
-      {toast ? (
-        <div className="toast" role="status">
-          <Icon name="check" size={17} />
-          {toast}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function Sidebar({
-  active,
-  onNav,
-  workspace
-}: {
-  active: WorkspaceSection;
-  onNav: (section: WorkspaceSection) => void;
-  workspace: WorkspaceState;
-}) {
-  return (
-    <aside className="side">
-      <div className="brand">
-        <span className="brand-mark">Г</span>
-        <span className="wm">Главред</span>
-      </div>
-      <div className="nav-label">Редакция</div>
-      {NAV.map((item) => (
-        <button
-          key={item.id}
-          className={`nav-item${active === item.id ? ' active' : ''}${item.disabled ? ' muted' : ''}`}
-          onClick={() => onNav(item.id)}
-          type="button"
-        >
-          <Icon name={item.icon} />
-          <span>{item.label}</span>
-          {item.id === 'memory' ? <span className="count">{workspace.authorNotes.length}</span> : null}
-          {item.id === 'signals' ? <span className="count">{workspace.sourceSignals.length}</span> : null}
-          {item.id === 'plan' ? <span className="count">{workspace.contentPlanItems.length}</span> : null}
-          {item.id !== 'memory' && item.id !== 'signals' && item.id !== 'plan' && item.count ? <span className="count">{item.count}</span> : null}
-        </button>
-      ))}
-      <div className="side-foot">
-        <div className="author">
-          <div className="ava">АК</div>
-          <div>
-            <b>{workspace.editorialModel.author.split(' — ')[0]}</b>
-            <span>Главный редактор</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function Topbar({
-  active,
-  chatOpen,
-  suggestionCount,
-  onOpenChat,
-  onReset
-}: {
-  active: WorkspaceSection;
-  chatOpen: boolean;
-  suggestionCount: number;
-  onOpenChat: () => void;
-  onReset: () => void;
-}) {
-  const [title, subtitle] = TITLES[active];
-
-  return (
-    <header className="topbar">
-      <div className="crumb">
-        {title}
-        <small>{subtitle}</small>
-      </div>
-      <div className="spacer" />
-      <div className="search">
-        <Icon name="search" size={16} />
-        <input aria-label="Поиск" placeholder="Поиск по темам, фабулам..." />
-      </div>
-      <button className="icon-btn" type="button" aria-label="Уведомления">
-        <Icon name="bell" />
-        <span className="dot" />
-      </button>
-      <button
-        className={`btn btn-sec btn-sm assistant-topbar-btn${chatOpen ? ' active' : ''}`}
-        data-testid="context-chat-topbar-trigger"
-        type="button"
-        aria-expanded={chatOpen}
-        onClick={onOpenChat}
-      >
-        <Icon name="spark" size={14} />
-        Помощник
-        {suggestionCount > 0 ? <span className="assistant-count">{suggestionCount}</span> : null}
-      </button>
-      <button className="icon-btn" type="button" aria-label="Сбросить демо" onClick={onReset} title="Сбросить демо">
-        <Icon name="reset" size={14} />
-      </button>
-    </header>
-  );
-}
-
-function ContextChatOverlay({
-  activeTab,
-  messages,
-  open,
-  scope,
-  suggestions,
-  onAcceptSuggestion,
-  onClose,
-  onDismissSuggestion,
-  onSendMessage,
-  onSwitchTab
-}: {
-  activeTab: ContextChatTab;
-  messages: ContextChatMessage[];
-  open: boolean;
-  scope: ContextChatScope;
-  suggestions: ContextChatSuggestion[];
-  onAcceptSuggestion: (suggestion: ContextChatSuggestion) => void;
-  onClose: () => void;
-  onDismissSuggestion: (suggestionId: string) => void;
-  onSendMessage: (message: string) => void;
-  onSwitchTab: (tab: ContextChatTab) => void;
-}) {
-  const [draft, setDraft] = useState('');
-
-  if (!open) return null;
-
-  function submitMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    onSendMessage(text);
-    setDraft('');
-  }
-
-  return (
-    <aside
-      className={`context-chat-drawer scope-${scope}`}
-      data-testid="context-chat-drawer"
-      aria-label="Контекстный помощник"
+      }
     >
-      <div className="context-chat-head">
-        <div>
-          <span className="mono-label">Context chat</span>
-          <h3>Помощник раздела</h3>
-          <p>{contextChatScopeLabel(scope)}</p>
-        </div>
-        <div className="context-chat-head-actions">
-          <button className="icon-btn" type="button" aria-label="Закрыть помощника" onClick={onClose}>
-            <Icon name="close" size={16} />
-          </button>
-        </div>
-      </div>
-      <div className="context-chat-tabs tabs" role="tablist" aria-label="Режим помощника">
-        <button
-          className={`tab${activeTab === 'chat' ? ' active' : ''}`}
-          role="tab"
-          type="button"
-          aria-selected={activeTab === 'chat'}
-          onClick={() => onSwitchTab('chat')}
-        >
-          Чат
-        </button>
-        <button
-          className={`tab${activeTab === 'suggestions' ? ' active' : ''}`}
-          role="tab"
-          type="button"
-          aria-selected={activeTab === 'suggestions'}
-          onClick={() => onSwitchTab('suggestions')}
-        >
-          Подсказки
-          <span className="assistant-count">{suggestions.length}</span>
-        </button>
-      </div>
-      {activeTab === 'chat' ? (
-        <div className="context-chat-mode">
-          <div className="context-chat-thread">
-            {messages.map((message) => (
-              <article className={`context-message ${message.role}`} key={message.id}>
-                <span>{contextChatRoleLabel(message.role)}</span>
-                <p>{message.text}</p>
-                {message.suggestion && message.suggestion.actionType !== 'readOnly' ? (
-                  <button
-                    className="btn btn-pri btn-sm"
-                    type="button"
-                    onClick={() => onAcceptSuggestion(message.suggestion as ContextChatSuggestion)}
-                  >
-                    {contextChatActionLabel(message.suggestion.actionType)}
-                  </button>
-                ) : null}
-              </article>
-            ))}
-          </div>
-          <form className="context-chat-input" onSubmit={submitMessage}>
-            <textarea
-              aria-label="Сообщение помощнику"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Спросите по текущему разделу или попросите сгенерировать тему..."
-              rows={3}
-            />
-            <button className="btn btn-pri btn-sm" type="submit" disabled={!draft.trim()}>
-              Отправить
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="context-chat-suggestions">
-          {suggestions.length === 0 ? (
-            <p className="context-empty">Новых подсказок нет. Можно вернуться в чат и задать вопрос по разделу.</p>
-          ) : null}
-          {suggestions.map((suggestion) => (
-            <article className="context-suggestion" key={suggestion.id}>
-              <button
-                className="context-suggestion-dismiss"
-                type="button"
-                aria-label={`Скрыть подсказку: ${suggestion.title}`}
-                onClick={() => onDismissSuggestion(suggestion.id)}
-              >
-                <Icon name="close" size={14} />
-              </button>
-              <div>
-                <h4>{suggestion.title}</h4>
-                <p>{suggestion.body}</p>
-              </div>
-              {suggestion.actionType !== 'readOnly' ? (
-                <button className="btn btn-pri btn-sm" type="button" onClick={() => onAcceptSuggestion(suggestion)}>
-                  {contextChatActionLabel(suggestion.actionType)}
-                </button>
-              ) : null}
-            </article>
-          ))}
-        </div>
+      {active === 'memory' && (
+        <AuthorMemoryView
+          activeTab={memoryTab}
+          workspace={workspace}
+          onChangeTab={controller.setMemoryTab}
+          onPatchWorkspace={controller.patchWorkspace}
+          onChangeNotes={controller.changeAuthorNotes}
+        />
       )}
-    </aside>
+      {active === 'editorialModel' && (
+        <EditorialModelView
+          activeTab={editorialModelTab}
+          chatIntent={contextChatIntent}
+          workspace={workspace}
+          model={workspace.editorialModel}
+          projectProfile={workspace.projectProfile}
+          editorialRules={workspace.editorialRules}
+          topics={workspace.topics}
+          fabulas={workspace.fabulas}
+          matrix={workspace.topicFabulaMatrix}
+          onModelChange={(editorialModel) => controller.patchEditorialSetup({ editorialModel })}
+          onProjectProfileChange={(projectProfile) => controller.patchEditorialSetup({ projectProfile })}
+          onEditorialRulesChange={(editorialRules) => controller.patchEditorialSetup({ editorialRules })}
+          onTopicsChange={(topics) => controller.patchEditorialSetup({ topics })}
+          onFabulasChange={(fabulas) => controller.patchEditorialSetup({ fabulas })}
+          onMatrixChange={(topicFabulaMatrix) => controller.patchEditorialSetup({ topicFabulaMatrix })}
+          onTopicsAndMatrixChange={(topics, topicFabulaMatrix) =>
+            controller.patchEditorialSetup({ topics, topicFabulaMatrix })
+          }
+          onFabulasAndMatrixChange={(fabulas, topicFabulaMatrix) =>
+            controller.patchEditorialSetup({ fabulas, topicFabulaMatrix })
+          }
+          onChangeTab={controller.setEditorialModelTab}
+          onChatIntentConsumed={() => controller.setContextChatIntent(null)}
+          onRunValidation={controller.runEditorialValidation}
+        />
+      )}
+      {active === 'signals' && (
+        <SignalsViewV2
+          workspace={workspace}
+          onSaveRadar={controller.saveRadar}
+          onDeleteRadar={controller.removeRadar}
+          onToggleRadarStatus={controller.switchRadarStatus}
+          onApproveSignal={controller.approveSourceSignal}
+          onRejectSignal={controller.rejectSourceSignal}
+          onArchiveSignal={controller.archiveSourceSignal}
+          onCorrectSignal={controller.correctSourceSignal}
+          onCreateInsight={controller.createInsightFromCurrentSignal}
+          onPlan={controller.addInsightToPlan}
+        />
+      )}
+      {active === 'plan' && (
+        <PlanView
+          workspace={workspace}
+          onGenerate={controller.generateBroadcastPlan}
+          onItemChange={controller.updatePlanItemAndWarnings}
+          onApprove={controller.approvePlanSlot}
+          onBrief={controller.prepareBrief}
+        />
+      )}
+      {active === 'brief' && (
+        <BriefView
+          workspace={workspace}
+          onBriefChange={(postBrief) => controller.patchWorkspace({ postBrief })}
+          onBackToPlan={() => controller.go('plan')}
+          onApprove={controller.approveCurrentBrief}
+        />
+      )}
+      {active === 'edit' && (
+        <EditView
+          workspace={workspace}
+          onGoBrief={() => controller.go('brief')}
+          onCreateDraft={controller.createDraftFromBrief}
+          onDraftChange={controller.updateDraftBody}
+          onApproveFinal={controller.approveCurrentFinalText}
+        />
+      )}
+      {active === 'release' && (
+        <ReleaseView
+          workspace={workspace}
+          onGoEdit={() => controller.go('edit')}
+          onCreatePackage={controller.createReleaseFromFinalText}
+          onToggleChecklist={controller.toggleReleaseChecklist}
+          onMarkReady={controller.markCurrentReleaseReady}
+          onCopy={controller.copyCurrentFinalText}
+          onDownload={controller.downloadCurrentRelease}
+        />
+      )}
+      {active === 'analytics' && (
+        <AnalyticsView
+          workspace={workspace}
+          onGoRelease={() => controller.go('release')}
+          onCreateNote={controller.createLearningNote}
+          onChangeNote={controller.updateCurrentLearningNote}
+          onCapture={controller.captureLearningNote}
+        />
+      )}
+    </AppShell>
   );
 }
-
-function getContextChatScope(
-  active: WorkspaceSection,
-  memoryTab: MemoryInternalTab,
-  editorialTab: EditorialModelTab
-): ContextChatScope {
-  if (active === 'memory') {
-    if (memoryTab === 'sources') return 'sources';
-    if (memoryTab === 'queue') return 'importQueue';
-    if (memoryTab === 'archive') return 'archive';
-    return 'memory';
-  }
-
-  if (active === 'editorialModel') {
-    if (editorialTab === 'topics') return 'topics';
-    if (editorialTab === 'fabulas') return 'fabulas';
-    if (editorialTab === 'matrix') return 'matrix';
-    return 'editorialPublisher';
-  }
-
-  return mapWorkspaceSectionToProductionScope(active);
-}
-
-function contextChatScopeLabel(scope: ContextChatScope): string {
-  const labels: Record<ContextChatScope, string> = {
-    memory: 'Память автора · мысли и корректировки',
-    sources: 'Память автора · источники',
-    importQueue: 'Память автора · очередь разбора',
-    archive: 'Память автора · архив',
-    editorialPublisher: 'Редакционная модель · издательство',
-    topics: 'Редакционная модель · темы',
-    fabulas: 'Редакционная модель · фабулы',
-    matrix: 'Редакционная модель · матрица',
-    production: 'Производство поста · HITL flow',
-    release: 'Выпуск · manual export',
-    analytics: 'Аналитика · learning note'
-  };
-  return labels[scope];
-}
-
-function contextChatRoleLabel(role: ContextChatMessage['role']): string {
-  if (role === 'author') return 'Вы';
-  if (role === 'system') return 'Система';
-  return 'Помощник';
-}
-
-function contextChatActionLabel(actionType: ContextChatActionType): string {
-  const labels: Record<ContextChatActionType, string> = {
-    addEditorialRule: 'Добавить правило',
-    addTopic: 'Создать черновик темы',
-    addFabula: 'Создать черновик фабулы',
-    runValidation: 'Проверить',
-    readOnly: 'Принять к сведению'
-  };
-  return labels[actionType];
-}
-
 type MemoryTypeFilter = AuthorNoteType | 'all';
 type CorrectionTarget = {
   type: 'assertion' | 'evidence';
@@ -1084,7 +281,6 @@ type PendingCorrectionConflict = {
   noteId: string;
   targetTitle: string;
 };
-type MemoryInternalTab = 'feed' | 'sources' | 'queue' | 'archive';
 type ImportViewMode = 'list' | 'groups';
 type PendingBulkAction = {
   action: 'archive' | 'reject';
@@ -2783,7 +1979,6 @@ function BulkActionDialog({
   );
 }
 
-type EditorialModelTab = 'publisher' | 'topics' | 'fabulas' | 'matrix';
 
 const EDITORIAL_TABS: Array<[EditorialModelTab, string]> = [
   ['publisher', 'Издательство'],
@@ -3980,33 +3175,6 @@ function ValidatorCard({ result }: { result: ValidatorResult }) {
         </div>
       </details>
     </article>
-  );
-}
-
-function WeightRangeEditor({ value, onChange }: { value: WeightRange; onChange: (value: WeightRange) => void }) {
-  return (
-    <div className="weight-editor">
-      <label>
-        Минимум, %
-        <input
-          min={0}
-          max={100}
-          type="number"
-          value={value.min}
-          onChange={(event) => onChange(normalizeWeightRange({ ...value, min: Number(event.target.value) }))}
-        />
-      </label>
-      <label>
-        Максимум, %
-        <input
-          min={0}
-          max={100}
-          type="number"
-          value={value.max}
-          onChange={(event) => onChange(normalizeWeightRange({ ...value, max: Number(event.target.value) }))}
-        />
-      </label>
-    </div>
   );
 }
 
@@ -6779,35 +5947,4 @@ function targetLabel(target: string): string {
   if (target === 'telegram') return 'Telegram';
   if (target === 'linkedin') return 'LinkedIn';
   return target;
-}
-
-function markManualExportDone(releasePackage: ReleasePackage): ReleasePackage {
-  return {
-    ...releasePackage,
-    checklist: releasePackage.checklist.map((item) =>
-      item.id === 'manual-exported' ? { ...item, done: true } : item
-    )
-  };
-}
-
-async function copyToClipboard(value: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch {
-      // Markdown preview stays visible for manual copy when clipboard access is unavailable.
-    }
-  }
-}
-
-function downloadMarkdown(releasePackage: ReleasePackage): void {
-  if (!window.URL?.createObjectURL) return;
-
-  const blob = new Blob([releasePackage.markdown], { type: 'text/markdown;charset=utf-8' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${releasePackage.id}.md`;
-  link.click();
-  window.URL.revokeObjectURL(url);
 }

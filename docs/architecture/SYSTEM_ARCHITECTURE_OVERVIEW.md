@@ -170,16 +170,17 @@ to use deterministic fallback or provider-backed behavior.
 
 ## React UI Architecture
 
-The current React implementation intentionally carries technical debt from fast
-product exploration: `src/App.tsx` is still a large composition and implementation
-file. As of Slice 1.5.9 it contains about 6813 lines and many top-level UI
-declarations. This is now an explicit temporary baseline, not an acceptable direction
-for future feature work.
+The React implementation is being extracted from the initial fast-exploration
+god-file. As of Slice 1.5.10, `src/App.tsx` is still large, but app-level ownership
+has moved out: shell, navigation, topbar/sidebar, context-chat overlay, shared icon,
+weight range editor, persistence/autosave/reset, and high-level workspace
+orchestration now live outside `App.tsx`. This is now an explicit temporary extraction
+baseline, not an acceptable direction for future feature work.
 
 Target structure:
 
-- `src/app/`: app composition root, shell, topbar/sidebar, navigation, and workspace
-  controller.
+- `src/app/`: app shell, topbar/sidebar, navigation, context-chat overlay and scope,
+  and workspace controller.
 - `src/features/author-memory`: author memory feed, assertions, import queue, and
   archive UI.
 - `src/features/editorial-model`: project profile, rules, topics, fabulas, matrix, and
@@ -208,16 +209,20 @@ primitive, it belongs in `src/shared/ui`. If two features need the same business
 it belongs in application/domain services. If app-level wiring is needed, it belongs in
 `src/app/`.
 
-`App.tsx` must become a composition root only. It may connect the app shell, workspace
-controller, and feature entry components, but new large `*View`, `*Editor`, `*Panel`,
-`*Card`, `*Header`, `*Sidebar`, `*Topbar`, or `*Overlay` implementations must not be
-added there. Domain/application logic must not be written inside JSX.
+`App.tsx` must become a composition root only. It now imports `useWorkspaceController`
+from `src/app/useWorkspaceController.ts` and must not import `LocalWorkspaceStore`.
+It may connect the app shell, workspace controller, and feature entry components, but
+new large `*View`, `*Editor`, `*Panel`, `*Card`, `*Header`, `*Sidebar`, `*Topbar`, or
+`*Overlay` implementations must not be added there. Domain/application logic must not
+be written inside JSX.
 
 Architecture smoke tests enforce the temporary baseline:
 
-- `src/App.tsx <= 6900` lines for Slice 1.5.9.
-- `src/App.test.tsx <= 850` lines for Slice 1.5.9.
-- No growth in large App-level UI declarations beyond the accepted baseline.
+- `src/App.tsx <= 6300` lines after Slice 1.5.10.
+- `src/App.test.tsx <= 850` lines.
+- Large `App.tsx` UI declarations `<= 30`.
+- Required app/shared extraction files must exist.
+- `src/App.tsx` must not import or instantiate `LocalWorkspaceStore`.
 - The React UI architecture ADR and this SAO section must exist.
 
 Every extraction slice must lower these limits. The target after the extraction chain

@@ -1304,7 +1304,7 @@ Status:
 
 ### Slice 1.5.10: Extract App Shell and Workspace Controller
 
-- Status: Ready
+- Status: Done
 - Goal: Move shell, topbar/sidebar, navigation metadata, and workspace controller logic
   out of `App.tsx` without changing behavior.
 - User value: The product gains a smaller app composition root and a safer place to
@@ -1315,19 +1315,26 @@ Status:
     controller.
   - Keep current local-first persistence and demo behavior unchanged.
   - Lower `App.tsx` and `App.test.tsx` architecture limits after extraction.
+- Delivered:
+  - Added `src/app/AppShell.tsx`, `Sidebar.tsx`, `Topbar.tsx`, `navigation.ts`,
+    `contextChatScope.ts`, `ContextChatOverlay.tsx`, and `useWorkspaceController.ts`.
+  - Added `src/shared/ui/Icon.tsx` and `WeightRangeEditor.tsx`.
+  - Removed `LocalWorkspaceStore`, autosave/reset, shell state, context-chat state, and
+    production orchestration ownership from `src/App.tsx`.
+  - Lowered architecture smoke to `App.tsx <= 6300` and large App declarations `<= 30`.
 - Out of scope:
   - Extracting individual feature screens.
   - Product behavior changes.
 - Validation:
-  - `npm run test:architecture`;
-  - `npm test -- --run`;
-  - `npm run smoke`;
-  - `npm run test:design`;
-  - `npm run test:visual`.
+  - `npm run test:architecture`. Passed.
+  - `npm test -- --run`. Passed.
+  - `npm run smoke`. Passed.
+  - `npm run test:design`. Passed.
+  - `npm run test:visual`. Passed.
 
 ### Slice 1.5.11: Extract Signals Feature
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move `Сигналы` UI into `src/features/signals` while preserving current radar
   and signal review behavior.
 - Notes:
@@ -1553,6 +1560,7 @@ Status:
   2026-06-14.
 - Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails. Completed
   2026-06-15.
+- Slice 1.5.10: Extract App Shell and Workspace Controller. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1573,4 +1581,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5.10: Extract App Shell and Workspace Controller`.
+Start `Slice 1.5.11: Extract Signals Feature`.

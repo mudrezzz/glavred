@@ -72,13 +72,14 @@ npm run docs:wiki:publish
   analytics prep.
 - `src/infrastructure/`: browser storage adapter.
 - `src/fixtures/`: demo workspace data.
-- `src/App.tsx`: temporary React composition and implementation baseline. New major UI
-  must move toward feature modules instead of extending this file.
-- Future `src/app/`: app shell, navigation, and workspace controller.
+- `src/App.tsx`: temporary React feature composition baseline. It must not own
+  persistence, autosave, reset, navigation shell, or app-level orchestration.
+- `src/app/`: app shell, topbar/sidebar, navigation, context-chat overlay/scope, and
+  workspace controller.
 - Future `src/features/*`: feature-owned screens such as author memory, editorial
   model, signals, plan, briefing, editing, release, analytics, and context chat.
-- Future `src/shared/ui` and `src/shared/format`: shared cabinet primitives and
-  formatting helpers.
+- `src/shared/ui`: shared cabinet primitives such as `Icon` and `WeightRangeEditor`.
+- Future `src/shared/format`: formatting helpers.
 - `src/test/`: test setup.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
@@ -249,16 +250,19 @@ current compatibility layer, but the intended flow is:
 
 `AuthorMemory/Archive/ExternalSources -> Сигналы -> Кандидаты постов -> BroadcastContentPlan -> approved PostBrief`
 
-React UI now has an explicit architecture baseline. `App.tsx` is a temporary god-file
-baseline and must move toward a composition root. New large screens, editors, panels,
-cards, headers, overlays, and formatting helpers should be added to the planned
-`src/app/`, `src/features/<feature>/`, `src/shared/ui`, or `src/shared/format`
-structure, not directly to `App.tsx`.
+React UI now has an explicit architecture baseline. `App.tsx` is a temporary feature
+composition root and must continue shrinking. App shell, navigation, context-chat
+overlay, shared icon, weight range editor, and workspace controller have been
+extracted. New large screens, editors, panels, cards, headers, overlays, and
+formatting helpers should be added to `src/app/`, `src/features/<feature>/`,
+`src/shared/ui`, or future `src/shared/format`, not directly to `App.tsx`.
 
 Run `npm run test:architecture` before completing any UI slice. The current guardrail
-blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline and verifies that
-the React architecture ADR and SAO section remain present. Extraction slices must lower
-those limits as code moves into feature modules.
+blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline, checks required
+app/shared extraction files, and verifies that `App.tsx` no longer imports
+`LocalWorkspaceStore`. Extraction slices must lower those limits as code moves into
+feature modules. After Slice 1.5.10 the limits are `App.tsx <= 6300`, `App.test.tsx <=
+850`, and large App UI declarations `<= 30`.
 
 Use these boundaries:
 
