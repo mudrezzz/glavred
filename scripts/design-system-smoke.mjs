@@ -270,6 +270,23 @@ async function assertSignalsDesign(page, viewportName) {
     }
 
     if (radarEditor) {
+      const embeddedEditor = document.querySelector('[data-testid="radar-row"] .radar-editor');
+      const topLevelEditor = radarEditor.closest('[data-testid="radar-row"]') ? null : radarEditor;
+      if (topLevelEditor && !topLevelEditor.closest('[data-testid="radar-list"]')) {
+        failures.push('radar editor is detached from the edited radar row.');
+      }
+      if (embeddedEditor) {
+        const ruleTextareas = embeddedEditor.querySelectorAll('.radar-rule-edit textarea');
+        if (ruleTextareas.length === 0) {
+          failures.push('inline radar editor does not use textarea for radar search rules.');
+        }
+        embeddedEditor.querySelectorAll('.radar-source-edit').forEach((sourceEdit) => {
+          if (!sourceEdit.querySelector('textarea')) {
+            failures.push('inline radar editor does not use textarea for radar source values.');
+          }
+        });
+      }
+
       const blocks = Array.from(radarEditor.querySelectorAll('.signal-edit-form > label, .signal-edit-form > .form-grid-3'))
         .map((element) => element.getBoundingClientRect())
         .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -388,7 +405,7 @@ async function main() {
     const firstRadarRow = page.locator('[data-testid="radar-row"]').first();
     await firstRadarRow.locator('.radar-row-main').click();
     await firstRadarRow.locator('.radar-actions .btn').first().click();
-    await page.locator('.radar-editor').waitFor();
+    await firstRadarRow.locator('.radar-editor').waitFor();
     await assertSignalsDesign(page, 'desktop radar editor');
 
     await page.locator('.signal-tabs .tab').nth(1).click();

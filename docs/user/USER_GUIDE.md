@@ -199,6 +199,16 @@ header stat cards stay pinned to the right edge of the header, and the radar edi
 keeps visible spacing between labels and controls. These are now covered by
 `npm run test:design`, so layout drift should be treated as a regression.
 
+### Radar editing after Slice 1.5.7
+
+Existing radars are edited in place. Click `Редактировать` on a radar card and the edit
+form opens inside that same card, so you do not need to scroll to a duplicated form at
+the top of the list.
+
+Radar search rules and source values use multiline fields. Use them for full search
+instructions, URLs, API/MCP notes, keyword sets, or source descriptions. A new radar can
+still be created from the toolbar as a temporary draft form above the list.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by

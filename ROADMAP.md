@@ -1205,6 +1205,31 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
+### Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources
+
+- Status: Done
+- Goal: Fix radar editing so existing radars are edited in-place and radar rules/sources
+  have enough writing space.
+- User value: The author can edit the radar they clicked without scrolling to a duplicate
+  form at the top of the list, and can write real search instructions or URL/API/MCP
+  source descriptions in multiline fields.
+- Scope:
+  - Keep new radar creation as a temporary draft form above the list.
+  - Render existing radar edit mode inside the selected radar card.
+  - Replace one-line radar rule and source-value controls with textareas.
+  - Extend UI/design smoke checks so inline radar editing and multiline radar rule/source
+    fields are enforced.
+- Out of scope:
+  - New radar execution behavior.
+  - Real external integrations.
+  - Post candidate assemblies.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1397,6 +1422,8 @@ Status:
   2026-06-14.
 - Slice 1.5.5: Frontend Design-System Consolidation. Completed 2026-06-14.
 - Slice 1.5.6: Layout Stability and Form Rhythm Guardrails. Completed 2026-06-14.
+- Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources. Completed
+  2026-06-14.
 
 ## Blocked Items
 

@@ -4347,7 +4347,7 @@ function SignalsViewV2({
               </button>
             </div>
 
-            {editingRadar && (
+            {editingRadar && isNewRadar && (
               <RadarEditor
                 radar={editingRadar}
                 isNew={isNewRadar}
@@ -4369,11 +4369,19 @@ function SignalsViewV2({
             <div className="entity-list signals-entity-list" data-testid="radar-list">
               {workspace.radars.map((radar) => {
                 const expanded = expandedRadarId === radar.id;
+                const editingThisRadar = editingRadar?.id === radar.id && !isNewRadar;
                 const signalCount = signalCountsByRadar[radar.id] ?? 0;
 
                 return (
-                  <article className={`entity-row radar-card ${expanded ? 'expanded' : ''}`} data-testid="radar-row" key={radar.id}>
-                    <button className="radar-row-main" type="button" onClick={() => setExpandedRadarId(expanded ? '' : radar.id)}>
+                  <article className={`entity-row radar-card ${expanded || editingThisRadar ? 'expanded' : ''} ${editingThisRadar ? 'editing' : ''}`} data-testid="radar-row" key={radar.id}>
+                    <button
+                      className="radar-row-main"
+                      type="button"
+                      onClick={() => {
+                        if (editingThisRadar) return;
+                        setExpandedRadarId(expanded ? '' : radar.id);
+                      }}
+                    >
                       <span className="sig radar-type">{radarSourceTypeLabel(radar.sourceType)}</span>
                       <span className="radar-row-body">
                         <strong className="radar-title">{radar.title}</strong>
@@ -4389,7 +4397,27 @@ function SignalsViewV2({
                       </span>
                     </button>
 
-                    {expanded && (
+                    {editingThisRadar && editingRadar && (
+                      <RadarEditor
+                        radar={editingRadar}
+                        isNew={false}
+                        embedded
+                        onPatch={patchRadarDraft}
+                        onPatchRule={patchRadarRule}
+                        onAddRule={addRadarRule}
+                        onDeleteRule={deleteRadarRule}
+                        onPatchSource={patchRadarSource}
+                        onAddSource={addRadarSource}
+                        onDeleteSource={deleteRadarSource}
+                        onSave={saveRadarDraft}
+                        onCancel={() => {
+                          setEditingRadar(null);
+                          setIsNewRadar(false);
+                        }}
+                      />
+                    )}
+
+                    {expanded && !editingThisRadar && (
                       <div className="radar-details">
                         <p>{radar.scope}</p>
                         <div className="radar-config-section">
@@ -4667,10 +4695,12 @@ function RadarEditor({
   onAddSource,
   onDeleteSource,
   onSave,
-  onCancel
+  onCancel,
+  embedded = false
 }: {
   radar: RadarDefinition;
   isNew: boolean;
+  embedded?: boolean;
   onPatch: (patch: Partial<RadarDefinition>) => void;
   onPatchRule: (ruleId: string, patch: Partial<RadarSearchRule>) => void;
   onAddRule: () => void;
@@ -4682,7 +4712,7 @@ function RadarEditor({
   onCancel: () => void;
 }) {
   return (
-    <section className="card radar-editor">
+    <section className={`${embedded ? 'radar-editor radar-editor-inline' : 'card radar-editor'}`}>
       <div className="doc-head">
         <div>
           <span className="rub">{isNew ? 'Новый радар' : 'Редактирование радара'}</span>
@@ -4754,7 +4784,7 @@ function RadarEditor({
               <input type="checkbox" checked={rule.negate} onChange={(event) => onPatchRule(rule.id, { negate: event.target.checked })} />
               NOT
             </label>
-            <input
+            <textarea
               placeholder="Одна инструкция поиска"
               value={rule.statement}
               onChange={(event) => onPatchRule(rule.id, { statement: event.target.value })}
@@ -4787,7 +4817,7 @@ function RadarEditor({
               <option value="openWeb">Открытый web</option>
             </select>
             <input placeholder="Название" value={source.title} onChange={(event) => onPatchSource(source.id, { title: event.target.value })} />
-            <input placeholder="URL/API/MCP/ключевые слова" value={source.value} onChange={(event) => onPatchSource(source.id, { value: event.target.value })} />
+            <textarea placeholder="URL/API/MCP/ключевые слова" value={source.value} onChange={(event) => onPatchSource(source.id, { value: event.target.value })} />
             <button className="btn btn-ghost btn-sm" type="button" onClick={() => onDeleteSource(source.id)}>
               Удалить
             </button>

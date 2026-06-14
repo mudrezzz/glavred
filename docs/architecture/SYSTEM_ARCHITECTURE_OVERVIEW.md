@@ -181,6 +181,12 @@ Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions
 - Disclosure-heavy lists must be layout-stable: expanding or collapsing an entity row
   adds vertical detail inside the same frame and must not move the header, tabs,
   main/right grid, toolbar, or row horizontally.
+- Existing entity edit mode must open inside the selected entity row/card. Top-of-list
+  draft forms are acceptable for new entities, but editing an existing entity cannot
+  create a duplicate form detached from the row the author clicked.
+- Structured search instructions, source descriptions, and other long rule-like values
+  use multiline controls. One-line inputs are reserved for short titles, labels, and
+  compact scalar settings.
 - Dense editor forms must keep measurable vertical rhythm between fields and between
   labels and controls; grouped controls cannot collapse into neighboring labels.
 - Context chat uses a collapsible overlay, not a permanent third column beside existing

@@ -182,6 +182,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     Slice 1.5.6 note: expanding/collapsing a radar must not shift the workspace.
     `npm run test:design` checks this disclosure stability, wide-screen header metric
     alignment, and radar editor field spacing.
+    Slice 1.5.7 note: editing an existing radar opens the editor inside that radar
+    card. Radar rules and source values are multiline fields, so demo instructions,
+    URLs, API/MCP notes, and keyword sets are not cramped into one-line inputs.
 19. Open `Кандидаты постов` to see the Slice 1.6 preview.
 20. Return to `Найденные сигналы` and click `Собрать инсайт`.
 21. Click `В план`.

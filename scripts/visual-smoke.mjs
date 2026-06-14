@@ -108,6 +108,9 @@ function assertSignalsLayout(result) {
   if (result.sideActionGap !== null && result.sideActionGap < 12) failures.push(`${result.viewport}: signal side action has too little top spacing (${result.sideActionGap}px).`);
   if (result.radarEditorOverflow > 2) failures.push(`${result.viewport}: radar editor content overflows by ${result.radarEditorOverflow}px.`);
   if (result.radarEditorSectionGap !== null && result.radarEditorSectionGap < 12) failures.push(`${result.viewport}: radar editor sections are too cramped (${result.radarEditorSectionGap}px).`);
+  if (!result.radarEditorInline) failures.push(`${result.viewport}: radar editor is not rendered inside the edited radar row.`);
+  if (!result.radarRuleTextarea) failures.push(`${result.viewport}: radar search rule is not a textarea.`);
+  if (!result.radarSourceTextarea) failures.push(`${result.viewport}: radar source value is not a textarea.`);
   if (result.signalTitleWidth !== null && result.signalTitleWidth < 180 && result.viewport !== 'mobile') failures.push(`${result.viewport}: signal title column is too narrow (${result.signalTitleWidth}px).`);
 
   if (failures.length) {
@@ -169,9 +172,13 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
   }, viewportName);
 
   await page.locator('[data-testid="radar-row"]').first().getByRole('button', { name: /Редактировать/i }).click();
-  await page.locator('.radar-editor').waitFor();
+  await page.locator('[data-testid="radar-row"]').first().locator('.radar-editor').waitFor();
+  if ((await page.locator('[data-testid="radar-row"]').first().locator('.radar-source-edit').count()) === 0) {
+    await page.locator('[data-testid="radar-row"]').first().locator('.radar-config-section').nth(1).locator('button').first().click();
+  }
   const radarEditorResult = await page.evaluate((name) => {
     const editor = document.querySelector('.radar-editor');
+    const inlineEditor = document.querySelector('[data-testid="radar-row"] .radar-editor');
     const sections = Array.from(editor?.querySelectorAll('.radar-config-section') ?? []);
     const sectionRects = sections.map((section) => section.getBoundingClientRect()).sort((a, b) => a.top - b.top);
     const sectionGap =
@@ -182,7 +189,10 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
     return {
       viewport: name,
       radarEditorOverflow: editor ? editor.scrollWidth - editor.clientWidth : 0,
-      radarEditorSectionGap: sectionGap
+      radarEditorSectionGap: sectionGap,
+      radarEditorInline: Boolean(inlineEditor),
+      radarRuleTextarea: Boolean(inlineEditor?.querySelector('.radar-rule-edit textarea')),
+      radarSourceTextarea: Boolean(inlineEditor?.querySelector('.radar-source-edit textarea'))
     };
   }, viewportName);
 

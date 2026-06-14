@@ -143,6 +143,10 @@ radar row, checks the Signals header on a wide desktop viewport, and measures ve
 form rhythm in the radar editor. A disclosure state that shifts the workspace, a
 metric group drifting from the right edge, or a label/control pair with no visible gap
 is a design-system failure.
+The checks also require existing radar edit mode to render inside the edited
+`data-testid="radar-row"` and require radar rule/source value controls to use multiline
+`textarea` fields. Creating a new radar may use a temporary top-of-list draft, but
+editing an existing radar must stay in-place.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 

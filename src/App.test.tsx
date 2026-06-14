@@ -110,6 +110,32 @@ describe('App', () => {
     expect(screen.getByText(/Slice 1\.6/i)).toBeInTheDocument();
   });
 
+  it('edits an existing radar inline with multiline rule and source fields', () => {
+    render(<App />);
+
+    goToSignals();
+
+    const radarRows = screen.getAllByTestId('radar-row');
+    const lastRadar = radarRows[radarRows.length - 1];
+    const rowMain = lastRadar.querySelector('.radar-row-main') as HTMLElement;
+    fireEvent.click(rowMain);
+
+    const editButton = lastRadar.querySelector('.radar-actions .btn') as HTMLElement;
+    fireEvent.click(editButton);
+
+    const inlineEditor = lastRadar.querySelector('.radar-editor');
+    expect(inlineEditor).toBeInTheDocument();
+    expect(screen.getByTestId('radar-list').previousElementSibling).not.toHaveClass('radar-editor');
+    expect(lastRadar.querySelectorAll('.radar-rule-edit textarea').length).toBeGreaterThan(0);
+    if (lastRadar.querySelectorAll('.radar-source-edit textarea').length === 0) {
+      const addSourceButton = Array.from((inlineEditor as HTMLElement).querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Источник')
+      ) as HTMLElement;
+      fireEvent.click(addSourceButton);
+    }
+    expect(lastRadar.querySelectorAll('.radar-source-edit textarea').length).toBeGreaterThan(0);
+  });
+
   it('opens on author memory with demo notes and evidence-backed assertions', () => {
     render(<App />);
 
