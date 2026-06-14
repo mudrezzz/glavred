@@ -45,13 +45,18 @@
 }
 
 .signals-section-header {
-  grid-template-columns: minmax(0, 1fr) minmax(330px, auto);
+  grid-template-columns: minmax(0, 1fr) max-content;
 }
 
-.signals-header-stats {
-  width: fit-content;
+.project-profile-meta.signals-header-stats {
+  width: max-content;
+  margin-left: auto;
   justify-self: end;
   grid-template-columns: repeat(3, 112px);
+}
+
+.signals-section-header .project-profile-main {
+  max-width: 760px;
 }
 
 .tab-count {
@@ -290,8 +295,21 @@
 
 .radar-editor .signal-edit-form {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   padding: 0;
+}
+
+.radar-editor .form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.radar-editor .signal-edit-form > label,
+.radar-editor .signal-edit-form > .form-grid-3,
+.radar-editor .form-grid-3 > label {
+  min-width: 0;
 }
 
 .signal-card .signal-edit-form {
@@ -825,6 +843,7 @@ button:disabled {
 .scroll {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .page {

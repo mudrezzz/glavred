@@ -192,6 +192,13 @@ and fabulas. Radar rows keep stable metadata slots for status, signal count, and
 run. Newly added radars show a visible fallback instead of leaving the last-run slot
 empty.
 
+### Signals layout stability after Slice 1.5.6
+
+Opening or closing a radar should not move the Signals workspace sideways. The section
+header stat cards stay pinned to the right edge of the header, and the radar editor
+keeps visible spacing between labels and controls. These are now covered by
+`npm run test:design`, so layout drift should be treated as a regression.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by

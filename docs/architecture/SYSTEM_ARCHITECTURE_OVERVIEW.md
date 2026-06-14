@@ -178,6 +178,11 @@ Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions
 - Editorial catalogs and matrices must contain realistic long content: wrap labels,
   use shared scroll areas for long details, and keep matrix row context visible with a
   sticky topic column during horizontal scroll.
+- Disclosure-heavy lists must be layout-stable: expanding or collapsing an entity row
+  adds vertical detail inside the same frame and must not move the header, tabs,
+  main/right grid, toolbar, or row horizontally.
+- Dense editor forms must keep measurable vertical rhythm between fields and between
+  labels and controls; grouped controls cannot collapse into neighboring labels.
 - Context chat uses a collapsible overlay, not a permanent third column beside existing
   right-side panels. It must stay covered by visual smoke checks.
 

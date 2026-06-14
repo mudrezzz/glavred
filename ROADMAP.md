@@ -1179,6 +1179,32 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
+### Slice 1.5.6: Layout Stability and Form Rhythm Guardrails
+
+- Status: Done
+- Goal: Make Signals layout stability and radar editor form rhythm formally
+  testable, not only manually reviewable.
+- User value: Expanding/collapsing radar cards no longer shifts the workspace, header
+  metrics stay aligned to the right edge, and radar editor fields keep visible spacing.
+- Scope:
+  - Reserve the app scroll gutter so disclosure state does not move centered cabinet
+    content horizontally.
+  - Keep Signals section metrics pinned to the right edge of the shared section
+    header pattern on desktop and wide desktop viewports.
+  - Add explicit grid rhythm for radar editor base fields and grouped selects.
+  - Extend design-smoke checks with collapse/expand layout stability, wide desktop
+    header alignment, and measured field-label spacing.
+- Out of scope:
+  - New radar/signal product behavior.
+  - Pixel-perfect screenshot diffing.
+  - Full design-system component extraction.
+- Validation:
+  - `npm run test:design` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1369,6 +1395,8 @@ Status:
 - Slice 1.5.3: Signals Layout Polish and Pixel Guardrails. Completed 2026-06-14.
 - Slice 1.5.4: Design-System Guardrails and Signals UI Alignment. Completed
   2026-06-14.
+- Slice 1.5.5: Frontend Design-System Consolidation. Completed 2026-06-14.
+- Slice 1.5.6: Layout Stability and Form Rhythm Guardrails. Completed 2026-06-14.
 
 ## Blocked Items
 

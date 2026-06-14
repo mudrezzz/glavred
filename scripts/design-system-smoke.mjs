@@ -181,9 +181,17 @@ async function assertSignalsDesign(page, viewportName) {
     if (header && headerStats) {
       const headerRect = header.getBoundingClientRect();
       const statsRect = headerStats.getBoundingClientRect();
+      const lastStat = Array.from(headerStats.children).at(-1);
       const rightGap = Math.round(headerRect.right - statsRect.right);
       if (rightGap < 12 || rightGap > 32) {
         failures.push(`signals header metrics are not aligned to the right edge (${rightGap}px).`);
+      }
+      if (lastStat) {
+        const lastStatRect = lastStat.getBoundingClientRect();
+        const lastStatGap = Math.round(headerRect.right - lastStatRect.right);
+        if (lastStatGap < 12 || lastStatGap > 32) {
+          failures.push(`signals header visible metric cards are not aligned to the right edge (${lastStatGap}px).`);
+        }
       }
     }
 
@@ -261,10 +269,83 @@ async function assertSignalsDesign(page, viewportName) {
       }
     }
 
+    if (radarEditor) {
+      const blocks = Array.from(radarEditor.querySelectorAll('.signal-edit-form > label, .signal-edit-form > .form-grid-3'))
+        .map((element) => element.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0)
+        .sort((a, b) => a.top - b.top);
+      blocks.slice(1).forEach((rect, index) => {
+        const prev = blocks[index];
+        const gap = Math.round(rect.top - prev.bottom);
+        if (gap < 12) {
+          failures.push(`radar editor form rhythm is too tight between fields (${gap}px).`);
+        }
+      });
+
+      radarEditor.querySelectorAll('.form-grid-3 label').forEach((label) => {
+        const labelText = label.querySelector('span');
+        const control = label.querySelector('input, select, textarea');
+        if (!labelText || !control) return;
+        const labelRect = labelText.getBoundingClientRect();
+        const controlRect = control.getBoundingClientRect();
+        const gap = Math.round(controlRect.top - labelRect.bottom);
+        if (gap < 6) {
+          failures.push(`radar editor field label touches control (${gap}px).`);
+        }
+      });
+    }
+
     return failures;
   });
 
   failIfAny(`${viewportName} signals design`, [...baseFailures, ...specificFailures]);
+}
+
+async function captureSignalsLayout(page) {
+  return page.evaluate(() => {
+    const selectors = {
+      header: '[data-testid="signals-section-header"]',
+      tabs: '.signal-tabs',
+      grid: '.signals-workspace-grid',
+      main: '.signals-workspace-grid .memory-main',
+      side: '.signals-workspace-grid .memory-side',
+      toolbar: '[data-testid="signals-radar-toolbar"]',
+      firstRadar: '[data-testid="radar-row"]'
+    };
+
+    return Object.fromEntries(
+      Object.entries(selectors).map(([key, selector]) => {
+        const element = document.querySelector(selector);
+        if (!element) return [key, null];
+        const rect = element.getBoundingClientRect();
+        return [
+          key,
+          {
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            top: Math.round(rect.top)
+          }
+        ];
+      })
+    );
+  });
+}
+
+function assertStableSignalsLayout(before, after, label) {
+  const failures = [];
+  ['header', 'tabs', 'grid', 'main', 'side', 'toolbar', 'firstRadar'].forEach((key) => {
+    const beforeRect = before[key];
+    const afterRect = after[key];
+    if (!beforeRect || !afterRect) return;
+    ['left', 'right', 'width'].forEach((axis) => {
+      const delta = Math.abs(afterRect[axis] - beforeRect[axis]);
+      if (delta > 1) {
+        failures.push(`${key}.${axis} shifted by ${delta}px.`);
+      }
+    });
+  });
+  failIfAny(`${label} layout stability`, failures);
 }
 
 async function main() {
@@ -290,6 +371,14 @@ async function main() {
     await page.locator('[data-testid="radar-row"]').first().waitFor();
     await assertSignalsDesign(page, 'desktop');
 
+    const expandedLayout = await captureSignalsLayout(page);
+    await page.locator('[data-testid="radar-row"]').first().locator('.radar-row-main').click();
+    const collapsedLayout = await captureSignalsLayout(page);
+    assertStableSignalsLayout(expandedLayout, collapsedLayout, 'desktop radar collapse');
+    await page.locator('[data-testid="radar-row"]').first().locator('.radar-row-main').click();
+    const reexpandedLayout = await captureSignalsLayout(page);
+    assertStableSignalsLayout(expandedLayout, reexpandedLayout, 'desktop radar expand');
+
     await page.locator('[data-testid="add-radar-button"]').click();
     await page.locator('.radar-editor input').first().fill('Тестовый радар без даты');
     await page.locator('.radar-editor .btn-pri').click();
@@ -305,6 +394,12 @@ async function main() {
     await page.locator('.signal-tabs .tab').nth(1).click();
     await page.locator('[data-testid="source-signal-row"]').first().waitFor();
     await assertSignalsDesign(page, 'desktop found signals');
+
+    await page.setViewportSize({ width: 2048, height: 1100 });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.locator('.nav-item').nth(2).click();
+    await page.locator('[data-testid="signals-section-header"]').waitFor();
+    await assertSignalsDesign(page, 'wide desktop');
 
     await page.setViewportSize({ width: 1180, height: 820 });
     await page.reload({ waitUntil: 'networkidle' });

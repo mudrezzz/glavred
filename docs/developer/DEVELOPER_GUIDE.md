@@ -138,6 +138,11 @@ edge, cards and panels keep internal padding, main/right columns do not overlap,
 dense workspace grids keep a measurable gutter, action groups keep a measurable gap,
 tab counters use the shared badge pattern, and radar edit sections align with base
 form fields.
+It also compares `Signals -> Radars` geometry before and after expanding/collapsing a
+radar row, checks the Signals header on a wide desktop viewport, and measures vertical
+form rhythm in the radar editor. A disclosure state that shifts the workspace, a
+metric group drifting from the right edge, or a label/control pair with no visible gap
+is a design-system failure.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 
@@ -151,6 +156,9 @@ Cabinet action taxonomy is intentional:
 Entity list toolbars should use the compact count-left/action-right pattern. Entity
 rows should reserve stable metadata slots and render fallbacks for optional values
 instead of leaving layout holes.
+Expandable rows must keep the same horizontal geometry in collapsed and expanded
+states. If a row needs more detail, add vertical content inside the existing frame; do
+not let disclosure change the main/side grid, toolbar width, or row width.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main

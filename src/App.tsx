@@ -1579,7 +1579,7 @@ function AuthorMemoryView({
   }
 
   return (
-    <div className="page wide signals-page fade-up">
+    <div className="page wide fade-up">
       <div className="sec-head">
         <div>
           <h2>Авторская память</h2>
@@ -4298,7 +4298,7 @@ function SignalsViewV2({
   }
 
   return (
-    <div className="page wide fade-up">
+    <div className="page wide signals-page fade-up">
       <section className="card project-profile-header signals-section-header" data-testid="signals-section-header">
         <div className="project-profile-main">
           <span className="mono-label">Материал</span>
