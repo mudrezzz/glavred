@@ -141,6 +141,17 @@ form fields.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 
+Cabinet action taxonomy is intentional:
+
+- secondary white buttons are ordinary work actions, such as adding a radar/topic,
+  editing, opening, cancelling or navigating;
+- primary red buttons are validation, approval, save/commit and HITL lifecycle
+  actions.
+
+Entity list toolbars should use the compact count-left/action-right pattern. Entity
+rows should reserve stable metadata slots and render fallbacks for optional values
+instead of leaving layout holes.
+
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main
 repository must be public before publishing the wiki in the current GitHub setup.

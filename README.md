@@ -145,6 +145,10 @@ Run structural design-system checks:
 npm run test:design
 ```
 
+This check covers shared cabinet primitives: section-header metric alignment,
+main/right column boundaries, tab count badges, ordinary white create actions versus
+red validation/commit actions, and stable radar metadata slots.
+
 Update user wiki screenshots:
 
 ```bash

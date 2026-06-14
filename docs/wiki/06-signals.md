@@ -22,3 +22,8 @@ footers, and measured visual guardrails for spacing, edit forms, and main/side c
 overlap.
 The section header follows the same cabinet pattern as `Редакционная модель`; tab
 counters use the shared red badge style instead of being appended as plain text.
+
+Slice 1.5.5 adds the shared action taxonomy: `+ Radar` is a normal white work button,
+while red buttons are reserved for validation, approval, save/commit, and HITL
+lifecycle steps. Newly added radars keep a visible last-run fallback so metadata rows
+do not shift.

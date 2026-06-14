@@ -176,6 +176,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     Slice 1.5.4 note: the header now follows the same cabinet pattern as
     `Редакционная модель`, tab counters use the shared red badge, and
     `npm run test:design` checks the layout contract.
+    Slice 1.5.5 note: `+ Radar` is an ordinary white work action, not a red validation
+    gate. The radar toolbar follows the same count-left/action-right pattern as topics
+    and fabulas, and newly added radars keep a visible last-run fallback.
 19. Open `Кандидаты постов` to see the Slice 1.6 preview.
 20. Return to `Найденные сигналы` and click `Собрать инсайт`.
 21. Click `В план`.

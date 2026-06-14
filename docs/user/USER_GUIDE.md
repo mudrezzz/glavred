@@ -181,6 +181,17 @@ and stat cards use the same cabinet pattern. The `Найденные сигна�
 separate red badge, and the radar editor keeps base fields, rule groups, source groups,
 and footer actions on one consistent form rhythm.
 
+### Signals design-system consolidation after Slice 1.5.5
+
+Ordinary create actions such as `+ Radar`, `+ Topic`, and `+ Fabula` use white
+secondary buttons. Red primary buttons are reserved for validation, approval,
+save/commit, and HITL lifecycle steps.
+
+The radar toolbar follows the same compact count-left/action-right pattern as topics
+and fabulas. Radar rows keep stable metadata slots for status, signal count, and last
+run. Newly added radars show a visible fallback instead of leaving the last-run slot
+empty.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by

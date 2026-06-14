@@ -169,6 +169,7 @@ async function assertSignalsDesign(page, viewportName) {
     const tabs = document.querySelector('.signal-tabs');
     const tabCount = tabs?.querySelector('.tab-count');
     const headerStats = header?.querySelector('.signals-header-stats');
+    const radarToolbar = document.querySelector('[data-testid="signals-radar-toolbar"]');
     const radarEditor = document.querySelector('.radar-editor');
     const firstFormInput = radarEditor?.querySelector('.signal-edit-form input, .signal-edit-form textarea, .signal-edit-form select');
     const firstConfigSection = radarEditor?.querySelector('.radar-config-section');
@@ -196,6 +197,61 @@ async function assertSignalsDesign(page, viewportName) {
         failures.push(`signals tab count badge is malformed (${Math.round(rect.width)}x${Math.round(rect.height)}, margin ${marginLeft}px).`);
       }
     }
+
+    if (radarToolbar) {
+      const title = radarToolbar.querySelector('.entity-toolbar-copy h2');
+      const description = radarToolbar.querySelector('.entity-toolbar-copy p');
+      const action = radarToolbar.querySelector('[data-testid="add-radar-button"]');
+      if (!title || !description) {
+        failures.push('signals radar toolbar does not use canonical count + description copy.');
+      }
+      if (!action) {
+        failures.push('signals radar toolbar add action is missing.');
+      } else if (action.classList.contains('btn-pri')) {
+        failures.push('ordinary + Radar action uses validation/primary button styling.');
+      }
+      if (action) {
+        const toolbarRect = radarToolbar.getBoundingClientRect();
+        const actionRect = action.getBoundingClientRect();
+        const rightGap = Math.round(toolbarRect.right - actionRect.right);
+        if (rightGap < -1 || rightGap > 4) {
+          failures.push(`signals radar toolbar action is not aligned to the right edge (${rightGap}px).`);
+        }
+      }
+    }
+
+    document.querySelectorAll('.entity-list-toolbar button').forEach((button) => {
+      const label = button.textContent?.trim() ?? '';
+      if (label.startsWith('+') && button.classList.contains('btn-pri')) {
+        failures.push(`ordinary create button "${label}" uses btn-pri.`);
+      }
+    });
+
+    document.querySelectorAll('[data-testid="radar-row"] .radar-row-main').forEach((row) => {
+      const rowRect = row.getBoundingClientRect();
+      const meta = row.querySelector('.radar-row-meta');
+      const status = row.querySelector('.radar-status');
+      const count = row.querySelector('.radar-count');
+      const date = row.querySelector('.radar-date');
+      if (!meta || !status || !count || !date) {
+        failures.push('radar row is missing status/count/date metadata slots.');
+        return;
+      }
+      const dateText = date.textContent?.trim() ?? '';
+      if (dateText === 'last run' || dateText.length <= 'last run'.length) {
+        failures.push('radar row date slot is empty instead of showing a fallback.');
+      }
+      const metaRect = meta.getBoundingClientRect();
+      if (metaRect.right > rowRect.right + 1) {
+        failures.push('radar row metadata overflows the row.');
+      }
+      const statusRect = status.getBoundingClientRect();
+      const countRect = count.getBoundingClientRect();
+      const dateRect = date.getBoundingClientRect();
+      if (statusRect.right > countRect.left - 6 || countRect.right > dateRect.left - 6) {
+        failures.push('radar row metadata slots overlap or touch each other.');
+      }
+    });
 
     if (radarEditor && firstFormInput && firstConfigSection) {
       const inputRect = firstFormInput.getBoundingClientRect();
@@ -234,7 +290,15 @@ async function main() {
     await page.locator('[data-testid="radar-row"]').first().waitFor();
     await assertSignalsDesign(page, 'desktop');
 
-    await page.locator('[data-testid="radar-row"]').first().locator('.radar-actions .btn').first().click();
+    await page.locator('[data-testid="add-radar-button"]').click();
+    await page.locator('.radar-editor input').first().fill('Тестовый радар без даты');
+    await page.locator('.radar-editor .btn-pri').click();
+    await page.getByText('Тестовый радар без даты').waitFor();
+    await assertSignalsDesign(page, 'desktop added radar');
+
+    const firstRadarRow = page.locator('[data-testid="radar-row"]').first();
+    await firstRadarRow.locator('.radar-row-main').click();
+    await firstRadarRow.locator('.radar-actions .btn').first().click();
     await page.locator('.radar-editor').waitFor();
     await assertSignalsDesign(page, 'desktop radar editor');
 

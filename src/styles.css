@@ -19,7 +19,7 @@
 }
 
 .radar-row-main {
-  grid-template-columns: minmax(86px, 120px) minmax(0, 1fr) minmax(220px, max-content);
+  grid-template-columns: minmax(88px, 128px) minmax(0, 1fr) minmax(330px, auto);
 }
 
 .signal-row-main {
@@ -147,10 +147,12 @@
 }
 
 .radar-row-meta {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(126px, max-content) 28px minmax(150px, 1fr);
   justify-self: end;
   align-items: center;
   justify-content: flex-end;
+  justify-items: end;
   gap: 10px;
   white-space: nowrap;
 }
@@ -212,7 +214,8 @@
 }
 
 .radar-date {
-  max-width: 142px;
+  width: 150px;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--ink-500);
@@ -470,6 +473,11 @@
     justify-self: stretch;
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .radar-row-meta {
+    grid-template-columns: 1fr;
+    justify-items: start;
   }
 
   .radar-card .radar-row-main,
@@ -1107,6 +1115,31 @@ button:disabled {
   gap: 12px;
   align-items: center;
   justify-content: space-between;
+}
+
+.entity-toolbar-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.entity-toolbar-copy h2,
+.entity-toolbar-copy p {
+  margin: 0;
+}
+
+.entity-toolbar-copy h2 {
+  color: var(--ink-900);
+  font: var(--h3);
+}
+
+.entity-toolbar-copy p {
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.signals-entity-toolbar {
+  margin-bottom: 14px;
 }
 
 .entity-row-main {

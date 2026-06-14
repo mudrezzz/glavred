@@ -1149,6 +1149,36 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
+### Slice 1.5.5: Frontend Design-System Consolidation
+
+- Status: Done
+- Goal: Consolidate shared front-end primitives for section headers, entity toolbars,
+  ordinary action buttons and radar metadata rows.
+- User value: The author sees `Signals`, `Editorial Model` and later cabinet screens as
+  one coherent product surface; ordinary work actions no longer look like validation or
+  approval gates.
+- Scope:
+  - Reuse the compact entity toolbar pattern in `Signals -> Radars`: count and
+    description on the left, ordinary `+ Radar` action on the right.
+  - Keep `+ Radar` as a white secondary work button; reserve red primary buttons for
+    validation, approval, save/commit and HITL lifecycle actions.
+  - Stabilize radar row metadata slots: status, signal count and last run always occupy
+    predictable positions.
+  - Render a fallback for missing radar `lastRunAt` instead of leaving a layout hole.
+  - Add ADR for canonical cabinet primitives and button taxonomy.
+  - Extend `npm run test:design` and UI tests for toolbar action taxonomy and radar
+    metadata slot stability.
+- Out of scope:
+  - Full component extraction into a design-system package.
+  - Pixel-perfect screenshot diffs.
+  - New product behavior for radars, signals or post candidates.
+- Validation:
+  - `npm run test:design` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready

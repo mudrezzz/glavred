@@ -74,6 +74,8 @@ describe('App', () => {
     expect(foundSignalsTab.querySelector('.tab-count')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i })).toBeInTheDocument();
     expect(screen.getByTestId('radar-list')).toBeInTheDocument();
+    expect(within(screen.getByTestId('signals-radar-toolbar')).getByTestId('add-radar-button')).toHaveClass('btn-sec');
+    expect(within(screen.getByTestId('signals-radar-toolbar')).getByTestId('add-radar-button')).not.toHaveClass('btn-pri');
     expect(screen.getAllByTestId('radar-row').length).toBeGreaterThan(0);
     expect(screen.getAllByTestId('radar-row')[0]).toHaveClass('radar-card');
     expect(screen.getAllByText('Память автора').length).toBeGreaterThan(0);

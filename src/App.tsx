@@ -4337,12 +4337,12 @@ function SignalsViewV2({
       {tab === 'radars' && (
         <div className="memory-grid signals-workspace-grid">
           <section className="memory-main">
-            <div className="list-toolbar">
-              <div>
-                <span className="rub">Настраиваемые поисковики</span>
+            <div className="entity-list-toolbar signals-entity-toolbar" data-testid="signals-radar-toolbar">
+              <div className="entity-toolbar-copy">
                 <h2>{workspace.radars.length} радара</h2>
+                <p>Настраиваемые поисковики</p>
               </div>
-              <button className="btn btn-pri btn-sm" type="button" onClick={openNewRadar}>
+              <button className="btn btn-sec btn-sm" data-testid="add-radar-button" type="button" onClick={openNewRadar}>
                 + Радар
               </button>
             </div>
@@ -4385,7 +4385,7 @@ function SignalsViewV2({
                           <span>{radarStatusLabel(radar.status)}</span>
                         </span>
                         <span className="count-dot radar-count">{signalCount}</span>
-                        <span className="radar-date">last run {formatDate(radar.lastRunAt)}</span>
+                        <span className="radar-date">last run {radar.lastRunAt ? formatDate(radar.lastRunAt) : 'не запускался'}</span>
                       </span>
                     </button>
 
