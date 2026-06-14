@@ -173,6 +173,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     evidence, and actions must stay inside the same visible entity card.
     Slice 1.5.3 note: the `Сигналы` section has its own header, stable row layout,
     separated action footers, and visual checks for spacing and column overlap.
+    Slice 1.5.4 note: the header now follows the same cabinet pattern as
+    `Редакционная модель`, tab counters use the shared red badge, and
+    `npm run test:design` checks the layout contract.
 19. Open `Кандидаты постов` to see the Slice 1.6 preview.
 20. Return to `Найденные сигналы` and click `Собрать инсайт`.
 21. Click `В план`.

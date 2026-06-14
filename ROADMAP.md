@@ -1116,6 +1116,39 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
+### Slice 1.5.4: Design-System Guardrails and Signals UI Alignment
+
+- Status: Done
+- Goal: Align the `Сигналы` header and local layout with the accepted cabinet
+  patterns, then make those patterns enforceable through automated design tests.
+- User value: The author sees `Сигналы` as part of the same product, not as a locally
+  assembled screen; future UI regressions around spacing, tabs, side panels and forms
+  are caught before manual review.
+- Scope:
+  - Reuse the `Редакционная модель` project/profile header pattern for `Сигналы`.
+  - Align Signals header metrics to the right edge of the header card, matching the
+    operational right-panel rhythm.
+  - Render tab counters through the shared red badge/count pattern instead of plain
+    text glued to the tab label.
+  - Keep the `Радары` toolbar hierarchy readable: title first, descriptor second.
+  - Enforce base gaps for `.row-actions` so save/cancel and entity actions cannot
+    touch each other.
+  - Align radar editor grouped rule/source sections with the base form working width.
+  - Add `npm run test:design` for structural design-system checks, including
+    main/right column non-overlap and Signals gutter validation.
+  - Add ADR for the cabinet layout contract and design-smoke requirements.
+- Out of scope:
+  - Pixel-perfect screenshot diffing.
+  - New signal/radar domain behavior.
+  - Post candidate assemblies.
+  - Real API/crawler/MCP/AI provider calls.
+- Validation:
+  - `npm run test:design` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1304,6 +1337,8 @@ Status:
 - Slice 1.5.1: Radar Rules/Sources and Raw Signal UX Repair. Completed 2026-06-13.
 - Slice 1.5.2: Signals UI Design-System Repair and Visual Guardrails. Completed 2026-06-13.
 - Slice 1.5.3: Signals Layout Polish and Pixel Guardrails. Completed 2026-06-14.
+- Slice 1.5.4: Design-System Guardrails and Signals UI Alignment. Completed
+  2026-06-14.
 
 ## Blocked Items
 

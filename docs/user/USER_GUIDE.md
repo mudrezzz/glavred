@@ -176,6 +176,11 @@ found-signal rows keep radar, title, date, duplicate risk, and review status rea
 Expanded details and edit forms stay inside the same card, and actions sit in a
 separated footer.
 
+Slice 1.5.4 aligns this header with `Редакционная модель`: the section title, purpose,
+and stat cards use the same cabinet pattern. The `Найденные сигналы` tab counter is a
+separate red badge, and the radar editor keeps base fields, rule groups, source groups,
+and footer actions on one consistent form rhythm.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by

@@ -93,7 +93,7 @@ The revised core modules are:
   compatibility matrix, rules, and validators.
 - Signals and Radars: reviewed material from author memory, archive, external sources,
   and manual input before it becomes a post candidate. Radar and signal lists use
-  framed cabinet rows covered by visual smoke guardrails.
+  framed cabinet rows covered by visual and design-system guardrails.
 - Post Candidates: proposed combinations of signal, topic, fabula, audience, value,
   goal, platform, and format.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for
@@ -137,6 +137,12 @@ Run browser visual smoke checks:
 
 ```bash
 npm run test:visual
+```
+
+Run structural design-system checks:
+
+```bash
+npm run test:design
 ```
 
 Update user wiki screenshots:

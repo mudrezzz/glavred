@@ -131,6 +131,9 @@ After the first `Сигналы` implementation, the product model was corrected
 - topic/fabula/audience/value matching starts only in `Кандидаты постов`.
 - `Радары` and `Найденные сигналы` must use framed rows/cards so the author can see
   which rules, evidence, metadata, and actions belong to one entity.
+- `Сигналы` must reuse the cabinet header rhythm from `Редакционная модель`; tab
+  counters are separate red badges, and normal right panels must never overlap main
+  content. `npm run test:design` enforces these structural UI rules.
 
 This keeps the flow clean:
 

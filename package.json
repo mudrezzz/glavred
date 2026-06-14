@@ -10,6 +10,7 @@
     "docs:wiki:publish": "node scripts/publish-wiki.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:design": "node scripts/design-system-smoke.mjs",
     "test:visual": "node scripts/visual-smoke.mjs",
     "test:watch": "vitest",
     "smoke": "npm run build"

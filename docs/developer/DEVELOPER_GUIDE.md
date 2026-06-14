@@ -40,6 +40,12 @@ Run browser visual smoke checks for operational UI guardrails:
 npm run test:visual
 ```
 
+Run structural design-system checks for cabinet layout contracts:
+
+```bash
+npm run test:design
+```
+
 Refresh wiki screenshots:
 
 ```bash
@@ -125,6 +131,15 @@ For `Сигналы`, visual smoke also verifies the section header, main/side c
 action-button spacing, side-panel action spacing, radar edit-form overflow, and signal
 title width. These checks are intentionally stricter than ordinary smoke tests because
 the screen is dense and small spacing regressions make it unreadable.
+
+`npm run test:design` starts Vite and checks shared cabinet design-system invariants:
+major section headers reuse known patterns, header metric blocks align to the right
+edge, cards and panels keep internal padding, main/right columns do not overlap,
+dense workspace grids keep a measurable gutter, action groups keep a measurable gap,
+tab counters use the shared badge pattern, and radar edit sections align with base
+form fields.
+Use it whenever a slice changes a large operational screen, not only when screenshots
+change.
 
 `npm run docs:wiki:publish` copies `docs/wiki/` into the separate GitHub Wiki
 repository at `https://github.com/mudrezzz/glavred.wiki.git` and pushes it. The main

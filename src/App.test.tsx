@@ -69,7 +69,9 @@ describe('App', () => {
 
     expect(screen.getByTestId('signals-section-header')).toHaveTextContent('Сигналы');
     expect(screen.getByRole('button', { name: /Радары|Р Р°РґР°СЂС‹/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Найденные сигналы|РќР°Р№РґРµРЅРЅС‹Рµ СЃРёРіРЅР°Р»С‹/i })).toBeInTheDocument();
+    const foundSignalsTab = screen.getByRole('button', { name: /Найденные сигналы|РќР°Р№РґРµРЅРЅС‹Рµ СЃРёРіРЅР°Р»С‹/i });
+    expect(foundSignalsTab).toBeInTheDocument();
+    expect(foundSignalsTab.querySelector('.tab-count')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i })).toBeInTheDocument();
     expect(screen.getByTestId('radar-list')).toBeInTheDocument();
     expect(screen.getAllByTestId('radar-row').length).toBeGreaterThan(0);

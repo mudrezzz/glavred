@@ -1579,7 +1579,7 @@ function AuthorMemoryView({
   }
 
   return (
-    <div className="page wide fade-up">
+    <div className="page wide signals-page fade-up">
       <div className="sec-head">
         <div>
           <h2>Авторская память</h2>
@@ -4299,16 +4299,25 @@ function SignalsViewV2({
 
   return (
     <div className="page wide fade-up">
-      <section className="card signals-section-header" data-testid="signals-section-header">
-        <div>
-          <span className="rub">Signals workspace</span>
+      <section className="card project-profile-header signals-section-header" data-testid="signals-section-header">
+        <div className="project-profile-main">
+          <span className="mono-label">Материал</span>
           <h2>Сигналы</h2>
           <p>Радары собирают сырой материал для постов. Автор утверждает, архивирует или правит сигнал до того, как он станет кандидатом поста.</p>
         </div>
-        <div className="signals-header-stats">
-          <SummaryItem label="Радаров" value={workspace.radars.length} />
-          <SummaryItem label="Новых" value={signalSummary.new} />
-          <SummaryItem label="Утверждено" value={signalSummary.approved} />
+        <div className="project-profile-meta signals-header-stats">
+          <div>
+            <b>{workspace.radars.length}</b>
+            <span>радаров</span>
+          </div>
+          <div>
+            <b>{signalSummary.new}</b>
+            <span>новых</span>
+          </div>
+          <div>
+            <b>{signalSummary.approved}</b>
+            <span>утверждено</span>
+          </div>
         </div>
       </section>
 
@@ -4318,7 +4327,7 @@ function SignalsViewV2({
         </button>
         <button className={`tab ${tab === 'signals' ? 'active' : ''}`} type="button" onClick={() => setTab('signals')}>
           Найденные сигналы
-          <span className="count-dot">{signalSummary.new}</span>
+          <span className="tab-count">{signalSummary.new}</span>
         </button>
         <button className={`tab ${tab === 'candidates' ? 'active' : ''}`} type="button" onClick={() => setTab('candidates')}>
           Кандидаты постов

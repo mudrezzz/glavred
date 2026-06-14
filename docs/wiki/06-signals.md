@@ -20,3 +20,5 @@ Rows must stay framed, chips must not wrap by letters, and expanded details must
 The workspace also keeps an explicit section header above tabs, separated action
 footers, and measured visual guardrails for spacing, edit forms, and main/side column
 overlap.
+The section header follows the same cabinet pattern as `Редакционная модель`; tab
+counters use the shared red badge style instead of being appended as plain text.
