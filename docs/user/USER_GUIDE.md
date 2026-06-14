@@ -209,6 +209,25 @@ Radar search rules and source values use multiline fields. Use them for full sea
 instructions, URLs, API/MCP notes, keyword sets, or source descriptions. A new radar can
 still be created from the toolbar as a temporary draft form above the list.
 
+### Radar filters after Slice 1.5.8
+
+Radar setup now has four working blocks:
+
+- trigger rules: what should count as a found signal;
+- search sources: where the radar must search;
+- source discovery mode: search only specified sources, specified plus additional
+  sources, or autonomous discovery;
+- editorial filters: author, audience, positioning, goals, forbidden topics, and
+  topics.
+
+Use `Фильтры отбора` to explain why material should pass, warn, be filtered out, or
+intentionally create tension with the author's position. Style is not a radar filter;
+style is checked later in drafting and editorial review.
+
+If `Только указанные` is selected without at least one source, the radar editor shows a
+warning and blocks save. Filtered-out signals remain visible in `Найденные сигналы` so
+the author can review or override the decision.
+
 ## Context Chat
 
 Use the `Помощник` button in the topbar to open the context chat. It is closed by

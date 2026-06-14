@@ -14,6 +14,7 @@ import {
   completeTopicFabulaMatrix,
   correctSignal,
   createFabulaDraft,
+  createDefaultRadarEditorialFilters,
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
   createEditorialValidationRun,
@@ -24,9 +25,11 @@ import {
   deleteEditorialRule,
   deleteTopic,
   detectBroadcastPlanConflicts,
+  evaluateSignalAgainstRadarFilters,
   filterImportCandidates,
   getRulesByGroup,
   getTopicFabulaWarnings,
+  isRadarSourceConfigurationValid,
   groupImportCandidates,
   normalizeWeightRange,
   markCandidateAcceptedToMemory,
@@ -173,6 +176,46 @@ describe('editorial workspace domain', () => {
     expect(updated.find((radar) => radar.id === draft.id)?.status).toBe('paused');
     expect(updated.find((radar) => radar.id === draft.id)?.notes).toContain('planning deficit');
     expect(removed.some((radar) => radar.id === draft.id)).toBe(false);
+  });
+
+  it('models radar source discovery and editorial filters without using style as a filter', () => {
+    const workspace = createDemoWorkspace();
+    const draft = createRadarDraft();
+    const dimensions = createDefaultRadarEditorialFilters('radar-test').map((filter) => filter.dimension);
+
+    expect(draft.sourceDiscoveryMode).toBe('autonomous');
+    expect(draft.filters).toHaveLength(6);
+    expect(dimensions).toEqual(['author', 'audience', 'positioning', 'goals', 'forbiddenTopics', 'topics']);
+    expect(dimensions).not.toContain('style');
+    expect(isRadarSourceConfigurationValid({ ...draft, sourceDiscoveryMode: 'specifiedOnly', sources: [] })).toBe(false);
+    expect(isRadarSourceConfigurationValid({ ...draft, sourceDiscoveryMode: 'autonomous', sources: [] })).toBe(true);
+    expect(workspace.radars.every((radar) => radar.sourceDiscoveryMode)).toBe(true);
+    expect(workspace.radars.some((radar) => radar.filters?.some((filter) => filter.mode === 'seekTension'))).toBe(true);
+  });
+
+  it('evaluates signals against radar filters deterministically without hiding failed material', () => {
+    const workspace = createDemoWorkspace();
+    const radar = {
+      ...workspace.radars[0],
+      filters: createDefaultRadarEditorialFilters(workspace.radars[0].id, ['positioning', 'forbiddenTopics'])
+    };
+    const rejected = evaluateSignalAgainstRadarFilters(
+      {
+        ...workspace.sourceSignals[0],
+        title: 'Гарантированные прогнозы рынка AI без workflow',
+        summary: 'AI-хайп обещает универсальную автоматизацию и гарантированные прогнозы рынка.',
+        rawNote: 'Гарантированные прогнозы рынка, model-first hype и магическое мышление про модели.'
+      },
+      radar,
+      workspace
+    );
+    const passed = evaluateSignalAgainstRadarFilters(workspace.sourceSignals[0], radar, workspace);
+
+    expect(passed.filterEvaluations?.length).toBe(2);
+    expect(passed.filterStatus).toBe('passed');
+    expect(rejected.id).toBe(workspace.sourceSignals[0].id);
+    expect(rejected.filterStatus).toBe('rejected');
+    expect(rejected.filterEvaluations?.some((evaluation) => evaluation.status === 'failed')).toBe(true);
   });
 
   it('creates a deterministic broadcast grid with compatible topic and fabula slots', () => {

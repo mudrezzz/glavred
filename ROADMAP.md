@@ -1230,6 +1230,35 @@ Status:
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
 
+### Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode
+
+- Status: Done
+- Goal: Extend radar setup from trigger rules and sources to a full signal-search
+  configuration: trigger rules, search sources, editorial filters, and run settings.
+- User value: The author can explain not only what a radar should find and where it
+  should look, but also which editorial dimensions should pass, warn, reject, or seek
+  useful tension before material becomes a post candidate.
+- Scope:
+  - Add source discovery modes: specified sources only, specified plus additional
+    discovery, and autonomous discovery.
+  - Add editorial radar filters for author, audience, positioning, goals, forbidden
+    topics, and topics.
+  - Keep style out of radar filtering.
+  - Remove the radar notes field from the UI while keeping it as storage compatibility.
+  - Show deterministic filter evaluations on found signals.
+  - Add signal filtering by filter status.
+- Out of scope:
+  - Real web/API/MCP execution.
+  - AI provider calls.
+  - Automatic deletion of filtered signals.
+  - Post candidate assemblies.
+- Validation:
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
+  - `npm run docs:screenshots` passed.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1423,6 +1452,8 @@ Status:
 - Slice 1.5.5: Frontend Design-System Consolidation. Completed 2026-06-14.
 - Slice 1.5.6: Layout Stability and Form Rhythm Guardrails. Completed 2026-06-14.
 - Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources. Completed
+  2026-06-14.
+- Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode. Completed
   2026-06-14.
 
 ## Blocked Items

@@ -52,10 +52,12 @@ import {
   deleteEditorialRule,
   deleteTopic,
   detectBroadcastPlanConflicts,
+  evaluateSignalAgainstRadarFilters,
   filterImportCandidates,
   getTopicFabulaWarnings,
   groupImportCandidates,
   ignoreCandidateForEvidence,
+  isRadarSourceConfigurationValid,
   markCandidateAcceptedToArchive,
   markCandidateAcceptedToMemory,
   markLearningNoteCaptured,
@@ -100,9 +102,14 @@ import {
   type PostDraft,
   type ProjectProfile,
   type RadarDefinition,
+  type RadarEditorialFilterMode,
+  type RadarEditorialFilterRule,
+  type RadarSourceDiscoveryMode,
   type RadarSearchRule,
   type RadarSearchSource,
   type ReleasePackage,
+  type SignalFilterStatus,
+  type SignalFilterEvaluationStatus,
   type SignalReviewStatus,
   type SourceSignal,
   type Topic,
@@ -287,11 +294,24 @@ export function App() {
   }
 
   function saveRadar(nextRadar: RadarDefinition, isNew: boolean) {
-    setWorkspace((current) => ({
-      ...current,
-      radars: isNew ? addRadar(current.radars, nextRadar) : updateRadar(current.radars, nextRadar),
-      updatedAt: new Date().toISOString()
-    }));
+    setWorkspace((current) => {
+      const radars = isNew ? addRadar(current.radars, nextRadar) : updateRadar(current.radars, nextRadar);
+      const sourceSignals = current.sourceSignals.map((signal) =>
+        signal.radarId === nextRadar.id ? evaluateSignalAgainstRadarFilters(signal, nextRadar, { ...current, radars }) : signal
+      );
+      const sourceSignal =
+        current.sourceSignal.radarId === nextRadar.id
+          ? sourceSignals.find((signal) => signal.id === current.sourceSignal.id) ?? current.sourceSignal
+          : current.sourceSignal;
+
+      return {
+        ...current,
+        radars,
+        sourceSignal,
+        sourceSignals,
+        updatedAt: new Date().toISOString()
+      };
+    });
     setToast(isNew ? 'Радар добавлен' : 'Радар сохранен');
   }
 
@@ -4100,6 +4120,47 @@ function radarSearchSourceTypeLabel(type: RadarSearchSource['type']): string {
   return labels[type] ?? type;
 }
 
+function radarSourceDiscoveryModeLabel(mode: RadarSourceDiscoveryMode | undefined): string {
+  if (mode === 'specifiedOnly') return 'Только указанные';
+  if (mode === 'specifiedAndAdditional') return 'Указанные + дополнительные';
+  return 'Самостоятельный поиск';
+}
+
+function radarFilterDimensionLabel(dimension: RadarEditorialFilterRule['dimension']): string {
+  const labels: Record<RadarEditorialFilterRule['dimension'], string> = {
+    author: 'Автор',
+    audience: 'Аудитория',
+    positioning: 'Позиция',
+    goals: 'Цели',
+    forbiddenTopics: 'Запреты',
+    topics: 'Темы'
+  };
+  return labels[dimension];
+}
+
+function radarFilterModeLabel(mode: RadarEditorialFilterMode): string {
+  const labels: Record<RadarEditorialFilterMode, string> = {
+    mustMatch: 'Должно совпадать',
+    shouldMatch: 'Желательно совпадение',
+    mustNotMatch: 'Должно отсекаться',
+    seekTension: 'Искать напряжение'
+  };
+  return labels[mode];
+}
+
+function signalFilterStatusLabel(status: SignalFilterStatus | undefined): string {
+  if (status === 'passed') return 'Прошел';
+  if (status === 'warning') return 'С предупреждением';
+  return 'Отсечен';
+}
+
+function signalFilterEvaluationLabel(status: SignalFilterEvaluationStatus): string {
+  if (status === 'passed') return 'OK';
+  if (status === 'warning') return 'Внимание';
+  if (status === 'tension') return 'Напряжение';
+  return 'Отсечено';
+}
+
 function signalReviewStatusLabel(status: SignalReviewStatus | undefined): string {
   if (status === 'approved') return 'Утвержден';
   if (status === 'rejected') return 'Отклонен';
@@ -4139,6 +4200,7 @@ function SignalsViewV2({
   const [editingSignal, setEditingSignal] = useState<SourceSignal | null>(null);
   const [radarFilter, setRadarFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | SignalReviewStatus>('all');
+  const [filterStatusFilter, setFilterStatusFilter] = useState<'all' | SignalFilterStatus>('all');
   const [riskFilter, setRiskFilter] = useState<'all' | ImportRiskLevel>('all');
   const [query, setQuery] = useState('');
 
@@ -4163,6 +4225,7 @@ function SignalsViewV2({
 
     if (radarFilter !== 'all' && signal.radarId !== radarFilter) return false;
     if (statusFilter !== 'all' && signal.reviewStatus !== statusFilter) return false;
+    if (filterStatusFilter !== 'all' && signal.filterStatus !== filterStatusFilter) return false;
     if (riskFilter !== 'all' && signal.duplicateRisk !== riskFilter) return false;
     if (query.trim() && !haystack.includes(query.trim().toLowerCase())) return false;
     return true;
@@ -4191,6 +4254,7 @@ function SignalsViewV2({
 
   function saveRadarDraft() {
     if (!editingRadar || !editingRadar.title.trim()) return;
+    if (!isRadarSourceConfigurationValid(editingRadar)) return;
     onSaveRadar(editingRadar, isNewRadar);
     setExpandedRadarId(editingRadar.id);
     setEditingRadar(null);
@@ -4207,6 +4271,17 @@ function SignalsViewV2({
         ? {
             ...current,
             rules: current.rules.map((rule) => (rule.id === ruleId ? { ...rule, ...patch } : rule))
+          }
+        : current
+    );
+  }
+
+  function patchRadarFilter(filterId: string, patch: Partial<RadarEditorialFilterRule>) {
+    setEditingRadar((current) =>
+      current
+        ? {
+            ...current,
+            filters: (current.filters ?? []).map((filter) => (filter.id === filterId ? { ...filter, ...patch } : filter))
           }
         : current
     );
@@ -4358,6 +4433,7 @@ function SignalsViewV2({
                 onPatchSource={patchRadarSource}
                 onAddSource={addRadarSource}
                 onDeleteSource={deleteRadarSource}
+                onPatchFilter={patchRadarFilter}
                 onSave={saveRadarDraft}
                 onCancel={() => {
                   setEditingRadar(null);
@@ -4409,6 +4485,7 @@ function SignalsViewV2({
                         onPatchSource={patchRadarSource}
                         onAddSource={addRadarSource}
                         onDeleteSource={deleteRadarSource}
+                        onPatchFilter={patchRadarFilter}
                         onSave={saveRadarDraft}
                         onCancel={() => {
                           setEditingRadar(null);
@@ -4433,6 +4510,7 @@ function SignalsViewV2({
                         </div>
                         <div className="radar-config-section">
                           <h4>Источники поиска</h4>
+                          <p className="muted">Поверхность поиска: {radarSourceDiscoveryModeLabel(radar.sourceDiscoveryMode)}</p>
                           {radar.sources.length > 0 ? (
                             <div className="radar-object-list">
                               {radar.sources.map((source) => (
@@ -4450,13 +4528,32 @@ function SignalsViewV2({
                             <p className="muted">Источники не заданы: будущий AI-адаптер сможет сам выбрать поверхность поиска по правилам.</p>
                           )}
                         </div>
+                        <div className="radar-config-section">
+                          <h4>Фильтры отбора</h4>
+                          {(radar.filters ?? []).filter((filter) => filter.enabled).length > 0 ? (
+                            <div className="radar-object-list">
+                              {(radar.filters ?? [])
+                                .filter((filter) => filter.enabled)
+                                .map((filter) => (
+                                  <div className="radar-object" key={filter.id}>
+                                    <span className="sig">{radarFilterDimensionLabel(filter.dimension)}</span>
+                                    <p>
+                                      <strong>{radarFilterModeLabel(filter.mode)}</strong>
+                                      <br />
+                                      {filter.instruction}
+                                    </p>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <p className="muted">Фильтры не включены: радар покажет найденный материал без редакционного отсева.</p>
+                          )}
+                        </div>
                         <dl className="meta-list">
                           <dt>Политика утверждения</dt>
                           <dd>{radarAcceptancePolicyLabel(radar.acceptancePolicy)}</dd>
                           <dt>Запуск</dt>
                           <dd>{radarTriggerModeLabel(radar.triggerMode)}</dd>
-                          <dt>Заметка</dt>
-                          <dd>{radar.notes}</dd>
                         </dl>
                         <div className="row-actions radar-actions entity-actions-footer">
                           <button className="btn btn-sec btn-sm" type="button" onClick={() => startRadarEdit(radar)}>
@@ -4543,6 +4640,17 @@ function SignalsViewV2({
                 <option value="medium">medium</option>
                 <option value="high">high</option>
               </select>
+              <select
+                aria-label="Р¤РёР»СЊС‚СЂ С„РёР»СЊС‚СЂРѕРІ РѕС‚Р±РѕСЂР° СЃРёРіРЅР°Р»Р°"
+                data-testid="signal-filter-status-filter"
+                value={filterStatusFilter}
+                onChange={(event) => setFilterStatusFilter(event.target.value as 'all' | SignalFilterStatus)}
+              >
+                <option value="all">Все по фильтрам</option>
+                <option value="passed">Прошли</option>
+                <option value="warning">С предупреждением</option>
+                <option value="rejected">Отсечены</option>
+              </select>
             </div>
 
             <div className="entity-list signals-entity-list" data-testid="source-signal-list">
@@ -4564,6 +4672,9 @@ function SignalsViewV2({
                       <span className="signal-row-meta">
                         <span className="signal-date">{formatDate(signal.capturedAt)}</span>
                         <span className={`sc signal-risk risk-${signal.duplicateRisk ?? 'low'}`}>дубль {duplicateRiskLabel(signal.duplicateRisk ?? 'low')}</span>
+                        <span className={`sc signal-filter-status filter-status-${signal.filterStatus ?? 'passed'}`}>
+                          {signalFilterStatusLabel(signal.filterStatus)}
+                        </span>
                       </span>
                     </button>
 
@@ -4587,6 +4698,27 @@ function SignalsViewV2({
                           <dt>Правка автора</dt>
                           <dd>{signal.authorCorrection || 'нет'}</dd>
                         </dl>
+                        <div className="radar-config-section signal-filter-evaluations" data-testid="signal-filter-evaluations">
+                          <h4>Фильтры отбора</h4>
+                          {(signal.filterEvaluations ?? []).length > 0 ? (
+                            <div className="signal-filter-list">
+                              {(signal.filterEvaluations ?? []).map((evaluation) => (
+                                <div className={`signal-filter-evaluation filter-eval-${evaluation.status}`} key={evaluation.filterId}>
+                                  <span className={`sc filter-status-${evaluation.status}`}>
+                                    {signalFilterEvaluationLabel(evaluation.status)}
+                                  </span>
+                                  <div>
+                                    <strong>{radarFilterDimensionLabel(evaluation.dimension)} · {evaluation.score}%</strong>
+                                    <p>{evaluation.summary}</p>
+                                    <small>{evaluation.evidence}</small>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="muted">Для этого сигнала еще нет оценки фильтров.</p>
+                          )}
+                        </div>
                         <div className="radar-config-section">
                           <h4>Evidence</h4>
                           <div className="signal-evidence-list">
@@ -4694,6 +4826,7 @@ function RadarEditor({
   onPatchSource,
   onAddSource,
   onDeleteSource,
+  onPatchFilter,
   onSave,
   onCancel,
   embedded = false
@@ -4708,9 +4841,12 @@ function RadarEditor({
   onPatchSource: (sourceId: string, patch: Partial<RadarSearchSource>) => void;
   onAddSource: () => void;
   onDeleteSource: (sourceId: string) => void;
+  onPatchFilter: (filterId: string, patch: Partial<RadarEditorialFilterRule>) => void;
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const sourceConfigInvalid = !isRadarSourceConfigurationValid(radar);
+
   return (
     <section className={`${embedded ? 'radar-editor radar-editor-inline' : 'card radar-editor'}`}>
       <div className="doc-head">
@@ -4761,10 +4897,6 @@ function RadarEditor({
             </select>
           </label>
         </div>
-        <label>
-          <span>Заметка</span>
-          <textarea value={radar.notes} onChange={(event) => onPatch({ notes: event.target.value })} />
-        </label>
       </div>
 
       <div className="radar-config-section">
@@ -4803,6 +4935,23 @@ function RadarEditor({
             + Источник
           </button>
         </div>
+        <div className="radar-source-mode" data-testid="radar-source-discovery-mode">
+          {(['specifiedOnly', 'specifiedAndAdditional', 'autonomous'] as RadarSourceDiscoveryMode[]).map((mode) => (
+            <label className={`source-mode-option ${radar.sourceDiscoveryMode === mode ? 'active' : ''}`} key={mode}>
+              <input
+                type="radio"
+                checked={(radar.sourceDiscoveryMode ?? 'autonomous') === mode}
+                onChange={() => onPatch({ sourceDiscoveryMode: mode })}
+              />
+              <span>{radarSourceDiscoveryModeLabel(mode)}</span>
+            </label>
+          ))}
+        </div>
+        {sourceConfigInvalid && (
+          <p className="validation-warning" role="alert">
+            Для режима "Только указанные" нужен хотя бы один источник или другой режим поиска.
+          </p>
+        )}
         {radar.sources.map((source) => (
           <div className="radar-source-edit" key={source.id}>
             <select value={source.type} onChange={(event) => onPatchSource(source.id, { type: event.target.value as RadarSearchSource['type'] })}>
@@ -4826,8 +4975,45 @@ function RadarEditor({
         {radar.sources.length === 0 && <p className="muted">Источники можно не задавать: тогда правила описывают, что искать, а поверхность поиска будет выбрана позднее.</p>}
       </div>
 
+      <div className="radar-config-section" data-testid="radar-filter-section">
+        <div className="list-toolbar compact">
+          <h4>Фильтры отбора</h4>
+          <p className="muted">Проверяют найденный сигнал против издательства, автора, аудитории, позиции, целей, запретов и тем.</p>
+        </div>
+        {(radar.filters ?? []).map((filter) => (
+          <div className={`radar-filter-edit ${filter.enabled ? 'active' : ''}`} key={filter.id}>
+            <label className="check-row radar-filter-toggle">
+              <input
+                type="checkbox"
+                checked={filter.enabled}
+                onChange={(event) => onPatchFilter(filter.id, { enabled: event.target.checked })}
+              />
+              {radarFilterDimensionLabel(filter.dimension)}
+            </label>
+            <div className="radar-filter-controls">
+              <select
+                value={filter.mode}
+                onChange={(event) => onPatchFilter(filter.id, { mode: event.target.value as RadarEditorialFilterMode })}
+                disabled={!filter.enabled}
+              >
+                <option value="mustMatch">Должно совпадать</option>
+                <option value="shouldMatch">Желательно совпадение</option>
+                <option value="mustNotMatch">Не должно совпадать</option>
+                <option value="seekTension">Искать напряжение</option>
+              </select>
+              <textarea
+                placeholder="Дополнительное правило фильтра"
+                value={filter.instruction}
+                onChange={(event) => onPatchFilter(filter.id, { instruction: event.target.value })}
+                disabled={!filter.enabled}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="row-actions">
-        <button className="btn btn-pri btn-sm" type="button" disabled={!radar.title.trim()} onClick={onSave}>
+        <button className="btn btn-pri btn-sm" type="button" disabled={!radar.title.trim() || sourceConfigInvalid} onClick={onSave}>
           Сохранить
         </button>
         <button className="btn btn-sec btn-sm" type="button" onClick={onCancel}>

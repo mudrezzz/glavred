@@ -139,6 +139,26 @@ This keeps the flow clean:
 
 `Radar rules/sources -> raw SourceSignal -> reviewed SourceSignal -> PostCandidate`.
 
+## Slice 1.5.8 Correction: Radar Discovery Mode and Editorial Filters
+
+A radar is now modeled as four separate configuration layers:
+
+1. Trigger rules: atomic instructions that say what should count as a signal.
+2. Search sources: optional explicit places to search, such as archive, URL, API, MCP,
+   keywords, documents, or open web.
+3. Source discovery mode: `specifiedOnly`, `specifiedAndAdditional`, or `autonomous`.
+4. Editorial filters: author, audience, positioning, goals, forbidden topics, and
+   topics.
+
+The distinction matters because a future adapter may search broad surfaces while the
+editorial filters explain whether the found material fits the author and publishing
+project. Style is intentionally excluded from radar filtering; it belongs to post
+drafting and editorial checks.
+
+Filtered-out signals remain visible. The system should show why they failed, warn, or
+create useful tension, then let the author approve, archive, reject, or correct them.
+No signal should disappear automatically before human review.
+
 Radars should react to plan deficit:
 
 - if the calendar has enough approved candidates, radars can stay idle;

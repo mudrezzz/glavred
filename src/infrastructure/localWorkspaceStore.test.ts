@@ -143,7 +143,10 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.radars).toHaveLength(4);
     expect(loaded.radars[0].rules.length).toBeGreaterThan(0);
     expect(Array.isArray(loaded.radars[0].sources)).toBe(true);
+    expect(loaded.radars[0].sourceDiscoveryMode).toBeDefined();
+    expect(loaded.radars[0].filters?.length).toBeGreaterThan(0);
     expect(loaded.sourceSignals.length).toBeGreaterThan(5);
+    expect(loaded.sourceSignals[0].filterStatus).toBeDefined();
     expect(loaded.sourceSignal.id).toBe(workspace.sourceSignal.id);
   });
 
@@ -157,7 +160,17 @@ describe('LocalWorkspaceStore', () => {
     };
     const changed = {
       ...workspace,
-      radars: [{ ...workspace.radars[0], status: 'paused' as const }, ...workspace.radars.slice(1)],
+      radars: [
+        {
+          ...workspace.radars[0],
+          status: 'paused' as const,
+          sourceDiscoveryMode: 'specifiedOnly' as const,
+          filters: workspace.radars[0].filters?.map((filter, index) =>
+            index === 0 ? { ...filter, enabled: true, instruction: 'Roundtrip author filter.' } : filter
+          )
+        },
+        ...workspace.radars.slice(1)
+      ],
       sourceSignal: changedSignal,
       sourceSignals: workspace.sourceSignals.map((signal) => signal.id === changedSignal.id ? changedSignal : signal)
     };
@@ -166,6 +179,8 @@ describe('LocalWorkspaceStore', () => {
     const loaded = store.load();
 
     expect(loaded.radars[0].status).toBe('paused');
+    expect(loaded.radars[0].sourceDiscoveryMode).toBe('specifiedOnly');
+    expect(loaded.radars[0].filters?.[0].instruction).toContain('Roundtrip');
     expect(loaded.sourceSignal.id).toBe(changedSignal.id);
     expect(loaded.sourceSignal.reviewStatus).toBe('approved');
     expect(loaded.sourceSignals.find((signal) => signal.id === changedSignal.id)?.authorCorrection).toContain('trust/adoption');

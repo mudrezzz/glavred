@@ -61,6 +61,10 @@ flow; future slices should route post candidates and calendar slots through them
 Slice 1.5 adds the first local-first `Сигналы` workspace: demo radars, found signals,
 manual review actions, and a read-only `Кандидаты постов` preview. The deeper planning
 model still needs Slice 1.6 candidate assemblies before expanding the calendar UI.
+Slice 1.5.8 refines radars into separate trigger rules, search sources, source
+discovery mode, and editorial filters. Filters evaluate author, audience, positioning,
+goals, forbidden topics, and topics; style remains a later drafting/review concern.
+Filtered signals stay visible for human review instead of being deleted automatically.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -107,6 +111,10 @@ turning the product into generic content generation.
   finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
   audience/value matching starts in `PostCandidateAssembly`, not in the signal review
   UI.
+- Slice 1.5.8 correction: `EditorialRadar` also owns source discovery mode and
+  editorial filters. The deterministic filter service returns per-filter status, score,
+  summary, and evidence on `SourceSignal`; React renders those results but does not
+  implement scoring logic.
 - `ExternalSourceSettings`: stores planned or connected source configurations for
   Telegram, social profiles, blogs, documents, article archives, and manual uploads.
 - `ImportReviewQueue`: holds imported candidates before they affect author memory,

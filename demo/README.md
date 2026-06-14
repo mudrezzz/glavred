@@ -185,6 +185,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     Slice 1.5.7 note: editing an existing radar opens the editor inside that radar
     card. Radar rules and source values are multiline fields, so demo instructions,
     URLs, API/MCP notes, and keyword sets are not cramped into one-line inputs.
+    Slice 1.5.8 note: radar setup now also includes source discovery mode and
+    `Фильтры отбора`. Expand a found signal to see deterministic filter evaluations
+    for author, audience, positioning, goals, forbidden topics, and topics.
 19. Open `Кандидаты постов` to see the Slice 1.6 preview.
 20. Return to `Найденные сигналы` and click `Собрать инсайт`.
 21. Click `В план`.

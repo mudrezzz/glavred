@@ -35,6 +35,17 @@ export type RadarAcceptancePolicy = 'manual' | 'automatic' | 'automaticWithRevie
 export type RadarTriggerMode = 'scheduled' | 'manual' | 'deficitDriven';
 export type RadarStatus = 'active' | 'paused' | 'needsReview';
 export type RadarRuleOperator = 'and' | 'or';
+export type RadarSourceDiscoveryMode = 'specifiedOnly' | 'specifiedAndAdditional' | 'autonomous';
+export type RadarEditorialFilterDimension =
+  | 'author'
+  | 'audience'
+  | 'positioning'
+  | 'goals'
+  | 'forbiddenTopics'
+  | 'topics';
+export type RadarEditorialFilterMode = 'mustMatch' | 'shouldMatch' | 'mustNotMatch' | 'seekTension';
+export type SignalFilterEvaluationStatus = 'passed' | 'warning' | 'failed' | 'tension';
+export type SignalFilterStatus = 'passed' | 'warning' | 'rejected';
 export type RadarSearchSourceType =
   | 'authorArchive'
   | 'externalUrl'
@@ -265,6 +276,8 @@ export interface RadarDefinition {
   scope: string;
   rules: RadarSearchRule[];
   sources: RadarSearchSource[];
+  sourceDiscoveryMode?: RadarSourceDiscoveryMode;
+  filters?: RadarEditorialFilterRule[];
   acceptancePolicy: RadarAcceptancePolicy;
   triggerMode: RadarTriggerMode;
   status: RadarStatus;
@@ -287,6 +300,23 @@ export interface RadarSearchSource {
   value: string;
   notes: string;
   status: EditorialEntityStatus;
+}
+
+export interface RadarEditorialFilterRule {
+  id: string;
+  dimension: RadarEditorialFilterDimension;
+  enabled: boolean;
+  mode: RadarEditorialFilterMode;
+  instruction: string;
+}
+
+export interface SignalFilterEvaluation {
+  filterId: string;
+  dimension: RadarEditorialFilterDimension;
+  status: SignalFilterEvaluationStatus;
+  score: number;
+  summary: string;
+  evidence: string;
 }
 
 export interface SignalEvidence {
@@ -314,6 +344,8 @@ export interface SourceSignal {
   suggestedValue?: string;
   duplicateRisk?: ImportRiskLevel;
   authorCorrection?: string;
+  filterEvaluations?: SignalFilterEvaluation[];
+  filterStatus?: SignalFilterStatus;
 }
 
 export interface InsightCard {
@@ -1200,6 +1232,177 @@ export function archiveSignal(signal: SourceSignal): SourceSignal {
   return { ...signal, reviewStatus: 'archived' };
 }
 
+export function createDefaultRadarEditorialFilters(
+  radarId: string,
+  enabledDimensions: RadarEditorialFilterDimension[] = []
+): RadarEditorialFilterRule[] {
+  const defaults: Array<{
+    dimension: RadarEditorialFilterDimension;
+    mode: RadarEditorialFilterMode;
+    instruction: string;
+  }> = [
+    {
+      dimension: 'author',
+      mode: 'mustMatch',
+      instruction: 'Материал должен быть совместим с образом автора и его исследовательской оптикой.'
+    },
+    {
+      dimension: 'audience',
+      mode: 'shouldMatch',
+      instruction: 'Материал должен быть полезен AI PM, founders, CPO или B2B SaaS командам.'
+    },
+    {
+      dimension: 'positioning',
+      mode: 'mustMatch',
+      instruction: 'Материал должен поддерживать позицию: меньше demo magic, больше workflow, evals, trust loop и adoption.'
+    },
+    {
+      dimension: 'goals',
+      mode: 'shouldMatch',
+      instruction: 'Материал должен помогать собирать аудиторию вокруг практики AI-B2B productization.'
+    },
+    {
+      dimension: 'forbiddenTopics',
+      mode: 'mustNotMatch',
+      instruction: 'Отсекать AI-хайп без продуктовой механики, гарантированные прогнозы и магическое мышление про модели.'
+    },
+    {
+      dimension: 'topics',
+      mode: 'mustMatch',
+      instruction: 'Материал должен ложиться хотя бы на одну активную тему редакционной модели.'
+    }
+  ];
+
+  return defaults.map((item) => ({
+    id: `filter-${radarId}-${item.dimension}`,
+    dimension: item.dimension,
+    enabled: enabledDimensions.includes(item.dimension),
+    mode: item.mode,
+    instruction: item.instruction
+  }));
+}
+
+export function isRadarSourceConfigurationValid(radar: RadarDefinition): boolean {
+  return radar.sourceDiscoveryMode !== 'specifiedOnly' || radar.sources.length > 0;
+}
+
+function signalText(signal: SourceSignal): string {
+  return [
+    signal.title,
+    signal.type,
+    signal.source,
+    signal.summary,
+    signal.rawNote,
+    signal.searchNote ?? '',
+    signal.suggestedValue ?? '',
+    signal.authorCorrection ?? '',
+    ...(signal.evidence ?? []).flatMap((item) => [item.sourceTitle, item.quote, item.summary])
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
+function dimensionKeywords(workspace: WorkspaceState, dimension: RadarEditorialFilterDimension): string[] {
+  const topicTitles = workspace.topics.map((topic) => topic.title.toLowerCase());
+  const model = workspace.editorialModel;
+  const map: Record<RadarEditorialFilterDimension, string[]> = {
+    author: ['исслед', 'product', 'workflow', 'практик', 'trade-off', model.author.toLowerCase()],
+    audience: ['pm', 'founder', 'cpo', 'b2b', 'enterprise', 'audience', model.audience.toLowerCase()],
+    positioning: ['workflow', 'eval', 'trust', 'adoption', 'rollout', 'demo', 'позици', model.positioning.toLowerCase()],
+    goals: ['audience', 'productization', 'practice', 'принцип', 'опыт', ...model.goals.map((goal) => goal.toLowerCase())],
+    forbiddenTopics: ['hype', 'магич', 'universal', 'гарантир', 'model-first', ...model.forbiddenTopics.map((topic) => topic.toLowerCase())],
+    topics: [...topicTitles, 'discovery', 'eval', 'quality', 'trust', 'gtm', 'adoption', 'workflow']
+  };
+  return map[dimension];
+}
+
+function hasAnyKeyword(text: string, keywords: string[]): boolean {
+  return keywords.some((keyword) => keyword && text.includes(keyword));
+}
+
+function evaluateFilter(
+  signal: SourceSignal,
+  filter: RadarEditorialFilterRule,
+  workspace: WorkspaceState
+): SignalFilterEvaluation {
+  const text = signalText(signal);
+  const matched = hasAnyKeyword(text, dimensionKeywords(workspace, filter.dimension));
+  const mode = filter.mode;
+
+  if (mode === 'mustNotMatch') {
+    return {
+      filterId: filter.id,
+      dimension: filter.dimension,
+      status: matched ? 'failed' : 'passed',
+      score: matched ? 0.25 : 0.92,
+      summary: matched
+        ? 'Сигнал похож на материал, который фильтр просит отсечь.'
+        : 'Сигнал не попал в запрещенную область фильтра.',
+      evidence: filter.instruction
+    };
+  }
+
+  if (mode === 'seekTension') {
+    return {
+      filterId: filter.id,
+      dimension: filter.dimension,
+      status: matched ? 'tension' : 'warning',
+      score: matched ? 0.72 : 0.54,
+      summary: matched
+        ? 'Есть продуктивное напряжение с выбранной редакционной рамкой.'
+        : 'Напряжение задано фильтром, но в сигнале пока мало опор.',
+      evidence: filter.instruction
+    };
+  }
+
+  if (mode === 'shouldMatch') {
+    return {
+      filterId: filter.id,
+      dimension: filter.dimension,
+      status: matched ? 'passed' : 'warning',
+      score: matched ? 0.82 : 0.58,
+      summary: matched
+        ? 'Сигнал достаточно хорошо совпадает с мягким фильтром.'
+        : 'Сигнал можно оставить на review, но связь с фильтром слабая.',
+      evidence: filter.instruction
+    };
+  }
+
+  return {
+    filterId: filter.id,
+    dimension: filter.dimension,
+    status: matched ? 'passed' : 'failed',
+    score: matched ? 0.9 : 0.34,
+    summary: matched
+      ? 'Сигнал проходит обязательный фильтр.'
+      : 'Сигнал не показывает достаточной связи с обязательным фильтром.',
+    evidence: filter.instruction
+  };
+}
+
+export function evaluateSignalAgainstRadarFilters(
+  signal: SourceSignal,
+  radar: RadarDefinition,
+  workspace: WorkspaceState
+): SourceSignal {
+  const evaluations = (radar.filters ?? createDefaultRadarEditorialFilters(radar.id))
+    .filter((filter) => filter.enabled)
+    .map((filter) => evaluateFilter(signal, filter, workspace));
+
+  const filterStatus: SignalFilterStatus =
+    evaluations.some((evaluation) => evaluation.status === 'failed')
+      ? 'rejected'
+      : evaluations.some((evaluation) => evaluation.status === 'warning' || evaluation.status === 'tension')
+        ? 'warning'
+        : 'passed';
+
+  return {
+    ...signal,
+    filterEvaluations: evaluations,
+    filterStatus
+  };
+}
+
 export function createRadarDraft(): RadarDefinition {
   const id = `radar-custom-${Date.now()}`;
   return {
@@ -1209,6 +1412,8 @@ export function createRadarDraft(): RadarDefinition {
     scope: '',
     rules: [],
     sources: [],
+    sourceDiscoveryMode: 'autonomous',
+    filters: createDefaultRadarEditorialFilters(id),
     acceptancePolicy: 'manual',
     triggerMode: 'manual',
     status: 'active',

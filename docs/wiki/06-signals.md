@@ -11,8 +11,23 @@ Radars are configurable search procedures. Each radar row is a framed cabinet ca
 ## Found Signals
 
 Found signals are raw material. They do not own topic/fabula/audience/value matching yet; that starts in Slice 1.6 with post candidates.
+Expanded signals now show deterministic editorial filter evaluations from the source
+radar. These evaluations explain whether a signal passed, needs attention, was
+filtered out, or intentionally creates tension with the author's position. Filtered
+signals remain visible for human review.
 
 ![Found signals](assets/screenshots/13-signals-found-signals.png)
+
+## Radar Filters
+
+Radar setup separates:
+
+- trigger rules;
+- search sources;
+- source discovery mode;
+- editorial filters for author, audience, positioning, goals, forbidden topics, and topics.
+
+Style is not a radar filter. It belongs to draft editing and editorial checks.
 
 ## UX Rule
 

@@ -463,7 +463,7 @@
 
 .signal-filter-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr));
   gap: 10px;
   padding: 14px;
   border: 1px solid var(--ink-200);
@@ -471,6 +471,149 @@
   background: var(--surface);
   box-shadow: var(--shadow-sm);
   margin-bottom: 14px;
+}
+
+.radar-source-mode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.source-mode-option {
+  display: flex !important;
+  min-width: 0;
+  align-items: center;
+  gap: 8px !important;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-700) !important;
+  font: var(--ui-sm) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  overflow-wrap: anywhere;
+}
+
+.source-mode-option.active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.source-mode-option input {
+  width: auto;
+  min-width: 18px;
+  height: 18px;
+}
+
+.validation-warning {
+  padding: 12px 14px;
+  border: 1px solid var(--warn);
+  border-radius: var(--r-sm);
+  background: var(--warn-tint);
+  color: var(--warn-ink) !important;
+  font: var(--ui-sm) !important;
+}
+
+.radar-filter-edit {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.radar-filter-edit:not(.active) {
+  opacity: 0.72;
+}
+
+.radar-filter-edit textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.radar-filter-toggle {
+  padding-top: 0;
+}
+
+.radar-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(190px, 280px) minmax(50%, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.radar-filter-controls select,
+.radar-filter-controls textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.signal-filter-status,
+.filter-status-passed,
+.filter-status-warning,
+.filter-status-rejected,
+.filter-status-failed,
+.filter-status-tension {
+  white-space: nowrap;
+}
+
+.filter-status-passed {
+  color: var(--ok-ink);
+  background: var(--ok-tint);
+}
+
+.filter-status-warning,
+.filter-status-tension {
+  color: var(--warn-ink);
+  background: var(--warn-tint);
+}
+
+.filter-status-rejected,
+.filter-status-failed {
+  color: var(--danger-ink);
+  background: var(--danger-tint);
+}
+
+.signal-filter-list {
+  display: grid;
+  gap: 10px;
+}
+
+.signal-filter-evaluation {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.signal-filter-evaluation strong,
+.signal-filter-evaluation p,
+.signal-filter-evaluation small {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.signal-filter-evaluation div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.signal-filter-evaluation small {
+  color: var(--ink-600);
+  font: var(--ui-sm);
 }
 
 .signal-filter-row input,
@@ -541,8 +684,22 @@
   }
 
   .signal-filter-row,
+  .radar-source-mode,
+  .radar-filter-edit,
+  .radar-filter-controls,
+  .signal-filter-evaluation,
   .signal-side-panel .signal-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .source-mode-option,
+  .radar-filter-edit select,
+  .radar-filter-edit textarea {
+    width: 100%;
+  }
+
+  .radar-filter-toggle {
+    padding-top: 0;
   }
 }
 

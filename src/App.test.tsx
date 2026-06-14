@@ -95,6 +95,12 @@ describe('App', () => {
     const signalRow = screen.getAllByTestId('source-signal-row')[0];
     fireEvent.click(within(signalRow).getAllByRole('button')[0]);
     expect(within(signalRow).getByText('Evidence')).toBeInTheDocument();
+    expect(within(signalRow).getByTestId('signal-filter-evaluations')).toBeInTheDocument();
+    expect(within(signalRow).getByText(/Фильтры отбора/i)).toBeInTheDocument();
+    expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Все по фильтрам' })).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'warning' } });
+    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
     fireEvent.click(within(signalRow).getByRole('button', { name: /Утвердить сигнал|РЈС‚РІРµСЂРґРёС‚СЊ СЃРёРіРЅР°Р»/i }));
     fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'approved' } });
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
@@ -126,7 +132,14 @@ describe('App', () => {
     const inlineEditor = lastRadar.querySelector('.radar-editor');
     expect(inlineEditor).toBeInTheDocument();
     expect(screen.getByTestId('radar-list').previousElementSibling).not.toHaveClass('radar-editor');
+    expect(within(inlineEditor as HTMLElement).getByTestId('radar-source-discovery-mode')).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByTestId('radar-filter-section')).toBeInTheDocument();
+    expect((inlineEditor as HTMLElement).querySelector('.radar-filter-controls')).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).queryByText(/^Заметка$/i)).not.toBeInTheDocument();
     expect(lastRadar.querySelectorAll('.radar-rule-edit textarea').length).toBeGreaterThan(0);
+    fireEvent.click(within(inlineEditor as HTMLElement).getByLabelText(/Только указанные/i));
+    expect(within(inlineEditor as HTMLElement).getByRole('alert')).toHaveTextContent(/нужен хотя бы один источник/i);
+    expect(within(inlineEditor as HTMLElement).getByRole('button', { name: /^Сохранить$/i })).toBeDisabled();
     if (lastRadar.querySelectorAll('.radar-source-edit textarea').length === 0) {
       const addSourceButton = Array.from((inlineEditor as HTMLElement).querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Источник')

@@ -1,5 +1,9 @@
 import { createAuthorMemoryEvent, createBroadcastPlan, inferAuthorPositionAssertions } from '../application/editorialServices';
-import { createDefaultTopicFabulaMatrix } from '../domain/editorialWorkspace';
+import {
+  createDefaultRadarEditorialFilters,
+  createDefaultTopicFabulaMatrix,
+  evaluateSignalAgainstRadarFilters
+} from '../domain/editorialWorkspace';
 import type {
   ArchiveRecord,
   AuthorExternalSource,
@@ -773,6 +777,40 @@ const demoRadars: RadarDefinition[] = [
   }
 ];
 
+const demoRadarsWithFilters: RadarDefinition[] = demoRadars.map((radar) => {
+  if (radar.id === 'radar-author-memory') {
+    return {
+      ...radar,
+      sourceDiscoveryMode: 'specifiedAndAdditional',
+      filters: createDefaultRadarEditorialFilters(radar.id, ['positioning', 'topics'])
+    };
+  }
+
+  if (radar.id === 'radar-archive') {
+    return {
+      ...radar,
+      sourceDiscoveryMode: 'specifiedOnly',
+      filters: createDefaultRadarEditorialFilters(radar.id, ['forbiddenTopics', 'topics'])
+    };
+  }
+
+  if (radar.id === 'radar-external-sources') {
+    return {
+      ...radar,
+      sourceDiscoveryMode: 'specifiedAndAdditional',
+      filters: createDefaultRadarEditorialFilters(radar.id, ['audience', 'positioning', 'forbiddenTopics']).map((filter) =>
+        filter.dimension === 'positioning' ? { ...filter, mode: 'seekTension' } : filter
+      )
+    };
+  }
+
+  return {
+    ...radar,
+    sourceDiscoveryMode: 'autonomous',
+    filters: createDefaultRadarEditorialFilters(radar.id, ['goals', 'topics'])
+  };
+});
+
 const demoSourceSignals: SourceSignal[] = ([
   {
     id: 'signal-ai-demo-to-adoption-gap',
@@ -911,6 +949,22 @@ const demoSourceSignals: SourceSignal[] = ([
 export function createDemoWorkspace(): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);
   const authorPositionAssertions = inferAuthorPositionAssertions(demoAuthorNotes, authorMemoryEvents);
+  const evaluatedSourceSignals = demoSourceSignals.map((signal) => {
+    const radar = demoRadarsWithFilters.find((candidate) => candidate.id === signal.radarId);
+    return radar ? evaluateSignalAgainstRadarFilters(signal, radar, {
+      editorialModel: {
+        author: '',
+        audience: '',
+        positioning: '',
+        fabula: '',
+        rubrics: [],
+        styleRules: [],
+        forbiddenTopics: [],
+        goals: []
+      },
+      topics: demoTopics
+      } as unknown as WorkspaceState) : signal;
+  });
 
   const workspace: WorkspaceState = {
     authorNotes: demoAuthorNotes,
@@ -946,7 +1000,7 @@ export function createDemoWorkspace(): WorkspaceState {
     topics: demoTopics,
     fabulas: demoFabulas,
     topicFabulaMatrix: createDefaultTopicFabulaMatrix(demoTopics, demoFabulas),
-    radars: demoRadars,
+    radars: demoRadarsWithFilters,
     sourceSignal: {
       id: 'signal-ai-demo-to-adoption-gap',
       type: 'Повторяющийся паттерн',
@@ -958,7 +1012,7 @@ export function createDemoWorkspace(): WorkspaceState {
       rawNote:
         'Хороший материал для TG-поста: не спорить про модели, а показать разрыв между демо и продуктом. Это лучше относится к GTM/adoption, чем к support automation.'
     },
-    sourceSignals: demoSourceSignals,
+    sourceSignals: evaluatedSourceSignals,
     insightCard: null,
     contentPlanItem: null,
     contentPlanItems: [],
@@ -989,7 +1043,7 @@ export function createDemoWorkspace(): WorkspaceState {
     updatedAt: new Date().toISOString()
   };
 
-  const selectedSourceSignal = demoSourceSignals[0];
+  const selectedSourceSignal = evaluatedSourceSignals[0];
   const workspaceWithSelectedSignal = {
     ...workspace,
     sourceSignal: selectedSourceSignal

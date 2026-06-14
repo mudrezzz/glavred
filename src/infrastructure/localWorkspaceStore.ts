@@ -1,6 +1,8 @@
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   completeTopicFabulaMatrix,
+  createDefaultRadarEditorialFilters,
+  evaluateSignalAgainstRadarFilters,
   getValidatorRunScore,
   getValidatorRunStatus,
   normalizeWeightRange,
@@ -61,10 +63,15 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
       weightWarningIds: item.weightWarningIds ?? []
     })
   );
+  const radars = (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar));
   const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
-  const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) =>
-    normalizeSourceSignal(signal, sourceSignal)
-  );
+  const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) => {
+    const normalizedSignal = normalizeSourceSignal(signal, sourceSignal);
+    const radar = radars.find((candidate) => candidate.id === normalizedSignal.radarId);
+    return radar
+      ? evaluateSignalAgainstRadarFilters(normalizedSignal, radar, { ...demo, ...saved, radars } as WorkspaceState)
+      : normalizedSignal;
+  });
   const activeSection = normalizeWorkspaceSection(saved.activeSection);
 
   return {
@@ -84,7 +91,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
-    radars: (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar)),
+    radars,
     sourceSignal,
     sourceSignals,
     insightCard: saved.insightCard ?? null,
@@ -128,13 +135,20 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
     suggestedFabulaId: signal.suggestedFabulaId ?? fallback.suggestedFabulaId,
     suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
     duplicateRisk: signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
-    authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? ''
+    authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? '',
+    filterEvaluations: signal.filterEvaluations ?? fallback.filterEvaluations ?? [],
+    filterStatus: signal.filterStatus ?? fallback.filterStatus ?? 'passed'
   };
 }
 
 function normalizeRadar(radar: RadarDefinition): RadarDefinition {
+  const sourceDiscoveryMode =
+    radar.sourceDiscoveryMode ??
+    (radar.sources && radar.sources.length > 0 ? 'specifiedAndAdditional' : 'autonomous');
   return {
     ...radar,
+    sourceDiscoveryMode,
+    filters: radar.filters ?? createDefaultRadarEditorialFilters(radar.id, []),
     rules: radar.rules ?? [
       {
         id: `rule-${radar.id}`,

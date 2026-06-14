@@ -51,7 +51,11 @@ author memory, archive, external sources, and manual research; found signals can
 approved, corrected, archived, or rejected before downstream production starts.
 Radars are configurable search objects with atomic rules and optional sources. Found
 signals are raw evidence-backed material; topic/fabula/audience/value matching belongs
-to post candidates, not to the signal review UI.
+to post candidates, not to the signal review UI. Radars now also separate search
+surface from editorial suitability: each radar has a source discovery mode and
+optional filters for author, audience, positioning, goals, forbidden topics, and
+topics. Filtered-out material stays visible for human review; style is checked later
+during drafting and editorial review, not during radar intake.
 `Кандидаты постов` is visible as the next read-only step: it explains that assemblies
 of signal, topic, fabula, audience, value, and goal arrive in Slice 1.6. The current
 broadcast grid remains a useful local-first prototype until candidate assemblies and a

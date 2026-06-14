@@ -281,6 +281,21 @@ Signal review transitions are pure domain helpers:
 from the demo workspace and maps old `activeSection: "radar"` browser state to
 `activeSection: "signals"`.
 
+Slice 1.5.8 extends `RadarDefinition` with `sourceDiscoveryMode` and `filters`.
+Domain/application code owns `evaluateSignalAgainstRadarFilters(signal, radar,
+workspace)`. React may render the filter editor and evaluation badges, but it must not
+duplicate filter scoring rules. `notes` remains a legacy storage field for old
+workspaces and must not be reintroduced as a visible radar editor field.
+
+Radar source configuration rules:
+
+- `specifiedOnly` requires at least one source before save.
+- `specifiedAndAdditional` means explicit sources are mandatory context, but future
+  search adapters may also discover additional sources.
+- `autonomous` is valid without sources.
+- `style` is not a radar filter dimension.
+- failed filter evaluations mark a signal for review; they do not delete or hide it.
+
 File attachments are local-first and size-limited to 1 MB per attachment in the browser
 demo. They are stored as metadata plus `dataUrl`. Real PDF/DOCX parsing, OCR, image
 understanding, text extraction, chunking, and AI analysis belong to a later
