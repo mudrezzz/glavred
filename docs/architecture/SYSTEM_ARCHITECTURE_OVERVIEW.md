@@ -170,13 +170,12 @@ to use deterministic fallback or provider-backed behavior.
 
 ## React UI Architecture
 
-The React implementation is being extracted from the initial fast-exploration
-god-file. As of Slice 1.5.13, `src/App.tsx` is still large, but app-level ownership and
-the first feature boundaries have moved out. Shell, navigation, topbar/sidebar,
-context-chat overlay, shared icon, weight range editor, persistence/autosave/reset,
-high-level workspace orchestration, the `Signals`, `Editorial Model`, and `Author
-Memory` workspaces now live outside `App.tsx`. This is now an explicit temporary
-extraction baseline, not an acceptable direction for future feature work.
+The React implementation has been extracted from the initial fast-exploration
+god-file. As of Slice 1.5.14, `src/App.tsx` is a small composition root. Shell,
+navigation, topbar/sidebar, context-chat overlay, shared icon, weight range editor,
+persistence/autosave/reset, high-level workspace orchestration, `Author Memory`,
+`Editorial Model`, `Signals`, and the production flow feature entrypoints now live
+outside `App.tsx`. This is the new baseline for future feature work.
 
 Target structure:
 
@@ -210,21 +209,25 @@ primitive, it belongs in `src/shared/ui`. If two features need the same business
 it belongs in application/domain services. If app-level wiring is needed, it belongs in
 `src/app/`.
 
-`App.tsx` must become a composition root only. It now imports `useWorkspaceController`
+`App.tsx` is a composition root only. It imports `useWorkspaceController`
 from `src/app/useWorkspaceController.ts` and must not import `LocalWorkspaceStore`.
 It may connect the app shell, workspace controller, and feature entry components, but
 new large `*View`, `*Editor`, `*Panel`, `*Card`, `*Header`, `*Sidebar`, `*Topbar`, or
 `*Overlay` implementations must not be added there. Domain/application logic must not
 be written inside JSX.
 
-Architecture smoke tests enforce the temporary baseline:
+Architecture smoke tests enforce the baseline:
 
-- `src/App.tsx <= 1700` lines after Slice 1.5.13.
+- `src/App.tsx <= 350` lines after Slice 1.5.14.
 - `src/App.test.tsx <= 850` lines.
-- Large `App.tsx` UI declarations `<= 10`.
+- Large `App.tsx` UI declarations `<= 1`.
 - Required app/shared extraction files, `src/features/author-memory/AuthorMemoryView.tsx`,
   `src/features/signals/SignalsView.tsx`, and
   `src/features/editorial-model/EditorialModelView.tsx` must exist.
+- Production flow entrypoints must exist:
+  `src/features/plan/PlanView.tsx`, `src/features/briefing/BriefView.tsx`,
+  `src/features/editing/EditView.tsx`, `src/features/release/ReleaseView.tsx`, and
+  `src/features/analytics/AnalyticsView.tsx`.
 - `src/App.tsx` must not import or instantiate `LocalWorkspaceStore`.
 - `src/App.tsx` must not contain signals feature internals such as `RadarEditor`,
   `SignalsSidePanel`, `RadarView`, or radar/signal label helpers.
@@ -234,11 +237,14 @@ Architecture smoke tests enforce the temporary baseline:
 - `src/App.tsx` must not contain author-memory internals such as `AuthorNoteCard`,
   `AssertionCard`, `ExternalSourcesView`, `ImportQueueView`, `ArchiveView`, or
   author-memory/import helper functions.
+- `src/App.tsx` must not contain production-flow internals such as `PlanView`,
+  `BriefView`, `EditView`, `ReleaseView`, `AnalyticsView`, `HitlGate`, `FieldInput`,
+  `CheckCard`, or `FinalTextView` implementations.
 - The React UI architecture ADR and this SAO section must exist.
 
 Every extraction slice must lower these limits. The target after the extraction chain
-is for `App.tsx` to be a small composition root, roughly 150-250 lines, with feature
-screens owned by their feature modules.
+is now met for `App.tsx`; future slices should keep it at composition-root size and
+avoid moving feature behavior back into it.
 
 ## Frontend UX Architecture
 

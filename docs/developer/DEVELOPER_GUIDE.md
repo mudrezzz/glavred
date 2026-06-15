@@ -72,7 +72,8 @@ npm run docs:wiki:publish
   analytics prep.
 - `src/infrastructure/`: browser storage adapter.
 - `src/fixtures/`: demo workspace data.
-- `src/App.tsx`: temporary React feature composition baseline. It must not own
+- `src/App.tsx`: React composition root. It connects the app shell, workspace
+  controller, context chat, and feature entrypoints, but must not own feature UI,
   persistence, autosave, reset, navigation shell, or app-level orchestration.
 - `src/app/`: app shell, topbar/sidebar, navigation, context-chat overlay/scope, and
   workspace controller.
@@ -85,10 +86,22 @@ npm run docs:wiki:publish
   memory feed, composer, assertions/evidence correction UI, import sources, import
   queue, archive, attachments, and local import/archive UI orchestration, but receives
   workspace data and callbacks from the app controller and does not own persistence.
-- Future `src/features/*`: feature-owned screens such as plan, briefing, editing,
-  release, analytics, and context chat.
+- `src/features/plan`: feature-owned broadcast grid and plan slot UI.
+- `src/features/briefing`: feature-owned post brief / concrete post-fabula workflow.
+- `src/features/editing`: feature-owned draft, editorial checks, editor notes, and
+  final-text approval UI.
+- `src/features/release`: feature-owned manual export package, checklist, copy, and
+  Markdown export UI.
+- `src/features/analytics`: feature-owned manual metrics and editorial learning note
+  UI.
+- Future `src/features/*`: feature-owned screens such as context chat when it is
+  extracted from the app layer.
 - `src/shared/ui`: shared cabinet primitives such as `Icon` and `WeightRangeEditor`.
-- Future `src/shared/format`: formatting helpers.
+- `src/shared/ui/WorkflowPrimitives.tsx`: shared production-flow primitives such as
+  HITL gates, field rows/lists, placeholders, and empty states.
+- `src/shared/format`: formatting helpers.
+- `src/shared/format/production.ts`: shared production-flow labels, dates, and text
+  helpers.
 - `src/test/`: test setup.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
@@ -259,21 +272,21 @@ current compatibility layer, but the intended flow is:
 
 `AuthorMemory/Archive/ExternalSources -> Сигналы -> Кандидаты постов -> BroadcastContentPlan -> approved PostBrief`
 
-React UI now has an explicit architecture baseline. `App.tsx` is a temporary feature
-composition root and must continue shrinking. App shell, navigation, context-chat
-overlay, shared icon, weight range editor, workspace controller, signals,
-editorial-model, and author-memory features have been extracted. New large screens,
-editors, panels, cards, headers, overlays, and formatting helpers should be added to
-`src/app/`, `src/features/<feature>/`, `src/shared/ui`, or future `src/shared/format`,
-not directly to `App.tsx`.
+React UI now has an explicit architecture baseline. `App.tsx` is a composition root
+and must stay small. App shell, navigation, context-chat overlay, shared icon, weight
+range editor, workspace controller, signals, editorial-model, author-memory, plan,
+briefing, editing, release, and analytics features have been extracted. New large
+screens, editors, panels, cards, headers, overlays, and formatting helpers should be
+added to `src/app/`, `src/features/<feature>/`, `src/shared/ui`, or
+`src/shared/format`, not directly to `App.tsx`.
 
 Run `npm run test:architecture` before completing any UI slice. The current guardrail
 blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline, checks required
-app/shared extraction files, the author-memory, signals, and editorial-model feature
-entries, and verifies that `App.tsx` no longer imports `LocalWorkspaceStore` or
-contains extracted feature internals. Extraction slices must lower those limits as code
-moves into feature modules. After Slice 1.5.13 the limits are `App.tsx <= 1700`,
-`App.test.tsx <= 850`, and large App UI declarations `<= 10`.
+app/shared extraction files, author-memory, signals, editorial-model, plan, briefing,
+editing, release, and analytics feature entries, and verifies that `App.tsx` no longer
+imports `LocalWorkspaceStore` or contains extracted feature internals. After Slice
+1.5.14 the limits are `App.tsx <= 350`, `App.test.tsx <= 850`, and large App UI
+declarations `<= 1`.
 
 Use these boundaries:
 

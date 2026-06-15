@@ -1379,13 +1379,30 @@ Status:
 
 ### Slice 1.5.14: Extract Production Flow Features
 
-- Status: Ready
+- Status: Done
 - Goal: Move plan, briefing, editing, release, analytics, and context chat entry points
   into feature modules without changing the current demo flow.
+- Notes:
+  - `PlanView`, `BriefView`, `EditView`, `ReleaseView`, and `AnalyticsView` now live
+    under `src/features/plan`, `src/features/briefing`, `src/features/editing`,
+    `src/features/release`, and `src/features/analytics`.
+  - Shared production primitives now live in `src/shared/ui/WorkflowPrimitives.tsx`.
+  - Shared production labels, dates, and formatting helpers now live in
+    `src/shared/format/production.ts`.
+  - `App.tsx` is now a small composition root for shell, controller, and feature
+    entrypoints.
+  - Architecture guardrails were lowered to `App.tsx <= 350` and large App UI
+    declarations `<= 1`.
+- Validation:
+  - `npm run test:architecture` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
 
 ### Slice 1.6: Post Candidate Assemblies
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add post candidates as explicit combinations of signal, topic, fabula,
   audience, value, goal, platform, and format.
 - User value: The author can compare several proposed post concepts for one future
@@ -1588,6 +1605,7 @@ Status:
 - Slice 1.5.11: Extract Signals Feature. Completed 2026-06-15.
 - Slice 1.5.12: Extract Editorial Model Feature. Completed 2026-06-15.
 - Slice 1.5.13: Extract Author Memory Feature. Completed 2026-06-15.
+- Slice 1.5.14: Extract Production Flow Features. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1608,4 +1626,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5.14: Extract Production Flow Features`.
+Start `Slice 1.6: Post Candidate Assemblies`.

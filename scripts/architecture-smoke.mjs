@@ -3,9 +3,9 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const APP_TSX_LIMIT = 1700;
+const APP_TSX_LIMIT = 350;
 const APP_TEST_TSX_LIMIT = 850;
-const LARGE_APP_DECLARATION_LIMIT = 10;
+const LARGE_APP_DECLARATION_LIMIT = 1;
 
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
@@ -73,6 +73,11 @@ const requiredSourceFiles = [
   "src/features/author-memory/AuthorMemoryView.tsx",
   "src/features/editorial-model/EditorialModelView.tsx",
   "src/features/signals/SignalsView.tsx",
+  "src/features/plan/PlanView.tsx",
+  "src/features/briefing/BriefView.tsx",
+  "src/features/editing/EditView.tsx",
+  "src/features/release/ReleaseView.tsx",
+  "src/features/analytics/AnalyticsView.tsx",
 ];
 
 for (const requiredFile of requiredSourceFiles) {
@@ -139,6 +144,25 @@ for (const symbol of forbiddenAppAuthorMemorySymbols) {
   assert(
     !appSource.includes(symbol),
     `src/App.tsx must not contain author-memory feature internals: ${symbol}. Use src/features/author-memory.`
+  );
+}
+
+const forbiddenAppProductionSymbols = [
+  "function PlanView",
+  "function BriefView",
+  "function EditView",
+  "function ReleaseView",
+  "function AnalyticsView",
+  "function HitlGate",
+  "function FieldInput",
+  "function CheckCard",
+  "function FinalTextView",
+];
+
+for (const symbol of forbiddenAppProductionSymbols) {
+  assert(
+    !appSource.includes(symbol),
+    `src/App.tsx must not contain production-flow feature internals: ${symbol}. Use src/features/* and src/shared/* modules.`
   );
 }
 
