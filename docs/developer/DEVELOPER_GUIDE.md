@@ -76,8 +76,10 @@ npm run docs:wiki:publish
   persistence, autosave, reset, navigation shell, or app-level orchestration.
 - `src/app/`: app shell, topbar/sidebar, navigation, context-chat overlay/scope, and
   workspace controller.
+- `src/features/signals`: feature-owned `Signals` workspace. It receives workspace
+  data and callbacks from the app controller and does not own persistence.
 - Future `src/features/*`: feature-owned screens such as author memory, editorial
-  model, signals, plan, briefing, editing, release, analytics, and context chat.
+  model, plan, briefing, editing, release, analytics, and context chat.
 - `src/shared/ui`: shared cabinet primitives such as `Icon` and `WeightRangeEditor`.
 - Future `src/shared/format`: formatting helpers.
 - `src/test/`: test setup.
@@ -252,17 +254,17 @@ current compatibility layer, but the intended flow is:
 
 React UI now has an explicit architecture baseline. `App.tsx` is a temporary feature
 composition root and must continue shrinking. App shell, navigation, context-chat
-overlay, shared icon, weight range editor, and workspace controller have been
-extracted. New large screens, editors, panels, cards, headers, overlays, and
+overlay, shared icon, weight range editor, workspace controller, and the signals
+feature have been extracted. New large screens, editors, panels, cards, headers, overlays, and
 formatting helpers should be added to `src/app/`, `src/features/<feature>/`,
 `src/shared/ui`, or future `src/shared/format`, not directly to `App.tsx`.
 
 Run `npm run test:architecture` before completing any UI slice. The current guardrail
 blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline, checks required
-app/shared extraction files, and verifies that `App.tsx` no longer imports
-`LocalWorkspaceStore`. Extraction slices must lower those limits as code moves into
-feature modules. After Slice 1.5.10 the limits are `App.tsx <= 6300`, `App.test.tsx <=
-850`, and large App UI declarations `<= 30`.
+app/shared extraction files, the signals feature entry, and verifies that `App.tsx` no
+longer imports `LocalWorkspaceStore` or contains signals feature internals. Extraction slices must lower those limits as code moves into
+feature modules. After Slice 1.5.11 the limits are `App.tsx <= 5400`, `App.test.tsx <=
+850`, and large App UI declarations `<= 26`.
 
 Use these boundaries:
 

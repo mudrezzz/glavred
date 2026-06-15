@@ -3,9 +3,9 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const APP_TSX_LIMIT = 6300;
+const APP_TSX_LIMIT = 5400;
 const APP_TEST_TSX_LIMIT = 850;
-const LARGE_APP_DECLARATION_LIMIT = 30;
+const LARGE_APP_DECLARATION_LIMIT = 26;
 
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
@@ -70,6 +70,7 @@ const requiredSourceFiles = [
   "src/app/useWorkspaceController.ts",
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
+  "src/features/signals/SignalsView.tsx",
 ];
 
 for (const requiredFile of requiredSourceFiles) {
@@ -80,6 +81,24 @@ assert(
   !appSource.includes("LocalWorkspaceStore"),
   "src/App.tsx must not import or instantiate LocalWorkspaceStore; use src/app/useWorkspaceController.ts."
 );
+
+const forbiddenAppSignalsSymbols = [
+  "function SignalsViewV2",
+  "function RadarEditor",
+  "function SignalsSidePanel",
+  "function RadarView",
+  "createRadarDraft",
+  "isRadarSourceConfigurationValid",
+  "radarSourceTypeLabel",
+  "signalReviewStatusLabel",
+];
+
+for (const symbol of forbiddenAppSignalsSymbols) {
+  assert(
+    !appSource.includes(symbol),
+    `src/App.tsx must not contain signals feature internals: ${symbol}. Use src/features/signals.`
+  );
+}
 
 const saoSource = readText(SAO_PATH);
 const requiredSaoFragments = [

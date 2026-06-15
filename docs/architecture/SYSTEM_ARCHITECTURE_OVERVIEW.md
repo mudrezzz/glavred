@@ -171,10 +171,11 @@ to use deterministic fallback or provider-backed behavior.
 ## React UI Architecture
 
 The React implementation is being extracted from the initial fast-exploration
-god-file. As of Slice 1.5.10, `src/App.tsx` is still large, but app-level ownership
-has moved out: shell, navigation, topbar/sidebar, context-chat overlay, shared icon,
-weight range editor, persistence/autosave/reset, and high-level workspace
-orchestration now live outside `App.tsx`. This is now an explicit temporary extraction
+god-file. As of Slice 1.5.11, `src/App.tsx` is still large, but app-level ownership and the
+first feature boundary have moved out. Shell, navigation, topbar/sidebar,
+context-chat overlay, shared icon, weight range editor, persistence/autosave/reset,
+high-level workspace orchestration, and the `Signals` workspace now live outside
+`App.tsx`. This is now an explicit temporary extraction
 baseline, not an acceptable direction for future feature work.
 
 Target structure:
@@ -218,11 +219,13 @@ be written inside JSX.
 
 Architecture smoke tests enforce the temporary baseline:
 
-- `src/App.tsx <= 6300` lines after Slice 1.5.10.
+- `src/App.tsx <= 5400` lines after Slice 1.5.11.
 - `src/App.test.tsx <= 850` lines.
-- Large `App.tsx` UI declarations `<= 30`.
-- Required app/shared extraction files must exist.
+- Large `App.tsx` UI declarations `<= 26`.
+- Required app/shared extraction files and `src/features/signals/SignalsView.tsx` must exist.
 - `src/App.tsx` must not import or instantiate `LocalWorkspaceStore`.
+- `src/App.tsx` must not contain signals feature internals such as `RadarEditor`,
+  `SignalsSidePanel`, `RadarView`, or radar/signal label helpers.
 - The React UI architecture ADR and this SAO section must exist.
 
 Every extraction slice must lower these limits. The target after the extraction chain

@@ -1334,16 +1334,22 @@ Status:
 
 ### Slice 1.5.11: Extract Signals Feature
 
-- Status: Ready
+- Status: Done
 - Goal: Move `Сигналы` UI into `src/features/signals` while preserving current radar
   and signal review behavior.
 - Notes:
   - This should be the first feature extraction because it is the most recently active
     and visually sensitive workspace.
+  - `SignalsView`, `RadarEditor`, `SignalsSidePanel`, and signals label helpers now live
+    under `src/features/signals`.
+  - `App.tsx` imports the signals feature entry and no longer contains legacy
+    `SignalsView` / `RadarView` code.
+  - Architecture guardrails were lowered to `App.tsx <= 5400` and large App UI
+    declarations `<= 26`.
 
 ### Slice 1.5.12: Extract Editorial Model Feature
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move project profile, editorial rules, topics, fabulas, matrix, and validation
   panel into `src/features/editorial-model`.
 
@@ -1561,6 +1567,7 @@ Status:
 - Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails. Completed
   2026-06-15.
 - Slice 1.5.10: Extract App Shell and Workspace Controller. Completed 2026-06-15.
+- Slice 1.5.11: Extract Signals Feature. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1581,4 +1588,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5.11: Extract Signals Feature`.
+Start `Slice 1.5.12: Extract Editorial Model Feature`.
