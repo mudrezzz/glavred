@@ -1782,6 +1782,42 @@ Status:
   - Mechanical extraction can accidentally move state ownership; preserve existing
     props/callback boundaries and use tests to catch regressions.
 
+### Slice 1.5.25: Author Memory Entry Point Decomposition
+
+- Status: Done
+- Goal: Reduce `src/features/author-memory/AuthorMemoryView.tsx` into a thin
+  feature composition root without changing behavior, storage, demo data, or CSS.
+- User value: Author memory remains maintainable before product work resumes, so
+  adding future memory/import behavior does not recreate a feature-level god file.
+- Scope:
+  - Move memory feed composer/edit/delete/correction state into
+    `useMemoryFeedController`.
+  - Move import queue/archive/bulk-review state into `useImportReviewController`.
+  - Move feed rendering, side panel, and dialogs into feature-local components.
+  - Lower architecture smoke limits for `AuthorMemoryView` and the new modules.
+- Out of scope:
+  - Product behavior changes.
+  - Visual redesign or CSS changes.
+  - Domain/storage changes.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, and roadmap.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `AuthorMemoryView` is below the new architecture limit and contains no feed/import
+    orchestration internals. Done.
+  - Existing author memory and import/archive flows remain behaviorally unchanged. Done.
+  - Full regression commands pass. Done.
+- Risks:
+  - Hook extraction can accidentally change stale closure behavior; preserve existing
+    callback boundaries and rely on regression tests.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready

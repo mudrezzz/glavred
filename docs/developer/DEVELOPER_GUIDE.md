@@ -319,6 +319,12 @@ default destination for new code:
 - Signals setup UI belongs in `RadarEditor`; signals summary belongs in
   `SignalsSidePanel`.
 
+After Slice 1.5.25, `AuthorMemoryView` is also only a feature composition root.
+Memory feed, composer, note edit/delete, correction conflict, and filtered-note state
+belong in `useMemoryFeedController`; import queue, archive restore/delete, selected
+candidates, bulk confirmation, and undo state belong in `useImportReviewController`.
+Rendering is split into `MemoryFeedTab`, `MemorySidePanel`, and `MemoryDialogs`.
+
 Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
 `validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP

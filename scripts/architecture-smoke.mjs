@@ -10,8 +10,33 @@ const LARGE_APP_DECLARATION_LIMIT = 1;
 const LARGE_SOURCE_BASELINES = [
   {
     path: "src/features/author-memory/AuthorMemoryView.tsx",
-    limit: 930,
-    next: "Author memory internals must keep moving into feature-local components before new UI is added.",
+    limit: 320,
+    next: "AuthorMemoryView must stay a feature composition root; put feed/import orchestration in feature-local hooks and views.",
+  },
+  {
+    path: "src/features/author-memory/useMemoryFeedController.ts",
+    limit: 280,
+    next: "Memory feed state should stay in this hook or be split by composer/edit/correction role.",
+  },
+  {
+    path: "src/features/author-memory/useImportReviewController.ts",
+    limit: 300,
+    next: "Import review state should stay in this hook or be split by queue/archive role.",
+  },
+  {
+    path: "src/features/author-memory/MemoryFeedTab.tsx",
+    limit: 260,
+    next: "MemoryFeedTab should stay focused on composer, toolbar, and feed rendering.",
+  },
+  {
+    path: "src/features/author-memory/MemorySidePanel.tsx",
+    limit: 140,
+    next: "MemorySidePanel should stay summary/assertion-only.",
+  },
+  {
+    path: "src/features/author-memory/MemoryDialogs.tsx",
+    limit: 120,
+    next: "MemoryDialogs should stay limited to author-memory modal/confirmation surfaces.",
   },
   {
     path: "src/domain/editorialWorkspace.ts",
@@ -230,6 +255,11 @@ const requiredSourceFiles = [
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
   "src/features/author-memory/AuthorMemoryView.tsx",
+  "src/features/author-memory/useMemoryFeedController.ts",
+  "src/features/author-memory/useImportReviewController.ts",
+  "src/features/author-memory/MemoryFeedTab.tsx",
+  "src/features/author-memory/MemorySidePanel.tsx",
+  "src/features/author-memory/MemoryDialogs.tsx",
   "src/features/author-memory/ImportViews.tsx",
   "src/features/author-memory/ExternalSourcesView.tsx",
   "src/features/author-memory/ImportQueueView.tsx",
@@ -340,6 +370,23 @@ for (const symbol of forbiddenAppAuthorMemorySymbols) {
   assert(
     !appSource.includes(symbol),
     `src/App.tsx must not contain author-memory feature internals: ${symbol}. Use src/features/author-memory.`
+  );
+}
+
+const authorMemoryViewSource = readText("src/features/author-memory/AuthorMemoryView.tsx");
+const forbiddenAuthorMemoryEntrypointSymbols = [
+  "function submitNote",
+  "function saveEdit",
+  "function performBulkAction",
+  "function acceptArchiveRecordToMemory",
+  "function restoreArchiveRecordToQueue",
+  "function deleteArchiveRecord",
+];
+
+for (const symbol of forbiddenAuthorMemoryEntrypointSymbols) {
+  assert(
+    !authorMemoryViewSource.includes(symbol),
+    `AuthorMemoryView.tsx must not contain author-memory orchestration internals: ${symbol}. Use feature-local hooks.`
   );
 }
 

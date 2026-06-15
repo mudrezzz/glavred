@@ -251,7 +251,12 @@ avoid moving feature behavior back into it.
 The next architecture risk is no longer `App.tsx`; it is large domain, application,
 fixture, and feature files. Architecture smoke now tracks current large-file baselines:
 
-- `src/features/author-memory/AuthorMemoryView.tsx <= 930`
+- `src/features/author-memory/AuthorMemoryView.tsx <= 320`
+- `src/features/author-memory/useMemoryFeedController.ts <= 280`
+- `src/features/author-memory/useImportReviewController.ts <= 300`
+- `src/features/author-memory/MemoryFeedTab.tsx <= 260`
+- `src/features/author-memory/MemorySidePanel.tsx <= 140`
+- `src/features/author-memory/MemoryDialogs.tsx <= 120`
 - `src/domain/editorialWorkspace.ts <= 170`
 - `src/features/editorial-model/EditorialModelView.tsx <= 220`
 - `src/fixtures/demoWorkspace.ts <= 120`
@@ -290,10 +295,19 @@ role-owned files such as:
 - `src/features/author-memory/ExternalSourcesView.tsx`,
   `ImportQueueView.tsx`, `CandidateCard.tsx`, `ArchiveView.tsx`, and
   `BulkActionDialog.tsx`;
+- `src/features/author-memory/useMemoryFeedController.ts`,
+  `useImportReviewController.ts`, `MemoryFeedTab.tsx`, `MemorySidePanel.tsx`,
+  and `MemoryDialogs.tsx`;
 - `src/features/editorial-model/ProjectProfileHeader.tsx`,
   `PublisherRulesView.tsx`, `TopicsTab.tsx`, `FabulasTab.tsx`, and
   `MatrixTab.tsx`;
 - `src/features/signals/RadarEditor.tsx` and `SignalsSidePanel.tsx`.
+
+Stateful feature orchestration belongs in feature-local hooks, not entrypoints.
+After Slice 1.5.25, `AuthorMemoryView` composes the active memory tab, side panel,
+and dialogs. Feed/composer/edit/delete/correction state lives in
+`useMemoryFeedController`; import queue, archive, selection, bulk action, and undo
+state lives in `useImportReviewController`.
 
 Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel only; rules, setup validation, and topic/fabula catalog
