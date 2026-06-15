@@ -3,9 +3,9 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const APP_TSX_LIMIT = 3600;
+const APP_TSX_LIMIT = 1700;
 const APP_TEST_TSX_LIMIT = 850;
-const LARGE_APP_DECLARATION_LIMIT = 17;
+const LARGE_APP_DECLARATION_LIMIT = 10;
 
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
@@ -70,6 +70,7 @@ const requiredSourceFiles = [
   "src/app/useWorkspaceController.ts",
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
+  "src/features/author-memory/AuthorMemoryView.tsx",
   "src/features/editorial-model/EditorialModelView.tsx",
   "src/features/signals/SignalsView.tsx",
 ];
@@ -116,6 +117,28 @@ for (const symbol of forbiddenAppEditorialModelSymbols) {
   assert(
     !appSource.includes(symbol),
     `src/App.tsx must not contain editorial-model feature internals: ${symbol}. Use src/features/editorial-model.`
+  );
+}
+
+const forbiddenAppAuthorMemorySymbols = [
+  "function AuthorMemoryView",
+  "function AuthorNoteCard",
+  "function AssertionCard",
+  "function ExternalSourcesView",
+  "function ImportQueueView",
+  "function ArchiveView",
+  "function BulkActionDialog",
+  "createAuthorMemoryEvent",
+  "filterAuthorNotes",
+  "getImportSummary",
+  "sourceTypeLabel",
+  "reviewStatusLabel",
+];
+
+for (const symbol of forbiddenAppAuthorMemorySymbols) {
+  assert(
+    !appSource.includes(symbol),
+    `src/App.tsx must not contain author-memory feature internals: ${symbol}. Use src/features/author-memory.`
   );
 }
 

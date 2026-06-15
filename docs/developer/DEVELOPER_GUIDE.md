@@ -81,8 +81,12 @@ npm run docs:wiki:publish
 - `src/features/editorial-model`: feature-owned editorial setup workspace. It owns
   project profile UI, publisher rules, topics, fabulas, matrix, and setup validation
   rendering, but receives workspace data and callbacks from the app controller.
-- Future `src/features/*`: feature-owned screens such as author memory, plan,
-  briefing, editing, release, analytics, and context chat.
+- `src/features/author-memory`: feature-owned author memory workspace. It owns the
+  memory feed, composer, assertions/evidence correction UI, import sources, import
+  queue, archive, attachments, and local import/archive UI orchestration, but receives
+  workspace data and callbacks from the app controller and does not own persistence.
+- Future `src/features/*`: feature-owned screens such as plan, briefing, editing,
+  release, analytics, and context chat.
 - `src/shared/ui`: shared cabinet primitives such as `Icon` and `WeightRangeEditor`.
 - Future `src/shared/format`: formatting helpers.
 - `src/test/`: test setup.
@@ -257,18 +261,19 @@ current compatibility layer, but the intended flow is:
 
 React UI now has an explicit architecture baseline. `App.tsx` is a temporary feature
 composition root and must continue shrinking. App shell, navigation, context-chat
-overlay, shared icon, weight range editor, workspace controller, signals, and the
-editorial-model feature have been extracted. New large screens, editors, panels, cards, headers, overlays, and
-formatting helpers should be added to `src/app/`, `src/features/<feature>/`,
-`src/shared/ui`, or future `src/shared/format`, not directly to `App.tsx`.
+overlay, shared icon, weight range editor, workspace controller, signals,
+editorial-model, and author-memory features have been extracted. New large screens,
+editors, panels, cards, headers, overlays, and formatting helpers should be added to
+`src/app/`, `src/features/<feature>/`, `src/shared/ui`, or future `src/shared/format`,
+not directly to `App.tsx`.
 
 Run `npm run test:architecture` before completing any UI slice. The current guardrail
 blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline, checks required
-app/shared extraction files, the signals and editorial-model feature entries, and verifies
-that `App.tsx` no longer imports `LocalWorkspaceStore` or contains signals/editorial-model
-feature internals. Extraction slices must lower those limits as code moves into feature
-modules. After Slice 1.5.12 the limits are `App.tsx <= 3600`, `App.test.tsx <= 850`,
-and large App UI declarations `<= 17`.
+app/shared extraction files, the author-memory, signals, and editorial-model feature
+entries, and verifies that `App.tsx` no longer imports `LocalWorkspaceStore` or
+contains extracted feature internals. Extraction slices must lower those limits as code
+moves into feature modules. After Slice 1.5.13 the limits are `App.tsx <= 1700`,
+`App.test.tsx <= 850`, and large App UI declarations `<= 10`.
 
 Use these boundaries:
 

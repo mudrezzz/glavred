@@ -57,9 +57,9 @@ import {
 import { LocalWorkspaceStore } from '../infrastructure/localWorkspaceStore';
 import {
   getContextChatScope,
-  type ContextChatTab,
-  type MemoryInternalTab
+  type ContextChatTab
 } from './contextChatScope';
+import type { MemoryInternalTab } from '../features/author-memory/types';
 import type { EditorialModelTab } from '../features/editorial-model/types';
 
 const store = new LocalWorkspaceStore();

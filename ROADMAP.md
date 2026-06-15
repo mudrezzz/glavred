@@ -1364,13 +1364,22 @@ Status:
 
 ### Slice 1.5.13: Extract Author Memory Feature
 
-- Status: Ready
+- Status: Done
 - Goal: Move author memory feed, assertions, imports, archive, attachments, and memory
   summary into `src/features/author-memory`.
+- Notes:
+  - `AuthorMemoryView`, composer, note cards, assertion/evidence correction UI,
+    memory tabs, external sources, import queue, archive, bulk dialog, and
+    author-memory/import helpers now live under `src/features/author-memory`.
+  - `MemoryInternalTab` belongs to the author-memory feature boundary.
+  - `App.tsx` imports the author-memory feature entry and no longer contains
+    author-memory cards, import queue, archive UI, or author-memory-only helpers.
+  - Architecture guardrails were lowered to `App.tsx <= 1700` and large App UI
+    declarations `<= 10`.
 
 ### Slice 1.5.14: Extract Production Flow Features
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move plan, briefing, editing, release, analytics, and context chat entry points
   into feature modules without changing the current demo flow.
 
@@ -1578,6 +1587,7 @@ Status:
 - Slice 1.5.10: Extract App Shell and Workspace Controller. Completed 2026-06-15.
 - Slice 1.5.11: Extract Signals Feature. Completed 2026-06-15.
 - Slice 1.5.12: Extract Editorial Model Feature. Completed 2026-06-15.
+- Slice 1.5.13: Extract Author Memory Feature. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1598,4 +1608,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5.13: Extract Author Memory Feature`.
+Start `Slice 1.5.14: Extract Production Flow Features`.

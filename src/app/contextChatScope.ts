@@ -6,9 +6,9 @@ import type {
   ContextChatScope
 } from '../application/contextChat';
 import type { WorkspaceSection } from '../domain/editorialWorkspace';
+import type { MemoryInternalTab } from '../features/author-memory/types';
 import type { EditorialModelTab } from '../features/editorial-model/types';
 
-export type MemoryInternalTab = 'feed' | 'sources' | 'queue' | 'archive';
 export type ContextChatTab = 'chat' | 'suggestions';
 
 export function getContextChatScope(
