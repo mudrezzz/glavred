@@ -49,6 +49,11 @@ export type ContextChatSuggestionPayload =
   | AddFabulaPayload
   | RunValidationPayload;
 
+export type ContextChatIntent =
+  | { id: string; actionType: 'addEditorialRule'; payload: AddEditorialRulePayload }
+  | { id: string; actionType: 'addTopic'; payload: AddTopicPayload }
+  | { id: string; actionType: 'addFabula'; payload: AddFabulaPayload };
+
 export interface AddEditorialRulePayload {
   group: EditorialRuleGroup;
   title: string;

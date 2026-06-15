@@ -1,22 +1,15 @@
 import { mapWorkspaceSectionToProductionScope } from '../application/contextChat';
 import type {
-  AddEditorialRulePayload,
-  AddFabulaPayload,
-  AddTopicPayload,
   ContextChatActionType,
+  ContextChatIntent,
   ContextChatMessage,
   ContextChatScope
 } from '../application/contextChat';
 import type { WorkspaceSection } from '../domain/editorialWorkspace';
+import type { EditorialModelTab } from '../features/editorial-model/types';
 
 export type MemoryInternalTab = 'feed' | 'sources' | 'queue' | 'archive';
-export type EditorialModelTab = 'publisher' | 'topics' | 'fabulas' | 'matrix';
 export type ContextChatTab = 'chat' | 'suggestions';
-
-export type ContextChatIntent =
-  | { id: string; actionType: 'addEditorialRule'; payload: AddEditorialRulePayload }
-  | { id: string; actionType: 'addTopic'; payload: AddTopicPayload }
-  | { id: string; actionType: 'addFabula'; payload: AddFabulaPayload };
 
 export function getContextChatScope(
   active: WorkspaceSection,

@@ -18,6 +18,7 @@ import {
   type AddEditorialRulePayload,
   type AddFabulaPayload,
   type AddTopicPayload,
+  type ContextChatIntent,
   type ContextChatMessage,
   type ContextChatSuggestion
 } from '../application/contextChat';
@@ -56,11 +57,10 @@ import {
 import { LocalWorkspaceStore } from '../infrastructure/localWorkspaceStore';
 import {
   getContextChatScope,
-  type ContextChatIntent,
   type ContextChatTab,
-  type EditorialModelTab,
   type MemoryInternalTab
 } from './contextChatScope';
+import type { EditorialModelTab } from '../features/editorial-model/types';
 
 const store = new LocalWorkspaceStore();
 

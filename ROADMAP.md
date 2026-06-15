@@ -1349,13 +1349,22 @@ Status:
 
 ### Slice 1.5.12: Extract Editorial Model Feature
 
-- Status: Ready
+- Status: Done
 - Goal: Move project profile, editorial rules, topics, fabulas, matrix, and validation
   panel into `src/features/editorial-model`.
+- Notes:
+  - `EditorialModelView`, project profile UI, publisher rules, topics, fabulas,
+    matrix, and setup validation panel now live under `src/features/editorial-model`.
+  - `ContextChatIntent` is now an application-level boundary type, while
+    `EditorialModelTab` belongs to the editorial-model feature boundary.
+  - `App.tsx` imports the editorial-model feature entry and no longer contains
+    editorial setup editors, matrix UI, validation panel, or editorial-only helpers.
+  - Architecture guardrails were lowered to `App.tsx <= 3600` and large App UI
+    declarations `<= 17`.
 
 ### Slice 1.5.13: Extract Author Memory Feature
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move author memory feed, assertions, imports, archive, attachments, and memory
   summary into `src/features/author-memory`.
 
@@ -1568,6 +1577,7 @@ Status:
   2026-06-15.
 - Slice 1.5.10: Extract App Shell and Workspace Controller. Completed 2026-06-15.
 - Slice 1.5.11: Extract Signals Feature. Completed 2026-06-15.
+- Slice 1.5.12: Extract Editorial Model Feature. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1588,4 +1598,4 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.5.12: Extract Editorial Model Feature`.
+Start `Slice 1.5.13: Extract Author Memory Feature`.

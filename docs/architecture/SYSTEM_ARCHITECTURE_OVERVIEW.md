@@ -171,11 +171,11 @@ to use deterministic fallback or provider-backed behavior.
 ## React UI Architecture
 
 The React implementation is being extracted from the initial fast-exploration
-god-file. As of Slice 1.5.11, `src/App.tsx` is still large, but app-level ownership and the
-first feature boundary have moved out. Shell, navigation, topbar/sidebar,
+god-file. As of Slice 1.5.12, `src/App.tsx` is still large, but app-level ownership and
+the first feature boundaries have moved out. Shell, navigation, topbar/sidebar,
 context-chat overlay, shared icon, weight range editor, persistence/autosave/reset,
-high-level workspace orchestration, and the `Signals` workspace now live outside
-`App.tsx`. This is now an explicit temporary extraction
+high-level workspace orchestration, the `Signals` workspace, and the `Editorial Model`
+workspace now live outside `App.tsx`. This is now an explicit temporary extraction
 baseline, not an acceptable direction for future feature work.
 
 Target structure:
@@ -219,13 +219,17 @@ be written inside JSX.
 
 Architecture smoke tests enforce the temporary baseline:
 
-- `src/App.tsx <= 5400` lines after Slice 1.5.11.
+- `src/App.tsx <= 3600` lines after Slice 1.5.12.
 - `src/App.test.tsx <= 850` lines.
-- Large `App.tsx` UI declarations `<= 26`.
-- Required app/shared extraction files and `src/features/signals/SignalsView.tsx` must exist.
+- Large `App.tsx` UI declarations `<= 17`.
+- Required app/shared extraction files, `src/features/signals/SignalsView.tsx`, and
+  `src/features/editorial-model/EditorialModelView.tsx` must exist.
 - `src/App.tsx` must not import or instantiate `LocalWorkspaceStore`.
 - `src/App.tsx` must not contain signals feature internals such as `RadarEditor`,
   `SignalsSidePanel`, `RadarView`, or radar/signal label helpers.
+- `src/App.tsx` must not contain editorial-model internals such as `TopicEditor`,
+  `FabulaEditor`, `TopicFabulaMatrixView`, `EditorialValidationPanel`, or
+  editorial setup helper factories.
 - The React UI architecture ADR and this SAO section must exist.
 
 Every extraction slice must lower these limits. The target after the extraction chain

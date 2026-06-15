@@ -3,9 +3,9 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
-const APP_TSX_LIMIT = 5400;
+const APP_TSX_LIMIT = 3600;
 const APP_TEST_TSX_LIMIT = 850;
-const LARGE_APP_DECLARATION_LIMIT = 26;
+const LARGE_APP_DECLARATION_LIMIT = 17;
 
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
@@ -70,6 +70,7 @@ const requiredSourceFiles = [
   "src/app/useWorkspaceController.ts",
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
+  "src/features/editorial-model/EditorialModelView.tsx",
   "src/features/signals/SignalsView.tsx",
 ];
 
@@ -97,6 +98,24 @@ for (const symbol of forbiddenAppSignalsSymbols) {
   assert(
     !appSource.includes(symbol),
     `src/App.tsx must not contain signals feature internals: ${symbol}. Use src/features/signals.`
+  );
+}
+
+const forbiddenAppEditorialModelSymbols = [
+  "function EditorialModelView",
+  "function TopicEditor",
+  "function FabulaEditor",
+  "function TopicFabulaMatrixView",
+  "function EditorialValidationPanel",
+  "createEditorialRule",
+  "createTopicDraft",
+  "createFabulaDraft",
+];
+
+for (const symbol of forbiddenAppEditorialModelSymbols) {
+  assert(
+    !appSource.includes(symbol),
+    `src/App.tsx must not contain editorial-model feature internals: ${symbol}. Use src/features/editorial-model.`
   );
 }
 
