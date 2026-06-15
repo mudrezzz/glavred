@@ -325,6 +325,13 @@ belong in `useMemoryFeedController`; import queue, archive restore/delete, selec
 candidates, bulk confirmation, and undo state belong in `useImportReviewController`.
 Rendering is split into `MemoryFeedTab`, `MemorySidePanel`, and `MemoryDialogs`.
 
+After Slice 1.5.26, `SignalsView` is also only a feature composition root. Signals tab,
+expanded row, radar draft, signal draft, filter, summary, and derived-list state belongs
+in `useSignalsController`. Rendering is split into `SignalsHeader`, `SignalsTabs`,
+`RadarsTab`, `RadarCard`, `FoundSignalsTab`, `SourceSignalCard`, and
+`PostCandidatesPreviewTab`. `RadarEditor` remains the radar form editor, not the owner
+of tab/list state.
+
 Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
 `validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP

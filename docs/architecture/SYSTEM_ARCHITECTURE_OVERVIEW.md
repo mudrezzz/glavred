@@ -260,7 +260,15 @@ fixture, and feature files. Architecture smoke now tracks current large-file bas
 - `src/domain/editorialWorkspace.ts <= 170`
 - `src/features/editorial-model/EditorialModelView.tsx <= 220`
 - `src/fixtures/demoWorkspace.ts <= 120`
-- `src/features/signals/SignalsView.tsx <= 700`
+- `src/features/signals/SignalsView.tsx <= 180`
+- `src/features/signals/useSignalsController.ts <= 280`
+- `src/features/signals/RadarsTab.tsx <= 220`
+- `src/features/signals/RadarCard.tsx <= 240`
+- `src/features/signals/FoundSignalsTab.tsx <= 220`
+- `src/features/signals/SourceSignalCard.tsx <= 260`
+- `src/features/signals/SignalsHeader.tsx <= 100`
+- `src/features/signals/SignalsTabs.tsx <= 80`
+- `src/features/signals/PostCandidatesPreviewTab.tsx <= 120`
 - `src/application/editorialServices.ts <= 20`
 - `src/domain/editorial-model/transitions.ts <= 20`
 - `src/domain/editorial-model/rules.ts <= 50`
@@ -301,13 +309,21 @@ role-owned files such as:
 - `src/features/editorial-model/ProjectProfileHeader.tsx`,
   `PublisherRulesView.tsx`, `TopicsTab.tsx`, `FabulasTab.tsx`, and
   `MatrixTab.tsx`;
-- `src/features/signals/RadarEditor.tsx` and `SignalsSidePanel.tsx`.
+- `src/features/signals/useSignalsController.ts`, `SignalsHeader.tsx`,
+  `SignalsTabs.tsx`, `RadarsTab.tsx`, `RadarCard.tsx`, `FoundSignalsTab.tsx`,
+  `SourceSignalCard.tsx`, `PostCandidatesPreviewTab.tsx`, `RadarEditor.tsx`,
+  and `SignalsSidePanel.tsx`.
 
 Stateful feature orchestration belongs in feature-local hooks, not entrypoints.
 After Slice 1.5.25, `AuthorMemoryView` composes the active memory tab, side panel,
 and dialogs. Feed/composer/edit/delete/correction state lives in
 `useMemoryFeedController`; import queue, archive, selection, bulk action, and undo
 state lives in `useImportReviewController`.
+
+After Slice 1.5.26, `SignalsView` composes the signals header, tabs, and active
+workspace tab. Radar/signal expanded state, edit drafts, filters, summaries, and
+derived lists live in `useSignalsController`; tab/entity rendering lives in
+feature-local modules.
 
 Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel only; rules, setup validation, and topic/fabula catalog

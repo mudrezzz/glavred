@@ -55,8 +55,48 @@ const LARGE_SOURCE_BASELINES = [
   },
   {
     path: "src/features/signals/SignalsView.tsx",
-    limit: 700,
-    next: "Signals internals must keep moving into radar/signal component modules.",
+    limit: 180,
+    next: "SignalsView must stay a composition root; keep radar/signal state and tab UI in feature-local modules.",
+  },
+  {
+    path: "src/features/signals/useSignalsController.ts",
+    limit: 280,
+    next: "Signals tab/filter/edit state should stay in this hook or be split by radar/signal role.",
+  },
+  {
+    path: "src/features/signals/RadarsTab.tsx",
+    limit: 220,
+    next: "RadarsTab should stay focused on toolbar, new radar editor, and radar list composition.",
+  },
+  {
+    path: "src/features/signals/RadarCard.tsx",
+    limit: 240,
+    next: "RadarCard should stay focused on one radar row/detail/edit surface.",
+  },
+  {
+    path: "src/features/signals/FoundSignalsTab.tsx",
+    limit: 220,
+    next: "FoundSignalsTab should stay focused on filter toolbar and signal list composition.",
+  },
+  {
+    path: "src/features/signals/SourceSignalCard.tsx",
+    limit: 260,
+    next: "SourceSignalCard should stay focused on one found signal row/detail/edit surface.",
+  },
+  {
+    path: "src/features/signals/SignalsHeader.tsx",
+    limit: 100,
+    next: "SignalsHeader should stay focused on section title and header metrics.",
+  },
+  {
+    path: "src/features/signals/SignalsTabs.tsx",
+    limit: 80,
+    next: "SignalsTabs should stay focused on tab switching only.",
+  },
+  {
+    path: "src/features/signals/PostCandidatesPreviewTab.tsx",
+    limit: 120,
+    next: "PostCandidatesPreviewTab should stay a read-only Slice 1.6 placeholder.",
   },
   {
     path: "src/application/editorialServices.ts",
@@ -278,6 +318,14 @@ const requiredSourceFiles = [
   "src/features/editorial-model/ValidationPanel.tsx",
   "src/features/editorial-model/helpers.ts",
   "src/features/signals/SignalsView.tsx",
+  "src/features/signals/useSignalsController.ts",
+  "src/features/signals/SignalsHeader.tsx",
+  "src/features/signals/SignalsTabs.tsx",
+  "src/features/signals/RadarsTab.tsx",
+  "src/features/signals/RadarCard.tsx",
+  "src/features/signals/FoundSignalsTab.tsx",
+  "src/features/signals/SourceSignalCard.tsx",
+  "src/features/signals/PostCandidatesPreviewTab.tsx",
   "src/features/signals/RadarEditor.tsx",
   "src/features/signals/SignalsSidePanel.tsx",
   "src/features/signals/helpers.tsx",
@@ -330,6 +378,23 @@ for (const symbol of forbiddenAppSignalsSymbols) {
   assert(
     !appSource.includes(symbol),
     `src/App.tsx must not contain signals feature internals: ${symbol}. Use src/features/signals.`
+  );
+}
+
+const signalsViewSource = readText("src/features/signals/SignalsView.tsx");
+const forbiddenSignalsViewSymbols = [
+  "function openNewRadar",
+  "function saveRadarDraft",
+  "filteredSignals",
+  "function startSignalEdit",
+  "function patchRadarRule",
+  "function patchRadarSource",
+];
+
+for (const symbol of forbiddenSignalsViewSymbols) {
+  assert(
+    !signalsViewSource.includes(symbol),
+    `src/features/signals/SignalsView.tsx must not contain signals internals: ${symbol}. Use useSignalsController or feature-local tab/entity modules.`
   );
 }
 

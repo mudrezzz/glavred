@@ -1818,6 +1818,43 @@ Status:
   - Hook extraction can accidentally change stale closure behavior; preserve existing
     callback boundaries and rely on regression tests.
 
+### Slice 1.5.26: Signals Feature Internal Decomposition
+
+- Status: Done
+- Goal: Reduce `src/features/signals/SignalsView.tsx` into a thin feature composition
+  root without changing behavior, storage, demo data, or CSS.
+- User value: Signals can evolve into post candidate assemblies without recreating a
+  feature-level god file.
+- Scope:
+  - Move signals tabs, filters, radar draft, signal draft, and summary state into
+    `useSignalsController`.
+  - Move header, tabs, radars list, radar card, found signals list, signal card, and
+    post-candidates preview into role-owned feature modules.
+  - Lower architecture smoke limits for `SignalsView` and the new signals modules.
+- Out of scope:
+  - Product behavior changes.
+  - Visual redesign or CSS changes.
+  - Domain/storage changes.
+  - Post candidate assemblies.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, and roadmap.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `SignalsView` is below the new architecture limit and contains no radar/signal
+    orchestration internals. Done.
+  - Existing radar and found-signal flows remain behaviorally unchanged. Done.
+  - Full regression commands pass. Done.
+- Risks:
+  - Mechanical extraction can accidentally change expanded/edit state; preserve existing
+    callbacks and rely on regression tests.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
