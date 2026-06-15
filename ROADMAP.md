@@ -1738,17 +1738,60 @@ Status:
   - Premature optimization can distract from maintainability; keep this slice focused
     on visibility and boundaries.
 
+### Slice 1.5.24: Feature Internals Cleanup and OOP Boundaries
+
+- Status: Done
+- Goal: Bring the refactored React/domain structure closer to maintainable feature
+  modules by splitting remaining large feature entrypoints and editorial-model
+  transitions by role.
+- User value: New contributors can open a feature or domain folder and find the
+  relevant component, form, tab, validator, or transition without reading a thousand
+  lines of unrelated code.
+- Scope:
+  - Split large feature entrypoints into feature-local tab, panel, editor, and card
+    modules while keeping public feature entrypoints stable.
+  - Split `src/domain/editorial-model/transitions.ts` into role-owned modules for
+    rules, validation, and topic/fabula catalog transitions.
+  - Keep compatibility barrels where existing imports need them, but prevent new
+    logic from accumulating there.
+  - Add architecture smoke limits for the new files and lower limits for the old
+    entrypoints.
+  - Add ADR coverage for React composition, OOP boundaries, and role-owned domain
+    modules.
+- Out of scope:
+  - Product behavior changes.
+  - Visual redesign.
+  - New UI states or new domain concepts.
+  - Route-level lazy loading.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, ADRs, and roadmap.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - Large feature entrypoints shrink and delegate to feature-local modules. Done.
+  - Editorial-model transitions are split by role with a thin compatibility export. Done.
+  - Architecture smoke tracks the new feature-local/domain-owned modules. Done.
+  - Behavior and visual regression tests pass. Done.
+- Risks:
+  - Mechanical extraction can accidentally move state ownership; preserve existing
+    props/callback boundaries and use tests to catch regressions.
+
 ### Slice 1.6: Post Candidate Assemblies
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add post candidates as explicit combinations of signal, topic, fabula,
   audience, value, goal, platform, and format.
 - User value: The author can compare several proposed post concepts for one future
   slot instead of approving the first generated idea.
 - Dependency:
-  - Deferred until the refactoring chain through `Slice 1.5.23` finishes. New product
-    UI should not be added while domain, application, fixtures, and feature internals
-    still contain large monolithic files.
+  - Ready after the refactoring chain through `Slice 1.5.24`. New product UI should
+    continue using the feature-local module boundaries and architecture smoke limits.
 - Scope:
   - Add `PostCandidate` contracts.
   - Generate deterministic candidates from approved signals and editorial model.
@@ -1977,4 +2020,3 @@ Status:
 ## Next Recommended Task
 
 Resume product work with `Slice 1.6: Post Candidate Assemblies` after the completed architecture refactoring chain.
-

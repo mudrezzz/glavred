@@ -307,6 +307,23 @@ facades/factories rather than owners of all domain, service, or demo logic. Sour
 should explain ownership, invariants, compatibility fields, deterministic stubs, and future
 provider/backend boundaries; avoid comments that only describe obvious JSX or assignments.
 
+After Slice 1.5.24, feature entrypoints must stay thin. `AuthorMemoryView`,
+`EditorialModelView`, and `SignalsView` should compose feature-local modules, not absorb
+every tab, dialog, row, editor, side panel, and helper. Use the existing split as the
+default destination for new code:
+
+- Author memory import/source/archive UI belongs in `ExternalSourcesView`,
+  `ImportQueueView`, `CandidateCard`, `ArchiveView`, or `BulkActionDialog`.
+- Editorial model setup UI belongs in `ProjectProfileHeader`, `PublisherRulesView`,
+  `TopicsTab`, `FabulasTab`, or `MatrixTab`.
+- Signals setup UI belongs in `RadarEditor`; signals summary belongs in
+  `SignalsSidePanel`.
+
+Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
+is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
+`validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP
+through explicit ownership and stable module boundaries rather than class-heavy React.
+
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.

@@ -10,7 +10,7 @@ const LARGE_APP_DECLARATION_LIMIT = 1;
 const LARGE_SOURCE_BASELINES = [
   {
     path: "src/features/author-memory/AuthorMemoryView.tsx",
-    limit: 1460,
+    limit: 930,
     next: "Author memory internals must keep moving into feature-local components before new UI is added.",
   },
   {
@@ -20,7 +20,7 @@ const LARGE_SOURCE_BASELINES = [
   },
   {
     path: "src/features/editorial-model/EditorialModelView.tsx",
-    limit: 1090,
+    limit: 220,
     next: "Editorial model internals must keep moving into feature-local tab/panel modules.",
   },
   {
@@ -30,7 +30,7 @@ const LARGE_SOURCE_BASELINES = [
   },
   {
     path: "src/features/signals/SignalsView.tsx",
-    limit: 950,
+    limit: 700,
     next: "Signals internals must keep moving into radar/signal component modules.",
   },
   {
@@ -40,8 +40,93 @@ const LARGE_SOURCE_BASELINES = [
   },
   {
     path: "src/domain/editorial-model/transitions.ts",
-    limit: 640,
+    limit: 20,
     next: "If editorial-model transitions grow, split them by rules, topics, fabulas, matrix, and validators.",
+  },
+  {
+    path: "src/domain/editorial-model/rules.ts",
+    limit: 50,
+    next: "Editorial rule transitions should stay small and role-owned.",
+  },
+  {
+    path: "src/domain/editorial-model/validation.ts",
+    limit: 460,
+    next: "If editorial validation grows, split individual validators into dedicated modules.",
+  },
+  {
+    path: "src/domain/editorial-model/catalog.ts",
+    limit: 190,
+    next: "Topic/fabula/matrix transitions should stay catalog-owned.",
+  },
+  {
+    path: "src/features/author-memory/ImportViews.tsx",
+    limit: 20,
+    next: "ImportViews.tsx must remain a feature-local compatibility barrel.",
+  },
+  {
+    path: "src/features/author-memory/ExternalSourcesView.tsx",
+    limit: 190,
+    next: "External source UI should stay separate from memory feed and import queue logic.",
+  },
+  {
+    path: "src/features/author-memory/ImportQueueView.tsx",
+    limit: 340,
+    next: "If import queue grows, split filters, bulk toolbar, and selection state helpers.",
+  },
+  {
+    path: "src/features/author-memory/CandidateCard.tsx",
+    limit: 170,
+    next: "CandidateCard should stay focused on one imported candidate.",
+  },
+  {
+    path: "src/features/author-memory/ArchiveView.tsx",
+    limit: 150,
+    next: "Archive UI should stay separate from import queue review logic.",
+  },
+  {
+    path: "src/features/author-memory/BulkActionDialog.tsx",
+    limit: 130,
+    next: "Bulk action confirmation should stay a small dialog component.",
+  },
+  {
+    path: "src/features/editorial-model/EditorialModelParts.tsx",
+    limit: 20,
+    next: "EditorialModelParts.tsx must remain a feature-local compatibility barrel.",
+  },
+  {
+    path: "src/features/editorial-model/ProjectProfileHeader.tsx",
+    limit: 160,
+    next: "Project profile header must stay separate from rules, topics, and matrix UI.",
+  },
+  {
+    path: "src/features/editorial-model/PublisherRulesView.tsx",
+    limit: 260,
+    next: "Publisher rules UI should stay focused on rules and rule editing.",
+  },
+  {
+    path: "src/features/editorial-model/TopicsTab.tsx",
+    limit: 310,
+    next: "Topics tab should be split again if topic editor/list behavior grows.",
+  },
+  {
+    path: "src/features/editorial-model/FabulasTab.tsx",
+    limit: 310,
+    next: "Fabulas tab should be split again if fabula editor/list behavior grows.",
+  },
+  {
+    path: "src/features/editorial-model/MatrixTab.tsx",
+    limit: 140,
+    next: "Matrix UI should stay focused on compatibility editing.",
+  },
+  {
+    path: "src/features/signals/RadarEditor.tsx",
+    limit: 270,
+    next: "Radar editor should stay separate from signals list and side panel UI.",
+  },
+  {
+    path: "src/features/signals/SignalsSidePanel.tsx",
+    limit: 100,
+    next: "Signals side panel should stay compact and summary-focused.",
   },
   {
     path: "src/fixtures/demoImports.ts",
@@ -54,6 +139,8 @@ const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
 const MODULE_GUARDRAILS_ADR_PATH =
   "docs/adr/2026-06-15-domain-feature-modules-have-size-boundary-guardrails.md";
+const FEATURE_INTERNALS_ADR_PATH =
+  "docs/adr/2026-06-15-feature-entrypoints-stay-thin-and-domain-transitions-are-role-owned.md";
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 
 function readText(relativePath) {
@@ -129,6 +216,10 @@ assert(
   fileExists(MODULE_GUARDRAILS_ADR_PATH),
   `Missing ADR: ${MODULE_GUARDRAILS_ADR_PATH}`
 );
+assert(
+  fileExists(FEATURE_INTERNALS_ADR_PATH),
+  `Missing ADR: ${FEATURE_INTERNALS_ADR_PATH}`
+);
 
 const requiredSourceFiles = [
   "src/app/AppShell.tsx",
@@ -139,12 +230,26 @@ const requiredSourceFiles = [
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
   "src/features/author-memory/AuthorMemoryView.tsx",
+  "src/features/author-memory/ImportViews.tsx",
+  "src/features/author-memory/ExternalSourcesView.tsx",
+  "src/features/author-memory/ImportQueueView.tsx",
+  "src/features/author-memory/CandidateCard.tsx",
+  "src/features/author-memory/ArchiveView.tsx",
+  "src/features/author-memory/BulkActionDialog.tsx",
   "src/features/author-memory/components.tsx",
   "src/features/author-memory/helpers.ts",
   "src/features/editorial-model/EditorialModelView.tsx",
+  "src/features/editorial-model/EditorialModelParts.tsx",
+  "src/features/editorial-model/ProjectProfileHeader.tsx",
+  "src/features/editorial-model/PublisherRulesView.tsx",
+  "src/features/editorial-model/TopicsTab.tsx",
+  "src/features/editorial-model/FabulasTab.tsx",
+  "src/features/editorial-model/MatrixTab.tsx",
   "src/features/editorial-model/ValidationPanel.tsx",
   "src/features/editorial-model/helpers.ts",
   "src/features/signals/SignalsView.tsx",
+  "src/features/signals/RadarEditor.tsx",
+  "src/features/signals/SignalsSidePanel.tsx",
   "src/features/signals/helpers.tsx",
   "src/features/plan/PlanView.tsx",
   "src/features/briefing/BriefView.tsx",
@@ -311,6 +416,8 @@ const requiredSaoFragments = [
   "features -> shared/application/domain",
   "no feature -> feature",
   "Large-file guardrails",
+  "Feature entrypoints stay thin",
+  "Domain transitions are role-owned",
   "domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain",
 ];
 

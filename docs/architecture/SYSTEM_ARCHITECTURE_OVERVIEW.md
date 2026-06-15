@@ -251,13 +251,22 @@ avoid moving feature behavior back into it.
 The next architecture risk is no longer `App.tsx`; it is large domain, application,
 fixture, and feature files. Architecture smoke now tracks current large-file baselines:
 
-- `src/features/author-memory/AuthorMemoryView.tsx <= 1460`
+- `src/features/author-memory/AuthorMemoryView.tsx <= 930`
 - `src/domain/editorialWorkspace.ts <= 170`
-- `src/features/editorial-model/EditorialModelView.tsx <= 1090`
+- `src/features/editorial-model/EditorialModelView.tsx <= 220`
 - `src/fixtures/demoWorkspace.ts <= 120`
-- `src/features/signals/SignalsView.tsx <= 950`
+- `src/features/signals/SignalsView.tsx <= 700`
 - `src/application/editorialServices.ts <= 20`
-- `src/domain/editorial-model/transitions.ts <= 640`
+- `src/domain/editorial-model/transitions.ts <= 20`
+- `src/domain/editorial-model/rules.ts <= 50`
+- `src/domain/editorial-model/validation.ts <= 460`
+- `src/domain/editorial-model/catalog.ts <= 190`
+- `src/features/author-memory/ImportViews.tsx <= 20`
+- `src/features/author-memory/ImportQueueView.tsx <= 340`
+- `src/features/editorial-model/EditorialModelParts.tsx <= 20`
+- `src/features/editorial-model/TopicsTab.tsx <= 310`
+- `src/features/editorial-model/FabulasTab.tsx <= 310`
+- `src/features/signals/RadarEditor.tsx <= 270`
 - `src/fixtures/demoImports.ts <= 410`
 
 These are temporary ceilings, not acceptable target sizes. domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain. Product slices that add new user-facing UI are deferred until the large-file guardrails are lowered through bounded-context decomposition.
@@ -272,6 +281,25 @@ The refactoring direction is:
 - large feature entrypoints have started moving internal tabs, panels, cards, forms, dialogs, and
   local helpers into feature-local files;
 - feature modules still obey `no feature -> feature`.
+
+Feature entrypoints stay thin. `AuthorMemoryView`, `EditorialModelView`, and
+`SignalsView` are composition surfaces for their feature, not owners of every tab,
+dialog, editor, row, side panel, and helper. Feature-local internals now live in
+role-owned files such as:
+
+- `src/features/author-memory/ExternalSourcesView.tsx`,
+  `ImportQueueView.tsx`, `CandidateCard.tsx`, `ArchiveView.tsx`, and
+  `BulkActionDialog.tsx`;
+- `src/features/editorial-model/ProjectProfileHeader.tsx`,
+  `PublisherRulesView.tsx`, `TopicsTab.tsx`, `FabulasTab.tsx`, and
+  `MatrixTab.tsx`;
+- `src/features/signals/RadarEditor.tsx` and `SignalsSidePanel.tsx`.
+
+Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
+is a compatibility barrel only; rules, setup validation, and topic/fabula catalog
+transitions live in `rules.ts`, `validation.ts`, and `catalog.ts`. New transition
+logic should be added to the role-owned file first, then re-exported only when
+backward-compatible imports require it.
 
 Source comments are required for domain ownership, invariants, legacy compatibility,
 deterministic stubs, and future provider/backend boundaries. Comments should not
