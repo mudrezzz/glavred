@@ -246,6 +246,37 @@ Every extraction slice must lower these limits. The target after the extraction 
 is now met for `App.tsx`; future slices should keep it at composition-root size and
 avoid moving feature behavior back into it.
 
+### Large-file guardrails
+
+The next architecture risk is no longer `App.tsx`; it is large domain, application,
+fixture, and feature files. Architecture smoke now tracks current large-file baselines:
+
+- `src/features/author-memory/AuthorMemoryView.tsx <= 1460`
+- `src/domain/editorialWorkspace.ts <= 170`
+- `src/features/editorial-model/EditorialModelView.tsx <= 1090`
+- `src/fixtures/demoWorkspace.ts <= 120`
+- `src/features/signals/SignalsView.tsx <= 950`
+- `src/application/editorialServices.ts <= 20`
+- `src/domain/editorial-model/transitions.ts <= 640`
+- `src/fixtures/demoImports.ts <= 410`
+
+These are temporary ceilings, not acceptable target sizes. domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain. Product slices that add new user-facing UI are deferred until the large-file guardrails are lowered through bounded-context decomposition.
+
+The refactoring direction is:
+
+- domain types and transitions have moved from `editorialWorkspace.ts` into
+  bounded-context modules;
+- application services have moved from `editorialServices.ts` into workflow-specific
+  services;
+- demo data has moved from `demoWorkspace.ts` into scenario/context fixtures;
+- large feature entrypoints have started moving internal tabs, panels, cards, forms, dialogs, and
+  local helpers into feature-local files;
+- feature modules still obey `no feature -> feature`.
+
+Source comments are required for domain ownership, invariants, legacy compatibility,
+deterministic stubs, and future provider/backend boundaries. Comments should not
+describe obvious JSX or restate simple assignments.
+
 ## Frontend UX Architecture
 
 Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions:

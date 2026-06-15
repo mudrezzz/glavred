@@ -288,6 +288,25 @@ imports `LocalWorkspaceStore` or contains extracted feature internals. After Sli
 1.5.14 the limits are `App.tsx <= 350`, `App.test.tsx <= 850`, and large App UI
 declarations `<= 1`.
 
+After Slice 1.5.15, architecture smoke also tracks large-file baselines outside
+`App.tsx`. These are temporary ceilings:
+
+- `src/features/author-memory/AuthorMemoryView.tsx`
+- `src/domain/editorialWorkspace.ts`
+- `src/features/editorial-model/EditorialModelView.tsx`
+- `src/fixtures/demoWorkspace.ts`
+- `src/features/signals/SignalsView.tsx`
+- `src/application/editorialServices.ts`
+- `src/domain/editorial-model/transitions.ts`
+- `src/fixtures/demoImports.ts`
+
+Do not add product behavior to these files unless the same slice lowers the relevant
+limit by extracting cohesive modules. As of the refactoring chain through Slice 1.5.23,
+`editorialWorkspace.ts`, `editorialServices.ts`, and `demoWorkspace.ts` are compatibility
+facades/factories rather than owners of all domain, service, or demo logic. Source comments
+should explain ownership, invariants, compatibility fields, deterministic stubs, and future
+provider/backend boundaries; avoid comments that only describe obvious JSX or assignments.
+
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.

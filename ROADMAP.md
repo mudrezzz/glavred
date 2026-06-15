@@ -1400,16 +1400,355 @@ Status:
   - `npm run test:design` passed.
   - `npm run test:visual` passed.
 
+### Slice 1.5.15: Codebase Size Audit and Modularization Guardrails
+
+- Status: Done
+- Goal: Stop large-file growth across domain, application, fixtures, and feature
+  modules before new product UI is added.
+- User value: The product becomes easier to maintain and safer to extend; new
+  contributors can understand module boundaries without reading thousand-line files.
+- Scope:
+  - Add a codebase size audit for `src/**/*.ts` and `src/**/*.tsx`.
+  - Extend `npm run test:architecture` or add a dedicated size guard so large files are
+    tracked explicitly.
+  - Set temporary baselines for current large files:
+    - `src/features/author-memory/AuthorMemoryView.tsx`;
+    - `src/domain/editorialWorkspace.ts`;
+    - `src/features/editorial-model/EditorialModelView.tsx`;
+    - `src/fixtures/demoWorkspace.ts`;
+    - `src/features/signals/SignalsView.tsx`;
+    - `src/application/editorialServices.ts`.
+  - Add rules that these baselines may only decrease in future refactoring slices.
+  - Add architecture checks for feature/domain/application boundary ownership.
+  - Add ADR for module size, comments, and decomposition guardrails.
+  - Update SAO and developer guide with the refactoring chain.
+- Out of scope:
+  - Moving domain or feature code.
+  - Product behavior changes.
+  - UI/CSS changes.
+- Implementation notes:
+  - The first guard should be strict enough to prevent growth, but not block the current
+    main branch before decomposition starts.
+  - Comments policy should require useful boundary/invariant comments, not noisy
+    line-by-line narration.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update ROADMAP, SAO, developer guide, and ADRs.
+- Demo impact:
+  - None. This is architecture-only.
+- Acceptance criteria:
+  - Large-file baselines are visible and enforced.
+  - The next refactoring slices are explicitly listed before `Slice 1.6`.
+  - Architecture docs explain why product slices are paused.
+- Risks:
+  - Overly strict limits could block necessary refactors; use temporary baselines and
+    lower them slice by slice.
+
+### Slice 1.5.16: Split Domain Workspace Types by Bounded Context
+
+- Status: Done
+- Goal: Break `src/domain/editorialWorkspace.ts` type definitions into domain
+  bounded-context modules.
+- User value: Domain concepts become discoverable by area instead of buried in one
+  workspace file.
+- Scope:
+  - Create domain context modules for:
+    - `author-memory`;
+    - `editorial-model`;
+    - `signals`;
+    - `planning`;
+    - `briefing`;
+    - `editing`;
+    - `release`;
+    - `analytics`;
+    - `workspace`.
+  - Move type/interface declarations into those modules.
+  - Keep `src/domain/editorialWorkspace.ts` as a temporary compatibility barrel.
+  - Add module-level comments that explain each domain context and its invariants.
+- Out of scope:
+  - Moving transitions/services.
+  - Changing storage shape.
+  - Changing runtime behavior.
+- Implementation notes:
+  - Imports should continue to work through the compatibility barrel during this slice.
+  - No type should be renamed unless it is required for a clean boundary.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update SAO and developer guide with the new domain structure.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `editorialWorkspace.ts` no longer owns all type declarations directly.
+  - Existing product flow and tests behave unchanged.
+- Risks:
+  - Type moves can cause broad import churn; keep a compatibility barrel until later.
+
+### Slice 1.5.17: Split Domain Transitions and Invariants
+
+- Status: Done
+- Goal: Move pure domain transitions and helpers out of the workspace barrel into
+  bounded-context modules.
+- User value: Business rules become easier to locate, test, and change safely.
+- Scope:
+  - Move author-memory, editorial-model, signals, planning, release, and analytics
+    transitions to their context modules.
+  - Add short comments for non-obvious invariants and compatibility behavior.
+  - Keep `editorialWorkspace.ts` as a thin public re-export until imports are cleaned.
+  - Extend architecture checks so new domain logic cannot be added back to the barrel.
+- Out of scope:
+  - Application services.
+  - UI refactors.
+  - Product behavior changes.
+- Implementation notes:
+  - Preserve function names and deterministic behavior.
+  - Prefer small files by role over one file per tiny function.
+- Tests:
+  - Domain tests for moved transitions.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update developer guide with transition ownership.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `editorialWorkspace.ts` is a thin compatibility module.
+  - Moved transitions retain existing behavior.
+- Risks:
+  - Hidden import cycles may appear; fix by adjusting context ownership, not by adding
+    cross-layer shortcuts.
+
+### Slice 1.5.18: Split Application Services
+
+- Status: Done
+- Goal: Break `src/application/editorialServices.ts` into cohesive application
+  services.
+- User value: Deterministic services, future AI boundaries, and workflow orchestration
+  become easier to reason about independently.
+- Scope:
+  - Create application modules for:
+    - author memory;
+    - signals;
+    - planning;
+    - briefing;
+    - drafting/editing checks;
+    - release;
+    - analytics.
+  - Keep an `application` compatibility barrel for current imports.
+  - Add service-level comments that explain deterministic fallback and future AI/provider
+    boundaries.
+- Out of scope:
+  - Real AI provider calls.
+  - UI changes.
+  - Domain model changes beyond imports.
+- Implementation notes:
+  - Application services may import domain contexts, but not UI or infrastructure.
+  - Keep deterministic behavior byte-for-byte where practical.
+- Tests:
+  - Existing application/domain tests.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update SAO and developer guide.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `editorialServices.ts` is no longer the service god-file.
+  - Services have clear ownership boundaries.
+- Risks:
+  - Over-splitting could create boilerplate; group by workflow role, not by every
+    function.
+
+### Slice 1.5.19: Split Demo Workspace Fixtures
+
+- Status: Done
+- Goal: Break `src/fixtures/demoWorkspace.ts` into scenario modules while preserving a
+  single demo workspace factory.
+- User value: Demo data becomes easier to update with new product slices without
+  editing a thousand-line fixture file.
+- Scope:
+  - Split demo fixtures by context:
+    - author memory;
+    - editorial model;
+    - signals/radars;
+    - planning;
+    - production artifacts;
+    - release and analytics.
+  - Keep `createDemoWorkspace` as the public factory.
+  - Add comments explaining the permanent AI Product Manager demo story.
+- Out of scope:
+  - Changing demo behavior or copy.
+  - New demo scenarios.
+  - UI changes.
+- Implementation notes:
+  - Avoid fixture barrels that eagerly obscure ownership; keep the public factory
+    intentional.
+- Tests:
+  - Storage reset tests.
+  - Demo workspace tests.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update demo docs if fixture ownership changes developer workflow.
+- Demo impact:
+  - No visible change.
+- Acceptance criteria:
+  - Demo data is modular and still produces the same workspace after reset.
+- Risks:
+  - Fixture split can accidentally alter IDs; preserve stable IDs unless intentionally
+    changed.
+
+### Slice 1.5.20: Split Author Memory Feature Internals
+
+- Status: Done
+- Goal: Break `src/features/author-memory/AuthorMemoryView.tsx` into cohesive
+  subcomponents without changing UX.
+- User value: The largest feature surface becomes maintainable and safer to extend.
+- Scope:
+  - Extract composer, feed, note cards, assertions panel, sources tab, import queue tab,
+    archive tab, bulk dialog, and local feature helpers.
+  - Keep `AuthorMemoryView` as the feature entrypoint.
+  - Add feature-local comments where correction/evidence/import flows have non-obvious
+    behavior.
+- Out of scope:
+  - Product changes.
+  - CSS changes.
+  - Storage changes.
+- Tests:
+  - Existing author memory UI tests.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update developer guide with feature internal structure.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `AuthorMemoryView.tsx` drops below the new size limit.
+  - User-visible behavior is unchanged.
+- Risks:
+  - Feature-local state can be accidentally split incorrectly; preserve existing
+    callback boundaries.
+
+### Slice 1.5.21: Split Editorial Model Feature Internals
+
+- Status: Done
+- Goal: Break `src/features/editorial-model/EditorialModelView.tsx` into tab and panel
+  modules without changing UX.
+- User value: Editorial model work can continue without reintroducing a feature-level
+  god-file.
+- Scope:
+  - Extract publisher tab, topics tab, fabulas tab, matrix tab, project profile header,
+    validation panel, and local helpers.
+  - Keep `EditorialModelView` as the feature entrypoint.
+- Out of scope:
+  - New validators.
+  - New editorial-model behavior.
+  - CSS changes.
+- Tests:
+  - Editorial model UI tests.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update developer guide with feature internal structure.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `EditorialModelView.tsx` drops below the new size limit.
+  - Existing add/edit/delete/validation flows still work.
+- Risks:
+  - Matrix and topic/fabula editors share state; keep save/cancel behavior identical.
+
+### Slice 1.5.22: Split Signals Feature Internals
+
+- Status: Done
+- Goal: Break `src/features/signals/SignalsView.tsx` into radar, signal, candidate
+  preview, and side-panel modules without changing UX.
+- User value: Signals can evolve into post candidates without the feature file becoming
+  the next monolith.
+- Scope:
+  - Extract radars tab, radar editor, found signals tab, signal card, candidates preview,
+    side panel, and local filter/label helpers.
+  - Keep `SignalsView` as the feature entrypoint.
+- Out of scope:
+  - Post candidate assemblies.
+  - Real radar execution.
+  - CSS changes.
+- Tests:
+  - Signals UI tests.
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update developer guide with feature internal structure.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `SignalsView.tsx` drops below the new size limit.
+  - Radar and signal flows behave unchanged.
+- Risks:
+  - Signals has recent layout guardrails; visual smoke must remain mandatory.
+
+### Slice 1.5.23: Bundle and Import Hygiene Baseline
+
+- Status: Done
+- Goal: Ensure the new modular structure imports only what it needs and does not
+  accidentally pull the whole app into each feature.
+- User value: The browser bundle stays understandable and future lazy-loading remains
+  possible.
+- Scope:
+  - Add import hygiene checks for domain/application/shared barrels.
+  - Identify heavy imports and broad compatibility barrels that should be phased out.
+  - Add a simple bundle/build report or dependency graph check appropriate for Vite.
+  - Define public API boundaries for each major context.
+- Out of scope:
+  - Actual route-level lazy loading unless it is trivial and risk-free.
+  - Product behavior changes.
+  - UI changes.
+- Implementation notes:
+  - Compatibility barrels may remain where needed, but new imports should prefer direct
+    context modules.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+- Docs:
+  - Update SAO and developer guide.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - Import rules are documented and checked.
+  - Product slices can resume without expanding hidden coupling.
+- Risks:
+  - Premature optimization can distract from maintainability; keep this slice focused
+    on visibility and boundaries.
+
 ### Slice 1.6: Post Candidate Assemblies
 
-- Status: Ready
+- Status: Backlog
 - Goal: Add post candidates as explicit combinations of signal, topic, fabula,
   audience, value, goal, platform, and format.
 - User value: The author can compare several proposed post concepts for one future
   slot instead of approving the first generated idea.
 - Dependency:
-  - Deferred until the React extraction chain starts. New product UI should not be
-    added directly to the current `App.tsx` monolith.
+  - Deferred until the refactoring chain through `Slice 1.5.23` finishes. New product
+    UI should not be added while domain, application, fixtures, and feature internals
+    still contain large monolithic files.
 - Scope:
   - Add `PostCandidate` contracts.
   - Generate deterministic candidates from approved signals and editorial model.
@@ -1606,6 +1945,17 @@ Status:
 - Slice 1.5.12: Extract Editorial Model Feature. Completed 2026-06-15.
 - Slice 1.5.13: Extract Author Memory Feature. Completed 2026-06-15.
 - Slice 1.5.14: Extract Production Flow Features. Completed 2026-06-15.
+- Slice 1.5.15: Codebase Size Audit and Modularization Guardrails. Completed
+  2026-06-15.
+- Slice 1.5.16: Split Domain Workspace Types by Bounded Context. Completed
+  2026-06-15.
+- Slice 1.5.17: Split Domain Transitions and Invariants. Completed 2026-06-15.
+- Slice 1.5.18: Split Application Services. Completed 2026-06-15.
+- Slice 1.5.19: Split Demo Workspace Fixtures. Completed 2026-06-15.
+- Slice 1.5.20: Split Author Memory Feature Internals. Completed 2026-06-15.
+- Slice 1.5.21: Split Editorial Model Feature Internals. Completed 2026-06-15.
+- Slice 1.5.22: Split Signals Feature Internals. Completed 2026-06-15.
+- Slice 1.5.23: Bundle and Import Hygiene Baseline. Completed 2026-06-15.
 
 ## Blocked Items
 
@@ -1626,4 +1976,5 @@ Status:
 
 ## Next Recommended Task
 
-Start `Slice 1.6: Post Candidate Assemblies`.
+Resume product work with `Slice 1.6: Post Candidate Assemblies` after the completed architecture refactoring chain.
+

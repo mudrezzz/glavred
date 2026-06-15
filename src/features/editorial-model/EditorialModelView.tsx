@@ -13,27 +13,31 @@ import {
   getTopicFabulaWarnings,
   normalizeWeightRange,
   updateEditorialRule,
-  validatorDefinitionTitle,
   type EditorialModel,
   type EditorialRule,
   type EditorialRuleGroup,
-  type EditorialValidationRun,
   type Fabula,
   type ProjectProfile,
   type Topic,
   type TopicFabulaMatrixEntry,
-  type ValidatorResult,
   type WorkspaceState
 } from '../../domain/editorialWorkspace';
 import { WeightRangeEditor } from '../../shared/ui/WeightRangeEditor';
+import { EditorialValidationPanel, ValidationBadge } from './ValidationPanel';
+import {
+  EDITORIAL_TABS,
+  RULE_SECTIONS,
+  countCompatibleFabulas,
+  countCompatibleTopics,
+  editorialRuleGroupLabel,
+  getReferencedFabulaIds,
+  getReferencedTopicIds,
+  isMatrixEnabled,
+  sameMatrix,
+  splitLines
+} from './helpers';
 import type { EditorialModelTab } from './types';
 
-const EDITORIAL_TABS: Array<[EditorialModelTab, string]> = [
-  ['publisher', 'Издательство'],
-  ['topics', 'Темы'],
-  ['fabulas', 'Фабулы'],
-  ['matrix', 'Матрица']
-];
 
 export function EditorialModelView({
   activeTab,
@@ -194,38 +198,6 @@ export function EditorialModelView({
   );
 }
 
-const RULE_SECTIONS: Array<{ title: string; description: string; groups: EditorialRuleGroup[] }> = [
-  {
-    title: 'Автор',
-    description: 'Характеристики образа автора, которые потом должны проверяться в тексте.',
-    groups: ['author']
-  },
-  {
-    title: 'Аудитория',
-    description: 'Кому пишем и какую пользу читатель должен получать.',
-    groups: ['audience']
-  },
-  {
-    title: 'Позиция',
-    description: 'Что автор утверждает, с чем спорит и какую оптику удерживает.',
-    groups: ['positioning']
-  },
-  {
-    title: 'Стиль',
-    description: 'Голос, язык, ритм, anti-AI-паттерны и запрещенные формулировки.',
-    groups: ['styleVoice', 'styleLanguage', 'styleRhythm', 'antiAiPattern']
-  },
-  {
-    title: 'Цели',
-    description: 'Зачем существует блог и что должно поддерживаться каждым выпуском.',
-    groups: ['goal']
-  },
-  {
-    title: 'Запреты',
-    description: 'Темы, углы и обещания, которые нельзя протаскивать в публикации.',
-    groups: ['forbiddenTopic']
-  }
-];
 
 function ProjectProfileHeader({
   profile,
@@ -1099,212 +1071,7 @@ function TopicFabulaMatrixView({
   );
 }
 
-function EditorialValidationPanel({
-  validationRun,
-  currentRevision,
-  activeTab,
-  onRunValidation
-}: {
-  validationRun: EditorialValidationRun | null;
-  currentRevision: number;
-  activeTab: EditorialModelTab;
-  onRunValidation: () => void;
-}) {
-  const validation = validationRun?.summary ?? null;
-  const validatorResults = validationRun?.results ?? [];
-  const aggregateStatus = validationRun?.aggregateStatus ?? validation?.status ?? null;
-  const aggregateScore = validationRun?.aggregateScore ?? 0;
-  const isStale = Boolean(validationRun && validationRun.revision !== currentRevision);
-  const runState = !validationRun ? 'Еще не проверено' : isStale ? 'Требует повторной проверки' : 'Проверено';
-
-  return (
-    <aside className="card validation-panel">
-      <div className="validation-head">
-        <span className="mono-label">Проверка</span>
-        <span className={`validation-run-state ${!validationRun ? 'empty' : isStale ? 'stale' : 'fresh'}`}>
-          {runState}
-        </span>
-        {aggregateStatus ? <ValidationBadge status={aggregateStatus} /> : null}
-        <h3>{validation?.title ?? 'Проверка еще не запускалась'}</h3>
-        <p>
-          {validation
-            ? validation.summary
-            : 'Заполните или отредактируйте правила, темы, фабулы и матрицу, затем запустите проверку вручную.'}
-        </p>
-        {isStale ? (
-          <p className="validation-stale-note">
-            После последней проверки были сохранены изменения. Запустите проверку повторно, чтобы получить актуальный вывод.
-          </p>
-        ) : null}
-        <button className="btn btn-pri btn-sm" type="button" onClick={onRunValidation}>
-          Проверить
-        </button>
-      </div>
-      {validation ? (
-        <div className="validator-summary">
-          <div>
-            <span className="mono-label">Score</span>
-            <strong>{Math.round(aggregateScore * 100)}%</strong>
-          </div>
-          <div>
-            <span className="mono-label">Validators</span>
-            <strong>{validatorResults.length || validation.items.length}</strong>
-          </div>
-        </div>
-      ) : null}
-      {validatorResults.length > 0 ? (
-        <div className="validation-items validator-cards">
-          {validatorResults.map((result) => (
-            <ValidatorCard key={result.id} result={result} />
-          ))}
-        </div>
-      ) : validation ? (
-        <div className="validation-items">
-          {validation.items.map((item) => (
-            <article className="validation-item" key={item.id}>
-              <div>
-                <ValidationBadge status={item.status} />
-                <b>{item.title}</b>
-              </div>
-              <p>{item.summary}</p>
-              <small>{item.recommendation}</small>
-            </article>
-          ))}
-        </div>
-      ) : null}
-      <p className="validation-note">
-        Вкладка: {editorialTabLabel(activeTab)}. Проверка deterministic, без AI provider. Результат обновляется только по кнопке.
-      </p>
-      {validationRun ? <p className="validation-note">Последняя проверка: {formatDateTime(validationRun.checkedAt)}</p> : null}
-    </aside>
-  );
-}
-
-function ValidatorCard({ result }: { result: ValidatorResult }) {
-  return (
-    <article className="validation-item validator-card">
-      <div className="validator-card-head">
-        <ValidationBadge status={result.status} />
-        <div>
-          <b>{validatorDefinitionTitle(result.validatorId)}</b>
-          <span>{result.validatorId}</span>
-        </div>
-        <strong>{Math.round(result.score * 100)}%</strong>
-      </div>
-      <p>{result.summary}</p>
-      <details className="validator-details">
-        <summary>Evidence и рекомендации</summary>
-        <div className="validator-detail-block">
-          <span className="mono-label">Evidence</span>
-          {result.evidence.length > 0 ? (
-            result.evidence.map((item) => (
-              <blockquote key={item.id}>
-                <b>{item.title}</b>
-                <p>{item.quote}</p>
-                <small>{item.reason}</small>
-              </blockquote>
-            ))
-          ) : (
-            <p className="muted-text">Evidence пока нет.</p>
-          )}
-        </div>
-        <div className="validator-detail-block">
-          <span className="mono-label">Suggestions</span>
-          {result.suggestions.length > 0 ? (
-            result.suggestions.map((item) => (
-              <div className={`validator-suggestion ${item.severity}`} key={item.id}>
-                <b>{item.title}</b>
-                <p>{item.description}</p>
-              </div>
-            ))
-          ) : (
-            <p className="muted-text">Рекомендаций нет.</p>
-          )}
-        </div>
-      </details>
-    </article>
-  );
-}
-
-function ValidationBadge({ status }: { status: 'green' | 'yellow' | 'red' }) {
-  const label = status === 'green' ? 'ок' : status === 'yellow' ? 'внимание' : 'риск';
-  return <span className={`validation-badge ${status}`}>{label}</span>;
-}
-
-function editorialRuleGroupLabel(group: EditorialRuleGroup): string {
-  const labels: Record<EditorialRuleGroup, string> = {
-    author: 'Образ автора',
-    audience: 'Аудитория',
-    positioning: 'Позиция',
-    styleVoice: 'Голос',
-    styleLanguage: 'Язык',
-    styleRhythm: 'Ритм',
-    antiAiPattern: 'Anti-AI',
-    goal: 'Цель',
-    forbiddenTopic: 'Запрет'
-  };
-  return labels[group];
-}
-
-function editorialTabLabel(tab: EditorialModelTab): string {
-  if (tab === 'publisher') return 'Издательство';
-  if (tab === 'topics') return 'Темы';
-  if (tab === 'fabulas') return 'Фабулы';
-  return 'Матрица';
-}
-
-function getReferencedTopicIds(workspace: WorkspaceState): Set<string> {
-  return new Set(
-    [workspace.insightCard?.topicId, workspace.contentPlanItem?.topicId, workspace.postBrief?.topicId].filter(
-      Boolean
-    ) as string[]
-  );
-}
-
-function getReferencedFabulaIds(workspace: WorkspaceState): Set<string> {
-  return new Set(
-    [workspace.insightCard?.fabulaId, workspace.contentPlanItem?.fabulaId, workspace.postBrief?.fabulaId].filter(
-      Boolean
-    ) as string[]
-  );
-}
-
-function countCompatibleFabulas(topicId: string, matrix: TopicFabulaMatrixEntry[]): number {
-  return matrix.filter((entry) => entry.topicId === topicId && entry.enabled).length;
-}
-
-function countCompatibleTopics(fabulaId: string, matrix: TopicFabulaMatrixEntry[]): number {
-  return matrix.filter((entry) => entry.fabulaId === fabulaId && entry.enabled).length;
-}
-
-function isMatrixEnabled(topicId: string, fabulaId: string, matrix: TopicFabulaMatrixEntry[]): boolean {
-  return matrix.some((entry) => entry.topicId === topicId && entry.fabulaId === fabulaId && entry.enabled);
-}
-
-function sameMatrix(left: TopicFabulaMatrixEntry[], right: TopicFabulaMatrixEntry[]): boolean {
-  if (left.length !== right.length) return false;
-  return left.every((entry) => {
-    const other = right.find((item) => item.topicId === entry.topicId && item.fabulaId === entry.fabulaId);
-    return other ? other.enabled === entry.enabled : false;
-  });
-}
 function EmptyState({ text }: { text: string }) {
   return <div className="card empty-state">{text}</div>;
 }
 
-function splitLines(value: string): string[] {
-  return value
-    .split('\n')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
