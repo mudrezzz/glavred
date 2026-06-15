@@ -288,6 +288,73 @@ imports `LocalWorkspaceStore` or contains extracted feature internals. After Sli
 1.5.14 the limits are `App.tsx <= 350`, `App.test.tsx <= 850`, and large App UI
 declarations `<= 1`.
 
+After Slice 1.5.15, architecture smoke also tracks large-file baselines outside
+`App.tsx`. These are temporary ceilings:
+
+- `src/features/author-memory/AuthorMemoryView.tsx`
+- `src/domain/editorialWorkspace.ts`
+- `src/features/editorial-model/EditorialModelView.tsx`
+- `src/fixtures/demoWorkspace.ts`
+- `src/features/signals/SignalsView.tsx`
+- `src/application/editorialServices.ts`
+- `src/domain/editorial-model/transitions.ts`
+- `src/fixtures/demoImports.ts`
+
+Do not add product behavior to these files unless the same slice lowers the relevant
+limit by extracting cohesive modules. As of the refactoring chain through Slice 1.5.23,
+`editorialWorkspace.ts`, `editorialServices.ts`, and `demoWorkspace.ts` are compatibility
+facades/factories rather than owners of all domain, service, or demo logic. Source comments
+should explain ownership, invariants, compatibility fields, deterministic stubs, and future
+provider/backend boundaries; avoid comments that only describe obvious JSX or assignments.
+
+After Slice 1.5.24, feature entrypoints must stay thin. `AuthorMemoryView`,
+`EditorialModelView`, and `SignalsView` should compose feature-local modules, not absorb
+every tab, dialog, row, editor, side panel, and helper. Use the existing split as the
+default destination for new code:
+
+- Author memory import/source/archive UI belongs in `ExternalSourcesView`,
+  `ImportQueueView`, `CandidateCard`, `ArchiveView`, or `BulkActionDialog`.
+- Editorial model setup UI belongs in `ProjectProfileHeader`, `PublisherRulesView`,
+  `TopicsTab`, `FabulasTab`, or `MatrixTab`.
+- Signals setup UI belongs in `RadarEditor`; signals summary belongs in
+  `SignalsSidePanel`.
+
+After Slice 1.5.25, `AuthorMemoryView` is also only a feature composition root.
+Memory feed, composer, note edit/delete, correction conflict, and filtered-note state
+belong in `useMemoryFeedController`; import queue, archive restore/delete, selected
+candidates, bulk confirmation, and undo state belong in `useImportReviewController`.
+Rendering is split into `MemoryFeedTab`, `MemorySidePanel`, and `MemoryDialogs`.
+
+After Slice 1.5.26, `SignalsView` is also only a feature composition root. Signals tab,
+expanded row, radar draft, signal draft, filter, summary, and derived-list state belongs
+in `useSignalsController`. Rendering is split into `SignalsHeader`, `SignalsTabs`,
+`RadarsTab`, `RadarCard`, `FoundSignalsTab`, `SourceSignalCard`, and
+`PostCandidatesPreviewTab`. `RadarEditor` remains the radar form editor, not the owner
+of tab/list state.
+
+After Slice 1.5.27, `ImportQueueView` is also only the author-memory import-queue
+composition root. Filter controls and view-mode switching belong in
+`ImportQueueToolbar`; selected-count and bulk actions belong in `ImportQueueBulkBar`;
+group/list/empty rendering belongs in `ImportCandidateGroupList`, `ImportCandidateList`,
+and `ImportQueueEmptyState`. Keep import transitions in the existing controller and
+domain helpers; queue view modules must not own persistence.
+
+After Slice 1.5.28, `useWorkspaceController` is also only an app-level public facade.
+Do not add new persistence, context-chat, radar/signal, production-flow, or browser
+export action groups directly to it. Use the role-owned app hooks instead:
+
+- `useWorkspacePersistence` owns load/save/reset/toast and workspace patch helpers.
+- `useContextChatController` owns chat open/tab/messages/suggestions/intents.
+- `useSignalsWorkspaceActions` owns radar and signal workspace mutations.
+- `useProductionFlowActions` owns insight, plan, brief, draft, release, and analytics
+  callbacks.
+- `releaseExport` owns clipboard and Markdown download browser edges.
+
+Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
+is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
+`validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP
+through explicit ownership and stable module boundaries rather than class-heavy React.
+
 Use these boundaries:
 
 - Domain objects and pure transitions live in `src/domain/`.

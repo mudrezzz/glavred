@@ -246,6 +246,121 @@ Every extraction slice must lower these limits. The target after the extraction 
 is now met for `App.tsx`; future slices should keep it at composition-root size and
 avoid moving feature behavior back into it.
 
+### Large-file guardrails
+
+The next architecture risk is no longer `App.tsx`; it is large domain, application,
+fixture, and feature files. Architecture smoke now tracks current large-file baselines:
+
+- `src/app/useWorkspaceController.ts <= 220`
+- `src/app/useWorkspacePersistence.ts <= 170`
+- `src/app/useContextChatController.ts <= 220`
+- `src/app/useSignalsWorkspaceActions.ts <= 180`
+- `src/app/useProductionFlowActions.ts <= 260`
+- `src/app/releaseExport.ts <= 90`
+- `src/features/author-memory/AuthorMemoryView.tsx <= 320`
+- `src/features/author-memory/useMemoryFeedController.ts <= 280`
+- `src/features/author-memory/useImportReviewController.ts <= 300`
+- `src/features/author-memory/MemoryFeedTab.tsx <= 260`
+- `src/features/author-memory/MemorySidePanel.tsx <= 140`
+- `src/features/author-memory/MemoryDialogs.tsx <= 120`
+- `src/domain/editorialWorkspace.ts <= 170`
+- `src/features/editorial-model/EditorialModelView.tsx <= 220`
+- `src/fixtures/demoWorkspace.ts <= 120`
+- `src/features/signals/SignalsView.tsx <= 180`
+- `src/features/signals/useSignalsController.ts <= 280`
+- `src/features/signals/RadarsTab.tsx <= 220`
+- `src/features/signals/RadarCard.tsx <= 240`
+- `src/features/signals/FoundSignalsTab.tsx <= 220`
+- `src/features/signals/SourceSignalCard.tsx <= 260`
+- `src/features/signals/SignalsHeader.tsx <= 100`
+- `src/features/signals/SignalsTabs.tsx <= 80`
+- `src/features/signals/PostCandidatesPreviewTab.tsx <= 120`
+- `src/application/editorialServices.ts <= 20`
+- `src/domain/editorial-model/transitions.ts <= 20`
+- `src/domain/editorial-model/rules.ts <= 50`
+- `src/domain/editorial-model/validation.ts <= 460`
+- `src/domain/editorial-model/catalog.ts <= 190`
+- `src/features/author-memory/ImportViews.tsx <= 20`
+- `src/features/author-memory/ImportQueueView.tsx <= 150`
+- `src/features/author-memory/ImportQueueToolbar.tsx <= 120`
+- `src/features/author-memory/ImportQueueBulkBar.tsx <= 130`
+- `src/features/author-memory/ImportCandidateGroupList.tsx <= 140`
+- `src/features/author-memory/ImportCandidateList.tsx <= 120`
+- `src/features/author-memory/ImportQueueEmptyState.tsx <= 60`
+- `src/features/editorial-model/EditorialModelParts.tsx <= 20`
+- `src/features/editorial-model/TopicsTab.tsx <= 310`
+- `src/features/editorial-model/FabulasTab.tsx <= 310`
+- `src/features/signals/RadarEditor.tsx <= 270`
+- `src/fixtures/demoImports.ts <= 410`
+
+These are temporary ceilings, not acceptable target sizes. domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain. Product slices that add new user-facing UI are deferred until the large-file guardrails are lowered through bounded-context decomposition.
+
+The refactoring direction is:
+
+- domain types and transitions have moved from `editorialWorkspace.ts` into
+  bounded-context modules;
+- application services have moved from `editorialServices.ts` into workflow-specific
+  services;
+- demo data has moved from `demoWorkspace.ts` into scenario/context fixtures;
+- large feature entrypoints have started moving internal tabs, panels, cards, forms, dialogs, and
+  local helpers into feature-local files;
+- feature modules still obey `no feature -> feature`.
+
+Feature entrypoints stay thin. `AuthorMemoryView`, `EditorialModelView`, and
+`SignalsView` are composition surfaces for their feature, not owners of every tab,
+dialog, editor, row, side panel, and helper. Feature-local internals now live in
+role-owned files such as:
+
+- `src/features/author-memory/ExternalSourcesView.tsx`,
+  `ImportQueueView.tsx`, `ImportQueueToolbar.tsx`, `ImportQueueBulkBar.tsx`,
+  `ImportCandidateGroupList.tsx`, `ImportCandidateList.tsx`,
+  `ImportQueueEmptyState.tsx`, `CandidateCard.tsx`, `ArchiveView.tsx`, and
+  `BulkActionDialog.tsx`;
+- `src/features/author-memory/useMemoryFeedController.ts`,
+  `useImportReviewController.ts`, `MemoryFeedTab.tsx`, `MemorySidePanel.tsx`,
+  and `MemoryDialogs.tsx`;
+- `src/features/editorial-model/ProjectProfileHeader.tsx`,
+  `PublisherRulesView.tsx`, `TopicsTab.tsx`, `FabulasTab.tsx`, and
+  `MatrixTab.tsx`;
+- `src/features/signals/useSignalsController.ts`, `SignalsHeader.tsx`,
+  `SignalsTabs.tsx`, `RadarsTab.tsx`, `RadarCard.tsx`, `FoundSignalsTab.tsx`,
+  `SourceSignalCard.tsx`, `PostCandidatesPreviewTab.tsx`, `RadarEditor.tsx`,
+  and `SignalsSidePanel.tsx`.
+
+Stateful feature orchestration belongs in feature-local hooks, not entrypoints.
+After Slice 1.5.25, `AuthorMemoryView` composes the active memory tab, side panel,
+and dialogs. Feed/composer/edit/delete/correction state lives in
+`useMemoryFeedController`; import queue, archive, selection, bulk action, and undo
+state lives in `useImportReviewController`.
+
+After Slice 1.5.26, `SignalsView` composes the signals header, tabs, and active
+workspace tab. Radar/signal expanded state, edit drafts, filters, summaries, and
+derived lists live in `useSignalsController`; tab/entity rendering lives in
+feature-local modules.
+
+After Slice 1.5.27, `ImportQueueView` is also only a queue-tab composition root.
+Queue filters and view mode live in `ImportQueueToolbar`; selection and bulk actions
+live in `ImportQueueBulkBar`; list/group/empty rendering lives in
+`ImportCandidateList`, `ImportCandidateGroupList`, and `ImportQueueEmptyState`.
+
+After Slice 1.5.28, `useWorkspaceController` is only the app-level public facade.
+Persistence/autosave/reset/toast live in `useWorkspacePersistence`; context-chat
+state and suggestions live in `useContextChatController`; radar/signal mutations live
+in `useSignalsWorkspaceActions`; downstream production callbacks live in
+`useProductionFlowActions`; clipboard/download browser edges live in `releaseExport`.
+New app-level action groups must be added to role-owned hooks, not back into the
+controller facade.
+
+Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
+is a compatibility barrel only; rules, setup validation, and topic/fabula catalog
+transitions live in `rules.ts`, `validation.ts`, and `catalog.ts`. New transition
+logic should be added to the role-owned file first, then re-exported only when
+backward-compatible imports require it.
+
+Source comments are required for domain ownership, invariants, legacy compatibility,
+deterministic stubs, and future provider/backend boundaries. Comments should not
+describe obvious JSX or restate simple assignments.
+
 ## Frontend UX Architecture
 
 Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions:

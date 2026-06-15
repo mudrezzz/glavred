@@ -345,7 +345,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Создать черновик темы/i }));
 
     expect(screen.getByDisplayValue('AI trust onboarding')).toBeInTheDocument();
-    expect(screen.getByText(/5 тем|5 С‚РµРј/i)).toBeInTheDocument();
+    expect(screen.getByText(/5 тем|5 тем/i)).toBeInTheDocument();
   });
 
   it('allows asking the context chat to generate a topic without saving automatically', () => {
