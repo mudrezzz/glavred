@@ -9,6 +9,36 @@ const LARGE_APP_DECLARATION_LIMIT = 1;
 
 const LARGE_SOURCE_BASELINES = [
   {
+    path: "src/app/useWorkspaceController.ts",
+    limit: 220,
+    next: "useWorkspaceController must stay a public facade over role-owned app hooks.",
+  },
+  {
+    path: "src/app/useWorkspacePersistence.ts",
+    limit: 170,
+    next: "Workspace persistence should own load/save/reset/toast and basic patch helpers only.",
+  },
+  {
+    path: "src/app/useContextChatController.ts",
+    limit: 220,
+    next: "Context chat state and suggestions should stay in this app hook or split by chat/suggestions role.",
+  },
+  {
+    path: "src/app/useSignalsWorkspaceActions.ts",
+    limit: 180,
+    next: "Signals workspace actions should stay app-level orchestration without feature UI or storage ownership.",
+  },
+  {
+    path: "src/app/useProductionFlowActions.ts",
+    limit: 260,
+    next: "Production flow actions should stay app-level orchestration and split by plan/release if they grow.",
+  },
+  {
+    path: "src/app/releaseExport.ts",
+    limit: 90,
+    next: "Release export helpers should stay limited to browser clipboard/download edges.",
+  },
+  {
     path: "src/features/author-memory/AuthorMemoryView.tsx",
     limit: 320,
     next: "AuthorMemoryView must stay a feature composition root; put feed/import orchestration in feature-local hooks and views.",
@@ -317,6 +347,11 @@ const requiredSourceFiles = [
   "src/app/Topbar.tsx",
   "src/app/navigation.ts",
   "src/app/useWorkspaceController.ts",
+  "src/app/useWorkspacePersistence.ts",
+  "src/app/useContextChatController.ts",
+  "src/app/useSignalsWorkspaceActions.ts",
+  "src/app/useProductionFlowActions.ts",
+  "src/app/releaseExport.ts",
   "src/app/contextChatScope.ts",
   "src/shared/ui/Icon.tsx",
   "src/features/author-memory/AuthorMemoryView.tsx",
@@ -392,6 +427,23 @@ assert(
   !appSource.includes("LocalWorkspaceStore"),
   "src/App.tsx must not import or instantiate LocalWorkspaceStore; use src/app/useWorkspaceController.ts."
 );
+
+const workspaceControllerSource = readText("src/app/useWorkspaceController.ts");
+const forbiddenWorkspaceControllerSymbols = [
+  "sendContextChatMessage",
+  "acceptContextChatSuggestion",
+  "approveSourceSignal",
+  "saveRadar",
+  "createDraftFromBrief",
+  "downloadMarkdown",
+];
+
+for (const symbol of forbiddenWorkspaceControllerSymbols) {
+  assert(
+    !workspaceControllerSource.includes(symbol),
+    `src/app/useWorkspaceController.ts must not contain app action internals: ${symbol}. Use role-owned app hooks.`
+  );
+}
 
 const forbiddenAppSignalsSymbols = [
   "function SignalsViewV2",

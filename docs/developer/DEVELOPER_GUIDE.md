@@ -339,6 +339,17 @@ group/list/empty rendering belongs in `ImportCandidateGroupList`, `ImportCandida
 and `ImportQueueEmptyState`. Keep import transitions in the existing controller and
 domain helpers; queue view modules must not own persistence.
 
+After Slice 1.5.28, `useWorkspaceController` is also only an app-level public facade.
+Do not add new persistence, context-chat, radar/signal, production-flow, or browser
+export action groups directly to it. Use the role-owned app hooks instead:
+
+- `useWorkspacePersistence` owns load/save/reset/toast and workspace patch helpers.
+- `useContextChatController` owns chat open/tab/messages/suggestions/intents.
+- `useSignalsWorkspaceActions` owns radar and signal workspace mutations.
+- `useProductionFlowActions` owns insight, plan, brief, draft, release, and analytics
+  callbacks.
+- `releaseExport` owns clipboard and Markdown download browser edges.
+
 Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
 `validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP

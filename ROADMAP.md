@@ -1892,6 +1892,48 @@ Status:
   - Mechanical extraction can accidentally change selection behavior; preserve existing
     props/callback boundaries and rely on regression tests.
 
+### Slice 1.5.28: App Workspace Controller Decomposition
+
+- Status: Done
+- Goal: Reduce `src/app/useWorkspaceController.ts` into a thin public facade over
+  role-owned app hooks without changing behavior, storage, demo data, or CSS.
+- User value: App-level orchestration remains maintainable before product work
+  resumes; persistence, chat, signals, production actions, and release export no
+  longer live in one god-hook.
+- Scope:
+  - Move load/save/reset/toast and workspace patch helpers into
+    `useWorkspacePersistence`.
+  - Move context-chat messages, suggestions, intents, and open/tab state into
+    `useContextChatController`.
+  - Move radar/signal workspace actions into `useSignalsWorkspaceActions`.
+  - Move insight/plan/brief/draft/release/analytics callbacks into
+    `useProductionFlowActions`.
+  - Move clipboard/download helpers into `releaseExport`.
+  - Lower architecture smoke limits for the app controller and new app hooks.
+- Out of scope:
+  - Product behavior changes.
+  - Visual redesign or CSS changes.
+  - Domain/storage/demo changes.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, and roadmap.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `useWorkspaceController.ts` is below the new architecture limit and contains no
+    context-chat, radar/signal, production-flow, or export internals. Done.
+  - Existing app navigation, reset, chat, signals, plan, release, and analytics flows
+    remain behaviorally unchanged. Done.
+  - Full regression commands pass. Done.
+- Risks:
+  - App-level action extraction can accidentally change stale workspace reads; keep
+    existing callback boundaries and rely on regression tests.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1900,7 +1942,7 @@ Status:
 - User value: The author can compare several proposed post concepts for one future
   slot instead of approving the first generated idea.
 - Dependency:
-  - Ready after the refactoring chain through `Slice 1.5.24`. New product UI should
+  - Ready after the refactoring chain through `Slice 1.5.28`. New product UI should
     continue using the feature-local module boundaries and architecture smoke limits.
 - Scope:
   - Add `PostCandidate` contracts.
@@ -2109,6 +2151,11 @@ Status:
 - Slice 1.5.21: Split Editorial Model Feature Internals. Completed 2026-06-15.
 - Slice 1.5.22: Split Signals Feature Internals. Completed 2026-06-15.
 - Slice 1.5.23: Bundle and Import Hygiene Baseline. Completed 2026-06-15.
+- Slice 1.5.24: Feature Internals Cleanup and OOP Boundaries. Completed 2026-06-15.
+- Slice 1.5.25: Author Memory Entry Point Decomposition. Completed 2026-06-15.
+- Slice 1.5.26: Signals Feature Internal Decomposition. Completed 2026-06-15.
+- Slice 1.5.27: Author Memory Import Queue Decomposition. Completed 2026-06-15.
+- Slice 1.5.28: App Workspace Controller Decomposition. Completed 2026-06-15.
 
 ## Blocked Items
 

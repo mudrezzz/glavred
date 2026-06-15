@@ -251,6 +251,12 @@ avoid moving feature behavior back into it.
 The next architecture risk is no longer `App.tsx`; it is large domain, application,
 fixture, and feature files. Architecture smoke now tracks current large-file baselines:
 
+- `src/app/useWorkspaceController.ts <= 220`
+- `src/app/useWorkspacePersistence.ts <= 170`
+- `src/app/useContextChatController.ts <= 220`
+- `src/app/useSignalsWorkspaceActions.ts <= 180`
+- `src/app/useProductionFlowActions.ts <= 260`
+- `src/app/releaseExport.ts <= 90`
 - `src/features/author-memory/AuthorMemoryView.tsx <= 320`
 - `src/features/author-memory/useMemoryFeedController.ts <= 280`
 - `src/features/author-memory/useImportReviewController.ts <= 300`
@@ -336,6 +342,14 @@ After Slice 1.5.27, `ImportQueueView` is also only a queue-tab composition root.
 Queue filters and view mode live in `ImportQueueToolbar`; selection and bulk actions
 live in `ImportQueueBulkBar`; list/group/empty rendering lives in
 `ImportCandidateList`, `ImportCandidateGroupList`, and `ImportQueueEmptyState`.
+
+After Slice 1.5.28, `useWorkspaceController` is only the app-level public facade.
+Persistence/autosave/reset/toast live in `useWorkspacePersistence`; context-chat
+state and suggestions live in `useContextChatController`; radar/signal mutations live
+in `useSignalsWorkspaceActions`; downstream production callbacks live in
+`useProductionFlowActions`; clipboard/download browser edges live in `releaseExport`.
+New app-level action groups must be added to role-owned hooks, not back into the
+controller facade.
 
 Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel only; rules, setup validation, and topic/fabula catalog
