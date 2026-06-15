@@ -275,7 +275,12 @@ fixture, and feature files. Architecture smoke now tracks current large-file bas
 - `src/domain/editorial-model/validation.ts <= 460`
 - `src/domain/editorial-model/catalog.ts <= 190`
 - `src/features/author-memory/ImportViews.tsx <= 20`
-- `src/features/author-memory/ImportQueueView.tsx <= 340`
+- `src/features/author-memory/ImportQueueView.tsx <= 150`
+- `src/features/author-memory/ImportQueueToolbar.tsx <= 120`
+- `src/features/author-memory/ImportQueueBulkBar.tsx <= 130`
+- `src/features/author-memory/ImportCandidateGroupList.tsx <= 140`
+- `src/features/author-memory/ImportCandidateList.tsx <= 120`
+- `src/features/author-memory/ImportQueueEmptyState.tsx <= 60`
 - `src/features/editorial-model/EditorialModelParts.tsx <= 20`
 - `src/features/editorial-model/TopicsTab.tsx <= 310`
 - `src/features/editorial-model/FabulasTab.tsx <= 310`
@@ -301,7 +306,9 @@ dialog, editor, row, side panel, and helper. Feature-local internals now live in
 role-owned files such as:
 
 - `src/features/author-memory/ExternalSourcesView.tsx`,
-  `ImportQueueView.tsx`, `CandidateCard.tsx`, `ArchiveView.tsx`, and
+  `ImportQueueView.tsx`, `ImportQueueToolbar.tsx`, `ImportQueueBulkBar.tsx`,
+  `ImportCandidateGroupList.tsx`, `ImportCandidateList.tsx`,
+  `ImportQueueEmptyState.tsx`, `CandidateCard.tsx`, `ArchiveView.tsx`, and
   `BulkActionDialog.tsx`;
 - `src/features/author-memory/useMemoryFeedController.ts`,
   `useImportReviewController.ts`, `MemoryFeedTab.tsx`, `MemorySidePanel.tsx`,
@@ -324,6 +331,11 @@ After Slice 1.5.26, `SignalsView` composes the signals header, tabs, and active
 workspace tab. Radar/signal expanded state, edit drafts, filters, summaries, and
 derived lists live in `useSignalsController`; tab/entity rendering lives in
 feature-local modules.
+
+After Slice 1.5.27, `ImportQueueView` is also only a queue-tab composition root.
+Queue filters and view mode live in `ImportQueueToolbar`; selection and bulk actions
+live in `ImportQueueBulkBar`; list/group/empty rendering lives in
+`ImportCandidateList`, `ImportCandidateGroupList`, and `ImportQueueEmptyState`.
 
 Domain transitions are role-owned. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel only; rules, setup validation, and topic/fabula catalog

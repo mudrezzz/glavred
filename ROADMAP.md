@@ -1855,6 +1855,43 @@ Status:
   - Mechanical extraction can accidentally change expanded/edit state; preserve existing
     callbacks and rely on regression tests.
 
+### Slice 1.5.27: Author Memory Import Queue Decomposition
+
+- Status: Done
+- Goal: Reduce `src/features/author-memory/ImportQueueView.tsx` into a thin
+  queue-tab composition root without changing behavior, storage, demo data, or CSS.
+- User value: The author-memory import queue can evolve without recreating a large
+  feature-level file.
+- Scope:
+  - Move import queue filters and list/group mode controls into `ImportQueueToolbar`.
+  - Move selection summary and bulk archive/reject actions into `ImportQueueBulkBar`.
+  - Move group, list, and empty-state rendering into dedicated queue modules.
+  - Lower architecture smoke limits for `ImportQueueView` and the new queue modules.
+- Out of scope:
+  - Product behavior changes.
+  - Visual redesign or CSS changes.
+  - Domain/storage changes.
+  - Post candidate assemblies.
+- Tests:
+  - `npm run test:architecture`.
+  - `npm test -- --run`.
+  - `npm run smoke`.
+  - `npm run test:design`.
+  - `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, and roadmap.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - `ImportQueueView` is below the new architecture limit and contains no filter,
+    bulk-action, group-list, or candidate-list rendering internals. Done.
+  - Existing import queue filters, selection, bulk actions, and candidate actions
+    remain behaviorally unchanged. Done.
+  - Full regression commands pass. Done.
+- Risks:
+  - Mechanical extraction can accidentally change selection behavior; preserve existing
+    props/callback boundaries and rely on regression tests.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready

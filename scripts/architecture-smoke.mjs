@@ -135,8 +135,33 @@ const LARGE_SOURCE_BASELINES = [
   },
   {
     path: "src/features/author-memory/ImportQueueView.tsx",
-    limit: 340,
-    next: "If import queue grows, split filters, bulk toolbar, and selection state helpers.",
+    limit: 150,
+    next: "ImportQueueView should stay a composition root for queue toolbar, bulk bar, and list/group rendering.",
+  },
+  {
+    path: "src/features/author-memory/ImportQueueToolbar.tsx",
+    limit: 120,
+    next: "ImportQueueToolbar should stay focused on filters and list/group mode controls.",
+  },
+  {
+    path: "src/features/author-memory/ImportQueueBulkBar.tsx",
+    limit: 130,
+    next: "ImportQueueBulkBar should stay focused on selection summary and bulk actions.",
+  },
+  {
+    path: "src/features/author-memory/ImportCandidateGroupList.tsx",
+    limit: 140,
+    next: "ImportCandidateGroupList should stay focused on grouped candidate rendering.",
+  },
+  {
+    path: "src/features/author-memory/ImportCandidateList.tsx",
+    limit: 120,
+    next: "ImportCandidateList should stay focused on candidate list rendering.",
+  },
+  {
+    path: "src/features/author-memory/ImportQueueEmptyState.tsx",
+    limit: 60,
+    next: "ImportQueueEmptyState should stay a tiny empty/resultless state component.",
   },
   {
     path: "src/features/author-memory/CandidateCard.tsx",
@@ -303,6 +328,11 @@ const requiredSourceFiles = [
   "src/features/author-memory/ImportViews.tsx",
   "src/features/author-memory/ExternalSourcesView.tsx",
   "src/features/author-memory/ImportQueueView.tsx",
+  "src/features/author-memory/ImportQueueToolbar.tsx",
+  "src/features/author-memory/ImportQueueBulkBar.tsx",
+  "src/features/author-memory/ImportCandidateGroupList.tsx",
+  "src/features/author-memory/ImportCandidateList.tsx",
+  "src/features/author-memory/ImportQueueEmptyState.tsx",
   "src/features/author-memory/CandidateCard.tsx",
   "src/features/author-memory/ArchiveView.tsx",
   "src/features/author-memory/BulkActionDialog.tsx",
@@ -452,6 +482,23 @@ for (const symbol of forbiddenAuthorMemoryEntrypointSymbols) {
   assert(
     !authorMemoryViewSource.includes(symbol),
     `AuthorMemoryView.tsx must not contain author-memory orchestration internals: ${symbol}. Use feature-local hooks.`
+  );
+}
+
+const importQueueViewSource = readText("src/features/author-memory/ImportQueueView.tsx");
+const forbiddenImportQueueViewSymbols = [
+  "function patchFilters",
+  "import-filter-grid",
+  "bulk-bar",
+  "view-toggle",
+  "groups.map",
+  "filteredCandidates.map",
+];
+
+for (const symbol of forbiddenImportQueueViewSymbols) {
+  assert(
+    !importQueueViewSource.includes(symbol),
+    `ImportQueueView.tsx must not contain import queue internals: ${symbol}. Use feature-local queue modules.`
   );
 }
 

@@ -332,6 +332,13 @@ in `useSignalsController`. Rendering is split into `SignalsHeader`, `SignalsTabs
 `PostCandidatesPreviewTab`. `RadarEditor` remains the radar form editor, not the owner
 of tab/list state.
 
+After Slice 1.5.27, `ImportQueueView` is also only the author-memory import-queue
+composition root. Filter controls and view-mode switching belong in
+`ImportQueueToolbar`; selected-count and bulk actions belong in `ImportQueueBulkBar`;
+group/list/empty rendering belongs in `ImportCandidateGroupList`, `ImportCandidateList`,
+and `ImportQueueEmptyState`. Keep import transitions in the existing controller and
+domain helpers; queue view modules must not own persistence.
+
 Domain transitions follow the same rule. `src/domain/editorial-model/transitions.ts`
 is a compatibility barrel. Rule transitions go to `rules.ts`, setup validators to
 `validation.ts`, and topic/fabula/matrix operations to `catalog.ts`. This applies OOP/SRP
