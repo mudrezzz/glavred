@@ -15,8 +15,10 @@ description: Use for any Power Web OS frontend work: building or modifying scree
    - product tone and visual rationale: `ui-design-system/design-system-readme.md`
    - behavior/layout references: `ui-design-system/app-prototype/README.md`
 3. Inspect relevant prototype files before recreating a screen or component.
-4. Implement in the project frontend stack, while preserving design-system semantics.
-5. Before finishing, apply the checklist in `ui-design-system/START-HERE.md`.
+4. Check existing production primitives in `src/shared/ui` and relevant feature-local
+   modules before adding a new UI pattern.
+5. Implement in the project frontend stack, while preserving design-system semantics.
+6. Before finishing, apply the checklist in `ui-design-system/START-HERE.md`.
 
 ## Non-Negotiable Rules
 
@@ -32,6 +34,8 @@ description: Use for any Power Web OS frontend work: building or modifying scree
 - Use Lucide icons in production.
 - Respect `prefers-reduced-motion`.
 - Do not introduce decorative gradients, photos, or illustrations unless the design system is updated to allow them.
+- Do not add a new production UI primitive when an existing design-system or
+  `src/shared/ui` primitive covers the same role.
 
 ## Component Reference Order
 
@@ -50,6 +54,9 @@ For screens and visible component work:
 2. Compare screen behavior with `ui-design-system/app-prototype/index.html`.
 3. Check focus states, hover/press behavior, reduced motion, and text overflow.
 4. Report any known deviation from the design system before finishing.
+5. Run `npm run test:design` and `npm run test:visual` for visible frontend changes.
+6. Run `npm run test:architecture` when the change touches `src/app`, `src/features`,
+   or shared frontend primitives.
 
 ## Final Response Requirements
 
@@ -58,4 +65,6 @@ Report:
 - which design-system files were consulted;
 - whether hardcoded visual values were avoided;
 - whether the `START-HERE.md` checklist was applied;
+- whether `npm run test:design` and `npm run test:visual` were run for visible
+  frontend changes;
 - any known deviations from the design system.

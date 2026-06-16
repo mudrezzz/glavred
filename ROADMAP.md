@@ -1934,6 +1934,57 @@ Status:
   - App-level action extraction can accidentally change stale workspace reads; keep
     existing callback boundaries and rely on regression tests.
 
+### Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules
+
+- Status: Done
+- Goal: Make architecture guardrails a mandatory part of future development instead of
+  a one-time agreement.
+- User value: Future product slices can resume with lower risk of bloating
+  app/feature/domain files or bypassing the design-system and module ownership rules.
+- Scope:
+  - Add ADR
+    `docs/adr/2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md`.
+  - Strengthen `scripts/architecture-smoke.mjs` with near-limit warnings, successful
+    near-limit summary output, warning-level export-count guardrails, and explicit
+    feature dependency/barrel hygiene.
+  - Update `.agents/skills` so slice implementation, planning, architecture design,
+    regression strategy, frontend design-system work, and project onboarding all
+    account for architecture guardrails.
+  - Update SAO and developer docs with architecture preflight and drift-prevention
+    policy.
+- Out of scope:
+  - Product behavior changes.
+  - UI, CSS, storage, demo data, domain contracts, or feature implementation changes.
+- Implementation notes:
+  - Near-limit and export-count checks are warning-level at this step.
+  - Existing hard architecture limits stay unchanged.
+  - New architecture rules must have ADR + SAO coverage plus automated check or
+    mandatory workflow checklist coverage.
+- Architecture impact:
+  - Adds process and smoke guardrails before `Slice 1.6`.
+  - Makes `Architecture impact` mandatory for new product slices.
+  - Keeps `src/features/*` dependency direction explicit: no feature-to-feature imports
+    and no root features barrel bypass.
+- Tests:
+  - `npm run test:architecture` passed and printed a near-limit summary.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - Workflow text check for `.agents/skills/*/SKILL.md` required mentions passed.
+  - `npm run test:design` and `npm run test:visual` are not required for this slice
+    because UI/CSS do not change.
+- Docs:
+  - Update ADR, SAO, developer guide, roadmap, and `.agents/skills`.
+- Demo impact:
+  - None.
+- Acceptance criteria:
+  - Architecture smoke passes and prints a near-limit summary. Done.
+  - Skill files mention required architecture, roadmap, ADR/SAO/checklist, and
+    frontend visual validation rules. Done.
+  - Slice 1.6 remains the next `Ready` product slice. Done.
+- Risks:
+  - Warning-level export counts can be noisy; keep them informational until a separate
+    cleanup slice lowers public surfaces deliberately.
+
 ### Slice 1.6: Post Candidate Assemblies
 
 - Status: Ready
@@ -1942,7 +1993,7 @@ Status:
 - User value: The author can compare several proposed post concepts for one future
   slot instead of approving the first generated idea.
 - Dependency:
-  - Ready after the refactoring chain through `Slice 1.5.28`. New product UI should
+  - Ready after the refactoring chain through `Slice 1.5.29`. New product UI should
     continue using the feature-local module boundaries and architecture smoke limits.
 - Scope:
   - Add `PostCandidate` contracts.
@@ -1960,6 +2011,13 @@ Status:
   - Candidate approval should synchronize the compatibility `contentPlanItem` only
     when a concrete plan slot is selected or created.
   - Candidate edits should be explicit save/cancel operations.
+- Architecture impact:
+  - Must start with architecture preflight against file-size limits and near-limit
+    warnings.
+  - New candidate UI belongs under `src/features/signals` or a role-owned feature-local
+    candidate module; shared primitives belong in `src/shared/ui`.
+  - Domain/application candidate logic must stay outside React and must not create
+    feature-to-feature dependencies.
 - Tests:
   - Domain tests for candidate generation and approval.
   - UI tests for comparing, approving, rejecting, and editing candidates.
@@ -2156,6 +2214,8 @@ Status:
 - Slice 1.5.26: Signals Feature Internal Decomposition. Completed 2026-06-15.
 - Slice 1.5.27: Author Memory Import Queue Decomposition. Completed 2026-06-15.
 - Slice 1.5.28: App Workspace Controller Decomposition. Completed 2026-06-15.
+- Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules. Completed
+  2026-06-16.
 
 ## Blocked Items
 
@@ -2176,4 +2236,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.6: Post Candidate Assemblies` after the completed architecture refactoring chain.
+Resume product work with `Slice 1.6: Post Candidate Assemblies` after the completed architecture guardrail slice.

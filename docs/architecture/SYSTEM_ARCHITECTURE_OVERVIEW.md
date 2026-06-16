@@ -361,6 +361,40 @@ Source comments are required for domain ownership, invariants, legacy compatibil
 deterministic stubs, and future provider/backend boundaries. Comments should not
 describe obvious JSX or restate simple assignments.
 
+### Architecture drift prevention
+
+Architecture rules are part of the delivery system, not only historical notes. A new
+architecture rule is accepted only when it is recorded in an ADR, reflected in this
+SAO, and backed by either an automated smoke check or an explicit mandatory agent
+workflow checklist.
+
+`npm run test:architecture` now reports both hard failures and warning-level drift
+signals:
+
+- hard line-count limits for `App.tsx`, `App.test.tsx`, and tracked large
+  app/feature/domain/application/fixture files remain blocking;
+- near-limit files are any tracked files at or above 85% of their limit and are listed
+  at the end of a successful architecture smoke run;
+- new behavior must not be added to a near-limit file unless the same slice includes a
+  refactor step that moves behavior into a role-owned module;
+- export-count warnings are observation-only for now and identify large tracked files
+  whose public surface may need a facade or a split;
+- `src/features/*` modules cannot import other features directly or through a root
+  features barrel; cross-feature code belongs in `src/shared/*`,
+  `src/application/*`, `src/domain/*`, or app-level composition.
+
+Every product or refactor slice must include architecture preflight before
+implementation. The preflight checks planned files against file-size limits, module
+ownership, dependency direction, and design-system ownership. ROADMAP entries for new
+product slices must include `Architecture impact`, and future agents must run
+`npm run test:architecture` before completing refactor, domain, application, app, or
+frontend slices.
+
+The agent workflow is also enforced through `.agents/skills`: slice implementation,
+roadmap planning, architecture design, regression strategy, frontend design-system,
+and project onboarding now include the guardrails from ADR
+`2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails`.
+
 ## Frontend UX Architecture
 
 Slice 1.1.1 fixes the editorial setup UX and records reusable frontend decisions:

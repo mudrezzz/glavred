@@ -6,6 +6,8 @@ const ROOT = process.cwd();
 const APP_TSX_LIMIT = 350;
 const APP_TEST_TSX_LIMIT = 850;
 const LARGE_APP_DECLARATION_LIMIT = 1;
+const NEAR_LIMIT_RATIO = 0.85;
+const DEFAULT_EXPORT_COUNT_WARNING_LIMIT = 12;
 
 const LARGE_SOURCE_BASELINES = [
   {
@@ -261,6 +263,8 @@ const MODULE_GUARDRAILS_ADR_PATH =
   "docs/adr/2026-06-15-domain-feature-modules-have-size-boundary-guardrails.md";
 const FEATURE_INTERNALS_ADR_PATH =
   "docs/adr/2026-06-15-feature-entrypoints-stay-thin-and-domain-transitions-are-role-owned.md";
+const ARCHITECTURE_DRIFT_ADR_PATH =
+  "docs/adr/2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md";
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 
 function readText(relativePath) {
@@ -295,11 +299,46 @@ function listFiles(dir, extensions) {
 }
 
 const failures = [];
+const warnings = [];
+
+function warn(message) {
+  warnings.push(message);
+}
 
 function assert(condition, message) {
   if (!condition) {
     failures.push(message);
   }
+}
+
+function countExportedSymbols(source) {
+  const namedDeclarationCount = [
+    ...source.matchAll(
+      /^export\s+(?:async\s+)?(?:function|class|const|let|var|interface|type|enum)\s+([A-Za-z_$][\w$]*)/gm
+    ),
+  ].length;
+
+  const namedExportCount = [...source.matchAll(/^export\s+\{([^}]+)\}/gm)].reduce(
+    (total, match) =>
+      total +
+      match[1]
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean).length,
+    0
+  );
+
+  return namedDeclarationCount + namedExportCount;
+}
+
+function resolveModuleReference(sourceFile, importPath) {
+  if (!importPath.startsWith(".")) {
+    return importPath;
+  }
+
+  return path
+    .relative(ROOT, path.resolve(ROOT, path.dirname(sourceFile), importPath))
+    .replaceAll(path.sep, "/");
 }
 
 const appSource = readText("src/App.tsx");
@@ -339,6 +378,10 @@ assert(
 assert(
   fileExists(FEATURE_INTERNALS_ADR_PATH),
   `Missing ADR: ${FEATURE_INTERNALS_ADR_PATH}`
+);
+assert(
+  fileExists(ARCHITECTURE_DRIFT_ADR_PATH),
+  `Missing ADR: ${ARCHITECTURE_DRIFT_ADR_PATH}`
 );
 
 const requiredSourceFiles = [
@@ -406,13 +449,32 @@ for (const requiredFile of requiredSourceFiles) {
 }
 
 const largeSourceStats = [];
+const nearLimitStats = [];
+const exportCountStats = [];
 
 for (const baseline of LARGE_SOURCE_BASELINES) {
   assert(fileExists(baseline.path), `Missing large-file baseline target: ${baseline.path}`);
 
   if (fileExists(baseline.path)) {
-    const lines = lineCount(readText(baseline.path));
+    const source = readText(baseline.path);
+    const lines = lineCount(source);
+    const exportCount = countExportedSymbols(source);
     largeSourceStats.push({ ...baseline, lines });
+    exportCountStats.push({ ...baseline, exportCount });
+
+    if (lines >= Math.ceil(baseline.limit * NEAR_LIMIT_RATIO)) {
+      nearLimitStats.push({ ...baseline, lines });
+      warn(
+        `${baseline.path} is near its architecture limit: ${lines}/${baseline.limit} lines. ${baseline.next}`
+      );
+    }
+
+    if (exportCount > DEFAULT_EXPORT_COUNT_WARNING_LIMIT) {
+      warn(
+        `${baseline.path} exports ${exportCount} symbols; review whether the public surface should be split or kept behind a role-owned facade.`
+      );
+    }
+
     assert(
       lines <= baseline.limit,
       [
@@ -574,7 +636,8 @@ for (const symbol of forbiddenAppProductionSymbols) {
 }
 
 const featureFiles = listFiles("src/features", [".ts", ".tsx"]);
-const importPattern = /from\s+["']([^"']+)["']/g;
+const moduleReferencePattern =
+  /(?:from\s+|import\s*\(\s*|import\s+)["']([^"']+)["']/g;
 
 for (const featureFile of featureFiles) {
   const [, featureName] = featureFile.match(/^src\/features\/([^/]+)\//) ?? [];
@@ -583,15 +646,16 @@ for (const featureFile of featureFiles) {
   }
 
   const source = readText(featureFile);
-  for (const match of source.matchAll(importPattern)) {
+  for (const match of source.matchAll(moduleReferencePattern)) {
     const importPath = match[1];
-    let resolvedImport = importPath;
+    const resolvedImport = resolveModuleReference(featureFile, importPath);
 
-    if (importPath.startsWith(".")) {
-      resolvedImport = path
-        .relative(ROOT, path.resolve(ROOT, path.dirname(featureFile), importPath))
-        .replaceAll(path.sep, "/");
-    }
+    assert(
+      !["src/features", "@/features", "~features"].includes(importPath) &&
+        resolvedImport !== "src/features" &&
+        !resolvedImport.startsWith("src/features/index"),
+      `${featureFile} imports a root features barrel (${importPath}); use app wiring, shared/ui, application, or domain instead.`
+    );
 
     const [, importedFeature] =
       resolvedImport.match(/^src\/features\/([^/]+)/) ??
@@ -608,6 +672,15 @@ for (const featureFile of featureFiles) {
     );
   }
 }
+
+const featureBarrelFiles = featureFiles.filter((featureFile) =>
+  /^src\/features\/(?:index|[^/]+\/index)\.(?:ts|tsx)$/.test(featureFile)
+);
+
+assert(
+  featureBarrelFiles.length === 0,
+  `Feature barrel files can bypass dependency hygiene and are forbidden: ${featureBarrelFiles.join(", ")}`
+);
 
 const saoSource = readText(SAO_PATH);
 const requiredSaoFragments = [
@@ -630,6 +703,9 @@ const requiredSaoFragments = [
   "Feature entrypoints stay thin",
   "Domain transitions are role-owned",
   "domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain",
+  "Architecture drift prevention",
+  "near-limit",
+  "agent workflow",
 ];
 
 for (const fragment of requiredSaoFragments) {
@@ -640,6 +716,13 @@ for (const fragment of requiredSaoFragments) {
 }
 
 if (failures.length > 0) {
+  if (warnings.length > 0) {
+    console.warn("Architecture smoke warnings:");
+    for (const warning of warnings) {
+      console.warn(`- ${warning}`);
+    }
+  }
+
   console.error("Architecture smoke failed:");
   for (const failure of failures) {
     console.error(`- ${failure}`);
@@ -655,4 +738,28 @@ console.log(
 );
 for (const stat of largeSourceStats) {
   console.log(`- ${stat.path}: ${stat.lines}/${stat.limit} lines`);
+}
+
+if (nearLimitStats.length > 0) {
+  console.log(
+    `- Near-limit files (>= ${Math.round(NEAR_LIMIT_RATIO * 100)}% of limit):`
+  );
+  for (const stat of nearLimitStats) {
+    console.log(`  - ${stat.path}: ${stat.lines}/${stat.limit} lines`);
+  }
+} else {
+  console.log(`- Near-limit files (>= ${Math.round(NEAR_LIMIT_RATIO * 100)}% of limit): none`);
+}
+
+const exportWarnings = exportCountStats.filter(
+  (stat) => stat.exportCount > DEFAULT_EXPORT_COUNT_WARNING_LIMIT
+);
+
+if (exportWarnings.length > 0) {
+  console.log(`- Export-count warnings (> ${DEFAULT_EXPORT_COUNT_WARNING_LIMIT} exports):`);
+  for (const stat of exportWarnings) {
+    console.log(`  - ${stat.path}: ${stat.exportCount} exports`);
+  }
+} else {
+  console.log(`- Export-count warnings (> ${DEFAULT_EXPORT_COUNT_WARNING_LIMIT} exports): none`);
 }

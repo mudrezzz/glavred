@@ -18,6 +18,7 @@ Quickly understand the project state and select the next appropriate action from
 5. Inspect:
    - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`
    - latest ADRs
+   - latest architecture ADRs and active architecture guardrails
    - developer docs
    - user docs
    - demo docs
@@ -34,6 +35,8 @@ Instead:
 2. If there is an `In Progress` task, prefer continuing it unless it is blocked.
 3. If no task is ready, propose the smallest next slice based on requirements and current architecture.
 4. Update `ROADMAP.md` before starting implementation if the selected task needs clarification.
+5. Before selecting a product slice, account for current file-size limits, near-limit
+   warnings, module ownership, and feature dependency guardrails.
 
 ## Required output before implementation
 
@@ -45,6 +48,7 @@ Provide a short project state summary:
 - Relevant files
 - Risks or blockers
 - Intended validation commands
+- Architecture guardrails that affect the selected slice
 
 Then continue with the task unless the task is genuinely blocked.
 

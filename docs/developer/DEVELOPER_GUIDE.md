@@ -64,6 +64,29 @@ Publish GitHub Wiki from `docs/wiki/`:
 npm run docs:wiki:publish
 ```
 
+## Product and Refactor Slice Preflight
+
+Before implementing a product, refactor, domain, application, app, or frontend slice:
+
+1. Read the active `ROADMAP.md` slice and confirm it has `Architecture impact`.
+2. Check the planned files against the current large-file limits in
+   `scripts/architecture-smoke.mjs`.
+3. Treat files reported as near-limit by `npm run test:architecture` as closed for new
+   behavior unless the same slice includes a refactor step into a role-owned module.
+4. Confirm module ownership before editing:
+   - app shell and high-level wiring stay in `src/app/`;
+   - feature UI stays under its own `src/features/<feature>/` folder;
+   - shared visual primitives go to `src/shared/ui`;
+   - shared business behavior goes to `src/application` or `src/domain`.
+5. For frontend work, check existing design-system primitives before adding a new UI
+   pattern.
+6. Run `npm run test:architecture` before completing the slice. For visible frontend
+   changes, also run `npm run test:design` and `npm run test:visual`.
+
+Architecture rules are accepted only when they are documented in ADR/SAO and backed by
+an automated check or mandatory workflow checklist. Warning-level near-limit and
+export-count output should be reviewed even when the command exits successfully.
+
 ## Source Layout
 
 - `src/domain/`: framework-independent domain model.

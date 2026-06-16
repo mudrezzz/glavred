@@ -139,6 +139,12 @@ Run the smoke build:
 npm run smoke
 ```
 
+Run architecture guardrails:
+
+```bash
+npm run test:architecture
+```
+
 Run browser visual smoke checks:
 
 ```bash

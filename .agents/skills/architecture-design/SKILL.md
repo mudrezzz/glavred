@@ -38,6 +38,11 @@ Use the following sources, in this order:
 6. Separate domain, application, infrastructure, UI, persistence, integration, and testing concerns where applicable.
 7. Identify architectural risks.
 8. Record meaningful decisions as ADRs.
+9. For every new architecture rule, define how it is enforced:
+   - update SAO with the rule and ownership boundary;
+   - add or update an ADR;
+   - add an automated smoke check when practical, or a mandatory workflow checklist
+     when automation would be brittle.
 
 ## Required outputs
 
@@ -46,6 +51,7 @@ Update or create:
 - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`
 - relevant ADR files under `docs/adr/`
 - `ROADMAP.md` if architecture affects iterations or slices
+- smoke-check or workflow-checklist coverage for each new architecture rule
 
 ## Architecture document should include
 
@@ -91,5 +97,7 @@ Before finishing:
 - Architecture supports iterative slice delivery.
 - No component has unclear ownership.
 - Important trade-offs are documented.
+- New architecture rules have ADR + SAO coverage and either automated checks or a
+  mandatory workflow checklist.
 - `ROADMAP.md` reflects architectural work.
 - Follow-up tasks are small enough to implement as slices.

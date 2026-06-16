@@ -28,7 +28,9 @@ Consider:
    - targeted tests for local changes
    - smoke tests for user-visible flows
    - integration tests for cross-component changes
-   - full regression when risk is broad
+- full regression when risk is broad
+   - `npm run test:architecture` for every refactor, domain, application, app, or
+     frontend slice
 6. Run the selected commands if available.
 7. Report results clearly.
 
@@ -43,6 +45,19 @@ Run or recommend full regression when:
 - authentication, authorization, payments, security, or data integrity paths changed
 - demo-critical flows changed
 - many modules were touched
+
+## Mandatory Architecture Validation
+
+Run `npm run test:architecture` before completing any slice that touches:
+
+- architecture docs or ADRs;
+- domain or application logic;
+- `src/app`;
+- `src/features`;
+- shared frontend primitives or visible frontend behavior;
+- refactoring, module ownership, or import boundaries.
+
+Review warning-level near-limit and export-count output even when the command passes.
 
 ## Completion checklist
 

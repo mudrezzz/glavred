@@ -20,6 +20,7 @@ Maintain `ROADMAP.md` as the project control center.
 7. Ensure every slice has:
    - user value
    - implementation scope
+   - architecture impact
    - documentation impact
    - test expectations
    - demo impact when applicable
@@ -38,6 +39,7 @@ Use this format in `ROADMAP.md`:
 - Scope:
 - Out of scope:
 - Implementation notes:
+- Architecture impact:
 - Tests:
 - Docs:
 - Demo impact:
