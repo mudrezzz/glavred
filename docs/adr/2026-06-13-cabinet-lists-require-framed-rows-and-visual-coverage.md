@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Working cabinet screens contain many operational entities: author notes, sources, radars, signals, topics, fabulas, plan slots and future post candidates. When a new list is rendered as loose text, transparent buttons or unframed metadata, the user cannot tell which controls belong to which entity. This breaks the product's editorial-cabinet design language and makes review impossible.
+Working cabinet screens contain many operational entities: author notes, sources, radars, signals, topics, fabulas, plan slots and post candidates. When a new list is rendered as loose text, transparent buttons or unframed metadata, the user cannot tell which controls belong to which entity. This breaks the product's editorial-cabinet design language and makes review impossible.
 
 ## Decision
 
@@ -17,6 +17,10 @@ All operational entity lists in the cabinet UI must use framed rows or cards:
 - expanded details must remain inside the same row/card;
 - status and risk chips must not wrap by letters or become tall badges;
 - filter toolbars for entity lists must be framed and visually separate from rows;
+- large entity lists use the shared sequence `filter card -> search -> list/group
+  toggle -> framed rows -> bottom-left actions`;
+- a large entity list must not put a hero/summary block above the filter card when the
+  first user task is filtering or reviewing entities;
 - every new major list screen must have visual smoke coverage before acceptance.
 
 ## Consequences

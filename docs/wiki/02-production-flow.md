@@ -5,27 +5,33 @@ Production flow начинается после авторской памяти.
 
 Рабочая цепочка:
 
-`Сигналы -> Инсайт -> Сетка вещания -> Утвержденная фабула поста`
+`Сигналы -> Кандидаты постов -> Инсайт -> Сетка вещания -> Утвержденная фабула поста`
 
-Note: this page documents the current Slice 1.5 demo flow. `Сигналы` is implemented as
-a local-first radar and signal-review workspace. `Кандидаты постов` is visible as the
-next read-only step and becomes functional in Slice 1.6. The current grid remains a
-working local-first prototype for slot approval and downstream production.
+Note: this page documents the current local-first demo flow. `Сигналы` is implemented
+as a radar, signal-review, and first post-candidate workspace. `Кандидаты постов`
+creates deterministic review cards from approved signals with filtering, search,
+grouping, edit/reject, and approve actions; the current grid remains a working
+prototype for slot approval and downstream production.
 
 ![Утвержденная фабула](assets/screenshots/05-approved-post-brief.png)
 
 ## Сигналы
 
-В `Сигналы` пользователь видит радары, найденные сигналы и read-only preview
-`Кандидаты постов`. В демо это материал из памяти автора, архива, внешних источников
-и ручного исследования про AI-B2B adoption, evals, trust loop и rollout.
+В `Сигналы` пользователь видит радары, найденные сигналы и `Кандидаты постов`. В демо
+это материал из памяти автора, архива, внешних источников и ручного исследования про
+AI-B2B adoption, evals, trust loop и rollout.
 
 Сигнал можно утвердить, отредактировать, отправить в архив или отклонить. Только
-утвержденный сигнал становится текущим входом для production-flow.
+утвержденный сигнал попадает в candidate assembly.
 
-Кнопка `Собрать инсайт` создает deterministic insight card: почему это важно, для
-кого релевантно, где позиция автора и какие риски банальности или фактические gaps
-видны.
+В `Кандидаты постов` Glavred показывает 2-3 deterministic сборки: сигнал, тема, фабула,
+аудитория, ценность, цель, платформа, формат, confidence и risks. Пользователь может
+фильтровать, искать, группировать, редактировать или отклонять кандидатов, затем
+утверждает один кандидат; он становится текущим концептом для `Собрать инсайт`.
+
+Кнопка `Собрать инсайт` создает deterministic insight card из утвержденного кандидата:
+почему это важно, для кого релевантно, где позиция автора и какие риски или фактические
+gaps видны.
 
 ## План
 

@@ -98,6 +98,9 @@ export function App() {
           onRejectSignal={controller.rejectSourceSignal}
           onArchiveSignal={controller.archiveSourceSignal}
           onCorrectSignal={controller.correctSourceSignal}
+          onApprovePostCandidate={controller.approveCandidate}
+          onEditPostCandidate={controller.editCandidate}
+          onRejectPostCandidate={controller.rejectCandidate}
           onCreateInsight={controller.createInsightFromCurrentSignal}
           onPlan={controller.addInsightToPlan}
         />

@@ -58,6 +58,8 @@ export function createDemoWorkspace(): WorkspaceState {
         'Хороший материал для TG-поста: не спорить про модели, а показать разрыв между демо и продуктом. Это лучше относится к GTM/adoption, чем к support automation.'
     },
     sourceSignals: evaluatedSourceSignals,
+    postCandidates: [],
+    postCandidate: null,
     insightCard: null,
     contentPlanItem: null,
     contentPlanItems: [],

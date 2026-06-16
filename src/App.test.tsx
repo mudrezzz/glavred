@@ -113,7 +113,13 @@ describe('App', () => {
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i }));
-    expect(screen.getByText(/Slice 1\.6/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Slice 1\.6/i)).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('post-candidate-card').length).toBeGreaterThanOrEqual(2);
+    const candidateCard = screen.getAllByTestId('post-candidate-card')[0];
+    const candidateTitle = within(candidateCard).getByRole('heading', { level: 3 }).textContent ?? '';
+    fireEvent.click(within(candidateCard).getByRole('button', { name: /^Утвердить$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
+    expect(screen.getAllByText(candidateTitle).length).toBeGreaterThan(1);
   });
 
   it('edits an existing radar inline with multiline rule and source fields', () => {

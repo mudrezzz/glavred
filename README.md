@@ -56,10 +56,13 @@ surface from editorial suitability: each radar has a source discovery mode and
 optional filters for author, audience, positioning, goals, forbidden topics, and
 topics. Filtered-out material stays visible for human review; style is checked later
 during drafting and editorial review, not during radar intake.
-`Кандидаты постов` is visible as the next read-only step: it explains that assemblies
-of signal, topic, fabula, audience, value, and goal arrive in Slice 1.6. The current
-broadcast grid remains a useful local-first prototype until candidate assemblies and a
-true calendar are added.
+`Кандидаты постов` is now the first working candidate layer: approved signals become
+2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
+format, confidence, and risks. The candidate list uses the same filter/search/group
+cabinet pattern as `Очередь разбора`; candidates can be edited or rejected locally, and
+approving one candidate makes it the current concept for `Собрать инсайт`. The current
+broadcast grid remains a useful local-first prototype until request-more generation
+and a true calendar are added.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
@@ -101,7 +104,7 @@ The revised core modules are:
   now also check disclosure stability, right-aligned header metrics, inline radar
   editing, multiline rule/source fields, and radar editor form spacing.
 - Post Candidates: proposed combinations of signal, topic, fabula, audience, value,
-  goal, platform, and format.
+  goal, platform, and format, reviewed through the shared large-list pattern.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for
   software projects.
 - Audience, goal, metrics, platforms, and formats: structured rules, not freeform

@@ -58,10 +58,12 @@ The `Сигналы` section should have three internal tabs:
    - approve, reject, archive, or correct;
    - corrections become author-memory evidence.
 3. `Кандидаты постов`
-   - combinations of `Signal + Topic + Fabula + Audience + Value + Goal`;
-   - candidate count follows broadcast grid settings;
-   - author can approve one candidate, reject it, request more variants, or edit the
-     combination.
+   - combinations of `Signal + Topic + Fabula + Audience + Value + Goal + Platform +
+     Format`;
+   - the first implementation generates 2-3 deterministic candidates from approved
+     signals and active topic/fabula pairs;
+   - author can filter, group, edit, reject, and approve candidates;
+   - request-more variants and slot binding are later controls.
 
 Unapproved signals do not become active post concepts. Archive-only signals do not
 change author-position assertions unless explicitly accepted into memory.
@@ -181,11 +183,13 @@ operational.
 2. `Slice 1.5: Signals and Radar Workspace`
    - implement `Сигналы` as the next product layer;
    - add radar settings, found signals, and HITL signal review.
-3. `Slice 1.6: Post Candidate Assemblies`
-   - implement candidate concepts as combinations of signal/topic/fabula/audience/value.
-4. `Slice 1.7: Broadcast Grid Settings`
+3. `Slice 1.6: First Real Post Candidate Assemblies`
+   - implement deterministic compare-and-approve candidate concepts.
+4. `Slice 1.7: Candidate Editing and Variant Control`
+   - add request-more controls for candidate generation.
+5. `Slice 1.8: Broadcast Grid Settings`
    - implement tempo, period, days/times, and min/max candidate settings.
-5. `Slice 1.8: Calendar View for Broadcast Plan`
+6. `Slice 1.9: Calendar View for Broadcast Plan`
    - implement calendar zoom levels, slot statuses, and slot detail panel.
 
 Archive uniqueness remains important, but it should follow the signal/candidate

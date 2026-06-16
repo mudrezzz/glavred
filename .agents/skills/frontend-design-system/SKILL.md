@@ -36,6 +36,10 @@ description: Use for any Power Web OS frontend work: building or modifying scree
 - Do not introduce decorative gradients, photos, or illustrations unless the design system is updated to allow them.
 - Do not add a new production UI primitive when an existing design-system or
   `src/shared/ui` primitive covers the same role.
+- Large operational entity lists must use the cabinet list pattern:
+  `filter card -> search -> list/group toggle -> framed rows -> bottom-left actions`.
+  Do not introduce a hero/summary block above a large list when a filter card is the
+  first working control.
 
 ## Component Reference Order
 

@@ -51,16 +51,21 @@ author's own position explicit, editable, evidence-backed, and continuously vali
 The current implemented perimeter now starts with author memory and reaches a captured
 editorial learning note:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 The source-to-release part remains useful as a production layer. It is no longer the
 conceptual center of the product. Author memory, author-position assertions,
 structured topics/fabulas, validator results, and reviewed signals now sit above that
 flow; future slices should route post candidates and calendar slots through them.
 
-Slice 1.5 adds the first local-first `Сигналы` workspace: demo radars, found signals,
-manual review actions, and a read-only `Кандидаты постов` preview. The deeper planning
-model still needs Slice 1.6 candidate assemblies before expanding the calendar UI.
+Slice 1.6 adds the first working `Кандидаты постов` layer: deterministic assemblies
+from approved source signals and active topic/fabula pairs, compare cards, and one
+approved candidate that becomes the current concept for insight creation. Slice 1.7
+turns that layer into a cabinet-grade review list: filter card, full-width search,
+list/group toggle, framed candidate rows, bottom-left approve/edit/reject actions,
+inline editing, rejection, full-width evidence, and grouped review by signal, topic,
+status, or risk. The deeper planning model still needs request-more controls and
+broadcast settings before expanding the calendar UI.
 Slice 1.5.8 refines radars into separate trigger rules, search sources, source
 discovery mode, and editorial filters. Filters evaluate author, audience, positioning,
 goals, forbidden topics, and topics; style remains a later drafting/review concern.
@@ -126,10 +131,14 @@ turning the product into generic content generation.
   accepting selected items into archive, or ignoring selected items as evidence.
 - `ArchiveRecords`: stores accepted historical posts and long-form materials with
   provenance and evidence policy.
-- `PostCandidateAssembly`: combines a reviewed signal with topic, fabula, audience,
-  value, goal, platform, and format options before a post concept is approved.
-- `InsightScoring`: turns a reviewed source signal into an insight card with relevance,
-  urgency, banality risk, fact gaps, suggested topic, and suggested author position.
+- `PostCandidateAssembly`: combines an approved source signal with topic, fabula,
+  audience, value, goal, platform, format, thesis, evidence summary, confidence, and
+  risks before a post concept is approved. Candidate filtering, grouping, and inline
+  edit state are UI/application concerns under `src/features/signals`; edit/reject
+  transitions remain domain-level post-candidate operations.
+- `InsightScoring`: turns an approved candidate, or a reviewed source signal fallback,
+  into an insight card with relevance, urgency, banality risk, fact gaps, topic, fabula,
+  and suggested author position.
 - `ContentPlanning`: describes broadcast demand and calendar status: tempo, period,
   publishing days/times, candidate count requirements, platform/date/topic/fabula/
   format, approval status, manual override state, and advisory conflicts.
@@ -275,6 +284,9 @@ fixture, and feature files. Architecture smoke now tracks current large-file bas
 - `src/features/signals/SignalsHeader.tsx <= 100`
 - `src/features/signals/SignalsTabs.tsx <= 80`
 - `src/features/signals/PostCandidatesPreviewTab.tsx <= 120`
+- `src/features/signals/PostCandidateCard.tsx <= 130`
+- `src/features/signals/usePostCandidatesController.ts <= 60`
+- `src/application/postCandidateService.ts <= 120`
 - `src/application/editorialServices.ts <= 20`
 - `src/domain/editorial-model/transitions.ts <= 20`
 - `src/domain/editorial-model/rules.ts <= 50`
@@ -324,8 +336,8 @@ role-owned files such as:
   `MatrixTab.tsx`;
 - `src/features/signals/useSignalsController.ts`, `SignalsHeader.tsx`,
   `SignalsTabs.tsx`, `RadarsTab.tsx`, `RadarCard.tsx`, `FoundSignalsTab.tsx`,
-  `SourceSignalCard.tsx`, `PostCandidatesPreviewTab.tsx`, `RadarEditor.tsx`,
-  and `SignalsSidePanel.tsx`.
+  `SourceSignalCard.tsx`, `PostCandidatesPreviewTab.tsx`, `PostCandidateCard.tsx`,
+  `usePostCandidatesController.ts`, `RadarEditor.tsx`, and `SignalsSidePanel.tsx`.
 
 Stateful feature orchestration belongs in feature-local hooks, not entrypoints.
 After Slice 1.5.25, `AuthorMemoryView` composes the active memory tab, side panel,
@@ -466,8 +478,9 @@ Current implemented production contracts:
 - `SourceSignal`: type, title, source, capturedAt, summary, rawNote.
 - Future `RadarDefinition`: source, scope, acceptance policy, trigger mode, status,
   last run, and notes.
-- Future `PostCandidate`: candidate assembly of signal, topic, fabula, audience,
-  value, goal, platform, format, confidence, risks, and approval status.
+- `PostCandidate`: candidate assembly of signal, topic, fabula, audience, value, goal,
+  platform, format, title, thesis, evidence summary, confidence, risks, and approval
+  status.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
 - `ContentPlanItem`: insight, platform, date, priority, format, expected effect,
@@ -583,14 +596,16 @@ research experience building AI-B2B products:
    manual research.
 7. The author reviews found signals, then approves, archives, rejects, or corrects a
    signal before it becomes production material.
-8. The approved signal becomes the compatibility `sourceSignal` for downstream flow.
-9. `InsightScoring` produces an `InsightCard`.
-10. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
-11. The author approves a slot and post brief through HITL gates.
-12. `Drafting` creates an editable research-note draft.
-13. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+8. Approved signals produce 2-3 deterministic post candidates in `Кандидаты постов`.
+9. The author approves one candidate; it becomes `postCandidate` and its signal becomes
+   the compatibility `sourceSignal` for downstream flow.
+10. `InsightScoring` produces an `InsightCard` from the approved candidate.
+11. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
+12. The author approves a slot and post brief through HITL gates.
+13. `Drafting` creates an editable research-note draft.
+14. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-14. The author approves final text, prepares a manual Telegram release package, and
+15. The author approves final text, prepares a manual Telegram release package, and
    captures analytics learning.
 
 ## Extension Points
@@ -602,8 +617,9 @@ research experience building AI-B2B products:
 - Reviewed source material can become `SourceSignal`; unreviewed imports and archive
   records remain source material until the author or an acceptance policy promotes
   them.
-- Post candidate assembly can later replace direct plan-slot generation while keeping
-  current `contentPlanItems` as a compatibility layer.
+- Post candidate assembly now feeds insight creation and supports local edit/reject
+  review; later slices should add request-more variants and calendar slot binding while
+  keeping current `contentPlanItems` as a compatibility layer.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.

@@ -94,6 +94,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     radars,
     sourceSignal,
     sourceSignals,
+    postCandidates: saved.postCandidates ?? [],
+    postCandidate: saved.postCandidate ?? null,
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
     contentPlanItems,

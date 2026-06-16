@@ -3635,6 +3635,104 @@ select:focus {
   margin-top: 12px;
 }
 
+.post-candidates-list {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.post-candidate-card {
+  grid-template-columns: minmax(0, 1fr);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.post-candidate-card.selected {
+  border-color: var(--ok-ink);
+  background: var(--ok-tint);
+}
+
+.post-candidate-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.post-candidate-facts .wide {
+  grid-column: 1 / -1;
+}
+
+.post-candidate-facts div,
+.post-candidate-risks {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.post-candidate-facts span {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.post-candidate-facts b {
+  color: var(--ink-800);
+  font: var(--ui-sm);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.post-candidate-risks {
+  margin: 0;
+}
+
+.post-candidate-risks ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-700);
+  font: var(--ui-sm);
+  line-height: 1.45;
+}
+
+.post-candidate-groups,
+.candidate-group,
+.post-candidate-edit-form {
+  display: grid;
+  gap: 12px;
+}
+
+.post-candidate-edit-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.post-candidate-edit-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-candidate-edit-form input,
+.post-candidate-edit-form textarea {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.post-candidate-edit-form textarea {
+  min-height: 96px;
+}
+
 .empty-state {
   padding: 24px;
   color: var(--ink-600);
@@ -3938,6 +4036,8 @@ select:focus {
   .signals-stack .entity-row-main,
   .signal-filters,
   .signal-meta-grid,
+  .post-candidate-facts,
+  .post-candidate-edit-row,
   .project-profile-header,
   .project-profile-meta,
   .editorial-workspace,

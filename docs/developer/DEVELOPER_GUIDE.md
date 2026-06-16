@@ -269,9 +269,10 @@ New conceptual entities:
 - `SourceSignal` now supports review metadata: `radarId`, `reviewStatus`,
   `suggestedTopicId`, `suggestedFabulaId`, `suggestedValue`, `duplicateRisk`, and
   `authorCorrection`.
-  `suggestedTopicId`, `suggestedFabulaId`, and `suggestedValue` are temporary
-  compatibility fields. The `Найденные сигналы` UI treats signals as raw material and
-  does not expose topic/fabula matching; Slice 1.6 moves matching to `PostCandidate`.
+  `suggestedTopicId`, `suggestedFabulaId`, and `suggestedValue` are compatibility
+  fields for older signal fixtures. The `Найденные сигналы` UI treats signals as raw
+  material and does not expose topic/fabula matching; `PostCandidate` is now the first
+  matching layer.
   New signal-facing fields are `evidence` and `searchNote`.
 - `Topic`, `Fabula`, `WeightRange`, and `TopicFabulaMatrixEntry` as implemented
   structured editorial entities. `ContentDesignRecord` and `PlatformProfile` remain
@@ -288,7 +289,7 @@ requires small entities, explicit rules, validator scores, and evidence links.
 
 The implemented flow is:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> PostCandidate -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 Planning architecture is being corrected after Slice 1.4. The broadcast grid is the
 current compatibility layer, but the intended flow is:
@@ -355,6 +356,21 @@ in `useSignalsController`. Rendering is split into `SignalsHeader`, `SignalsTabs
 `PostCandidatesPreviewTab`. `RadarEditor` remains the radar form editor, not the owner
 of tab/list state.
 
+After Slice 1.6, `PostCandidatesPreviewTab` is the real candidates tab composition root,
+not a placeholder. Candidate derivation belongs in `usePostCandidatesController`,
+candidate rendering belongs in `PostCandidateCard`, deterministic assembly belongs in
+`src/application/postCandidateService.ts`, and candidate approval/downstream reset
+belongs in `src/app/usePostCandidateWorkspaceActions.ts`.
+
+After Slice 1.7, large operational entity lists must use the shared cabinet list
+pattern: `filter card -> search -> list/group toggle -> framed rows -> bottom-left
+actions`. `Кандидаты постов` follows the same UX rule as
+`Память автора -> Очередь разбора`: filters and grouping live in
+`PostCandidatesToolbar`, grouped rendering in `PostCandidateGroupList`, inline editing
+in `PostCandidateEditForm`, and local filter/group helpers in `postCandidateFilters`.
+Do not add new large-list hero/summary blocks above the filter card. Primary row
+actions are red only for the main approval/save step; secondary row actions stay white.
+
 After Slice 1.5.27, `ImportQueueView` is also only the author-memory import-queue
 composition root. Filter controls and view-mode switching belong in
 `ImportQueueToolbar`; selected-count and bulk actions belong in `ImportQueueBulkBar`;
@@ -396,8 +412,13 @@ Use these boundaries:
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and
   analytics services.
-- Future `PostCandidate` services should assemble signal/topic/fabula/audience/value/
-  goal combinations before a calendar slot becomes an approved post concept.
+- `PostCandidate` services assemble signal/topic/fabula/audience/value/goal/platform/
+  format combinations before insight creation. Approving a candidate sets
+  `WorkspaceState.postCandidate`, switches the current `sourceSignal` to the candidate's
+  source, and clears stale downstream insight, selected plan item, brief, draft,
+  release, and analytics artifacts. Editing or rejecting a candidate updates only
+  candidate review state and must not create or clear downstream artifacts. A rejected
+  candidate cannot become the current approved concept.
 - The author-memory UI may use browser-only helpers for local link previews, derived
   titles, search filters, summary counts, and voice-input capability detection. These
   helpers must not fetch external metadata or bypass local-first storage.

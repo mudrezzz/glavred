@@ -55,6 +55,7 @@ export type {
   InsightCard,
   PlanWeightWarning,
 } from './planning/types';
+export type { PostCandidate } from './post-candidates/types';
 export type {
   AnalyticsStatus,
   EditorialCheck,
@@ -153,5 +154,6 @@ import type { WorkspaceState } from './workspace/types';
 export * from './editorial-model/transitions';
 export * from './planning/transitions';
 export * from './signals/transitions';
+export * from './post-candidates/transitions';
 export * from './production/transitions';
 export * from './imports/transitions';

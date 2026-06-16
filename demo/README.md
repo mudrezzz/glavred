@@ -93,11 +93,12 @@ seed contains two weeks of slots with dates, Telegram as the local-first platfor
 formats, topics, fabulas, approval status, manual override state, and advisory
 weight/matrix warnings.
 
-This is a useful Slice 1.4 prototype, but it is not the final planning model. Slice
-1.5 now adds `Сигналы`: radar settings, found signals, and explicit signal review.
-The next demo evolution should add post candidate assemblies. After that, `План` can
-become a real calendar with publishing tempo, period, days/times, candidate counts,
-and readiness statuses.
+This is a useful compatibility prototype, but it is not the final planning model. The
+demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
+the first `Кандидаты постов` review layer with filters, search, grouping, edit, reject,
+and approve actions. Future slices can add candidate variant requests and then turn
+`План` into a real calendar with publishing
+tempo, period, days/times, candidate counts, and readiness statuses.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
@@ -188,8 +189,11 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     Slice 1.5.8 note: radar setup now also includes source discovery mode and
     `Фильтры отбора`. Expand a found signal to see deterministic filter evaluations
     for author, audience, positioning, goals, forbidden topics, and topics.
-19. Open `Кандидаты постов` to see the Slice 1.6 preview.
-20. Return to `Найденные сигналы` and click `Собрать инсайт`.
+19. Open `Кандидаты постов`, use the filter/search/group controls, optionally
+    `Редактировать` or `Отклонить` a deterministic concept, and click `Утвердить` on
+    one card.
+20. Click `Собрать инсайт`; the insight should use the approved candidate's title,
+    topic, fabula, value, and risks.
 21. Click `В план`.
 22. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.

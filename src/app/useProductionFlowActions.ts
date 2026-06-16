@@ -2,7 +2,7 @@ import {
   createBroadcastPlan,
   createEditorNotes,
   createEditorialLearningNote,
-  createInsightCard,
+  createWorkspaceInsightCard,
   createPostBrief,
   createPostDraft,
   createReleasePackage,
@@ -37,26 +37,12 @@ type ProductionFlowActionsParams = {
 
 export function useProductionFlowActions({ patchWorkspace, workspace }: ProductionFlowActionsParams) {
   function createInsightFromCurrentSignal() {
-    const insightCard = createInsightCard(
-      workspace.sourceSignal,
-      workspace.editorialModel,
-      workspace.topics,
-      workspace.fabulas,
-      workspace.topicFabulaMatrix
-    );
+    const insightCard = createWorkspaceInsightCard(workspace);
     patchWorkspace({ insightCard }, 'Карточка инсайта собрана');
   }
 
   function addInsightToPlan() {
-    const insightCard =
-      workspace.insightCard ??
-      createInsightCard(
-        workspace.sourceSignal,
-        workspace.editorialModel,
-        workspace.topics,
-        workspace.fabulas,
-        workspace.topicFabulaMatrix
-      );
+    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
     const nextWorkspace = { ...workspace, insightCard };
     const generatedItems = createBroadcastPlan(nextWorkspace);
     const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
@@ -68,15 +54,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function generateBroadcastPlan() {
-    const insightCard =
-      workspace.insightCard ??
-      createInsightCard(
-        workspace.sourceSignal,
-        workspace.editorialModel,
-        workspace.topics,
-        workspace.fabulas,
-        workspace.topicFabulaMatrix
-      );
+    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
     const nextWorkspace = { ...workspace, insightCard };
     const generatedItems = createBroadcastPlan(nextWorkspace);
     const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
@@ -103,15 +81,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function prepareBrief(item: ContentPlanItem) {
-    const insightCard =
-      workspace.insightCard ??
-      createInsightCard(
-        workspace.sourceSignal,
-        workspace.editorialModel,
-        workspace.topics,
-        workspace.fabulas,
-        workspace.topicFabulaMatrix
-      );
+    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
     const postBrief = createPostBrief(
       item,
       insightCard,

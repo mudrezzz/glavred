@@ -58,6 +58,11 @@ export function SignalsSidePanel({
           <SummaryItem label="В архиве" value={summary.archived} />
           <SummaryItem label="High duplicate" value={summary.highRisk} />
         </div>
+        {workspace.postCandidate && (
+          <div className="context-empty">
+            Текущий кандидат: {workspace.postCandidate.title}
+          </div>
+        )}
         <button className="btn btn-sec wide" type="button" onClick={onCreateInsight}>
           <Icon name="radar" size={16} />
           Собрать инсайт

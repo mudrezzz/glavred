@@ -3,6 +3,7 @@ import type {
   EditorialModel,
   Fabula,
   InsightCard,
+  PostCandidate,
   SourceSignal,
   Topic,
   TopicFabulaMatrixEntry,
@@ -20,26 +21,29 @@ export function createInsightCard(
   model: EditorialModel,
   topics: Topic[] = [],
   fabulas: Fabula[] = [],
-  matrix: TopicFabulaMatrixEntry[] = []
+  matrix: TopicFabulaMatrixEntry[] = [],
+  candidate?: PostCandidate | null
 ): InsightCard {
   const score = signal.summary.toLowerCase().includes('workflow') ? 0.92 : 0.78;
-  const pair = selectCompatibleTopicFabula(topics, fabulas, matrix);
+  const pair = candidate ? findCandidatePair(candidate, topics, fabulas) : selectCompatibleTopicFabula(topics, fabulas, matrix);
   const rubric = pair?.topic.title ?? model.rubrics[0] ?? 'Product research notes';
 
   return {
-    id: 'insight-ai-demo-to-adoption',
-    signalId: signal.id,
-    title: 'AI-B2B пилоты ломаются между красивым демо и повторяемым adoption',
+    id: candidate ? `insight-${candidate.id}` : 'insight-ai-demo-to-adoption',
+    signalId: candidate?.sourceSignalId ?? signal.id,
+    title: candidate?.title ?? 'AI-B2B пилоты ломаются между красивым демо и повторяемым adoption',
     whyItMatters:
+      candidate?.thesis ??
       'Сигнал ложится на позицию автора: AI-фича становится продуктом не в момент демо, а когда команда научилась измерять качество, встраивать workflow и доводить пользователя до повторяемого результата.',
-    audienceRelevance: model.audience,
+    audienceRelevance: candidate?.audience ?? model.audience,
     authorPosition:
+      candidate?.value ??
       'Слабое место AI-B2B продукта обычно не модель, а отсутствие product loop: evals, trust, adoption, rollback и ясная экономика внедрения.',
     rubric,
     urgency: 'Вечнозеленая тема с актуальным рынком AI-пилотов',
     score,
     banalityRisk: 0.18,
-    factGaps: [
+    factGaps: candidate?.risks ?? [
       'Нужен публичный пример AI-B2B пилота, который не дошел до регулярного использования после демо',
       'Нужен отчет или интервью о роли evals, trust и change management в adoption AI-функций'
     ],
@@ -72,18 +76,24 @@ export function createContentPlanItem(insight: InsightCard): ContentPlanItem {
   };
 }
 
+export function createWorkspaceInsightCard(workspace: WorkspaceState): InsightCard {
+  const approvedCandidate =
+    workspace.postCandidate?.approvalStatus === 'approved' ? workspace.postCandidate : null;
+
+  return createInsightCard(
+    workspace.sourceSignal,
+    workspace.editorialModel,
+    workspace.topics,
+    workspace.fabulas,
+    workspace.topicFabulaMatrix,
+    approvedCandidate
+  );
+}
+
 export function createBroadcastPlan(workspace: WorkspaceState): ContentPlanItem[] {
   const settings = workspace.contentPlanSettings;
   const slotCount = Math.max(1, Math.round((settings.postsPerWeek * settings.planningHorizonDays) / 7));
-  const existingInsight =
-    workspace.insightCard ??
-    createInsightCard(
-      workspace.sourceSignal,
-      workspace.editorialModel,
-      workspace.topics,
-      workspace.fabulas,
-      workspace.topicFabulaMatrix
-    );
+  const existingInsight = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
   const pairs = getBroadcastPairs(workspace.topics, workspace.fabulas, workspace.topicFabulaMatrix);
   const formats = settings.allowedFormats.length > 0 ? settings.allowedFormats : ['Исследовательская заметка'];
   const dates = ['2026-06-15', '2026-06-17', '2026-06-19', '2026-06-22', '2026-06-24', '2026-06-26'];
@@ -142,4 +152,10 @@ function createPlanTitle(topicTitle: string, fabulaTitle: string): string {
 
 function createExpectedEffect(topicTitle: string, fabulaTitle: string): string {
   return `Проверить, как тема "${topicTitle}" раскрывается через сценарий "${fabulaTitle}" и поддерживает позицию AI Product Manager без demo magic.`;
+}
+
+function findCandidatePair(candidate: PostCandidate, topics: Topic[], fabulas: Fabula[]): { topic: Topic; fabula: Fabula } | null {
+  const topic = topics.find((item) => item.id === candidate.topicId);
+  const fabula = fabulas.find((item) => item.id === candidate.fabulaId);
+  return topic && fabula ? { topic, fabula } : null;
 }

@@ -1985,58 +1985,138 @@ Status:
   - Warning-level export counts can be noisy; keep them informational until a separate
     cleanup slice lowers public surfaces deliberately.
 
-### Slice 1.6: Post Candidate Assemblies
+### Slice 1.6: First Real Post Candidate Assemblies
 
-- Status: Ready
-- Goal: Add post candidates as explicit combinations of signal, topic, fabula,
-  audience, value, goal, platform, and format.
-- User value: The author can compare several proposed post concepts for one future
-  slot instead of approving the first generated idea.
+- Status: Done
+- Goal: Replace the `Кандидаты постов` placeholder with the first working
+  compare-and-approve layer.
+- User value: The author can compare deterministic post concepts assembled from
+  approved signals and choose one as the current concept before building the insight.
 - Dependency:
-  - Ready after the refactoring chain through `Slice 1.5.29`. New product UI should
-    continue using the feature-local module boundaries and architecture smoke limits.
+  - Completed after `Slice 1.5.29` architecture guardrails.
 - Scope:
-  - Add `PostCandidate` contracts.
-  - Generate deterministic candidates from approved signals and editorial model.
-  - Respect min/max candidate count from future or temporary planning settings.
-  - Show candidates in `Сигналы -> Кандидаты постов`.
-  - Let the author approve one candidate, reject candidates, request more variants, or
-    edit the assembly.
-  - Approved candidate becomes the input for `Фабула поста`.
+  - Add `PostCandidate` as a domain contract with signal, topic, fabula, audience,
+    value, goal, platform, format, title, thesis, evidence summary, confidence, risks,
+    and approval status.
+  - Store `postCandidates` and selected `postCandidate` in `WorkspaceState`; normalize
+    old local workspaces to an empty candidate list and `null` selection.
+  - Generate 2-3 deterministic candidates from approved `SourceSignal` records and
+    active topic/fabula pairs in the editorial matrix.
+  - Show real candidate cards in `Сигналы -> Кандидаты постов` with compare fields,
+    confidence, risks, and `Утвердить кандидата`.
+  - On approve, select the candidate, set its signal as the current signal, and clear
+    stale downstream insight/plan selection/brief/draft/release/analytics artifacts.
+  - Make `createInsightCard` use the selected candidate concept when one is approved.
 - Out of scope:
-  - Full calendar view.
-  - Real AI candidate generation.
-  - Automated publishing.
+  - Candidate edit, reject, request-more, bulk actions, and calendar slot binding.
+  - Full calendar view, real AI candidate generation, real search, and automated
+    publishing.
 - Implementation notes:
-  - Candidate approval should synchronize the compatibility `contentPlanItem` only
-    when a concrete plan slot is selected or created.
-  - Candidate edits should be explicit save/cancel operations.
+  - `PostCandidatesPreviewTab` is now the real candidates tab composition root.
+  - Candidate assembly lives in `src/application/postCandidateService.ts`.
+  - Candidate approval orchestration lives in
+    `src/app/usePostCandidateWorkspaceActions.ts`.
 - Architecture impact:
-  - Must start with architecture preflight against file-size limits and near-limit
-    warnings.
-  - New candidate UI belongs under `src/features/signals` or a role-owned feature-local
-    candidate module; shared primitives belong in `src/shared/ui`.
-  - Domain/application candidate logic must stay outside React and must not create
-    feature-to-feature dependencies.
+  - Ran architecture preflight before implementation and kept hard limits active.
+  - Candidate UI stays in `src/features/signals` with `PostCandidateCard` and
+    `usePostCandidatesController`; `useSignalsController` was not expanded.
+  - Domain/application logic stays outside React and feature code has no feature-to-
+    feature imports.
 - Tests:
-  - Domain tests for candidate generation and approval.
-  - UI tests for comparing, approving, rejecting, and editing candidates.
-  - Regression for `Фабула поста` creation from an approved candidate.
+  - `npm run test:architecture` passed before implementation.
+  - Domain/application tests cover deterministic generation, approved-signal filtering,
+    candidate-backed insight creation, and downstream reset on approve.
+  - UI tests cover candidate cards, approve action, App smoke integration, and empty
+    state without approved signals.
+  - `npm run test:architecture` passed after implementation.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
 - Docs:
   - Update architecture, developer guide, user guide, demo docs, wiki, and roadmap.
 - Demo impact:
-  - Demo should show at least 2-3 candidate concepts for a planned AI Product Manager
-    post.
+  - Demo shows 2-3 candidate concepts for the AI Product Manager signal and lets the
+    author approve one before `Собрать инсайт -> В план`.
 - Acceptance criteria:
-  - User can review multiple candidates for the same editorial need.
-  - Approved candidate starts the existing post-brief flow.
-  - Rejected candidates do not affect plan or production artifacts.
+  - User can review multiple deterministic candidates. Done.
+  - Approved candidate becomes the current concept for the existing insight-to-plan
+    flow. Done.
+  - Placeholder text is gone and empty state routes the user back to approved signals.
+    Done.
 - Risks:
-  - Candidate UX can become noisy; keep the first view compact with details on demand.
+  - Candidate generation is deterministic and intentionally simple; edit/reject/request-
+    more candidates should be handled in the next product slice.
 
-### Slice 1.7: Broadcast Grid Settings
+### Slice 1.7: Candidate List UX Parity and Review Actions
 
-- Status: Backlog
+- Status: Done
+- Goal: Bring `Кандидаты постов` to the same large-list UX pattern as
+  `Память автора -> Очередь разбора`.
+- User value: The author can filter, search, group, edit, reject, and approve post
+  candidates without the layout drifting from the rest of the cabinet.
+- Scope:
+  - Remove the top `Кандидаты постов / Сравните сборки... / counters` hero-summary
+    block from the candidates tab.
+  - Make the first main-content block a filter card with `Сигнал`, `Статус`, `Тема`,
+    `Risk`, full-width search, and `Список / Группы` toggle.
+  - Add grouping by signal, topic, status, and risk.
+  - Convert candidate cards to the cabinet row pattern with bottom-left inline actions:
+    primary red `Утвердить`, secondary `Редактировать` and `Отклонить`.
+  - Add inline edit for title, thesis, audience, value, goal, platform, format,
+    evidence summary, and risks.
+  - Make `Доказательство` full-width inside the facts grid and keep `Risks`
+    full-width below facts.
+  - Add frontend rule: all large entity lists use the pattern
+    `filter card -> search -> list/group toggle -> framed rows -> bottom-left actions`.
+- Out of scope:
+  - Request-more variants.
+  - Bulk actions for candidates.
+  - Real AI generation.
+  - Calendar slot assignment.
+- Implementation notes:
+  - Candidate filters/grouping/edit UI is split into role-owned modules under
+    `src/features/signals`.
+  - `PostCandidatesPreviewTab` remains a composition root; candidate list logic lives
+    in `usePostCandidatesController` and `postCandidateFilters`.
+  - `SignalsView` and `useSignalsController` were not expanded with candidate behavior.
+- Architecture impact:
+  - Architecture preflight and final smoke passed.
+  - Added architecture baselines for candidate toolbar, grouped list, edit form, and
+    filter/group helpers.
+  - Domain transitions for edit/reject live in `src/domain/post-candidates`.
+  - Workspace mutation remains in `src/app/usePostCandidateWorkspaceActions.ts`.
+- Tests:
+  - Domain/application tests cover edit, reject, rejected-candidate approval guard, and
+    approved edited candidate insight creation.
+  - UI tests cover no hero-summary block, filter card, filtering/search/grouping,
+    bottom-left actions, primary/secondary button classes, edit save, reject action,
+    evidence full-width, empty states, and cards staying in `.memory-main`.
+  - `npm run test:architecture` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
+- Docs:
+  - Update architecture, developer guide, user guide, demo docs, wiki, design workflow,
+    and roadmap.
+- Demo impact:
+  - Demo candidates now use the same filter/search/group UX as the import queue and
+    expose edit/reject/approve review actions without changing calendar behavior.
+- Acceptance criteria:
+  - Candidate cards render in `.memory-main`, never in `.memory-side`. Done.
+  - Top hero-summary block is gone. Done.
+  - Candidate list follows the shared large-list pattern. Done.
+  - Reject/edit do not create downstream artifacts. Done.
+  - Only approved candidates can feed `Собрать инсайт`. Done.
+- Risks:
+  - `PostCandidateCard` and `usePostCandidateWorkspaceActions` are near their smoke
+    limits; future candidate behavior should split card subparts and orchestration
+    helpers before adding more state.
+
+### Slice 1.8: Broadcast Grid Settings
+
+- Status: Ready
 - Goal: Add high-level broadcast settings before calendar implementation.
 - User value: The author can configure publishing tempo and candidate expectations
   once, instead of editing every post slot manually.
@@ -2077,7 +2157,7 @@ Status:
 - Risks:
   - Calendar settings can become platform-specific; keep platform entities deferred.
 
-### Slice 1.8: Calendar View for Broadcast Plan
+### Slice 1.9: Calendar View for Broadcast Plan
 
 - Status: Backlog
 - Goal: Replace the list-only plan view with a calendar that shows slot readiness and
@@ -2124,7 +2204,7 @@ Status:
   - Calendar UI can easily become too dense; start with compact slot badges and a
     detail panel.
 
-### Slice 1.9: Archive and Uniqueness Baseline
+### Slice 1.10: Archive and Uniqueness Baseline
 
 - Status: Backlog
 - Goal: Treat released and imported posts as author memory, signal material, and
@@ -2216,6 +2296,8 @@ Status:
 - Slice 1.5.28: App Workspace Controller Decomposition. Completed 2026-06-15.
 - Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules. Completed
   2026-06-16.
+- Slice 1.6: First Real Post Candidate Assemblies. Completed 2026-06-16.
+- Slice 1.7: Candidate List UX Parity and Review Actions. Completed 2026-06-16.
 
 ## Blocked Items
 
@@ -2236,4 +2318,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.6: Post Candidate Assemblies` after the completed architecture guardrail slice.
+Resume product work with `Slice 1.8: Broadcast Grid Settings`.

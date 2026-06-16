@@ -31,6 +31,11 @@ const LARGE_SOURCE_BASELINES = [
     next: "Signals workspace actions should stay app-level orchestration without feature UI or storage ownership.",
   },
   {
+    path: "src/app/usePostCandidateWorkspaceActions.ts",
+    limit: 80,
+    next: "Post candidate workspace actions should own candidate selection and downstream reset only.",
+  },
+  {
     path: "src/app/useProductionFlowActions.ts",
     limit: 260,
     next: "Production flow actions should stay app-level orchestration and split by plan/release if they grow.",
@@ -128,7 +133,42 @@ const LARGE_SOURCE_BASELINES = [
   {
     path: "src/features/signals/PostCandidatesPreviewTab.tsx",
     limit: 120,
-    next: "PostCandidatesPreviewTab should stay a read-only Slice 1.6 placeholder.",
+    next: "PostCandidatesPreviewTab should stay a composition root; keep card UI and candidate derivation in role-owned modules.",
+  },
+  {
+    path: "src/features/signals/PostCandidateCard.tsx",
+    limit: 130,
+    next: "PostCandidateCard should stay focused on one compare-and-approve candidate card.",
+  },
+  {
+    path: "src/features/signals/PostCandidatesToolbar.tsx",
+    limit: 120,
+    next: "PostCandidatesToolbar should stay focused on candidate filters, search, and list/group mode controls.",
+  },
+  {
+    path: "src/features/signals/PostCandidateGroupList.tsx",
+    limit: 110,
+    next: "PostCandidateGroupList should stay focused on grouped candidate rendering.",
+  },
+  {
+    path: "src/features/signals/PostCandidateEditForm.tsx",
+    limit: 110,
+    next: "PostCandidateEditForm should stay limited to inline candidate field editing.",
+  },
+  {
+    path: "src/features/signals/usePostCandidatesController.ts",
+    limit: 60,
+    next: "Candidate tab derivation should stay separate from useSignalsController.",
+  },
+  {
+    path: "src/features/signals/postCandidateFilters.ts",
+    limit: 80,
+    next: "Candidate filters and grouping should stay local deterministic UI logic.",
+  },
+  {
+    path: "src/application/postCandidateService.ts",
+    limit: 120,
+    next: "Candidate assembly should remain deterministic application logic until AI generation is introduced behind a service boundary.",
   },
   {
     path: "src/application/editorialServices.ts",
@@ -434,6 +474,12 @@ const requiredSourceFiles = [
   "src/features/signals/FoundSignalsTab.tsx",
   "src/features/signals/SourceSignalCard.tsx",
   "src/features/signals/PostCandidatesPreviewTab.tsx",
+  "src/features/signals/PostCandidateCard.tsx",
+  "src/features/signals/PostCandidatesToolbar.tsx",
+  "src/features/signals/PostCandidateGroupList.tsx",
+  "src/features/signals/PostCandidateEditForm.tsx",
+  "src/features/signals/usePostCandidatesController.ts",
+  "src/features/signals/postCandidateFilters.ts",
   "src/features/signals/RadarEditor.tsx",
   "src/features/signals/SignalsSidePanel.tsx",
   "src/features/signals/helpers.tsx",

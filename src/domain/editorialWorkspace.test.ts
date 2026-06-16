@@ -5,6 +5,7 @@ import {
   addTopic,
   approveFinalText,
   approvePlanItem,
+  approvePostCandidate,
   approvePostBrief,
   approveSignal,
   acceptCandidateToArchive,
@@ -25,6 +26,7 @@ import {
   deleteEditorialRule,
   deleteTopic,
   detectBroadcastPlanConflicts,
+  editPostCandidate,
   evaluateSignalAgainstRadarFilters,
   filterImportCandidates,
   getRulesByGroup,
@@ -36,6 +38,7 @@ import {
   markLearningNoteCaptured,
   markReleaseExported,
   markReleaseReady,
+  rejectPostCandidate,
   rejectSignal,
   rejectPlanItem,
   rejectPostBrief,
@@ -57,9 +60,11 @@ import {
   createEditorNotes,
   createEditorialLearningNote,
   createInsightCard,
+  createPostCandidates,
   createPostBrief,
   createPostDraft,
   createReleasePackage,
+  createWorkspaceInsightCard,
   inferAuthorPositionAssertions,
   runEditorialChecks
 } from '../application/editorialServices';
@@ -121,6 +126,108 @@ describe('editorial workspace domain', () => {
     expect(workspace.sourceSignals.some((signal) => signal.reviewStatus === 'new')).toBe(true);
     expect(workspace.sourceSignal.id).toBe(workspace.sourceSignals[0].id);
     expect(workspace.sourceSignal.reviewStatus).toBe('approved');
+  });
+
+  it('assembles deterministic post candidates only from approved source signals', () => {
+    const workspace = createDemoWorkspace();
+    const candidates = createPostCandidates(workspace);
+    const approvedSignalIds = new Set(
+      workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved').map((signal) => signal.id)
+    );
+
+    expect(candidates.length).toBeGreaterThanOrEqual(2);
+    expect(candidates.length).toBeLessThanOrEqual(3);
+    expect(candidates.every((candidate) => approvedSignalIds.has(candidate.sourceSignalId))).toBe(true);
+    expect(candidates[0]).toMatchObject({
+      platform: workspace.contentPlanSettings.defaultPlatform,
+      audience: workspace.editorialModel.audience,
+      approvalStatus: 'draft'
+    });
+    expect(candidates[0].topicId).toBeTruthy();
+    expect(candidates[0].fabulaId).toBeTruthy();
+    expect(candidates[0].value).toBeTruthy();
+    expect(candidates[0].goal).toBeTruthy();
+    expect(candidates[0].format).toBeTruthy();
+  });
+
+  it('returns no post candidates when no source signal is approved', () => {
+    const workspace = createDemoWorkspace();
+    const withoutApprovedSignals = {
+      ...workspace,
+      sourceSignals: workspace.sourceSignals.map((signal) => ({ ...signal, reviewStatus: 'new' as const }))
+    };
+
+    expect(createPostCandidates(withoutApprovedSignals)).toEqual([]);
+  });
+
+  it('creates insight from the approved post candidate concept', () => {
+    const workspace = createDemoWorkspace();
+    const approvedCandidate = approvePostCandidate(createPostCandidates(workspace)[1]);
+    const insight = createWorkspaceInsightCard({ ...workspace, postCandidate: approvedCandidate });
+
+    expect(insight.id).toBe(`insight-${approvedCandidate.id}`);
+    expect(insight.title).toBe(approvedCandidate.title);
+    expect(insight.signalId).toBe(approvedCandidate.sourceSignalId);
+    expect(insight.topicId).toBe(approvedCandidate.topicId);
+    expect(insight.fabulaId).toBe(approvedCandidate.fabulaId);
+    expect(insight.authorPosition).toBe(approvedCandidate.value);
+    expect(insight.factGaps).toEqual(approvedCandidate.risks);
+  });
+
+  it('edits and rejects post candidates without silently approving them', () => {
+    const workspace = createDemoWorkspace();
+    const candidate = createPostCandidates(workspace)[0];
+    const edited = editPostCandidate(candidate, {
+      title: 'Edited candidate',
+      thesis: 'Edited thesis',
+      audience: candidate.audience,
+      value: 'Edited value',
+      goal: candidate.goal,
+      platform: candidate.platform,
+      format: candidate.format,
+      evidenceSummary: candidate.evidenceSummary,
+      risks: ['Проверить edited risk']
+    });
+    const rejected = rejectPostCandidate(edited);
+    const approvedAttempt = approvePostCandidate(rejected);
+
+    expect(edited.approvalStatus).toBe('draft');
+    expect(edited.title).toBe('Edited candidate');
+    expect(edited.value).toBe('Edited value');
+    expect(rejected.approvalStatus).toBe('rejected');
+    expect(approvedAttempt.approvalStatus).toBe('rejected');
+  });
+
+  it('ignores non-approved post candidates when creating a workspace insight', () => {
+    const workspace = createDemoWorkspace();
+    const draftCandidate = { ...createPostCandidates(workspace)[1], title: 'Draft candidate title' };
+    const rejectedCandidate = rejectPostCandidate({ ...draftCandidate, title: 'Rejected candidate title' });
+    const draftInsight = createWorkspaceInsightCard({ ...workspace, postCandidate: draftCandidate });
+    const rejectedInsight = createWorkspaceInsightCard({ ...workspace, postCandidate: rejectedCandidate });
+
+    expect(draftInsight.title).not.toBe('Draft candidate title');
+    expect(rejectedInsight.title).not.toBe('Rejected candidate title');
+  });
+
+  it('creates insight from an approved edited post candidate', () => {
+    const workspace = createDemoWorkspace();
+    const candidate = approvePostCandidate(createPostCandidates(workspace)[1]);
+    const edited = editPostCandidate(candidate, {
+      title: 'Approved edited candidate title',
+      thesis: candidate.thesis,
+      audience: candidate.audience,
+      value: 'Edited approved value',
+      goal: candidate.goal,
+      platform: candidate.platform,
+      format: candidate.format,
+      evidenceSummary: candidate.evidenceSummary,
+      risks: candidate.risks
+    });
+    const insight = createWorkspaceInsightCard({ ...workspace, postCandidate: edited });
+
+    expect(edited.approvalStatus).toBe('approved');
+    expect(insight.title).toBe('Approved edited candidate title');
+    expect(insight.authorPosition).toBe('Edited approved value');
   });
 
   it('transitions source signals through approve, reject, archive, and correction states', () => {

@@ -21,6 +21,7 @@ import type {
   InsightCard,
   PlanWeightWarning,
 } from '../planning/types';
+import type { PostCandidate } from '../post-candidates/types';
 import type {
   EditorialCheck,
   EditorialLearningNote,
@@ -48,6 +49,8 @@ export interface WorkspaceState {
   radars: RadarDefinition[];
   sourceSignal: SourceSignal;
   sourceSignals: SourceSignal[];
+  postCandidates: PostCandidate[];
+  postCandidate: PostCandidate | null;
   insightCard: InsightCard | null;
   contentPlanItem: ContentPlanItem | null;
   contentPlanItems: ContentPlanItem[];

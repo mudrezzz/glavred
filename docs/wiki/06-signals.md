@@ -1,6 +1,6 @@
 # Signals
 
-`Сигналы` is the local-first workspace between author memory/archive/source material and future post candidates.
+`Сигналы` is the local-first workspace between author memory/archive/source material and approved post concepts.
 
 ## Radars
 
@@ -10,13 +10,30 @@ Radars are configurable search procedures. Each radar row is a framed cabinet ca
 
 ## Found Signals
 
-Found signals are raw material. They do not own topic/fabula/audience/value matching yet; that starts in Slice 1.6 with post candidates.
+Found signals are raw material. They do not own topic/fabula/audience/value matching; that starts in `Кандидаты постов`.
 Expanded signals now show deterministic editorial filter evaluations from the source
 radar. These evaluations explain whether a signal passed, needs attention, was
 filtered out, or intentionally creates tension with the author's position. Filtered
 signals remain visible for human review.
 
 ![Found signals](assets/screenshots/13-signals-found-signals.png)
+
+## Post Candidates
+
+`Кандидаты постов` assembles 2-3 deterministic concepts only from approved source
+signals. Each card shows the source signal, topic, fabula, audience, value, goal,
+platform, format, confidence, evidence summary, and risks.
+
+The tab follows the same cabinet-list pattern as `Память автора -> Очередь разбора`:
+filter card, full-width search, list/group toggle, framed rows, and bottom-left row
+actions. The author can edit candidate fields inline, reject weak candidates, or
+approve one candidate. Approval saves the selected `PostCandidate`, switches the
+current source signal to the candidate's signal, clears stale downstream artifacts,
+and makes `Собрать инсайт` use the candidate title, thesis, value, topic, fabula, and
+risks.
+
+Request-more variants, bulk actions, and direct calendar binding are future candidate
+controls.
 
 ## Radar Filters
 
@@ -35,6 +52,8 @@ Rows must stay framed, chips must not wrap by letters, and expanded details must
 The workspace also keeps an explicit section header above tabs, separated action
 footers, and measured visual guardrails for spacing, edit forms, and main/side column
 overlap.
+Large entity lists must use `filter card -> search -> list/group toggle -> framed rows
+-> bottom-left actions`; candidates and import queue now share that rule.
 The section header follows the same cabinet pattern as `Редакционная модель`; tab
 counters use the shared red badge style instead of being appended as plain text.
 

@@ -1,4 +1,10 @@
-import type { RadarDefinition, SourceSignal, WorkspaceState } from '../../domain/editorialWorkspace';
+import type {
+  PostCandidate,
+  PostCandidateEditPatch,
+  RadarDefinition,
+  SourceSignal,
+  WorkspaceState
+} from '../../domain/editorialWorkspace';
 import { FoundSignalsTab } from './FoundSignalsTab';
 import { PostCandidatesPreviewTab } from './PostCandidatesPreviewTab';
 import { RadarsTab } from './RadarsTab';
@@ -15,6 +21,9 @@ export function SignalsView({
   onRejectSignal,
   onArchiveSignal,
   onCorrectSignal,
+  onApprovePostCandidate,
+  onEditPostCandidate,
+  onRejectPostCandidate,
   onCreateInsight,
   onPlan
 }: {
@@ -26,6 +35,9 @@ export function SignalsView({
   onRejectSignal: (signal: SourceSignal) => void;
   onArchiveSignal: (signal: SourceSignal) => void;
   onCorrectSignal: (signal: SourceSignal, patch: Partial<SourceSignal>) => void;
+  onApprovePostCandidate: (candidate: PostCandidate) => void;
+  onEditPostCandidate: (candidate: PostCandidate, patch: PostCandidateEditPatch) => void;
+  onRejectPostCandidate: (candidate: PostCandidate) => void;
   onCreateInsight: () => void;
   onPlan: () => void;
 }) {
@@ -63,6 +75,9 @@ export function SignalsView({
         <PostCandidatesPreviewTab
           workspace={workspace}
           controller={controller}
+          onApprovePostCandidate={onApprovePostCandidate}
+          onEditPostCandidate={onEditPostCandidate}
+          onRejectPostCandidate={onRejectPostCandidate}
           onCreateInsight={onCreateInsight}
           onPlan={onPlan}
         />
