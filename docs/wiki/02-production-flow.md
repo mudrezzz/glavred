@@ -72,6 +72,11 @@ and prepares the initial post brief immediately. `Редактура` is split i
 and `Рабочий стол`: use `Посты` for queue review and `К рабочему столу`, then edit the
 selected post through `Фабула -> Драфт -> Финал` inside the workbench.
 
+Slice 1.10.4 note: the `Фабула` stage shows read-only candidate/slot context and lets
+the author edit the `PostBrief` fields before approval. Editing an already approved
+fabula invalidates stale draft, checks, final text, release, and learning artifacts,
+then returns the selected post to `Фабула`.
+
 ## Ограничения текущего demo
 
 - Инсайт, план и фабула создаются deterministic-сервисами.

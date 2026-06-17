@@ -364,6 +364,19 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Reload the page and confirm local workspace state persists.
 - Reset the demo scenario from the topbar.
 
+### Editing Fabula In The Workbench
+
+`Редактура -> Рабочий стол -> Фабула` shows the read-only context of the selected
+approved post: source signal, topic, fabula, audience, value, goal, platform,
+publication date/time, confidence, candidate evidence, and risks. These fields identify
+the candidate and slot; edit them in `Сигналы` or `План`, not inside the workbench.
+
+The editable artifact on this screen is the `PostBrief`: title, thesis, conflict,
+author position, audience, evidence, examples, structure, CTA, risks, and sources. If
+you edit an already approved fabula, Glavred clears stale draft, checks, final text,
+release, and learning artifacts and returns the post to `Фабула` until you approve the
+updated brief again.
+
 ## Not Yet Supported
 
 - Real AI classification of author memory.

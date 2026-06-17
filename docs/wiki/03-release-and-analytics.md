@@ -10,6 +10,11 @@
 поста. После `Утвердить фабулу` Glavred автоматически готовит deterministic-драфт
 из утвержденной фабулы и редакционной модели.
 
+The `Фабула` stage also displays read-only candidate and slot context. The author edits
+only the `PostBrief` production artifact there. If an approved fabula is edited,
+Glavred clears stale draft, checks, final text, release, and learning artifacts before
+the updated fabula is approved again.
+
 Редакторский pipeline показывает четыре проверки:
 
 - стиль;

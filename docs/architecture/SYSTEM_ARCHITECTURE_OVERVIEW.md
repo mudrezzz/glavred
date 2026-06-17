@@ -80,6 +80,12 @@ Slice 1.10 removes the extra `Подготовить фабулу поста` ha
 the first tab manages the production queue, while the second edits one selected post
 with the existing `Фабула -> Драфт -> Финал` stages inside the workbench.
 
+Slice 1.10.4 makes the `Фабула` stage editable inside that workbench. The workbench
+shows read-only candidate and slot context, but `PostBrief` remains a production
+artifact with only brief fields. Editing an approved fabula returns the selected work
+item to stage `brief` and invalidates stale draft, checks, notes, final text, release
+package, and learning note before the author approves the fabula again.
+
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
 is making the author's own position explicit enough that AI can later assist without
@@ -163,7 +169,8 @@ turning the product into generic content generation.
   single-post editors to be reused as selected-item workbenches.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
-  status.
+  status. The selected-post workbench can edit those brief fields; candidate and slot
+  context is assembled separately from workspace entities and is displayed read-only.
 - `Drafting`: turns an approved post brief into an editable draft.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before final approval.

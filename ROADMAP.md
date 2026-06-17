@@ -2526,6 +2526,42 @@ Status:
     active workbench post.
   - Design smoke verifies the picker is a single select combobox.
 
+### Slice 1.10.4: Editable Fabula Brief With Candidate Context
+
+- Status: Done
+- Goal: Make `Редактура -> Рабочий стол -> Фабула` a complete working screen for the
+  selected post.
+- User value: The author sees the original approved candidate and slot context while
+  editing the production fabula, instead of guessing which signal/topic/fabula is being
+  changed.
+- Scope:
+  - Show read-only context for signal, topic, fabula, audience, value, goal, platform,
+    publication date/time, confidence, candidate evidence, and candidate risks.
+  - Add inline edit mode for the `PostBrief` artifact: title, thesis, conflict, author
+    position, audience, evidence, examples, structure, CTA, risks, and sources.
+  - Keep candidate/slot identity read-only in the workbench; identity changes remain in
+    `Сигналы` and `План`.
+  - Saving an edited fabula sets the brief back to `draft`, syncs the selected
+    `EditorialWorkItem`, and clears stale draft/checks/notes/final/release/learning
+    artifacts.
+  - Re-approving the edited fabula keeps the Slice 1.10.2 behavior: a new deterministic
+    draft, checks, and notes are created immediately.
+- Architecture impact:
+  - `PostBrief` is not expanded with candidate or slot fields.
+  - `src/features/editing/editorialWorkItemContext.ts` assembles read-only context from
+    `WorkspaceState`, selected `EditorialWorkItem`, `ContentPlanItem`, `PostCandidate`,
+    `SourceSignal`, `Topic`, and `Fabula`.
+  - Brief editing lives in production transitions and app-level workspace patch
+    helpers, not in React JSX.
+- Tests:
+  - Domain test covers `editPostBrief` and multiline normalization. Done.
+  - Application action test covers selected work item sync and stale downstream reset.
+    Done.
+  - UI tests cover full context, edit/save/cancel, and returning to the `Фабула` stage
+    after editing. Done.
+- Docs:
+  - Update SAO, user guide, demo docs, wiki, and roadmap.
+
 ### Slice 1.11: Release Queue
 
 - Status: Ready
@@ -2713,6 +2749,7 @@ Status:
 - Slice 1.10.2: Automatic Draft After Fabula Approval. Completed 2026-06-17.
 - Slice 1.10.3: Editorial Workbench Selection and Picker Repair. Completed
   2026-06-17.
+- Slice 1.10.4: Editable Fabula Brief With Candidate Context. Completed 2026-06-17.
 
 ## Blocked Items
 

@@ -14,11 +14,13 @@ import {
   type ContentPlanSettings,
   type ContentPlanItem,
   type EditorialLearningNote,
+  type PostBriefEditPatch,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
   buildApprovePlanSlotPatch,
+  buildEditCurrentBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
@@ -83,6 +85,13 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     patchWorkspace(
       buildApproveBriefAndCreateDraftPatch(workspace),
       'Фабула утверждена, драфт подготовлен'
+    );
+  }
+
+  function editCurrentBrief(patch: PostBriefEditPatch) {
+    patchWorkspace(
+      buildEditCurrentBriefPatch(workspace, patch),
+      'Фабула обновлена, драфт нужно пересобрать'
     );
   }
 
@@ -190,6 +199,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     createLearningNote,
     createReleaseFromFinalText,
     downloadCurrentRelease,
+    editCurrentBrief,
     generateBroadcastPlan,
     markCurrentReleaseReady,
     returnEditorialWorkItemToCandidates,

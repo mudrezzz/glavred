@@ -1,5 +1,10 @@
 import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, ReleasePackage } from './types';
 
+export type PostBriefEditPatch = Pick<
+  PostBrief,
+  'title' | 'thesis' | 'conflict' | 'authorPosition' | 'audience' | 'evidence' | 'examples' | 'structure' | 'cta' | 'risks' | 'sources'
+>;
+
 // Production transitions preserve the HITL gates from brief approval to learning capture.
 export function approvePostBrief(postBrief: PostBrief): PostBrief {
   return { ...postBrief, approvalStatus: 'approved' };
@@ -7,6 +12,23 @@ export function approvePostBrief(postBrief: PostBrief): PostBrief {
 
 export function rejectPostBrief(postBrief: PostBrief): PostBrief {
   return { ...postBrief, approvalStatus: 'rejected' };
+}
+
+export function editPostBrief(postBrief: PostBrief, patch: PostBriefEditPatch): PostBrief {
+  return {
+    ...postBrief,
+    ...patch,
+    evidence: normalizeLines(patch.evidence),
+    examples: normalizeLines(patch.examples),
+    structure: normalizeLines(patch.structure),
+    risks: normalizeLines(patch.risks),
+    sources: normalizeLines(patch.sources),
+    approvalStatus: 'draft'
+  };
+}
+
+function normalizeLines(items: string[]): string[] {
+  return items.map((item) => item.trim()).filter(Boolean);
 }
 
 export function reviseDraft(postDraft: PostDraft, body: string): PostDraft {

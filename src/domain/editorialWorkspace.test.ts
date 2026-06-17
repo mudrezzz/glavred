@@ -27,6 +27,7 @@ import {
   deleteEditorialRule,
   deleteTopic,
   detectBroadcastPlanConflicts,
+  editPostBrief,
   editPostCandidate,
   evaluateSignalAgainstRadarFilters,
   filterImportCandidates,
@@ -82,6 +83,34 @@ describe('editorial workspace domain', () => {
     expect(rejectPlanItem(planItem).approvalStatus).toBe('rejected');
     expect(approvePostBrief(brief).approvalStatus).toBe('approved');
     expect(rejectPostBrief(brief).approvalStatus).toBe('rejected');
+  });
+
+  it('edits post briefs as draft artifacts and normalizes multiline fields', () => {
+    const workspace = createDemoWorkspace();
+    const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
+    const planItem = createContentPlanItem(insight);
+    const approvedBrief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const edited = editPostBrief(approvedBrief, {
+      title: 'Edited brief title',
+      thesis: 'Edited thesis',
+      conflict: approvedBrief.conflict,
+      authorPosition: approvedBrief.authorPosition,
+      audience: approvedBrief.audience,
+      evidence: [' first evidence ', '', 'second evidence'],
+      examples: ['example'],
+      structure: ['structure'],
+      cta: approvedBrief.cta,
+      risks: [' risk ', ''],
+      sources: [' source ']
+    });
+
+    expect(edited.id).toBe(approvedBrief.id);
+    expect(edited.title).toBe('Edited brief title');
+    expect(edited.thesis).toBe('Edited thesis');
+    expect(edited.evidence).toEqual(['first evidence', 'second evidence']);
+    expect(edited.risks).toEqual(['risk']);
+    expect(edited.sources).toEqual(['source']);
+    expect(edited.approvalStatus).toBe('draft');
   });
 
   it('creates deterministic outputs for the AI Product Manager demo signal', () => {

@@ -126,6 +126,7 @@ export function App() {
         <EditView
           workspace={workspace}
           onApproveBrief={controller.approveCurrentBrief}
+          onEditBrief={controller.editCurrentBrief}
           onGoPlan={() => controller.go('plan')}
           onReturnWorkItem={controller.returnEditorialWorkItemToCandidates}
           onSelectWorkItem={controller.selectEditorialWorkItem}

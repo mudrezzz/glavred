@@ -3871,6 +3871,68 @@ select:focus {
   gap: 12px;
 }
 
+.snapshot-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.editorial-brief-stage {
+  display: grid;
+  gap: 18px;
+}
+
+.editorial-brief-context {
+  margin-bottom: 0;
+}
+
+.editorial-brief-risks {
+  margin-top: 0;
+}
+
+.brief-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.brief-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.brief-edit-grid label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brief-edit-grid input,
+.brief-edit-grid textarea {
+  width: 100%;
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.brief-edit-grid textarea {
+  min-height: 118px;
+  resize: vertical;
+}
+
+.brief-edit-wide {
+  grid-column: 1 / -1;
+}
+
+.brief-edit-actions,
+.editorial-brief-actions {
+  margin-top: 2px;
+}
+
 .info-block h4 {
   margin: 0 0 8px;
   color: var(--ink-900);
@@ -4570,6 +4632,7 @@ select:focus {
   .analytics-grid,
   .metric-grid,
   .learning-fields,
+  .brief-edit-grid,
   .snapshot-grid,
   .form-row {
     grid-template-columns: 1fr;

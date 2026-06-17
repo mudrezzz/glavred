@@ -1,18 +1,21 @@
 import { useState } from 'react';
-import type { FinalText, PostBrief, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
+import type { FinalText, PostBriefEditPatch, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
+import { EditorialBriefStage } from './EditorialBriefStage';
 
 export function EditorialWorkbench({
   workspace,
   onApproveBrief,
   onApproveFinal,
   onDraftChange,
+  onEditBrief,
   onGoPlan
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
   onApproveFinal: () => void;
   onDraftChange: (body: string) => void;
+  onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
 }) {
   const brief = workspace.postBrief;
@@ -52,7 +55,7 @@ export function EditorialWorkbench({
 
   return (
     <section className="editorial-workbench" data-testid="editorial-workbench">
-      <div className="tabs" role="tablist" aria-label="Редакторские вкладки">
+      <div className="tabs" role="tablist" aria-label="Редакторские стадии">
         <button className={`tab${tab === 'brief' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'brief'} onClick={() => setTab('brief')}>
           Фабула
         </button>
@@ -63,31 +66,29 @@ export function EditorialWorkbench({
           Финал
         </button>
       </div>
-      {brief.approvalStatus !== 'approved' ? (
-        <section className="doc editorial-brief-approval">
-          <BriefSnapshot brief={brief} />
-          <div className="inline-actions">
-            <button className="btn btn-pri" type="button" onClick={() => {
-              onApproveBrief();
-              setTab('draft');
-            }}>
-              <Icon name="check" size={16} />
-              Утвердить фабулу
-            </button>
-            <button className="btn btn-sec" type="button" onClick={onGoPlan}>
-              Вернуться в план
-            </button>
-          </div>
-        </section>
+      {tab === 'brief' ? (
+        <EditorialBriefStage
+          brief={brief}
+          workspace={workspace}
+          onApproveBrief={onApproveBrief}
+          onEditBrief={(patch) => {
+            onEditBrief(patch);
+            setTab('brief');
+          }}
+          onGoPlan={onGoPlan}
+          onOpenDraft={() => setTab('draft')}
+        />
       ) : !draft ? (
         <section className="card draft-start">
           <span className="rub">{brief.rubric}</span>
           <h2>{brief.title}</h2>
-          <p>Драфт готовится автоматически после утверждения фабулы.</p>
+          <p>Драфт появится после утверждения фабулы.</p>
+          <button className="btn btn-sec" type="button" onClick={() => setTab('brief')}>
+            Вернуться к фабуле
+          </button>
         </section>
       ) : (
         <section className="doc">
-          {tab === 'brief' && <BriefSnapshot brief={brief} />}
           {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
           {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} onApproveFinal={onApproveFinal} />}
         </section>
@@ -118,22 +119,6 @@ function DraftEditor({ draft, onDraftChange }: { draft: PostDraft; onDraftChange
         />
       </label>
     </>
-  );
-}
-
-function BriefSnapshot({ brief }: { brief: PostBrief }) {
-  return (
-    <div className="brief-snapshot">
-      <span className="rub">{brief.rubric}</span>
-      <h2>{brief.title}</h2>
-      <p className="lead">{brief.thesis}</p>
-      <div className="snapshot-grid">
-        <InfoBlock title="Конфликт" items={[brief.conflict]} />
-        <InfoBlock title="Позиция" items={[brief.authorPosition]} />
-        <InfoBlock title="Доказательства" items={brief.evidence} />
-        <InfoBlock title="Риски" items={brief.risks} />
-      </div>
-    </div>
   );
 }
 
@@ -173,18 +158,5 @@ function FinalTextView({
       <h2>{finalText.title}</h2>
       <pre>{finalText.body}</pre>
     </article>
-  );
-}
-
-function InfoBlock({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="info-block">
-      <h4>{title}</h4>
-      <ul className="bullets">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
   );
 }

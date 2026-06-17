@@ -4,10 +4,12 @@ import {
   applyPlanWarnings,
   createEditorialWorkItem,
   detectBroadcastPlanConflicts,
+  editPostBrief,
   replacePostCandidate,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
   type ContentPlanItem,
+  type PostBriefEditPatch,
   type PostCandidate,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
@@ -180,6 +182,24 @@ export function buildApproveBriefAndCreateDraftPatch(workspace: WorkspaceState):
     postDraft,
     editorialChecks,
     editorNotes,
+    finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildEditCurrentBriefPatch(
+  workspace: WorkspaceState,
+  patch: PostBriefEditPatch
+): Partial<WorkspaceState> {
+  if (!workspace.postBrief) return {};
+  const postBrief = editPostBrief(workspace.postBrief, patch);
+
+  return withEditorialWorkItemSync(workspace, {
+    postBrief,
+    postDraft: null,
+    editorialChecks: [],
+    editorNotes: [],
     finalText: null,
     releasePackage: null,
     editorialLearningNote: null

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { WorkspaceState } from '../../domain/editorialWorkspace';
+import type { PostBriefEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { EditorialPostsAside, EditorialWorkbenchAside } from './EditorialWorkAside';
 import { EditorialWorkbench } from './EditorialWorkbench';
 import { EditorialWorkGroupList, EditorialWorkQueueList } from './EditorialWorkQueueList';
@@ -17,6 +17,7 @@ import {
 export function EditView({
   workspace,
   onApproveBrief,
+  onEditBrief,
   onDraftChange,
   onGoPlan,
   onReturnWorkItem,
@@ -25,6 +26,7 @@ export function EditView({
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
+  onEditBrief: (patch: PostBriefEditPatch) => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
   onReturnWorkItem: (workItemId: string) => void;
@@ -117,6 +119,7 @@ export function EditView({
               onApproveBrief={onApproveBrief}
               onApproveFinal={onApproveFinal}
               onDraftChange={onDraftChange}
+              onEditBrief={onEditBrief}
               onGoPlan={onGoPlan}
             />
           </section>

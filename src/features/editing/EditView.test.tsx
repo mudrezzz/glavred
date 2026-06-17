@@ -3,13 +3,14 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   approvePostBrief,
+  approvePostCandidate,
   createEditorialWorkItem,
   type ContentPlanItem,
   type WorkspaceState
 } from '../../domain/editorialWorkspace';
-import { createPostBrief, createWorkspaceInsightCard } from '../../application/editorialServices';
+import { createPostBrief, createPostCandidates, createPostDraft, createWorkspaceInsightCard } from '../../application/editorialServices';
 import { createDemoWorkspace } from '../../fixtures/demoWorkspace';
-import { buildSelectEditorialWorkItemPatch } from '../../app/editorialWorkQueueActions';
+import { buildEditCurrentBriefPatch, buildSelectEditorialWorkItemPatch } from '../../app/editorialWorkQueueActions';
 import { EditView } from './EditView';
 
 describe('EditView', () => {
@@ -99,6 +100,67 @@ describe('EditView', () => {
     expect(screen.getAllByText(/Фабула/i).length).toBeGreaterThan(0);
   });
 
+  it('shows full candidate and slot context on the fabula workbench', () => {
+    const workspace = createWorkspaceWithQueue();
+    const candidate = workspace.postCandidate!;
+
+    render(<ControlledEditView workspace={workspace} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Фабула/i }));
+
+    const context = screen.getByTestId('editorial-brief-context');
+    expect(context).toHaveTextContent(workspace.sourceSignals.find((signal) => signal.id === candidate.sourceSignalId)?.title ?? '');
+    expect(context).toHaveTextContent(candidate.audience);
+    expect(context).toHaveTextContent(candidate.value);
+    expect(context).toHaveTextContent(candidate.goal);
+    expect(context).toHaveTextContent(candidate.platform);
+    expect(context).toHaveTextContent(candidate.evidenceSummary);
+    expect(screen.getByText('Risks').closest('.editorial-brief-risks')).toHaveTextContent(candidate.risks[0]);
+    expect(context.querySelectorAll('.candidate-fact.wide')).toHaveLength(1);
+  });
+
+  it('edits the current fabula brief and drops the stale draft from the workbench', () => {
+    const workspace = createWorkspaceWithQueue();
+
+    render(<ControlledEditView workspace={workspace} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Фабула/i }));
+    expect(screen.getByText('First queue item')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+
+    fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'Edited fabula title' } });
+    fireEvent.change(screen.getByLabelText('Тезис'), { target: { value: 'Edited fabula thesis' } });
+    fireEvent.change(screen.getByLabelText('Доказательства'), {
+      target: { value: 'First evidence line\n\nSecond evidence line' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
+
+    expect(screen.queryByTestId('editorial-brief-edit-form')).not.toBeInTheDocument();
+    expect(screen.getByTestId('editorial-brief-snapshot')).toHaveTextContent('Edited fabula title');
+    expect(screen.getByTestId('editorial-brief-snapshot')).toHaveTextContent('Edited fabula thesis');
+    expect(screen.getByTestId('editorial-brief-snapshot')).toHaveTextContent('First evidence line');
+    expect(screen.queryByText(/Версия 1/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Фабула/i })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('cancels fabula brief editing without changing visible text', () => {
+    const workspace = createWorkspaceWithQueue();
+
+    render(<ControlledEditView workspace={workspace} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Фабула/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Редактировать/i }));
+    fireEvent.change(screen.getByLabelText('Заголовок'), { target: { value: 'Discarded title' } });
+    fireEvent.click(screen.getByRole('button', { name: /Отменить/i }));
+
+    expect(screen.queryByTestId('editorial-brief-edit-form')).not.toBeInTheDocument();
+    expect(screen.queryByText('Discarded title')).not.toBeInTheDocument();
+    expect(screen.getByTestId('editorial-brief-snapshot')).toHaveTextContent('First queue item');
+  });
+
   it('shows an empty queue path through plan when no work items exist', () => {
     renderEdit({ ...createDemoWorkspace(), editorialWorkItems: [], selectedEditorialWorkItemId: null });
 
@@ -119,6 +181,7 @@ function renderEdit(
     <EditView
       workspace={workspace}
       onApproveBrief={vi.fn()}
+      onEditBrief={vi.fn()}
       onApproveFinal={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
@@ -135,6 +198,12 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
     <EditView
       workspace={current}
       onApproveBrief={vi.fn()}
+      onEditBrief={(patch) =>
+        setCurrent((previous) => ({
+          ...previous,
+          ...buildEditCurrentBriefPatch(previous, patch)
+        }))
+      }
       onApproveFinal={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
@@ -151,19 +220,36 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
 
 function createWorkspaceWithQueue(): WorkspaceState {
   const workspace = createDemoWorkspace();
-  const firstItem = renamePlanItem(workspace.contentPlanItems[0], 'First queue item');
+  const approvedCandidate = approvePostCandidate(createPostCandidates(workspace)[0]);
+  const firstItem = renamePlanItem(
+    {
+      ...workspace.contentPlanItems[0],
+      insightId: `insight-${approvedCandidate.id}`,
+      sourceSignalId: approvedCandidate.sourceSignalId,
+      topicId: approvedCandidate.topicId,
+      fabulaId: approvedCandidate.fabulaId,
+      topicTitle: workspace.topics.find((topic) => topic.id === approvedCandidate.topicId)?.title,
+      fabulaTitle: workspace.fabulas.find((fabula) => fabula.id === approvedCandidate.fabulaId)?.title,
+      platform: approvedCandidate.platform
+    },
+    'First queue item'
+  );
   const secondItem = renamePlanItem(workspace.contentPlanItems[1], 'Second queue item');
   const insightCard = createWorkspaceInsightCard({ ...workspace, contentPlanItem: firstItem });
   const brief = approvePostBrief(createPostBrief(firstItem, insightCard, workspace.editorialModel));
   const secondBrief = approvePostBrief(createPostBrief(secondItem, insightCard, workspace.editorialModel));
-  const firstWorkItem = createEditorialWorkItem(firstItem, { brief });
+  const draft = createPostDraft(brief, workspace.editorialModel);
+  const firstWorkItem = createEditorialWorkItem(firstItem, { brief, draft }, approvedCandidate.id);
   const secondWorkItem = createEditorialWorkItem(secondItem, { brief: secondBrief });
 
   return {
     ...workspace,
+    postCandidates: [approvedCandidate],
+    postCandidate: approvedCandidate,
     contentPlanItems: [firstItem, secondItem],
     contentPlanItem: firstItem,
     postBrief: brief,
+    postDraft: draft,
     editorialWorkItems: [firstWorkItem, secondWorkItem],
     selectedEditorialWorkItemId: firstWorkItem.id
   };

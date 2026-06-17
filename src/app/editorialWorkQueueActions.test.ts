@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createPostDraft } from '../application/editorialServices';
-import { approvePostBrief } from '../domain/editorialWorkspace';
+import { approveFinalText, approvePostBrief } from '../domain/editorialWorkspace';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
   buildApprovePlanSlotPatch,
+  buildEditCurrentBriefPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
+import { createEditorialLearningNote, createReleasePackage } from '../application/editorialServices';
 
 describe('editorial work queue actions', () => {
   it('approves a plan slot into one stable editorial work item', () => {
@@ -59,6 +61,61 @@ describe('editorial work queue actions', () => {
     expect(patch.editorialWorkItems?.[0].brief?.approvalStatus).toBe('approved');
     expect(patch.editorialWorkItems?.[0].draft?.id).toBe(patch.postDraft?.id);
     expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
+  });
+
+  it('edits the selected brief and clears stale downstream artifacts', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const approvedBrief = buildApproveBriefAndCreateDraftPatch(withSlot);
+    const withDraft = { ...withSlot, ...approvedBrief };
+    const finalText = approveFinalText(withDraft.postDraft!);
+    const releasePackage = createReleasePackage(finalText, withDraft.contentPlanItem!);
+    const editorialLearningNote = createEditorialLearningNote(
+      { ...releasePackage, status: 'exported' as const },
+      finalText,
+      withDraft.contentPlanItem!
+    );
+    const current = {
+      ...withDraft,
+      finalText,
+      releasePackage,
+      editorialLearningNote,
+      editorialWorkItems: withEditorialWorkItemSync(withDraft, {
+        postBrief: withDraft.postBrief,
+        postDraft: withDraft.postDraft,
+        editorialChecks: withDraft.editorialChecks,
+        editorNotes: withDraft.editorNotes,
+        finalText
+      }).editorialWorkItems!
+    };
+    const patch = buildEditCurrentBriefPatch(current, {
+      title: 'Edited brief title',
+      thesis: 'Edited thesis',
+      conflict: current.postBrief!.conflict,
+      authorPosition: current.postBrief!.authorPosition,
+      audience: current.postBrief!.audience,
+      evidence: ['Edited evidence'],
+      examples: current.postBrief!.examples,
+      structure: current.postBrief!.structure,
+      cta: current.postBrief!.cta,
+      risks: ['Edited risk'],
+      sources: current.postBrief!.sources
+    });
+
+    expect(patch.postBrief?.title).toBe('Edited brief title');
+    expect(patch.postBrief?.approvalStatus).toBe('draft');
+    expect(patch.postDraft).toBeNull();
+    expect(patch.editorialChecks).toEqual([]);
+    expect(patch.editorNotes).toEqual([]);
+    expect(patch.finalText).toBeNull();
+    expect(patch.releasePackage).toBeNull();
+    expect(patch.editorialLearningNote).toBeNull();
+    expect(patch.editorialWorkItems?.[0].brief?.title).toBe('Edited brief title');
+    expect(patch.editorialWorkItems?.[0].brief?.approvalStatus).toBe('draft');
+    expect(patch.editorialWorkItems?.[0].draft).toBeNull();
+    expect(patch.editorialWorkItems?.[0].finalText).toBeNull();
+    expect(patch.editorialWorkItems?.[0].stage).toBe('brief');
   });
 
   it('returns an editorial work item to candidates and clears production artifacts', () => {

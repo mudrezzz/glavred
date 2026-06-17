@@ -219,6 +219,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 25. Open `Редактура`; the approved slot is already in `Посты`.
 26. Click `К рабочему столу`, or open `Рабочий стол` and choose the post from the picker.
 27. Review the prepared `Фабула`, edit the brief if needed, then click `Утвердить фабулу`.
+    Slice 1.10.4 note: the `Фабула` screen also shows read-only
+    signal/topic/fabula/audience/value/goal, platform/date, confidence, evidence, and
+    risks from the approved candidate and slot. Editing an approved fabula clears stale
+    draft/final/release artifacts until the updated brief is approved again.
 28. Review the automatically prepared draft checks and editor notes.
 29. Edit the draft text.
 30. Click `Утвердить текст`.
