@@ -119,7 +119,7 @@ function deriveEditorialWorkState(artifacts: EditorialWorkArtifacts): {
   }
 
   if (artifacts.draft) {
-    return { stage: 'final', status: 'inProgress' };
+    return { stage: 'draft', status: 'inProgress' };
   }
 
   if (artifacts.brief?.approvalStatus === 'approved') {

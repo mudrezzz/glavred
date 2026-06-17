@@ -2453,6 +2453,79 @@ Status:
   - Compatibility fields can still diverge from work-item state until future slices
     move all production actions to explicit work-item ids.
 
+### Slice 1.10.1: Editorial Workspace UX Guardrail Repair
+
+- Status: Done
+- Goal: Fix the first `Редактура` UX regressions after Slice 1.10 and extend
+  design-system smoke coverage to the new editing surface.
+- User value: The editorial queue now follows the same cabinet spacing and metric
+  patterns as the rest of the product.
+- Scope:
+  - Reuse the canonical project-profile header padding for `Редактура`.
+  - Replace custom vertical right-panel stats with shared compact summary metric
+    cards.
+  - Remove the redundant `Рабочий пост` header card from the selected-post workbench.
+  - Add design-smoke coverage for `Редактура` header padding, metric alignment,
+    right-panel summary cards, and absence of redundant workbench headers.
+- Architecture impact:
+  - No domain or storage changes.
+  - UX rules are enforced in `scripts/design-system-smoke.mjs`, not only in docs.
+- Tests:
+  - `npm run test:design` covers the new editing design contract.
+- Docs:
+  - Update developer/design-system guidance and roadmap.
+
+### Slice 1.10.2: Automatic Draft After Fabula Approval
+
+- Status: Done
+- Goal: Remove the redundant `Написать драфт` action from the editorial workbench.
+- User value: After the author approves the fabula, Glavred immediately moves the
+  selected post into draft generation and shows the prepared draft stage instead of
+  asking for another button click.
+- Scope:
+  - `Утвердить фабулу` now approves the `PostBrief` and creates the deterministic
+    `PostDraft`, checks, and editor notes in one application transition.
+  - Remove the `Написать драфт` action and prop chain from `Редактура`.
+  - Keep `Фабула / Драфт / Финал` as stages inside the selected post workbench.
+  - Treat a work item with a draft artifact as stage `draft`, not as `final`.
+- Architecture impact:
+  - Draft creation stays in role-owned application helpers, not in React JSX.
+  - Compatibility fields are still synchronized with the selected `EditorialWorkItem`.
+- Tests:
+  - Application action test verifies brief approval creates draft/checks/notes and
+    syncs the selected work item. Done.
+  - UI regression verifies `Написать драфт` is absent and the draft editor appears
+    after `Утвердить фабулу`. Done.
+- Docs:
+  - Update user guide, demo docs, wiki notes, and roadmap.
+
+### Slice 1.10.3: Editorial Workbench Selection and Picker Repair
+
+- Status: Done
+- Goal: Fix broken selected-post navigation in `Редактура -> Рабочий стол`.
+- User value: `К рабочему столу` opens the exact queued post the author selected, and
+  the top post chooser behaves as one dropdown control instead of an input plus a
+  duplicate selected row.
+- Scope:
+  - Make `PostBrief` ids and titles slot-specific instead of reusing the old demo
+    hardcoded brief id/title for every editorial work item.
+  - Repair legacy selected work item artifacts with the old hardcoded brief id/title
+    when a user selects a post from existing local state.
+  - Use one consistent row action label: `К рабочему столу`.
+  - Replace the workbench picker input/results pair with a single select combobox
+    that supports native first-letter typeahead.
+  - Extend design-system smoke coverage so the old input plus `.picker-results`
+    pattern cannot return.
+- Architecture impact:
+  - Selection hydration stays in `editorialWorkQueueActions`, outside React.
+  - UI keeps a role-owned `EditorialWorkbenchPicker` component.
+- Tests:
+  - Application action tests verify different plan slots hydrate different brief
+    titles.
+  - Stateful `EditView` test verifies queue row and picker selection switch the
+    active workbench post.
+  - Design smoke verifies the picker is a single select combobox.
+
 ### Slice 1.11: Release Queue
 
 - Status: Ready
@@ -2636,6 +2709,10 @@ Status:
 - Slice 1.8.2: Broadcast Grid Candidate Calendar View. Completed 2026-06-17.
 - Slice 1.9: Editorial Work Queue Foundation. Completed 2026-06-17.
 - Slice 1.10: Редактура как очередь постов и рабочий стол. Completed 2026-06-17.
+- Slice 1.10.1: Editorial Workspace UX Guardrail Repair. Completed 2026-06-17.
+- Slice 1.10.2: Automatic Draft After Fabula Approval. Completed 2026-06-17.
+- Slice 1.10.3: Editorial Workbench Selection and Picker Repair. Completed
+  2026-06-17.
 
 ## Blocked Items
 

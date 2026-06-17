@@ -17,7 +17,6 @@ import {
 export function EditView({
   workspace,
   onApproveBrief,
-  onCreateDraft,
   onDraftChange,
   onGoPlan,
   onReturnWorkItem,
@@ -26,7 +25,6 @@ export function EditView({
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
-  onCreateDraft: () => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
   onReturnWorkItem: (workItemId: string) => void;
@@ -50,16 +48,16 @@ export function EditView({
 
   return (
     <div className="page wide fade-up">
-      <section className="card project-profile-card signals-section-header editorial-section-header">
+      <section className="card project-profile-header signals-section-header editorial-section-header" data-testid="editorial-section-header">
         <div className="project-profile-main">
           <span className="rub">Редактура</span>
           <h2>Очередь постов и рабочий стол</h2>
           <p>Утвержденные слоты из плана попадают сюда как посты. В очереди выбирайте пост, на рабочем столе ведите его через стадии фабулы, драфта и финала.</p>
         </div>
         <div className="project-profile-meta signals-header-stats">
-          <div><strong>{workspace.editorialWorkItems.length}</strong><span>постов</span></div>
-          <div><strong>{workspace.editorialWorkItems.filter((item) => item.status === 'inProgress').length}</strong><span>в работе</span></div>
-          <div><strong>{workspace.editorialWorkItems.filter((item) => item.status === 'approved').length}</strong><span>готово</span></div>
+          <div><b>{workspace.editorialWorkItems.length}</b><span>постов</span></div>
+          <div><b>{workspace.editorialWorkItems.filter((item) => item.status === 'inProgress').length}</b><span>в работе</span></div>
+          <div><b>{workspace.editorialWorkItems.filter((item) => item.status === 'approved').length}</b><span>готово</span></div>
         </div>
       </section>
       <div className="tabs memory-tabs editorial-mode-tabs" role="tablist" aria-label="Редактура">
@@ -118,7 +116,6 @@ export function EditView({
               workspace={workspace}
               onApproveBrief={onApproveBrief}
               onApproveFinal={onApproveFinal}
-              onCreateDraft={onCreateDraft}
               onDraftChange={onDraftChange}
               onGoPlan={onGoPlan}
             />

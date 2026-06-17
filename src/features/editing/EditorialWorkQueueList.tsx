@@ -127,7 +127,7 @@ function EditorialWorkRow({
           <div className="inline-actions editorial-work-actions">
             <button className="btn btn-pri" type="button" onClick={() => onSelect(item.id)}>
               <Icon name="edit" size={16} />
-              {selected ? 'На рабочем столе' : 'К рабочему столу'}
+              К рабочему столу
             </button>
             <button className="btn btn-sec" type="button" onClick={() => onReturn(item.id)}>
               Вернуть в кандидаты

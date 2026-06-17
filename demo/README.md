@@ -219,20 +219,19 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 25. Open `Редактура`; the approved slot is already in `Посты`.
 26. Click `К рабочему столу`, or open `Рабочий стол` and choose the post from the picker.
 27. Review the prepared `Фабула`, edit the brief if needed, then click `Утвердить фабулу`.
-28. Click `Написать драфт`.
-29. Review checks and editor notes.
-30. Edit the draft text.
-31. Click `Утвердить текст`.
-32. Open `Выпуск`.
-33. Click `Подготовить выпуск`.
-34. Review target, checklist, final text, and Markdown preview.
-35. Complete the checklist and click `Готово к выпуску`.
-36. Click `Скопировать текст` or `Скачать Markdown`.
-37. Open `Аналитика`.
-38. Click `Подготовить аналитику`.
-39. Enter manual metrics and editorial conclusions.
-40. Click `Зафиксировать выводы`.
-41. Reload the page to confirm state persists.
+28. Review the automatically prepared draft checks and editor notes.
+29. Edit the draft text.
+30. Click `Утвердить текст`.
+31. Open `Выпуск`.
+32. Click `Подготовить выпуск`.
+33. Review target, checklist, final text, and Markdown preview.
+34. Complete the checklist and click `Готово к выпуску`.
+35. Click `Скопировать текст` or `Скачать Markdown`.
+36. Open `Аналитика`.
+37. Click `Подготовить аналитику`.
+38. Enter manual metrics and editorial conclusions.
+39. Click `Зафиксировать выводы`.
+40. Reload the page to confirm state persists.
 42. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials

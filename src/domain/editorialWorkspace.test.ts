@@ -362,7 +362,7 @@ describe('editorial workspace domain', () => {
     expect(workItem.topicTitle).toBe(item.topicTitle);
     expect(workItem.fabulaTitle).toBe(item.fabulaTitle);
     expect(workItem.stage).toBe('draft');
-    expect(synced[0].stage).toBe('final');
+    expect(synced[0].stage).toBe('draft');
     expect(synced[0].draft?.briefId).toBe(brief.id);
   });
 

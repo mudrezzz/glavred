@@ -129,7 +129,6 @@ export function App() {
           onGoPlan={() => controller.go('plan')}
           onReturnWorkItem={controller.returnEditorialWorkItemToCandidates}
           onSelectWorkItem={controller.selectEditorialWorkItem}
-          onCreateDraft={controller.createDraftFromBrief}
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}
         />

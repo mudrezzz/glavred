@@ -23,7 +23,7 @@ function createApprovedBrief() {
 
 function createApprovedFinalText() {
   createApprovedBrief();
-  fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
+  fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
   fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
 }
 
@@ -675,13 +675,14 @@ describe('App', () => {
     expect(voiceButton).toHaveAttribute('title', 'Голосовой ввод недоступен в этом браузере');
   });
 
-  it('moves from source signal to an approved post brief', () => {
+  it('moves from source signal to an approved post brief and automatic draft', () => {
     render(<App />);
 
     createApprovedBrief();
 
     expect(screen.getByTestId('editorial-workbench')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Написать драфт/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Написать драфт/i })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Текст драфта')).toBeInTheDocument();
   });
 
   it('shows broadcast grid slots and keeps post brief as an internal production step', () => {
@@ -740,7 +741,6 @@ describe('App', () => {
     const { unmount } = render(<App />);
 
     createApprovedBrief();
-    fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
 
     expect(screen.getByText('Стиль')).toBeInTheDocument();
     expect(screen.getByText('Анти-AI')).toBeInTheDocument();
@@ -753,8 +753,8 @@ describe('App', () => {
         value: `${(draftEditor as HTMLTextAreaElement).value}\n\nРучная редакторская правка перед финалом.`
       }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
 
     expect(screen.getAllByText(/Финальный текст утвержден/i).length).toBeGreaterThan(0);
 

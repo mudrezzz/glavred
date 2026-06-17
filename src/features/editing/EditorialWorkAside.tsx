@@ -13,11 +13,11 @@ export function EditorialPostsAside({ items }: { items: EditorialWorkItem[] }) {
     <aside className="memory-side editorial-side">
       <section className="panel">
         <h3>Очередь</h3>
-        <div className="side-stats">
-          <div><strong>{items.length}</strong><span>постов</span></div>
-          <div><strong>{todo}</strong><span>в очереди</span></div>
-          <div><strong>{inProgress}</strong><span>в работе</span></div>
-          <div><strong>{ready}</strong><span>к выпуску</span></div>
+        <div className="signal-summary-grid editorial-summary-grid">
+          <Metric label="постов" value={items.length} />
+          <Metric label="в очереди" value={todo} />
+          <Metric label="в работе" value={inProgress} />
+          <Metric label="к выпуску" value={ready} />
         </div>
       </section>
       <section className="panel">
@@ -77,6 +77,15 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
         </div>
       </section>
     </aside>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="summary-item">
+      <b>{value}</b>
+      <span>{label}</span>
+    </div>
   );
 }
 

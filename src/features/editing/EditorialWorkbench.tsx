@@ -6,14 +6,12 @@ export function EditorialWorkbench({
   workspace,
   onApproveBrief,
   onApproveFinal,
-  onCreateDraft,
   onDraftChange,
   onGoPlan
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
   onApproveFinal: () => void;
-  onCreateDraft: () => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
 }) {
@@ -54,16 +52,6 @@ export function EditorialWorkbench({
 
   return (
     <section className="editorial-workbench" data-testid="editorial-workbench">
-      <div className="editorial-workbench-head">
-        <div>
-          <span className="rub">Рабочий пост</span>
-          <h2>{brief.title}</h2>
-        </div>
-        <button className="btn btn-pri" type="button" disabled={!draft} onClick={onApproveFinal}>
-          <Icon name="check" size={16} />
-          Утвердить текст
-        </button>
-      </div>
       <div className="tabs" role="tablist" aria-label="Редакторские вкладки">
         <button className={`tab${tab === 'brief' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'brief'} onClick={() => setTab('brief')}>
           Фабула
@@ -79,7 +67,10 @@ export function EditorialWorkbench({
         <section className="doc editorial-brief-approval">
           <BriefSnapshot brief={brief} />
           <div className="inline-actions">
-            <button className="btn btn-pri" type="button" onClick={onApproveBrief}>
+            <button className="btn btn-pri" type="button" onClick={() => {
+              onApproveBrief();
+              setTab('draft');
+            }}>
               <Icon name="check" size={16} />
               Утвердить фабулу
             </button>
@@ -92,20 +83,13 @@ export function EditorialWorkbench({
         <section className="card draft-start">
           <span className="rub">{brief.rubric}</span>
           <h2>{brief.title}</h2>
-          <p>{brief.thesis}</p>
-          <button className="btn btn-pri" type="button" onClick={() => {
-            onCreateDraft();
-            setTab('draft');
-          }}>
-            <Icon name="edit" size={16} />
-            Написать драфт
-          </button>
+          <p>Драфт готовится автоматически после утверждения фабулы.</p>
         </section>
       ) : (
         <section className="doc">
           {tab === 'brief' && <BriefSnapshot brief={brief} />}
           {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
-          {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} />}
+          {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} onApproveFinal={onApproveFinal} />}
         </section>
       )}
     </section>
@@ -153,12 +137,26 @@ function BriefSnapshot({ brief }: { brief: PostBrief }) {
   );
 }
 
-function FinalTextView({ finalText, draft }: { finalText: FinalText | null; draft: PostDraft }) {
+function FinalTextView({
+  finalText,
+  draft,
+  onApproveFinal
+}: {
+  finalText: FinalText | null;
+  draft: PostDraft;
+  onApproveFinal: () => void;
+}) {
   if (!finalText) {
     return (
       <div className="final-empty">
         <h2>Финал еще не утвержден</h2>
         <p>Проверьте драфт, замечания редакторов и нажмите «Утвердить текст».</p>
+        <div className="inline-actions">
+          <button className="btn btn-pri" type="button" onClick={onApproveFinal}>
+            <Icon name="check" size={16} />
+            Утвердить текст
+          </button>
+        </div>
       </div>
     );
   }

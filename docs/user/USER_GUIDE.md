@@ -347,7 +347,8 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - In `Посты`, expand a queued post and use `К рабочему столу`, or open `Рабочий стол`
   and choose a post from the searchable picker.
 - Review, edit if needed, and approve the prepared post brief through the second HITL gate.
-- Click `Написать драфт` in the selected-post workbench.
+  Glavred immediately prepares the draft and opens the `Драфт` stage for the selected
+  post; there is no separate `Написать драфт` action.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the final text through the
   third HITL gate.

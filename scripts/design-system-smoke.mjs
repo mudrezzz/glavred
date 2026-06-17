@@ -419,6 +419,77 @@ async function assertPlanDesign(page) {
   failIfAny('plan design contract', [...baseFailures, ...planFailures]);
 }
 
+async function assertEditingDesign(page) {
+  await page.locator('[data-testid="editorial-section-header"]').waitFor();
+  const baseFailures = await page.evaluate(sharedDesignChecks);
+  const editingFailures = await page.evaluate(() => {
+    const failures = [];
+    const header = document.querySelector('[data-testid="editorial-section-header"]');
+    const headerStats = header?.querySelector('.signals-header-stats');
+    const asideSummary = document.querySelector('.editorial-side .editorial-summary-grid');
+    const isWorkbenchMode = Boolean(document.querySelector('[data-testid="editorial-workbench-picker"]'));
+
+    if (!header?.classList.contains('project-profile-header')) {
+      failures.push('editing header does not reuse project-profile-header padding pattern.');
+    }
+
+    if (header) {
+      const style = window.getComputedStyle(header);
+      const paddingLeft = Number.parseFloat(style.paddingLeft || '0') || 0;
+      const paddingTop = Number.parseFloat(style.paddingTop || '0') || 0;
+      if (paddingLeft < 20 || paddingTop < 20) {
+        failures.push(`editing header padding is too small (${paddingTop}/${paddingLeft}px).`);
+      }
+    }
+
+    if (header && headerStats) {
+      const headerRect = header.getBoundingClientRect();
+      const statsRect = headerStats.getBoundingClientRect();
+      const rightGap = Math.round(headerRect.right - statsRect.right);
+      if (rightGap < 12 || rightGap > 32) {
+        failures.push(`editing header metrics are not aligned to the right edge (${rightGap}px).`);
+      }
+      headerStats.querySelectorAll(':scope > div').forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const style = window.getComputedStyle(card);
+        if (rect.width < 90 || rect.height < 50 || style.backgroundColor === 'rgba(0, 0, 0, 0)') {
+          failures.push('editing header metric card does not use the compact metric-card pattern.');
+        }
+      });
+    }
+
+    if (!isWorkbenchMode && !asideSummary) {
+      failures.push('editing side panel does not use the shared summary metric grid.');
+    } else if (asideSummary) {
+      asideSummary.querySelectorAll('.summary-item').forEach((item) => {
+        const value = item.querySelector('b');
+        const label = item.querySelector('span');
+        if (!value || !label) {
+          failures.push('editing side summary item does not use b/span metric structure.');
+        }
+      });
+    }
+
+    if (document.querySelector('.editorial-workbench-head')) {
+      failures.push('editing workbench renders a redundant top post header.');
+    }
+
+    if (isWorkbenchMode) {
+      const picker = document.querySelector('[data-testid="editorial-workbench-picker"]');
+      if (!picker?.querySelector('select[aria-label="Выбор поста"]')) {
+        failures.push('editing workbench picker must use a single select combobox.');
+      }
+      if (picker?.querySelector('input') || picker?.querySelector('.picker-results')) {
+        failures.push('editing workbench picker must not render input plus separate result rows.');
+      }
+    }
+
+    return failures;
+  });
+
+  failIfAny('editing design contract', [...baseFailures, ...editingFailures]);
+}
+
 async function captureSignalsLayout(page) {
   return page.evaluate(() => {
     const selectors = {
@@ -518,6 +589,11 @@ async function main() {
     await page.locator('[data-testid="broadcast-filter-toolbar"] .compact-tabs .tab').nth(2).click();
     await page.locator('[data-testid="broadcast-calendar-view"]').waitFor();
     await assertCommonDesign(page, 'plan calendar view');
+
+    await page.locator('.nav-item').nth(4).click();
+    await assertEditingDesign(page);
+    await page.getByRole('tab', { name: /Рабочий стол/ }).click();
+    await assertEditingDesign(page);
 
     await page.setViewportSize({ width: 2048, height: 1100 });
     await page.reload({ waitUntil: 'networkidle' });

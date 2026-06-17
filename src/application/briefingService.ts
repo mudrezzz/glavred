@@ -28,9 +28,9 @@ export function createPostBrief(
   const fabula = pair?.fabula ?? fabulas.find((item) => item.id === insight.fabulaId);
 
   return {
-    id: 'brief-ai-demo-to-adoption',
+    id: `brief-${planItem.id}`,
     planItemId: planItem.id,
-    title: 'Почему AI-B2B демо еще не продукт',
+    title: planItem.title,
     rubric: topic?.title ?? insight.rubric,
     audience: model.audience,
     thesis:

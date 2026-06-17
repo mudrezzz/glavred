@@ -3,6 +3,7 @@ import { createPostDraft } from '../application/editorialServices';
 import { approvePostBrief } from '../domain/editorialWorkspace';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
+  buildApproveBriefAndCreateDraftPatch,
   buildApprovePlanSlotPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
@@ -24,6 +25,40 @@ describe('editorial work queue actions', () => {
     expect(firstPatch.editorialWorkItems?.[0].brief?.id).toBe(firstPatch.postBrief?.id);
     expect(firstPatch.selectedEditorialWorkItemId).toBe(`editorial-work-${item.id}`);
     expect(secondPatch.editorialWorkItems).toHaveLength(1);
+  });
+
+  it('keeps selected work item artifacts tied to the chosen plan slot', () => {
+    const workspace = createDemoWorkspace();
+    const firstPatch = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withFirst = { ...workspace, ...firstPatch };
+    const secondPatch = buildApprovePlanSlotPatch(withFirst, workspace.contentPlanItems[1].id);
+    const withSecond = { ...withFirst, ...secondPatch };
+    const firstSelected = buildSelectEditorialWorkItemPatch(withSecond, firstPatch.selectedEditorialWorkItemId!);
+    const secondSelected = buildSelectEditorialWorkItemPatch(
+      { ...withSecond, ...firstSelected },
+      secondPatch.selectedEditorialWorkItemId!
+    );
+
+    expect(firstPatch.postBrief?.id).toBe(`brief-${workspace.contentPlanItems[0].id}`);
+    expect(secondPatch.postBrief?.id).toBe(`brief-${workspace.contentPlanItems[1].id}`);
+    expect(firstSelected.postBrief?.title).toBe(workspace.contentPlanItems[0].title);
+    expect(secondSelected.postBrief?.title).toBe(workspace.contentPlanItems[1].title);
+    expect(firstSelected.postBrief?.title).not.toBe(secondSelected.postBrief?.title);
+  });
+
+  it('approves a brief and creates the first draft in the selected work item', () => {
+    const workspace = createDemoWorkspace();
+    const approved = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const current = { ...workspace, ...approved };
+    const patch = buildApproveBriefAndCreateDraftPatch(current);
+
+    expect(patch.postBrief?.approvalStatus).toBe('approved');
+    expect(patch.postDraft?.briefId).toBe(patch.postBrief?.id);
+    expect(patch.editorialChecks?.length).toBeGreaterThan(0);
+    expect(patch.editorNotes?.length).toBeGreaterThan(0);
+    expect(patch.editorialWorkItems?.[0].brief?.approvalStatus).toBe('approved');
+    expect(patch.editorialWorkItems?.[0].draft?.id).toBe(patch.postDraft?.id);
+    expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
   });
 
   it('returns an editorial work item to candidates and clears production artifacts', () => {

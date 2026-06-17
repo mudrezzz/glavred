@@ -2,13 +2,11 @@ import {
   createEditorNotes,
   createEditorialLearningNote,
   createWorkspaceInsightCard,
-  createPostDraft,
   createReleasePackage,
   runEditorialChecks
 } from '../application/editorialServices';
 import {
   approveFinalText,
-  approvePostBrief,
   markLearningNoteCaptured,
   markReleaseReady,
   reviseDraft,
@@ -18,7 +16,13 @@ import {
   type EditorialLearningNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
-import { buildApprovePlanSlotPatch, buildReturnEditorialWorkItemToCandidatesPatch, buildSelectEditorialWorkItemPatch, withEditorialWorkItemSync } from './editorialWorkQueueActions';
+import {
+  buildApproveBriefAndCreateDraftPatch,
+  buildApprovePlanSlotPatch,
+  buildReturnEditorialWorkItemToCandidatesPatch,
+  buildSelectEditorialWorkItemPatch,
+  withEditorialWorkItemSync
+} from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
@@ -77,19 +81,8 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   function approveCurrentBrief() {
     if (!workspace.postBrief) return;
     patchWorkspace(
-      withEditorialWorkItemSync(workspace, { postBrief: approvePostBrief(workspace.postBrief) }),
-      'Фабула утверждена'
-    );
-  }
-
-  function createDraftFromBrief() {
-    if (!workspace.postBrief || workspace.postBrief.approvalStatus !== 'approved') return;
-    const postDraft = createPostDraft(workspace.postBrief, workspace.editorialModel);
-    const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
-    const editorNotes = createEditorNotes(editorialChecks);
-    patchWorkspace(
-      withEditorialWorkItemSync(workspace, { postDraft, editorialChecks, editorNotes, finalText: null }),
-      'Драфт подготовлен для редакторских проверок'
+      buildApproveBriefAndCreateDraftPatch(workspace),
+      'Фабула утверждена, драфт подготовлен'
     );
   }
 
@@ -193,7 +186,6 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     approvePlanSlot,
     captureLearningNote,
     copyCurrentFinalText,
-    createDraftFromBrief,
     createInsightFromCurrentSignal,
     createLearningNote,
     createReleaseFromFinalText,

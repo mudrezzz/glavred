@@ -212,6 +212,10 @@ text is a design-system failure.
 The broadcast grid filter toolbar must also expose the calendar view tab, and visual
 smoke checks that the calendar opens, shows candidate counts per date, and renders the
 same row cards for the selected date.
+For `Редактура`, design smoke opens both `Посты` and `Рабочий стол`: the section header
+must reuse project-profile padding, header metrics must align to the right edge, the
+queue side panel must use shared compact `.summary-item` metric cards, and the
+selected-post workbench must not reintroduce a redundant top post header.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 

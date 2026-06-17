@@ -1,4 +1,5 @@
 import {
+  approvePostBrief,
   approveContentPlanSlot,
   applyPlanWarnings,
   createEditorialWorkItem,
@@ -10,7 +11,16 @@ import {
   type PostCandidate,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
-import { createPostBrief, createWorkspaceInsightCard } from '../application/editorialServices';
+import {
+  createEditorNotes,
+  createPostBrief,
+  createPostDraft,
+  createWorkspaceInsightCard,
+  runEditorialChecks
+} from '../application/editorialServices';
+
+const legacyBriefId = 'brief-ai-demo-to-adoption';
+const legacyBriefTitle = 'Почему AI-B2B демо еще не продукт';
 
 export function buildApprovePlanSlotPatch(workspace: WorkspaceState, itemId: string): Partial<WorkspaceState> {
   const approvedItems = approveContentPlanSlot(workspace.contentPlanItems, itemId);
@@ -132,23 +142,48 @@ export function buildSelectEditorialWorkItemPatch(
 ): Partial<WorkspaceState> {
   const syncedItems = syncSelectedEditorialWorkItem(workspace);
   const selected = syncedItems.find((item) => item.id === workItemId);
+  const selectedArtifacts = alignSelectedArtifacts(selected);
+  const editorialWorkItems = syncEditorialWorkItemArtifacts(
+    syncedItems,
+    selected?.id ?? null,
+    selectedArtifacts
+  );
   const contentPlanItem =
     workspace.contentPlanItems.find((item) => item.id === selected?.contentPlanItemId) ??
     workspace.contentPlanItem;
 
   return {
-    editorialWorkItems: syncedItems,
+    editorialWorkItems,
     selectedEditorialWorkItemId: selected?.id ?? null,
     contentPlanItem,
-    postBrief: selected?.brief ?? null,
-    postDraft: selected?.draft ?? null,
-    editorialChecks: selected?.editorialChecks ?? [],
-    editorNotes: selected?.editorNotes ?? [],
-    finalText: selected?.finalText ?? null,
+    postBrief: selectedArtifacts.brief,
+    postDraft: selectedArtifacts.draft,
+    editorialChecks: selectedArtifacts.editorialChecks,
+    editorNotes: selectedArtifacts.editorNotes,
+    finalText: selectedArtifacts.finalText,
     releasePackage: null,
     editorialLearningNote: null,
     activeSection: 'edit'
   };
+}
+
+export function buildApproveBriefAndCreateDraftPatch(workspace: WorkspaceState): Partial<WorkspaceState> {
+  if (!workspace.postBrief) return {};
+
+  const postBrief = approvePostBrief(workspace.postBrief);
+  const postDraft = createPostDraft(postBrief, workspace.editorialModel);
+  const editorialChecks = runEditorialChecks(postDraft, postBrief, workspace.editorialModel);
+  const editorNotes = createEditorNotes(editorialChecks);
+
+  return withEditorialWorkItemSync(workspace, {
+    postBrief,
+    postDraft,
+    editorialChecks,
+    editorNotes,
+    finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
 }
 
 function getReturnedCandidate(workspace: WorkspaceState, postCandidateId: string | undefined): PostCandidate | null {
@@ -157,6 +192,45 @@ function getReturnedCandidate(workspace: WorkspaceState, postCandidateId: string
     .filter(Boolean)
     .find((item) => item?.id === postCandidateId);
   return candidate ? { ...candidate, approvalStatus: 'draft' } : null;
+}
+
+function alignSelectedArtifacts(item: ReturnType<typeof syncSelectedEditorialWorkItem>[number] | undefined) {
+  if (!item) {
+    return {
+      brief: null,
+      draft: null,
+      editorialChecks: [],
+      editorNotes: [],
+      finalText: null
+    };
+  }
+
+  const hasLegacyBrief = item.brief?.id === legacyBriefId || item.brief?.title === legacyBriefTitle;
+  const brief = item.brief
+    ? {
+        ...item.brief,
+        id: hasLegacyBrief ? `brief-${item.contentPlanItemId}` : item.brief.id,
+        planItemId: item.contentPlanItemId,
+        title: hasLegacyBrief ? item.title : item.brief.title
+      }
+    : null;
+  const hasLegacyDraft = item.draft?.briefId === legacyBriefId || item.draft?.title === legacyBriefTitle;
+  const draft = item.draft && brief
+    ? {
+        ...item.draft,
+        id: hasLegacyDraft ? `draft-${brief.id}` : item.draft.id,
+        briefId: brief.id,
+        title: hasLegacyDraft ? item.title : item.draft.title
+      }
+    : item.draft;
+
+  return {
+    brief,
+    draft,
+    editorialChecks: item.editorialChecks,
+    editorNotes: item.editorNotes,
+    finalText: item.finalText
+  };
 }
 
 export function withEditorialWorkItemSync(
