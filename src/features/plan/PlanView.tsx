@@ -8,6 +8,7 @@ import {
 import { summarizeBroadcastGridDemand } from '../../application/editorialServices';
 import { HitlGate } from '../../shared/ui/WorkflowPrimitives';
 import { BroadcastGridAside } from './BroadcastGridAside';
+import { BroadcastGridCalendarView } from './BroadcastGridCalendarView';
 import { BroadcastGridGroupList } from './BroadcastGridGroupList';
 import { BroadcastGridList } from './BroadcastGridList';
 import { BroadcastGridToolbar } from './BroadcastGridToolbar';
@@ -82,7 +83,18 @@ export function PlanView({
                 onChangeGroupMode={grid.setGroupMode}
                 onChangeViewMode={grid.setViewMode}
               />
-              {grid.viewMode === 'groups' ? (
+              {grid.viewMode === 'calendar' ? (
+                <BroadcastGridCalendarView
+                  items={grid.filteredItems}
+                  selectedDate={grid.selectedCalendarDate}
+                  workspace={workspace}
+                  warnings={warnings}
+                  onApprove={onApprove}
+                  onBrief={onBrief}
+                  onItemChange={onItemChange}
+                  onSelectDate={grid.setSelectedCalendarDate}
+                />
+              ) : grid.viewMode === 'groups' ? (
                 <BroadcastGridGroupList
                   groups={grid.groups}
                   workspace={workspace}

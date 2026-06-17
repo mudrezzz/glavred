@@ -127,6 +127,9 @@ function assertPlanLayout(result) {
   if (result.mainSideGap !== null && result.mainSideGap < 18) failures.push(`${result.viewport}: plan main/side columns are too close (${result.mainSideGap}px).`);
   if (result.maxRowOverflow > 2) failures.push(`${result.viewport}: broadcast row overflows by ${result.maxRowOverflow}px.`);
   if (result.actionMinGap !== null && result.actionMinGap < 8) failures.push(`${result.viewport}: broadcast actions are too close (${result.actionMinGap}px).`);
+  if (!result.calendarViewExists) failures.push(`${result.viewport}: broadcast calendar view is missing.`);
+  if (!result.calendarHasCounts) failures.push(`${result.viewport}: broadcast calendar does not show candidate counts.`);
+  if (!result.calendarDateRowCount) failures.push(`${result.viewport}: broadcast calendar selected date has no candidate rows.`);
   if (!result.calendarExists) failures.push(`${result.viewport}: plan settings mini-calendar is missing.`);
   if (!result.calendarHasSelectedDay) failures.push(`${result.viewport}: plan settings calendar has no selected publish day.`);
 
@@ -170,6 +173,19 @@ async function assertPlanAtViewport(page, viewport, viewportName) {
     };
   }, viewportName);
 
+  await page.locator('[data-testid="broadcast-filter-toolbar"] .compact-tabs .tab').nth(2).click();
+  await page.locator('[data-testid="broadcast-calendar-view"]').waitFor();
+  const calendarResult = await page.evaluate(() => {
+    const calendar = document.querySelector('[data-testid="broadcast-calendar-view"]');
+    const counts = Array.from(calendar?.querySelectorAll('.broadcast-calendar-count') ?? [])
+      .map((element) => Number.parseInt(element.textContent || '0', 10));
+    return {
+      calendarViewExists: Boolean(calendar),
+      calendarHasCounts: counts.some((count) => count > 0),
+      calendarDateRowCount: document.querySelectorAll('[data-testid="broadcast-calendar-date-list"] .broadcast-row').length
+    };
+  });
+
   await page.getByRole('tab', { name: /Настройка сетки/i }).click();
   await page.locator('.publish-calendar').waitFor();
   const settingsResult = await page.evaluate(() => ({
@@ -177,7 +193,7 @@ async function assertPlanAtViewport(page, viewport, viewportName) {
     calendarHasSelectedDay: Boolean(document.querySelector('.publish-calendar-day.selected'))
   }));
 
-  assertPlanLayout({ ...gridResult, ...settingsResult });
+  assertPlanLayout({ ...gridResult, ...calendarResult, ...settingsResult });
 }
 
 async function assertSignalsAtViewport(page, viewport, viewportName) {

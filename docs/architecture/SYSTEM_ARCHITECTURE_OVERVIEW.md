@@ -203,6 +203,9 @@ Target structure:
   Plan-specific filter/group/edit/calendar state stays in role-owned plan modules.
   The current settings UI owns an explicit mini-calendar for selected publish slots;
   recurring day/time fields are fallback defaults, not the visible planning control.
+  The broadcast grid also has a calendar view that reuses the same week/month/quarter
+  calendar model, shows filtered candidate counts per date, and renders the same slot
+  rows below a selected date instead of creating a second card pattern.
 - `src/features/briefing`: post brief and concrete post-fabula approval workflow.
 - `src/features/editing`: draft, editorial checks, editor notes, and final text
   approval.

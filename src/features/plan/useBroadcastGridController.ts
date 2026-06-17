@@ -13,6 +13,7 @@ export function useBroadcastGridController(items: ContentPlanItem[], warnings: P
   const [filters, setFilters] = useState<BroadcastGridFilters>(DEFAULT_BROADCAST_GRID_FILTERS);
   const [viewMode, setViewMode] = useState<BroadcastGridViewMode>('list');
   const [groupMode, setGroupMode] = useState<BroadcastGridGroupMode>('date');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState('');
 
   const filteredItems = useMemo(
     () => filterBroadcastItems(items, warnings, filters),
@@ -29,6 +30,8 @@ export function useBroadcastGridController(items: ContentPlanItem[], warnings: P
     groupMode,
     groups,
     setFilters,
+    selectedCalendarDate,
+    setSelectedCalendarDate,
     setGroupMode,
     setViewMode,
     viewMode

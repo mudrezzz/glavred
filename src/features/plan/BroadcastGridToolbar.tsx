@@ -86,6 +86,9 @@ export function BroadcastGridToolbar({
           <button className={`tab${viewMode === 'groups' ? ' active' : ''}`} type="button" role="tab" aria-selected={viewMode === 'groups'} onClick={() => onChangeViewMode('groups')}>
             Группы
           </button>
+          <button className={`tab${viewMode === 'calendar' ? ' active' : ''}`} type="button" role="tab" aria-selected={viewMode === 'calendar'} onClick={() => onChangeViewMode('calendar')}>
+            Календарь
+          </button>
         </div>
         {viewMode === 'groups' ? (
           <select value={groupMode} onChange={(event) => onChangeGroupMode(event.target.value as BroadcastGridGroupMode)}>

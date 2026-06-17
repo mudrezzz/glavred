@@ -36,6 +36,26 @@ describe('PlanView', () => {
     expect(screen.getByText(/По дате/i)).toBeInTheDocument();
   });
 
+  it('shows a calendar view with candidate counts and date-specific rows', () => {
+    const workspace = createDemoWorkspace();
+
+    renderPlan(workspace);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Календарь|РљР°Р»РµРЅРґР°СЂСЊ/i }));
+    const calendarView = screen.getByTestId('broadcast-calendar-view');
+    expect(calendarView.closest('.broadcast-main')).toBeInTheDocument();
+
+    const countedDay = Array.from(calendarView.querySelectorAll<HTMLButtonElement>('.broadcast-calendar-day.has-candidates'))
+      .find((button) => !button.hasAttribute('disabled'));
+    expect(countedDay).toBeDefined();
+    expect(Number(countedDay?.querySelector('.broadcast-calendar-count')?.textContent ?? 0)).toBeGreaterThan(0);
+
+    fireEvent.click(countedDay as HTMLButtonElement);
+    const dateList = screen.getByTestId('broadcast-calendar-date-list');
+    expect(dateList.closest('.broadcast-main')).toBeInTheDocument();
+    expect(dateList.querySelectorAll('.broadcast-row').length).toBeGreaterThan(0);
+  });
+
   it('shows full candidate context in the opened slot and readonly context in edit mode', () => {
     const workspace = createDemoWorkspace();
 

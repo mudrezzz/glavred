@@ -98,12 +98,14 @@ This is a useful compatibility prototype, but it is not the final planning model
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
 the first `Кандидаты постов` review layer with filters, search, grouping, edit, reject,
 and approve actions. `Настройка сетки` creates the publish-window frame and shows
-available candidates versus approved concepts. Slice 1.8.1 makes the demo plan screen
-match the same cabinet UX as the review queues: filters/search and `Список / Группы`
-sit above broadcast slots, slot rows stay in the main content column, expanded slots
-show the candidate/source context, and `Настройка сетки` uses a clickable
-mini-calendar for week/month/quarter publish-slot selection. Future slices can add candidate variant
-requests and then turn `План` into a real calendar with readiness statuses.
+available candidates versus approved concepts. Slice 1.8.2 makes the demo plan screen
+match the same cabinet UX as the review queues: filters/search and
+`Список / Группы / Календарь` sit above broadcast slots, slot rows stay in the main
+content column, expanded slots show the candidate/source context, and `Настройка
+сетки` uses a clickable mini-calendar for week/month/quarter publish-slot selection.
+The calendar view marks publish dates, shows filtered candidate counts per date, and
+opens the same slot cards under the selected date. Future slices can add candidate
+variant requests and then turn `План` into a real calendar with readiness statuses.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
@@ -204,27 +206,29 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     candidate limits, platform, or signal policy; save settings before rebuilding.
     Slice 1.8.1 note: select dates directly in the mini-calendar; the counter shows
     target, selected, remaining, or extra slots while you click.
-23. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
+23. Switch the broadcast grid to `Календарь` to see candidate counts by publish date,
+    then click a date to inspect that day's same slot cards.
+24. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
-24. Click `Подготовить фабулу поста`.
-25. Edit the post brief if needed.
-26. Click `Утвердить фабулу`.
-27. Open `Редактура`.
-28. Click `Написать драфт`.
-29. Review checks and editor notes.
-30. Edit the draft text.
-31. Click `Утвердить текст`.
-32. Open `Выпуск`.
-33. Click `Подготовить выпуск`.
-34. Review target, checklist, final text, and Markdown preview.
-35. Complete the checklist and click `Готово к выпуску`.
-36. Click `Скопировать текст` or `Скачать Markdown`.
-37. Open `Аналитика`.
-38. Click `Подготовить аналитику`.
-39. Enter manual metrics and editorial conclusions.
-40. Click `Зафиксировать выводы`.
-41. Reload the page to confirm state persists.
-42. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+25. Click `Подготовить фабулу поста`.
+26. Edit the post brief if needed.
+27. Click `Утвердить фабулу`.
+28. Open `Редактура`.
+29. Click `Написать драфт`.
+30. Review checks and editor notes.
+31. Edit the draft text.
+32. Click `Утвердить текст`.
+33. Open `Выпуск`.
+34. Click `Подготовить выпуск`.
+35. Review target, checklist, final text, and Markdown preview.
+36. Complete the checklist and click `Готово к выпуску`.
+37. Click `Скопировать текст` or `Скачать Markdown`.
+38. Open `Аналитика`.
+39. Click `Подготовить аналитику`.
+40. Enter manual metrics and editorial conclusions.
+41. Click `Зафиксировать выводы`.
+42. Reload the page to confirm state persists.
+43. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

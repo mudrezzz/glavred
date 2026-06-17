@@ -3336,6 +3336,49 @@ select:focus {
   color: var(--accent-dark);
 }
 
+.publish-calendar-day.active {
+  outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 2px;
+}
+
+.broadcast-calendar-view {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.broadcast-calendar-panel .publish-calendar-day {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+}
+
+.broadcast-calendar-count {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--surface-sunk);
+  color: var(--ink-700);
+  font: var(--mono-xs);
+}
+
+.publish-calendar-day.selected .broadcast-calendar-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.publish-calendar-day.has-candidates:not(.selected) .broadcast-calendar-count {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.broadcast-calendar-date-list {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
 .publish-calendar-day.outside,
 .publish-calendar-day:disabled {
   opacity: 0.35;

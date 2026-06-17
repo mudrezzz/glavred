@@ -2277,6 +2277,51 @@ Status:
   - `PlanSettingsPanel` and `BroadcastGridRow` are close enough to smoke limits that
     field groups must be split before adding behavior.
 
+### Slice 1.8.2: Broadcast Grid Candidate Calendar View
+
+- Status: Done
+- Goal: Add a calendar view to the existing broadcast grid candidate list without
+  replacing the operational list view.
+- User value: The author can keep filtering the grid as a list, then switch to a
+  calendar that shows which publish dates already have candidates and inspect the
+  rows for a selected date.
+- Scope:
+  - Add a third view mode in the broadcast grid filter toolbar: `Список`, `Группы`,
+    `Календарь`.
+  - Reuse the same week/month/quarter mini-calendar logic as `Настройка сетки`.
+  - Mark publish dates in calendar cells and show the number of current filtered
+    candidates for each date.
+  - Clicking a date renders the same broadcast row cards below the calendar for that
+    date.
+  - Keep filters/search above the calendar so the count and selected-date rows reflect
+    the current filter state.
+- Out of scope:
+  - Full readiness calendar statuses.
+  - Drag-and-drop slot movement.
+  - Slot/candidate reassignment from the calendar cell.
+  - New candidate generation or request-more variants.
+- Architecture impact:
+  - Calendar view state stays in `useBroadcastGridController`.
+  - Calendar grouping and slot merging live in role-owned plan helpers under
+    `src/features/plan`.
+  - `PlanView` and `BroadcastGridRow` remain near-limit files and receive only wiring,
+    not new calendar behavior.
+- Tests:
+  - UI test covers calendar tab, main-column rendering, date counts, date click, and
+    date-specific rows.
+  - Design/visual smoke now check that the broadcast calendar view exists, shows
+    counts, and renders selected-date rows.
+- Docs:
+  - Update SAO, developer guide, user guide, demo docs, wiki notes, and roadmap.
+- Demo impact:
+  - Demo plan can be reviewed either as a filtered list/grouped list or as a compact
+    calendar with per-date candidate counts.
+- Acceptance criteria:
+  - Calendar view appears from the broadcast grid filter toolbar. Done.
+  - Calendar period matches the saved week/month/quarter planning setting. Done.
+  - Candidate counts reflect the current filtered grid. Done.
+  - Clicking a date shows the same row cards as the normal list. Done.
+
 ### Slice 1.9: Calendar View for Broadcast Plan
 
 - Status: Ready
@@ -2422,6 +2467,7 @@ Status:
 - Slice 1.8: Broadcast Grid Settings. Completed 2026-06-17.
 - Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings. Completed
   2026-06-17.
+- Slice 1.8.2: Broadcast Grid Candidate Calendar View. Completed 2026-06-17.
 
 ## Blocked Items
 

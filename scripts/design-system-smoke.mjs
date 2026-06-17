@@ -373,6 +373,9 @@ async function assertPlanDesign(page) {
     if (!tabs?.classList.contains('tabs') || tabs.querySelectorAll('.tab').length < 2) {
       failures.push('plan mode switcher does not use canonical .tabs .tab structure.');
     }
+    if (!filterCard?.querySelector('.compact-tabs .tab:nth-child(3)')) {
+      failures.push('broadcast grid calendar view tab is missing from the filter toolbar.');
+    }
     if (header && tabs && tabs.getBoundingClientRect().top <= header.getBoundingClientRect().bottom) {
       failures.push('plan mode tabs are not placed below the plan header.');
     }
@@ -512,6 +515,9 @@ async function main() {
 
     await page.getByRole('button', { name: /План/ }).click();
     await assertPlanDesign(page);
+    await page.locator('[data-testid="broadcast-filter-toolbar"] .compact-tabs .tab').nth(2).click();
+    await page.locator('[data-testid="broadcast-calendar-view"]').waitFor();
+    await assertCommonDesign(page, 'plan calendar view');
 
     await page.setViewportSize({ width: 2048, height: 1100 });
     await page.reload({ waitUntil: 'networkidle' });

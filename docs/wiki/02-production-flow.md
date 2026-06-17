@@ -18,6 +18,10 @@ Filters/search and `Список / Группы` sit above slots, expanded slots
 context visible, and `Настройка сетки` uses a clickable mini-calendar for selecting
 explicit publish slots before rebuilding.
 
+Slice 1.8.2 note: the same filter toolbar now also has `Календарь`. It reuses the
+week/month/quarter period from grid settings, shows candidate counts on publish dates,
+and opens the same broadcast slot rows below the clicked date.
+
 ![Утвержденная фабула](assets/screenshots/05-approved-post-brief.png)
 
 ## Сигналы

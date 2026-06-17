@@ -1,6 +1,6 @@
 import type { ContentPlanItem, PlanWeightWarning } from '../../domain/editorialWorkspace';
 
-export type BroadcastGridViewMode = 'list' | 'groups';
+export type BroadcastGridViewMode = 'list' | 'groups' | 'calendar';
 export type BroadcastGridGroupMode = 'date' | 'topic' | 'fabula' | 'status' | 'risk';
 
 export interface BroadcastGridFilters {

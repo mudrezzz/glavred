@@ -209,6 +209,9 @@ For `План`, the same command checks canonical tabs, filter-card placement be
 broadcast list, row overflow, action spacing, and readable warning contrast. A
 centered floating list action, a slot card in the side panel, or low-contrast warning
 text is a design-system failure.
+The broadcast grid filter toolbar must also expose the calendar view tab, and visual
+smoke checks that the calendar opens, shows candidate counts per date, and renders the
+same row cards for the selected date.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 
@@ -381,6 +384,12 @@ start with a filter card, full-width search, list/group tabs, and framed rows in
 states must keep readonly candidate context visible: source signal, topic, fabula,
 audience, value, and goal. Plan edit fields may change schedule/slot metadata, but
 must not hide the candidate/source context that explains what is being scheduled.
+
+After Slice 1.8.2, the broadcast grid has a third view mode: `Календарь`. It must reuse
+the planning mini-calendar period model (`week | month | quarter`), count the currently
+filtered plan items by date, and render date-specific candidates with the same
+`BroadcastGridRow` component used by the list/group views. Do not build separate
+calendar-only candidate cards unless a later slice explicitly changes the row contract.
 
 Planning settings use the mini-calendar as the visible source of publish-slot choices.
 Clicking a day selects/unselects an explicit `publishSlots` date. Period changes switch

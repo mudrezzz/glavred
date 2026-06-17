@@ -45,13 +45,15 @@ candidate limits, default platform, and signal policy. The grid is still not the
 calendar model: it creates publish-window slots and fills them with deterministic
 topic/fabula ideas from the approved signal/candidate layer.
 
-After Slice 1.8.1, `План` uses the same cabinet-list UX as the review queues: filters
-and search appear above the slot list, `Список / Группы` switches the view, and every
-slot expands inside the main content area. Expanded and edit states show the source
-signal, topic, fabula, audience, value, and goal so you know which candidate context is
-being scheduled. `Настройка сетки` uses a mini-calendar: choose week/month/quarter,
-click dates to assign or remove publish slots, then save explicitly before rebuilding
-the grid.
+After Slice 1.8.2, `План` uses the same cabinet-list UX as the review queues: filters
+and search appear above the slot list, `Список / Группы / Календарь` switches the view,
+and every slot expands inside the main content area. The calendar view follows the same
+week/month/quarter period as `Настройка сетки`, marks publish dates, shows how many
+filtered candidates sit on each date, and opens the same slot cards below the clicked
+date. Expanded and edit states show the source signal, topic, fabula, audience, value,
+and goal so you know which candidate context is being scheduled. `Настройка сетки`
+uses a mini-calendar: choose week/month/quarter, click dates to assign or remove
+publish slots, then save explicitly before rebuilding the grid.
 
 ## Demo Context
 
@@ -325,6 +327,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Slice 1.8.1 note: filters/search sit above the broadcast list, and
   `Настройка сетки` uses a mini-calendar. Choose week/month/quarter, click dates to
   assign or remove publish slots, and save explicitly before rebuilding.
+- Slice 1.8.2 note: use the `Календарь` view in the same filter toolbar to see
+  candidate counts by date. Click a date to inspect the same broadcast slot cards for
+  that day.
 - Slot detail note: expanded and edit states show signal, topic, fabula, audience,
   value, goal, thesis, evidence, and risks so plan edits do not hide candidate context.
 - Expand a slot, edit it if needed, then use `Сохранить` or `Отменить`.

@@ -87,6 +87,14 @@ planning can still fill those slots with topic/fabula ideas. The UI also shows s
 demand, available post candidates, approved concepts, and deficit/proficit. Full
 calendar binding remains a later slice.
 
+Slice 1.8.2 adds a lightweight calendar representation inside the current broadcast
+grid, not the final readiness calendar. The filter card remains first; `Список`,
+`Группы`, and `Календарь` are view modes over the same filtered plan items. The
+calendar reuses the settings week/month/quarter model, marks publish dates, shows the
+number of filtered candidates on each date, and renders the same broadcast rows below a
+clicked date. It does not yet assign candidates to new slots or show production
+readiness statuses.
+
 ## Calendar View
 
 The second `План` tab should be `Календарь выпуска`.

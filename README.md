@@ -63,7 +63,8 @@ editorial shape; platform/format settings stay in the broadcast grid layer. The
 candidate list uses the same filter/search/group cabinet pattern as `Очередь разбора`;
 candidates can be edited or rejected locally, and approving one candidate makes it the
 current concept for `Собрать инсайт`. The current broadcast grid remains a useful
-local-first prototype until request-more generation and a true calendar are added.
+local-first prototype: it now has list/group/calendar views over the same filtered
+slots, while request-more generation and a true readiness calendar remain future work.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
