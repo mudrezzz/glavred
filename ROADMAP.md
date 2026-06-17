@@ -1996,8 +1996,9 @@ Status:
   - Completed after `Slice 1.5.29` architecture guardrails.
 - Scope:
   - Add `PostCandidate` as a domain contract with signal, topic, fabula, audience,
-    value, goal, platform, format, title, thesis, evidence summary, confidence, risks,
-    and approval status.
+    value, goal, platform, title, thesis, evidence summary, confidence, risks, and
+    approval status. Candidate `format` was removed in Slice 1.7.1 because it
+    duplicated fabula.
   - Store `postCandidates` and selected `postCandidate` in `WorkspaceState`; normalize
     old local workspaces to an empty candidate list and `null` selection.
   - Generate 2-3 deterministic candidates from approved `SourceSignal` records and
@@ -2063,8 +2064,9 @@ Status:
   - Add grouping by signal, topic, status, and risk.
   - Convert candidate cards to the cabinet row pattern with bottom-left inline actions:
     primary red `Утвердить`, secondary `Редактировать` and `Отклонить`.
-  - Add inline edit for title, thesis, audience, value, goal, platform, format,
-    evidence summary, and risks.
+  - Add inline edit for title, thesis, audience, value, goal, platform, evidence
+    summary, and risks. Candidate fabula edit and format cleanup were finalized in
+    Slice 1.7.1.
   - Make `Доказательство` full-width inside the facts grid and keep `Risks`
     full-width below facts.
   - Add frontend rule: all large entity lists use the pattern
@@ -2113,6 +2115,53 @@ Status:
   - `PostCandidateCard` and `usePostCandidateWorkspaceActions` are near their smoke
     limits; future candidate behavior should split card subparts and orchestration
     helpers before adding more state.
+
+### Slice 1.7.1: Candidate Format Cleanup and Edit Context
+
+- Status: Done
+- Goal: Remove the confusing candidate `format` field and make candidate editing show
+  enough immutable context to edit safely.
+- User value: The author understands which signal/topic/fabula combination is being
+  edited and no longer sees a duplicate "format" field that repeats the fabula.
+- Scope:
+  - Remove `format` from `PostCandidate` domain contract, deterministic generation,
+    candidate cards, edit form, and tests. Done.
+  - Treat old persisted candidate `format` values as legacy storage noise during
+    workspace normalize. Done.
+  - Show readonly edit context for source signal and suggested topic. Done.
+  - Make candidate `fabulaId` editable through a select of active fabulas. Done.
+  - Warn when the chosen fabula is not enabled for the candidate topic, but do not
+    block saving. Done.
+  - Keep candidate topic readonly in this slice. Done.
+- Out of scope:
+  - Editing topic from the candidate card.
+  - Recomputing title/thesis/value automatically after a fabula change.
+  - Request-more variants and calendar slot binding.
+- Architecture impact:
+  - Must avoid further growth in near-limit `PostCandidateCard`; edit context belongs
+    in a role-owned candidate edit context module. Done.
+  - Domain/application changes stay outside React. Done.
+  - Storage compatibility handles legacy `format` without keeping it in the current
+    domain type. Done.
+- Tests:
+  - Domain/application tests for no candidate `format`, editable `fabulaId`, and
+    approved edited candidate feeding insight. Done.
+  - Storage test for old saved candidates with `format`. Done.
+  - UI tests for readonly signal/topic in edit mode, editable fabula select, no
+    `Format` field in read mode, and matrix warning for incompatible fabula. Done.
+  - `npm run test:architecture` passed.
+  - `npm test -- --run` passed.
+  - `npm run smoke` passed.
+  - `npm run test:design` passed.
+  - `npm run test:visual` passed.
+- Docs:
+  - Update SAO, developer guide, user guide, demo docs, wiki, and roadmap.
+- Demo impact:
+  - Candidate editing shows the source signal and suggested topic while letting the
+    author change only the fabula among structural fields. Done.
+- Risks:
+  - `PostCandidateEditForm` is exactly at its architecture smoke limit; future
+    candidate edit behavior should split field groups before adding more controls.
 
 ### Slice 1.8: Broadcast Grid Settings
 
@@ -2298,6 +2347,7 @@ Status:
   2026-06-16.
 - Slice 1.6: First Real Post Candidate Assemblies. Completed 2026-06-16.
 - Slice 1.7: Candidate List UX Parity and Review Actions. Completed 2026-06-16.
+- Slice 1.7.1: Candidate Format Cleanup and Edit Context. Completed 2026-06-16.
 
 ## Blocked Items
 

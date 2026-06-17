@@ -1,10 +1,18 @@
-import type { Fabula, PostCandidate, PostCandidateEditPatch, SourceSignal, Topic } from '../../domain/editorialWorkspace';
+import type {
+  Fabula,
+  PostCandidate,
+  PostCandidateEditPatch,
+  SourceSignal,
+  Topic,
+  TopicFabulaMatrixEntry
+} from '../../domain/editorialWorkspace';
 import { PostCandidateCard } from './PostCandidateCard';
 import type { PostCandidateGroup } from './postCandidateTypes';
 
 export function PostCandidateGroupList({
   fabulas,
   groups,
+  matrix,
   selectedCandidateId,
   signals,
   topics,
@@ -14,6 +22,7 @@ export function PostCandidateGroupList({
 }: {
   fabulas: Fabula[];
   groups: PostCandidateGroup[];
+  matrix: TopicFabulaMatrixEntry[];
   selectedCandidateId: string;
   signals: SourceSignal[];
   topics: Topic[];
@@ -34,6 +43,7 @@ export function PostCandidateGroupList({
           <PostCandidateRows
             candidates={group.candidates}
             fabulas={fabulas}
+            matrix={matrix}
             selectedCandidateId={selectedCandidateId}
             signals={signals}
             topics={topics}
@@ -50,6 +60,7 @@ export function PostCandidateGroupList({
 export function PostCandidateRows({
   candidates,
   fabulas,
+  matrix,
   selectedCandidateId,
   signals,
   topics,
@@ -59,6 +70,7 @@ export function PostCandidateRows({
 }: {
   candidates: PostCandidate[];
   fabulas: Fabula[];
+  matrix: TopicFabulaMatrixEntry[];
   selectedCandidateId: string;
   signals: SourceSignal[];
   topics: Topic[];
@@ -73,7 +85,9 @@ export function PostCandidateRows({
           key={candidate.id}
           candidate={candidate}
           fabula={fabulas.find((fabula) => fabula.id === candidate.fabulaId)}
+          fabulas={fabulas}
           isSelected={candidate.id === selectedCandidateId}
+          matrix={matrix}
           signal={signals.find((signal) => signal.id === candidate.sourceSignalId)}
           topic={topics.find((topic) => topic.id === candidate.topicId)}
           onApprove={onApprove}

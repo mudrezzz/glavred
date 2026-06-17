@@ -73,6 +73,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
       : normalizedSignal;
   });
   const activeSection = normalizeWorkspaceSection(saved.activeSection);
+  const postCandidates = (saved.postCandidates ?? []).map((candidate) => normalizePostCandidate(candidate));
+  const postCandidate = saved.postCandidate ? normalizePostCandidate(saved.postCandidate) : null;
 
   return {
     ...demo,
@@ -94,8 +96,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     radars,
     sourceSignal,
     sourceSignals,
-    postCandidates: saved.postCandidates ?? [],
-    postCandidate: saved.postCandidate ?? null,
+    postCandidates,
+    postCandidate,
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
     contentPlanItems,
@@ -115,6 +117,11 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     activeSection: activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt
   };
+}
+
+function normalizePostCandidate(candidate: WorkspaceState['postCandidates'][number]): WorkspaceState['postCandidates'][number] {
+  const { format: _legacyFormat, ...current } = candidate as WorkspaceState['postCandidates'][number] & { format?: string };
+  return current;
 }
 
 function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {

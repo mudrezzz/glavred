@@ -44,6 +44,7 @@ describe('PostCandidatesPreviewTab', () => {
     expect(within(cards[0]).getByText(/confidence/i)).toBeInTheDocument();
     expect(within(cards[0]).getByText('Risks')).toBeInTheDocument();
     expect(within(cards[0]).getByText('Доказательство').closest('.wide')).toBeInTheDocument();
+    expect(within(cards[0]).queryByText('Format')).not.toBeInTheDocument();
 
     const approveButton = within(cards[0]).getByRole('button', { name: /Утвердить/i });
     expect(approveButton.closest('.inline-actions')).toBeInTheDocument();
@@ -57,13 +58,20 @@ describe('PostCandidatesPreviewTab', () => {
 
   it('filters, searches, groups, edits, and rejects candidates locally', () => {
     const workspace = createDemoWorkspace();
+    const editedFabula = workspace.fabulas[1];
+    const editedWorkspace = {
+      ...workspace,
+      topicFabulaMatrix: workspace.topicFabulaMatrix.map((entry) =>
+        entry.fabulaId === editedFabula.id ? { ...entry, enabled: false } : entry
+      )
+    };
     const onEdit = vi.fn();
     const onReject = vi.fn();
 
     render(
       <PostCandidatesPreviewTab
-        workspace={workspace}
-        controller={createController(workspace)}
+        workspace={editedWorkspace}
+        controller={createController(editedWorkspace)}
         onApprovePostCandidate={vi.fn()}
         onEditPostCandidate={onEdit}
         onRejectPostCandidate={onReject}
@@ -75,7 +83,7 @@ describe('PostCandidatesPreviewTab', () => {
     const initialCards = screen.getAllByTestId('post-candidate-card');
     const firstCard = initialCards[0];
     const firstTitle = within(firstCard).getByRole('heading', { level: 3 }).textContent ?? '';
-    const firstSignal = workspace.sourceSignals.find((signal) => signal.reviewStatus === 'approved')!;
+    const firstSignal = editedWorkspace.sourceSignals.find((signal) => signal.reviewStatus === 'approved')!;
 
     fireEvent.change(screen.getByLabelText(/Сигнал/i), { target: { value: firstSignal.id } });
     expect(screen.getAllByTestId('post-candidate-card').length).toBeGreaterThan(0);
@@ -94,9 +102,16 @@ describe('PostCandidatesPreviewTab', () => {
 
     const editableCard = screen.getAllByTestId('post-candidate-card')[0];
     fireEvent.click(within(editableCard).getByRole('button', { name: /Редактировать/i }));
+    expect(screen.getAllByText(firstSignal.title).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/AI product discovery/i).length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText('Фабула'), { target: { value: editedFabula.id } });
+    expect(screen.getByText(/Фабула не включена/i)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Edited candidate title' } });
     fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
-    expect(onEdit).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ title: 'Edited candidate title' }));
+    expect(onEdit).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ fabulaId: editedFabula.id, title: 'Edited candidate title' })
+    );
 
     const rejectableCard = screen.getAllByTestId('post-candidate-card')[0];
     fireEvent.click(within(rejectableCard).getByRole('button', { name: /Отклонить/i }));

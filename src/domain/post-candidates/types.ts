@@ -9,7 +9,6 @@ export interface PostCandidate {
   value: string;
   goal: string;
   platform: string;
-  format: string;
   title: string;
   thesis: string;
   evidenceSummary: string;

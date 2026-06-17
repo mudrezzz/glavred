@@ -2,7 +2,7 @@ import type { PostCandidate } from './types';
 
 export type PostCandidateEditPatch = Pick<
   PostCandidate,
-  'title' | 'thesis' | 'audience' | 'value' | 'goal' | 'platform' | 'format' | 'evidenceSummary' | 'risks'
+  'fabulaId' | 'title' | 'thesis' | 'audience' | 'value' | 'goal' | 'platform' | 'evidenceSummary' | 'risks'
 >;
 
 export function approvePostCandidate(candidate: PostCandidate): PostCandidate {

@@ -58,11 +58,12 @@ topics. Filtered-out material stays visible for human review; style is checked l
 during drafting and editorial review, not during radar intake.
 `Кандидаты постов` is now the first working candidate layer: approved signals become
 2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
-format, confidence, and risks. The candidate list uses the same filter/search/group
-cabinet pattern as `Очередь разбора`; candidates can be edited or rejected locally, and
-approving one candidate makes it the current concept for `Собрать инсайт`. The current
-broadcast grid remains a useful local-first prototype until request-more generation
-and a true calendar are added.
+confidence, and risks. Candidate format was removed because fabula already owns the
+editorial shape; platform/format settings stay in the broadcast grid layer. The
+candidate list uses the same filter/search/group cabinet pattern as `Очередь разбора`;
+candidates can be edited or rejected locally, and approving one candidate makes it the
+current concept for `Собрать инсайт`. The current broadcast grid remains a useful
+local-first prototype until request-more generation and a true calendar are added.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
@@ -104,7 +105,7 @@ The revised core modules are:
   now also check disclosure stability, right-aligned header metrics, inline radar
   editing, multiline rule/source fields, and radar editor form spacing.
 - Post Candidates: proposed combinations of signal, topic, fabula, audience, value,
-  goal, platform, and format, reviewed through the shared large-list pattern.
+  goal, and platform, reviewed through the shared large-list pattern.
 - Content Design Records: durable project-wide content decisions, similar to ADRs for
   software projects.
 - Audience, goal, metrics, platforms, and formats: structured rules, not freeform

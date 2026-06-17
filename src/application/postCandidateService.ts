@@ -6,15 +6,10 @@ type CandidatePair = { topic: Topic; fabula: Fabula };
 export function createPostCandidates(workspace: WorkspaceState): PostCandidate[] {
   const approvedSignals = workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved');
   const pairs = getActiveCandidatePairs(workspace);
-  const formats = workspace.contentPlanSettings.allowedFormats;
   const storedById = new Map(workspace.postCandidates.map((candidate) => [candidate.id, candidate]));
 
   return approvedSignals
-    .flatMap((signal) =>
-      pairs.map((pair, index) =>
-        createPostCandidate(workspace, signal, pair, index, formats[index % Math.max(1, formats.length)])
-      )
-    )
+    .flatMap((signal) => pairs.map((pair, index) => createPostCandidate(workspace, signal, pair, index)))
     .slice(0, 3)
     .map((candidate) => storedById.get(candidate.id) ?? candidate)
     .map((candidate) => (workspace.postCandidate?.id === candidate.id ? workspace.postCandidate : candidate));
@@ -36,8 +31,7 @@ function createPostCandidate(
   workspace: WorkspaceState,
   signal: SourceSignal,
   pair: CandidatePair,
-  index: number,
-  format = pair.fabula.title
+  index: number
 ): PostCandidate {
   const value = signal.suggestedValue || pair.topic.audienceValue || pair.topic.purpose;
   const evidenceSummary = signal.evidence?.[0]?.summary || signal.searchNote || signal.summary;
@@ -51,7 +45,6 @@ function createPostCandidate(
     value,
     goal: workspace.editorialModel.goals[index % Math.max(1, workspace.editorialModel.goals.length)] ?? pair.topic.purpose,
     platform: workspace.contentPlanSettings.defaultPlatform,
-    format,
     title: `${pair.topic.title} / ${pair.fabula.title}: ${signal.title}`,
     thesis: `${signal.summary} Развернуть через фабулу "${pair.fabula.title}" и ценность: ${value}`,
     evidenceSummary,

@@ -141,6 +141,11 @@ const LARGE_SOURCE_BASELINES = [
     next: "PostCandidateCard should stay focused on one compare-and-approve candidate card.",
   },
   {
+    path: "src/features/signals/PostCandidateCardParts.tsx",
+    limit: 40,
+    next: "PostCandidateCardParts should stay limited to small candidate-card display helpers.",
+  },
+  {
     path: "src/features/signals/PostCandidatesToolbar.tsx",
     limit: 120,
     next: "PostCandidatesToolbar should stay focused on candidate filters, search, and list/group mode controls.",
@@ -154,6 +159,11 @@ const LARGE_SOURCE_BASELINES = [
     path: "src/features/signals/PostCandidateEditForm.tsx",
     limit: 110,
     next: "PostCandidateEditForm should stay limited to inline candidate field editing.",
+  },
+  {
+    path: "src/features/signals/PostCandidateEditContext.tsx",
+    limit: 70,
+    next: "PostCandidateEditContext should stay limited to source/topic/fabula edit context.",
   },
   {
     path: "src/features/signals/usePostCandidatesController.ts",
@@ -475,9 +485,11 @@ const requiredSourceFiles = [
   "src/features/signals/SourceSignalCard.tsx",
   "src/features/signals/PostCandidatesPreviewTab.tsx",
   "src/features/signals/PostCandidateCard.tsx",
+  "src/features/signals/PostCandidateCardParts.tsx",
   "src/features/signals/PostCandidatesToolbar.tsx",
   "src/features/signals/PostCandidateGroupList.tsx",
   "src/features/signals/PostCandidateEditForm.tsx",
+  "src/features/signals/PostCandidateEditContext.tsx",
   "src/features/signals/usePostCandidatesController.ts",
   "src/features/signals/postCandidateFilters.ts",
   "src/features/signals/RadarEditor.tsx",

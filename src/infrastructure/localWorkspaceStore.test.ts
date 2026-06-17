@@ -14,6 +14,7 @@ import {
   createContentPlanItem,
   createEditorialLearningNote,
   createInsightCard,
+  createPostCandidates,
   createPostBrief,
   createPostDraft,
   createReleasePackage
@@ -76,6 +77,24 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.contentPlanItems[0].id).toBe(contentPlanItem.id);
     expect(loaded.contentPlanItems[0].manualOverride).toBe(false);
     expect(loaded.contentPlanSettings.defaultPlatform).toBe('Telegram');
+  });
+
+  it('drops legacy post candidate format values while loading saved workspaces', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const candidate = createPostCandidates(workspace)[0];
+    const legacyCandidate = { ...candidate, format: 'Legacy duplicate format' };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...workspace, postCandidates: [legacyCandidate], postCandidate: legacyCandidate })
+    );
+    const store = new LocalWorkspaceStore(storage);
+
+    const loaded = store.load();
+
+    expect(loaded.postCandidates[0]).not.toHaveProperty('format');
+    expect(loaded.postCandidate).not.toHaveProperty('format');
+    expect(loaded.postCandidates[0].fabulaId).toBe(candidate.fabulaId);
   });
 
   it('loads an old workspace without author memory fields', () => {

@@ -371,6 +371,11 @@ in `PostCandidateEditForm`, and local filter/group helpers in `postCandidateFilt
 Do not add new large-list hero/summary blocks above the filter card. Primary row
 actions are red only for the main approval/save step; secondary row actions stay white.
 
+After Slice 1.7.1, `PostCandidate` does not own `format`. Fabula is the candidate's
+editorial shape; broadcast grid settings and `ContentPlanItem` own plan formats.
+Candidate edit context must show readonly source signal and topic, and may edit
+`fabulaId` with a compatibility warning instead of silently hiding matrix risk.
+
 After Slice 1.5.27, `ImportQueueView` is also only the author-memory import-queue
 composition root. Filter controls and view-mode switching belong in
 `ImportQueueToolbar`; selected-count and bulk actions belong in `ImportQueueBulkBar`;
@@ -412,8 +417,8 @@ Use these boundaries:
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and
   analytics services.
-- `PostCandidate` services assemble signal/topic/fabula/audience/value/goal/platform/
-  format combinations before insight creation. Approving a candidate sets
+- `PostCandidate` services assemble signal/topic/fabula/audience/value/goal/platform
+  combinations before insight creation. Approving a candidate sets
   `WorkspaceState.postCandidate`, switches the current `sourceSignal` to the candidate's
   source, and clears stale downstream insight, selected plan item, brief, draft,
   release, and analytics artifacts. Editing or rejecting a candidate updates only

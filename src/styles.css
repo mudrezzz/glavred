@@ -3706,6 +3706,52 @@ select:focus {
   gap: 12px;
 }
 
+.post-candidate-edit-context {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.post-candidate-edit-context div,
+.post-candidate-edit-context label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.post-candidate-edit-context span,
+.post-candidate-edit-context label {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.post-candidate-edit-context b,
+.post-candidate-edit-context select {
+  color: var(--ink-800);
+  font: var(--ui-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.post-candidate-edit-warning {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--warn-tint);
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--warn-ink);
+  font: var(--ui-sm);
+}
+
 .post-candidate-edit-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4037,6 +4083,7 @@ select:focus {
   .signal-filters,
   .signal-meta-grid,
   .post-candidate-facts,
+  .post-candidate-edit-context,
   .post-candidate-edit-row,
   .project-profile-header,
   .project-profile-meta,

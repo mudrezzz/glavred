@@ -58,13 +58,13 @@ describe('usePostCandidateWorkspaceActions', () => {
 
     const actions = usePostCandidateWorkspaceActions({ setToast: vi.fn(), setWorkspace });
     actions.editCandidate(candidate, {
+      fabulaId: candidate.fabulaId,
       title: 'Edited title',
       thesis: candidate.thesis,
       audience: candidate.audience,
       value: candidate.value,
       goal: candidate.goal,
       platform: candidate.platform,
-      format: candidate.format,
       evidenceSummary: candidate.evidenceSummary,
       risks: ['Edited risk']
     });

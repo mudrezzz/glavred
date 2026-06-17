@@ -1,23 +1,39 @@
 import { useState } from 'react';
-import type { PostCandidate, PostCandidateEditPatch } from '../../domain/editorialWorkspace';
+import type {
+  Fabula,
+  PostCandidate,
+  PostCandidateEditPatch,
+  SourceSignal,
+  Topic,
+  TopicFabulaMatrixEntry
+} from '../../domain/editorialWorkspace';
+import { PostCandidateEditContext } from './PostCandidateEditContext';
 
 export function PostCandidateEditForm({
   candidate,
+  fabulas,
+  matrix,
+  signal,
+  topic,
   onCancel,
   onSave
 }: {
   candidate: PostCandidate;
+  fabulas: Fabula[];
+  matrix: TopicFabulaMatrixEntry[];
+  signal?: SourceSignal;
+  topic?: Topic;
   onCancel: () => void;
   onSave: (patch: PostCandidateEditPatch) => void;
 }) {
   const [draft, setDraft] = useState({
+    fabulaId: candidate.fabulaId,
     title: candidate.title,
     thesis: candidate.thesis,
     audience: candidate.audience,
     value: candidate.value,
     goal: candidate.goal,
     platform: candidate.platform,
-    format: candidate.format,
     evidenceSummary: candidate.evidenceSummary,
     risks: candidate.risks.join('\n')
   });
@@ -38,6 +54,14 @@ export function PostCandidateEditForm({
 
   return (
     <div className="post-candidate-edit-form">
+      <PostCandidateEditContext
+        fabulaId={draft.fabulaId}
+        fabulas={fabulas}
+        matrix={matrix}
+        signal={signal}
+        topic={topic}
+        onFabulaChange={(fabulaId) => patchDraft({ fabulaId })}
+      />
       <label>
         Название
         <input value={draft.title} onChange={(event) => patchDraft({ title: event.target.value })} />
@@ -62,10 +86,6 @@ export function PostCandidateEditForm({
         <label>
           Платформа
           <input value={draft.platform} onChange={(event) => patchDraft({ platform: event.target.value })} />
-        </label>
-        <label>
-          Формат
-          <input value={draft.format} onChange={(event) => patchDraft({ format: event.target.value })} />
         </label>
       </div>
       <label>

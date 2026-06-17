@@ -1,13 +1,23 @@
 import { useState } from 'react';
-import type { Fabula, PostCandidate, PostCandidateEditPatch, SourceSignal, Topic } from '../../domain/editorialWorkspace';
+import type {
+  Fabula,
+  PostCandidate,
+  PostCandidateEditPatch,
+  SourceSignal,
+  Topic,
+  TopicFabulaMatrixEntry
+} from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
+import { CandidateFact, candidateStatusLabel } from './PostCandidateCardParts';
 import { PostCandidateEditForm } from './PostCandidateEditForm';
 import { getCandidateRiskLevel } from './postCandidateFilters';
 
 export function PostCandidateCard({
   candidate,
   fabula,
+  fabulas,
   isSelected,
+  matrix,
   signal,
   topic,
   onApprove,
@@ -16,7 +26,9 @@ export function PostCandidateCard({
 }: {
   candidate: PostCandidate;
   fabula?: Fabula;
+  fabulas: Fabula[];
   isSelected: boolean;
+  matrix: TopicFabulaMatrixEntry[];
   signal?: SourceSignal;
   topic?: Topic;
   onApprove: (candidate: PostCandidate) => void;
@@ -38,6 +50,10 @@ export function PostCandidateCard({
           </div>
           <PostCandidateEditForm
             candidate={candidate}
+            fabulas={fabulas}
+            matrix={matrix}
+            signal={signal}
+            topic={topic}
             onCancel={() => setEditing(false)}
             onSave={(patch) => {
               onEdit(candidate, patch);
@@ -66,8 +82,6 @@ export function PostCandidateCard({
         <dl className="meta-list post-candidate-meta">
           <dt>Platform</dt>
           <dd>{candidate.platform}</dd>
-          <dt>Format</dt>
-          <dd>{candidate.format}</dd>
           <dt>Topic</dt>
           <dd>{topic?.title ?? candidate.topicId}</dd>
           <dt>Fabula</dt>
@@ -75,6 +89,8 @@ export function PostCandidateCard({
         </dl>
         <div className="post-candidate-facts">
           <CandidateFact label="Сигнал" value={signal?.title ?? candidate.sourceSignalId} />
+          <CandidateFact label="Тема" value={topic?.title ?? candidate.topicId} />
+          <CandidateFact label="Фабула" value={fabula?.title ?? candidate.fabulaId} />
           <CandidateFact label="Аудитория" value={candidate.audience} />
           <CandidateFact label="Ценность" value={candidate.value} />
           <CandidateFact label="Цель" value={candidate.goal} />
@@ -103,19 +119,4 @@ export function PostCandidateCard({
       </div>
     </article>
   );
-}
-
-function CandidateFact({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
-  return (
-    <div className={wide ? 'wide' : undefined}>
-      <span>{label}</span>
-      <b>{value}</b>
-    </div>
-  );
-}
-
-function candidateStatusLabel(candidate: PostCandidate): string {
-  if (candidate.approvalStatus === 'approved') return 'Утвержден';
-  if (candidate.approvalStatus === 'rejected') return 'Отклонен';
-  return 'Новый';
 }

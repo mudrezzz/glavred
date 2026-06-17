@@ -147,7 +147,7 @@ describe('editorial workspace domain', () => {
     expect(candidates[0].fabulaId).toBeTruthy();
     expect(candidates[0].value).toBeTruthy();
     expect(candidates[0].goal).toBeTruthy();
-    expect(candidates[0].format).toBeTruthy();
+    expect(candidates[0]).not.toHaveProperty('format');
   });
 
   it('returns no post candidates when no source signal is approved', () => {
@@ -178,13 +178,13 @@ describe('editorial workspace domain', () => {
     const workspace = createDemoWorkspace();
     const candidate = createPostCandidates(workspace)[0];
     const edited = editPostCandidate(candidate, {
+      fabulaId: workspace.fabulas[1].id,
       title: 'Edited candidate',
       thesis: 'Edited thesis',
       audience: candidate.audience,
       value: 'Edited value',
       goal: candidate.goal,
       platform: candidate.platform,
-      format: candidate.format,
       evidenceSummary: candidate.evidenceSummary,
       risks: ['Проверить edited risk']
     });
@@ -192,6 +192,7 @@ describe('editorial workspace domain', () => {
     const approvedAttempt = approvePostCandidate(rejected);
 
     expect(edited.approvalStatus).toBe('draft');
+    expect(edited.fabulaId).toBe(workspace.fabulas[1].id);
     expect(edited.title).toBe('Edited candidate');
     expect(edited.value).toBe('Edited value');
     expect(rejected.approvalStatus).toBe('rejected');
@@ -213,13 +214,13 @@ describe('editorial workspace domain', () => {
     const workspace = createDemoWorkspace();
     const candidate = approvePostCandidate(createPostCandidates(workspace)[1]);
     const edited = editPostCandidate(candidate, {
+      fabulaId: workspace.fabulas[1].id,
       title: 'Approved edited candidate title',
       thesis: candidate.thesis,
       audience: candidate.audience,
       value: 'Edited approved value',
       goal: candidate.goal,
       platform: candidate.platform,
-      format: candidate.format,
       evidenceSummary: candidate.evidenceSummary,
       risks: candidate.risks
     });
@@ -228,6 +229,7 @@ describe('editorial workspace domain', () => {
     expect(edited.approvalStatus).toBe('approved');
     expect(insight.title).toBe('Approved edited candidate title');
     expect(insight.authorPosition).toBe('Edited approved value');
+    expect(insight.fabulaId).toBe(workspace.fabulas[1].id);
   });
 
   it('transitions source signals through approve, reject, archive, and correction states', () => {

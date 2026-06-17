@@ -42,3 +42,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-15-feature-entrypoints-stay-thin-and-domain-transitions-are-role-owned.md](2026-06-15-feature-entrypoints-stay-thin-and-domain-transitions-are-role-owned.md)
 - [2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md](2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md)
 - [2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md](2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md)
+- [2026-06-16-post-candidate-uses-fabula-not-format.md](2026-06-16-post-candidate-uses-fabula-not-format.md)

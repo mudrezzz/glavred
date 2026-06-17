@@ -132,10 +132,12 @@ turning the product into generic content generation.
 - `ArchiveRecords`: stores accepted historical posts and long-form materials with
   provenance and evidence policy.
 - `PostCandidateAssembly`: combines an approved source signal with topic, fabula,
-  audience, value, goal, platform, format, thesis, evidence summary, confidence, and
-  risks before a post concept is approved. Candidate filtering, grouping, and inline
-  edit state are UI/application concerns under `src/features/signals`; edit/reject
-  transitions remain domain-level post-candidate operations.
+  audience, value, goal, platform, thesis, evidence summary, confidence, and risks
+  before a post concept is approved. It does not own `format`; fabula is the
+  candidate's editorial shape, while format remains a broadcast-planning concern.
+  Candidate filtering, grouping, and inline edit state are UI/application concerns
+  under `src/features/signals`; edit/reject transitions remain domain-level
+  post-candidate operations.
 - `InsightScoring`: turns an approved candidate, or a reviewed source signal fallback,
   into an insight card with relevance, urgency, banality risk, fact gaps, topic, fabula,
   and suggested author position.
@@ -285,7 +287,13 @@ fixture, and feature files. Architecture smoke now tracks current large-file bas
 - `src/features/signals/SignalsTabs.tsx <= 80`
 - `src/features/signals/PostCandidatesPreviewTab.tsx <= 120`
 - `src/features/signals/PostCandidateCard.tsx <= 130`
+- `src/features/signals/PostCandidateCardParts.tsx <= 40`
+- `src/features/signals/PostCandidatesToolbar.tsx <= 120`
+- `src/features/signals/PostCandidateGroupList.tsx <= 110`
+- `src/features/signals/PostCandidateEditForm.tsx <= 110`
+- `src/features/signals/PostCandidateEditContext.tsx <= 70`
 - `src/features/signals/usePostCandidatesController.ts <= 60`
+- `src/features/signals/postCandidateFilters.ts <= 80`
 - `src/application/postCandidateService.ts <= 120`
 - `src/application/editorialServices.ts <= 20`
 - `src/domain/editorial-model/transitions.ts <= 20`
@@ -337,7 +345,10 @@ role-owned files such as:
 - `src/features/signals/useSignalsController.ts`, `SignalsHeader.tsx`,
   `SignalsTabs.tsx`, `RadarsTab.tsx`, `RadarCard.tsx`, `FoundSignalsTab.tsx`,
   `SourceSignalCard.tsx`, `PostCandidatesPreviewTab.tsx`, `PostCandidateCard.tsx`,
-  `usePostCandidatesController.ts`, `RadarEditor.tsx`, and `SignalsSidePanel.tsx`.
+  `PostCandidateCardParts.tsx`, `PostCandidatesToolbar.tsx`,
+  `PostCandidateGroupList.tsx`, `PostCandidateEditForm.tsx`,
+  `PostCandidateEditContext.tsx`, `usePostCandidatesController.ts`,
+  `postCandidateFilters.ts`, `RadarEditor.tsx`, and `SignalsSidePanel.tsx`.
 
 Stateful feature orchestration belongs in feature-local hooks, not entrypoints.
 After Slice 1.5.25, `AuthorMemoryView` composes the active memory tab, side panel,
@@ -479,8 +490,9 @@ Current implemented production contracts:
 - Future `RadarDefinition`: source, scope, acceptance policy, trigger mode, status,
   last run, and notes.
 - `PostCandidate`: candidate assembly of signal, topic, fabula, audience, value, goal,
-  platform, format, title, thesis, evidence summary, confidence, risks, and approval
-  status.
+  platform, title, thesis, evidence summary, confidence, risks, and approval status.
+  Legacy persisted candidate `format` values are ignored during workspace
+  normalization.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
 - `ContentPlanItem`: insight, platform, date, priority, format, expected effect,

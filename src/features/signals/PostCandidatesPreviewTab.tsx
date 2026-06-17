@@ -50,6 +50,7 @@ export function PostCandidatesPreviewTab({
             <PostCandidateGroupList
               fabulas={workspace.fabulas}
               groups={candidatesController.groups}
+              matrix={workspace.topicFabulaMatrix}
               selectedCandidateId={candidatesController.selectedCandidateId}
               signals={workspace.sourceSignals}
               topics={workspace.topics}
@@ -61,6 +62,7 @@ export function PostCandidatesPreviewTab({
             <PostCandidateRows
               candidates={candidatesController.filteredCandidates}
               fabulas={workspace.fabulas}
+              matrix={workspace.topicFabulaMatrix}
               selectedCandidateId={candidatesController.selectedCandidateId}
               signals={workspace.sourceSignals}
               topics={workspace.topics}

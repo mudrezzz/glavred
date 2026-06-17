@@ -190,8 +190,8 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     `Фильтры отбора`. Expand a found signal to see deterministic filter evaluations
     for author, audience, positioning, goals, forbidden topics, and topics.
 19. Open `Кандидаты постов`, use the filter/search/group controls, optionally
-    `Редактировать` or `Отклонить` a deterministic concept, and click `Утвердить` on
-    one card.
+    `Редактировать` a concept while checking its readonly signal/topic context and
+    editable fabula, or `Отклонить` a weak concept, then click `Утвердить` on one card.
 20. Click `Собрать инсайт`; the insight should use the approved candidate's title,
     topic, fabula, value, and risks.
 21. Click `В план`.

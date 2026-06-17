@@ -124,7 +124,7 @@ The section has three internal tabs:
   text, and duplicate risk. Expand a signal to see radar provenance, date, finding,
   evidence, duplicate search note, author correction, and actions.
 - `Кандидаты постов`: deterministic post concepts assembled from approved signals,
-  active topics/fabulas, audience, value, goal, platform, and format. Approve one
+  active topics/fabulas, audience, value, goal, and platform. Approve one
   candidate before building the insight when you want the candidate concept to drive the
   next step.
 
@@ -162,8 +162,11 @@ the signal.
 Approved signals become available in `Кандидаты постов`. The current implementation
 shows 2-3 deterministic concepts and lets you filter by signal/status/topic/risk,
 search by title/thesis/value/evidence, switch between list and grouped views, edit a
-candidate inline, reject it, or approve it. Only an approved candidate can drive
-`Собрать инсайт`; rejected or draft candidates stay out of the production flow.
+candidate inline, reject it, or approve it. Candidate edit shows the readonly source
+signal and suggested topic, and lets you change the fabula. Candidate `format` is not
+editable because the fabula already describes the editorial shape; plan formats belong
+to the broadcast grid. Only an approved candidate can drive `Собрать инсайт`; rejected
+or draft candidates stay out of the production flow.
 
 ### Signals UI after Slice 1.5.2
 

@@ -27,7 +27,9 @@ Responsibilities:
 - `Сигналы`: finds and reviews raw material from radars, author memory, archives,
   external sources, and manual input.
 - `Кандидаты постов`: assembles potential post concepts from a signal, topic, fabula,
-  audience, value, goal, platform, and format.
+  audience, value, goal, and platform. Candidate format is intentionally absent
+  because fabula owns the editorial shape; broadcast settings still own plan item
+  formats.
 - `План`: describes publishing demand and calendar status. It should not invent
   material without signals and candidates.
 - `Фабула поста`: the approved concept/brief for one selected slot and candidate.
@@ -58,8 +60,7 @@ The `Сигналы` section should have three internal tabs:
    - approve, reject, archive, or correct;
    - corrections become author-memory evidence.
 3. `Кандидаты постов`
-   - combinations of `Signal + Topic + Fabula + Audience + Value + Goal + Platform +
-     Format`;
+   - combinations of `Signal + Topic + Fabula + Audience + Value + Goal + Platform`;
    - the first implementation generates 2-3 deterministic candidates from approved
      signals and active topic/fabula pairs;
    - author can filter, group, edit, reject, and approve candidates;
