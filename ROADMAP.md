@@ -2216,6 +2216,67 @@ Status:
 - Risks:
   - Calendar settings can become platform-specific; keep platform entities deferred.
 
+### Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings
+
+- Status: Done
+- Goal: Fix the Slice 1.8 planning UX so `План` follows the same cabinet list,
+  tabs, actions, row, warning, and calendar-setting rules as the rest of the product.
+- User value: The author can configure the grid visually, filter many slots, inspect
+  candidate context, and edit plan-specific fields without losing orientation.
+- Scope:
+  - Move `Сетка / Настройка сетки` to canonical `.tabs .tab` under the plan header.
+  - Remove centered/floating toolbar actions; primary actions align with canonical
+    header or row action areas.
+  - Add a filter card above broadcast slots with status, platform, topic, fabula,
+    risk, search, and list/group toggle.
+  - Stabilize broadcast rows so long titles/topics/fabulas wrap inside the main
+    content area without horizontal drift.
+  - Expand slot details to show candidate/source context: signal, topic, fabula,
+    audience, value, goal, thesis/evidence, risks, and plan date/time/platform.
+  - Keep edit mode oriented with readonly signal/topic/fabula/candidate context and
+    editable plan fields only.
+  - Replace weekday toggles in settings with a mini calendar for week/month/quarter
+    where clicking a day selects/unselects a publish slot.
+  - Show selected/target/remaining/extra slot counts while editing calendar settings.
+  - Fix warning contrast in the right panel and enforce action gaps.
+- Out of scope:
+  - Drag-and-drop calendar.
+  - Real AI planning.
+  - Bulk plan actions.
+  - Full per-slot candidate binding beyond showing the current linked/derived concept.
+- Implementation notes:
+  - Reuse the cabinet list pattern from `ImportQueueToolbar` and post candidates.
+  - Store explicit `publishSlots` in `ContentPlanSettings`; keep weekday/time fields as
+    legacy/default fallback for old workspaces.
+  - Shared candidate detail display can be derived from the approved `postCandidate`,
+    generated candidates, insight, source signal, topic, and fabula.
+- Architecture impact:
+  - Planning UI remains under `src/features/plan` with separate toolbar, row detail,
+    row edit, calendar settings, and filters modules.
+  - Domain schedule helpers own publish-slot normalization and calendar generation.
+  - Design smoke gains plan-specific checks for tabs, action gaps, row overflow,
+    floating toolbar actions, and warning contrast.
+- Tests:
+  - Domain/application tests for explicit publish slots and fallback days/times.
+  - UI tests for tabs placement, filters, grouping, row layout, slot detail context,
+    edit context, mini calendar selection, and action classes.
+  - Design/visual smoke must cover `План`.
+- Docs:
+  - Update SAO, developer guide, user guide, wiki/demo notes with plan UX rules and
+    mini-calendar settings behavior.
+- Demo impact:
+  - Demo shows monthly Telegram plan settings with selected publish dates and visible
+    deficit/proficit counters.
+- Acceptance criteria:
+  - `План` uses canonical tabs below the header.
+  - Broadcast list has filter card and stable rows. Done.
+  - Expanded/edit slot surfaces do not hide source/candidate context. Done.
+  - Settings use a clickable mini calendar with target/remaining feedback. Done.
+  - Design smoke would fail on the reported tab/action/overflow/contrast regressions. Done.
+- Risks:
+  - `PlanSettingsPanel` and `BroadcastGridRow` are close enough to smoke limits that
+    field groups must be split before adding behavior.
+
 ### Slice 1.9: Calendar View for Broadcast Plan
 
 - Status: Ready
@@ -2358,6 +2419,9 @@ Status:
 - Slice 1.6: First Real Post Candidate Assemblies. Completed 2026-06-16.
 - Slice 1.7: Candidate List UX Parity and Review Actions. Completed 2026-06-16.
 - Slice 1.7.1: Candidate Format Cleanup and Edit Context. Completed 2026-06-16.
+- Slice 1.8: Broadcast Grid Settings. Completed 2026-06-17.
+- Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings. Completed
+  2026-06-17.
 
 ## Blocked Items
 
@@ -2378,4 +2442,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.8: Broadcast Grid Settings`.
+Resume product work with `Slice 1.9: Calendar View for Broadcast Plan`.

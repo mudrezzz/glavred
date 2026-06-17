@@ -98,7 +98,11 @@ This is a useful compatibility prototype, but it is not the final planning model
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
 the first `Кандидаты постов` review layer with filters, search, grouping, edit, reject,
 and approve actions. `Настройка сетки` creates the publish-window frame and shows
-available candidates versus approved concepts. Future slices can add candidate variant
+available candidates versus approved concepts. Slice 1.8.1 makes the demo plan screen
+match the same cabinet UX as the review queues: filters/search and `Список / Группы`
+sit above broadcast slots, slot rows stay in the main content column, expanded slots
+show the candidate/source context, and `Настройка сетки` uses a clickable
+mini-calendar for week/month/quarter publish-slot selection. Future slices can add candidate variant
 requests and then turn `План` into a real calendar with readiness statuses.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
@@ -198,6 +202,8 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 21. Click `В план`.
 22. In `План`, open `Настройка сетки` if you want to change period, tempo, days/times,
     candidate limits, platform, or signal policy; save settings before rebuilding.
+    Slice 1.8.1 note: select dates directly in the mini-calendar; the counter shows
+    target, selected, remaining, or extra slots while you click.
 23. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
 24. Click `Подготовить фабулу поста`.

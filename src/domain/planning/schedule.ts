@@ -2,6 +2,10 @@ import { getPlanningHorizonDays } from './settings';
 import type { ContentPlanSettings, PublishWindow } from './types';
 
 export function createPublishWindows(settings: ContentPlanSettings, startDate = new Date()): PublishWindow[] {
+  if (settings.publishSlots.length > 0) {
+    return settings.publishSlots.map((slot) => ({ date: slot.date, time: slot.time }));
+  }
+
   const horizonDays = getPlanningHorizonDays(settings.period);
   const start = toUtcDate(startDate);
   const windows: PublishWindow[] = [];
@@ -20,6 +24,10 @@ export function createPublishWindows(settings: ContentPlanSettings, startDate = 
 }
 
 export function getBroadcastSlotCount(settings: ContentPlanSettings, startDate = new Date()): number {
+  if (settings.publishSlots.length > 0) {
+    return settings.publishSlots.length;
+  }
+
   const horizonDays = getPlanningHorizonDays(settings.period);
   const targetSlots = Math.max(1, Math.round((settings.postsPerWeek * horizonDays) / 7));
   const availableWindows = createPublishWindows(settings, startDate).length;

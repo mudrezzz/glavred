@@ -37,7 +37,8 @@ describe('planning service', () => {
       period: 'week',
       postsPerWeek: 2,
       publishingDays: [3, 5],
-      publishingTimes: ['11:00']
+      publishingTimes: ['11:00'],
+      publishSlots: []
     });
     const items = createBroadcastPlan({ ...workspace, contentPlanSettings: settings }, startDate);
 
@@ -55,6 +56,7 @@ describe('planning service', () => {
       postsPerWeek: 3,
       publishingDays: [3, 5],
       publishingTimes: ['11:00'],
+      publishSlots: [],
       minCandidatesPerSlot: 2,
       maxCandidatesPerSlot: 3
     });
@@ -73,5 +75,22 @@ describe('planning service', () => {
     expect(summary.approvedConceptCount).toBe(1);
     expect(summary.minNeededCandidates).toBe(4);
     expect(summary.status).toBe('deficit');
+  });
+
+  it('uses explicit calendar publish slots before recurring day rules', () => {
+    const workspace = createDemoWorkspace();
+    const settings = normalizeContentPlanSettings({
+      ...workspace.contentPlanSettings,
+      period: 'week',
+      publishingDays: [1],
+      publishingTimes: ['11:00'],
+      publishSlots: [
+        { date: '2026-06-20', time: '09:00' },
+        { date: '2026-06-21', time: '12:30' }
+      ]
+    });
+    const items = createBroadcastPlan({ ...workspace, contentPlanSettings: settings }, startDate);
+
+    expect(items.map((item) => `${item.date} ${item.time}`)).toEqual(['2026-06-20 09:00', '2026-06-21 12:30']);
   });
 });

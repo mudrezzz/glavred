@@ -13,6 +13,11 @@ creates deterministic review cards from approved signals with filtering, search,
 grouping, edit/reject, and approve actions; the current grid remains a working
 prototype for slot approval and downstream production.
 
+Slice 1.8.1 note: `План` now follows the same cabinet list pattern as review queues.
+Filters/search and `Список / Группы` sit above slots, expanded slots keep candidate
+context visible, and `Настройка сетки` uses a clickable mini-calendar for selecting
+explicit publish slots before rebuilding.
+
 ![Утвержденная фабула](assets/screenshots/05-approved-post-brief.png)
 
 ## Сигналы

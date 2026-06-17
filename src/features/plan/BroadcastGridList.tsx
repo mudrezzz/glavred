@@ -6,7 +6,6 @@ export function BroadcastGridList({
   items,
   workspace,
   warnings,
-  onGenerate,
   onItemChange,
   onApprove,
   onBrief
@@ -14,7 +13,6 @@ export function BroadcastGridList({
   items: ContentPlanItem[];
   workspace: WorkspaceState;
   warnings: PlanWeightWarning[];
-  onGenerate: () => void;
   onItemChange: (item: ContentPlanItem) => void;
   onApprove: (itemId: string) => void;
   onBrief: (item: ContentPlanItem) => void;
@@ -37,9 +35,6 @@ export function BroadcastGridList({
             {workspace.contentPlanSettings.publishingTimes.join(', ')}
           </p>
         </div>
-        <button className="btn btn-sec btn-sm" type="button" onClick={onGenerate}>
-          Пересобрать сетку
-        </button>
         <span className={`validation-run-state ${activeWarnings.length > 0 ? 'stale' : 'fresh'}`}>
           {activeWarnings.length > 0 ? `${activeWarnings.length} предупрежд.` : 'OK'}
         </span>

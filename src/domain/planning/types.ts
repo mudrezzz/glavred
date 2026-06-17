@@ -48,6 +48,7 @@ export interface ContentPlanSettings {
   planningHorizonDays: number;
   publishingDays: number[];
   publishingTimes: string[];
+  publishSlots: PublishSlot[];
   minCandidatesPerSlot: number;
   maxCandidatesPerSlot: number;
   defaultPlatform: string;
@@ -63,6 +64,11 @@ export interface PlanWeightWarning {
 }
 
 export interface PublishWindow {
+  date: string;
+  time: string;
+}
+
+export interface PublishSlot {
   date: string;
   time: string;
 }

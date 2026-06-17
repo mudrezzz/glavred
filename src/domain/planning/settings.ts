@@ -1,4 +1,4 @@
-import type { ContentPlanSettings, PlanningPeriod, SignalSelectionPolicy } from './types';
+import type { ContentPlanSettings, PlanningPeriod, PublishSlot, SignalSelectionPolicy } from './types';
 
 const PERIOD_DAYS: Record<PlanningPeriod, number> = {
   week: 7,
@@ -15,6 +15,7 @@ export const DEFAULT_CONTENT_PLAN_SETTINGS: ContentPlanSettings = {
   planningHorizonDays: PERIOD_DAYS.month,
   publishingDays: [1, 3, 5],
   publishingTimes: ['10:00'],
+  publishSlots: [],
   minCandidatesPerSlot: 1,
   maxCandidatesPerSlot: 2,
   defaultPlatform: 'Telegram',
@@ -33,6 +34,7 @@ export function normalizeContentPlanSettings(
   const postsPerWeek = clampInteger(saved?.postsPerWeek, fallback.postsPerWeek, 1, 21);
   const publishingDays = normalizePublishingDays(saved?.publishingDays, fallback.publishingDays);
   const publishingTimes = normalizePublishingTimes(saved?.publishingTimes, fallback.publishingTimes);
+  const publishSlots = normalizePublishSlots(saved?.publishSlots, publishingTimes);
   const minCandidatesPerSlot = clampInteger(saved?.minCandidatesPerSlot, fallback.minCandidatesPerSlot, 1, 10);
   const maxCandidatesPerSlot = Math.max(
     minCandidatesPerSlot,
@@ -51,6 +53,7 @@ export function normalizeContentPlanSettings(
     planningHorizonDays: getPlanningHorizonDays(period),
     publishingDays,
     publishingTimes,
+    publishSlots,
     minCandidatesPerSlot,
     maxCandidatesPerSlot,
     defaultPlatform,
@@ -81,6 +84,23 @@ function normalizePublishingDays(days: number[] | undefined, fallback: number[])
 function normalizePublishingTimes(times: string[] | undefined, fallback: string[]): string[] {
   const normalized = Array.from(new Set((times ?? []).map((time) => time.trim()).filter(isValidTime)));
   return normalized.length > 0 ? normalized : fallback;
+}
+
+function normalizePublishSlots(slots: PublishSlot[] | undefined, fallbackTimes: string[]): PublishSlot[] {
+  const normalized = (slots ?? [])
+    .filter((slot) => typeof slot?.date === 'string' && isValidDate(slot.date))
+    .map((slot) => ({
+      date: slot.date,
+      time: isValidTime(slot.time) ? slot.time : fallbackTimes[0] ?? '10:00'
+    }));
+
+  const unique = new Map<string, PublishSlot>();
+  normalized.forEach((slot) => unique.set(slot.date, slot));
+  return Array.from(unique.values()).sort((left, right) => left.date.localeCompare(right.date));
+}
+
+function isValidDate(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(new Date(`${date}T00:00:00Z`).getTime());
 }
 
 function isValidTime(time: string): boolean {

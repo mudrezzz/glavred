@@ -205,6 +205,10 @@ The checks also require existing radar edit mode to render inside the edited
 `data-testid="radar-row"` and require radar rule/source value controls to use multiline
 `textarea` fields. Creating a new radar may use a temporary top-of-list draft, but
 editing an existing radar must stay in-place.
+For `План`, the same command checks canonical tabs, filter-card placement before the
+broadcast list, row overflow, action spacing, and readable warning contrast. A
+centered floating list action, a slot card in the side panel, or low-contrast warning
+text is a design-system failure.
 Use it whenever a slice changes a large operational screen, not only when screenshots
 change.
 
@@ -370,6 +374,19 @@ actions`. `Кандидаты постов` follows the same UX rule as
 in `PostCandidateEditForm`, and local filter/group helpers in `postCandidateFilters`.
 Do not add new large-list hero/summary blocks above the filter card. Primary row
 actions are red only for the main approval/save step; secondary row actions stay white.
+
+After Slice 1.8.1, `План` follows the same cabinet-list contract. Broadcast slots must
+start with a filter card, full-width search, list/group tabs, and framed rows in
+`.broadcast-main`; slot cards must not render in `.broadcast-aside`. Expanded and edit
+states must keep readonly candidate context visible: source signal, topic, fabula,
+audience, value, and goal. Plan edit fields may change schedule/slot metadata, but
+must not hide the candidate/source context that explains what is being scheduled.
+
+Planning settings use the mini-calendar as the visible source of publish-slot choices.
+Clicking a day selects/unselects an explicit `publishSlots` date. Period changes switch
+the visible horizon: week, month, or quarter. `publishingDays` and `publishingTimes`
+remain normalized fallback/default fields for older workspaces and generated slots,
+but new UX should not reintroduce abstract weekday toggle bars as the primary control.
 
 After Slice 1.7.1, `PostCandidate` does not own `format`. Fabula is the candidate's
 editorial shape; broadcast grid settings and `ContentPlanItem` own plan formats.

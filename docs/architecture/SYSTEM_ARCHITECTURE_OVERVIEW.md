@@ -142,8 +142,9 @@ turning the product into generic content generation.
   into an insight card with relevance, urgency, banality risk, fact gaps, topic, fabula,
   and suggested author position.
 - `ContentPlanning`: describes broadcast demand and calendar status: tempo, period,
-  publishing days/times, candidate count requirements, platform/date/time/topic/
-  fabula, approval status, manual override state, and advisory conflicts.
+  explicit publish slots, fallback publishing days/times, candidate count
+  requirements, platform/date/time/topic/fabula, approval status, manual override
+  state, and advisory conflicts.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -199,6 +200,9 @@ Target structure:
 - `src/features/signals`: radar setup, found signals, signal review, and post
   candidate entry points.
 - `src/features/plan`: broadcast grid, planning settings, and future calendar UI.
+  Plan-specific filter/group/edit/calendar state stays in role-owned plan modules.
+  The current settings UI owns an explicit mini-calendar for selected publish slots;
+  recurring day/time fields are fallback defaults, not the visible planning control.
 - `src/features/briefing`: post brief and concrete post-fabula approval workflow.
 - `src/features/editing`: draft, editorial checks, editor notes, and final text
   approval.

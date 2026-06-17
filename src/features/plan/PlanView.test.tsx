@@ -5,7 +5,54 @@ import type { ContentPlanItem, ContentPlanSettings } from '../../domain/editoria
 import { PlanView } from './PlanView';
 
 describe('PlanView', () => {
-  it('shows grid settings, saves explicit settings, and keeps candidate summary visible', () => {
+  it('uses canonical plan tabs below the header and keeps the grid filter card in main content', () => {
+    const workspace = createDemoWorkspace();
+
+    renderPlan(workspace);
+
+    const tabs = screen.getByRole('tablist', { name: /План/i });
+    expect(tabs).toHaveClass('tabs');
+    expect(within(tabs).getAllByRole('tab')[0]).toHaveClass('tab');
+
+    const filterCard = screen.getByTestId('broadcast-filter-toolbar');
+    const grid = screen.getByTestId('broadcast-grid');
+    expect(filterCard.closest('.broadcast-main')).toBeInTheDocument();
+    expect(grid.closest('.broadcast-main')).toBeInTheDocument();
+    expect(grid.closest('.broadcast-aside')).toBeNull();
+  });
+
+  it('filters and groups broadcast slots without moving rows to the side panel', () => {
+    const workspace = createDemoWorkspace();
+
+    renderPlan(workspace);
+
+    fireEvent.change(screen.getByLabelText(/Поиск/i), { target: { value: 'Разбор мифа' } });
+    expect(within(screen.getByTestId('broadcast-grid')).getAllByText(/Разбор мифа/i).length).toBeGreaterThan(0);
+    expect(within(screen.getByTestId('broadcast-grid')).queryByText(/Исследовательская заметка/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Поиск/i), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('tab', { name: /Группы/i }));
+    expect(screen.getByRole('tablist', { name: /Вид сетки/i }).closest('.broadcast-main')).toBeInTheDocument();
+    expect(screen.getByText(/По дате/i)).toBeInTheDocument();
+  });
+
+  it('shows full candidate context in the opened slot and readonly context in edit mode', () => {
+    const workspace = createDemoWorkspace();
+
+    renderPlan(workspace);
+
+    const grid = screen.getByTestId('broadcast-grid');
+    expect(within(grid).getByText(/Сигнал/i)).toBeInTheDocument();
+    expect(within(grid).getAllByText(/^Тема$/i).length).toBeGreaterThan(0);
+    expect(within(grid).getAllByText(/^Фабула$/i).length).toBeGreaterThan(0);
+    expect(within(grid).getAllByText(/^Доказательство$/i).length).toBeGreaterThan(0);
+
+    fireEvent.click(within(grid).getByRole('button', { name: /^Редактировать$/i }));
+    expect(within(grid).getByLabelText(/Контекст кандидата/i)).toBeInTheDocument();
+    expect(within(grid).getByLabelText(/Заголовок/i)).toBeInTheDocument();
+  });
+
+  it('shows calendar settings, saves explicit slots, and keeps candidate summary visible', () => {
     const workspace = createDemoWorkspace();
     const onSettingsSave = vi.fn();
 
@@ -20,6 +67,11 @@ describe('PlanView', () => {
     fireEvent.change(screen.getByLabelText(/Темп/i), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText(/Площадка/i), { target: { value: 'LinkedIn' } });
     fireEvent.change(screen.getByLabelText(/Время публикаций/i), { target: { value: '09:00, 18:30' } });
+    const calendarDay = screen.getAllByRole('button', { pressed: false }).find((button) =>
+      button.classList.contains('publish-calendar-day') && !button.hasAttribute('disabled')
+    );
+    expect(calendarDay).toBeDefined();
+    fireEvent.click(calendarDay as HTMLElement);
     fireEvent.click(screen.getByRole('button', { name: /Сохранить настройку/i }));
 
     expect(onSettingsSave).toHaveBeenCalledWith(
@@ -28,20 +80,10 @@ describe('PlanView', () => {
         postsPerWeek: 2,
         defaultPlatform: 'LinkedIn',
         publishingTimes: ['09:00', '18:30'],
-        signalSelectionPolicy: 'hitl-only'
+        signalSelectionPolicy: 'hitl-only',
+        publishSlots: expect.arrayContaining([expect.objectContaining({ time: '09:00' })])
       })
     );
-  });
-
-  it('keeps broadcast cards in the main plan area and shows date with time', () => {
-    const workspace = createDemoWorkspace();
-
-    renderPlan(workspace);
-
-    const grid = screen.getByTestId('broadcast-grid');
-    expect(grid.closest('.broadcast-main')).toBeInTheDocument();
-    expect(grid.closest('.broadcast-aside')).toBeNull();
-    expect(within(grid).getAllByText(/10:00/i).length).toBeGreaterThan(0);
   });
 });
 

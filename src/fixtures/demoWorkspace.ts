@@ -69,6 +69,14 @@ export function createDemoWorkspace(): WorkspaceState {
       planningHorizonDays: 30,
       publishingDays: [1, 3, 5],
       publishingTimes: ['10:00'],
+      publishSlots: [
+        { date: '2026-06-17', time: '10:00' },
+        { date: '2026-06-19', time: '10:00' },
+        { date: '2026-06-22', time: '10:00' },
+        { date: '2026-06-24', time: '10:00' },
+        { date: '2026-06-26', time: '10:00' },
+        { date: '2026-06-29', time: '10:00' }
+      ],
       minCandidatesPerSlot: 1,
       maxCandidatesPerSlot: 2,
       defaultPlatform: 'Telegram',

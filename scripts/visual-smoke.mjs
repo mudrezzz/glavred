@@ -118,6 +118,68 @@ function assertSignalsLayout(result) {
   }
 }
 
+function assertPlanLayout(result) {
+  const failures = [];
+
+  if (!result.filterBeforeGrid) failures.push(`${result.viewport}: plan filter card is not before the broadcast list.`);
+  if (!result.rowCount) failures.push(`${result.viewport}: no broadcast rows rendered.`);
+  if (result.pageOverflow > 2) failures.push(`${result.viewport}: plan page overflows horizontally by ${result.pageOverflow}px.`);
+  if (result.mainSideGap !== null && result.mainSideGap < 18) failures.push(`${result.viewport}: plan main/side columns are too close (${result.mainSideGap}px).`);
+  if (result.maxRowOverflow > 2) failures.push(`${result.viewport}: broadcast row overflows by ${result.maxRowOverflow}px.`);
+  if (result.actionMinGap !== null && result.actionMinGap < 8) failures.push(`${result.viewport}: broadcast actions are too close (${result.actionMinGap}px).`);
+  if (!result.calendarExists) failures.push(`${result.viewport}: plan settings mini-calendar is missing.`);
+  if (!result.calendarHasSelectedDay) failures.push(`${result.viewport}: plan settings calendar has no selected publish day.`);
+
+  if (failures.length) {
+    throw new Error(`Plan visual smoke failed:\n- ${failures.join('\n- ')}`);
+  }
+}
+
+async function assertPlanAtViewport(page, viewport, viewportName) {
+  await page.setViewportSize(viewport);
+  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /План/i }).click();
+  await page.locator('[data-testid="broadcast-filter-toolbar"]').waitFor();
+
+  const gridResult = await page.evaluate((name) => {
+    const filter = document.querySelector('[data-testid="broadcast-filter-toolbar"]');
+    const grid = document.querySelector('[data-testid="broadcast-grid"]');
+    const rows = Array.from(document.querySelectorAll('.broadcast-row'));
+    const main = document.querySelector('.broadcast-main');
+    const side = document.querySelector('.broadcast-aside');
+    const mainRect = main?.getBoundingClientRect();
+    const sideRect = side?.getBoundingClientRect();
+    const actionButtons = Array.from(document.querySelectorAll('.broadcast-row-actions button'));
+    const actionRects = actionButtons.map((element) => element.getBoundingClientRect()).sort((a, b) => a.top - b.top || a.left - b.left);
+    const gaps = actionRects
+      .slice(1)
+      .map((rect, index) => ({ rect, prev: actionRects[index] }))
+      .filter(({ rect, prev }) => Math.abs(rect.top - prev.top) < 8)
+      .map(({ rect, prev }) => Math.round(rect.left - prev.right));
+
+    return {
+      viewport: name,
+      filterBeforeGrid: Boolean(filter && grid && filter.getBoundingClientRect().top < grid.getBoundingClientRect().top),
+      rowCount: rows.length,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      mainSideGap: mainRect && sideRect && Math.abs(mainRect.top - sideRect.top) < 120 ? Math.round(sideRect.left - mainRect.right) : null,
+      maxRowOverflow: rows.reduce((max, row) => Math.max(max, row.scrollWidth - row.clientWidth), 0),
+      actionMinGap: gaps.length ? Math.min(...gaps) : null
+    };
+  }, viewportName);
+
+  await page.getByRole('tab', { name: /Настройка сетки/i }).click();
+  await page.locator('.publish-calendar').waitFor();
+  const settingsResult = await page.evaluate(() => ({
+    calendarExists: Boolean(document.querySelector('.publish-calendar')),
+    calendarHasSelectedDay: Boolean(document.querySelector('.publish-calendar-day.selected'))
+  }));
+
+  assertPlanLayout({ ...gridResult, ...settingsResult });
+}
+
 async function assertSignalsAtViewport(page, viewport, viewportName) {
   await page.setViewportSize(viewport);
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
@@ -375,6 +437,8 @@ async function main() {
     await assertSignalsAtViewport(page, { width: 1440, height: 1024 }, 'desktop');
     await assertSignalsAtViewport(page, { width: 1180, height: 820 }, 'laptop');
     await assertSignalsAtViewport(page, { width: 390, height: 760 }, 'mobile');
+    await assertPlanAtViewport(page, { width: 1440, height: 1024 }, 'desktop');
+    await assertPlanAtViewport(page, { width: 1180, height: 820 }, 'laptop');
 
     await browser.close();
   } catch (error) {

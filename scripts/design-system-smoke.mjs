@@ -63,7 +63,12 @@ function sharedDesignChecks() {
 
   function cardPaddingFailures() {
     const failures = [];
-    const selectors = ['.project-profile-header', '.signals-section-header', '.panel', '.card:not(.signal-card):not(.radar-card)'];
+    const selectors = [
+      '.project-profile-header',
+      '.signals-section-header',
+      '.panel',
+      '.card:not(.signal-card):not(.radar-card):not(.broadcast-row)'
+    ];
     document.querySelectorAll(selectors.join(',')).forEach((element) => {
       const rect = element.getBoundingClientRect();
       if (rect.width < 80 || rect.height < 40) return;
@@ -129,7 +134,7 @@ function sharedDesignChecks() {
   function actionGapFailures() {
     const failures = [];
     document
-      .querySelectorAll('.row-actions, .inline-actions, .composer-actions, .entity-actions-footer, .source-row-actions')
+      .querySelectorAll('.row-actions, .inline-actions, .entity-actions, .composer-actions, .entity-actions-footer, .source-row-actions')
       .forEach((group) => {
         const buttons = group.querySelectorAll('button, .btn');
         if (buttons.length < 2) return;
@@ -153,6 +158,25 @@ function sharedDesignChecks() {
     ...mainContentOverflowFailures(),
     ...actionGapFailures()
   ];
+}
+
+function colorToRgb(value) {
+  const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function contrastRatio(foreground, background) {
+  function luminance([red, green, blue]) {
+    const channels = [red, green, blue].map((channel) => {
+      const value = channel / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  }
+
+  const lighter = Math.max(luminance(foreground), luminance(background));
+  const darker = Math.min(luminance(foreground), luminance(background));
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 async function assertCommonDesign(page, label) {
@@ -318,6 +342,80 @@ async function assertSignalsDesign(page, viewportName) {
   failIfAny(`${viewportName} signals design`, [...baseFailures, ...specificFailures]);
 }
 
+async function assertPlanDesign(page) {
+  await page.locator('[data-testid="broadcast-filter-toolbar"]').waitFor();
+  const baseFailures = await page.evaluate(sharedDesignChecks);
+  const planFailures = await page.evaluate(() => {
+    const failures = [];
+    function colorToRgb(value) {
+      const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+    }
+    function contrastRatio(foreground, background) {
+      function luminance([red, green, blue]) {
+        const channels = [red, green, blue].map((channel) => {
+          const value = channel / 255;
+          return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+      }
+      const lighter = Math.max(luminance(foreground), luminance(background));
+      const darker = Math.min(luminance(foreground), luminance(background));
+      return (lighter + 0.05) / (darker + 0.05);
+    }
+    const header = document.querySelector('.gate');
+    const tabs = document.querySelector('.plan-mode-tabs');
+    const filterCard = document.querySelector('[data-testid="broadcast-filter-toolbar"]');
+    const grid = document.querySelector('[data-testid="broadcast-grid"]');
+    const main = document.querySelector('.broadcast-main');
+    const side = document.querySelector('.broadcast-aside');
+
+    if (!tabs?.classList.contains('tabs') || tabs.querySelectorAll('.tab').length < 2) {
+      failures.push('plan mode switcher does not use canonical .tabs .tab structure.');
+    }
+    if (header && tabs && tabs.getBoundingClientRect().top <= header.getBoundingClientRect().bottom) {
+      failures.push('plan mode tabs are not placed below the plan header.');
+    }
+    if (!filterCard || !grid) {
+      failures.push('broadcast grid filter card or list is missing.');
+    } else if (filterCard.getBoundingClientRect().top > grid.getBoundingClientRect().top) {
+      failures.push('broadcast grid filter card is not before the list.');
+    }
+    if (main && side) {
+      const mainRect = main.getBoundingClientRect();
+      const sideRect = side.getBoundingClientRect();
+      document.querySelectorAll('.broadcast-main > *').forEach((child) => {
+        const rect = child.getBoundingClientRect();
+        if (rect.width > 20 && rect.right > sideRect.left - 20) {
+          failures.push(`${child.className || child.tagName}: overflows broadcast main column.`);
+        }
+      });
+      if (mainRect.right > sideRect.left - 20) {
+        failures.push('broadcast main and side columns are too close.');
+      }
+    }
+    document.querySelectorAll('.broadcast-row-main').forEach((row) => {
+      const rect = row.getBoundingClientRect();
+      row.querySelectorAll(':scope > *').forEach((child) => {
+        const childRect = child.getBoundingClientRect();
+        if (childRect.right > rect.right + 1) {
+          failures.push('broadcast row child overflows row bounds.');
+        }
+      });
+    });
+    document.querySelectorAll('.validation-warnings p').forEach((paragraph) => {
+      const textColor = colorToRgb(window.getComputedStyle(paragraph).color);
+      const backgroundColor = colorToRgb(window.getComputedStyle(paragraph.parentElement).backgroundColor);
+      if (textColor && backgroundColor && contrastRatio(textColor, backgroundColor) < 4.5) {
+        failures.push('validation warning text contrast is below 4.5.');
+      }
+    });
+    return failures;
+  });
+
+  failIfAny('plan design contract', [...baseFailures, ...planFailures]);
+}
+
 async function captureSignalsLayout(page) {
   return page.evaluate(() => {
     const selectors = {
@@ -411,6 +509,9 @@ async function main() {
     await page.locator('.signal-tabs .tab').nth(1).click();
     await page.locator('[data-testid="source-signal-row"]').first().waitFor();
     await assertSignalsDesign(page, 'desktop found signals');
+
+    await page.getByRole('button', { name: /План/ }).click();
+    await assertPlanDesign(page);
 
     await page.setViewportSize({ width: 2048, height: 1100 });
     await page.reload({ waitUntil: 'networkidle' });

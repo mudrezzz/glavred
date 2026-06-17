@@ -8,8 +8,11 @@ import {
 import { summarizeBroadcastGridDemand } from '../../application/editorialServices';
 import { HitlGate } from '../../shared/ui/WorkflowPrimitives';
 import { BroadcastGridAside } from './BroadcastGridAside';
+import { BroadcastGridGroupList } from './BroadcastGridGroupList';
 import { BroadcastGridList } from './BroadcastGridList';
+import { BroadcastGridToolbar } from './BroadcastGridToolbar';
 import { PlanSettingsPanel } from './PlanSettingsPanel';
+import { useBroadcastGridController } from './useBroadcastGridController';
 
 type PlanMode = 'grid' | 'settings';
 
@@ -37,26 +40,22 @@ export function PlanView({
   const demandSummary = useMemo(() => summarizeBroadcastGridDemand(workspace), [workspace]);
   const topicDistribution = getPlanDistribution(items, 'topicTitle');
   const fabulaDistribution = getPlanDistribution(items, 'fabulaTitle');
+  const grid = useBroadcastGridController(items, warnings);
 
   return (
     <div className="page wide fade-up">
-      <div className="plan-mode-tabs segmented memory-tabs" role="tablist" aria-label="План">
-        <button
-          className={mode === 'grid' ? 'active' : ''}
-          type="button"
-          role="tab"
-          aria-selected={mode === 'grid'}
-          onClick={() => setMode('grid')}
-        >
+      <HitlGate
+        tag="HITL · Gate 1 — Сетка вещания"
+        title="Соберите и утвердите слоты контент-плана"
+        subtitle="Сетка использует сохраненную настройку публикаций: период, темп, дни, время, платформу и лимиты кандидатов. Ручные правки слотов сохраняются, а конфликты подсвечиваются."
+        action={items.length > 0 ? 'Пересобрать сетку' : 'Собрать сетку'}
+        onAction={onGenerate}
+      />
+      <div className="tabs memory-tabs plan-mode-tabs" role="tablist" aria-label="План">
+        <button className={`tab${mode === 'grid' ? ' active' : ''}`} type="button" role="tab" aria-selected={mode === 'grid'} onClick={() => setMode('grid')}>
           Сетка
         </button>
-        <button
-          className={mode === 'settings' ? 'active' : ''}
-          type="button"
-          role="tab"
-          aria-selected={mode === 'settings'}
-          onClick={() => setMode('settings')}
-        >
+        <button className={`tab${mode === 'settings' ? ' active' : ''}`} type="button" role="tab" aria-selected={mode === 'settings'} onClick={() => setMode('settings')}>
           Настройка сетки
         </button>
       </div>
@@ -72,22 +71,36 @@ export function PlanView({
             />
           ) : (
             <>
-              <HitlGate
-                tag="HITL · Gate 1 — Сетка вещания"
-                title="Соберите и утвердите слоты контент-плана"
-                subtitle="Сетка использует сохраненную настройку публикаций: период, темп, дни, время, платформу и лимиты кандидатов. Ручные правки слотов сохраняются, а конфликты подсвечиваются."
-                action={items.length > 0 ? 'Пересобрать сетку' : 'Собрать сетку'}
-                onAction={onGenerate}
-              />
-              <BroadcastGridList
+              <BroadcastGridToolbar
+                fabulas={workspace.fabulas}
+                filters={grid.filters}
+                groupMode={grid.groupMode}
                 items={items}
-                workspace={workspace}
-                warnings={warnings}
-                onGenerate={onGenerate}
-                onItemChange={onItemChange}
-                onApprove={onApprove}
-                onBrief={onBrief}
+                topics={workspace.topics}
+                viewMode={grid.viewMode}
+                onChangeFilters={grid.setFilters}
+                onChangeGroupMode={grid.setGroupMode}
+                onChangeViewMode={grid.setViewMode}
               />
+              {grid.viewMode === 'groups' ? (
+                <BroadcastGridGroupList
+                  groups={grid.groups}
+                  workspace={workspace}
+                  warnings={warnings}
+                  onItemChange={onItemChange}
+                  onApprove={onApprove}
+                  onBrief={onBrief}
+                />
+              ) : (
+                <BroadcastGridList
+                  items={grid.filteredItems}
+                  workspace={workspace}
+                  warnings={warnings}
+                  onItemChange={onItemChange}
+                  onApprove={onApprove}
+                  onBrief={onBrief}
+                />
+              )}
             </>
           )}
         </section>

@@ -45,6 +45,14 @@ candidate limits, default platform, and signal policy. The grid is still not the
 calendar model: it creates publish-window slots and fills them with deterministic
 topic/fabula ideas from the approved signal/candidate layer.
 
+After Slice 1.8.1, `План` uses the same cabinet-list UX as the review queues: filters
+and search appear above the slot list, `Список / Группы` switches the view, and every
+slot expands inside the main content area. Expanded and edit states show the source
+signal, topic, fabula, audience, value, and goal so you know which candidate context is
+being scheduled. `Настройка сетки` uses a mini-calendar: choose week/month/quarter,
+click dates to assign or remove publish slots, then save explicitly before rebuilding
+the grid.
+
 ## Demo Context
 
 The permanent demo is a Telegram blog by an AI Product Manager who shares research
@@ -314,6 +322,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Review the broadcast grid: each slot has date, time, platform, topic, fabula,
   priority, status, and advisory warnings. The side summary separates available
   candidates from approved concepts and shows deficit/proficit.
+- Slice 1.8.1 note: filters/search sit above the broadcast list, and
+  `Настройка сетки` uses a mini-calendar. Choose week/month/quarter, click dates to
+  assign or remove publish slots, and save explicitly before rebuilding.
+- Slot detail note: expanded and edit states show signal, topic, fabula, audience,
+  value, goal, thesis, evidence, and risks so plan edits do not hide candidate context.
 - Expand a slot, edit it if needed, then use `Сохранить` or `Отменить`.
 - Approve one slot through the first HITL gate.
 - Generate and edit a post brief through `Подготовить фабулу поста`. This is an

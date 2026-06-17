@@ -49,7 +49,7 @@ export type {
   ValidatorSuggestionSeverity,
   ValidatorTargetType,
 } from './editorial-model/types';
-export type { BroadcastGridDemandSummary, ContentPlanItem, ContentPlanSettings, InsightCard, PlanWeightWarning, PlanningPeriod, PublishWindow, SignalSelectionPolicy } from './planning/types';
+export type { BroadcastGridDemandSummary, ContentPlanItem, ContentPlanSettings, InsightCard, PlanWeightWarning, PlanningPeriod, PublishSlot, PublishWindow, SignalSelectionPolicy } from './planning/types';
 export type { PostCandidate } from './post-candidates/types';
 export type {
   AnalyticsStatus,
@@ -149,6 +149,7 @@ import type { WorkspaceState } from './workspace/types';
 export * from './editorial-model/transitions';
 export * from './planning/settings';
 export * from './planning/schedule';
+export * from './planning/defaultSlots';
 export * from './planning/transitions';
 export * from './signals/transitions';
 export * from './post-candidates/transitions';
