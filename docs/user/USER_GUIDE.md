@@ -39,10 +39,11 @@ The wiki explains the current product through real screenshots:
 - Release and analytics: final text, manual export, and captured learning note.
 - Local-first demo: reset, persistence, and screenshot refresh commands.
 
-Planning note: the current `План` screen is a local-first broadcast grid prototype.
-`Сигналы` now owns radar settings, signal review, and the first compare-and-approve
-post candidates layer. The grid demonstrates slot approval and downstream production,
-not the final signal-driven calendar model.
+Planning note: the current `План` screen is a local-first broadcast grid prototype
+with explicit `Настройка сетки`. Settings define period, tempo, publishing days/times,
+candidate limits, default platform, and signal policy. The grid is still not the final
+calendar model: it creates publish-window slots and fills them with deterministic
+topic/fabula ideas from the approved signal/candidate layer.
 
 ## Demo Context
 
@@ -307,8 +308,12 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   candidate, and approve one candidate.
 - Generate an insight card from the approved candidate.
 - Add the insight to `План`.
-- Review the broadcast grid: each slot has date, platform, format, topic, fabula,
-  priority, status, and advisory warnings.
+- Open `Настройка сетки` when the publishing frame needs to change. Save settings
+  explicitly; saved changes clear the current grid and downstream production artifacts
+  so the plan can be rebuilt.
+- Review the broadcast grid: each slot has date, time, platform, topic, fabula,
+  priority, status, and advisory warnings. The side summary separates available
+  candidates from approved concepts and shows deficit/proficit.
 - Expand a slot, edit it if needed, then use `Сохранить` or `Отменить`.
 - Approve one slot through the first HITL gate.
 - Generate and edit a post brief through `Подготовить фабулу поста`. This is an

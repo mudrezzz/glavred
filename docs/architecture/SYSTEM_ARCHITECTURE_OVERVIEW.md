@@ -142,8 +142,8 @@ turning the product into generic content generation.
   into an insight card with relevance, urgency, banality risk, fact gaps, topic, fabula,
   and suggested author position.
 - `ContentPlanning`: describes broadcast demand and calendar status: tempo, period,
-  publishing days/times, candidate count requirements, platform/date/topic/fabula/
-  format, approval status, manual override state, and advisory conflicts.
+  publishing days/times, candidate count requirements, platform/date/time/topic/
+  fabula, approval status, manual override state, and advisory conflicts.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -495,9 +495,11 @@ Current implemented production contracts:
   normalization.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
-- `ContentPlanItem`: insight, platform, date, priority, format, expected effect,
-  approval status, topic/fabula link, manual override state, and warning links.
-- `ContentPlanSettings`: local-first tempo and format settings for the broadcast grid.
+- `ContentPlanItem`: insight, platform, date, time, priority, fabula-derived format,
+  expected effect, approval status, topic/fabula link, manual override state, and
+  warning links.
+- `ContentPlanSettings`: local-first period, tempo, publishing days/times, candidate
+  limits, default platform, and signal-selection policy for the broadcast grid.
 - `PlanWeightWarning`: advisory warning when the grid diverges from topic/fabula
   weights, matrix compatibility, or required slot fields.
 - `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,
@@ -612,7 +614,8 @@ research experience building AI-B2B products:
 9. The author approves one candidate; it becomes `postCandidate` and its signal becomes
    the compatibility `sourceSignal` for downstream flow.
 10. `InsightScoring` produces an `InsightCard` from the approved candidate.
-11. `ContentPlanning` currently creates a Telegram broadcast grid prototype.
+11. `ContentPlanning` saves grid settings, creates publish-window slots from the
+   current date, and fills the hybrid grid with deterministic topic/fabula ideas.
 12. The author approves a slot and post brief through HITL gates.
 13. `Drafting` creates an editable research-note draft.
 14. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor

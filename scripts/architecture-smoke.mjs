@@ -181,6 +181,16 @@ const LARGE_SOURCE_BASELINES = [
     next: "Candidate assembly should remain deterministic application logic until AI generation is introduced behind a service boundary.",
   },
   {
+    path: "src/application/planningService.ts",
+    limit: 180,
+    next: "Planning service should keep deterministic slot assembly separate from demand and schedule helpers.",
+  },
+  {
+    path: "src/application/planningDemandService.ts",
+    limit: 70,
+    next: "Planning demand summary should stay a small application helper over candidates and settings.",
+  },
+  {
     path: "src/application/editorialServices.ts",
     limit: 20,
     next: "editorialServices.ts must remain a compatibility barrel.",
@@ -289,6 +299,41 @@ const LARGE_SOURCE_BASELINES = [
     path: "src/features/editorial-model/MatrixTab.tsx",
     limit: 140,
     next: "Matrix UI should stay focused on compatibility editing.",
+  },
+  {
+    path: "src/features/plan/PlanView.tsx",
+    limit: 160,
+    next: "PlanView must stay a composition root for grid/settings modes.",
+  },
+  {
+    path: "src/features/plan/PlanSettingsPanel.tsx",
+    limit: 220,
+    next: "Plan settings UI should split field groups before adding platform-specific settings.",
+  },
+  {
+    path: "src/features/plan/BroadcastGridList.tsx",
+    limit: 100,
+    next: "BroadcastGridList should stay focused on toolbar and row composition.",
+  },
+  {
+    path: "src/features/plan/BroadcastGridRow.tsx",
+    limit: 190,
+    next: "BroadcastGridRow should stay focused on one slot row/detail/edit surface.",
+  },
+  {
+    path: "src/features/plan/BroadcastGridAside.tsx",
+    limit: 110,
+    next: "BroadcastGridAside should stay limited to planning summary and warnings.",
+  },
+  {
+    path: "src/domain/planning/settings.ts",
+    limit: 120,
+    next: "Planning settings normalization should stay pure and split platform policy when introduced.",
+  },
+  {
+    path: "src/domain/planning/schedule.ts",
+    limit: 80,
+    next: "Planning schedule helpers should stay pure and split calendar math if it grows.",
   },
   {
     path: "src/features/signals/RadarEditor.tsx",
@@ -496,6 +541,10 @@ const requiredSourceFiles = [
   "src/features/signals/SignalsSidePanel.tsx",
   "src/features/signals/helpers.tsx",
   "src/features/plan/PlanView.tsx",
+  "src/features/plan/PlanSettingsPanel.tsx",
+  "src/features/plan/BroadcastGridList.tsx",
+  "src/features/plan/BroadcastGridRow.tsx",
+  "src/features/plan/BroadcastGridAside.tsx",
   "src/features/briefing/BriefView.tsx",
   "src/features/editing/EditView.tsx",
   "src/features/release/ReleaseView.tsx",

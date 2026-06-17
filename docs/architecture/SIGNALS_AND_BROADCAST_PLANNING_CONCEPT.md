@@ -74,15 +74,18 @@ change author-position assertions unless explicitly accepted into memory.
 `План` should start from publishing settings, not per-post details:
 
 - article/post tempo;
-- planning period: week, month, quarter, year;
+- planning period: week, month, quarter;
 - publishing days and times;
 - candidate count per slot: minimum and maximum;
-- platform and format defaults until dedicated platform entities exist;
+- platform default until dedicated platform entities exist;
 - whether signals can be selected automatically or require HITL approval.
 
-When the author saves these settings, the system generates calendar slots for the
-selected horizon. Each slot then asks the signal/candidate layer for enough viable
-concepts.
+When the author saves these settings, the current grid is marked stale by clearing
+generated plan slots and downstream production artifacts. Slice 1.8 uses a hybrid
+model: settings create publish-window slots from the current date, while deterministic
+planning can still fill those slots with topic/fabula ideas. The UI also shows slot
+demand, available post candidates, approved concepts, and deficit/proficit. Full
+calendar binding remains a later slice.
 
 ## Calendar View
 

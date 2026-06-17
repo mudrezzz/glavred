@@ -413,6 +413,10 @@ Use these boundaries:
 - `WorkspaceState.contentPlanItems` is the broadcast grid. `contentPlanItem` remains a
   compatibility field for the currently selected/approved slot used by post brief,
   release, and analytics services.
+- `WorkspaceState.contentPlanSettings` is normalized on load. It owns period, tempo,
+  publishing days/times, candidate limits, default platform, and signal-selection
+  policy. Saving settings clears generated plan slots and downstream production
+  artifacts so the grid is rebuilt explicitly.
 - `Сигналы` owns local-first radar settings and reviewed source material. `sourceSignals`
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and
@@ -431,9 +435,10 @@ Use these boundaries:
 Do not call browser storage from domain code. Do not add backend persistence, auth,
 real source ingestion, or AI provider calls until their slices are planned.
 
-Do not deepen `План` as a standalone generator of posts. The next planning slices must
-first add the signal workspace and post candidate assemblies so the calendar shows
-material readiness rather than invented slots.
+Do not deepen `План` as a standalone generator of posts. Planning settings may create
+the publish-window frame, but content ideas must continue to come from approved
+signals, post candidates, topics, and fabulas. Calendar binding and AI planning need
+separate roadmap slices.
 
 Signal review transitions are pure domain helpers:
 

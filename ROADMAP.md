@@ -2165,7 +2165,7 @@ Status:
 
 ### Slice 1.8: Broadcast Grid Settings
 
-- Status: Ready
+- Status: Done
 - Goal: Add high-level broadcast settings before calendar implementation.
 - User value: The author can configure publishing tempo and candidate expectations
   once, instead of editing every post slot manually.
@@ -2176,12 +2176,14 @@ Status:
     - planning period: week, month, quarter;
     - publishing days and times;
     - min/max candidates per slot;
-    - default platform and format until dedicated platform entities exist;
+    - default platform until dedicated platform entities exist;
     - signal selection policy: HITL-only, automatic, or automatic with review.
   - Save settings explicitly.
-  - Generate empty calendar slots for the chosen horizon.
-  - Show plan deficit/proficit summary based on available approved signals and
-    candidates.
+  - Generate a hybrid publish-window frame for the chosen horizon: slots get
+    configured dates/times while deterministic planning can still fill topic/fabula
+    ideas.
+  - Show deficit/proficit summary with separate available candidate and approved
+    concept counters.
 - Out of scope:
   - Calendar zoom UI.
   - Real radar execution.
@@ -2189,7 +2191,15 @@ Status:
 - Implementation notes:
   - Settings are general requirements for the grid, not detailed settings for every
     post.
-  - Saved settings should mark generated slots/candidates stale when changed.
+  - Saved settings clear generated slots and downstream production artifacts so the
+    grid is explicitly rebuilt.
+  - `format` is not a candidate/grid setting in this slice; slot format is derived
+    from the fabula title until a dedicated platform/format model exists.
+- Architecture impact:
+  - Adds planning settings normalization and publish-window generation in domain code.
+  - Keeps demand summary in application logic and UI state in role-owned
+    `src/features/plan` modules.
+  - Storage migration is additive and normalizes legacy settings/items.
 - Tests:
   - Domain tests for slot generation from tempo/days/period.
   - UI tests for settings save/cancel and regenerated slot counts.
@@ -2208,7 +2218,7 @@ Status:
 
 ### Slice 1.9: Calendar View for Broadcast Plan
 
-- Status: Backlog
+- Status: Ready
 - Goal: Replace the list-only plan view with a calendar that shows slot readiness and
   lets the author zoom into a day or slot.
 - User value: The author can see upcoming risk, ready posts, published posts, and

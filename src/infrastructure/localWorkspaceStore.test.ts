@@ -76,7 +76,38 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.contentPlanItems).toHaveLength(1);
     expect(loaded.contentPlanItems[0].id).toBe(contentPlanItem.id);
     expect(loaded.contentPlanItems[0].manualOverride).toBe(false);
+    expect(loaded.contentPlanItems[0].time).toBe('10:00');
     expect(loaded.contentPlanSettings.defaultPlatform).toBe('Telegram');
+    expect(loaded.contentPlanSettings.period).toBe('month');
+    expect(loaded.contentPlanSettings.publishingDays).toEqual([1, 3, 5]);
+    expect(loaded.contentPlanSettings.signalSelectionPolicy).toBe('hitl-only');
+  });
+
+  it('normalizes legacy broadcast settings without weakening saved platform and tempo', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...workspace,
+        contentPlanSettings: {
+          postsPerWeek: 5,
+          planningHorizonDays: 7,
+          defaultPlatform: 'LinkedIn',
+          allowedFormats: ['Legacy format']
+        }
+      })
+    );
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.contentPlanSettings.period).toBe('week');
+    expect(loaded.contentPlanSettings.postsPerWeek).toBe(5);
+    expect(loaded.contentPlanSettings.defaultPlatform).toBe('LinkedIn');
+    expect(loaded.contentPlanSettings.publishingTimes).toEqual(['10:00']);
+    expect(loaded.contentPlanSettings.minCandidatesPerSlot).toBe(1);
+    expect(loaded.contentPlanSettings.maxCandidatesPerSlot).toBe(2);
+    expect(loaded.contentPlanSettings).not.toHaveProperty('allowedFormats');
   });
 
   it('drops legacy post candidate format values while loading saved workspaces', () => {

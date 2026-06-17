@@ -16,9 +16,11 @@ import {
   detectBroadcastPlanConflicts,
   markLearningNoteCaptured,
   markReleaseReady,
+  normalizeContentPlanSettings,
   reviseDraft,
   toggleReleaseChecklistItem,
   updateContentPlanItem,
+  type ContentPlanSettings,
   type ContentPlanItem,
   type EditorialLearningNote,
   type WorkspaceState
@@ -62,6 +64,25 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     patchWorkspace(
       { insightCard, contentPlanItems, planWeightWarnings, contentPlanItem: null },
       'Сетка вещания собрана'
+    );
+  }
+
+  function saveContentPlanSettings(contentPlanSettings: ContentPlanSettings) {
+    patchWorkspace(
+      {
+        contentPlanSettings: normalizeContentPlanSettings(contentPlanSettings, workspace.contentPlanSettings),
+        contentPlanItems: [],
+        contentPlanItem: null,
+        planWeightWarnings: [],
+        postBrief: null,
+        postDraft: null,
+        editorialChecks: [],
+        editorNotes: [],
+        finalText: null,
+        releasePackage: null,
+        editorialLearningNote: null
+      },
+      'Настройка сетки сохранена, план нужно пересобрать'
     );
   }
 
@@ -211,6 +232,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     generateBroadcastPlan,
     markCurrentReleaseReady,
     prepareBrief,
+    saveContentPlanSettings,
     toggleReleaseChecklist,
     updateCurrentLearningNote,
     updateDraftBody,

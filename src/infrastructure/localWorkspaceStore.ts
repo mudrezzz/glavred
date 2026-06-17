@@ -5,6 +5,7 @@ import {
   evaluateSignalAgainstRadarFilters,
   getValidatorRunScore,
   getValidatorRunStatus,
+  normalizeContentPlanSettings,
   normalizeWeightRange,
   summarizeValidatorRun,
   type EditorialValidationRun,
@@ -58,6 +59,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   const contentPlanItems = (saved.contentPlanItems ?? (saved.contentPlanItem ? [saved.contentPlanItem] : demo.contentPlanItems)).map(
     (item) => ({
       ...item,
+      time: item.time ?? demo.contentPlanSettings.publishingTimes[0],
       manualOverride: item.manualOverride ?? false,
       sourceSignalId: item.sourceSignalId ?? saved.sourceSignal?.id ?? demo.sourceSignal.id,
       weightWarningIds: item.weightWarningIds ?? []
@@ -101,7 +103,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
     contentPlanItems,
-    contentPlanSettings: saved.contentPlanSettings ?? demo.contentPlanSettings,
+    contentPlanSettings: normalizeContentPlanSettings(saved.contentPlanSettings, demo.contentPlanSettings),
     planWeightWarnings: saved.planWeightWarnings ?? [],
     postBrief: saved.postBrief ?? null,
     postDraft: saved.postDraft ?? null,

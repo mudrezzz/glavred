@@ -64,15 +64,15 @@ export function createDemoWorkspace(): WorkspaceState {
     contentPlanItem: null,
     contentPlanItems: [],
     contentPlanSettings: {
+      period: 'month',
       postsPerWeek: 3,
-      planningHorizonDays: 14,
+      planningHorizonDays: 30,
+      publishingDays: [1, 3, 5],
+      publishingTimes: ['10:00'],
+      minCandidatesPerSlot: 1,
+      maxCandidatesPerSlot: 2,
       defaultPlatform: 'Telegram',
-      allowedFormats: [
-        'Исследовательская заметка',
-        'Разбор мифа',
-        'Практический фреймворк',
-        'Postmortem пилота'
-      ]
+      signalSelectionPolicy: 'hitl-only'
     },
     planWeightWarnings: [],
     postBrief: null,

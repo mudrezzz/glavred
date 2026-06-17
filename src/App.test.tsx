@@ -689,7 +689,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /План/i }));
 
     expect(screen.getByTestId('broadcast-grid')).toBeInTheDocument();
-    expect(screen.getByText(/Сетка на 14 дней/i)).toBeInTheDocument();
+    expect(screen.getByText(/Сетка на месяц/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Сетка вещания/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Редактировать$/i })[0]);

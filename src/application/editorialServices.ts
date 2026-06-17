@@ -1,6 +1,7 @@
 export * from './authorMemoryService';
 export * from './postCandidateService';
 export * from './planningService';
+export * from './planningDemandService';
 export * from './briefingService';
 export * from './draftingService';
 export * from './releaseService';

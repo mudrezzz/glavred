@@ -11,7 +11,9 @@ import type {
 } from '../domain/editorialWorkspace';
 import {
   applyPlanWarnings,
+  createPublishWindows,
   detectBroadcastPlanConflicts,
+  getBroadcastSlotCount,
   isTopicFabulaEnabled,
   selectCompatibleTopicFabula
 } from '../domain/editorialWorkspace';
@@ -61,6 +63,7 @@ export function createContentPlanItem(insight: InsightCard): ContentPlanItem {
     title: insight.title,
     platform: 'Telegram',
     date: '2026-06-12',
+    time: '10:00',
     priority: 'Высокий',
     format: 'Исследовательская заметка',
     expectedEffect:
@@ -90,18 +93,16 @@ export function createWorkspaceInsightCard(workspace: WorkspaceState): InsightCa
   );
 }
 
-export function createBroadcastPlan(workspace: WorkspaceState): ContentPlanItem[] {
+export function createBroadcastPlan(workspace: WorkspaceState, startDate = new Date()): ContentPlanItem[] {
   const settings = workspace.contentPlanSettings;
-  const slotCount = Math.max(1, Math.round((settings.postsPerWeek * settings.planningHorizonDays) / 7));
+  const slotCount = getBroadcastSlotCount(settings, startDate);
   const existingInsight = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
   const pairs = getBroadcastPairs(workspace.topics, workspace.fabulas, workspace.topicFabulaMatrix);
-  const formats = settings.allowedFormats.length > 0 ? settings.allowedFormats : ['Исследовательская заметка'];
-  const dates = ['2026-06-15', '2026-06-17', '2026-06-19', '2026-06-22', '2026-06-24', '2026-06-26'];
+  const publishWindows = createPublishWindows(settings, startDate);
 
   const items = Array.from({ length: slotCount }, (_, index) => {
     const pair = pairs[index % pairs.length];
-    const format = formats[index % formats.length];
-    const date = dates[index % dates.length];
+    const publishWindow = publishWindows[index % publishWindows.length] ?? { date: '', time: '' };
     const priority = index === 0 ? 'Высокий' : index % 3 === 0 ? 'Средний' : 'Нормальный';
 
     return {
@@ -109,9 +110,10 @@ export function createBroadcastPlan(workspace: WorkspaceState): ContentPlanItem[
       insightId: existingInsight.id,
       title: createPlanTitle(pair.topic.title, pair.fabula.title),
       platform: settings.defaultPlatform,
-      date,
+      date: publishWindow.date,
+      time: publishWindow.time,
       priority,
-      format,
+      format: pair.fabula.title,
       expectedEffect: createExpectedEffect(pair.topic.title, pair.fabula.title),
       approvalStatus: 'draft' as const,
       topicId: pair.topic.id,

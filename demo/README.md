@@ -89,16 +89,17 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 ## Broadcast Content Plan
 
 `План` now opens as a broadcast grid for the AI Product Manager Telegram blog. The demo
-seed contains two weeks of slots with dates, Telegram as the local-first platform,
-formats, topics, fabulas, approval status, manual override state, and advisory
-weight/matrix warnings.
+seed contains a monthly settings profile: three posts per week, Monday/Wednesday/Friday
+publishing at 10:00, Telegram as the local-first platform, HITL signal selection, and
+candidate limits per slot. The generated grid shows dates, times, topics, fabulas,
+approval status, manual override state, and advisory weight/matrix warnings.
 
 This is a useful compatibility prototype, but it is not the final planning model. The
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
 the first `Кандидаты постов` review layer with filters, search, grouping, edit, reject,
-and approve actions. Future slices can add candidate variant requests and then turn
-`План` into a real calendar with publishing
-tempo, period, days/times, candidate counts, and readiness statuses.
+and approve actions. `Настройка сетки` creates the publish-window frame and shows
+available candidates versus approved concepts. Future slices can add candidate variant
+requests and then turn `План` into a real calendar with readiness statuses.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
@@ -195,27 +196,29 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 20. Click `Собрать инсайт`; the insight should use the approved candidate's title,
     topic, fabula, value, and risks.
 21. Click `В план`.
-22. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
+22. In `План`, open `Настройка сетки` if you want to change period, tempo, days/times,
+    candidate limits, platform, or signal policy; save settings before rebuilding.
+23. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
-23. Click `Подготовить фабулу поста`.
-24. Edit the post brief if needed.
-25. Click `Утвердить фабулу`.
-26. Open `Редактура`.
-27. Click `Написать драфт`.
-28. Review checks and editor notes.
-29. Edit the draft text.
-30. Click `Утвердить текст`.
-31. Open `Выпуск`.
-32. Click `Подготовить выпуск`.
-33. Review target, checklist, final text, and Markdown preview.
-31. Complete the checklist and click `Готово к выпуску`.
-32. Click `Скопировать текст` or `Скачать Markdown`.
-33. Open `Аналитика`.
-34. Click `Подготовить аналитику`.
-35. Enter manual metrics and editorial conclusions.
-36. Click `Зафиксировать выводы`.
-37. Reload the page to confirm state persists.
-38. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+24. Click `Подготовить фабулу поста`.
+25. Edit the post brief if needed.
+26. Click `Утвердить фабулу`.
+27. Open `Редактура`.
+28. Click `Написать драфт`.
+29. Review checks and editor notes.
+30. Edit the draft text.
+31. Click `Утвердить текст`.
+32. Open `Выпуск`.
+33. Click `Подготовить выпуск`.
+34. Review target, checklist, final text, and Markdown preview.
+35. Complete the checklist and click `Готово к выпуску`.
+36. Click `Скопировать текст` or `Скачать Markdown`.
+37. Open `Аналитика`.
+38. Click `Подготовить аналитику`.
+39. Enter manual metrics and editorial conclusions.
+40. Click `Зафиксировать выводы`.
+41. Reload the page to confirm state persists.
+42. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

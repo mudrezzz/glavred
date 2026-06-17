@@ -112,6 +112,7 @@ export function App() {
           onItemChange={controller.updatePlanItemAndWarnings}
           onApprove={controller.approvePlanSlot}
           onBrief={controller.prepareBrief}
+          onSettingsSave={controller.saveContentPlanSettings}
         />
       )}
       {active === 'brief' && (

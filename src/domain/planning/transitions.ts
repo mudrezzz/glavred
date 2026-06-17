@@ -47,13 +47,13 @@ export function detectBroadcastPlanConflicts(
   const fabulaUsage = usageShare(activeItems, (item) => item.fabulaId);
 
   activeItems.forEach((item) => {
-    if (!item.date || !item.platform || !item.format || !item.topicId || !item.fabulaId) {
+    if (!item.date || !item.time || !item.platform || !item.format || !item.topicId || !item.fabulaId) {
       warnings.push({
         id: `slot-incomplete-${item.id}`,
         severity: 'red',
         targetType: 'slot',
         targetId: item.id,
-        message: 'Слот неполный: нужны дата, площадка, формат, тема и фабула.'
+        message: 'Слот неполный: нужны дата, время, площадка, формат, тема и фабула.'
       });
     }
 

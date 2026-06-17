@@ -25,6 +25,7 @@ export interface ContentPlanItem {
   title: string;
   platform: string;
   date: string;
+  time: string;
   priority: string;
   format: string;
   expectedEffect: string;
@@ -38,11 +39,19 @@ export interface ContentPlanItem {
   weightWarningIds?: string[];
 }
 
+export type PlanningPeriod = 'week' | 'month' | 'quarter';
+export type SignalSelectionPolicy = 'hitl-only' | 'automatic' | 'automatic-with-review';
+
 export interface ContentPlanSettings {
+  period: PlanningPeriod;
   postsPerWeek: number;
   planningHorizonDays: number;
+  publishingDays: number[];
+  publishingTimes: string[];
+  minCandidatesPerSlot: number;
+  maxCandidatesPerSlot: number;
   defaultPlatform: string;
-  allowedFormats: string[];
+  signalSelectionPolicy: SignalSelectionPolicy;
 }
 
 export interface PlanWeightWarning {
@@ -51,4 +60,20 @@ export interface PlanWeightWarning {
   message: string;
   targetType: 'topic' | 'fabula' | 'slot' | 'matrix';
   targetId: string;
+}
+
+export interface PublishWindow {
+  date: string;
+  time: string;
+}
+
+export interface BroadcastGridDemandSummary {
+  slotCount: number;
+  availableCandidateCount: number;
+  approvedConceptCount: number;
+  minNeededCandidates: number;
+  maxUsefulCandidates: number;
+  deficit: number;
+  surplus: number;
+  status: 'deficit' | 'balanced' | 'surplus';
 }

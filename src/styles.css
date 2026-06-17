@@ -2997,7 +2997,7 @@ select:focus {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: 82px minmax(180px, 1.2fr) minmax(90px, 0.6fr) minmax(140px, 0.8fr) minmax(150px, 0.8fr) minmax(150px, 0.8fr) auto auto;
+  grid-template-columns: 120px minmax(180px, 1.2fr) minmax(90px, 0.6fr) minmax(150px, 0.8fr) minmax(150px, 0.8fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 18px;
@@ -3075,6 +3075,98 @@ select:focus {
 
 .broadcast-aside {
   min-width: 0;
+}
+
+.plan-mode-tabs {
+  width: fit-content;
+}
+
+.plan-settings-panel {
+  gap: 18px;
+}
+
+.plan-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.plan-settings-grid label,
+.plan-settings-days {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-settings-grid input,
+.plan-settings-grid select {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.plan-settings-wide,
+.plan-settings-days {
+  grid-column: span 2;
+}
+
+.plan-day-toggle {
+  width: fit-content;
+}
+
+.plan-settings-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-settings-summary div {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunk);
+}
+
+.plan-settings-summary strong {
+  color: var(--ink-900);
+  font: var(--ui-lg);
+  font-weight: 800;
+}
+
+.plan-settings-summary span,
+.plan-settings-warning,
+.plan-demand-state {
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.plan-settings-warning {
+  margin: 0;
+}
+
+.plan-demand-state {
+  padding: 10px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunk);
+}
+
+.plan-demand-state.deficit {
+  color: var(--danger);
+}
+
+.plan-demand-state.surplus {
+  color: var(--ink-700);
 }
 
 .plan-distribution {
@@ -4078,6 +4170,8 @@ select:focus {
   .broadcast-layout,
   .broadcast-row-main,
   .broadcast-edit-grid,
+  .plan-settings-grid,
+  .plan-settings-summary,
   .signals-layout,
   .signals-stack .entity-row-main,
   .signal-filters,
@@ -4114,6 +4208,11 @@ select:focus {
 
   .broadcast-row-main {
     gap: 8px;
+  }
+
+  .plan-settings-wide,
+  .plan-settings-days {
+    grid-column: auto;
   }
 
   .matrix-topic-head,
