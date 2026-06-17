@@ -45,6 +45,12 @@ candidate limits, default platform, and signal policy. The grid is still not the
 calendar model: it creates publish-window slots and fills them with deterministic
 topic/fabula ideas from the approved signal/candidate layer.
 
+Production note: approved plan slots now enter an editorial work queue. `План`
+decides what should be produced and when. `Редактура` lists approved posts with the
+shared filter/search/group pattern; selecting a row opens the selected post workbench
+for `Фабула -> Драфт -> Финал`. `Выпуск` still uses the compatibility single-post
+release package/checklist/export flow until the release queue slice.
+
 After Slice 1.8.2, `План` uses the same cabinet-list UX as the review queues: filters
 and search appear above the slot list, `Список / Группы / Календарь` switches the view,
 and every slot expands inside the main content area. The calendar view follows the same
@@ -334,11 +340,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   value, goal, thesis, evidence, and risks so plan edits do not hide candidate context.
 - Expand a slot, edit it if needed, then use `Сохранить` or `Отменить`.
 - Approve one slot through the first HITL gate.
-- Generate and edit a post brief through `Подготовить фабулу поста`. This is an
-  internal production step, not a separate sidebar section.
-- Approve the post brief through the second HITL gate.
-- Open `Редактура`.
-- Click `Написать драфт`.
+- Click `Подготовить фабулу поста`; Glavred opens `Редактура` directly.
+- In the editorial queue, open the selected post and review the `Фабула` tab.
+- Generate, edit, and approve the post brief through the second HITL gate.
+- Click `Написать драфт` in the selected-post workbench.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the final text through the
   third HITL gate.

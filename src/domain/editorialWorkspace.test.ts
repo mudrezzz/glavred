@@ -18,6 +18,7 @@ import {
   createDefaultRadarEditorialFilters,
   createDefaultTopicFabulaMatrix,
   createEditorialRule,
+  createEditorialWorkItem,
   createEditorialValidationRun,
   createRadarDraft,
   createTopicDraft,
@@ -42,6 +43,7 @@ import {
   rejectSignal,
   rejectPlanItem,
   rejectPostBrief,
+  syncEditorialWorkItemArtifacts,
   undoLastBulkImportAction,
   updateEditorialRule,
   validateEditorialSetup,
@@ -337,6 +339,31 @@ describe('editorial workspace domain', () => {
     expect(items.every((item) => item.topicId && item.fabulaId)).toBe(true);
     expect(items.every((item) => item.manualOverride === false)).toBe(true);
     expect(warnings.every((warning) => warning.targetType !== 'slot' || !warning.message.includes('не включены'))).toBe(true);
+  });
+
+  it('creates stable editorial work items from approved broadcast slots and syncs artifacts', () => {
+    const workspace = createDemoWorkspace();
+    const item = workspace.contentPlanItems[0];
+    const brief = approvePostBrief(createPostBrief(item, createWorkspaceInsightCard(workspace), workspace.editorialModel));
+    const workItem = createEditorialWorkItem(item, { brief }, 'candidate-test');
+    const draft = createPostDraft(brief, workspace.editorialModel);
+    const synced = syncEditorialWorkItemArtifacts([workItem], workItem.id, {
+      brief,
+      draft,
+      editorialChecks: [],
+      editorNotes: [],
+      finalText: null
+    });
+
+    expect(workItem.id).toBe(`editorial-work-${item.id}`);
+    expect(workItem.contentPlanItemId).toBe(item.id);
+    expect(workItem.postCandidateId).toBe('candidate-test');
+    expect(workItem.sourceSignalId).toBe(item.sourceSignalId);
+    expect(workItem.topicTitle).toBe(item.topicTitle);
+    expect(workItem.fabulaTitle).toBe(item.fabulaTitle);
+    expect(workItem.stage).toBe('draft');
+    expect(synced[0].stage).toBe('final');
+    expect(synced[0].draft?.briefId).toBe(brief.id);
   });
 
   it('detects broadcast grid conflicts for incompatible matrix pairs and paused entities', () => {

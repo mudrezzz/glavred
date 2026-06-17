@@ -3588,6 +3588,69 @@ select:focus {
   align-items: start;
 }
 
+.editorial-production-flow,
+.editorial-work-list,
+.editorial-workbench {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.editorial-work-row {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.editorial-work-row.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint), var(--shadow-sm);
+}
+
+.editorial-work-row-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.editorial-work-context {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.editorial-work-actions {
+  justify-content: flex-start;
+}
+
+.editorial-workbench {
+  margin-top: 8px;
+}
+
+.editorial-workbench-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.editorial-workbench-head h2 {
+  margin: 4px 0 0;
+  color: var(--ink-900);
+  font: var(--ui-xl);
+}
+
+.editorial-brief-approval {
+  display: grid;
+  gap: 18px;
+}
+
 .doc {
   min-width: 0;
   padding: 28px 32px;
@@ -4400,6 +4463,8 @@ select:focus {
   .entity-grid,
   .broadcast-layout,
   .broadcast-row-main,
+  .editorial-work-row-main,
+  .editorial-work-context,
   .broadcast-edit-grid,
   .plan-settings-grid,
   .plan-settings-summary,
@@ -4486,6 +4551,7 @@ select:focus {
 
   .rule-card,
   .rule-section-head,
+  .editorial-workbench-head,
   .matrix-head {
     grid-template-columns: 1fr;
     flex-direction: column;

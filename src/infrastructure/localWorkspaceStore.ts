@@ -77,6 +77,10 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   const activeSection = normalizeWorkspaceSection(saved.activeSection);
   const postCandidates = (saved.postCandidates ?? []).map((candidate) => normalizePostCandidate(candidate));
   const postCandidate = saved.postCandidate ? normalizePostCandidate(saved.postCandidate) : null;
+  const editorialWorkItems = (saved.editorialWorkItems ?? []).map((item) => normalizeEditorialWorkItem(item));
+  const selectedEditorialWorkItemId = editorialWorkItems.some((item) => item.id === saved.selectedEditorialWorkItemId)
+    ? saved.selectedEditorialWorkItemId ?? null
+    : null;
 
   return {
     ...demo,
@@ -105,6 +109,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     contentPlanItems,
     contentPlanSettings: normalizeContentPlanSettings(saved.contentPlanSettings, demo.contentPlanSettings),
     planWeightWarnings: saved.planWeightWarnings ?? [],
+    editorialWorkItems,
+    selectedEditorialWorkItemId,
     postBrief: saved.postBrief ?? null,
     postDraft: saved.postDraft ?? null,
     editorialChecks: saved.editorialChecks ?? [],
@@ -124,6 +130,19 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
 function normalizePostCandidate(candidate: WorkspaceState['postCandidates'][number]): WorkspaceState['postCandidates'][number] {
   const { format: _legacyFormat, ...current } = candidate as WorkspaceState['postCandidates'][number] & { format?: string };
   return current;
+}
+
+function normalizeEditorialWorkItem(item: WorkspaceState['editorialWorkItems'][number]): WorkspaceState['editorialWorkItems'][number] {
+  return {
+    ...item,
+    stage: item.stage ?? 'brief',
+    status: item.status ?? 'todo',
+    brief: item.brief ?? null,
+    draft: item.draft ?? null,
+    editorialChecks: item.editorialChecks ?? [],
+    editorNotes: item.editorNotes ?? [],
+    finalText: item.finalText ?? null
+  };
 }
 
 function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {

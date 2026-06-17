@@ -1,0 +1,242 @@
+import { useState } from 'react';
+import type { EditorialCheck, FinalText, PostBrief, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
+import { checkStatusLabel } from '../../shared/format/production';
+import { Icon } from '../../shared/ui/Icon';
+
+export function EditorialWorkbench({
+  workspace,
+  onApproveBrief,
+  onApproveFinal,
+  onCreateDraft,
+  onDraftChange,
+  onGoPlan
+}: {
+  workspace: WorkspaceState;
+  onApproveBrief: () => void;
+  onApproveFinal: () => void;
+  onCreateDraft: () => void;
+  onDraftChange: (body: string) => void;
+  onGoPlan: () => void;
+}) {
+  const brief = workspace.postBrief;
+  const draft = workspace.postDraft;
+  const finalText = workspace.finalText;
+  const [tab, setTab] = useState<'brief' | 'draft' | 'final'>(() => {
+    if (!brief || brief.approvalStatus !== 'approved') return 'brief';
+    return finalText ? 'final' : 'draft';
+  });
+
+  if (!workspace.selectedEditorialWorkItemId) {
+    return (
+      <section className="card edit-empty editorial-workbench-empty">
+        <div className="placeholder-icon">
+          <Icon name="brief" size={28} />
+        </div>
+        <h2>Выберите пост из очереди</h2>
+        <p>Редактура работает с конкретным утвержденным слотом: сначала откройте строку в очереди, затем готовьте фабулу, драфт и финал.</p>
+      </section>
+    );
+  }
+
+  if (!brief) {
+    return (
+      <section className="card edit-empty editorial-workbench-empty">
+        <div className="placeholder-icon">
+          <Icon name="brief" size={28} />
+        </div>
+        <h2>Фабула еще не подготовлена</h2>
+        <p>Для этого поста уже есть work item, но фабулу нужно подготовить из утвержденного слота в плане.</p>
+        <button className="btn btn-sec" type="button" onClick={onGoPlan}>
+          Вернуться в план
+        </button>
+      </section>
+    );
+  }
+
+  return (
+    <section className="editorial-workbench" data-testid="editorial-workbench">
+      <div className="editorial-workbench-head">
+        <div>
+          <span className="rub">Рабочий пост</span>
+          <h2>{brief.title}</h2>
+        </div>
+        <button className="btn btn-pri" type="button" disabled={!draft} onClick={onApproveFinal}>
+          <Icon name="check" size={16} />
+          Утвердить текст
+        </button>
+      </div>
+      <div className="tabs" role="tablist" aria-label="Редакторские вкладки">
+        <button className={`tab${tab === 'brief' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'brief'} onClick={() => setTab('brief')}>
+          Фабула
+        </button>
+        <button className={`tab${tab === 'draft' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'draft'} onClick={() => setTab('draft')}>
+          Драфт
+        </button>
+        <button className={`tab${tab === 'final' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'final'} onClick={() => setTab('final')}>
+          Финал
+        </button>
+      </div>
+      {brief.approvalStatus !== 'approved' ? (
+        <section className="doc editorial-brief-approval">
+          <BriefSnapshot brief={brief} />
+          <div className="inline-actions">
+            <button className="btn btn-pri" type="button" onClick={onApproveBrief}>
+              <Icon name="check" size={16} />
+              Утвердить фабулу
+            </button>
+            <button className="btn btn-sec" type="button" onClick={onGoPlan}>
+              Вернуться в план
+            </button>
+          </div>
+        </section>
+      ) : !draft ? (
+        <section className="card draft-start">
+          <span className="rub">{brief.rubric}</span>
+          <h2>{brief.title}</h2>
+          <p>{brief.thesis}</p>
+          <button className="btn btn-pri" type="button" onClick={() => {
+            onCreateDraft();
+            setTab('draft');
+          }}>
+            <Icon name="edit" size={16} />
+            Написать драфт
+          </button>
+        </section>
+      ) : (
+        <div className="edit-grid">
+          <section className="doc">
+            {tab === 'brief' && <BriefSnapshot brief={brief} />}
+            {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
+            {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} />}
+          </section>
+          <aside className="edit-side">
+            <section className="panel">
+              <h4>Проверки</h4>
+              <div className="checks">
+                {workspace.editorialChecks.map((check) => (
+                  <CheckCard key={check.id} check={check} />
+                ))}
+              </div>
+            </section>
+            <section className="panel">
+              <h4>Заметки редакторов</h4>
+              <div className="notes">
+                {workspace.editorNotes.map((note) => (
+                  <article className="note" key={note.id}>
+                    <div className="note-head">
+                      <span className="av">{note.agent.slice(0, 2)}</span>
+                      <div>
+                        <b>{note.agent}</b>
+                        <span>{note.tone} · {note.target}</span>
+                      </div>
+                    </div>
+                    <p>{note.text}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </aside>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DraftEditor({ draft, onDraftChange }: { draft: PostDraft; onDraftChange: (body: string) => void }) {
+  return (
+    <>
+      <div className="doc-head">
+        <div>
+          <span className="rub">Версия {draft.version}</span>
+          <h2>{draft.title}</h2>
+        </div>
+        <span className={`pill ${draft.status === 'revised' ? 'pin' : 'ok'}`}>
+          <i />
+          {draft.status === 'revised' ? 'Отредактирован' : 'Драфт'}
+        </span>
+      </div>
+      <label className="draft-editor">
+        <span className="k">Текст</span>
+        <textarea
+          aria-label="Текст драфта"
+          value={draft.body}
+          onChange={(event) => onDraftChange(event.target.value)}
+        />
+      </label>
+    </>
+  );
+}
+
+function BriefSnapshot({ brief }: { brief: PostBrief }) {
+  return (
+    <div className="brief-snapshot">
+      <span className="rub">{brief.rubric}</span>
+      <h2>{brief.title}</h2>
+      <p className="lead">{brief.thesis}</p>
+      <div className="snapshot-grid">
+        <InfoBlock title="Конфликт" items={[brief.conflict]} />
+        <InfoBlock title="Позиция" items={[brief.authorPosition]} />
+        <InfoBlock title="Доказательства" items={brief.evidence} />
+        <InfoBlock title="Риски" items={brief.risks} />
+      </div>
+    </div>
+  );
+}
+
+function FinalTextView({ finalText, draft }: { finalText: FinalText | null; draft: PostDraft }) {
+  if (!finalText) {
+    return (
+      <div className="final-empty">
+        <h2>Финал еще не утвержден</h2>
+        <p>Проверьте драфт, замечания редакторов и нажмите «Утвердить текст».</p>
+      </div>
+    );
+  }
+
+  return (
+    <article className="final-doc">
+      <div className="final-status">
+        <span className="pill ok">
+          <i />
+          Финальный текст утвержден
+        </span>
+        <span>на основе версии {draft.version}</span>
+      </div>
+      <h2>{finalText.title}</h2>
+      <pre>{finalText.body}</pre>
+    </article>
+  );
+}
+
+function InfoBlock({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="info-block">
+      <h4>{title}</h4>
+      <ul className="bullets">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CheckCard({ check }: { check: EditorialCheck }) {
+  return (
+    <article className={`check check-${check.status}`}>
+      <div className="check-head">
+        <span className="ci">{check.title.slice(0, 1)}</span>
+        <div>
+          <b>{check.title}</b>
+          <span>{checkStatusLabel(check.status)}</span>
+        </div>
+      </div>
+      <p>{check.summary}</p>
+      <ul className="bullets">
+        {check.findings.map((finding) => (
+          <li key={finding}>{finding}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}

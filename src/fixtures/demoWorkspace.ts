@@ -83,6 +83,8 @@ export function createDemoWorkspace(): WorkspaceState {
       signalSelectionPolicy: 'hitl-only'
     },
     planWeightWarnings: [],
+    editorialWorkItems: [],
+    selectedEditorialWorkItemId: null,
     postBrief: null,
     postDraft: null,
     editorialChecks: [],

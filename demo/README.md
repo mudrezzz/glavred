@@ -112,6 +112,11 @@ The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edi
 approve a plan slot, click `Подготовить фабулу поста`, edit the post brief, and use
 `Вернуться в план` when needed.
 
+Approved plan slots now appear as an editorial work queue in `Редактура`. The existing
+single-post `Фабула -> Драфт -> Финал` experience is reused as the selected-post
+workbench below the queue. `Выпуск` still uses the compatibility single-post release
+package/checklist/copy/Markdown workbench until the release queue slice.
+
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product
@@ -210,25 +215,24 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     then click a date to inspect that day's same slot cards.
 24. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
-25. Click `Подготовить фабулу поста`.
-26. Edit the post brief if needed.
-27. Click `Утвердить фабулу`.
-28. Open `Редактура`.
-29. Click `Написать драфт`.
-30. Review checks and editor notes.
-31. Edit the draft text.
-32. Click `Утвердить текст`.
-33. Open `Выпуск`.
-34. Click `Подготовить выпуск`.
-35. Review target, checklist, final text, and Markdown preview.
-36. Complete the checklist and click `Готово к выпуску`.
-37. Click `Скопировать текст` or `Скачать Markdown`.
-38. Open `Аналитика`.
-39. Click `Подготовить аналитику`.
-40. Enter manual metrics and editorial conclusions.
-41. Click `Зафиксировать выводы`.
-42. Reload the page to confirm state persists.
-43. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+25. Click `Подготовить фабулу поста`; Glavred opens `Редактура` directly.
+26. In the editorial queue, confirm the selected work item and open the `Фабула` tab.
+27. Edit the post brief if needed, then click `Утвердить фабулу`.
+28. Click `Написать драфт`.
+29. Review checks and editor notes.
+30. Edit the draft text.
+31. Click `Утвердить текст`.
+32. Open `Выпуск`.
+33. Click `Подготовить выпуск`.
+34. Review target, checklist, final text, and Markdown preview.
+35. Complete the checklist and click `Готово к выпуску`.
+36. Click `Скопировать текст` or `Скачать Markdown`.
+37. Open `Аналитика`.
+38. Click `Подготовить аналитику`.
+39. Enter manual metrics and editorial conclusions.
+40. Click `Зафиксировать выводы`.
+41. Reload the page to confirm state persists.
+42. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

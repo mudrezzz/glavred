@@ -4,6 +4,7 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   approveFinalText,
   approvePostBrief,
+  createEditorialWorkItem,
   createEditorialValidationRun,
   markLearningNoteCaptured,
   markReleaseExported,
@@ -81,6 +82,8 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.contentPlanSettings.period).toBe('month');
     expect(loaded.contentPlanSettings.publishingDays).toEqual([1, 3, 5]);
     expect(loaded.contentPlanSettings.signalSelectionPolicy).toBe('hitl-only');
+    expect(loaded.editorialWorkItems).toEqual([]);
+    expect(loaded.selectedEditorialWorkItemId).toBeNull();
   });
 
   it('normalizes legacy broadcast settings without weakening saved platform and tempo', () => {
@@ -532,6 +535,26 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.contentPlanItems[0].manualOverride).toBe(true);
     expect(loaded.contentPlanItems[0].weightWarningIds).toContain('slot-test-warning');
     expect(loaded.planWeightWarnings[0].id).toBe('slot-test-warning');
+  });
+
+  it('saves and loads editorial work item queue state', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const workItem = createEditorialWorkItem(workspace.contentPlanItems[0]);
+
+    store.save({
+      ...workspace,
+      editorialWorkItems: [workItem],
+      selectedEditorialWorkItemId: workItem.id
+    });
+
+    const loaded = store.load();
+
+    expect(loaded.editorialWorkItems).toHaveLength(1);
+    expect(loaded.editorialWorkItems[0].id).toBe(workItem.id);
+    expect(loaded.editorialWorkItems[0].brief).toBeNull();
+    expect(loaded.editorialWorkItems[0].editorialChecks).toEqual([]);
+    expect(loaded.selectedEditorialWorkItemId).toBe(workItem.id);
   });
 
   it('saves and loads an approved final text', () => {

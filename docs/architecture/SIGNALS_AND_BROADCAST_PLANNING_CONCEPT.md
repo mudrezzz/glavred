@@ -95,6 +95,11 @@ number of filtered candidates on each date, and renders the same broadcast rows 
 clicked date. It does not yet assign candidates to new slots or show production
 readiness statuses.
 
+Before the full readiness calendar, approved slots should enter an editorial work
+queue. `Редактура` owns the selected-post workbench for `Фабула -> Драфт -> Финал`;
+`Выпуск` owns the release queue for finalized posts. Calendar readiness should be
+derived from these work items instead of singleton post artifacts.
+
 ## Calendar View
 
 The second `План` tab should be `Календарь выпуска`.
@@ -200,9 +205,13 @@ operational.
 4. `Slice 1.7: Candidate Editing and Variant Control`
    - add request-more controls for candidate generation.
 5. `Slice 1.8: Broadcast Grid Settings`
-   - implement tempo, period, days/times, and min/max candidate settings.
-6. `Slice 1.9: Calendar View for Broadcast Plan`
-   - implement calendar zoom levels, slot statuses, and slot detail panel.
+   - implement tempo, period, days/times, explicit publish slots, and min/max
+     candidate settings.
+6. `Slice 1.8.2: Broadcast Grid Candidate Calendar View`
+   - implement calendar view over the same filtered grid rows.
+7. `Slice 1.9: Editorial Work Queue Foundation`
+   - turn approved slots into `Редактура` work items and reuse the selected-post
+     `Фабула -> Драфт -> Финал` workbench.
 
 Archive uniqueness remains important, but it should follow the signal/candidate
 planning correction because archive material is one of the signal sources.

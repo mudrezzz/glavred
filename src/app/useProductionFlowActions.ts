@@ -1,35 +1,36 @@
 import {
-  createBroadcastPlan,
   createEditorNotes,
   createEditorialLearningNote,
   createWorkspaceInsightCard,
-  createPostBrief,
   createPostDraft,
   createReleasePackage,
   runEditorialChecks
 } from '../application/editorialServices';
 import {
-  approveContentPlanSlot,
   approveFinalText,
   approvePostBrief,
-  applyPlanWarnings,
-  detectBroadcastPlanConflicts,
   markLearningNoteCaptured,
   markReleaseReady,
-  normalizeContentPlanSettings,
   reviseDraft,
   toggleReleaseChecklistItem,
-  updateContentPlanItem,
   type ContentPlanSettings,
   type ContentPlanItem,
   type EditorialLearningNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
-  copyToClipboard,
-  downloadMarkdown,
-  markReleaseManuallyExported
-} from './releaseExport';
+  buildApprovePlanSlotPatch,
+  buildPrepareBriefPatch,
+  buildSelectEditorialWorkItemPatch,
+  withEditorialWorkItemSync
+} from './editorialWorkQueueActions';
+import {
+  buildAddInsightToPlanPatch,
+  buildGenerateBroadcastPlanPatch,
+  buildSaveContentPlanSettingsPatch,
+  buildUpdatePlanItemPatch
+} from './productionPlanActions';
+import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
 
 type ProductionFlowActionsParams = {
@@ -44,79 +45,48 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function addInsightToPlan() {
-    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
-    const nextWorkspace = { ...workspace, insightCard };
-    const generatedItems = createBroadcastPlan(nextWorkspace);
-    const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
-    const contentPlanItems = applyPlanWarnings(generatedItems, planWeightWarnings);
     patchWorkspace(
-      { insightCard, contentPlanItems, planWeightWarnings, contentPlanItem: null, activeSection: 'plan' },
+      buildAddInsightToPlanPatch(workspace),
       'Инсайт добавлен в план'
     );
   }
 
   function generateBroadcastPlan() {
-    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
-    const nextWorkspace = { ...workspace, insightCard };
-    const generatedItems = createBroadcastPlan(nextWorkspace);
-    const planWeightWarnings = detectBroadcastPlanConflicts(nextWorkspace, generatedItems);
-    const contentPlanItems = applyPlanWarnings(generatedItems, planWeightWarnings);
     patchWorkspace(
-      { insightCard, contentPlanItems, planWeightWarnings, contentPlanItem: null },
+      buildGenerateBroadcastPlanPatch(workspace),
       'Сетка вещания собрана'
     );
   }
 
   function saveContentPlanSettings(contentPlanSettings: ContentPlanSettings) {
     patchWorkspace(
-      {
-        contentPlanSettings: normalizeContentPlanSettings(contentPlanSettings, workspace.contentPlanSettings),
-        contentPlanItems: [],
-        contentPlanItem: null,
-        planWeightWarnings: [],
-        postBrief: null,
-        postDraft: null,
-        editorialChecks: [],
-        editorNotes: [],
-        finalText: null,
-        releasePackage: null,
-        editorialLearningNote: null
-      },
+      buildSaveContentPlanSettingsPatch(workspace, contentPlanSettings),
       'Настройка сетки сохранена, план нужно пересобрать'
     );
   }
 
   function updatePlanItemAndWarnings(item: ContentPlanItem) {
-    const updatedItems = updateContentPlanItem(workspace.contentPlanItems, item);
-    const planWeightWarnings = detectBroadcastPlanConflicts(workspace, updatedItems);
-    const contentPlanItems = applyPlanWarnings(updatedItems, planWeightWarnings);
-    patchWorkspace({ contentPlanItems, planWeightWarnings });
+    patchWorkspace(buildUpdatePlanItemPatch(workspace, item));
   }
 
   function approvePlanSlot(itemId: string) {
-    const approvedItems = approveContentPlanSlot(workspace.contentPlanItems, itemId);
-    const planWeightWarnings = detectBroadcastPlanConflicts(workspace, approvedItems);
-    const contentPlanItems = applyPlanWarnings(approvedItems, planWeightWarnings);
-    const contentPlanItem = contentPlanItems.find((item) => item.id === itemId) ?? null;
-    patchWorkspace({ contentPlanItems, contentPlanItem, planWeightWarnings }, 'Слот сетки утвержден');
+    patchWorkspace(buildApprovePlanSlotPatch(workspace, itemId), 'Слот сетки утвержден');
   }
 
   function prepareBrief(item: ContentPlanItem) {
-    const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
-    const postBrief = createPostBrief(
-      item,
-      insightCard,
-      workspace.editorialModel,
-      workspace.topics,
-      workspace.fabulas,
-      workspace.topicFabulaMatrix
-    );
-    patchWorkspace({ insightCard, contentPlanItem: item, postBrief, activeSection: 'brief' }, 'Фабула поста подготовлена');
+    patchWorkspace(buildPrepareBriefPatch(workspace, item), 'Фабула поста подготовлена');
+  }
+
+  function selectEditorialWorkItem(workItemId: string) {
+    patchWorkspace(buildSelectEditorialWorkItemPatch(workspace, workItemId));
   }
 
   function approveCurrentBrief() {
     if (!workspace.postBrief) return;
-    patchWorkspace({ postBrief: approvePostBrief(workspace.postBrief) }, 'Фабула утверждена');
+    patchWorkspace(
+      withEditorialWorkItemSync(workspace, { postBrief: approvePostBrief(workspace.postBrief) }),
+      'Фабула утверждена'
+    );
   }
 
   function createDraftFromBrief() {
@@ -124,7 +94,10 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     const postDraft = createPostDraft(workspace.postBrief, workspace.editorialModel);
     const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
     const editorNotes = createEditorNotes(editorialChecks);
-    patchWorkspace({ postDraft, editorialChecks, editorNotes, finalText: null }, 'Драфт подготовлен для редакторских проверок');
+    patchWorkspace(
+      withEditorialWorkItemSync(workspace, { postDraft, editorialChecks, editorNotes, finalText: null }),
+      'Драфт подготовлен для редакторских проверок'
+    );
   }
 
   function updateDraftBody(body: string) {
@@ -132,20 +105,23 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     const postDraft = reviseDraft(workspace.postDraft, body);
     const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
     const editorNotes = createEditorNotes(editorialChecks);
-    patchWorkspace({
+    patchWorkspace(withEditorialWorkItemSync(workspace, {
       postDraft,
       editorialChecks,
       editorNotes,
       finalText: null,
       releasePackage: null,
       editorialLearningNote: null
-    });
+    }));
   }
 
   function approveCurrentFinalText() {
     if (!workspace.postDraft) return;
     const finalText = approveFinalText(workspace.postDraft);
-    patchWorkspace({ finalText, releasePackage: null, editorialLearningNote: null }, 'Финальный текст утвержден');
+    patchWorkspace(
+      withEditorialWorkItemSync(workspace, { finalText, releasePackage: null, editorialLearningNote: null }),
+      'Финальный текст утвержден'
+    );
   }
 
   function createReleaseFromFinalText() {
@@ -233,6 +209,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     markCurrentReleaseReady,
     prepareBrief,
     saveContentPlanSettings,
+    selectEditorialWorkItem,
     toggleReleaseChecklist,
     updateCurrentLearningNote,
     updateDraftBody,

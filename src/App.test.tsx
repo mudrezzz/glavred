@@ -680,7 +680,8 @@ describe('App', () => {
 
     createApprovedBrief();
 
-    expect(screen.getAllByText('Утверждено').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('editorial-workbench')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Написать драфт/i })).toBeInTheDocument();
   });
 
   it('shows broadcast grid slots and keeps post brief as an internal production step', () => {
@@ -709,13 +710,13 @@ describe('App', () => {
     expect(screen.getByTestId('broadcast-grid')).toBeInTheDocument();
   });
 
-  it('shows an empty editorial review state before an approved brief', () => {
+  it('shows an empty editorial work queue before approved plan slots', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
 
-    expect(screen.getByText(/Сначала утвердите фабулу/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Перейти к фабуле/i })).toBeInTheDocument();
+    expect(screen.getByTestId('editorial-work-empty')).toHaveTextContent(/План/i);
+    expect(screen.getByTestId('editorial-work-toolbar')).toBeInTheDocument();
   });
 
   it('shows an empty release state before an approved final text', () => {
@@ -755,7 +756,7 @@ describe('App', () => {
       }
     });
     fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Финал/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
 
     expect(screen.getAllByText(/Финальный текст утвержден/i).length).toBeGreaterThan(0);
 

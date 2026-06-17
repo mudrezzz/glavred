@@ -25,6 +25,7 @@ import type { PostCandidate } from '../post-candidates/types';
 import type {
   EditorialCheck,
   EditorialLearningNote,
+  EditorialWorkItem,
   EditorNote,
   FinalText,
   PostBrief,
@@ -56,6 +57,8 @@ export interface WorkspaceState {
   contentPlanItems: ContentPlanItem[];
   contentPlanSettings: ContentPlanSettings;
   planWeightWarnings: PlanWeightWarning[];
+  editorialWorkItems: EditorialWorkItem[];
+  selectedEditorialWorkItemId: string | null;
   postBrief: PostBrief | null;
   postDraft: PostDraft | null;
   editorialChecks: EditorialCheck[];

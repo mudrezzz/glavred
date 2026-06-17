@@ -57,6 +57,9 @@ export type {
   EditorialCheckStatus,
   EditorialCheckType,
   EditorialLearningNote,
+  EditorialWorkItem,
+  EditorialWorkStage,
+  EditorialWorkStatus,
   EditorNote,
   FinalText,
   ManualMetricSnapshot,
@@ -153,5 +156,6 @@ export * from './planning/defaultSlots';
 export * from './planning/transitions';
 export * from './signals/transitions';
 export * from './post-candidates/transitions';
+export * from './production/editorialWorkQueue';
 export * from './production/transitions';
 export * from './imports/transitions';

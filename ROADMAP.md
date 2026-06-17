@@ -2322,36 +2322,176 @@ Status:
   - Candidate counts reflect the current filtered grid. Done.
   - Clicking a date shows the same row cards as the normal list. Done.
 
-### Slice 1.9: Calendar View for Broadcast Plan
+### Slice 1.9: Editorial Work Queue Foundation
 
-- Status: Ready
-- Goal: Replace the list-only plan view with a calendar that shows slot readiness and
-  lets the author zoom into a day or slot.
-- User value: The author can see upcoming risk, ready posts, published posts, and
-  where attention is needed.
+- Status: Done
+- Goal: Replace the singleton "current post" production mental model with an
+  editorial work queue while preserving the existing one-post editing behavior.
+- User value: The author can approve several plan slots and see them as a production
+  queue in `Редактура`, then choose which post to work on without overwriting another
+  post's brief, draft, final text, or release state.
 - Scope:
-  - Add `План -> Календарь выпуска`.
-  - Support week/month/quarter/year zoom levels.
-  - Show slot statuses:
-    - empty;
-    - waiting for signal approval;
-    - has candidates;
-    - concept approved;
-    - in production;
-    - ready;
-    - published;
-    - at risk.
+  - Add an `EditorialWorkItem` domain concept for an approved post in production.
+  - Add `editorialWorkItems: EditorialWorkItem[]` and
+    `selectedEditorialWorkItemId: string | null` to `WorkspaceState`.
+  - Normalize old workspaces by creating an empty queue and preserving current
+    singleton production fields as compatibility state.
+  - When a plan slot is approved or `Подготовить фабулу поста` is clicked, create or
+    update a work item linked to the plan slot and candidate/source context.
+  - Add a queue surface to `Редактура` using the shared large-list pattern:
+    `filter card -> search -> list/group toggle -> framed rows -> bottom-left actions`.
+  - Selecting a row should open the current one-post `Фабула/Драфт/Финал` workbench
+    for that work item, initially reusing compatibility fields if needed.
+- Out of scope:
+  - Full migration of every production action to work-item ids.
+  - Release queue.
+  - Calendar readiness statuses.
+  - Bulk production actions.
+- Implementation notes:
+  - Treat current `postBrief`, `postDraft`, `finalText`, and `releasePackage` as
+    compatibility fields during this slice.
+  - Do not rebuild `BriefView`, `EditView`, or `ReleaseView`; wrap/reuse their current
+    behavior around selected work-item context.
+  - The first queue can seed item status from existing artifacts:
+    `brief`, `draft`, `final`, `readyForRelease`.
+- Architecture impact:
+  - Add role-owned domain/application helpers for editorial work items.
+  - Keep `Редактура` UI under `src/features/editing`; avoid growing `App.tsx` or
+    `useWorkspaceController`.
+  - `useProductionFlowActions` is near-limit; new queue orchestration should move into
+    a role-owned action hook or helper rather than expanding it substantially.
+- Tests:
+  - Storage normalize adds queue fields to old workspaces.
+  - Creating a work item from an approved slot preserves slot/candidate context.
+  - Selecting one queued post does not erase another queued post.
+  - `Редактура` renders a queue and selected-post workbench in main content.
+  - Regression: `npm run test:architecture`, `npm test -- --run`, `npm run smoke`,
+    `npm run test:design`, `npm run test:visual`.
+- Docs:
+  - Update SAO, developer guide, user guide, demo docs, and wiki production flow.
+- Demo impact:
+  - Demo shows at least two approved slots in the editorial queue, with one selected
+    for the existing `Фабула -> Драфт -> Финал` flow.
+- Acceptance criteria:
+  - Approved slots appear in `Редактура` as production work items.
+  - The author can select a post before editing it.
+  - Existing one-post production flow still works for the selected item.
+  - Work item context shows date, platform, signal, topic, fabula, title, and stage.
+- Risks:
+  - Partial compatibility can be confusing if singleton fields and work items diverge;
+    make selected item ownership explicit in UI and tests.
+
+- Implementation result:
+  - Added `EditorialWorkItem`, workspace queue fields, storage normalization, stable
+    upsert from approved plan slots, and selected-item compatibility hydration.
+  - `Редактура` now starts with the shared list pattern and renders the selected
+    `Фабула -> Драфт -> Финал` workbench below the queue.
+  - `Подготовить фабулу поста` opens `Редактура`; `BriefView` remains a compatibility
+    surface.
+
+### Slice 1.10: Multi-Post Editing Workbench
+
+- Status: Backlog
+- Goal: Move `Фабула -> Драфт -> Финал` fully under selected editorial work items.
+- User value: The author can move several posts through different editing stages
+  without losing progress or having one draft overwrite another.
+- Scope:
+  - Store brief, draft, checks, notes, and final text on each `EditorialWorkItem`.
+  - Convert production actions to accept a work-item id.
+  - Keep `Фабула` as the first tab inside `Редактура`, not a separate top-level
+    destination.
+  - Add filters/grouping by stage, date, platform, topic, fabula, and warning state.
+  - Show readonly source/candidate/plan context in every edit mode.
+- Out of scope:
+  - Release queue.
+  - Real AI drafting.
+  - Collaborative editing.
+- Implementation notes:
+  - Extract reusable selected-post workbench parts from current `BriefView` and
+    `EditView` rather than duplicating their UI.
+- Architecture impact:
+  - Production mutations move away from singleton workspace fields toward
+    work-item-specific domain/application helpers.
+- Tests:
+  - Creating a draft for one work item does not change another work item.
+  - Final approval updates only the selected work item.
+  - UI filters and selected workbench stay in the main editing content, not side panels.
+- Docs:
+  - Update production-flow docs and developer ownership rules.
+- Demo impact:
+  - Demo can show one post at `Фабула`, one at `Драфт`, and one at `Финал`.
+- Acceptance criteria:
+  - Multiple queued posts can have independent brief/draft/final state.
+  - Existing editing UX remains recognizable.
+- Risks:
+  - This slice touches production state broadly; keep storage migration additive and
+    preserve old fields until release queue migration is complete.
+
+### Slice 1.11: Release Queue
+
+- Status: Backlog
+- Goal: Turn `Выпуск` into a queue of finalized posts while reusing the existing
+  release package/checklist/export workbench.
+- User value: The author can prepare, check, copy, download, and mark releases for
+  multiple finalized posts without losing which post is being released.
+- Scope:
+  - List work items whose final text is approved.
+  - Add release filters/search/grouping by platform, release status, date, and topic.
+  - Selecting a release row opens the existing package/checklist/copy/Markdown
+    workbench for that work item.
+  - Release package state is stored on the work item.
+  - Analytics learning attaches to the released work item.
+- Out of scope:
+  - Autoposting or platform APIs.
+  - External calendar integrations.
+  - Release bulk actions.
+- Implementation notes:
+  - Reuse `ReleaseView` behavior as a selected-release workbench.
+  - Keep manual export semantics: copy/download can mark only the selected work item
+    exported.
+- Architecture impact:
+  - Release actions become work-item-specific and should not mutate global
+    `releasePackage` as the source of truth.
+- Tests:
+  - Preparing release for one work item does not affect another finalized work item.
+  - Checklist/copy/download act on selected work item.
+  - UI shows queue first and workbench second.
+- Docs:
+  - Update user guide, demo docs, wiki, and SAO.
+- Demo impact:
+  - Demo can show one finalized post ready for package and one exported post ready for
+    analytics.
+- Acceptance criteria:
+  - `Выпуск` starts with a release queue.
+  - Existing release package UX remains available for the selected post.
+  - Analytics prep can identify the released work item.
+- Risks:
+  - Release and analytics are currently tightly coupled to singleton fields; migrate
+    in small helpers and keep compatibility until tests cover the queue.
+
+### Slice 1.12: Calendar View for Broadcast Plan
+
+- Status: Backlog
+- Goal: Add a broader calendar view that shows readiness across planning, editing,
+  release, and analytics after production work items exist.
+- User value: The author can see upcoming risk, ready posts, published posts, and
+  where attention is needed across the whole production system.
+- Scope:
+  - Add calendar readiness statuses derived from plan slots and editorial work items:
+    empty, waiting for signal approval, has candidates, concept approved, in editing,
+    final approved, release ready, exported, and at risk.
+  - Support week/month/quarter/year zoom levels if the UI remains readable.
   - Click a day/slot to open a detail panel below the calendar.
-  - Detail panel links to signals, candidates, post brief, editing, release, or
+  - Detail panel links to signals, candidates, editing work item, release package, or
     analytics depending on status.
-  - Preserve current list/grid view as a secondary operational view if useful.
+  - Preserve current list/grid views as operational views.
 - Out of scope:
   - Real platform publication links beyond manual/demo URLs.
   - External calendar integrations.
   - Real-time collaboration.
 - Implementation notes:
-  - Use status colors consistently and keep text labels available for accessibility.
-  - Calendar should summarize counts without forcing the user to inspect every slot.
+  - This slice should happen after editorial/release queues so readiness reflects real
+    work-item state instead of singleton artifacts.
 - Tests:
   - UI tests for zoom levels, status rendering, slot detail panel, and navigation.
   - Visual smoke tests for month and week layouts at desktop/laptop/mobile widths.
@@ -2359,17 +2499,17 @@ Status:
 - Docs:
   - Update user guide, wiki screenshots, demo docs, and architecture overview.
 - Demo impact:
-  - Demo should show a near-future slot that needs signal/candidate attention and one
-    approved slot ready for production.
+  - Demo should show a near-future slot needing attention, one post in editing, and
+    one release-ready or exported post.
 - Acceptance criteria:
   - Calendar clearly shows what is ready and what needs intervention.
   - Clicking a slot explains the next action.
   - Existing production flow remains reachable.
 - Risks:
-  - Calendar UI can easily become too dense; start with compact slot badges and a
-    detail panel.
+  - Calendar UI can easily become too dense; start with compact badges and a detail
+    panel.
 
-### Slice 1.10: Archive and Uniqueness Baseline
+### Slice 1.13: Archive and Uniqueness Baseline
 
 - Status: Backlog
 - Goal: Treat released and imported posts as author memory, signal material, and
@@ -2468,6 +2608,7 @@ Status:
 - Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings. Completed
   2026-06-17.
 - Slice 1.8.2: Broadcast Grid Candidate Calendar View. Completed 2026-06-17.
+- Slice 1.9: Editorial Work Queue Foundation. Completed 2026-06-17.
 
 ## Blocked Items
 
@@ -2488,4 +2629,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.9: Calendar View for Broadcast Plan`.
+Resume product work with `Slice 1.10: Multi-Post Editing Workbench`.

@@ -51,7 +51,7 @@ author's own position explicit, editable, evidence-backed, and continuously vali
 The current implemented perimeter now starts with author memory and reaches a captured
 editorial learning note:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 The source-to-release part remains useful as a production layer. It is no longer the
 conceptual center of the product. Author memory, author-position assertions,
@@ -70,6 +70,10 @@ Slice 1.5.8 refines radars into separate trigger rules, search sources, source
 discovery mode, and editorial filters. Filters evaluate author, audience, positioning,
 goals, forbidden topics, and topics; style remains a later drafting/review concern.
 Filtered signals stay visible for human review instead of being deleted automatically.
+Slice 1.9 adds the first production queue in `Редактура`: approved plan slots become
+stable `EditorialWorkItem` records, the screen starts with the shared large-list
+pattern, and the selected item hydrates the existing `Фабула -> Драфт -> Финал`
+workbench through compatibility fields.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -145,6 +149,12 @@ turning the product into generic content generation.
   explicit publish slots, fallback publishing days/times, candidate count
   requirements, platform/date/time/topic/fabula, approval status, manual override
   state, and advisory conflicts.
+- `EditorialWorkQueue`: stores approved posts as production work items. Each work
+  item keeps its source slot/candidate context plus its own brief, draft, checks,
+  editor notes, and final text. Release package and analytics learning note remain
+  compatibility singleton fields until the release queue slice. The queue replaces the
+  singleton production mental model while allowing the current single-post editors to
+  be reused as selected-item workbenches.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -206,10 +216,15 @@ Target structure:
   The broadcast grid also has a calendar view that reuses the same week/month/quarter
   calendar model, shows filtered candidate counts per date, and renders the same slot
   rows below a selected date instead of creating a second card pattern.
-- `src/features/briefing`: post brief and concrete post-fabula approval workflow.
-- `src/features/editing`: draft, editorial checks, editor notes, and final text
-  approval.
-- `src/features/release`: manual release package, checklist, copy, and Markdown export.
+- `src/features/briefing`: compatibility post-brief workbench. Future slices should
+  fold this into the selected post inside `src/features/editing` rather than keep
+  brief editing as a separate top-level workflow destination.
+- `src/features/editing`: editorial work queue and selected-post workbench. It should
+  list approved posts first, then reuse the existing `Фабула -> Драфт -> Финал`
+  editing flow for the selected work item.
+- `src/features/release`: release queue and selected-release workbench. It should list
+  finalized posts first, then reuse the existing manual package/checklist/copy/Markdown
+  flow for the selected work item.
 - `src/features/analytics`: manual metrics and editorial learning note UI.
 - `src/features/context-chat`: collapsible context assistant overlay, deterministic
   suggestions, and future provider-backed chat adapter boundary.
@@ -623,12 +638,15 @@ research experience building AI-B2B products:
 10. `InsightScoring` produces an `InsightCard` from the approved candidate.
 11. `ContentPlanning` saves grid settings, creates publish-window slots from the
    current date, and fills the hybrid grid with deterministic topic/fabula ideas.
-12. The author approves a slot and post brief through HITL gates.
-13. `Drafting` creates an editable research-note draft.
-14. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
+12. The author approves a slot; the slot enters the editorial work queue as a
+   selected production work item.
+13. Inside `Редактура`, the author approves the post fabula/brief, creates a draft, and
+   approves final text for that selected work item.
+14. `Drafting` creates an editable research-note draft.
+15. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
-15. The author approves final text, prepares a manual Telegram release package, and
-   captures analytics learning.
+16. Inside `Выпуск`, the author prepares a manual Telegram release package for the
+   selected finalized work item and captures analytics learning after export.
 
 ## Extension Points
 
@@ -642,6 +660,9 @@ research experience building AI-B2B products:
 - Post candidate assembly now feeds insight creation and supports local edit/reject
   review; later slices should add request-more variants and calendar slot binding while
   keeping current `contentPlanItems` as a compatibility layer.
+- Approved plan slots should become editorial work items. `Редактура` and `Выпуск`
+  should operate on a selected work-item id so one post can move through fabula, draft,
+  final, release, and analytics without overwriting another approved post.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.

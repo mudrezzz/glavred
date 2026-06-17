@@ -6,6 +6,8 @@ export type EditorialCheckStatus = 'passed' | 'warning' | 'failed';
 export type ReleaseStatus = 'draft' | 'ready' | 'exported';
 export type ReleaseTarget = 'telegram' | 'linkedin';
 export type AnalyticsStatus = 'draft' | 'captured';
+export type EditorialWorkStage = 'brief' | 'draft' | 'final' | 'readyForRelease';
+export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
 
 export interface PostBrief {
   id: string;
@@ -63,6 +65,28 @@ export interface FinalText {
   body: string;
   approvalStatus: ApprovalStatus;
   approvedAt: string;
+}
+
+export interface EditorialWorkItem {
+  id: string;
+  contentPlanItemId: string;
+  postCandidateId?: string;
+  sourceSignalId?: string;
+  title: string;
+  platform: string;
+  date: string;
+  time: string;
+  topicId?: string;
+  topicTitle?: string;
+  fabulaId?: string;
+  fabulaTitle?: string;
+  stage: EditorialWorkStage;
+  status: EditorialWorkStatus;
+  brief: PostBrief | null;
+  draft: PostDraft | null;
+  editorialChecks: EditorialCheck[];
+  editorNotes: EditorNote[];
+  finalText: FinalText | null;
 }
 
 export interface ReleaseChecklistItem {

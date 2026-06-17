@@ -13,6 +13,8 @@ describe('usePostCandidateWorkspaceActions', () => {
       ...workspace,
       insightCard: createWorkspaceInsightCard(workspace),
       contentPlanItem: workspace.contentPlanItems[0],
+      editorialWorkItems: [{}] as WorkspaceState['editorialWorkItems'],
+      selectedEditorialWorkItemId: 'editorial-work-old',
       postBrief: {} as WorkspaceState['postBrief'],
       postDraft: {} as WorkspaceState['postDraft'],
       editorialChecks: [{}] as WorkspaceState['editorialChecks'],
@@ -33,6 +35,8 @@ describe('usePostCandidateWorkspaceActions', () => {
     expect(current.sourceSignal.id).toBe(candidate.sourceSignalId);
     expect(current.insightCard).toBeNull();
     expect(current.contentPlanItem).toBeNull();
+    expect(current.editorialWorkItems).toEqual([]);
+    expect(current.selectedEditorialWorkItemId).toBeNull();
     expect(current.postBrief).toBeNull();
     expect(current.postDraft).toBeNull();
     expect(current.editorialChecks).toEqual([]);

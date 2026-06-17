@@ -126,7 +126,9 @@ export function App() {
       {active === 'edit' && (
         <EditView
           workspace={workspace}
-          onGoBrief={() => controller.go('brief')}
+          onApproveBrief={controller.approveCurrentBrief}
+          onGoPlan={() => controller.go('plan')}
+          onSelectWorkItem={controller.selectEditorialWorkItem}
           onCreateDraft={controller.createDraftFromBrief}
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}

@@ -66,6 +66,11 @@ current concept for `Собрать инсайт`. The current broadcast grid re
 local-first prototype: it now has list/group/calendar views over the same filtered
 slots, while request-more generation and a true readiness calendar remain future work.
 
+Approved slots now enter an editorial work queue: `Редактура` lists production
+work items with the shared filter/search/group pattern and reuses the existing
+`Фабула -> Драфт -> Финал` workbench for the selected post. `Выпуск` still uses the
+compatibility single-post release workbench; a release queue remains future work.
+
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.
 

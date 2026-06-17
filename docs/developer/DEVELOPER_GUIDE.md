@@ -439,6 +439,19 @@ Use these boundaries:
 - `WorkspaceState.contentPlanItems` is the broadcast grid. `contentPlanItem` remains a
   compatibility field for the currently selected/approved slot used by post brief,
   release, and analytics services.
+- Approved posts use `EditorialWorkItem` identity rather than expanding singleton
+  production state. The current `postBrief`, `postDraft`, `finalText`,
+  `releasePackage`, and `editorialLearningNote` fields remain compatibility fields.
+  Slice 1.9 synchronizes the selected work item through those fields; future
+  production actions should accept an explicit work-item id so editing one post does
+  not overwrite another queued post.
+- `Редактура` owns the production queue from approved slot to final text. Its UX rule
+  is `filter card -> search -> list/group toggle -> framed rows -> selected-post
+  workbench`. The selected-post workbench should reuse the existing `Фабула -> Драфт
+  -> Финал` flow.
+- `Выпуск` owns the release queue for finalized posts. It should reuse the current
+  release package/checklist/copy/Markdown workbench for a selected work item instead
+  of creating a second release UI.
 - `WorkspaceState.contentPlanSettings` is normalized on load. It owns period, tempo,
   publishing days/times, candidate limits, default platform, and signal-selection
   policy. Saving settings clears generated plan slots and downstream production
