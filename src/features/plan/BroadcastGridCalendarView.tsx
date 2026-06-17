@@ -18,8 +18,7 @@ export function BroadcastGridCalendarView({
   warnings,
   onSelectDate,
   onItemChange,
-  onApprove,
-  onBrief
+  onApprove
 }: {
   items: ContentPlanItem[];
   selectedDate: string;
@@ -28,7 +27,6 @@ export function BroadcastGridCalendarView({
   onSelectDate: (date: string) => void;
   onItemChange: (item: ContentPlanItem) => void;
   onApprove: (itemId: string) => void;
-  onBrief: (item: ContentPlanItem) => void;
 }) {
   const itemsByDate = useMemo(() => groupBroadcastItemsByDate(items), [items]);
   const calendarSettings = useMemo(
@@ -111,7 +109,6 @@ export function BroadcastGridCalendarView({
                 key={item.id}
                 workspace={workspace}
                 onApprove={onApprove}
-                onBrief={onBrief}
                 onItemChange={onItemChange}
               />
             ))}

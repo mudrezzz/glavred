@@ -95,10 +95,12 @@ number of filtered candidates on each date, and renders the same broadcast rows 
 clicked date. It does not yet assign candidates to new slots or show production
 readiness statuses.
 
-Before the full readiness calendar, approved slots should enter an editorial work
-queue. `Редактура` owns the selected-post workbench for `Фабула -> Драфт -> Финал`;
-`Выпуск` owns the release queue for finalized posts. Calendar readiness should be
-derived from these work items instead of singleton post artifacts.
+Before the full readiness calendar, approved slots enter an editorial work queue.
+Approving a slot creates or updates the stable `EditorialWorkItem` and prepares its
+initial post brief automatically. `Редактура` owns `Посты` for queue review and
+`Рабочий стол` for the selected-post `Фабула -> Драфт -> Финал` workbench; `Выпуск`
+owns the release queue for finalized posts. Calendar readiness should be derived from
+these work items instead of singleton post artifacts.
 
 ## Calendar View
 
@@ -212,6 +214,9 @@ operational.
 7. `Slice 1.9: Editorial Work Queue Foundation`
    - turn approved slots into `Редактура` work items and reuse the selected-post
      `Фабула -> Драфт -> Финал` workbench.
+8. `Slice 1.10: Редактура как очередь постов и рабочий стол`
+   - create the work item and initial brief on slot approval;
+   - split `Редактура` into `Посты` and `Рабочий стол`.
 
 Archive uniqueness remains important, but it should follow the signal/candidate
 planning correction because archive material is one of the signal sources.

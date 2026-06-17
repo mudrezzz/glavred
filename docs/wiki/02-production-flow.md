@@ -67,6 +67,11 @@ The existing one-post `Фабула -> Драфт -> Финал` flow is the sel
 below the queue. `Выпуск` still uses the compatibility single-post release workbench;
 a release queue remains future work.
 
+Slice 1.10 note: approving a plan slot now creates or updates the editorial work item
+and prepares the initial post brief immediately. `Редактура` is split into `Посты`
+and `Рабочий стол`: use `Посты` for queue review and `К рабочему столу`, then edit the
+selected post through `Фабула -> Драфт -> Финал` inside the workbench.
+
 ## Ограничения текущего demo
 
 - Инсайт, план и фабула создаются deterministic-сервисами.

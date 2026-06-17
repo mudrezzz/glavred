@@ -111,7 +111,6 @@ export function App() {
           onGenerate={controller.generateBroadcastPlan}
           onItemChange={controller.updatePlanItemAndWarnings}
           onApprove={controller.approvePlanSlot}
-          onBrief={controller.prepareBrief}
           onSettingsSave={controller.saveContentPlanSettings}
         />
       )}
@@ -128,6 +127,7 @@ export function App() {
           workspace={workspace}
           onApproveBrief={controller.approveCurrentBrief}
           onGoPlan={() => controller.go('plan')}
+          onReturnWorkItem={controller.returnEditorialWorkItemToCandidates}
           onSelectWorkItem={controller.selectEditorialWorkItem}
           onCreateDraft={controller.createDraftFromBrief}
           onDraftChange={controller.updateDraftBody}

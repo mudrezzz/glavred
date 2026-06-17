@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import type { EditorialCheck, FinalText, PostBrief, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
-import { checkStatusLabel } from '../../shared/format/production';
+import type { FinalText, PostBrief, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 
 export function EditorialWorkbench({
@@ -103,40 +102,11 @@ export function EditorialWorkbench({
           </button>
         </section>
       ) : (
-        <div className="edit-grid">
-          <section className="doc">
-            {tab === 'brief' && <BriefSnapshot brief={brief} />}
-            {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
-            {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} />}
-          </section>
-          <aside className="edit-side">
-            <section className="panel">
-              <h4>Проверки</h4>
-              <div className="checks">
-                {workspace.editorialChecks.map((check) => (
-                  <CheckCard key={check.id} check={check} />
-                ))}
-              </div>
-            </section>
-            <section className="panel">
-              <h4>Заметки редакторов</h4>
-              <div className="notes">
-                {workspace.editorNotes.map((note) => (
-                  <article className="note" key={note.id}>
-                    <div className="note-head">
-                      <span className="av">{note.agent.slice(0, 2)}</span>
-                      <div>
-                        <b>{note.agent}</b>
-                        <span>{note.tone} · {note.target}</span>
-                      </div>
-                    </div>
-                    <p>{note.text}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </aside>
-        </div>
+        <section className="doc">
+          {tab === 'brief' && <BriefSnapshot brief={brief} />}
+          {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
+          {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} />}
+        </section>
       )}
     </section>
   );
@@ -218,25 +188,5 @@ function InfoBlock({ title, items }: { title: string; items: string[] }) {
         ))}
       </ul>
     </div>
-  );
-}
-
-function CheckCard({ check }: { check: EditorialCheck }) {
-  return (
-    <article className={`check check-${check.status}`}>
-      <div className="check-head">
-        <span className="ci">{check.title.slice(0, 1)}</span>
-        <div>
-          <b>{check.title}</b>
-          <span>{checkStatusLabel(check.status)}</span>
-        </div>
-      </div>
-      <p>{check.summary}</p>
-      <ul className="bullets">
-        {check.findings.map((finding) => (
-          <li key={finding}>{finding}</li>
-        ))}
-      </ul>
-    </article>
   );
 }

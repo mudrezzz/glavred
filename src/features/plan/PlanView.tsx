@@ -22,14 +22,12 @@ export function PlanView({
   onGenerate,
   onItemChange,
   onApprove,
-  onBrief,
   onSettingsSave
 }: {
   workspace: WorkspaceState;
   onGenerate: () => void;
   onItemChange: (item: ContentPlanItem) => void;
   onApprove: (itemId: string) => void;
-  onBrief: (item: ContentPlanItem) => void;
   onSettingsSave: (settings: ContentPlanSettings) => void;
 }) {
   const [mode, setMode] = useState<PlanMode>('grid');
@@ -90,7 +88,6 @@ export function PlanView({
                   workspace={workspace}
                   warnings={warnings}
                   onApprove={onApprove}
-                  onBrief={onBrief}
                   onItemChange={onItemChange}
                   onSelectDate={grid.setSelectedCalendarDate}
                 />
@@ -101,7 +98,6 @@ export function PlanView({
                   warnings={warnings}
                   onItemChange={onItemChange}
                   onApprove={onApprove}
-                  onBrief={onBrief}
                 />
               ) : (
                 <BroadcastGridList
@@ -110,7 +106,6 @@ export function PlanView({
                   warnings={warnings}
                   onItemChange={onItemChange}
                   onApprove={onApprove}
-                  onBrief={onBrief}
                 />
               )}
             </>

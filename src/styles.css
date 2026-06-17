@@ -3596,11 +3596,24 @@ select:focus {
   gap: 16px;
 }
 
+.editorial-section-header {
+  margin-bottom: 18px;
+}
+
+.editorial-mode-tabs {
+  margin-bottom: 18px;
+}
+
+.editorial-workspace-grid {
+  align-items: start;
+}
+
 .editorial-work-row {
   min-width: 0;
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .editorial-work-row.selected {
@@ -3609,23 +3622,138 @@ select:focus {
 }
 
 .editorial-work-row-main {
+  width: 100%;
   min-width: 0;
   display: grid;
   grid-template-columns: 120px minmax(0, 1fr) auto auto;
   gap: 14px;
   align-items: center;
+  padding: 18px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .editorial-work-context {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 18px 16px;
 }
 
 .editorial-work-actions {
+  margin: 0 18px 18px;
   justify-content: flex-start;
+}
+
+.editorial-work-warnings {
+  margin: 0 18px 16px;
 }
 
 .editorial-workbench {
   margin-top: 8px;
+}
+
+.editorial-workbench-picker {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.editorial-workbench-picker label {
+  display: grid;
+  gap: 8px;
+}
+
+.editorial-workbench-picker input {
+  width: 100%;
+}
+
+.picker-results {
+  display: grid;
+  gap: 8px;
+}
+
+.picker-result {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-800);
+  text-align: left;
+  cursor: pointer;
+}
+
+.picker-result.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint);
+}
+
+.picker-result span {
+  color: var(--ink-500);
+  font: var(--ui-xs);
+}
+
+.editorial-side {
+  display: grid;
+  gap: 16px;
+}
+
+.side-stats,
+.side-dl {
+  display: grid;
+  gap: 10px;
+}
+
+.side-stats div,
+.side-dl div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ink-100);
+}
+
+.side-stats strong {
+  color: var(--ink-900);
+  font: var(--ui-xl);
+}
+
+.side-stats span,
+.side-dl dt,
+.side-dl dd,
+.aside-list span {
+  color: var(--ink-500);
+  font: var(--ui-xs);
+}
+
+.side-dl dt,
+.side-dl dd {
+  margin: 0;
+}
+
+.side-dl dd {
+  color: var(--ink-800);
+  font: var(--ui-sm);
+}
+
+.aside-list {
+  display: grid;
+  gap: 12px;
+}
+
+.aside-list article {
+  display: grid;
+  gap: 4px;
+}
+
+.aside-list p,
+.compact-checks p {
+  margin: 0;
+  color: var(--ink-600);
+  font: var(--ui-sm);
+  line-height: 1.45;
 }
 
 .editorial-workbench-head {

@@ -18,18 +18,8 @@ import {
   type EditorialLearningNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
-import {
-  buildApprovePlanSlotPatch,
-  buildPrepareBriefPatch,
-  buildSelectEditorialWorkItemPatch,
-  withEditorialWorkItemSync
-} from './editorialWorkQueueActions';
-import {
-  buildAddInsightToPlanPatch,
-  buildGenerateBroadcastPlanPatch,
-  buildSaveContentPlanSettingsPatch,
-  buildUpdatePlanItemPatch
-} from './productionPlanActions';
+import { buildApprovePlanSlotPatch, buildReturnEditorialWorkItemToCandidatesPatch, buildSelectEditorialWorkItemPatch, withEditorialWorkItemSync } from './editorialWorkQueueActions';
+import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
 
@@ -73,12 +63,15 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     patchWorkspace(buildApprovePlanSlotPatch(workspace, itemId), 'Слот сетки утвержден');
   }
 
-  function prepareBrief(item: ContentPlanItem) {
-    patchWorkspace(buildPrepareBriefPatch(workspace, item), 'Фабула поста подготовлена');
-  }
-
   function selectEditorialWorkItem(workItemId: string) {
     patchWorkspace(buildSelectEditorialWorkItemPatch(workspace, workItemId));
+  }
+
+  function returnEditorialWorkItemToCandidates(workItemId: string) {
+    patchWorkspace(
+      buildReturnEditorialWorkItemToCandidatesPatch(workspace, workItemId),
+      'Пост возвращен в кандидаты'
+    );
   }
 
   function approveCurrentBrief() {
@@ -207,7 +200,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     downloadCurrentRelease,
     generateBroadcastPlan,
     markCurrentReleaseReady,
-    prepareBrief,
+    returnEditorialWorkItemToCandidates,
     saveContentPlanSettings,
     selectEditorialWorkItem,
     toggleReleaseChecklist,

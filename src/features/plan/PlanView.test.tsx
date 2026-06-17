@@ -113,7 +113,6 @@ function renderPlan(
     onGenerate: () => void;
     onItemChange: (item: ContentPlanItem) => void;
     onApprove: (itemId: string) => void;
-    onBrief: (item: ContentPlanItem) => void;
     onSettingsSave: (settings: ContentPlanSettings) => void;
   }> = {}
 ) {
@@ -123,7 +122,6 @@ function renderPlan(
       onGenerate={overrides.onGenerate ?? vi.fn()}
       onItemChange={overrides.onItemChange ?? vi.fn()}
       onApprove={overrides.onApprove ?? vi.fn()}
-      onBrief={overrides.onBrief ?? vi.fn()}
       onSettingsSave={overrides.onSettingsSave ?? vi.fn()}
     />
   );

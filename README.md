@@ -43,8 +43,8 @@ validator returns a score, red/yellow/green status, evidence, and suggested fixe
 `План` now shows a broadcast grid rather than a single content-plan card. Slots carry
 date, platform, format, topic, fabula, priority, approval status, manual override state,
 and advisory weight warnings. The standalone sidebar item `Фабулы` was removed:
-editorial fabulas live inside `Редакционная модель`, while a concrete `Фабула поста`
-remains an internal production step opened from an approved plan slot.
+editorial fabulas live inside `Редакционная модель`, while approving a concrete plan
+slot automatically creates the editorial work item and initial post fabula/brief.
 
 `Сигналы` is now the material intake workspace: demo radars collect material from
 author memory, archive, external sources, and manual research; found signals can be
@@ -66,8 +66,9 @@ current concept for `Собрать инсайт`. The current broadcast grid re
 local-first prototype: it now has list/group/calendar views over the same filtered
 slots, while request-more generation and a true readiness calendar remain future work.
 
-Approved slots now enter an editorial work queue: `Редактура` lists production
-work items with the shared filter/search/group pattern and reuses the existing
+Approved slots now enter an editorial work queue: `Редактура` has `Посты` and
+`Рабочий стол` tabs, lists production work items with the shared filter/search/group
+pattern, lets a post return to candidates, and reuses the existing
 `Фабула -> Драфт -> Финал` workbench for the selected post. `Выпуск` still uses the
 compatibility single-post release workbench; a release queue remains future work.
 

@@ -10,7 +10,6 @@ export function BroadcastGridRow({
   itemWarnings,
   workspace,
   onApprove,
-  onBrief,
   onItemChange
 }: {
   defaultExpanded: boolean;
@@ -18,7 +17,6 @@ export function BroadcastGridRow({
   itemWarnings: PlanWeightWarning[];
   workspace: WorkspaceState;
   onApprove: (itemId: string) => void;
-  onBrief: (item: ContentPlanItem) => void;
   onItemChange: (item: ContentPlanItem) => void;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -145,9 +143,9 @@ export function BroadcastGridRow({
                 <button className="btn btn-pri" type="button" disabled={item.approvalStatus === 'approved'} onClick={() => onApprove(item.id)}>
                   Утвердить
                 </button>
-                <button className={`btn ${item.approvalStatus === 'approved' ? 'btn-pri' : 'btn-sec'}`} type="button" disabled={item.approvalStatus !== 'approved'} onClick={() => onBrief(item)}>
+                <button className="btn btn-sec" type="button" disabled={item.approvalStatus !== 'approved'}>
                   <Icon name="brief" size={16} />
-                  Подготовить фабулу поста
+                  В редактуре
                 </button>
               </div>
             </>

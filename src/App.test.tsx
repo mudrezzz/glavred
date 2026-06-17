@@ -16,13 +16,13 @@ function createApprovedBrief() {
   fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
   fireEvent.click(screen.getByRole('button', { name: /В план/i }));
   fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
-  fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу поста/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
+  fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
   fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
 }
 
 function createApprovedFinalText() {
   createApprovedBrief();
-  fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
   fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
   fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
 }
@@ -704,9 +704,8 @@ describe('App', () => {
     expect(screen.getByText('AI-B2B rollout grid slot')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Подготовить фабулу поста/i }));
-    expect(screen.getByRole('button', { name: /Вернуться в план/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Вернуться в план/i }));
+    expect(screen.queryByRole('button', { name: /Подготовить фабулу поста/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /В редактуре/i })).toBeInTheDocument();
     expect(screen.getByTestId('broadcast-grid')).toBeInTheDocument();
   });
 
@@ -741,7 +740,6 @@ describe('App', () => {
     const { unmount } = render(<App />);
 
     createApprovedBrief();
-    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('button', { name: /Написать драфт/i }));
 
     expect(screen.getByText('Стиль')).toBeInTheDocument();
@@ -763,6 +761,9 @@ describe('App', () => {
     unmount();
     render(<App />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
     expect(screen.getAllByText(/Финальный текст утвержден/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Ручная редакторская правка/i)).toBeInTheDocument();
   });

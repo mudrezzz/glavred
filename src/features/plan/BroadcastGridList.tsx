@@ -7,15 +7,13 @@ export function BroadcastGridList({
   workspace,
   warnings,
   onItemChange,
-  onApprove,
-  onBrief
+  onApprove
 }: {
   items: ContentPlanItem[];
   workspace: WorkspaceState;
   warnings: PlanWeightWarning[];
   onItemChange: (item: ContentPlanItem) => void;
   onApprove: (itemId: string) => void;
-  onBrief: (item: ContentPlanItem) => void;
 }) {
   const activeWarnings = warnings.filter((warning) => warning.severity !== 'green');
 
@@ -52,7 +50,6 @@ export function BroadcastGridList({
             key={item.id}
             workspace={workspace}
             onApprove={onApprove}
-            onBrief={onBrief}
             onItemChange={onItemChange}
           />
         );

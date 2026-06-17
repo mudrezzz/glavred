@@ -6,14 +6,12 @@ export function BroadcastGridGroupList({
   workspace,
   warnings,
   onApprove,
-  onBrief,
   onItemChange
 }: {
   groups: Array<{ id: string; title: string; items: ContentPlanItem[] }>;
   workspace: WorkspaceState;
   warnings: PlanWeightWarning[];
   onApprove: (itemId: string) => void;
-  onBrief: (item: ContentPlanItem) => void;
   onItemChange: (item: ContentPlanItem) => void;
 }) {
   return (
@@ -35,7 +33,6 @@ export function BroadcastGridGroupList({
                 key={item.id}
                 workspace={workspace}
                 onApprove={onApprove}
-                onBrief={onBrief}
                 onItemChange={onItemChange}
               />
             ))}

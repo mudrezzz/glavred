@@ -109,13 +109,14 @@ variant requests and then turn `План` into a real calendar with readiness st
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
-approve a plan slot, click `Подготовить фабулу поста`, edit the post brief, and use
-`Вернуться в план` when needed.
+approve a plan slot and Glavred automatically creates the editorial work item plus
+its initial post brief for `Редактура`.
 
-Approved plan slots now appear as an editorial work queue in `Редактура`. The existing
-single-post `Фабула -> Драфт -> Финал` experience is reused as the selected-post
-workbench below the queue. `Выпуск` still uses the compatibility single-post release
-package/checklist/copy/Markdown workbench until the release queue slice.
+Approved plan slots now appear as an editorial work queue in `Редактура`. `Посты`
+lists queued work items with filters and row actions; `Рабочий стол` edits one
+selected post with the existing `Фабула -> Драфт -> Финал` experience. `Выпуск` still
+uses the compatibility single-post release package/checklist/copy/Markdown workbench
+until the release queue slice.
 
 ## External Sources Scenario
 
@@ -215,9 +216,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     then click a date to inspect that day's same slot cards.
 24. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
     `Отменить`, and approve one slot.
-25. Click `Подготовить фабулу поста`; Glavred opens `Редактура` directly.
-26. In the editorial queue, confirm the selected work item and open the `Фабула` tab.
-27. Edit the post brief if needed, then click `Утвердить фабулу`.
+25. Open `Редактура`; the approved slot is already in `Посты`.
+26. Click `К рабочему столу`, or open `Рабочий стол` and choose the post from the picker.
+27. Review the prepared `Фабула`, edit the brief if needed, then click `Утвердить фабулу`.
 28. Click `Написать драфт`.
 29. Review checks and editor notes.
 30. Edit the draft text.

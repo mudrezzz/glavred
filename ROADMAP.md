@@ -2336,8 +2336,9 @@ Status:
     `selectedEditorialWorkItemId: string | null` to `WorkspaceState`.
   - Normalize old workspaces by creating an empty queue and preserving current
     singleton production fields as compatibility state.
-  - When a plan slot is approved or `Подготовить фабулу поста` is clicked, create or
-    update a work item linked to the plan slot and candidate/source context.
+  - Before Slice 1.10, approving a plan slot or clicking `Подготовить фабулу поста`
+    created or updated a work item linked to the plan slot and candidate/source
+    context.
   - Add a queue surface to `Редактура` using the shared large-list pattern:
     `filter card -> search -> list/group toggle -> framed rows -> bottom-left actions`.
   - Selecting a row should open the current one-post `Фабула/Драфт/Финал` workbench
@@ -2386,50 +2387,75 @@ Status:
     upsert from approved plan slots, and selected-item compatibility hydration.
   - `Редактура` now starts with the shared list pattern and renders the selected
     `Фабула -> Драфт -> Финал` workbench below the queue.
-  - `Подготовить фабулу поста` opens `Редактура`; `BriefView` remains a compatibility
-    surface.
+  - Historical note: before Slice 1.10, `Подготовить фабулу поста` opened
+    `Редактура`; after Slice 1.10, slot approval prepares the brief automatically.
+    `BriefView` remains a compatibility surface.
 
-### Slice 1.10: Multi-Post Editing Workbench
+### Slice 1.10: Редактура как очередь постов и рабочий стол
 
-- Status: Backlog
-- Goal: Move `Фабула -> Драфт -> Финал` fully under selected editorial work items.
-- User value: The author can move several posts through different editing stages
-  without losing progress or having one draft overwrite another.
+- Status: Done
+- Goal: Remove the redundant post-fabula preparation step after plan slot approval and
+  make `Редактура` the working place for approved production posts.
+- User value: After the author approves a candidate in `Сигналы` and approves its slot
+  in `План`, the post is already in `Редактура` with an initial fabula/brief prepared.
+  The author can review the queue, choose a post, edit it, or return it to candidates
+  without hunting through another section.
 - Scope:
-  - Store brief, draft, checks, notes, and final text on each `EditorialWorkItem`.
-  - Convert production actions to accept a work-item id.
-  - Keep `Фабула` as the first tab inside `Редактура`, not a separate top-level
-    destination.
-  - Add filters/grouping by stage, date, platform, topic, fabula, and warning state.
-  - Show readonly source/candidate/plan context in every edit mode.
+  - On `План -> Утвердить`, create or update the stable `EditorialWorkItem` from the
+    `contentPlanItemId`.
+  - Prepare the initial `PostBrief` automatically for that work item.
+  - Remove the mandatory visible `Подготовить фабулу поста` step from the plan slot
+    happy path.
+  - Split `Редактура` into `Посты` and `Рабочий стол`.
+  - `Посты` uses the shared large-list pattern: filter card, full-width search,
+    list/group toggle, framed collapsible rows, and bottom-left actions.
+  - Row actions are `К рабочему столу` and `Вернуть в кандидаты`.
+  - `Вернуть в кандидаты` reverses the approved plan slot, removes the work item from
+    the queue, clears its production artifacts, and returns the linked candidate to
+    draft review state when available.
+  - `Рабочий стол` has a searchable post picker and keeps `Фабула -> Драфт -> Финал`
+    as stages inside the selected post workbench.
+  - Add right panels for queue summary and selected-post workbench context.
 - Out of scope:
   - Release queue.
   - Real AI drafting.
   - Collaborative editing.
-- Implementation notes:
-  - Extract reusable selected-post workbench parts from current `BriefView` and
-    `EditView` rather than duplicating their UI.
+  - Full removal of singleton compatibility fields.
 - Architecture impact:
-  - Production mutations move away from singleton workspace fields toward
-    work-item-specific domain/application helpers.
+  - `План` owns slot approval only; `Редактура` owns production work after approval.
+  - Slot approval orchestration lives in role-owned app/domain helpers, not in React
+    JSX.
+  - `postBrief`, `postDraft`, `finalText`, `releasePackage`, and
+    `editorialLearningNote` remain compatibility fields synchronized with the selected
+    work item.
+  - `EditView` composes feature-owned posts/workbench modules and must not become a
+    god component.
 - Tests:
-  - Creating a draft for one work item does not change another work item.
-  - Final approval updates only the selected work item.
-  - UI filters and selected workbench stay in the main editing content, not side panels.
+  - Approving a plan slot creates one stable work item and initial brief. Done.
+  - Re-approving a slot does not create a duplicate. Done.
+  - Returning a post to candidates clears the work item and reverses the slot. Done.
+  - `Редактура` renders `Посты / Рабочий стол`, queue actions, picker, and selected
+    workbench. Done.
+  - Regression: `npm run test:architecture`, `npm test -- --run`, `npm run smoke`,
+    `npm run test:design`, `npm run test:visual`.
 - Docs:
-  - Update production-flow docs and developer ownership rules.
+  - Update SAO, ADRs, developer guide, user guide, demo docs, wiki notes, README, and
+    roadmap.
 - Demo impact:
-  - Demo can show one post at `Фабула`, one at `Драфт`, and one at `Финал`.
+  - Demo path becomes `Кандидаты -> Инсайт -> План -> Утвердить слот -> Редактура /
+    Посты -> Рабочий стол`.
 - Acceptance criteria:
-  - Multiple queued posts can have independent brief/draft/final state.
-  - Existing editing UX remains recognizable.
+  - Approved slots automatically appear in `Редактура`.
+  - No extra mandatory `Подготовить фабулу поста` action is needed after slot approval.
+  - The author can open a queued post on the workbench or return it to candidates.
+  - Existing fabula/draft/final UX remains recognizable.
 - Risks:
-  - This slice touches production state broadly; keep storage migration additive and
-    preserve old fields until release queue migration is complete.
+  - Compatibility fields can still diverge from work-item state until future slices
+    move all production actions to explicit work-item ids.
 
 ### Slice 1.11: Release Queue
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn `Выпуск` into a queue of finalized posts while reusing the existing
   release package/checklist/export workbench.
 - User value: The author can prepare, check, copy, download, and mark releases for
@@ -2609,6 +2635,7 @@ Status:
   2026-06-17.
 - Slice 1.8.2: Broadcast Grid Candidate Calendar View. Completed 2026-06-17.
 - Slice 1.9: Editorial Work Queue Foundation. Completed 2026-06-17.
+- Slice 1.10: Редактура как очередь постов и рабочий стол. Completed 2026-06-17.
 
 ## Blocked Items
 
@@ -2629,4 +2656,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.10: Multi-Post Editing Workbench`.
+Resume product work with `Slice 1.11: Release Queue`.

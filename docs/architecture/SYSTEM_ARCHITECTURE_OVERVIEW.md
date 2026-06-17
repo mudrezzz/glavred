@@ -74,6 +74,11 @@ Slice 1.9 adds the first production queue in `Редактура`: approved plan
 stable `EditorialWorkItem` records, the screen starts with the shared large-list
 pattern, and the selected item hydrates the existing `Фабула -> Драфт -> Финал`
 workbench through compatibility fields.
+Slice 1.10 removes the extra `Подготовить фабулу поста` handoff. Approving a slot in
+`План` now creates or updates the stable editorial work item and prepares its initial
+`PostBrief` immediately. `Редактура` is organized as `Посты` plus `Рабочий стол`:
+the first tab manages the production queue, while the second edits one selected post
+with the existing `Фабула -> Драфт -> Финал` stages inside the workbench.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -151,10 +156,11 @@ turning the product into generic content generation.
   state, and advisory conflicts.
 - `EditorialWorkQueue`: stores approved posts as production work items. Each work
   item keeps its source slot/candidate context plus its own brief, draft, checks,
-  editor notes, and final text. Release package and analytics learning note remain
-  compatibility singleton fields until the release queue slice. The queue replaces the
-  singleton production mental model while allowing the current single-post editors to
-  be reused as selected-item workbenches.
+  editor notes, and final text. Slot approval creates or updates the work item and
+  prepares the initial brief automatically. Release package and analytics learning
+  note remain compatibility singleton fields until the release queue slice. The queue
+  replaces the singleton production mental model while allowing the current
+  single-post editors to be reused as selected-item workbenches.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status.
@@ -219,8 +225,9 @@ Target structure:
 - `src/features/briefing`: compatibility post-brief workbench. Future slices should
   fold this into the selected post inside `src/features/editing` rather than keep
   brief editing as a separate top-level workflow destination.
-- `src/features/editing`: editorial work queue and selected-post workbench. It should
-  list approved posts first, then reuse the existing `Фабула -> Драфт -> Финал`
+- `src/features/editing`: editorial work queue and selected-post workbench. It owns
+  the `Посты / Рабочий стол` tabs, lists approved posts first, lets the author return
+  a work item to candidates, and reuses the existing `Фабула -> Драфт -> Финал`
   editing flow for the selected work item.
 - `src/features/release`: release queue and selected-release workbench. It should list
   finalized posts first, then reuse the existing manual package/checklist/copy/Markdown
@@ -639,9 +646,9 @@ research experience building AI-B2B products:
 11. `ContentPlanning` saves grid settings, creates publish-window slots from the
    current date, and fills the hybrid grid with deterministic topic/fabula ideas.
 12. The author approves a slot; the slot enters the editorial work queue as a
-   selected production work item.
-13. Inside `Редактура`, the author approves the post fabula/brief, creates a draft, and
-   approves final text for that selected work item.
+   selected production work item and receives an initial post fabula/brief.
+13. Inside `Редактура -> Рабочий стол`, the author chooses a post, approves the
+   fabula/brief, creates a draft, and approves final text for that selected work item.
 14. `Drafting` creates an editable research-note draft.
 15. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
    notes.
@@ -660,9 +667,10 @@ research experience building AI-B2B products:
 - Post candidate assembly now feeds insight creation and supports local edit/reject
   review; later slices should add request-more variants and calendar slot binding while
   keeping current `contentPlanItems` as a compatibility layer.
-- Approved plan slots should become editorial work items. `Редактура` and `Выпуск`
-  should operate on a selected work-item id so one post can move through fabula, draft,
-  final, release, and analytics without overwriting another approved post.
+- Approved plan slots become editorial work items immediately on slot approval.
+  `Редактура` and `Выпуск` should operate on a selected work-item id so one post can
+  move through fabula, draft, final, release, and analytics without overwriting
+  another approved post.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.

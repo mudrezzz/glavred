@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { EditorialWorkItem } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import {
@@ -10,12 +11,12 @@ import {
 export function EditorialWorkQueueList({
   items,
   selectedId,
-  onGoPlan,
+  onReturn,
   onSelect
 }: {
   items: EditorialWorkItem[];
   selectedId: string | null;
-  onGoPlan: () => void;
+  onReturn: (itemId: string) => void;
   onSelect: (itemId: string) => void;
 }) {
   if (items.length === 0) {
@@ -29,7 +30,7 @@ export function EditorialWorkQueueList({
           item={item}
           key={item.id}
           selected={item.id === selectedId}
-          onGoPlan={onGoPlan}
+          onReturn={onReturn}
           onSelect={onSelect}
         />
       ))}
@@ -40,12 +41,12 @@ export function EditorialWorkQueueList({
 export function EditorialWorkGroupList({
   groups,
   selectedId,
-  onGoPlan,
+  onReturn,
   onSelect
 }: {
   groups: EditorialWorkGroup[];
   selectedId: string | null;
-  onGoPlan: () => void;
+  onReturn: (itemId: string) => void;
   onSelect: (itemId: string) => void;
 }) {
   if (groups.length === 0) {
@@ -65,7 +66,7 @@ export function EditorialWorkGroupList({
               item={item}
               key={item.id}
               selected={item.id === selectedId}
-              onGoPlan={onGoPlan}
+              onReturn={onReturn}
               onSelect={onSelect}
             />
           ))}
@@ -78,19 +79,20 @@ export function EditorialWorkGroupList({
 function EditorialWorkRow({
   item,
   selected,
-  onGoPlan,
+  onReturn,
   onSelect
 }: {
   item: EditorialWorkItem;
   selected: boolean;
-  onGoPlan: () => void;
+  onReturn: (itemId: string) => void;
   onSelect: (itemId: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(selected);
   const warnings = getEditorialWorkWarnings(item);
 
   return (
-    <article className={`card editorial-work-row${selected ? ' selected' : ''}`} data-testid="editorial-work-row">
-      <div className="editorial-work-row-main">
+    <article className={`card editorial-work-row${selected ? ' selected' : ''}${expanded ? ' expanded' : ''}`} data-testid="editorial-work-row">
+      <button className="editorial-work-row-main" type="button" onClick={() => setExpanded((value) => !value)}>
         <span className="broadcast-date">{formatWorkDateTime(item.date, item.time)}</span>
         <span className="broadcast-row-copy">
           <span className="broadcast-title">{item.title}</span>
@@ -108,27 +110,31 @@ function EditorialWorkRow({
           <i />
           {workStatusLabel(item.status)}
         </span>
-      </div>
-      <dl className="broadcast-context-grid editorial-work-context">
-        <div><dt>Публикация</dt><dd>{formatWorkDateTime(item.date, item.time)} · {item.platform}</dd></div>
-        <div><dt>Тема</dt><dd>{item.topicTitle ?? 'Не задана'}</dd></div>
-        <div><dt>Фабула</dt><dd>{item.fabulaTitle ?? 'Не задана'}</dd></div>
-        <div><dt>Источник</dt><dd>{item.sourceSignalId ?? 'Не задан'}</dd></div>
-      </dl>
-      {warnings.length > 0 ? (
-        <div className="matrix-warnings editorial-work-warnings">
-          {warnings.map((warning) => <p key={warning}>{warning}</p>)}
-        </div>
+        </button>
+      {expanded ? (
+        <>
+          <dl className="broadcast-context-grid editorial-work-context">
+            <div><dt>Публикация</dt><dd>{formatWorkDateTime(item.date, item.time)} · {item.platform}</dd></div>
+            <div><dt>Тема</dt><dd>{item.topicTitle ?? 'Не задана'}</dd></div>
+            <div><dt>Фабула</dt><dd>{item.fabulaTitle ?? 'Не задана'}</dd></div>
+            <div><dt>Источник</dt><dd>{item.sourceSignalId ?? 'Не задан'}</dd></div>
+          </dl>
+          {warnings.length > 0 ? (
+            <div className="matrix-warnings editorial-work-warnings">
+              {warnings.map((warning) => <p key={warning}>{warning}</p>)}
+            </div>
+          ) : null}
+          <div className="inline-actions editorial-work-actions">
+            <button className="btn btn-pri" type="button" onClick={() => onSelect(item.id)}>
+              <Icon name="edit" size={16} />
+              {selected ? 'На рабочем столе' : 'К рабочему столу'}
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onReturn(item.id)}>
+              Вернуть в кандидаты
+            </button>
+          </div>
+        </>
       ) : null}
-      <div className="inline-actions editorial-work-actions">
-        <button className="btn btn-pri" type="button" onClick={() => onSelect(item.id)}>
-          <Icon name="edit" size={16} />
-          {selected ? 'Открыто' : 'Открыть'}
-        </button>
-        <button className="btn btn-sec" type="button" onClick={onGoPlan}>
-          К плану
-        </button>
-      </div>
     </article>
   );
 }

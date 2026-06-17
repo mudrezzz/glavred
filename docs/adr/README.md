@@ -44,3 +44,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md](2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md)
 - [2026-06-16-post-candidate-uses-fabula-not-format.md](2026-06-16-post-candidate-uses-fabula-not-format.md)
 - [2026-06-17-approved-posts-use-editorial-work-queue.md](2026-06-17-approved-posts-use-editorial-work-queue.md)
+- [2026-06-17-plan-slot-approval-creates-editorial-work-item-and-brief.md](2026-06-17-plan-slot-approval-creates-editorial-work-item-and-brief.md)

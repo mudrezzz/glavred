@@ -442,13 +442,14 @@ Use these boundaries:
 - Approved posts use `EditorialWorkItem` identity rather than expanding singleton
   production state. The current `postBrief`, `postDraft`, `finalText`,
   `releasePackage`, and `editorialLearningNote` fields remain compatibility fields.
-  Slice 1.9 synchronizes the selected work item through those fields; future
-  production actions should accept an explicit work-item id so editing one post does
-  not overwrite another queued post.
+  Slice 1.10 creates or updates the selected work item and prepares its initial
+  `PostBrief` when a plan slot is approved; future production actions should accept an
+  explicit work-item id so editing one post does not overwrite another queued post.
 - `Редактура` owns the production queue from approved slot to final text. Its UX rule
-  is `filter card -> search -> list/group toggle -> framed rows -> selected-post
-  workbench`. The selected-post workbench should reuse the existing `Фабула -> Драфт
-  -> Финал` flow.
+  is `section header -> Посты / Рабочий стол tabs -> filter card -> search ->
+  list/group toggle -> framed rows -> selected-post workbench`. The selected-post
+  workbench should reuse the existing `Фабула -> Драфт -> Финал` flow, with these
+  stages inside the selected post rather than as section-level tabs.
 - `Выпуск` owns the release queue for finalized posts. It should reuse the current
   release package/checklist/copy/Markdown workbench for a selected work item instead
   of creating a second release UI.

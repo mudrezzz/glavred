@@ -16,13 +16,41 @@ describe('EditView', () => {
 
     renderEdit(workspace);
 
+    expect(screen.getByRole('tab', { name: /Посты/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Рабочий стол/i })).toBeInTheDocument();
     const toolbar = screen.getByTestId('editorial-work-toolbar');
     const list = screen.getByTestId('editorial-work-list');
     expect(toolbar.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(toolbar.closest('.editorial-production-flow')).toBeInTheDocument();
     expect(screen.getAllByTestId('editorial-work-row')).toHaveLength(2);
-    expect(within(screen.getAllByTestId('editorial-work-row')[0]).getByRole('button', { name: /Открыть|Открыто/i }).closest('.inline-actions')).toBeInTheDocument();
+    expect(within(screen.getAllByTestId('editorial-work-row')[0]).getByRole('button', { name: /К рабочему столу|На рабочем столе/i }).closest('.inline-actions')).toBeInTheDocument();
+  });
+
+  it('opens a post on the workbench tab and shows the searchable picker', () => {
+    const workspace = createWorkspaceWithQueue();
+    const onSelectWorkItem = vi.fn();
+
+    renderEdit(workspace, { onSelectWorkItem });
+
+    fireEvent.click(within(screen.getAllByTestId('editorial-work-row')[1]).getByRole('button', { name: /Second queue item/i }));
+    fireEvent.click(within(screen.getAllByTestId('editorial-work-row')[1]).getByRole('button', { name: /К рабочему столу/i }));
+
+    expect(onSelectWorkItem).toHaveBeenCalledWith(workspace.editorialWorkItems[1].id);
+    expect(screen.getByRole('tab', { name: /Рабочий стол/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('editorial-workbench-picker')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Выбор поста/i)).toBeInTheDocument();
     expect(screen.getByTestId('editorial-workbench')).toBeInTheDocument();
+  });
+
+  it('returns a post to candidates from the posts list', () => {
+    const workspace = createWorkspaceWithQueue();
+    const onReturnWorkItem = vi.fn();
+
+    renderEdit(workspace, { onReturnWorkItem });
+
+    fireEvent.click(within(screen.getAllByTestId('editorial-work-row')[0]).getByRole('button', { name: /Вернуть в кандидаты/i }));
+
+    expect(onReturnWorkItem).toHaveBeenCalledWith(workspace.editorialWorkItems[0].id);
   });
 
   it('filters, searches, and groups editorial work items', () => {
@@ -32,7 +60,7 @@ describe('EditView', () => {
 
     fireEvent.change(screen.getByLabelText(/Поиск/i), { target: { value: 'Second queue item' } });
     expect(screen.getAllByTestId('editorial-work-row')).toHaveLength(1);
-    expect(screen.getByText('Second queue item')).toBeInTheDocument();
+    expect(screen.getAllByText('Second queue item').length).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText(/Поиск/i), { target: { value: '' } });
     fireEvent.click(screen.getByRole('tab', { name: /Группы/i }));
@@ -44,11 +72,18 @@ describe('EditView', () => {
     renderEdit({ ...createDemoWorkspace(), editorialWorkItems: [], selectedEditorialWorkItemId: null });
 
     expect(screen.getByTestId('editorial-work-empty')).toHaveTextContent(/План/i);
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
     expect(screen.getByText(/Выберите пост из очереди/i)).toBeInTheDocument();
   });
 });
 
-function renderEdit(workspace: WorkspaceState) {
+function renderEdit(
+  workspace: WorkspaceState,
+  overrides: Partial<{
+    onReturnWorkItem: (itemId: string) => void;
+    onSelectWorkItem: (itemId: string) => void;
+  }> = {}
+) {
   return render(
     <EditView
       workspace={workspace}
@@ -57,7 +92,8 @@ function renderEdit(workspace: WorkspaceState) {
       onCreateDraft={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
-      onSelectWorkItem={vi.fn()}
+      onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
+      onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}
     />
   );
 }

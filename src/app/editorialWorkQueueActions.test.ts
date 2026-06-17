@@ -5,6 +5,7 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   buildApprovePlanSlotPatch,
   buildPrepareBriefPatch,
+  buildReturnEditorialWorkItemToCandidatesPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
@@ -17,10 +18,27 @@ describe('editorial work queue actions', () => {
     const secondPatch = buildApprovePlanSlotPatch({ ...workspace, ...firstPatch }, item.id);
 
     expect(firstPatch.contentPlanItem?.id).toBe(item.id);
+    expect(firstPatch.postBrief?.planItemId).toBe(item.id);
     expect(firstPatch.editorialWorkItems).toHaveLength(1);
     expect(firstPatch.editorialWorkItems?.[0].id).toBe(`editorial-work-${item.id}`);
+    expect(firstPatch.editorialWorkItems?.[0].brief?.id).toBe(firstPatch.postBrief?.id);
     expect(firstPatch.selectedEditorialWorkItemId).toBe(`editorial-work-${item.id}`);
     expect(secondPatch.editorialWorkItems).toHaveLength(1);
+  });
+
+  it('returns an editorial work item to candidates and clears production artifacts', () => {
+    const workspace = createDemoWorkspace();
+    const item = workspace.contentPlanItems[0];
+    const approved = buildApprovePlanSlotPatch(workspace, item.id);
+    const current = { ...workspace, ...approved };
+    const patch = buildReturnEditorialWorkItemToCandidatesPatch(current, approved.selectedEditorialWorkItemId!);
+
+    expect(patch.contentPlanItems?.find((planItem) => planItem.id === item.id)?.approvalStatus).toBe('draft');
+    expect(patch.editorialWorkItems).toEqual([]);
+    expect(patch.selectedEditorialWorkItemId).toBeNull();
+    expect(patch.postBrief).toBeNull();
+    expect(patch.postDraft).toBeNull();
+    expect(patch.finalText).toBeNull();
   });
 
   it('prepares a brief inside the selected work item and opens editing', () => {

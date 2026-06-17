@@ -3,9 +3,11 @@ import {
   applyPlanWarnings,
   createEditorialWorkItem,
   detectBroadcastPlanConflicts,
+  replacePostCandidate,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
   type ContentPlanItem,
+  type PostCandidate,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import { createPostBrief, createWorkspaceInsightCard } from '../application/editorialServices';
@@ -20,19 +22,69 @@ export function buildApprovePlanSlotPatch(workspace: WorkspaceState, itemId: str
     return { contentPlanItems, contentPlanItem, planWeightWarnings };
   }
 
-  const editorialWorkItem = createEditorialWorkItem(
+  const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
+  const postBrief = createPostBrief(
     contentPlanItem,
-    {},
-    workspace.postCandidate?.id
+    insightCard,
+    workspace.editorialModel,
+    workspace.topics,
+    workspace.fabulas,
+    workspace.topicFabulaMatrix
   );
+  const editorialWorkItem = createEditorialWorkItem(contentPlanItem, { brief: postBrief }, workspace.postCandidate?.id);
   const editorialWorkItems = upsertEditorialWorkItem(workspace.editorialWorkItems, editorialWorkItem);
 
   return {
+    insightCard,
     contentPlanItems,
     contentPlanItem,
     planWeightWarnings,
     editorialWorkItems,
-    selectedEditorialWorkItemId: workspace.selectedEditorialWorkItemId ?? editorialWorkItem.id
+    selectedEditorialWorkItemId: editorialWorkItem.id,
+    postBrief,
+    postDraft: null,
+    editorialChecks: [],
+    editorNotes: [],
+    finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  };
+}
+
+export function buildReturnEditorialWorkItemToCandidatesPatch(
+  workspace: WorkspaceState,
+  workItemId: string
+): Partial<WorkspaceState> {
+  const workItem = workspace.editorialWorkItems.find((item) => item.id === workItemId);
+  if (!workItem) return {};
+
+  const draftItems = workspace.contentPlanItems.map((item) =>
+    item.id === workItem.contentPlanItemId ? { ...item, approvalStatus: 'draft' as const } : item
+  );
+  const planWeightWarnings = detectBroadcastPlanConflicts(workspace, draftItems);
+  const contentPlanItems = applyPlanWarnings(draftItems, planWeightWarnings);
+  const editorialWorkItems = workspace.editorialWorkItems.filter((item) => item.id !== workItemId);
+  const selected =
+    workspace.selectedEditorialWorkItemId === workItemId
+      ? editorialWorkItems[0] ?? null
+      : editorialWorkItems.find((item) => item.id === workspace.selectedEditorialWorkItemId) ?? null;
+  const postCandidate = getReturnedCandidate(workspace, workItem.postCandidateId);
+
+  return {
+    contentPlanItems,
+    contentPlanItem: selected ? contentPlanItems.find((item) => item.id === selected.contentPlanItemId) ?? null : null,
+    planWeightWarnings,
+    editorialWorkItems,
+    selectedEditorialWorkItemId: selected?.id ?? null,
+    postCandidates: postCandidate ? replacePostCandidate(workspace.postCandidates, postCandidate) : workspace.postCandidates,
+    postCandidate: postCandidate && workspace.postCandidate?.id === postCandidate.id ? postCandidate : workspace.postCandidate,
+    postBrief: selected?.brief ?? null,
+    postDraft: selected?.draft ?? null,
+    editorialChecks: selected?.editorialChecks ?? [],
+    editorNotes: selected?.editorNotes ?? [],
+    finalText: selected?.finalText ?? null,
+    releasePackage: null,
+    editorialLearningNote: null
   };
 }
 
@@ -97,6 +149,14 @@ export function buildSelectEditorialWorkItemPatch(
     editorialLearningNote: null,
     activeSection: 'edit'
   };
+}
+
+function getReturnedCandidate(workspace: WorkspaceState, postCandidateId: string | undefined): PostCandidate | null {
+  if (!postCandidateId) return null;
+  const candidate = [workspace.postCandidate, ...workspace.postCandidates]
+    .filter(Boolean)
+    .find((item) => item?.id === postCandidateId);
+  return candidate ? { ...candidate, approvalStatus: 'draft' } : null;
 }
 
 export function withEditorialWorkItemSync(
