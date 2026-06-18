@@ -24,6 +24,12 @@ Consider:
 2. Identify affected components.
 3. Identify existing tests.
 4. Add or update tests for changed behavior.
+   - Keep `src/App.test.tsx` for app shell/navigation only.
+   - Put feature user-flow coverage in the owning feature as `*AppFlow.test.tsx`.
+   - Put domain/application/storage coverage beside the owning domain/application/
+     infrastructure module.
+   - Use `src/test-support` only for small repeated navigation/setup helpers, not
+     hidden business assertions.
 5. Select validation scope:
    - targeted tests for local changes
    - smoke tests for user-visible flows
@@ -58,6 +64,8 @@ Run `npm run test:architecture` before completing any slice that touches:
 - refactoring, module ownership, or import boundaries.
 
 Review warning-level near-limit and export-count output even when the command passes.
+If the architecture smoke reports a near-limit test file touched by the current slice,
+split that test by feature/workflow ownership before adding more scenarios.
 
 ## Completion checklist
 

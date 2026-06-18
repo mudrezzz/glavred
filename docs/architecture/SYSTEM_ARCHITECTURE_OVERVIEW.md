@@ -306,7 +306,7 @@ be written inside JSX.
 Architecture smoke tests enforce the baseline:
 
 - `src/App.tsx <= 350` lines after Slice 1.5.14.
-- `src/App.test.tsx <= 850` lines.
+- `src/App.test.tsx <= 300` lines and covers app shell/navigation only.
 - Large `App.tsx` UI declarations `<= 1`.
 - Required app/shared extraction files, `src/features/author-memory/AuthorMemoryView.tsx`,
   `src/features/signals/SignalsView.tsx`, and
@@ -332,6 +332,30 @@ Architecture smoke tests enforce the baseline:
 Every extraction slice must lower these limits. The target after the extraction chain
 is now met for `App.tsx`; future slices should keep it at composition-root size and
 avoid moving feature behavior back into it.
+
+### Test ownership guardrails
+
+Tests follow the same ownership model as production code:
+
+- `src/App.test.tsx` is the app-shell smoke test. It must not contain feature-flow
+  helpers such as `goToSignals`, `createApprovedBrief`, `createExportedRelease`, or
+  deep form assertions. Feature workflows move to feature-owned `*AppFlow.test.tsx`
+  files.
+- Feature app-flow tests live beside the feature they exercise:
+  `src/features/signals/SignalsAppFlow.test.tsx`,
+  `src/features/author-memory/AuthorMemoryAppFlow.test.tsx`,
+  `src/features/editorial-model/EditorialModelAppFlow.test.tsx`,
+  `src/features/plan/PlanAppFlow.test.tsx`,
+  `src/features/editing/EditorialWorkbenchAppFlow.test.tsx`,
+  `src/features/release/ReleaseAppFlow.test.tsx`,
+  `src/features/analytics/AnalyticsAppFlow.test.tsx`, and
+  `src/features/context-chat/ContextChatAppFlow.test.tsx`.
+- `src/test-support` is a narrow helper layer for repeated user-flow navigation only.
+  It must not hide business rules, assert product outcomes, or become a page-object
+  framework.
+- Architecture smoke tracks app-flow tests and major test-support files with the same
+  near-limit summary used for production files. Adding behavior to a near-limit test
+  requires splitting the test by feature/workflow in the same slice.
 
 ### Large-file guardrails
 
@@ -758,7 +782,9 @@ Current validation covers:
 - Unit tests for deterministic scoring, planning, briefing, drafting, editorial check,
   release packaging, and analytics prep services.
 - Integration tests for local workspace save/load.
-- UI smoke tests for the source signal to captured editorial learning note flow.
+- Feature-owned app-flow tests for source signals, author memory, editorial model,
+  planning, editing, release, analytics, and context chat.
+- `src/App.test.tsx` is limited to app shell/navigation coverage.
 - Manual demo acceptance for the founder-blog scenario.
 
 For the author-position product circle, add:

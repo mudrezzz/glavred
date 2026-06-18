@@ -2755,6 +2755,43 @@ Status:
   - Visual approval requires a selected custom remix variant.
   - Other visual modes keep their existing behavior.
 
+### Slice 1.10.6.3: App Flow Test Ownership Guardrails
+
+- Status: Done
+- Goal: Stop `src/App.test.tsx` from becoming a second god file and move app-flow
+  regression coverage beside feature owners.
+- User value: Future slices can add tests without turning one large regression file
+  into an unreviewable bottleneck.
+- Scope:
+  - Keep `src/App.test.tsx` shell/navigation-only.
+  - Move feature app-flow scenarios into feature-owned `*AppFlow.test.tsx` files for
+    signals, author memory, editorial model, context chat, plan, editing, release, and
+    analytics.
+  - Add small `src/test-support` flow drivers for repeated navigation/setup only.
+  - Add ADR and SAO rules for test ownership.
+  - Update `.agents/skills` so future slices choose the correct test owner.
+  - Lower the architecture smoke limit for `App.test.tsx` and add test-file baselines.
+- Out of scope:
+  - Rewriting test assertions or changing product behavior.
+  - Splitting existing large domain/storage/component tests beyond adding guardrails.
+- Architecture impact:
+  - Test ownership now mirrors production ownership.
+  - `src/test-support` is a helper layer, not a page-object or hidden business-logic
+    layer.
+  - `npm run test:architecture` enforces test file limits and prevents feature-flow
+    helpers in `App.test.tsx`.
+- Tests:
+  - Feature app-flow tests preserve the existing 38 App-level scenarios. Done.
+  - Architecture smoke verifies the new test ownership baselines. Done.
+- Docs:
+  - Added ADR `2026-06-18-app-flow-tests-follow-feature-ownership.md`.
+  - Updated SAO, developer guide, and agent skills.
+- Acceptance criteria:
+  - `src/App.test.tsx` is under the new shell-only limit.
+  - Feature user-flow tests live beside their owning feature.
+  - Future additions to near-limit test files are blocked by workflow and smoke
+    guardrails.
+
 ### Slice 1.10.7: Ready Post Handoff
 
 - Status: Ready
@@ -2971,6 +3008,7 @@ Status:
 - Slice 1.10.6: Visual Stage Foundation. Completed 2026-06-18.
 - Slice 1.10.6.1: Visual Variants Review Flow. Completed 2026-06-18.
 - Slice 1.10.6.2: Two-Step Meme Remix Visual Flow. Completed 2026-06-18.
+- Slice 1.10.6.3: App Flow Test Ownership Guardrails. Completed 2026-06-18.
 
 ## Blocked Items
 

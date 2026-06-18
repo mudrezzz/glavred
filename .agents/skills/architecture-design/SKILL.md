@@ -96,6 +96,8 @@ Before finishing:
 
 - Architecture supports iterative slice delivery.
 - No component has unclear ownership.
+- Test ownership mirrors production ownership; app-flow tests live beside the owning
+  feature and `src/App.test.tsx` remains shell-only.
 - Important trade-offs are documented.
 - New architecture rules have ADR + SAO coverage and either automated checks or a
   mandatory workflow checklist.

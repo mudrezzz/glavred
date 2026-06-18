@@ -42,6 +42,12 @@ Implement one small, complete, tested, documented product increment.
   refactor step into a role-owned module and keeps the architecture smoke hard limits
   green.
 - Do not bypass module ownership through feature barrels or feature-to-feature imports.
+- Do not add feature-flow scenarios to `src/App.test.tsx`; keep it limited to app
+  shell/navigation smoke coverage. Add feature workflows beside the owning feature as
+  `*AppFlow.test.tsx`, and use `src/test-support` only for small repeated navigation
+  helpers.
+- Do not add test behavior to a near-limit test file unless the same slice splits the
+  test by feature/workflow ownership and keeps `npm run test:architecture` green.
 
 ## Completion checklist
 

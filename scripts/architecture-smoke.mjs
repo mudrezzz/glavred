@@ -4,7 +4,7 @@ import path from "node:path";
 const ROOT = process.cwd();
 
 const APP_TSX_LIMIT = 350;
-const APP_TEST_TSX_LIMIT = 850;
+const APP_TEST_TSX_LIMIT = 300;
 const LARGE_APP_DECLARATION_LIMIT = 1;
 const NEAR_LIMIT_RATIO = 0.85;
 const DEFAULT_EXPORT_COUNT_WARNING_LIMIT = 12;
@@ -387,6 +387,84 @@ const LARGE_SOURCE_BASELINES = [
   },
 ];
 
+const TEST_FILE_BASELINES = [
+  {
+    path: "src/App.test.tsx",
+    limit: APP_TEST_TSX_LIMIT,
+    next: "App.test.tsx should cover app shell and navigation only; move feature flows into feature-owned *AppFlow.test.tsx files.",
+  },
+  {
+    path: "src/test-support/productionFlowDriver.ts",
+    limit: 120,
+    next: "Production flow test helpers should stay small and avoid hidden business logic.",
+  },
+  {
+    path: "src/test-support/signalsFlowDriver.ts",
+    limit: 60,
+    next: "Signals flow test helpers should stay focused on navigation shortcuts.",
+  },
+  {
+    path: "src/features/signals/SignalsAppFlow.test.tsx",
+    limit: 180,
+    next: "Signals app-flow tests should split by radar/signal/candidate workflow before growing further.",
+  },
+  {
+    path: "src/features/author-memory/AuthorMemoryAppFlow.test.tsx",
+    limit: 400,
+    next: "Author-memory app-flow tests should split by import queue, archive, composer, and feed workflows before growing further.",
+  },
+  {
+    path: "src/features/context-chat/ContextChatAppFlow.test.tsx",
+    limit: 140,
+    next: "Context-chat app-flow tests should stay focused on assistant shell and suggestion workflows.",
+  },
+  {
+    path: "src/features/editorial-model/EditorialModelAppFlow.test.tsx",
+    limit: 180,
+    next: "Editorial-model app-flow tests should split by rules/topics/fabulas/matrix when needed.",
+  },
+  {
+    path: "src/features/plan/PlanAppFlow.test.tsx",
+    limit: 120,
+    next: "Plan app-flow tests should stay focused on grid/settings integration; move detailed UI tests to feature components.",
+  },
+  {
+    path: "src/features/editing/EditorialWorkbenchAppFlow.test.tsx",
+    limit: 140,
+    next: "Editing app-flow tests should stay focused on queue/workbench integration.",
+  },
+  {
+    path: "src/features/release/ReleaseAppFlow.test.tsx",
+    limit: 120,
+    next: "Release app-flow tests should stay focused on release-log/manual-export integration.",
+  },
+  {
+    path: "src/features/analytics/AnalyticsAppFlow.test.tsx",
+    limit: 120,
+    next: "Analytics app-flow tests should stay focused on learning-note integration.",
+  },
+  {
+    path: "src/features/editing/EditView.test.tsx",
+    limit: 720,
+    next: "EditView tests should split by posts/workbench/fabula/draft/visual stage ownership before growing further.",
+  },
+  {
+    path: "src/app/editorialWorkQueueActions.test.ts",
+    limit: 420,
+    next: "Editorial work queue action tests should split by planning handoff, brief/draft, and visual transitions before growing further.",
+  },
+  {
+    path: "src/domain/editorialWorkspace.test.ts",
+    limit: 850,
+    next: "Editorial workspace domain tests should split by bounded domain ownership before growing further.",
+  },
+  {
+    path: "src/infrastructure/localWorkspaceStore.test.ts",
+    limit: 820,
+    next: "Local workspace store tests should split migration/normalize/persistence cases before growing further.",
+  },
+];
+
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
 const MODULE_GUARDRAILS_ADR_PATH =
@@ -395,6 +473,8 @@ const FEATURE_INTERNALS_ADR_PATH =
   "docs/adr/2026-06-15-feature-entrypoints-stay-thin-and-domain-transitions-are-role-owned.md";
 const ARCHITECTURE_DRIFT_ADR_PATH =
   "docs/adr/2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md";
+const TEST_OWNERSHIP_ADR_PATH =
+  "docs/adr/2026-06-18-app-flow-tests-follow-feature-ownership.md";
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 
 function readText(relativePath) {
@@ -513,6 +593,10 @@ assert(
   fileExists(ARCHITECTURE_DRIFT_ADR_PATH),
   `Missing ADR: ${ARCHITECTURE_DRIFT_ADR_PATH}`
 );
+assert(
+  fileExists(TEST_OWNERSHIP_ADR_PATH),
+  `Missing ADR: ${TEST_OWNERSHIP_ADR_PATH}`
+);
 
 const requiredSourceFiles = [
   "src/app/AppShell.tsx",
@@ -598,6 +682,7 @@ for (const requiredFile of requiredSourceFiles) {
 }
 
 const largeSourceStats = [];
+const testFileStats = [];
 const nearLimitStats = [];
 const exportCountStats = [];
 
@@ -632,6 +717,46 @@ for (const baseline of LARGE_SOURCE_BASELINES) {
       ].join("\n")
     );
   }
+}
+
+for (const baseline of TEST_FILE_BASELINES) {
+  assert(fileExists(baseline.path), `Missing test architecture baseline target: ${baseline.path}`);
+
+  if (fileExists(baseline.path)) {
+    const source = readText(baseline.path);
+    const lines = lineCount(source);
+    testFileStats.push({ ...baseline, lines });
+
+    if (lines >= Math.ceil(baseline.limit * NEAR_LIMIT_RATIO)) {
+      nearLimitStats.push({ ...baseline, lines });
+      warn(
+        `${baseline.path} is near its test architecture limit: ${lines}/${baseline.limit} lines. ${baseline.next}`
+      );
+    }
+
+    assert(
+      lines <= baseline.limit,
+      [
+        `${baseline.path} has ${lines} lines; temporary test limit is ${baseline.limit}.`,
+        baseline.next,
+      ].join("\n")
+    );
+  }
+}
+
+const forbiddenAppTestSymbols = [
+  "goToSignals",
+  "createApprovedBrief",
+  "createApprovedFinalText",
+  "createExportedRelease",
+  "getByLabelText",
+];
+
+for (const symbol of forbiddenAppTestSymbols) {
+  assert(
+    !appTestSource.includes(symbol),
+    `src/App.test.tsx must not contain feature-flow test internals: ${symbol}. Move the scenario into a feature-owned *AppFlow.test.tsx file.`
+  );
 }
 
 assert(
@@ -853,6 +978,9 @@ const requiredSaoFragments = [
   "Domain transitions are role-owned",
   "domain/application/fixtures/feature files must shrink through the 1.5.x refactoring chain",
   "Architecture drift prevention",
+  "Test ownership guardrails",
+  "src/test-support",
+  "*AppFlow.test.tsx",
   "near-limit",
   "agent workflow",
 ];
@@ -887,6 +1015,9 @@ console.log(
 );
 for (const stat of largeSourceStats) {
   console.log(`- ${stat.path}: ${stat.lines}/${stat.limit} lines`);
+}
+for (const stat of testFileStats) {
+  console.log(`- ${stat.path}: ${stat.lines}/${stat.limit} test lines`);
 }
 
 if (nearLimitStats.length > 0) {

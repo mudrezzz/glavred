@@ -126,6 +126,8 @@ export-count output should be reviewed even when the command exits successfully.
 - `src/shared/format/production.ts`: shared production-flow labels, dates, and text
   helpers.
 - `src/test/`: test setup.
+- `src/test-support/`: small repeated app-flow navigation/setup helpers. Do not place
+  business assertions or page-object frameworks here.
 - `ui-design-systems/`: design handoff and reference UI, not production code.
 - `docs/`: documentation.
 - `docs/wiki/`: source files for the GitHub Wiki, including screenshot assets.
@@ -328,8 +330,9 @@ blocks `App.tsx` and `App.test.tsx` growth past the accepted baseline, checks re
 app/shared extraction files, author-memory, signals, editorial-model, plan, briefing,
 editing, release, and analytics feature entries, and verifies that `App.tsx` no longer
 imports `LocalWorkspaceStore` or contains extracted feature internals. After Slice
-1.5.14 the limits are `App.tsx <= 350`, `App.test.tsx <= 850`, and large App UI
-declarations `<= 1`.
+1.10.6.3 the limits are `App.tsx <= 350`, `App.test.tsx <= 300`, and large App UI
+declarations `<= 1`. `App.test.tsx` is shell/navigation-only; feature user flows live
+beside the owning feature as `*AppFlow.test.tsx`.
 
 After Slice 1.5.15, architecture smoke also tracks large-file baselines outside
 `App.tsx`. These are temporary ceilings:
@@ -717,6 +720,17 @@ Current tests cover:
 - Deterministic scoring, planning, briefing, drafting, editorial check, and release
   packaging services, plus analytics prep.
 - Local workspace save/load behavior.
-- UI smoke coverage for the signal to captured learning note flow.
+- Feature-owned app-flow coverage for signals, author memory, editorial model,
+  context chat, plan, editing, release, and analytics.
+- App shell/navigation coverage in `src/App.test.tsx`.
 
 Run `npm test` and `npm run smoke` before completing the slice.
+For new UI behavior, put tests beside the owner:
+
+- app shell only: `src/App.test.tsx`;
+- feature workflows: `src/features/<feature>/*AppFlow.test.tsx`;
+- component-level feature behavior: the feature component test;
+- domain/application/infrastructure behavior: the owning module test.
+
+If `npm run test:architecture` reports a touched test file as near-limit, split that
+test by feature/workflow ownership before adding more scenarios.
