@@ -22,10 +22,12 @@ import {
   buildSaveDraftTextPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
+import { buildApproveBriefWithGeneratedDraftPatch } from './productionDraftActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
 import { createProductionVisualActions } from './productionVisualActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
+import { generateBackendDraft } from '../infrastructure/backendDraftClient';
 
 type ProductionFlowActionsParams = {
   patchWorkspace: WorkspacePatch;
@@ -80,19 +82,29 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     );
   }
 
-  function approveCurrentBrief() {
-    if (!workspace.postBrief) return;
-    patchWorkspace(
-      buildApproveBriefAndCreateDraftPatch(workspace),
-      'Фабула утверждена, драфт подготовлен'
-    );
-  }
-
   function editCurrentBrief(patch: PostBriefEditPatch) {
     patchWorkspace(
       buildEditCurrentBriefPatch(workspace, patch),
       'Фабула обновлена, драфт нужно пересобрать'
     );
+  }
+
+  async function approveCurrentBriefWithBackend() {
+    if (!workspace.postBrief) return;
+    try {
+      const result = await generateBackendDraft(workspace.postBrief, workspace.editorialModel);
+      patchWorkspace(
+        buildApproveBriefWithGeneratedDraftPatch(workspace, result.draft),
+        result.aiRun.fallbackUsed
+          ? 'Фабула утверждена, драфт подготовлен fallback-сервисом'
+          : 'Фабула утверждена, драфт подготовлен через backend'
+      );
+    } catch {
+      patchWorkspace(
+        buildApproveBriefAndCreateDraftPatch(workspace),
+        'Фабула утверждена, backend недоступен: локальный драфт подготовлен'
+      );
+    }
   }
 
   function updateDraftBody(body: string) {
@@ -177,7 +189,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
 
   return {
     addInsightToPlan,
-    approveCurrentBrief,
+    approveCurrentBrief: approveCurrentBriefWithBackend,
     approveCurrentFinalText,
     approvePlanSlot,
     captureLearningNote,

@@ -8,10 +8,10 @@ describe('Editorial workbench app flow', () => {
     localStorage.clear();
   });
 
-  it('moves from source signal to an approved post brief and automatic draft', () => {
+  it('moves from source signal to an approved post brief and automatic draft', async () => {
     render(<App />);
 
-    createApprovedBrief();
+    await createApprovedBrief();
 
     expect(screen.getByTestId('editorial-workbench')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Написать драфт/i })).not.toBeInTheDocument();
@@ -27,10 +27,10 @@ describe('Editorial workbench app flow', () => {
     expect(screen.getByTestId('editorial-work-toolbar')).toBeInTheDocument();
   });
 
-  it('creates, edits, approves, and persists approved draft text', () => {
+  it('creates, edits, approves, and persists approved draft text', async () => {
     const { unmount } = render(<App />);
 
-    createApprovedBrief();
+    await createApprovedBrief();
 
     expect(screen.getByText('Стиль')).toBeInTheDocument();
     expect(screen.getByText('Анти-AI')).toBeInTheDocument();

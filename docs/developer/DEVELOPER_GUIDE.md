@@ -19,6 +19,8 @@ Required variables for the backend/AI track:
 
 - `VITE_API_BASE_URL`: frontend-to-backend URL, default `http://localhost:8000`.
 - `GLAVRED_ENV`, `GLAVRED_API_HOST`, `GLAVRED_API_PORT`: local backend runtime.
+- `GLAVRED_CORS_ORIGINS`: comma-separated browser origins allowed to call the
+  backend, defaulting to local Vite origins.
 - `DATABASE_URL`, `REDIS_URL`: future persistence and queue configuration.
 - `AI_RUN_AUDIT_DB_PATH`: local SQLite audit store for backend AI run records,
   default `var/glavred-ai-runs.sqlite3`.
@@ -39,6 +41,22 @@ tokens and other secrets must be redacted before persistence.
 - Testing Library
 
 ## Commands
+
+Start the full Dockerized local stack:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- `backend`: FastAPI on `http://localhost:8000`, with `./var` mounted for local
+  SQLite AI run audit data.
+- `frontend`: Vite on `http://localhost:5176`, configured to call the backend through
+  `VITE_API_BASE_URL=http://localhost:8000`.
+
+Docker Compose reads local secrets from `.env`, but `.env` is ignored by Git and
+excluded from the Docker build context by `.dockerignore`.
 
 Install dependencies:
 
@@ -199,14 +217,23 @@ Current backend files:
 - `backend/app/settings.py`: typed environment settings.
 - `backend/app/api/health.py`: `/health` and `/api/health` routes.
 - `backend/app/api/ai_runs.py`: `/api/ai-runs` create/read/list audit routes.
+- `backend/app/api/drafts.py`: `/api/drafts/generate` route for backend-assisted
+  draft generation.
 - `backend/app/api/dependencies.py`: request-time application service wiring.
 - `backend/app/application/health_service.py`: health use-case orchestration.
 - `backend/app/application/ai_run_service.py`: AI run audit use case, payload
   redaction, and repository port.
+- `backend/app/application/draft_generation_service.py`: OpenRouter/fallback
+  orchestration for draft generation.
+- `backend/app/application/deterministic_draft_service.py`: deterministic backend
+  fallback draft generation.
 - `backend/app/domain/health.py`: provider-free health value objects.
 - `backend/app/domain/ai_run.py`: provider-agnostic AI run entity and enums.
+- `backend/app/domain/draft_generation.py`: provider-free draft generation contracts.
 - `backend/app/infrastructure/openrouter_config.py`: OpenRouter config validator with
   no provider call.
+- `backend/app/infrastructure/openrouter_draft_adapter.py`: OpenRouter chat
+  completions adapter for draft generation.
 - `backend/app/infrastructure/sqlite_ai_run_repository.py`: stdlib SQLite audit
   repository.
 
@@ -221,6 +248,16 @@ AI run audit API:
 Slice 2.2 does not execute prompts, call OpenRouter, sync workspaces, or create
 publication artifacts. The audit contract exists so provider execution can be added
 behind the application/infrastructure boundary in Slice 2.3.
+
+Draft generation API:
+
+- `POST /api/drafts/generate`: accepts an approved `PostBrief` context and
+  `EditorialModel` context, returns a frontend-compatible `PostDraft` and `AiRun`.
+- OpenRouter calls happen only in `backend/app/infrastructure/openrouter_draft_adapter.py`.
+- Missing OpenRouter configuration, provider errors, and invalid provider JSON return a
+  deterministic fallback draft and an audited `fallbackUsed: true` run.
+- The frontend keeps local workspace persistence; backend sync is not part of this
+  slice.
 
 Backend OOP/SRP rules:
 

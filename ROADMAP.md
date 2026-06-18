@@ -3019,20 +3019,72 @@ Status:
 
 ### Slice 2.3: First OpenRouter Draft Run
 
-- Status: Ready
+- Status: Done
 - Goal: Replace one deterministic draft-generation path with an OpenRouter-backed run
   behind the backend application boundary.
 - Scope:
   - Build draft request from approved `PostBrief`, author/editorial context, and HITL
-    constraints.
-  - Call OpenRouter through an infrastructure adapter.
-  - Normalize result into the existing `PostDraft` shape.
+    constraints. Done.
+  - Call OpenRouter through an infrastructure adapter. Done.
+  - Normalize result into the existing `PostDraft` shape. Done.
   - Fall back to deterministic drafting on missing config, provider error, or invalid
-    result.
+    result. Done.
+  - Connect `Утвердить фабулу` to the backend draft endpoint with a local emergency
+    fallback when the backend is unreachable. Done.
+  - Record every backend draft generation as an `AiRun`. Done.
+- Out of scope:
+  - Streaming, retries, queues, auth, workspace backend persistence, prompt management
+    UI, and frontend AI-run history.
+- Architecture impact:
+  - `backend/app/api/drafts.py` stays a thin HTTP mapping layer.
+  - `backend/app/application/draft_generation_service.py` owns provider/fallback
+    orchestration and audit creation.
+  - `backend/app/infrastructure/openrouter_draft_adapter.py` owns OpenRouter HTTP.
+  - `src/infrastructure/backendDraftClient.ts` is the only frontend HTTP mapper for
+    draft generation.
+- Tests:
+  - Backend route tests cover OpenRouter success, missing config fallback, provider
+    error fallback, audit visibility, and secret safety. Done.
+  - Frontend client/action tests cover backend request mapping and workspace sync for
+    generated drafts. Done.
+  - Architecture smoke covers new backend/frontend bridge modules. Done.
+- Acceptance criteria:
+  - `POST /api/drafts/generate` returns a `PostDraft` and `AiRun`. Done.
+  - `Утвердить фабулу` can use backend/OpenRouter without exposing provider keys in the
+    browser. Done.
+  - Local deterministic drafting remains the emergency fallback when backend is
+    unreachable. Done.
+
+### Slice 2.3.1: Dockerized Local Full-Stack Runner
+
+- Status: Done
+- Goal: Make the current frontend + backend stack build and run with one Docker
+  Compose command.
+- Scope:
+  - Add backend and frontend Dockerfiles. Done.
+  - Add `compose.yaml` that starts FastAPI and Vite together. Done.
+  - Keep `.env` as runtime-only local configuration and exclude secrets from Docker
+    build context. Done.
+  - Mount `./var` for local SQLite AI run audit state. Done.
+  - Add backend CORS settings so the Dockerized frontend can call the backend. Done.
+- Out of scope:
+  - Postgres, Redis, workers, queues, auth, production deployment, and reverse proxy.
+- Architecture impact:
+  - Docker is an execution wrapper, not a new ownership layer.
+  - Backend API/application/domain/infrastructure boundaries remain unchanged.
+  - Future DB/queue services should be added to Compose as separate infrastructure
+    services behind explicit backend adapters.
+- Tests:
+  - Backend CORS contract test. Done.
+  - Architecture smoke requires Docker local-stack files. Done.
+- Acceptance criteria:
+  - `docker compose up --build` is the documented full-stack startup command. Done.
+  - Dockerized frontend runs at `http://localhost:5176`; backend remains at
+    `http://localhost:8000`. Done.
 
 ### Slice 2.4: Document AI Platform Import Adapter
 
-- Status: Backlog
+- Status: Ready
 - Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
   document/archive analysis.
 - Scope:
@@ -3144,6 +3196,8 @@ Status:
 - Slice 2.0: Backend AI Execution Architecture Baseline. Completed 2026-06-18.
 - Slice 2.1: Backend Foundation and OpenRouter Environment. Completed 2026-06-18.
 - Slice 2.2: AI Run Contract and Audit Trail. Completed 2026-06-18.
+- Slice 2.3: First OpenRouter Draft Run. Completed 2026-06-18.
+- Slice 2.3.1: Dockerized Local Full-Stack Runner. Completed 2026-06-18.
 
 ## Blocked Items
 
@@ -3164,4 +3218,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.3: First OpenRouter Draft Run`.
+Continue the backend track with `Slice 2.4: Document AI Platform Import Adapter`.

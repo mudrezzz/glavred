@@ -356,6 +356,16 @@ const LARGE_SOURCE_BASELINES = [
     next: "Meme remix placeholder service should stay deterministic until real search/remix adapters are introduced behind explicit ports.",
   },
   {
+    path: "src/infrastructure/backendDraftClient.ts",
+    limit: 90,
+    next: "Backend draft client should stay a thin HTTP mapper; move orchestration into app/application modules.",
+  },
+  {
+    path: "src/app/productionDraftActions.ts",
+    limit: 70,
+    next: "Production draft actions should stay a thin workspace patch builder for backend-generated drafts.",
+  },
+  {
     path: "src/app/productionVisualActions.ts",
     limit: 90,
     next: "Visual production actions should stay a thin workspace orchestration layer.",
@@ -463,6 +473,16 @@ const TEST_FILE_BASELINES = [
     limit: 820,
     next: "Local workspace store tests should split migration/normalize/persistence cases before growing further.",
   },
+  {
+    path: "src/infrastructure/backendDraftClient.test.ts",
+    limit: 90,
+    next: "Backend draft client tests should stay focused on request/response mapping.",
+  },
+  {
+    path: "src/app/productionDraftActions.test.ts",
+    limit: 70,
+    next: "Production draft action tests should stay focused on generated-draft workspace sync.",
+  },
 ];
 
 const BACKEND_SOURCE_BASELINES = [
@@ -492,6 +512,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "AI run routes should stay thin and delegate orchestration to AiRunService.",
   },
   {
+    path: "backend/app/api/drafts.py",
+    limit: 130,
+    next: "Draft routes should stay thin and delegate generation to DraftGenerationService.",
+  },
+  {
     path: "backend/app/application/health_service.py",
     limit: 90,
     next: "Health service should stay focused on liveness/readiness orchestration.",
@@ -500,6 +525,16 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/application/ai_run_service.py",
     limit: 100,
     next: "AI run service should own audit orchestration only; provider execution belongs in later services.",
+  },
+  {
+    path: "backend/app/application/draft_generation_service.py",
+    limit: 130,
+    next: "Draft generation service should stay orchestration-only; split provider policy if it grows.",
+  },
+  {
+    path: "backend/app/application/deterministic_draft_service.py",
+    limit: 80,
+    next: "Deterministic draft fallback should stay a small fallback service.",
   },
   {
     path: "backend/app/domain/health.py",
@@ -512,9 +547,19 @@ const BACKEND_SOURCE_BASELINES = [
     next: "AI run domain objects should stay provider-free and persistence-free.",
   },
   {
+    path: "backend/app/domain/draft_generation.py",
+    limit: 70,
+    next: "Draft generation domain contracts should stay provider-free and framework-free.",
+  },
+  {
     path: "backend/app/infrastructure/openrouter_config.py",
     limit: 80,
     next: "OpenRouter config validator must not perform provider calls.",
+  },
+  {
+    path: "backend/app/infrastructure/openrouter_draft_adapter.py",
+    limit: 140,
+    next: "OpenRouter draft adapter should stay provider-call-only; prompt policy belongs in application contracts.",
   },
   {
     path: "backend/app/infrastructure/sqlite_ai_run_repository.py",
@@ -540,6 +585,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_ai_run_repository.py",
     limit: 110,
     next: "AI run repository tests should split by schema/write/query behavior before growing further.",
+  },
+  {
+    path: "backend/tests/test_draft_generation_api.py",
+    limit: 170,
+    next: "Draft generation API tests should split by success/fallback/provider errors before growing further.",
   },
 ];
 
@@ -690,6 +740,7 @@ const requiredEnvFragments = [
   "GLAVRED_ENV=",
   "GLAVRED_API_HOST=",
   "GLAVRED_API_PORT=",
+  "GLAVRED_CORS_ORIGINS=",
   "DATABASE_URL=",
   "REDIS_URL=",
   "AI_RUN_AUDIT_DB_PATH=",
@@ -715,6 +766,17 @@ assert(
   gitignoreSource.includes("!.env.example"),
   ".gitignore must keep .env.example commit-ready."
 );
+
+const requiredDockerFiles = [
+  ".dockerignore",
+  "compose.yaml",
+  "docker/backend.Dockerfile",
+  "docker/frontend.Dockerfile",
+];
+
+for (const requiredFile of requiredDockerFiles) {
+  assert(fileExists(requiredFile), `Missing Docker local-stack file: ${requiredFile}`);
+}
 
 const requiredSourceFiles = [
   "src/app/AppShell.tsx",
@@ -792,6 +854,8 @@ const requiredSourceFiles = [
   "src/features/analytics/AnalyticsView.tsx",
   "src/application/visualVariantService.ts",
   "src/application/visualMemeRemixService.ts",
+  "src/infrastructure/backendDraftClient.ts",
+  "src/app/productionDraftActions.ts",
   "src/app/productionVisualActions.ts",
 ];
 
@@ -872,16 +936,22 @@ if (fileExists("backend")) {
     "backend/app/api/dependencies.py",
     "backend/app/api/health.py",
     "backend/app/api/ai_runs.py",
+    "backend/app/api/drafts.py",
     "backend/app/application/health_service.py",
     "backend/app/application/ai_run_service.py",
+    "backend/app/application/draft_generation_service.py",
+    "backend/app/application/deterministic_draft_service.py",
     "backend/app/domain/health.py",
     "backend/app/domain/ai_run.py",
+    "backend/app/domain/draft_generation.py",
     "backend/app/infrastructure/openrouter_config.py",
+    "backend/app/infrastructure/openrouter_draft_adapter.py",
     "backend/app/infrastructure/sqlite_ai_run_repository.py",
     "backend/tests/test_settings.py",
     "backend/tests/test_health_api.py",
     "backend/tests/test_ai_run_api.py",
     "backend/tests/test_ai_run_repository.py",
+    "backend/tests/test_draft_generation_api.py",
   ];
 
   for (const requiredFile of requiredBackendFiles) {
@@ -1209,10 +1279,17 @@ const requiredSaoFragments = [
   "no provider calls from API handlers",
   "backend/app/api/health.py",
   "backend/app/api/ai_runs.py",
+  "backend/app/api/drafts.py",
   "backend/app/application/health_service.py",
   "backend/app/application/ai_run_service.py",
+  "backend/app/application/draft_generation_service.py",
   "backend/app/infrastructure/openrouter_config.py",
+  "backend/app/infrastructure/openrouter_draft_adapter.py",
   "backend/app/infrastructure/sqlite_ai_run_repository.py",
+  "Dockerized local stack",
+  "compose.yaml",
+  "docker/backend.Dockerfile",
+  "docker/frontend.Dockerfile",
 ];
 
 for (const fragment of requiredSaoFragments) {

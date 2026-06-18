@@ -19,6 +19,9 @@ class AiRunProvider(StrEnum):
 
 class AiRunStatus(StrEnum):
     RECORDED = "recorded"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
 
 
 @dataclass(frozen=True)

@@ -5,6 +5,15 @@
 The current demo is the local Vite app:
 
 ```bash
+docker compose up --build
+```
+
+Open `http://localhost:5176`. The Dockerized demo starts the Vite frontend and FastAPI
+backend together; backend AI run audit data is stored under local `var/`.
+
+The non-Docker development path is:
+
+```bash
 npm install
 npm run dev
 ```
@@ -230,7 +239,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     signal/topic/fabula/audience/value/goal, platform/date, confidence, evidence, and
     risks from the approved candidate and slot. Editing an approved fabula clears stale
     draft/final/release artifacts until the updated brief is approved again.
-28. Review the automatically prepared draft checks and editor notes.
+28. Review the automatically prepared draft checks and editor notes. If the backend
+    is running with OpenRouter configured, the draft came from the backend
+    `/api/drafts/generate` path and has an `AiRun` audit record; otherwise the local
+    deterministic fallback prepared it.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
@@ -266,5 +278,6 @@ These are reference prototypes and design materials, not production code.
 Validator indicators for topics, fabulas, author position, and production artifacts are
 the next product layer after the structured editorial model.
 
-Real provider calls, API keys, platform metrics, publication automation, and backend
-sync remain later steps. Real attachment parsing and AI analysis are also deferred.
+Real provider-backed drafts now exist through the local backend/OpenRouter path.
+Platform metrics, publication automation, backend workspace sync, real attachment
+parsing, and broader AI analysis remain later steps.

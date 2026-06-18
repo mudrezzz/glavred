@@ -43,6 +43,33 @@ class AiRunService:
         )
         return self._repository.save(run)
 
+    def create_completed_run(
+        self,
+        *,
+        capability: AiRunCapability,
+        provider: AiRunProvider,
+        model: str | None,
+        request_payload: dict[str, Any],
+        result_payload: dict[str, Any],
+        fallback_used: bool,
+        error: str | None = None,
+    ) -> AiRun:
+        now = datetime.now(UTC)
+        run = AiRun(
+            id=str(uuid4()),
+            capability=capability,
+            status=AiRunStatus.SUCCEEDED,
+            provider=provider,
+            model=model,
+            request_payload=self._redact_sensitive_values(request_payload),
+            result_payload=self._redact_sensitive_values(result_payload),
+            error=error,
+            fallback_used=fallback_used,
+            created_at=now,
+            updated_at=now,
+        )
+        return self._repository.save(run)
+
     def get_run(self, run_id: str) -> AiRun | None:
         return self._repository.get(run_id)
 

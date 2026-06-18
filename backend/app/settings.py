@@ -15,6 +15,10 @@ class BackendSettings(BaseSettings):
     environment: str = Field(default="local", validation_alias="GLAVRED_ENV")
     api_host: str = Field(default="127.0.0.1", validation_alias="GLAVRED_API_HOST")
     api_port: int = Field(default=8000, validation_alias="GLAVRED_API_PORT")
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        validation_alias="GLAVRED_CORS_ORIGINS",
+    )
     ai_run_audit_db_path: Path = Field(
         default=Path("var/glavred-ai-runs.sqlite3"),
         validation_alias="AI_RUN_AUDIT_DB_PATH",
@@ -47,6 +51,10 @@ class BackendSettings(BaseSettings):
     @property
     def has_openrouter_default_model(self) -> bool:
         return bool(self.openrouter_default_model.strip())
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

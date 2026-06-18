@@ -12,9 +12,9 @@ release content.
 The current repository contains the first working local-first editorial cabinet. It
 implements author memory, evidence-backed author-position assertions, reviewed
 signals/radars, and an editable production flow from approved signal to insight card,
-broadcast content grid, approved post brief, deterministic draft, editorial checks,
-approved text, visual decision, ready state, publication log, and captured editorial
-learning note. The current `FinalText` and `ReleasePackage` artifacts remain
+broadcast content grid, approved post brief, backend-assisted or deterministic-fallback
+draft, editorial checks, approved text, visual decision, ready state, publication log,
+and captured editorial learning note. The current `FinalText` and `ReleasePackage` artifacts remain
 compatibility/manual-export surfaces until the release-log slices replace them.
 
 `Память автора` is now the main entry point: titleless thought capture, optional local
@@ -139,6 +139,19 @@ through the existing production flow.
 
 ## Quick Start
 
+Run the full local stack with Docker:
+
+```bash
+docker compose up --build
+```
+
+Then open `http://localhost:5176`. The backend is published at
+`http://localhost:8000`, and local AI run audit data is written under `var/`.
+Docker Compose reads local secrets from `.env`; `.env` is ignored by Git and is not
+copied into the Docker build context.
+
+Run without Docker:
+
 ```bash
 npm install
 python -m pip install -e ".[dev]"
@@ -151,10 +164,11 @@ Run the backend:
 npm run dev:backend
 ```
 
-The backend currently exposes health endpoints and an audit-only AI run contract:
-`POST /api/ai-runs`, `GET /api/ai-runs/{id}`, and `GET /api/ai-runs`. Audit records
-are stored in local SQLite at `AI_RUN_AUDIT_DB_PATH` (default
-`var/glavred-ai-runs.sqlite3`, ignored by Git). No LLM provider call happens yet.
+The backend currently exposes health endpoints, AI run audit endpoints, and the first
+draft-generation endpoint: `POST /api/drafts/generate`. When OpenRouter is configured,
+approving a fabula can generate the draft through the backend; missing provider config
+or provider errors fall back to deterministic drafting and are recorded in local SQLite
+at `AI_RUN_AUDIT_DB_PATH` (default `var/glavred-ai-runs.sqlite3`, ignored by Git).
 
 Run tests:
 

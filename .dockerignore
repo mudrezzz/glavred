@@ -1,0 +1,16 @@
+.git
+.pytest_cache
+.vite
+.vite-dev*.log
+vite-dev*.log
+.env
+.env.*
+!.env.example
+__pycache__
+*.py[cod]
+node_modules
+dist
+coverage
+var
+*.zip
+*.tsbuildinfo

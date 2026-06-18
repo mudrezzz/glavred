@@ -388,6 +388,10 @@ updated brief again.
 
 ## Not Yet Supported
 
+Backend draft note: AI-generated drafts are supported only when the local backend is
+running and OpenRouter credentials/model are configured. Otherwise the same fabula
+approval action uses the deterministic fallback draft path.
+
 - Real AI classification of author memory.
 - Real analysis of attached documents, images, screenshots, PDFs, or text files.
 - Real archive ingestion and uniqueness checks.

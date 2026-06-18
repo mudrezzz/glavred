@@ -12,6 +12,7 @@ def test_settings_defaults_without_env_file() -> None:
     assert settings.environment == "local"
     assert settings.api_host == "127.0.0.1"
     assert settings.api_port == 8000
+    assert settings.cors_origin_list == ["http://localhost:5173", "http://127.0.0.1:5173"]
     assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"
     assert settings.has_openrouter_api_key is False
     assert settings.has_openrouter_default_model is False

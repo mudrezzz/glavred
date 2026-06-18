@@ -117,10 +117,11 @@ Real image generation, internet meme search, and hybrid meme-based image
 transformation remain adapter-backed future slices; React workbench code stores the
 decision contract only.
 
-Real AI provider calls, publication automation, backend sync, and real metrics
-ingestion remain future slices. The near-term priority is not provider integration; it
-is making the author's own position explicit enough that AI can later assist without
-turning the product into generic content generation.
+Slice 2.3 introduces the first real AI provider call for draft generation only.
+Publication automation, backend workspace sync, real metrics ingestion, image
+generation, meme search, document analysis, and broader provider coverage remain
+future slices. Provider-backed output still enters the same HITL workflow and never
+approves editorial artifacts automatically.
 
 ## Major Components
 
@@ -292,6 +293,21 @@ provider:
 directory and schema on first use; no ORM, migration framework, queue, auth, prompt
 execution, or workspace sync exists in Slice 2.2.
 
+Slice 2.3 adds the first provider-backed production path:
+
+- `backend/app/api/drafts.py`: thin `POST /api/drafts/generate` route.
+- `backend/app/domain/draft_generation.py`: provider-free draft request/result
+  contracts.
+- `backend/app/application/draft_generation_service.py`: OpenRouter-or-fallback
+  orchestration and AI run audit creation.
+- `backend/app/application/deterministic_draft_service.py`: deterministic fallback
+  draft generation.
+- `backend/app/infrastructure/openrouter_draft_adapter.py`: OpenRouter chat
+  completions HTTP call and provider response parsing.
+- `src/infrastructure/backendDraftClient.ts`: browser-to-backend draft request mapper.
+- `src/app/productionDraftActions.ts`: workspace patch builder for backend-generated
+  drafts.
+
 The backend dependency rule is:
 
 `api -> application -> domain`
@@ -315,6 +331,29 @@ The Slice 2.2 AI run surface is audit-only. `POST /api/ai-runs` records a durabl
 `GET /api/ai-runs/{id}` and `GET /api/ai-runs` read audit records newest-first. The
 API never returns provider secrets or the absolute SQLite path. `/api/health` reports
 `aiRunAudit: { configured: true, storage: "sqlite" }` only.
+
+The Slice 2.3 draft surface is synchronous and non-streaming. `POST
+/api/drafts/generate` accepts an approved brief and editorial model context, calls
+OpenRouter only from infrastructure, validates JSON `{ title, body }`, maps it to the
+existing `PostDraft` shape, and records a succeeded `AiRun`. Missing configuration,
+provider errors, and invalid provider output fall back to deterministic drafting and
+record `fallbackUsed: true`. The frontend still stores workspace state locally; it
+uses the backend only for draft generation and keeps a local emergency fallback if the
+backend itself is unreachable.
+
+The Dockerized local stack is an execution wrapper around the same boundaries:
+
+- `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.
+- `docker/frontend.Dockerfile` builds only the Vite frontend and Node dependencies.
+- `compose.yaml` wires the two services, publishes `8000` and `5176`, injects local
+  `.env` values at runtime, and mounts `./var` for SQLite audit state.
+- `.dockerignore` excludes `.env`, local caches, `node_modules`, build outputs, and
+  audit data from the Docker build context.
+
+Docker does not change ownership rules. API handlers remain thin, provider calls stay
+under `backend/app/infrastructure`, workspace state remains local-first, and future DB,
+queue, or worker services must be added as separate Compose services behind explicit
+application/infrastructure boundaries.
 
 `langgraph-document-ai-platform` is a future infrastructure/workflow dependency behind
 a Glavred-owned facade. It may produce import-review candidates, document analysis, or
