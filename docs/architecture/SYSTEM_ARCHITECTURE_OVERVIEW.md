@@ -241,6 +241,75 @@ network clients. React components render state and trigger application service m
 Application services orchestrate domain operations, call adapters, and decide whether
 to use deterministic fallback or provider-backed behavior.
 
+## Backend AI Execution Architecture
+
+Backend work starts as an AI execution layer, not as a broad workspace rewrite. The
+frontend remains a local-first product surface until a backend slice explicitly moves a
+specific capability behind an HTTP boundary.
+
+The target backend structure is:
+
+- `backend/app/api/`: thin HTTP routes, request/response mapping, and no prompt,
+  provider, persistence, or workflow logic.
+- `backend/app/domain/`: provider-free entities, value objects, policies, and
+  invariants.
+- `backend/app/application/`: use-case services, orchestration, prompt-independent
+  request/result contracts, fallback decisions, and audit boundaries.
+- `backend/app/infrastructure/`: OpenRouter, database, queue, file storage,
+  `langgraph-document-ai-platform`, and platform-specific adapters.
+- `backend/app/workflows/`: workflow composition only when a real slice needs
+  multi-step execution; no empty boilerplate packages.
+- `backend/app/settings.py`: typed environment configuration and secret-safe
+  validation.
+- `backend/tests/`: unit, contract, and smoke tests that mirror backend ownership.
+
+Slice 2.1 implements the first concrete backend perimeter:
+
+- `backend/app/main.py`: FastAPI application factory.
+- `backend/app/__main__.py`: local server entrypoint used by `npm run dev:backend`.
+- `backend/app/settings.py`: typed settings loaded from `.env` / environment.
+- `backend/app/api/health.py`: `/health` and `/api/health` routes.
+- `backend/app/api/dependencies.py`: request-time application service wiring.
+- `backend/app/application/health_service.py`: liveness/readiness orchestration.
+- `backend/app/domain/health.py`: provider-free health value objects.
+- `backend/app/infrastructure/openrouter_config.py`: OpenRouter configuration status
+  evaluation without a provider call.
+
+The backend dependency rule is:
+
+`api -> application -> domain`
+
+Infrastructure is injected at the edge:
+
+`application -> infrastructure ports/adapters`
+
+OpenRouter is the default LLM provider target for the backend execution layer. The
+runtime contract is documented in `.env.example`; developer secrets live only in local
+ignored `.env` files. Provider keys, provider SDKs, and provider-specific metadata must
+not leak into React components, domain objects, or API route logic.
+
+The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
+reports whether OpenRouter is locally configured and never returns API keys or calls
+OpenRouter.
+
+`langgraph-document-ai-platform` is a future infrastructure/workflow dependency behind
+a Glavred-owned facade. It may produce import-review candidates, document analysis, or
+workflow results, but it must not write author-position assertions, source signals, or
+production artifacts without an application service and HITL transition.
+
+Backend OOP/SRP guardrails:
+
+- classes and modules own one role: route, use case, domain policy, adapter, mapper, or
+  test fixture;
+- no 2-3k line backend files, no god services, and no boilerplate-only packages;
+- no provider calls from API handlers, React, or domain modules;
+- no direct `langgraph-document-ai-platform` imports outside the backend
+  infrastructure/workflow facade;
+- every backend slice adds or updates backend tests and `npm run test:architecture`
+  smoke coverage for file size, ownership, and forbidden imports;
+- every new backend architecture rule needs ADR + SAO coverage and either an automated
+  check or an agent workflow checklist.
+
 ## React UI Architecture
 
 The React implementation has been extracted from the initial fast-exploration
@@ -765,6 +834,12 @@ research experience building AI-B2B products:
   explicit author review and save/cancel actions.
 - AI provider adapters can later replace deterministic insight, planning, briefing,
   drafting, and check services after author position and validators exist.
+- Backend AI execution starts with OpenRouter-backed application services behind thin
+  HTTP routes. It should first replace one deterministic use case, then expand through
+  audited `AiRun` records and adapter-backed workflows.
+- `langgraph-document-ai-platform` can later analyze documents and archives behind a
+  backend facade. Its output must enter Glavred as review candidates, not as direct
+  domain mutations.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace store
   interface.
 - Platform publication APIs should attach through `PublicationAdapter` and write
@@ -804,6 +879,16 @@ For later AI-assisted drafting, add:
 - Failure tests proving provider errors return deterministic fallback.
 - UI smoke coverage proving an AI-assisted draft still follows the existing HITL flow.
 
+For backend slices, add:
+
+- Unit tests for settings, domain policies, application services, and adapters.
+- Contract tests for API response shapes and provider result normalization.
+- Failure tests for missing OpenRouter configuration, provider errors, invalid model
+  output, and deterministic fallback.
+- Architecture smoke checks for backend file-size limits, dependency direction,
+  forbidden provider imports, and `.env.example` drift.
+- No backend slice is complete until `npm run test:architecture` passes.
+
 ## Known Trade-offs
 
 - The current `EditorialModel` is too coarse for the revised concept. It should be
@@ -814,8 +899,12 @@ For later AI-assisted drafting, add:
   progressive disclosure from colored status to evidence.
 - Local-first persistence avoids backend scope, but it is not suitable for multi-device
   or team collaboration.
-- Provider selection is intentionally deferred. This keeps AI integration from being
-  attached to an underdeveloped author-position model.
+- Provider selection now has a practical default: backend AI execution uses
+  OpenRouter first. The domain and application contracts still stay provider-agnostic
+  so another provider can be added behind an adapter later.
+- Starting backend work too broadly would create boilerplate. Backend growth should
+  follow real use cases: environment validation, AI run audit, one OpenRouter-backed
+  editorial action, then document/workflow adapters.
 
 ## Open Questions
 

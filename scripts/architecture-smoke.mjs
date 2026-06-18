@@ -465,6 +465,54 @@ const TEST_FILE_BASELINES = [
   },
 ];
 
+const BACKEND_SOURCE_BASELINES = [
+  {
+    path: "backend/app/main.py",
+    limit: 60,
+    next: "FastAPI app factory should stay a thin composition root.",
+  },
+  {
+    path: "backend/app/settings.py",
+    limit: 90,
+    next: "Backend settings should stay focused on typed environment configuration.",
+  },
+  {
+    path: "backend/app/api/dependencies.py",
+    limit: 60,
+    next: "API dependencies should stay limited to request-time service wiring.",
+  },
+  {
+    path: "backend/app/api/health.py",
+    limit: 60,
+    next: "Health routes should stay thin and delegate behavior to application services.",
+  },
+  {
+    path: "backend/app/application/health_service.py",
+    limit: 90,
+    next: "Health service should stay focused on liveness/readiness orchestration.",
+  },
+  {
+    path: "backend/app/domain/health.py",
+    limit: 60,
+    next: "Health domain objects should stay provider-free and framework-free.",
+  },
+  {
+    path: "backend/app/infrastructure/openrouter_config.py",
+    limit: 80,
+    next: "OpenRouter config validator must not perform provider calls.",
+  },
+  {
+    path: "backend/tests/test_settings.py",
+    limit: 100,
+    next: "Backend settings tests should split when provider config coverage grows.",
+  },
+  {
+    path: "backend/tests/test_health_api.py",
+    limit: 120,
+    next: "Backend API tests should split by route group when more APIs are added.",
+  },
+];
+
 const ADR_PATH =
   "docs/adr/2026-06-15-react-ui-uses-feature-modules-not-app-god-file.md";
 const MODULE_GUARDRAILS_ADR_PATH =
@@ -475,7 +523,10 @@ const ARCHITECTURE_DRIFT_ADR_PATH =
   "docs/adr/2026-06-16-architecture-drift-is-prevented-by-agent-and-smoke-guardrails.md";
 const TEST_OWNERSHIP_ADR_PATH =
   "docs/adr/2026-06-18-app-flow-tests-follow-feature-ownership.md";
+const BACKEND_AI_EXECUTION_ADR_PATH =
+  "docs/adr/2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md";
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
+const ENV_EXAMPLE_PATH = ".env.example";
 
 function readText(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
@@ -597,6 +648,42 @@ assert(
   fileExists(TEST_OWNERSHIP_ADR_PATH),
   `Missing ADR: ${TEST_OWNERSHIP_ADR_PATH}`
 );
+assert(
+  fileExists(BACKEND_AI_EXECUTION_ADR_PATH),
+  `Missing ADR: ${BACKEND_AI_EXECUTION_ADR_PATH}`
+);
+assert(fileExists(ENV_EXAMPLE_PATH), `Missing environment contract: ${ENV_EXAMPLE_PATH}`);
+
+const envExampleSource = fileExists(ENV_EXAMPLE_PATH) ? readText(ENV_EXAMPLE_PATH) : "";
+const requiredEnvFragments = [
+  "VITE_API_BASE_URL=",
+  "GLAVRED_ENV=",
+  "GLAVRED_API_HOST=",
+  "GLAVRED_API_PORT=",
+  "DATABASE_URL=",
+  "REDIS_URL=",
+  "OPENROUTER_API_KEY=",
+  "OPENROUTER_BASE_URL=",
+  "OPENROUTER_DEFAULT_MODEL=",
+  "OPENROUTER_APP_NAME=",
+  "OPENROUTER_HTTP_REFERER=",
+  "LANGGRAPH_DOCUMENT_AI_PLATFORM_MODE=",
+  "LANGGRAPH_DOCUMENT_AI_PLATFORM_CONFIG=",
+];
+
+for (const fragment of requiredEnvFragments) {
+  assert(
+    envExampleSource.includes(fragment),
+    `.env.example is missing required backend/OpenRouter variable: ${fragment}`
+  );
+}
+
+const gitignoreSource = fileExists(".gitignore") ? readText(".gitignore") : "";
+assert(gitignoreSource.includes(".env"), ".gitignore must ignore local .env files.");
+assert(
+  gitignoreSource.includes("!.env.example"),
+  ".gitignore must keep .env.example commit-ready."
+);
 
 const requiredSourceFiles = [
   "src/app/AppShell.tsx",
@@ -683,6 +770,7 @@ for (const requiredFile of requiredSourceFiles) {
 
 const largeSourceStats = [];
 const testFileStats = [];
+const backendSourceStats = [];
 const nearLimitStats = [];
 const exportCountStats = [];
 
@@ -741,6 +829,51 @@ for (const baseline of TEST_FILE_BASELINES) {
         baseline.next,
       ].join("\n")
     );
+  }
+}
+
+if (fileExists("backend")) {
+  const requiredBackendFiles = [
+    "pyproject.toml",
+    "backend/app/__main__.py",
+    "backend/app/main.py",
+    "backend/app/settings.py",
+    "backend/app/api/dependencies.py",
+    "backend/app/api/health.py",
+    "backend/app/application/health_service.py",
+    "backend/app/domain/health.py",
+    "backend/app/infrastructure/openrouter_config.py",
+    "backend/tests/test_settings.py",
+    "backend/tests/test_health_api.py",
+  ];
+
+  for (const requiredFile of requiredBackendFiles) {
+    assert(fileExists(requiredFile), `Missing backend architecture source file: ${requiredFile}`);
+  }
+
+  for (const baseline of BACKEND_SOURCE_BASELINES) {
+    assert(fileExists(baseline.path), `Missing backend baseline target: ${baseline.path}`);
+
+    if (fileExists(baseline.path)) {
+      const source = readText(baseline.path);
+      const lines = lineCount(source);
+      backendSourceStats.push({ ...baseline, lines });
+
+      if (lines >= Math.ceil(baseline.limit * NEAR_LIMIT_RATIO)) {
+        nearLimitStats.push({ ...baseline, lines });
+        warn(
+          `${baseline.path} is near its backend architecture limit: ${lines}/${baseline.limit} lines. ${baseline.next}`
+        );
+      }
+
+      assert(
+        lines <= baseline.limit,
+        [
+          `${baseline.path} has ${lines} lines; temporary backend limit is ${baseline.limit}.`,
+          baseline.next,
+        ].join("\n")
+      );
+    }
   }
 }
 
@@ -956,6 +1089,55 @@ assert(
   `Feature barrel files can bypass dependency hygiene and are forbidden: ${featureBarrelFiles.join(", ")}`
 );
 
+const backendPythonFiles = fileExists("backend/app") ? listFiles("backend/app", [".py"]) : [];
+const pythonImportPattern = /^\s*(?:from\s+([A-Za-z_][\w.]+)\s+import|import\s+([A-Za-z_][\w.]+))/gm;
+
+function pythonImports(source) {
+  return [...source.matchAll(pythonImportPattern)].map((match) => match[1] ?? match[2]);
+}
+
+function importsForbiddenModule(importPath, forbiddenModule) {
+  return importPath === forbiddenModule || importPath.startsWith(`${forbiddenModule}.`);
+}
+
+const backendDomainForbiddenImports = [
+  "fastapi",
+  "httpx",
+  "requests",
+  "sqlalchemy",
+  "pydantic_settings",
+  "uvicorn",
+  "openai",
+  "langgraph_document_ai_platform",
+  "langgraph",
+];
+
+const backendApiForbiddenImports = [
+  "httpx",
+  "requests",
+  "openai",
+  "langgraph_document_ai_platform",
+  "langgraph",
+];
+
+for (const backendFile of backendPythonFiles) {
+  const imports = pythonImports(readText(backendFile));
+  const forbiddenImports = backendFile.startsWith("backend/app/domain/")
+    ? backendDomainForbiddenImports
+    : backendFile.startsWith("backend/app/api/")
+      ? backendApiForbiddenImports
+      : [];
+
+  for (const importPath of imports) {
+    for (const forbiddenImport of forbiddenImports) {
+      assert(
+        !importsForbiddenModule(importPath, forbiddenImport),
+        `${backendFile} imports ${importPath}; backend layer forbids ${forbiddenImport} here.`
+      );
+    }
+  }
+}
+
 const saoSource = readText(SAO_PATH);
 const requiredSaoFragments = [
   "## React UI Architecture",
@@ -983,6 +1165,14 @@ const requiredSaoFragments = [
   "*AppFlow.test.tsx",
   "near-limit",
   "agent workflow",
+  "## Backend AI Execution Architecture",
+  "OpenRouter is the default LLM provider target",
+  "langgraph-document-ai-platform",
+  "no 2-3k line backend files",
+  "no provider calls from API handlers",
+  "backend/app/api/health.py",
+  "backend/app/application/health_service.py",
+  "backend/app/infrastructure/openrouter_config.py",
 ];
 
 for (const fragment of requiredSaoFragments) {
@@ -1018,6 +1208,9 @@ for (const stat of largeSourceStats) {
 }
 for (const stat of testFileStats) {
   console.log(`- ${stat.path}: ${stat.lines}/${stat.limit} test lines`);
+}
+for (const stat of backendSourceStats) {
+  console.log(`- ${stat.path}: ${stat.lines}/${stat.limit} backend lines`);
 }
 
 if (nearLimitStats.length > 0) {

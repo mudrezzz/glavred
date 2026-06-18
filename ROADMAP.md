@@ -2909,6 +2909,113 @@ Status:
   - Let archive records become signal sources.
   - Add deterministic uniqueness checks against archive titles/body snippets.
 
+### Slice 2.0: Backend AI Execution Architecture Baseline
+
+- Status: Done
+- Goal: Start the backend track as a disciplined AI execution layer with OpenRouter as
+  the default provider target.
+- User value: The project can move from deterministic placeholders toward real LLM
+  behavior without exposing provider keys in the browser or creating a backend
+  monolith.
+- Scope:
+  - Add `.env.example` and local `.env` variables for frontend/backend bridge,
+    backend server settings, persistence, OpenRouter, and
+    `langgraph-document-ai-platform`.
+  - Add ADR for backend responsibility, OpenRouter default, and provider/library
+    boundaries.
+  - Update SAO, developer guide, and agent skills with backend OOP/SRP rules.
+  - Extend architecture smoke so backend env/ADR/SAO guardrails are checked before
+    backend code appears.
+- Out of scope:
+  - Creating runtime backend code.
+  - Calling OpenRouter.
+  - Installing backend dependencies.
+  - Persisting workspace state on the server.
+- Architecture impact:
+  - Backend starts as an AI execution layer, not a full workspace replacement.
+  - Domain objects remain provider-free.
+  - API handlers must stay thin; application services own use cases; infrastructure
+    adapters own OpenRouter, persistence, queue, and document-AI calls.
+  - New backend files must stay small and role-owned; no 2-3k line modules, no god
+    services, and no boilerplate-only packages.
+- Tests:
+  - `npm run test:architecture` checks the env/ADR/SAO backend guardrails.
+- Acceptance criteria:
+  - OpenRouter env variables are documented.
+  - `.env` exists locally for developer tokens but is ignored by Git.
+  - Backend architecture rules are present in ADR/SAO/agent workflow docs.
+
+### Slice 2.1: Backend Foundation and OpenRouter Environment
+
+- Status: Done
+- Goal: Add the first thin backend service with environment validation and a health
+  surface.
+- User value: The team can run a real backend process and verify OpenRouter
+  configuration before wiring product flows to AI.
+- Scope:
+  - Add a minimal Python/FastAPI backend under `backend/`.
+  - Add typed settings loaded from environment variables documented in `.env.example`.
+  - Add `/health` and `/api/health` endpoints with provider configuration status that
+    does not reveal secrets.
+  - Add a small OpenRouter configuration validator; do not call the provider yet.
+  - Add backend test command and architecture smoke baselines for backend files.
+  - Update developer setup docs with backend run/test commands.
+- Out of scope:
+  - Real LLM calls.
+  - Database migrations beyond optional local configuration validation.
+  - Workspace sync, auth, queues, or publication adapters.
+- Architecture impact:
+  - Backend code follows `backend/app/api`, `backend/app/domain`,
+    `backend/app/application`, and `backend/app/infrastructure`.
+  - API modules contain routing only.
+  - Application services own use cases.
+  - Infrastructure adapters own env/provider edges.
+  - Architecture smoke must add backend file-size and forbidden-import checks in this
+    slice.
+- Tests:
+  - Backend unit tests for settings normalization and health response. Done.
+  - Architecture smoke for backend ownership and env contract. Done.
+  - Existing frontend regression remains green. Done.
+- Acceptance criteria:
+  - Backend starts locally. Done.
+  - Missing OpenRouter token is reported as unconfigured, not as a crash. Done.
+  - No provider call happens in Slice 2.1. Done.
+
+### Slice 2.2: AI Run Contract and Audit Trail
+
+- Status: Ready
+- Goal: Add a backend-side AI run model before the first provider call.
+- Scope:
+  - Define `AiRun`, request payload, normalized result, provider metadata, error, and
+    fallback status.
+  - Add persistence or local durable store for run audit records.
+  - Add application service interfaces for provider execution.
+  - Keep prompt templates and provider adapters outside API handlers.
+
+### Slice 2.3: First OpenRouter Draft Run
+
+- Status: Backlog
+- Goal: Replace one deterministic draft-generation path with an OpenRouter-backed run
+  behind the backend application boundary.
+- Scope:
+  - Build draft request from approved `PostBrief`, author/editorial context, and HITL
+    constraints.
+  - Call OpenRouter through an infrastructure adapter.
+  - Normalize result into the existing `PostDraft` shape.
+  - Fall back to deterministic drafting on missing config, provider error, or invalid
+    result.
+
+### Slice 2.4: Document AI Platform Import Adapter
+
+- Status: Backlog
+- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
+  document/archive analysis.
+- Scope:
+  - Add a facade over `langgraph-document-ai-platform`.
+  - Accept a local document/archive input through a backend use case.
+  - Return review candidates, not direct author-position assertions.
+  - Keep the library out of React, domain objects, and API handlers.
+
 ### Deferred: AI Drafting Adapter Skeleton
 
 - Status: Deferred
@@ -3009,6 +3116,8 @@ Status:
 - Slice 1.10.6.1: Visual Variants Review Flow. Completed 2026-06-18.
 - Slice 1.10.6.2: Two-Step Meme Remix Visual Flow. Completed 2026-06-18.
 - Slice 1.10.6.3: App Flow Test Ownership Guardrails. Completed 2026-06-18.
+- Slice 2.0: Backend AI Execution Architecture Baseline. Completed 2026-06-18.
+- Slice 2.1: Backend Foundation and OpenRouter Environment. Completed 2026-06-18.
 
 ## Blocked Items
 
@@ -3029,4 +3138,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.10.7: Ready Post Handoff`.
+Continue the backend track with `Slice 2.2: AI Run Contract and Audit Trail`.

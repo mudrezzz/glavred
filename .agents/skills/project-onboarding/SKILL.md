@@ -23,7 +23,12 @@ Quickly understand the project state and select the next appropriate action from
    - user docs
    - demo docs
 6. Inspect the project structure and test structure.
-7. Identify the current iteration, active slice, next ready task, blocked tasks, and open questions.
+7. If backend work is present or planned, inspect:
+   - `.env.example`;
+   - backend ADRs;
+   - backend sections in the SAO and developer guide;
+   - backend tests and architecture smoke backend baselines.
+8. Identify the current iteration, active slice, next ready task, blocked tasks, and open questions.
 
 ## When asked to "take the next task"
 
@@ -37,6 +42,9 @@ Instead:
 4. Update `ROADMAP.md` before starting implementation if the selected task needs clarification.
 5. Before selecting a product slice, account for current file-size limits, near-limit
    warnings, module ownership, and feature dependency guardrails.
+6. Before selecting a backend slice, account for OpenRouter environment requirements,
+   OOP/SRP backend boundaries, file-size guardrails, and provider/library dependency
+   hygiene.
 
 ## Required output before implementation
 
@@ -49,6 +57,8 @@ Provide a short project state summary:
 - Risks or blockers
 - Intended validation commands
 - Architecture guardrails that affect the selected slice
+- For backend slices, the current `.env.example` contract and OpenRouter/provider
+  boundary assumptions
 
 Then continue with the task unless the task is genuinely blocked.
 

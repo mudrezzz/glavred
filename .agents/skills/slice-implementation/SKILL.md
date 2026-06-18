@@ -48,6 +48,15 @@ Implement one small, complete, tested, documented product increment.
   helpers.
 - Do not add test behavior to a near-limit test file unless the same slice splits the
   test by feature/workflow ownership and keeps `npm run test:architecture` green.
+- For backend slices, do not add boilerplate-only modules, unused abstractions, or broad
+  scaffolding. Add only the route, use case, domain policy, adapter, setting, or test
+  required by the current slice.
+- Backend API handlers must stay thin. Put orchestration in application services and
+  provider/library calls in infrastructure adapters.
+- Backend domain modules must not import OpenRouter, provider SDKs, HTTP clients,
+  database sessions, queues, file systems, or `langgraph-document-ai-platform`.
+- If a backend slice changes environment variables, update `.env.example`,
+  developer docs, and architecture smoke checks. Never commit real `.env` secrets.
 
 ## Completion checklist
 
@@ -57,6 +66,8 @@ Before finishing:
 - Tests were added or updated.
 - Relevant tests were run.
 - `npm run test:architecture` was run and any near-limit warnings were considered.
+- For backend slices, backend tests were run when a backend test command exists, and
+  architecture smoke covers new backend ownership rules.
 - Docs were updated.
 - Demo was updated if needed.
 - `ROADMAP.md` status was updated.

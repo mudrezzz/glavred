@@ -141,13 +141,21 @@ through the existing production flow.
 
 ```bash
 npm install
+python -m pip install -e ".[dev]"
 npm run dev
+```
+
+Run the backend:
+
+```bash
+npm run dev:backend
 ```
 
 Run tests:
 
 ```bash
 npm test
+npm run test:backend
 ```
 
 Run the smoke build:

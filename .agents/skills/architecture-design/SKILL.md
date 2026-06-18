@@ -43,6 +43,13 @@ Use the following sources, in this order:
    - add or update an ADR;
    - add an automated smoke check when practical, or a mandatory workflow checklist
      when automation would be brittle.
+10. For backend architecture, enforce OOP/SRP boundaries explicitly:
+    - API routes are thin transport adapters;
+    - domain modules are provider-free and persistence-free;
+    - application services own use cases and orchestration;
+    - infrastructure adapters own OpenRouter, database, queue, file, publication, and
+      `langgraph-document-ai-platform` calls;
+    - no 2-3k line backend files, god services, or boilerplate-only packages.
 
 ## Required outputs
 
@@ -98,6 +105,10 @@ Before finishing:
 - No component has unclear ownership.
 - Test ownership mirrors production ownership; app-flow tests live beside the owning
   feature and `src/App.test.tsx` remains shell-only.
+- Backend ownership mirrors production ownership: routes, use cases, domain policies,
+  adapters, settings, and tests are separate roles.
+- OpenRouter is treated as the default backend LLM provider target, but provider
+  details stay outside React, domain objects, and API handlers.
 - Important trade-offs are documented.
 - New architecture rules have ADR + SAO coverage and either automated checks or a
   mandatory workflow checklist.

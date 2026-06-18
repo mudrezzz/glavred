@@ -30,13 +30,17 @@ Consider:
      infrastructure module.
    - Use `src/test-support` only for small repeated navigation/setup helpers, not
      hidden business assertions.
+   - For backend work, put route contract tests beside API ownership, use-case tests
+     beside application services, policy tests beside domain modules, and adapter
+     tests beside infrastructure modules.
 5. Select validation scope:
    - targeted tests for local changes
    - smoke tests for user-visible flows
    - integration tests for cross-component changes
-- full regression when risk is broad
+   - full regression when risk is broad
    - `npm run test:architecture` for every refactor, domain, application, app, or
      frontend slice
+   - backend unit/contract tests for backend slices when the command exists
 6. Run the selected commands if available.
 7. Report results clearly.
 
@@ -62,10 +66,16 @@ Run `npm run test:architecture` before completing any slice that touches:
 - `src/features`;
 - shared frontend primitives or visible frontend behavior;
 - refactoring, module ownership, or import boundaries.
+- backend architecture, environment contracts, provider adapters, API routes, or
+  backend tests.
 
 Review warning-level near-limit and export-count output even when the command passes.
 If the architecture smoke reports a near-limit test file touched by the current slice,
 split that test by feature/workflow ownership before adding more scenarios.
+
+Backend validation should include missing OpenRouter configuration, provider error
+mapping, deterministic fallback, route contracts, and forbidden dependency direction
+when those surfaces exist.
 
 ## Completion checklist
 

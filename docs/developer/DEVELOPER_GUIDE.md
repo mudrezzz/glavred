@@ -6,6 +6,30 @@
 - Vite
 - TypeScript
 - Vitest
+- Future backend: Python/FastAPI with explicit domain/application/infrastructure
+  boundaries.
+- Default LLM provider target for backend execution: OpenRouter.
+
+## Environment
+
+Copy `.env.example` to `.env` for local development and fill secrets locally. `.env`
+is ignored by Git; `.env.example` is the committed contract.
+
+Required variables for the backend/AI track:
+
+- `VITE_API_BASE_URL`: frontend-to-backend URL, default `http://localhost:8000`.
+- `GLAVRED_ENV`, `GLAVRED_API_HOST`, `GLAVRED_API_PORT`: local backend runtime.
+- `DATABASE_URL`, `REDIS_URL`: future persistence and queue configuration.
+- `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
+- `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
+- `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
+- `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
+- `LANGGRAPH_DOCUMENT_AI_PLATFORM_MODE`,
+  `LANGGRAPH_DOCUMENT_AI_PLATFORM_CONFIG`: future document/workflow adapter settings.
+
+OpenRouter configuration belongs to backend infrastructure adapters only. React,
+domain modules, API route handlers, and tests must not hardcode provider keys or call
+provider SDKs directly.
 - Testing Library
 
 ## Commands
@@ -14,6 +38,7 @@ Install dependencies:
 
 ```bash
 npm install
+python -m pip install -e ".[dev]"
 ```
 
 Start local development:
@@ -22,10 +47,22 @@ Start local development:
 npm run dev
 ```
 
+Start the backend:
+
+```bash
+npm run dev:backend
+```
+
 Run tests:
 
 ```bash
 npm test
+```
+
+Run backend tests:
+
+```bash
+npm run test:backend
 ```
 
 Run build smoke test:
@@ -82,6 +119,9 @@ Before implementing a product, refactor, domain, application, app, or frontend s
    pattern.
 6. Run `npm run test:architecture` before completing the slice. For visible frontend
    changes, also run `npm run test:design` and `npm run test:visual`.
+7. For backend slices, confirm the slice adds only the modules required by the current
+   use case. Avoid empty package scaffolding, unused base classes, and "future"
+   abstractions without tests.
 
 Architecture rules are accepted only when they are documented in ADR/SAO and backed by
 an automated check or mandatory workflow checklist. Warning-level near-limit and
@@ -132,6 +172,43 @@ export-count output should be reviewed even when the command exits successfully.
 - `docs/`: documentation.
 - `docs/wiki/`: source files for the GitHub Wiki, including screenshot assets.
 - `demo/`: demo notes and future demo assets.
+
+Future backend layout:
+
+- `backend/app/api/`: thin routes and HTTP shape mapping only.
+- `backend/app/domain/`: provider-free entities, policies, value objects, and
+  invariants.
+- `backend/app/application/`: use cases, orchestration, fallback decisions, and
+  provider-independent run contracts.
+- `backend/app/infrastructure/`: OpenRouter, persistence, queue, file, publication,
+  and `langgraph-document-ai-platform` adapters.
+- `backend/app/workflows/`: real multi-step workflow composition only when a slice
+  needs it.
+- `backend/tests/`: backend unit, contract, adapter, and smoke tests.
+
+Current Slice 2.1 backend files:
+
+- `backend/app/main.py`: FastAPI app factory.
+- `backend/app/__main__.py`: local server entrypoint used by `npm run dev:backend`.
+- `backend/app/settings.py`: typed environment settings.
+- `backend/app/api/health.py`: `/health` and `/api/health` routes.
+- `backend/app/application/health_service.py`: health use-case orchestration.
+- `backend/app/domain/health.py`: provider-free health value objects.
+- `backend/app/infrastructure/openrouter_config.py`: OpenRouter config validator with
+  no provider call.
+
+Backend OOP/SRP rules:
+
+- API handlers must not contain prompt logic, persistence logic, provider calls, or
+  workflow orchestration.
+- Domain modules must not import OpenRouter, provider metadata, HTTP clients,
+  database sessions, queues, file systems, or `langgraph-document-ai-platform`.
+- Application services own use-case methods and depend on ports or adapters through
+  explicit interfaces.
+- Infrastructure adapters normalize provider/library errors into application-level
+  results.
+- Split a backend module before it becomes a catch-all. Do not allow 2-3k line files.
+- Do not add boilerplate-only base classes, packages, or factories.
 
 ## Requirements Status
 
@@ -710,6 +787,23 @@ Prompt architecture for drafting:
 Slice 0.8 intentionally adds no provider SDKs, API keys, environment variables,
 backend, streaming, billing, or real provider calls.
 
+## Backend AI Execution Track
+
+The backend starts as an execution layer for AI and document workflows. It does not
+replace local workspace persistence until a slice explicitly moves one use case behind
+the backend.
+
+The first backend implementation order is:
+
+1. Backend foundation and OpenRouter environment validation.
+2. AI run contract and audit trail.
+3. First OpenRouter-backed editorial run with deterministic fallback.
+4. `langgraph-document-ai-platform` adapter for document/archive import review.
+
+Every backend slice must update architecture smoke with the files and forbidden-import
+rules it introduces. `npm run test:architecture` remains mandatory even before a
+dedicated backend test command exists.
+
 ## Validation Strategy
 
 Current tests cover:
@@ -734,3 +828,8 @@ For new UI behavior, put tests beside the owner:
 
 If `npm run test:architecture` reports a touched test file as near-limit, split that
 test by feature/workflow ownership before adding more scenarios.
+
+For backend slices, run the backend test command introduced by the slice, plus
+`npm run test:architecture`. Backend tests should cover settings normalization, route
+contracts, application services, provider fallback, adapter error mapping, and
+dependency-boundary failures where practical.
