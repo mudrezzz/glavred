@@ -463,7 +463,9 @@ Use these boundaries:
   workbench owns post preparation: `Фабула`, `Драфт`, `Визуал`, and
   `readyForRelease`. Visual modes must pass through the review contract:
   brief, prepare deterministic or adapter-backed variants, select one variant,
-  then approve. `noVisual` is the only direct visual completion path.
+  then approve. `memeRemix` is the exception inside that contract: it prepares and
+  selects a meme reference before preparing final remix variants. `noVisual` is the
+  only direct visual completion path.
 - `Выпуск` owns delivery history for ready posts. It should show publication log
   records, statuses, external links, platform errors, and retry notes. It must not
   edit text, visual, brief, candidate, or slot artifacts.

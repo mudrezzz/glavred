@@ -12,7 +12,10 @@ export function EditorialWorkbench({
   onDraftChange,
   onEditBrief,
   onGoPlan,
+  onPrepareMemeReferences,
+  onPrepareMemeRemixVariants,
   onPrepareVisualVariants,
+  onSelectMemeReference,
   onSelectVisualVariant,
   onSaveVisual
 }: {
@@ -23,7 +26,10 @@ export function EditorialWorkbench({
   onDraftChange: (body: string) => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
+  onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
+  onPrepareMemeRemixVariants: () => void;
   onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
+  onSelectMemeReference: (referenceId: string) => void;
   onSelectVisualVariant: (variantId: string) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
 }) {
@@ -93,8 +99,11 @@ export function EditorialWorkbench({
           workspace={workspace}
           onApproveVisual={onApproveVisual}
           onOpenDraft={() => setTab('draft')}
+          onPrepareMemeReferences={onPrepareMemeReferences}
+          onPrepareMemeRemixVariants={onPrepareMemeRemixVariants}
           onPrepareVisualVariants={onPrepareVisualVariants}
           onSaveVisual={onSaveVisual}
+          onSelectMemeReference={onSelectMemeReference}
           onSelectVisualVariant={onSelectVisualVariant}
         />
       ) : !draft ? (

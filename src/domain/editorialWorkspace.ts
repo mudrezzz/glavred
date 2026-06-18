@@ -66,6 +66,7 @@ export type {
   PostBrief,
   PostDraft,
   PostVisual,
+  PostVisualMemeReference,
   PostVisualVariant,
   ReleaseChecklistItem,
   ReleasePackage,

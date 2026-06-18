@@ -133,7 +133,10 @@ export function App() {
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}
           onSaveVisual={controller.saveCurrentVisualDraft}
+          onPrepareMemeReferences={controller.prepareCurrentMemeReferences}
+          onPrepareMemeRemixVariants={controller.prepareCurrentMemeRemixVariants}
           onPrepareVisualVariants={controller.prepareCurrentVisualVariants}
+          onSelectMemeReference={controller.selectCurrentMemeReference}
           onSelectVisualVariant={controller.selectCurrentVisualVariant}
           onApproveVisual={controller.approveCurrentVisual}
         />

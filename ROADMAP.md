@@ -2704,6 +2704,57 @@ Status:
   - `Без визуала` can be confirmed without variants.
   - `К выпуску: нет` remains true until Slice 1.10.7.
 
+### Slice 1.10.6.2: Two-Step Meme Remix Visual Flow
+
+- Status: Done
+- Goal: Make `Мем + генерация` a two-step visual flow: first choose the meme
+  reference, then generate/select the custom remix variant and approve it.
+- User value: The author can control the cultural reference before Glavred proposes
+  custom generated adaptations, instead of treating remix as one generic variant list.
+- Scope:
+  - Split `memeRemix` UI into two local stages inside `Визуал`:
+    - `Выбрать мем`: prepare and select one deterministic meme reference.
+    - `Сгенерировать кастом`: prepare deterministic remix variants based on the
+      selected meme reference and the same visual brief.
+  - Keep `Сгенерировать` and `Найти мем` on the existing one-step variant review flow.
+  - Store the selected meme reference in `PostVisual` using existing compatibility
+    reference fields where possible; add a small explicit field only if needed.
+  - Approval for `memeRemix` is allowed only after a remix variant is selected, not
+    after selecting the meme reference.
+  - Add clear bottom-left actions: `Выбрать мем`, `Сгенерировать кастом`,
+    `Выбрать вариант`, `Утвердить визуал`, `Править бриф`, `Вернуться к драфту`.
+  - Store `memeReferences`, `selectedMemeReferenceId`, and `memeReferenceBatch` in
+    `PostVisual` alongside final remix variants and selection.
+- Out of scope:
+  - Real meme search.
+  - Real image generation or transformation.
+  - Uploading user images.
+  - Changing readiness rules or `readyForRelease`.
+- Architecture impact:
+  - Keep the two-step state in visual domain/application transitions, not in React-only
+    state.
+  - Avoid expanding `EditorialVisualStage` into a god component; extract meme-remix
+    step UI if the branch grows.
+  - Existing visual variants service can be extended with a separate deterministic
+    reference batch and remix batch.
+- Tests:
+  - Domain/application tests for selecting a meme reference before remix generation.
+    Done.
+  - Domain/application tests that `memeRemix` cannot approve after reference selection
+    alone. Done.
+  - UI tests for reference cards, selected reference, remix variant cards, and approval
+    only after remix selection. Done.
+  - Regression: `npm run test:architecture`, `npm test -- --run`, `npm run smoke`,
+    `npm run test:design`, `npm run test:visual`.
+- Docs:
+  - Update roadmap, SAO, user guide, demo docs, and wiki production flow to state that
+    `Мем + генерация` is two-step.
+- Acceptance criteria:
+  - `Мем + генерация` first shows meme/reference options.
+  - After choosing a reference, the user can generate custom remix variants.
+  - Visual approval requires a selected custom remix variant.
+  - Other visual modes keep their existing behavior.
+
 ### Slice 1.10.7: Ready Post Handoff
 
 - Status: Ready
@@ -2919,6 +2970,7 @@ Status:
 - Slice 1.10.5: Draft Approval Without Final Tab. Completed 2026-06-18.
 - Slice 1.10.6: Visual Stage Foundation. Completed 2026-06-18.
 - Slice 1.10.6.1: Visual Variants Review Flow. Completed 2026-06-18.
+- Slice 1.10.6.2: Two-Step Meme Remix Visual Flow. Completed 2026-06-18.
 
 ## Blocked Items
 

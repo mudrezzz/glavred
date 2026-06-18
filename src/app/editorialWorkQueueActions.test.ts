@@ -8,11 +8,14 @@ import {
   buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
+  buildPrepareMemeReferencesPatch,
+  buildPrepareMemeRemixVariantsPatch,
   buildPrepareVisualVariantsPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
   buildSaveVisualDraftPatch,
+  buildSelectMemeReferencePatch,
   buildSelectVisualVariantPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
@@ -170,7 +173,7 @@ describe('editorial work queue actions', () => {
 
     expect(buildPrepareVisualVariantsPatch(withText, { mode: 'generate', brief: 'Сгенерировать образ про adoption gap' }).postVisual?.variants).toHaveLength(3);
     expect(buildPrepareVisualVariantsPatch(withText, { mode: 'memeSearch', brief: 'Найти мем про demo magic' }).postVisual?.variants).toHaveLength(3);
-    expect(buildPrepareVisualVariantsPatch(withText, { mode: 'memeRemix', brief: 'Взять мем и кастомизировать под AI-B2B' }).postVisual?.variants).toHaveLength(3);
+    expect(buildPrepareVisualVariantsPatch(withText, { mode: 'memeRemix', brief: 'Взять мем и кастомизировать под AI-B2B' })).toEqual({});
     expect(buildApproveVisualPatch(withText, { mode: 'noVisual', brief: '', notes: '' }).postVisual?.mode).toBe('noVisual');
   });
 
@@ -200,6 +203,53 @@ describe('editorial work queue actions', () => {
     expect(edited.postVisual?.variants).toEqual([]);
     expect(edited.postVisual?.selectedVariantId).toBeNull();
     expect(edited.postVisual?.approvalStatus).toBe('draft');
+  });
+
+  it('requires a selected meme reference before generating and approving meme remix variants', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const withDraft = { ...withSlot, ...buildApproveBriefAndCreateDraftPatch(withSlot) };
+    const withText = { ...withDraft, ...buildApproveDraftTextPatch(withDraft) };
+    const oldOneStep = buildPrepareVisualVariantsPatch(withText, {
+      mode: 'memeRemix',
+      brief: 'Взять мем и сделать кастом про demo adoption gap'
+    });
+    const preparedReferences = buildPrepareMemeReferencesPatch(withText, {
+      mode: 'memeRemix',
+      brief: 'Взять мем и сделать кастом про demo adoption gap'
+    });
+    const blockedVariants = buildPrepareMemeRemixVariantsPatch({ ...withText, ...preparedReferences });
+    const referenceSelection = buildSelectMemeReferencePatch(
+      { ...withText, ...preparedReferences },
+      preparedReferences.postVisual!.memeReferences[1].id
+    );
+    const blockedApproval = buildApproveVisualPatch({ ...withText, ...preparedReferences, ...referenceSelection });
+    const remixVariants = buildPrepareMemeRemixVariantsPatch({ ...withText, ...preparedReferences, ...referenceSelection });
+    const variantSelection = buildSelectVisualVariantPatch(
+      { ...withText, ...preparedReferences, ...referenceSelection, ...remixVariants },
+      remixVariants.postVisual!.variants[0].id
+    );
+    const approved = buildApproveVisualPatch({
+      ...withText,
+      ...preparedReferences,
+      ...referenceSelection,
+      ...remixVariants,
+      ...variantSelection
+    });
+
+    expect(oldOneStep).toEqual({});
+    expect(preparedReferences.postVisual?.memeReferences).toHaveLength(3);
+    expect(preparedReferences.postVisual?.variants).toEqual([]);
+    expect(blockedVariants).toEqual({});
+    expect(referenceSelection.postVisual?.selectedMemeReferenceId).toBe(preparedReferences.postVisual?.memeReferences[1].id);
+    expect(referenceSelection.postVisual?.selectedVariantId).toBeNull();
+    expect(blockedApproval.postVisual?.approvalStatus).toBe('draft');
+    expect(remixVariants.postVisual?.variants).toHaveLength(3);
+    expect(remixVariants.postVisual?.selectedMemeReferenceId).toBe(preparedReferences.postVisual?.memeReferences[1].id);
+    expect(variantSelection.postVisual?.selectedVariantId).toBe(remixVariants.postVisual?.variants[0].id);
+    expect(approved.postVisual?.approvalStatus).toBe('approved');
+    expect(approved.editorialWorkItems?.[0].stage).toBe('visual');
   });
 
   it('edits the selected brief and clears stale downstream artifacts', () => {

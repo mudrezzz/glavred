@@ -11,23 +11,19 @@ import {
   type ContentPlanItem,
   type EditorialLearningNote,
   type PostBriefEditPatch,
-  type PostVisualEditPatch,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
   buildApproveDraftTextPatch,
-  buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
-  buildPrepareVisualVariantsPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
-  buildSaveVisualDraftPatch,
-  buildSelectVisualVariantPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
+import { createProductionVisualActions } from './productionVisualActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
 
@@ -37,6 +33,8 @@ type ProductionFlowActionsParams = {
 };
 
 export function useProductionFlowActions({ patchWorkspace, workspace }: ProductionFlowActionsParams) {
+  const visualActions = createProductionVisualActions({ patchWorkspace, workspace });
+
   function createInsightFromCurrentSignal() {
     const insightCard = createWorkspaceInsightCard(workspace);
     patchWorkspace({ insightCard }, 'Карточка инсайта собрана');
@@ -106,22 +104,6 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
       buildApproveDraftTextPatch(workspace, body),
       'Текст утвержден · следующий шаг: Визуал'
     );
-  }
-
-  function saveCurrentVisualDraft(patch: PostVisualEditPatch) {
-    patchWorkspace(buildSaveVisualDraftPatch(workspace, patch), 'Визуал сохранен');
-  }
-
-  function approveCurrentVisual(patch: PostVisualEditPatch) {
-    patchWorkspace(buildApproveVisualPatch(workspace, patch), 'Визуал утвержден');
-  }
-
-  function prepareCurrentVisualVariants(patch: PostVisualEditPatch) {
-    patchWorkspace(buildPrepareVisualVariantsPatch(workspace, patch), 'Варианты визуала подготовлены');
-  }
-
-  function selectCurrentVisualVariant(variantId: string) {
-    patchWorkspace(buildSelectVisualVariantPatch(workspace, variantId), 'Вариант визуала выбран');
   }
 
   function createReleaseFromFinalText() {
@@ -197,7 +179,6 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     addInsightToPlan,
     approveCurrentBrief,
     approveCurrentFinalText,
-    approveCurrentVisual,
     approvePlanSlot,
     captureLearningNote,
     copyCurrentFinalText,
@@ -208,15 +189,13 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     editCurrentBrief,
     generateBroadcastPlan,
     markCurrentReleaseReady,
-    prepareCurrentVisualVariants,
     returnEditorialWorkItemToCandidates,
     saveContentPlanSettings,
-    saveCurrentVisualDraft,
-    selectCurrentVisualVariant,
     selectEditorialWorkItem,
     toggleReleaseChecklist,
     updateCurrentLearningNote,
     updateDraftBody,
-    updatePlanItemAndWarnings
+    updatePlanItemAndWarnings,
+    ...visualActions
   };
 }

@@ -72,9 +72,11 @@ Approved slots now enter an editorial work queue: `Редактура` has `По
 pattern, lets a post return to candidates, and owns selected-post preparation. The
 target chain is `Фабула -> Драфт -> Визуал -> готов к выпуску`: text approval belongs
 in `Драфт`, `Визуал` now uses `Бриф -> Подготовить варианты -> Выбрать -> Утвердить`
-for visual modes or `Без визуала` as an explicit shortcut, and the next slice
-turns a completed visual decision into readiness. `Выпуск` is the future publication
-log for delivery attempts, statuses, external links, and platform errors.
+for `Сгенерировать` and `Найти мем`; `Мем + генерация` is two-step
+`Бриф -> Подготовить мемы -> Выбрать мем -> Сгенерировать кастом -> Выбрать -> Утвердить`,
+and `Без визуала` remains an explicit shortcut. The next slice turns a completed
+visual decision into readiness. `Выпуск` is the future publication log for delivery
+attempts, statuses, external links, and platform errors.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

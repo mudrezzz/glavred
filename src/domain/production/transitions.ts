@@ -1,4 +1,4 @@
-import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, PostVisualVariant, ReleasePackage, VisualMode } from './types';
+import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, PostVisualMemeReference, PostVisualVariant, ReleasePackage, VisualMode } from './types';
 
 export type PostBriefEditPatch = Pick<
   PostBrief,
@@ -82,6 +82,9 @@ export function createPostVisual(workItemId: string, mode: VisualMode = 'generat
     transformationInstructions: '',
     assetPlaceholder: '',
     notes: '',
+    memeReferences: [],
+    selectedMemeReferenceId: null,
+    memeReferenceBatch: 0,
     variants: [],
     selectedVariantId: null,
     variantBatch: 0,
@@ -100,8 +103,49 @@ export function editPostVisual(postVisual: PostVisual, patch: PostVisualEditPatc
   return {
     ...postVisual,
     ...normalizedPatch,
+    memeReferences: shouldResetVariants ? [] : postVisual.memeReferences,
+    selectedMemeReferenceId: shouldResetVariants ? null : postVisual.selectedMemeReferenceId,
     variants: shouldResetVariants ? [] : postVisual.variants,
     selectedVariantId: shouldResetVariants ? null : postVisual.selectedVariantId,
+    approvalStatus: 'draft',
+    updatedAt: new Date().toISOString(),
+    approvedAt: null
+  };
+}
+
+export function preparePostVisualMemeReferences(
+  postVisual: PostVisual,
+  patch: PostVisualEditPatch,
+  memeReferences: PostVisualMemeReference[]
+): PostVisual {
+  if ((patch.mode ?? postVisual.mode) !== 'memeRemix') return postVisual;
+  const nextBatch = postVisual.memeReferenceBatch + 1;
+  const updated = editPostVisual(postVisual, patch);
+
+  return {
+    ...updated,
+    memeReferences,
+    selectedMemeReferenceId: null,
+    memeReferenceBatch: nextBatch,
+    variants: [],
+    selectedVariantId: null,
+    approvalStatus: 'draft',
+    updatedAt: new Date().toISOString(),
+    approvedAt: null
+  };
+}
+
+export function selectPostVisualMemeReference(postVisual: PostVisual, referenceId: string): PostVisual {
+  if (postVisual.mode !== 'memeRemix') return postVisual;
+  if (!postVisual.memeReferences.some((reference) => reference.id === referenceId)) return postVisual;
+
+  return {
+    ...postVisual,
+    selectedMemeReferenceId: referenceId,
+    memeReferenceTitle: postVisual.memeReferences.find((reference) => reference.id === referenceId)?.title ?? postVisual.memeReferenceTitle,
+    memeReferenceUrl: postVisual.memeReferences.find((reference) => reference.id === referenceId)?.sourceUrl ?? postVisual.memeReferenceUrl,
+    variants: [],
+    selectedVariantId: null,
     approvalStatus: 'draft',
     updatedAt: new Date().toISOString(),
     approvedAt: null
@@ -113,11 +157,16 @@ export function preparePostVisualVariants(
   patch: PostVisualEditPatch,
   variants: PostVisualVariant[]
 ): PostVisual {
+  if ((patch.mode ?? postVisual.mode) === 'memeRemix' && !postVisual.selectedMemeReferenceId) return postVisual;
   const nextBatch = postVisual.variantBatch + 1;
   const updated = editPostVisual(postVisual, patch);
 
   return {
     ...updated,
+    memeReferences: postVisual.memeReferences,
+    selectedMemeReferenceId: postVisual.selectedMemeReferenceId,
+    memeReferenceTitle: postVisual.memeReferenceTitle,
+    memeReferenceUrl: postVisual.memeReferenceUrl,
     variants,
     selectedVariantId: null,
     variantBatch: nextBatch,

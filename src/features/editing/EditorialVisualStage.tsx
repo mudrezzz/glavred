@@ -2,21 +2,28 @@ import { useEffect, useMemo, useState } from 'react';
 import type { PostVisualEditPatch, VisualMode, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialVisualFields, modeLabels, toVisualDraft, toVisualPatch, type VisualDraft } from './EditorialVisualFields';
+import { EditorialVisualMemeReferences } from './EditorialVisualMemeReferences';
 import { EditorialVisualVariants } from './EditorialVisualVariants';
 
 export function EditorialVisualStage({
   workspace,
   onApproveVisual,
   onOpenDraft,
+  onPrepareMemeReferences,
+  onPrepareMemeRemixVariants,
   onPrepareVisualVariants,
   onSaveVisual,
+  onSelectMemeReference,
   onSelectVisualVariant
 }: {
   workspace: WorkspaceState;
   onApproveVisual: (patch: PostVisualEditPatch) => void;
   onOpenDraft: () => void;
+  onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
+  onPrepareMemeRemixVariants: () => void;
   onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
+  onSelectMemeReference: (referenceId: string) => void;
   onSelectVisualVariant: (variantId: string) => void;
 }) {
   const finalText = workspace.finalText;
@@ -49,8 +56,13 @@ export function EditorialVisualStage({
   }
 
   const isApproved = savedVisual?.approvalStatus === 'approved' && !hasUnsavedChanges;
+  const isMemeRemix = draft.mode === 'memeRemix';
+  const hasPreparedMemeReferences = isMemeRemix && Boolean(savedVisual?.memeReferences.length) && !hasUnsavedChanges;
   const hasPreparedVariants = Boolean(savedVisual?.variants.length) && !hasUnsavedChanges && draft.mode !== 'noVisual';
+  const shouldShowBrief = !hasPreparedVariants && !(isMemeRemix && hasPreparedMemeReferences);
   const selectedVariantId = savedVisual?.selectedVariantId ?? null;
+  const selectedMemeReferenceId = savedVisual?.selectedMemeReferenceId ?? null;
+  const selectedMemeReference = savedVisual?.memeReferences.find((reference) => reference.id === selectedMemeReferenceId) ?? null;
 
   return (
     <section className="visual-stage" data-testid="editorial-visual-stage">
@@ -90,7 +102,25 @@ export function EditorialVisualStage({
         ))}
       </div>
 
-      {!hasPreparedVariants ? <EditorialVisualFields draft={draft} onChange={setDraft} /> : null}
+      {shouldShowBrief ? <EditorialVisualFields draft={draft} onChange={setDraft} /> : null}
+      {hasPreparedMemeReferences ? (
+        <>
+          {selectedMemeReference ? (
+            <article className="visual-selected-reference" data-testid="editorial-selected-meme-reference">
+              <span className="k">Выбранный мем</span>
+              <h3>{selectedMemeReference.title}</h3>
+              <p>{selectedMemeReference.rationale}</p>
+            </article>
+          ) : null}
+          {!hasPreparedVariants ? (
+            <EditorialVisualMemeReferences
+              references={savedVisual?.memeReferences ?? []}
+              selectedReferenceId={selectedMemeReferenceId}
+              onSelect={onSelectMemeReference}
+            />
+          ) : null}
+        </>
+      ) : null}
       {hasPreparedVariants ? (
         <EditorialVisualVariants
           selectedVariantId={selectedVariantId}
@@ -106,6 +136,31 @@ export function EditorialVisualStage({
             <Icon name="check" size={16} />
             Подтвердить без визуала
           </button>
+        ) : isMemeRemix && hasPreparedVariants ? (
+          <>
+            <button className="btn btn-pri" type="button" disabled={!selectedVariantId} onClick={() => onApproveVisual({})}>
+              <Icon name="check" size={16} />
+              Утвердить визуал
+            </button>
+            <button className="btn btn-sec" type="button" onClick={onPrepareMemeRemixVariants}>
+              Еще кастом-варианты
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onSaveVisual(toVisualPatch(draft))}>
+              Править бриф
+            </button>
+          </>
+        ) : isMemeRemix && hasPreparedMemeReferences ? (
+          <>
+            <button className="btn btn-pri" type="button" disabled={!selectedMemeReferenceId} onClick={onPrepareMemeRemixVariants}>
+              Сгенерировать кастом
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onPrepareMemeReferences(toVisualPatch(draft))}>
+              Еще мемы
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onSaveVisual(toVisualPatch(draft))}>
+              Править бриф
+            </button>
+          </>
         ) : hasPreparedVariants ? (
           <>
             <button className="btn btn-pri" type="button" disabled={!selectedVariantId} onClick={() => onApproveVisual({})}>
@@ -120,8 +175,8 @@ export function EditorialVisualStage({
             </button>
           </>
         ) : (
-          <button className="btn btn-pri" type="button" disabled={!draft.brief.trim()} onClick={() => onPrepareVisualVariants(toVisualPatch(draft))}>
-            Подготовить варианты
+          <button className="btn btn-pri" type="button" disabled={!draft.brief.trim()} onClick={() => isMemeRemix ? onPrepareMemeReferences(toVisualPatch(draft)) : onPrepareVisualVariants(toVisualPatch(draft))}>
+            {isMemeRemix ? 'Подготовить мемы' : 'Подготовить варианты'}
           </button>
         )}
         <button className="btn btn-sec" type="button" onClick={onOpenDraft}>

@@ -9,9 +9,11 @@ import {
   detectBroadcastPlanConflicts,
   editPostVisual,
   editPostBrief,
+  preparePostVisualMemeReferences,
   preparePostVisualVariants,
   replacePostCandidate,
   reviseDraft,
+  selectPostVisualMemeReference,
   selectPostVisualVariant,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
@@ -28,6 +30,7 @@ import {
   createWorkspaceInsightCard,
   runEditorialChecks
 } from '../application/editorialServices';
+import { createMemeReferences, createMemeRemixVariants } from '../application/visualMemeRemixService';
 import { createVisualVariants } from '../application/visualVariantService';
 
 const legacyBriefId = 'brief-ai-demo-to-adoption';
@@ -283,8 +286,63 @@ export function buildPrepareVisualVariantsPatch(
 
   const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, patch.mode ?? 'generate');
   const draftVisual = editPostVisual(currentVisual, patch);
+  if (draftVisual.mode === 'memeRemix') return {};
   const nextBatch = currentVisual.variantBatch + 1;
   const variants = createVisualVariants(draftVisual, nextBatch);
+  const postVisual = preparePostVisualVariants(currentVisual, patch, variants);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildPrepareMemeReferencesPatch(
+  workspace: WorkspaceState,
+  patch: PostVisualEditPatch
+): Partial<WorkspaceState> {
+  const workItemId = workspace.selectedEditorialWorkItemId;
+  if (!workItemId || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, 'memeRemix');
+  const draftVisual = editPostVisual(currentVisual, { ...patch, mode: 'memeRemix' });
+  const nextBatch = currentVisual.memeReferenceBatch + 1;
+  const memeReferences = createMemeReferences(draftVisual, nextBatch);
+  const postVisual = preparePostVisualMemeReferences(currentVisual, { ...patch, mode: 'memeRemix' }, memeReferences);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildSelectMemeReferencePatch(
+  workspace: WorkspaceState,
+  referenceId: string
+): Partial<WorkspaceState> {
+  if (!workspace.postVisual || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const postVisual = selectPostVisualMemeReference(workspace.postVisual, referenceId);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildPrepareMemeRemixVariantsPatch(
+  workspace: WorkspaceState,
+  patch: PostVisualEditPatch = {}
+): Partial<WorkspaceState> {
+  const workItemId = workspace.selectedEditorialWorkItemId;
+  if (!workItemId || workspace.finalText?.approvalStatus !== 'approved' || !workspace.postVisual?.selectedMemeReferenceId) return {};
+
+  const currentVisual = workspace.postVisual;
+  const nextBatch = currentVisual.variantBatch + 1;
+  const variants = createMemeRemixVariants(currentVisual, nextBatch);
   const postVisual = preparePostVisualVariants(currentVisual, patch, variants);
 
   return withEditorialWorkItemSync(workspace, {

@@ -108,6 +108,11 @@ Slice 1.10.6.1 adds the review contract around that state: deterministic
 variant must be selected before visual approval, and editing the mode or brief resets
 variants, selection, and approval. `noVisual` remains the only shortcut that can be
 approved without variants.
+Slice 1.10.6.2 makes `memeRemix` explicitly two-step: `PostVisualMemeReference`
+stores deterministic meme-reference options, `selectedMemeReferenceId` chooses the
+intermediate meme, and final remix `PostVisualVariant` options are prepared only
+after that reference is selected. Selecting a meme reference is not visual approval;
+approval still requires a selected final remix variant.
 Real image generation, internet meme search, and hybrid meme-based image
 transformation remain adapter-backed future slices; React workbench code stores the
 decision contract only.

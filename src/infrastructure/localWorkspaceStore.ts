@@ -156,6 +156,9 @@ function normalizeEditorialWorkItem(item: StoredEditorialWorkItem): WorkspaceSta
 function normalizePostVisual(visual: NonNullable<WorkspaceState['postVisual']>): NonNullable<WorkspaceState['postVisual']> {
   return {
     ...visual,
+    memeReferences: visual.memeReferences ?? [],
+    selectedMemeReferenceId: visual.selectedMemeReferenceId ?? null,
+    memeReferenceBatch: visual.memeReferenceBatch ?? 0,
     variants: visual.variants ?? [],
     selectedVariantId: visual.selectedVariantId ?? null,
     variantBatch: visual.variantBatch ?? 0

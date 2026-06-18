@@ -3915,6 +3915,25 @@ select:focus {
   font: var(--ui-md);
 }
 
+.visual-selected-reference {
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.visual-selected-reference h3,
+.visual-selected-reference p {
+  margin: 0;
+}
+
+.visual-selected-reference h3 {
+  color: var(--ink-900);
+  font: var(--ui-md);
+}
+
 .visual-variant-body p,
 .visual-variant-details dd {
   color: var(--ink-700);

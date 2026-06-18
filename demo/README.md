@@ -234,9 +234,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
-    `Мем + генерация`, or `Без визуала`). For visual modes, fill one local `Бриф`,
-    click `Подготовить варианты`, select one placeholder variant, and approve it.
-    `Без визуала` remains a direct explicit decision.
+    `Мем + генерация`, or `Без визуала`). For `Сгенерировать` and `Найти мем`,
+    fill one local `Бриф`, click `Подготовить варианты`, select one placeholder
+    variant, and approve it. For `Мем + генерация`, fill the same `Бриф`, click
+    `Подготовить мемы`, choose a meme reference, click `Сгенерировать кастом`,
+    select a final remix variant, and approve it. `Без визуала` remains a direct
+    explicit decision.
 32. Open `Выпуск` to inspect the publication log or, until integrations exist, the
     compatibility manual export surface.
 33. Open `Аналитика`.

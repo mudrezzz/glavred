@@ -576,6 +576,18 @@ describe('LocalWorkspaceStore', () => {
       transformationInstructions: 'Replace the caption with product adoption context.',
       assetPlaceholder: 'visual-placeholder',
       notes: 'Demo only.',
+      memeReferences: [{
+        id: `visual-${workItem.id}-meme-ref-1-1`,
+        visualId: `visual-${workItem.id}`,
+        title: 'Classic meme',
+        description: 'Demo reference',
+        previewLabel: 'MEME REF',
+        rationale: 'Fits the post.',
+        risks: ['Check copyright.'],
+        sourceUrl: 'https://example.test/meme'
+      }],
+      selectedMemeReferenceId: `visual-${workItem.id}-meme-ref-1-1`,
+      memeReferenceBatch: 1,
       variants: [{
         id: `visual-${workItem.id}-variant-1-1`,
         visualId: `visual-${workItem.id}`,
@@ -603,6 +615,8 @@ describe('LocalWorkspaceStore', () => {
     const loaded = store.load();
 
     expect(loaded.postVisual?.mode).toBe('memeRemix');
+    expect(loaded.postVisual?.memeReferences).toHaveLength(1);
+    expect(loaded.postVisual?.selectedMemeReferenceId).toBe(`visual-${workItem.id}-meme-ref-1-1`);
     expect(loaded.postVisual?.variants).toHaveLength(1);
     expect(loaded.postVisual?.selectedVariantId).toBe(`visual-${workItem.id}-variant-1-1`);
     expect(loaded.editorialWorkItems[0].visual?.approvalStatus).toBe('approved');
@@ -641,7 +655,11 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.postVisual?.variants).toEqual([]);
     expect(loaded.postVisual?.selectedVariantId).toBeNull();
     expect(loaded.postVisual?.variantBatch).toBe(0);
+    expect(loaded.postVisual?.memeReferences).toEqual([]);
+    expect(loaded.postVisual?.selectedMemeReferenceId).toBeNull();
+    expect(loaded.postVisual?.memeReferenceBatch).toBe(0);
     expect(loaded.editorialWorkItems[0].visual?.variants).toEqual([]);
+    expect(loaded.editorialWorkItems[0].visual?.memeReferences).toEqual([]);
   });
 
   it('normalizes legacy final editorial work stage to visual', () => {

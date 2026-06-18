@@ -341,9 +341,24 @@ const LARGE_SOURCE_BASELINES = [
     next: "Visual variant cards should stay presentational; keep variant generation in application services.",
   },
   {
+    path: "src/features/editing/EditorialVisualMemeReferences.tsx",
+    limit: 120,
+    next: "Meme reference cards should stay presentational; keep reference search and remix logic in application services.",
+  },
+  {
     path: "src/application/visualVariantService.ts",
     limit: 130,
     next: "Visual variant service should stay deterministic until real adapters are introduced behind explicit ports.",
+  },
+  {
+    path: "src/application/visualMemeRemixService.ts",
+    limit: 120,
+    next: "Meme remix placeholder service should stay deterministic until real search/remix adapters are introduced behind explicit ports.",
+  },
+  {
+    path: "src/app/productionVisualActions.ts",
+    limit: 90,
+    next: "Visual production actions should stay a thin workspace orchestration layer.",
   },
   {
     path: "src/domain/planning/settings.ts",
@@ -570,9 +585,12 @@ const requiredSourceFiles = [
   "src/features/editing/EditorialVisualStage.tsx",
   "src/features/editing/EditorialVisualFields.tsx",
   "src/features/editing/EditorialVisualVariants.tsx",
+  "src/features/editing/EditorialVisualMemeReferences.tsx",
   "src/features/release/ReleaseView.tsx",
   "src/features/analytics/AnalyticsView.tsx",
   "src/application/visualVariantService.ts",
+  "src/application/visualMemeRemixService.ts",
+  "src/app/productionVisualActions.ts",
 ];
 
 for (const requiredFile of requiredSourceFiles) {

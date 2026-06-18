@@ -22,6 +22,17 @@ export interface PostVisualVariant {
   sourceUrl?: string;
 }
 
+export interface PostVisualMemeReference {
+  id: string;
+  visualId: string;
+  title: string;
+  description: string;
+  previewLabel: string;
+  rationale: string;
+  risks: string[];
+  sourceUrl?: string;
+}
+
 export interface PostBrief {
   id: string;
   planItemId: string;
@@ -92,6 +103,9 @@ export interface PostVisual {
   transformationInstructions: string;
   assetPlaceholder: string;
   notes: string;
+  memeReferences: PostVisualMemeReference[];
+  selectedMemeReferenceId: string | null;
+  memeReferenceBatch: number;
   variants: PostVisualVariant[];
   selectedVariantId: string | null;
   variantBatch: number;

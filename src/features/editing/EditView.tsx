@@ -20,8 +20,11 @@ export function EditView({
   onEditBrief,
   onDraftChange,
   onGoPlan,
+  onPrepareMemeReferences,
+  onPrepareMemeRemixVariants,
   onPrepareVisualVariants,
   onSaveVisual,
+  onSelectMemeReference,
   onSelectVisualVariant,
   onReturnWorkItem,
   onSelectWorkItem,
@@ -33,8 +36,11 @@ export function EditView({
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
+  onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
+  onPrepareMemeRemixVariants: () => void;
   onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
+  onSelectMemeReference: (referenceId: string) => void;
   onSelectVisualVariant: (variantId: string) => void;
   onReturnWorkItem: (workItemId: string) => void;
   onSelectWorkItem: (workItemId: string) => void;
@@ -130,8 +136,11 @@ export function EditView({
               onDraftChange={onDraftChange}
               onEditBrief={onEditBrief}
               onGoPlan={onGoPlan}
+              onPrepareMemeReferences={onPrepareMemeReferences}
+              onPrepareMemeRemixVariants={onPrepareMemeRemixVariants}
               onPrepareVisualVariants={onPrepareVisualVariants}
               onSaveVisual={onSaveVisual}
+              onSelectMemeReference={onSelectMemeReference}
               onSelectVisualVariant={onSelectVisualVariant}
             />
           </section>

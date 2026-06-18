@@ -248,6 +248,81 @@ describe('EditView', () => {
     expect(onSaveVisual).toHaveBeenCalledWith(expect.objectContaining({ mode: 'generate' }));
   });
 
+  it('runs meme remix as reference selection before custom variant approval', () => {
+    const workspace = createWorkspaceWithApprovedText();
+    const onPrepareMemeReferences = vi.fn();
+    const onPrepareMemeRemixVariants = vi.fn();
+    const onSelectMemeReference = vi.fn();
+
+    const renderedBrief = renderEdit(workspace, { onPrepareMemeReferences, onPrepareMemeRemixVariants, onSelectMemeReference });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Мем \+ генерация/i }));
+    expect(screen.getByLabelText('Бриф')).toBeInTheDocument();
+    expect(screen.queryByTestId('editorial-visual-meme-reference')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('editorial-visual-variant')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Бриф'), { target: { value: 'Мем про demo magic и adoption gap' } });
+    fireEvent.click(screen.getByRole('button', { name: /Подготовить мемы/i }));
+    expect(onPrepareMemeReferences).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'memeRemix',
+      brief: 'Мем про demo magic и adoption gap'
+    }));
+
+    renderedBrief.unmount();
+    const referencesWorkspace = createWorkspaceWithMemeReferences();
+    const renderedReferences = renderEdit(referencesWorkspace, { onPrepareMemeReferences, onPrepareMemeRemixVariants, onSelectMemeReference });
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    expect(screen.getAllByTestId('editorial-visual-meme-reference')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: /Сгенерировать кастом/i })).toBeDisabled();
+
+    fireEvent.click(within(screen.getAllByTestId('editorial-visual-meme-reference')[0]).getByRole('button', { name: /Выбрать мем/i }));
+    expect(onSelectMemeReference).toHaveBeenCalledWith(referencesWorkspace.postVisual!.memeReferences[0].id);
+
+    renderedReferences.unmount();
+    const selectedReferenceWorkspace = {
+      ...referencesWorkspace,
+      postVisual: {
+        ...referencesWorkspace.postVisual!,
+        selectedMemeReferenceId: referencesWorkspace.postVisual!.memeReferences[0].id
+      }
+    };
+    const renderedSelected = renderEdit(selectedReferenceWorkspace, { onPrepareMemeReferences, onPrepareMemeRemixVariants, onSelectMemeReference });
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    expect(screen.getByTestId('editorial-selected-meme-reference')).toHaveTextContent(referencesWorkspace.postVisual!.memeReferences[0].title);
+    fireEvent.click(screen.getByRole('button', { name: /Сгенерировать кастом/i }));
+    expect(onPrepareMemeRemixVariants).toHaveBeenCalled();
+
+    renderedSelected.unmount();
+  });
+
+  it('approves meme remix only after a custom variant is selected', () => {
+    const workspace = createWorkspaceWithPreparedMemeRemixVariants();
+    const onApproveVisual = vi.fn();
+    const onPrepareMemeRemixVariants = vi.fn();
+    const onSelectVisualVariant = vi.fn();
+
+    const rendered = renderEdit(workspace, { onApproveVisual, onPrepareMemeRemixVariants, onSelectVisualVariant });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    expect(screen.getByTestId('editorial-selected-meme-reference')).toHaveTextContent(workspace.postVisual!.memeReferences[0].title);
+    expect(screen.getAllByTestId('editorial-visual-variant')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: /Утвердить визуал/i })).toBeDisabled();
+    fireEvent.click(within(screen.getAllByTestId('editorial-visual-variant')[2]).getByRole('button', { name: /Выбрать/i }));
+    expect(onSelectVisualVariant).toHaveBeenCalledWith(workspace.postVisual!.variants[2].id);
+
+    rendered.unmount();
+    renderEdit(
+      { ...workspace, postVisual: { ...workspace.postVisual!, selectedVariantId: workspace.postVisual!.variants[2].id } },
+      { onApproveVisual, onPrepareMemeRemixVariants, onSelectVisualVariant }
+    );
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Утвердить визуал/i }));
+    expect(onApproveVisual).toHaveBeenCalledWith({});
+    fireEvent.click(screen.getByRole('button', { name: /Еще кастом-варианты/i }));
+    expect(onPrepareMemeRemixVariants).toHaveBeenCalled();
+  });
+
   it('shows no-visual approval copy', () => {
     const workspace = createWorkspaceWithApprovedText();
     const onApproveVisual = vi.fn();
@@ -322,8 +397,11 @@ function renderEdit(
     onApproveFinal: (body?: string) => void;
     onApproveVisual: (patch: PostVisualEditPatch) => void;
     onDraftChange: (body: string) => void;
+    onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
+    onPrepareMemeRemixVariants: () => void;
     onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
     onSaveVisual: (patch: PostVisualEditPatch) => void;
+    onSelectMemeReference: (referenceId: string) => void;
     onSelectVisualVariant: (variantId: string) => void;
     onReturnWorkItem: (itemId: string) => void;
     onSelectWorkItem: (itemId: string) => void;
@@ -338,9 +416,12 @@ function renderEdit(
       onApproveVisual={overrides.onApproveVisual ?? vi.fn()}
       onDraftChange={overrides.onDraftChange ?? vi.fn()}
       onGoPlan={vi.fn()}
+      onPrepareMemeReferences={overrides.onPrepareMemeReferences ?? vi.fn()}
+      onPrepareMemeRemixVariants={overrides.onPrepareMemeRemixVariants ?? vi.fn()}
       onPrepareVisualVariants={overrides.onPrepareVisualVariants ?? vi.fn()}
       onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
       onSaveVisual={overrides.onSaveVisual ?? vi.fn()}
+      onSelectMemeReference={overrides.onSelectMemeReference ?? vi.fn()}
       onSelectVisualVariant={overrides.onSelectVisualVariant ?? vi.fn()}
       onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}
     />
@@ -364,9 +445,12 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
       onApproveVisual={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
+      onPrepareMemeReferences={vi.fn()}
+      onPrepareMemeRemixVariants={vi.fn()}
       onPrepareVisualVariants={vi.fn()}
       onReturnWorkItem={vi.fn()}
       onSaveVisual={vi.fn()}
+      onSelectMemeReference={vi.fn()}
       onSelectVisualVariant={vi.fn()}
       onSelectWorkItem={(itemId) =>
         setCurrent((previous) => ({
@@ -478,6 +562,106 @@ function createWorkspaceWithPreparedVisualVariants(): WorkspaceState {
     ...workspace,
     postVisual: visual,
     editorialWorkItems: workItems
+  };
+}
+
+function createWorkspaceWithMemeReferences(): WorkspaceState {
+  const workspace = createWorkspaceWithApprovedText();
+  const workItemId = workspace.selectedEditorialWorkItemId!;
+  const visual = {
+    ...createPostVisual(workItemId, 'memeRemix'),
+    brief: 'Мем про demo magic и adoption gap',
+    memeReferences: [
+      {
+        id: `visual-${workItemId}-meme-ref-1-1`,
+        visualId: `visual-${workItemId}`,
+        title: 'This is fine / demo magic',
+        description: 'Мем про спокойствие после красивого demo.',
+        previewLabel: 'This is fine',
+        rationale: 'Показывает, что команда не замечает adoption gap.',
+        risks: ['Не сделать слишком заезженно.'],
+        sourceUrl: 'https://example.test/meme-references/1-1'
+      },
+      {
+        id: `visual-${workItemId}-meme-ref-1-2`,
+        visualId: `visual-${workItemId}`,
+        title: 'Wrong metric',
+        description: 'Мем про выбор неправильной метрики.',
+        previewLabel: 'Wrong metric',
+        rationale: 'Разводит applause и adoption.',
+        risks: ['Не уйти в слишком простой мем.']
+      },
+      {
+        id: `visual-${workItemId}-meme-ref-1-3`,
+        visualId: `visual-${workItemId}`,
+        title: 'Pilot trap',
+        description: 'Мем про ловушку пилота.',
+        previewLabel: 'Pilot trap',
+        rationale: 'Поддерживает тему пилота без внедрения.',
+        risks: ['Не обесценить пилоты целиком.']
+      }
+    ],
+    selectedMemeReferenceId: null,
+    memeReferenceBatch: 1
+  };
+
+  return syncWorkspaceVisual(workspace, visual);
+}
+
+function createWorkspaceWithPreparedMemeRemixVariants(): WorkspaceState {
+  const workspace = createWorkspaceWithMemeReferences();
+  const selectedReferenceId = workspace.postVisual!.memeReferences[0].id;
+  const visual = {
+    ...workspace.postVisual!,
+    selectedMemeReferenceId: selectedReferenceId,
+    memeReferenceTitle: workspace.postVisual!.memeReferences[0].title,
+    memeReferenceUrl: workspace.postVisual!.memeReferences[0].sourceUrl ?? '',
+    variants: [
+      {
+        id: `${workspace.postVisual!.id}-variant-1-1`,
+        visualId: workspace.postVisual!.id,
+        mode: 'memeRemix' as const,
+        title: 'Кастом с подписью workflow',
+        description: 'This is fine: workflow adoption gap',
+        previewLabel: 'Custom labels',
+        rationale: 'Переносит мем в продуктовый контекст.',
+        risks: ['Не перегрузить подписью.']
+      },
+      {
+        id: `${workspace.postVisual!.id}-variant-1-2`,
+        visualId: workspace.postVisual!.id,
+        mode: 'memeRemix' as const,
+        title: 'Кастом с авторской рамкой',
+        description: 'This is fine: adoption gap frame',
+        previewLabel: 'Author frame',
+        rationale: 'Сохраняет авторский тезис.',
+        risks: ['Не потерять шутку.']
+      },
+      {
+        id: `${workspace.postVisual!.id}-variant-1-3`,
+        visualId: workspace.postVisual!.id,
+        mode: 'memeRemix' as const,
+        title: 'Кастом для Telegram',
+        description: 'This is fine: short Telegram punchline',
+        previewLabel: 'TG punchline',
+        rationale: 'Работает в быстром скролле.',
+        risks: ['Не упростить тезис.']
+      }
+    ],
+    selectedVariantId: null,
+    variantBatch: 1
+  };
+
+  return syncWorkspaceVisual(workspace, visual);
+}
+
+function syncWorkspaceVisual(workspace: WorkspaceState, visual: NonNullable<WorkspaceState['postVisual']>): WorkspaceState {
+  return {
+    ...workspace,
+    postVisual: visual,
+    editorialWorkItems: workspace.editorialWorkItems.map((item) =>
+      item.id === workspace.selectedEditorialWorkItemId ? { ...item, visual } : item
+    )
   };
 }
 
