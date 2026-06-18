@@ -3123,6 +3123,33 @@ Status:
   - After `Утвердить фабулу`, the user sees generation progress instead of an empty
     draft screen. Done.
 
+### Slice 2.3.3: AI Run Trace Debug Page
+
+- Status: Done
+- Goal: Add a separate frontend debug page for inspecting one backend `AiRun` trace by
+  run id without adding another surface to the main editorial cabinet.
+- Scope:
+  - Add `/ai-runs` as an out-of-cabinet debug route. Done.
+  - Add a run-id input and `GET /api/ai-runs/{id}` client. Done.
+  - Render run summary, request payload, result payload, fallback flag, provider/model,
+    and safe error context using the existing visual language. Done.
+  - Support `?runId=<id>` as a direct link format for debugging. Done.
+- Out of scope:
+  - AI run history list UI, search by capability, deletion, retention controls,
+    workspace sync, or provider replay.
+- Architecture impact:
+  - Debug UI stays in `src/features/ai-runs`.
+  - Backend trace fetch lives in a dedicated infrastructure client instead of expanding
+    the near-limit draft-generation client.
+  - The page is intentionally not part of the main cabinet navigation.
+- Tests:
+  - Frontend client test covers successful fetch and missing run error. Done.
+  - Feature test covers run-id lookup, rendered request/result JSON, error state, and
+    `/ai-runs` route isolation from the cabinet. Done.
+- Acceptance criteria:
+  - A developer can open `/ai-runs`, paste an `AiRun ID`, and see the detailed local
+    trace. Done.
+
 ### Slice 2.4: Document AI Platform Import Adapter
 
 - Status: Ready
@@ -3241,6 +3268,7 @@ Status:
 - Slice 2.3.1: Dockerized Local Full-Stack Runner. Completed 2026-06-18.
 - Slice 2.3.2: AI Run Observability and Draft Generation Status. Completed
   2026-06-18.
+- Slice 2.3.3: AI Run Trace Debug Page. Completed 2026-06-18.
 
 ## Blocked Items
 

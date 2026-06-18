@@ -42,6 +42,25 @@ async function waitForServer() {
   throw new Error(`Vite did not start at ${baseUrl}`);
 }
 
+async function clickNavItem(page, label) {
+  let item = page.locator('.nav-item').filter({ hasText: label }).first();
+  if ((await item.count()) === 0) {
+    let bodyText = await page.locator('body').innerText().catch(() => '');
+    if (!bodyText.trim()) {
+      await page.goto(baseUrl, { waitUntil: 'networkidle' });
+      await page.locator('.app').waitFor({ timeout: 10000 });
+      item = page.locator('.nav-item').filter({ hasText: label }).first();
+      bodyText = await page.locator('body').innerText().catch(() => '');
+    }
+    if ((await item.count()) > 0) {
+      await item.click();
+      return;
+    }
+    throw new Error(`Navigation item "${label}" was not found at ${page.url()}.\nBody:\n${bodyText.slice(0, 600)}`);
+  }
+  await item.click();
+}
+
 function assertLayout(result) {
   const failures = [];
 
@@ -139,11 +158,13 @@ function assertPlanLayout(result) {
 }
 
 async function assertPlanAtViewport(page, viewport, viewportName) {
+  page = await page.context().browser().newPage();
+  try {
   await page.setViewportSize(viewport);
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /План/i }).click();
+  await clickNavItem(page, 'План');
   await page.locator('[data-testid="broadcast-filter-toolbar"]').waitFor();
 
   const gridResult = await page.evaluate((name) => {
@@ -194,14 +215,19 @@ async function assertPlanAtViewport(page, viewport, viewportName) {
   }));
 
   assertPlanLayout({ ...gridResult, ...calendarResult, ...settingsResult });
+  } finally {
+    await page.close();
+  }
 }
 
 async function assertSignalsAtViewport(page, viewport, viewportName) {
+  page = await page.context().browser().newPage();
+  try {
   await page.setViewportSize(viewport);
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /Сигналы/i }).click();
+  await clickNavItem(page, 'Сигналы');
   await page.locator('[data-testid="radar-row"]').first().waitFor();
 
   const radarResult = await page.evaluate((name) => {
@@ -337,6 +363,9 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
     radarRowCount: radarResult.radarRowCount,
     signalRowCount: signalResult.signalRowCount
   });
+  } finally {
+    await page.close();
+  }
 }
 
 async function assertContextChatAtViewport(page, viewport, options) {
@@ -344,7 +373,7 @@ async function assertContextChatAtViewport(page, viewport, options) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /Редакционная модель/i }).click();
+  await clickNavItem(page, 'Редакционная модель');
   await page.locator('.validation-panel').waitFor();
   await page.locator('[data-testid="context-chat-topbar-trigger"]').waitFor();
 

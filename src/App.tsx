@@ -1,6 +1,7 @@
 import { AppShell } from './app/AppShell';
 import { ContextChatOverlay } from './app/ContextChatOverlay';
 import { useWorkspaceController } from './app/useWorkspaceController';
+import { AiRunTracePage } from './features/ai-runs/AiRunTracePage';
 import { AuthorMemoryView } from './features/author-memory/AuthorMemoryView';
 import { AnalyticsView } from './features/analytics/AnalyticsView';
 import { BriefView } from './features/briefing/BriefView';
@@ -11,6 +12,14 @@ import { ReleaseView } from './features/release/ReleaseView';
 import { SignalsView } from './features/signals/SignalsView';
 
 export function App() {
+  if (window.location.pathname.startsWith('/ai-runs')) {
+    return <AiRunTracePage />;
+  }
+
+  return <CabinetApp />;
+}
+
+function CabinetApp() {
   const controller = useWorkspaceController();
   const {
     active,

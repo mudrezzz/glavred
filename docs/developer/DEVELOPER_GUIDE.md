@@ -276,6 +276,15 @@ Invoke-RestMethod "http://localhost:8000/api/ai-runs?capability=draftGeneration&
 Invoke-RestMethod "http://localhost:8000/api/ai-runs/<AI_RUN_ID>"
 ```
 
+Frontend debug page:
+
+- Open `http://localhost:5176/ai-runs` in Docker, or `http://localhost:5173/ai-runs`
+  in local Vite.
+- Paste the `AiRun ID` from the draft trace summary.
+- Or open a direct link: `http://localhost:5176/ai-runs?runId=<AI_RUN_ID>`.
+- The page is intentionally outside the main cabinet navigation and only reads
+  backend audit data.
+
 How to read draft generation source:
 
 - OpenRouter success: frontend shows `source=openrouter`, an `AiRun ID`, provider,

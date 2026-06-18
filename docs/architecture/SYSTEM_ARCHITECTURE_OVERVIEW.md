@@ -360,6 +360,14 @@ after `Утвердить фабулу`, the draft tab shows a pending state, du
 blocked, and the completed draft shows whether it came from OpenRouter, backend
 fallback, or frontend local emergency fallback.
 
+Slice 2.3.3 adds a separate frontend debug page for this trace: `/ai-runs`.
+It is not part of the main editorial cabinet navigation. The page accepts one
+`AiRun ID`, calls `GET /api/ai-runs/{id}`, and renders the run summary plus raw
+request/result JSON for local debugging. The page lives under `src/features/ai-runs`;
+the HTTP mapper is `src/infrastructure/aiRunTraceClient.ts`. This keeps trace
+inspection separate from production draft generation and avoids expanding the
+near-limit draft client.
+
 The Dockerized local stack is an execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.

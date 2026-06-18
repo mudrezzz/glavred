@@ -172,7 +172,7 @@ at `AI_RUN_AUDIT_DB_PATH` (default `var/glavred-ai-runs.sqlite3`, ignored by Git
 Draft runs store a local sanitized trace with prompt messages, provider metadata,
 generated draft body, fallback flag, and safe error context. The UI stores only a
 summary and the `AiRun ID`; inspect the full trace through
-`GET /api/ai-runs/{id}`.
+`GET /api/ai-runs/{id}` or the separate debug page at `/ai-runs`.
 
 Run tests:
 
