@@ -473,7 +473,7 @@ const BACKEND_SOURCE_BASELINES = [
   },
   {
     path: "backend/app/settings.py",
-    limit: 90,
+    limit: 100,
     next: "Backend settings should stay focused on typed environment configuration.",
   },
   {
@@ -487,9 +487,19 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Health routes should stay thin and delegate behavior to application services.",
   },
   {
+    path: "backend/app/api/ai_runs.py",
+    limit: 120,
+    next: "AI run routes should stay thin and delegate orchestration to AiRunService.",
+  },
+  {
     path: "backend/app/application/health_service.py",
     limit: 90,
     next: "Health service should stay focused on liveness/readiness orchestration.",
+  },
+  {
+    path: "backend/app/application/ai_run_service.py",
+    limit: 100,
+    next: "AI run service should own audit orchestration only; provider execution belongs in later services.",
   },
   {
     path: "backend/app/domain/health.py",
@@ -497,9 +507,19 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Health domain objects should stay provider-free and framework-free.",
   },
   {
+    path: "backend/app/domain/ai_run.py",
+    limit: 80,
+    next: "AI run domain objects should stay provider-free and persistence-free.",
+  },
+  {
     path: "backend/app/infrastructure/openrouter_config.py",
     limit: 80,
     next: "OpenRouter config validator must not perform provider calls.",
+  },
+  {
+    path: "backend/app/infrastructure/sqlite_ai_run_repository.py",
+    limit: 130,
+    next: "SQLite AI run repository should stay audit-storage-only; split schema/mappers before adding more tables.",
   },
   {
     path: "backend/tests/test_settings.py",
@@ -510,6 +530,16 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_health_api.py",
     limit: 120,
     next: "Backend API tests should split by route group when more APIs are added.",
+  },
+  {
+    path: "backend/tests/test_ai_run_api.py",
+    limit: 130,
+    next: "AI run API tests should split by create/read/list behavior before growing further.",
+  },
+  {
+    path: "backend/tests/test_ai_run_repository.py",
+    limit: 110,
+    next: "AI run repository tests should split by schema/write/query behavior before growing further.",
   },
 ];
 
@@ -662,6 +692,7 @@ const requiredEnvFragments = [
   "GLAVRED_API_PORT=",
   "DATABASE_URL=",
   "REDIS_URL=",
+  "AI_RUN_AUDIT_DB_PATH=",
   "OPENROUTER_API_KEY=",
   "OPENROUTER_BASE_URL=",
   "OPENROUTER_DEFAULT_MODEL=",
@@ -840,11 +871,17 @@ if (fileExists("backend")) {
     "backend/app/settings.py",
     "backend/app/api/dependencies.py",
     "backend/app/api/health.py",
+    "backend/app/api/ai_runs.py",
     "backend/app/application/health_service.py",
+    "backend/app/application/ai_run_service.py",
     "backend/app/domain/health.py",
+    "backend/app/domain/ai_run.py",
     "backend/app/infrastructure/openrouter_config.py",
+    "backend/app/infrastructure/sqlite_ai_run_repository.py",
     "backend/tests/test_settings.py",
     "backend/tests/test_health_api.py",
+    "backend/tests/test_ai_run_api.py",
+    "backend/tests/test_ai_run_repository.py",
   ];
 
   for (const requiredFile of requiredBackendFiles) {
@@ -1171,8 +1208,11 @@ const requiredSaoFragments = [
   "no 2-3k line backend files",
   "no provider calls from API handlers",
   "backend/app/api/health.py",
+  "backend/app/api/ai_runs.py",
   "backend/app/application/health_service.py",
+  "backend/app/application/ai_run_service.py",
   "backend/app/infrastructure/openrouter_config.py",
+  "backend/app/infrastructure/sqlite_ai_run_repository.py",
 ];
 
 for (const fragment of requiredSaoFragments) {

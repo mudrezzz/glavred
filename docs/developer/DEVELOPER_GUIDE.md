@@ -20,6 +20,8 @@ Required variables for the backend/AI track:
 - `VITE_API_BASE_URL`: frontend-to-backend URL, default `http://localhost:8000`.
 - `GLAVRED_ENV`, `GLAVRED_API_HOST`, `GLAVRED_API_PORT`: local backend runtime.
 - `DATABASE_URL`, `REDIS_URL`: future persistence and queue configuration.
+- `AI_RUN_AUDIT_DB_PATH`: local SQLite audit store for backend AI run records,
+  default `var/glavred-ai-runs.sqlite3`.
 - `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
@@ -30,6 +32,10 @@ Required variables for the backend/AI track:
 OpenRouter configuration belongs to backend infrastructure adapters only. React,
 domain modules, API route handlers, and tests must not hardcode provider keys or call
 provider SDKs directly.
+
+`AI_RUN_AUDIT_DB_PATH` is local development state. The default `var/` directory is
+ignored by Git. Audit records may contain editorial request payloads, but provider
+tokens and other secrets must be redacted before persistence.
 - Testing Library
 
 ## Commands
@@ -186,16 +192,35 @@ Future backend layout:
   needs it.
 - `backend/tests/`: backend unit, contract, adapter, and smoke tests.
 
-Current Slice 2.1 backend files:
+Current backend files:
 
 - `backend/app/main.py`: FastAPI app factory.
 - `backend/app/__main__.py`: local server entrypoint used by `npm run dev:backend`.
 - `backend/app/settings.py`: typed environment settings.
 - `backend/app/api/health.py`: `/health` and `/api/health` routes.
+- `backend/app/api/ai_runs.py`: `/api/ai-runs` create/read/list audit routes.
+- `backend/app/api/dependencies.py`: request-time application service wiring.
 - `backend/app/application/health_service.py`: health use-case orchestration.
+- `backend/app/application/ai_run_service.py`: AI run audit use case, payload
+  redaction, and repository port.
 - `backend/app/domain/health.py`: provider-free health value objects.
+- `backend/app/domain/ai_run.py`: provider-agnostic AI run entity and enums.
 - `backend/app/infrastructure/openrouter_config.py`: OpenRouter config validator with
   no provider call.
+- `backend/app/infrastructure/sqlite_ai_run_repository.py`: stdlib SQLite audit
+  repository.
+
+AI run audit API:
+
+- `POST /api/ai-runs`: records an audit-only run for `draftGeneration`,
+  `visualGeneration`, `memeSearch`, or `documentImport`.
+- `GET /api/ai-runs/{id}`: reads one audit record.
+- `GET /api/ai-runs?limit=20&capability=draftGeneration`: lists recent records
+  newest-first.
+
+Slice 2.2 does not execute prompts, call OpenRouter, sync workspaces, or create
+publication artifacts. The audit contract exists so provider execution can be added
+behind the application/infrastructure boundary in Slice 2.3.
 
 Backend OOP/SRP rules:
 

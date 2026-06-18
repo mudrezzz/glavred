@@ -45,6 +45,7 @@ def test_api_health_reports_openrouter_without_exposing_secret() -> None:
         "appNameConfigured": True,
         "httpRefererConfigured": True,
     }
+    assert payload["aiRunAudit"] == {"configured": True, "storage": "sqlite"}
     assert "secret-token" not in response.text
 
 

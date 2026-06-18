@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,6 +15,10 @@ class BackendSettings(BaseSettings):
     environment: str = Field(default="local", validation_alias="GLAVRED_ENV")
     api_host: str = Field(default="127.0.0.1", validation_alias="GLAVRED_API_HOST")
     api_port: int = Field(default=8000, validation_alias="GLAVRED_API_PORT")
+    ai_run_audit_db_path: Path = Field(
+        default=Path("var/glavred-ai-runs.sqlite3"),
+        validation_alias="AI_RUN_AUDIT_DB_PATH",
+    )
 
     openrouter_api_key: SecretStr | None = Field(
         default=None,

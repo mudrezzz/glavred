@@ -2983,18 +2983,43 @@ Status:
 
 ### Slice 2.2: AI Run Contract and Audit Trail
 
-- Status: Ready
+- Status: Done
 - Goal: Add a backend-side AI run model before the first provider call.
 - Scope:
-  - Define `AiRun`, request payload, normalized result, provider metadata, error, and
-    fallback status.
-  - Add persistence or local durable store for run audit records.
-  - Add application service interfaces for provider execution.
-  - Keep prompt templates and provider adapters outside API handlers.
+  - Define provider-agnostic `AiRun` with capability, status, provider/model,
+    sanitized request payload, result payload, error, fallback flag, and timestamps.
+    Done.
+  - Add local durable SQLite audit store using stdlib `sqlite3`, defaulting to
+    `var/glavred-ai-runs.sqlite3`. Done.
+  - Add application service and repository boundary for create/read/list audit
+    records. Done.
+  - Add `/api/ai-runs` create/read/list endpoints without provider execution. Done.
+  - Extend `/api/health` with secret-safe AI run audit readiness. Done.
+  - Keep prompt templates and provider adapters outside API handlers. Done.
+- Out of scope:
+  - Calling OpenRouter.
+  - Running prompts or generating drafts/visuals.
+  - Frontend integration, workspace sync, auth, queue, or migrations.
+- Architecture impact:
+  - `backend/app/domain/ai_run.py` owns provider-free AI run types.
+  - `backend/app/application/ai_run_service.py` owns audit use cases and secret
+    redaction.
+  - `backend/app/infrastructure/sqlite_ai_run_repository.py` owns SQLite schema and
+    persistence.
+  - `backend/app/api/ai_runs.py` stays a thin HTTP mapping layer.
+- Tests:
+  - Backend API/repository tests for schema creation, create/read/list, filtering,
+    404, redaction, and health response. Done.
+  - Architecture smoke backend baselines and forbidden-import checks. Done.
+  - Existing frontend regression remains green. Done.
+- Acceptance criteria:
+  - Audit records are durable in SQLite. Done.
+  - API responses do not expose OpenRouter token or absolute DB path. Done.
+  - Slice 2.2 does not call any provider. Done.
 
 ### Slice 2.3: First OpenRouter Draft Run
 
-- Status: Backlog
+- Status: Ready
 - Goal: Replace one deterministic draft-generation path with an OpenRouter-backed run
   behind the backend application boundary.
 - Scope:
@@ -3118,6 +3143,7 @@ Status:
 - Slice 1.10.6.3: App Flow Test Ownership Guardrails. Completed 2026-06-18.
 - Slice 2.0: Backend AI Execution Architecture Baseline. Completed 2026-06-18.
 - Slice 2.1: Backend Foundation and OpenRouter Environment. Completed 2026-06-18.
+- Slice 2.2: AI Run Contract and Audit Trail. Completed 2026-06-18.
 
 ## Blocked Items
 
@@ -3138,4 +3164,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.2: AI Run Contract and Audit Trail`.
+Continue the backend track with `Slice 2.3: First OpenRouter Draft Run`.

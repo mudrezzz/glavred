@@ -275,6 +275,23 @@ Slice 2.1 implements the first concrete backend perimeter:
 - `backend/app/infrastructure/openrouter_config.py`: OpenRouter configuration status
   evaluation without a provider call.
 
+Slice 2.2 adds the first durable AI execution audit contract without executing a
+provider:
+
+- `backend/app/domain/ai_run.py`: provider-agnostic `AiRun` entity and capability,
+  provider, and status enums.
+- `backend/app/api/ai_runs.py`: thin `/api/ai-runs` routes for creating audit
+  records, reading one run, and listing recent runs.
+- `backend/app/application/ai_run_service.py`: audit use case, payload redaction,
+  stable timestamping, and repository port.
+- `backend/app/infrastructure/sqlite_ai_run_repository.py`: local SQLite audit
+  repository using stdlib `sqlite3`.
+
+`AI_RUN_AUDIT_DB_PATH` points to the local SQLite file, defaulting to
+`var/glavred-ai-runs.sqlite3`. `var/` is ignored by Git. The repository creates its
+directory and schema on first use; no ORM, migration framework, queue, auth, prompt
+execution, or workspace sync exists in Slice 2.2.
+
 The backend dependency rule is:
 
 `api -> application -> domain`
@@ -291,6 +308,13 @@ not leak into React components, domain objects, or API route logic.
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
 OpenRouter.
+
+The Slice 2.2 AI run surface is audit-only. `POST /api/ai-runs` records a durable
+`recorded` run for `draftGeneration`, `visualGeneration`, `memeSearch`, or
+`documentImport`, stores sanitized JSON payloads, and returns the created record.
+`GET /api/ai-runs/{id}` and `GET /api/ai-runs` read audit records newest-first. The
+API never returns provider secrets or the absolute SQLite path. `/api/health` reports
+`aiRunAudit: { configured: true, storage: "sqlite" }` only.
 
 `langgraph-document-ai-platform` is a future infrastructure/workflow dependency behind
 a Glavred-owned facade. It may produce import-review candidates, document analysis, or

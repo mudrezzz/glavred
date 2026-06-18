@@ -151,6 +151,11 @@ Run the backend:
 npm run dev:backend
 ```
 
+The backend currently exposes health endpoints and an audit-only AI run contract:
+`POST /api/ai-runs`, `GET /api/ai-runs/{id}`, and `GET /api/ai-runs`. Audit records
+are stored in local SQLite at `AI_RUN_AUDIT_DB_PATH` (default
+`var/glavred-ai-runs.sqlite3`, ignored by Git). No LLM provider call happens yet.
+
 Run tests:
 
 ```bash

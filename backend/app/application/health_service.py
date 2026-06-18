@@ -27,6 +27,10 @@ class BackendHealthService:
             "service": "glavred-backend",
             "environment": self._settings.environment,
             "openRouter": self._serialize_openrouter_status(openrouter_status),
+            "aiRunAudit": {
+                "configured": True,
+                "storage": "sqlite",
+            },
         }
 
     def _serialize_openrouter_status(
