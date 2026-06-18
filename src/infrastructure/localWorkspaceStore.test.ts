@@ -412,6 +412,7 @@ describe('LocalWorkspaceStore', () => {
     delete oldWorkspace.editorialChecks;
     delete oldWorkspace.editorNotes;
     delete oldWorkspace.finalText;
+    delete oldWorkspace.postVisual;
     delete oldWorkspace.releasePackage;
     delete oldWorkspace.editorialLearningNote;
     storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
@@ -423,6 +424,7 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialChecks).toEqual([]);
     expect(loaded.editorNotes).toEqual([]);
     expect(loaded.finalText).toBeNull();
+    expect(loaded.postVisual).toBeNull();
     expect(loaded.releasePackage).toBeNull();
     expect(loaded.editorialLearningNote).toBeNull();
   });
@@ -556,6 +558,40 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialWorkItems[0].brief).toBeNull();
     expect(loaded.editorialWorkItems[0].editorialChecks).toEqual([]);
     expect(loaded.selectedEditorialWorkItemId).toBe(workItem.id);
+  });
+
+  it('saves and loads selected visual state', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const workItem = createEditorialWorkItem(workspace.contentPlanItems[0]);
+    const visual: WorkspaceState['postVisual'] = {
+      id: `visual-${workItem.id}`,
+      workItemId: workItem.id,
+      mode: 'memeRemix',
+      brief: '',
+      prompt: 'Make it sharper',
+      memeSearchQuery: '',
+      memeReferenceTitle: 'Classic meme',
+      memeReferenceUrl: 'https://example.test/meme',
+      transformationInstructions: 'Replace the caption with product adoption context.',
+      assetPlaceholder: 'visual-placeholder',
+      notes: 'Demo only.',
+      approvalStatus: 'approved',
+      updatedAt: '2026-06-18T10:00:00.000Z',
+      approvedAt: '2026-06-18T10:00:00.000Z'
+    };
+
+    store.save({
+      ...workspace,
+      editorialWorkItems: [{ ...workItem, visual }],
+      selectedEditorialWorkItemId: workItem.id,
+      postVisual: visual
+    });
+
+    const loaded = store.load();
+
+    expect(loaded.postVisual?.mode).toBe('memeRemix');
+    expect(loaded.editorialWorkItems[0].visual?.approvalStatus).toBe('approved');
   });
 
   it('normalizes legacy final editorial work stage to visual', () => {

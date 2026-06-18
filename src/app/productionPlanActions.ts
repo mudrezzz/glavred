@@ -48,6 +48,7 @@ export function buildSaveContentPlanSettingsPatch(
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   };

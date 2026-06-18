@@ -71,9 +71,9 @@ Approved slots now enter an editorial work queue: `Редактура` has `По
 `Рабочий стол` tabs, lists production work items with the shared filter/search/group
 pattern, lets a post return to candidates, and owns selected-post preparation. The
 target chain is `Фабула -> Драфт -> Визуал -> готов к выпуску`: text approval belongs
-in `Драфт`, visual approval or `без визуала` completes readiness, and `Выпуск` is the
-future publication log for delivery attempts, statuses, external links, and platform
-errors.
+in `Драфт`, `Визуал` captures the local visual/no-visual decision, and the next slice
+turns a completed visual decision into readiness. `Выпуск` is the future publication
+log for delivery attempts, statuses, external links, and platform errors.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

@@ -30,6 +30,7 @@ import type {
   FinalText,
   PostBrief,
   PostDraft,
+  PostVisual,
   ReleasePackage,
 } from '../production/types';
 import type { RadarDefinition, SourceSignal } from '../signals/types';
@@ -64,6 +65,7 @@ export interface WorkspaceState {
   editorialChecks: EditorialCheck[];
   editorNotes: EditorNote[];
   finalText: FinalText | null;
+  postVisual: PostVisual | null;
   releasePackage: ReleasePackage | null;
   editorialLearningNote: EditorialLearningNote | null;
   externalSources: AuthorExternalSource[];

@@ -8,6 +8,7 @@ export type ReleaseTarget = 'telegram' | 'linkedin';
 export type AnalyticsStatus = 'draft' | 'captured';
 export type EditorialWorkStage = 'brief' | 'draft' | 'visual' | 'readyForRelease';
 export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
+export type VisualMode = 'generate' | 'memeSearch' | 'memeRemix' | 'noVisual';
 
 export interface PostBrief {
   id: string;
@@ -67,6 +68,23 @@ export interface FinalText {
   approvedAt: string;
 }
 
+export interface PostVisual {
+  id: string;
+  workItemId: string;
+  mode: VisualMode;
+  brief: string;
+  prompt: string;
+  memeSearchQuery: string;
+  memeReferenceTitle: string;
+  memeReferenceUrl: string;
+  transformationInstructions: string;
+  assetPlaceholder: string;
+  notes: string;
+  approvalStatus: ApprovalStatus;
+  updatedAt: string;
+  approvedAt: string | null;
+}
+
 export interface EditorialWorkItem {
   id: string;
   contentPlanItemId: string;
@@ -87,6 +105,7 @@ export interface EditorialWorkItem {
   editorialChecks: EditorialCheck[];
   editorNotes: EditorNote[];
   finalText: FinalText | null;
+  visual: PostVisual | null;
 }
 
 export interface ReleaseChecklistItem {

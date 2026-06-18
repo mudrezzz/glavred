@@ -37,6 +37,8 @@ export function EditorialPostsAside({ items }: { items: EditorialWorkItem[] }) {
 
 export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceState }) {
   const selected = workspace.editorialWorkItems.find((item) => item.id === workspace.selectedEditorialWorkItemId);
+  const visual = workspace.postVisual ?? selected?.visual ?? null;
+  const visualWarnings = getVisualWarnings(workspace, visual);
 
   return (
     <aside className="memory-side editorial-side">
@@ -51,6 +53,24 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
             <div><dt>Фабула</dt><dd>{selected.fabulaTitle ?? 'Не задана'}</dd></div>
           </dl>
         ) : <p>Выберите пост на рабочем столе.</p>}
+      </section>
+      <section className="panel">
+        <h3>Готовность</h3>
+        <dl className="side-dl">
+          <div><dt>Текст</dt><dd>{workspace.finalText?.approvalStatus === 'approved' ? 'Утвержден' : 'Не утвержден'}</dd></div>
+          <div><dt>Визуал</dt><dd>{visual ? visualStatusLabel(visual.approvalStatus, visual.mode) : 'Не начат'}</dd></div>
+          <div><dt>К выпуску</dt><dd>Нет</dd></div>
+        </dl>
+        {visualWarnings.length > 0 ? (
+          <div className="aside-list">
+            {visualWarnings.map((warning) => (
+              <article key={warning}>
+                <b>Предупреждение</b>
+                <p>{warning}</p>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
       <section className="panel">
         <h3>Проверки</h3>
@@ -78,6 +98,18 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
       </section>
     </aside>
   );
+}
+
+function visualStatusLabel(status: string, mode: string): string {
+  if (mode === 'noVisual' && status === 'approved') return 'Без визуала';
+  return status === 'approved' ? 'Утвержден' : 'Черновик';
+}
+
+function getVisualWarnings(workspace: WorkspaceState, visual: WorkspaceState['postVisual']): string[] {
+  if (workspace.finalText?.approvalStatus !== 'approved') return ['Сначала утвердите текст в Драфт.'];
+  if (!visual) return ['Визуальное решение еще не начато.'];
+  if (visual.mode !== 'noVisual' && !visual.brief) return ['Заполните бриф визуала.'];
+  return [];
 }
 
 function Metric({ label, value }: { label: string; value: number }) {

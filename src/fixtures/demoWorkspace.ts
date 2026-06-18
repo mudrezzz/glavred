@@ -90,6 +90,7 @@ export function createDemoWorkspace(): WorkspaceState {
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null,
     externalSources: demoExternalSources,

@@ -764,6 +764,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
     expect(screen.queryByRole('tab', { name: /Финал/i })).not.toBeInTheDocument();
     expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('tab', { name: /Драфт/i }));
     expect(screen.getByDisplayValue(/Ручная редакторская правка/i)).toBeInTheDocument();
   });
 

@@ -7,7 +7,8 @@ import type {
   EditorNote,
   FinalText,
   PostBrief,
-  PostDraft
+  PostDraft,
+  PostVisual
 } from './types';
 
 export type EditorialWorkArtifacts = {
@@ -16,6 +17,7 @@ export type EditorialWorkArtifacts = {
   editorialChecks: EditorialCheck[];
   editorNotes: EditorNote[];
   finalText: FinalText | null;
+  visual: PostVisual | null;
 };
 
 const emptyArtifacts: EditorialWorkArtifacts = {
@@ -23,7 +25,8 @@ const emptyArtifacts: EditorialWorkArtifacts = {
   draft: null,
   editorialChecks: [],
   editorNotes: [],
-  finalText: null
+  finalText: null,
+  visual: null
 };
 
 export function createEditorialWorkItem(
@@ -95,7 +98,8 @@ function mergeEditorialWorkItem(current: EditorialWorkItem, next: EditorialWorkI
     draft: next.draft ?? current.draft,
     editorialChecks: next.editorialChecks.length > 0 ? next.editorialChecks : current.editorialChecks,
     editorNotes: next.editorNotes.length > 0 ? next.editorNotes : current.editorNotes,
-    finalText: next.finalText ?? current.finalText
+    finalText: next.finalText ?? current.finalText,
+    visual: next.visual ?? current.visual
   });
 
   return {
@@ -110,6 +114,10 @@ function deriveEditorialWorkState(artifacts: EditorialWorkArtifacts): {
   stage: EditorialWorkStage;
   status: EditorialWorkStatus;
 } {
+  if (artifacts.visual) {
+    return { stage: 'visual', status: 'inProgress' };
+  }
+
   if (artifacts.finalText?.approvalStatus === 'approved') {
     return { stage: 'visual', status: 'todo' };
   }

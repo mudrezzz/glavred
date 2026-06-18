@@ -30,6 +30,7 @@ export function buildApproveCandidatePatch(
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   };

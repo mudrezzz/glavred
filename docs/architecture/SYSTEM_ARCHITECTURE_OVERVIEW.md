@@ -98,6 +98,15 @@ After text approval, `Редактура` adds a `Визуал` stage and marks 
 owns publication attempts, statuses, external links, and platform errors; it does not
 edit text, visual, candidate context, or brief artifacts.
 
+Slice 1.10.6 implements the first `Визуал` foundation as local selected-post state:
+`PostVisual` stores the chosen mode (`generate`, `memeSearch`, `memeRemix`, or
+`noVisual`), one user-facing visual brief, compatibility fields for future adapters,
+and approval status. The workbench deliberately exposes only one Russian `Бриф`
+field for `generate`, `memeSearch`, and `memeRemix`; `noVisual` has no extra field.
+Real image generation, internet meme search, and hybrid meme-based image
+transformation remain adapter-backed future slices; React workbench code stores the
+decision contract only.
+
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
 is making the author's own position explicit enough that AI can later assist without
@@ -188,8 +197,9 @@ turning the product into generic content generation.
   approval in the target UX.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before text approval.
-- `VisualPreparation`: future selected-post stage for visual brief, visual asset
-  placeholder, approval state, or explicit `без визуала`.
+- `VisualPreparation`: selected-post stage for one visual brief, visual mode,
+  approval state, or explicit `без визуала`. It owns the local decision contract;
+  provider-backed generation/search/remix adapters attach later.
 - `ReleaseLog`: future delivery layer that records ready posts, publication attempts,
   platform statuses, external links, adapter errors, and retry notes. The existing
   manual release package remains compatibility behavior until this model replaces it.
@@ -253,7 +263,7 @@ Target structure:
   the `Посты / Рабочий стол` tabs, lists approved posts first, lets the author return
   a work item to candidates, and owns the selected-post preparation stages. The target
   stage model is `Фабула -> Драфт -> Визуал -> readyForRelease`; `Финал` remains only a
-  compatibility approved-text artifact until the draft-approval slice removes the tab.
+  compatibility approved-text artifact, not a user-facing workbench tab.
 - `src/features/release`: publication log and delivery history. It should list ready
   posts and publication attempts, then show status, external links, adapter errors, and
   retry notes. It must not become a text, visual, checklist, or package-preparation
@@ -686,9 +696,10 @@ research experience building AI-B2B products:
    fabula/brief, reviews the draft, and approves the post text in `Драфт`.
 14. `Drafting` creates an editable research-note draft, and `EditorialChecks` returns
    style, anti-AI, fact-check, and policy checks plus editor notes.
-15. The next target stage is `Визуал`: the author prepares or explicitly skips the
-   visual. After text approval and visual approval or `без визуала`, the selected work
-   item becomes `readyForRelease`.
+15. The next stage is `Визуал`: the author chooses `Сгенерировать`, `Найти мем`,
+   `Мем + генерация`, or `без визуала`, fills one `Бриф` field when a visual is
+   needed, and approves the visual decision. Slice 1.10.7 then turns a completed
+   visual decision into `readyForRelease`.
 16. `Выпуск` becomes a publication log for ready posts and publication attempts.
    Until platform integrations exist, any manual export package remains compatibility
    behavior rather than the conceptual release model.

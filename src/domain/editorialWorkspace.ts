@@ -65,10 +65,12 @@ export type {
   ManualMetricSnapshot,
   PostBrief,
   PostDraft,
+  PostVisual,
   ReleaseChecklistItem,
   ReleasePackage,
   ReleaseStatus,
   ReleaseTarget,
+  VisualMode,
 } from './production/types';
 export type {
   RadarAcceptancePolicy,
@@ -134,6 +136,7 @@ import type {
   FinalText,
   PostBrief,
   PostDraft,
+  PostVisual,
   ReleasePackage,
 } from './production/types';
 import type {

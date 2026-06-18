@@ -14,8 +14,9 @@ It shows the first working Glavred editorial cabinet:
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved text -> Visual -> ReadyPost -> PublicationLogEntry -> EditorialLearningNote`
 
 `FinalText` and `ReleasePackage` still exist as compatibility/manual-export artifacts
-in the current runtime, but the demo path is moving to `Редактура -> Визуал -> Выпуск`:
-content is prepared in `Редактура`; `Выпуск` records delivery state.
+in the current runtime, but the demo path now includes `Редактура -> Визуал` as a
+local visual/no-visual decision. `Выпуск` records delivery state and must not edit the
+prepared content.
 
 The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
 topbar, cards, HITL gates, plan area, brief area, editorial review area, future release
@@ -232,8 +233,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 28. Review the automatically prepared draft checks and editor notes.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
-31. Confirm the draft shows `Текст утвержден` and `следующий шаг: Визуал`. The full
-    visual decision screen starts in Slice 1.10.6.
+31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
+    `Мем + генерация`, or `Без визуала`), fill one local `Бриф` field when a
+    visual is needed, and approve the visual decision.
 32. Open `Выпуск` to inspect the publication log or, until integrations exist, the
     compatibility manual export surface.
 33. Open `Аналитика`.

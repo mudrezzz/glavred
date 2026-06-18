@@ -132,6 +132,8 @@ export function App() {
           onSelectWorkItem={controller.selectEditorialWorkItem}
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}
+          onSaveVisual={controller.saveCurrentVisualDraft}
+          onApproveVisual={controller.approveCurrentVisual}
         />
       )}
       {active === 'release' && (

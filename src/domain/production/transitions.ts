@@ -1,8 +1,23 @@
-import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, ReleasePackage } from './types';
+import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, ReleasePackage, VisualMode } from './types';
 
 export type PostBriefEditPatch = Pick<
   PostBrief,
   'title' | 'thesis' | 'conflict' | 'authorPosition' | 'audience' | 'evidence' | 'examples' | 'structure' | 'cta' | 'risks' | 'sources'
+>;
+
+export type PostVisualEditPatch = Partial<
+  Pick<
+    PostVisual,
+    | 'mode'
+    | 'brief'
+    | 'prompt'
+    | 'memeSearchQuery'
+    | 'memeReferenceTitle'
+    | 'memeReferenceUrl'
+    | 'transformationInstructions'
+    | 'assetPlaceholder'
+    | 'notes'
+  >
 >;
 
 // Production transitions preserve the HITL gates from brief approval to learning capture.
@@ -50,6 +65,55 @@ export function approveFinalText(postDraft: PostDraft): FinalText {
     approvalStatus: 'approved',
     approvedAt: new Date().toISOString()
   };
+}
+
+export function createPostVisual(workItemId: string, mode: VisualMode = 'generate'): PostVisual {
+  const now = new Date().toISOString();
+
+  return {
+    id: `visual-${workItemId}`,
+    workItemId,
+    mode,
+    brief: '',
+    prompt: '',
+    memeSearchQuery: '',
+    memeReferenceTitle: '',
+    memeReferenceUrl: '',
+    transformationInstructions: '',
+    assetPlaceholder: '',
+    notes: '',
+    approvalStatus: 'draft',
+    updatedAt: now,
+    approvedAt: null
+  };
+}
+
+export function editPostVisual(postVisual: PostVisual, patch: PostVisualEditPatch): PostVisual {
+  return {
+    ...postVisual,
+    ...normalizeVisualPatch(patch),
+    approvalStatus: 'draft',
+    updatedAt: new Date().toISOString(),
+    approvedAt: null
+  };
+}
+
+export function approvePostVisual(postVisual: PostVisual, patch: PostVisualEditPatch = {}): PostVisual {
+  const updated = editPostVisual(postVisual, patch);
+  const now = new Date().toISOString();
+
+  return {
+    ...updated,
+    approvalStatus: 'approved',
+    updatedAt: now,
+    approvedAt: now
+  };
+}
+
+function normalizeVisualPatch(patch: PostVisualEditPatch): PostVisualEditPatch {
+  return Object.fromEntries(
+    Object.entries(patch).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value])
+  ) as PostVisualEditPatch;
 }
 
 export function markCheckResolved(check: EditorialCheck): EditorialCheck {

@@ -4,8 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   approvePostBrief,
   approvePostCandidate,
+  approveFinalText,
   createEditorialWorkItem,
   type ContentPlanItem,
+  type PostVisualEditPatch,
   type WorkspaceState
 } from '../../domain/editorialWorkspace';
 import { createPostBrief, createPostCandidates, createPostDraft, createWorkspaceInsightCard } from '../../application/editorialServices';
@@ -156,6 +158,79 @@ describe('EditView', () => {
     expect(screen.queryByRole('option', { name: /Финал/i })).not.toBeInTheDocument();
   });
 
+  it('blocks the visual stage until draft text is approved', () => {
+    const workspace = createWorkspaceWithQueue();
+
+    renderEdit(workspace);
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Визуал/i }));
+
+    expect(screen.getByTestId('editorial-visual-blocked')).toHaveTextContent(/Сначала утвердите текст/i);
+    expect(screen.getByRole('button', { name: /Вернуться к драфту/i })).toBeInTheDocument();
+  });
+
+  it('edits and approves visual placeholder modes from a local buffer', () => {
+    const workspace = createWorkspaceWithApprovedText();
+    const onSaveVisual = vi.fn();
+    const onApproveVisual = vi.fn();
+
+    renderEdit(workspace, { onApproveVisual, onSaveVisual });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    expect(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Визуал/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('editorial-visual-stage')).toHaveTextContent(/Утвержденный текст/i);
+    expect(screen.getByRole('button', { name: /Сгенерировать/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Найти мем/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Мем \+ генерация/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Без визуала/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Бриф'), { target: { value: 'Визуал про разрыв между demo и adoption' } });
+    expect(screen.queryByLabelText('Prompt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Reference title')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
+    expect(onSaveVisual).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить правки/i }));
+    expect(onSaveVisual).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'generate',
+      brief: 'Визуал про разрыв между demo и adoption',
+      prompt: '',
+      memeSearchQuery: '',
+      notes: ''
+    }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Найти мем/i }));
+    expect(screen.getByLabelText('Бриф')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Meme search query')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Бриф'), { target: { value: 'Найти мем про фальшивое ощущение прогресса' } });
+    fireEvent.click(screen.getByRole('button', { name: /Утвердить визуал/i }));
+    expect(onApproveVisual).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'memeSearch',
+      brief: 'Найти мем про фальшивое ощущение прогресса',
+      memeSearchQuery: '',
+      memeReferenceTitle: ''
+    }));
+  });
+
+  it('shows no-visual approval copy', () => {
+    const workspace = createWorkspaceWithApprovedText();
+    const onApproveVisual = vi.fn();
+
+    renderEdit(workspace, { onApproveVisual });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Без визуала/i }));
+    expect(screen.queryByTestId('editorial-visual-form')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Подтвердить без визуала/i }));
+
+    expect(onApproveVisual).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'noVisual',
+      brief: '',
+      notes: ''
+    }));
+  });
+
   it('edits the current fabula brief and drops the stale draft from the workbench', () => {
     const workspace = createWorkspaceWithQueue();
 
@@ -210,7 +285,9 @@ function renderEdit(
   workspace: WorkspaceState,
   overrides: Partial<{
     onApproveFinal: (body?: string) => void;
+    onApproveVisual: (patch: PostVisualEditPatch) => void;
     onDraftChange: (body: string) => void;
+    onSaveVisual: (patch: PostVisualEditPatch) => void;
     onReturnWorkItem: (itemId: string) => void;
     onSelectWorkItem: (itemId: string) => void;
   }> = {}
@@ -221,9 +298,11 @@ function renderEdit(
       onApproveBrief={vi.fn()}
       onEditBrief={vi.fn()}
       onApproveFinal={overrides.onApproveFinal ?? vi.fn()}
+      onApproveVisual={overrides.onApproveVisual ?? vi.fn()}
       onDraftChange={overrides.onDraftChange ?? vi.fn()}
       onGoPlan={vi.fn()}
       onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
+      onSaveVisual={overrides.onSaveVisual ?? vi.fn()}
       onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}
     />
   );
@@ -243,9 +322,11 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
         }))
       }
       onApproveFinal={vi.fn()}
+      onApproveVisual={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
       onReturnWorkItem={vi.fn()}
+      onSaveVisual={vi.fn()}
       onSelectWorkItem={(itemId) =>
         setCurrent((previous) => ({
           ...previous,
@@ -290,6 +371,20 @@ function createWorkspaceWithQueue(): WorkspaceState {
     postDraft: draft,
     editorialWorkItems: [firstWorkItem, secondWorkItem],
     selectedEditorialWorkItemId: firstWorkItem.id
+  };
+}
+
+function createWorkspaceWithApprovedText(): WorkspaceState {
+  const workspace = createWorkspaceWithQueue();
+  const finalText = approveFinalText(workspace.postDraft!);
+  const workItems = workspace.editorialWorkItems.map((item) =>
+    item.id === workspace.selectedEditorialWorkItemId ? { ...item, finalText, stage: 'visual' as const, status: 'todo' as const } : item
+  );
+
+  return {
+    ...workspace,
+    finalText,
+    editorialWorkItems: workItems
   };
 }
 

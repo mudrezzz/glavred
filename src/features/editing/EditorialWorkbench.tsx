@@ -1,28 +1,34 @@
 import { useEffect, useState } from 'react';
-import type { PostBriefEditPatch, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
+import type { PostBriefEditPatch, PostDraft, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefStage } from './EditorialBriefStage';
+import { EditorialVisualStage } from './EditorialVisualStage';
 
 export function EditorialWorkbench({
   workspace,
   onApproveBrief,
   onApproveFinal,
+  onApproveVisual,
   onDraftChange,
   onEditBrief,
-  onGoPlan
+  onGoPlan,
+  onSaveVisual
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
   onApproveFinal: (body?: string) => void;
+  onApproveVisual: (patch: PostVisualEditPatch) => void;
   onDraftChange: (body: string) => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
+  onSaveVisual: (patch: PostVisualEditPatch) => void;
 }) {
   const brief = workspace.postBrief;
   const draft = workspace.postDraft;
   const finalText = workspace.finalText;
-  const [tab, setTab] = useState<'brief' | 'draft'>(() => {
+  const [tab, setTab] = useState<'brief' | 'draft' | 'visual'>(() => {
     if (!brief || brief.approvalStatus !== 'approved') return 'brief';
+    if (finalText?.approvalStatus === 'approved') return 'visual';
     return 'draft';
   });
 
@@ -62,6 +68,9 @@ export function EditorialWorkbench({
         <button className={`tab${tab === 'draft' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'draft'} onClick={() => setTab('draft')}>
           Драфт
         </button>
+        <button className={`tab${tab === 'visual' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'visual'} onClick={() => setTab('visual')}>
+          Визуал
+        </button>
       </div>
       {tab === 'brief' ? (
         <EditorialBriefStage
@@ -74,6 +83,13 @@ export function EditorialWorkbench({
           }}
           onGoPlan={onGoPlan}
           onOpenDraft={() => setTab('draft')}
+        />
+      ) : tab === 'visual' ? (
+        <EditorialVisualStage
+          workspace={workspace}
+          onApproveVisual={onApproveVisual}
+          onOpenDraft={() => setTab('draft')}
+          onSaveVisual={onSaveVisual}
         />
       ) : !draft ? (
         <section className="card draft-start">

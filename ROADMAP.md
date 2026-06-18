@@ -2614,19 +2614,19 @@ Status:
 
 ### Slice 1.10.6: Visual Stage Foundation
 
-- Status: Ready
+- Status: Done
 - Goal: Add `Визуал` as the stage after text approval.
 - User value: The author finishes a post as a complete publication unit, not only as
   text.
 - Scope:
   - Add a `Визуал` stage inside the selected post workbench after approved text.
-  - Store a minimal visual artifact: mode, prompt/brief, source meme/search query,
-    selected asset placeholder, approval status, and notes.
+  - Store a minimal visual artifact: mode, one user-facing visual brief, approval
+    status, and compatibility fields for future adapters.
   - Support three visual creation modes:
-    - `Сгенерировать`: prepare an image prompt/brief for a future generation adapter.
-    - `Найти мем`: prepare an internet meme/search query and selected found reference.
-    - `Мем + генерация`: choose a meme/reference and prepare transformation instructions
-      for a future hybrid adapter.
+    - `Сгенерировать`: prepare one visual brief for a future generation adapter.
+    - `Найти мем`: prepare one visual brief for future meme search.
+    - `Мем + генерация`: prepare one visual brief for a future two-step meme selection
+      and customization flow.
   - Support `без визуала` as an explicit mode.
   - Show the approved text context while preparing the visual.
   - Keep the visual stage local and deterministic/demo-ready.
@@ -2644,21 +2644,30 @@ Status:
     adapters can attach to it without changing the workbench contract.
 - Tests:
   - Domain/application tests for visual artifact creation, editing, approval, and
-    `без визуала` mode.
+    `без визуала` mode. Done.
   - Domain/application tests for the three visual modes: generate, meme search, and
-    hybrid meme-based generation.
+    hybrid meme-based generation. Done.
   - UI tests for the `Визуал` stage, mode selector, bottom-left actions, and visible
-    text context.
+    text context. Done.
 - Acceptance criteria:
   - Approved text leads to a visible `Визуал` stage.
   - The author can choose `Сгенерировать`, `Найти мем`, `Мем + генерация`, or
     `без визуала`.
-  - Each visual mode shows the right fields and can be saved/approved as a placeholder
-    without real external calls.
+  - Visual modes use one Russian `Бриф` field, except `Без визуала`, which has no
+    extra field, and can be saved/approved without real external calls.
+- Implementation result:
+  - Added `PostVisual` as selected-post compatibility state and selected
+    `EditorialWorkItem.visual`.
+  - `Редактура -> Рабочий стол` now has `Фабула / Драфт / Визуал`.
+  - `Визуал` supports `Сгенерировать`, `Найти мем`, `Мем + генерация`, and
+    `Без визуала` as local deterministic placeholders.
+  - Visual save/approve uses explicit bottom-left actions and a local edit buffer.
+  - Visual approval does not mark the item `readyForRelease`; Slice 1.10.7 owns that
+    handoff rule.
 
 ### Slice 1.10.7: Ready Post Handoff
 
-- Status: Backlog
+- Status: Ready
 - Goal: Define when an editorial work item becomes `readyForRelease`.
 - User value: The author sees a clear finish line in `Редактура`: text is approved and
   visual decision is complete.
@@ -2869,6 +2878,7 @@ Status:
   2026-06-17.
 - Slice 1.10.4: Editable Fabula Brief With Candidate Context. Completed 2026-06-17.
 - Slice 1.10.5: Draft Approval Without Final Tab. Completed 2026-06-18.
+- Slice 1.10.6: Visual Stage Foundation. Completed 2026-06-18.
 
 ## Blocked Items
 
@@ -2889,4 +2899,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.10.6: Visual Stage Foundation`.
+Resume product work with `Slice 1.10.7: Ready Post Handoff`.

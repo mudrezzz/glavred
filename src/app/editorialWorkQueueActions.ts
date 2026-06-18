@@ -1,10 +1,13 @@
 import {
   approvePostBrief,
   approveFinalText,
+  approvePostVisual,
   approveContentPlanSlot,
   applyPlanWarnings,
   createEditorialWorkItem,
+  createPostVisual,
   detectBroadcastPlanConflicts,
+  editPostVisual,
   editPostBrief,
   replacePostCandidate,
   reviseDraft,
@@ -12,6 +15,7 @@ import {
   upsertEditorialWorkItem,
   type ContentPlanItem,
   type PostBriefEditPatch,
+  type PostVisualEditPatch,
   type PostCandidate,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
@@ -60,6 +64,7 @@ export function buildApprovePlanSlotPatch(workspace: WorkspaceState, itemId: str
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   };
@@ -97,6 +102,7 @@ export function buildReturnEditorialWorkItemToCandidatesPatch(
     editorialChecks: selected?.editorialChecks ?? [],
     editorNotes: selected?.editorNotes ?? [],
     finalText: selected?.finalText ?? null,
+    postVisual: selected?.visual ?? null,
     releasePackage: null,
     editorialLearningNote: null
   };
@@ -119,7 +125,8 @@ export function buildPrepareBriefPatch(workspace: WorkspaceState, item: ContentP
       draft: null,
       editorialChecks: [],
       editorNotes: [],
-      finalText: null
+      finalText: null,
+      visual: null
     },
     workspace.postCandidate?.id
   );
@@ -134,6 +141,7 @@ export function buildPrepareBriefPatch(workspace: WorkspaceState, item: ContentP
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null,
     activeSection: 'edit'
@@ -165,6 +173,7 @@ export function buildSelectEditorialWorkItemPatch(
     editorialChecks: selectedArtifacts.editorialChecks,
     editorNotes: selectedArtifacts.editorNotes,
     finalText: selectedArtifacts.finalText,
+    postVisual: selectedArtifacts.visual,
     releasePackage: null,
     editorialLearningNote: null,
     activeSection: 'edit'
@@ -185,6 +194,7 @@ export function buildApproveBriefAndCreateDraftPatch(workspace: WorkspaceState):
     editorialChecks,
     editorNotes,
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   });
@@ -203,6 +213,7 @@ export function buildEditCurrentBriefPatch(
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   });
@@ -220,6 +231,7 @@ export function buildSaveDraftTextPatch(workspace: WorkspaceState, body: string)
     editorialChecks,
     editorNotes,
     finalText: null,
+    postVisual: null,
     releasePackage: null,
     editorialLearningNote: null
   });
@@ -236,6 +248,41 @@ export function buildApproveDraftTextPatch(workspace: WorkspaceState, body?: str
   return withEditorialWorkItemSync({ ...workspace, ...savedPatch }, {
     ...savedPatch,
     finalText,
+    postVisual: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildSaveVisualDraftPatch(
+  workspace: WorkspaceState,
+  patch: PostVisualEditPatch
+): Partial<WorkspaceState> {
+  const workItemId = workspace.selectedEditorialWorkItemId;
+  if (!workItemId || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, patch.mode ?? 'generate');
+  const postVisual = editPostVisual(currentVisual, patch);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildApproveVisualPatch(
+  workspace: WorkspaceState,
+  patch: PostVisualEditPatch = {}
+): Partial<WorkspaceState> {
+  const workItemId = workspace.selectedEditorialWorkItemId;
+  if (!workItemId || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, patch.mode ?? 'generate');
+  const postVisual = approvePostVisual(currentVisual, patch);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
     releasePackage: null,
     editorialLearningNote: null
   });
@@ -256,7 +303,8 @@ function alignSelectedArtifacts(item: ReturnType<typeof syncSelectedEditorialWor
       draft: null,
       editorialChecks: [],
       editorNotes: [],
-      finalText: null
+      finalText: null,
+      visual: null
     };
   }
 
@@ -284,7 +332,8 @@ function alignSelectedArtifacts(item: ReturnType<typeof syncSelectedEditorialWor
     draft,
     editorialChecks: item.editorialChecks,
     editorNotes: item.editorNotes,
-    finalText: item.finalText
+    finalText: item.finalText,
+    visual: item.visual
   };
 }
 
@@ -309,7 +358,8 @@ function syncSelectedEditorialWorkItem(workspace: WorkspaceState) {
       draft: workspace.postDraft,
       editorialChecks: workspace.editorialChecks,
       editorNotes: workspace.editorNotes,
-      finalText: workspace.finalText
+      finalText: workspace.finalText,
+      visual: workspace.postVisual
     }
   );
 }

@@ -326,6 +326,16 @@ const LARGE_SOURCE_BASELINES = [
     next: "BroadcastGridAside should stay limited to planning summary and warnings.",
   },
   {
+    path: "src/features/editing/EditorialVisualStage.tsx",
+    limit: 220,
+    next: "EditorialVisualStage should stay focused on visual decision UI; keep real generation/search adapters outside React.",
+  },
+  {
+    path: "src/features/editing/EditorialVisualFields.tsx",
+    limit: 140,
+    next: "Visual mode fields should stay presentational; keep visual generation/search logic in application/domain adapters.",
+  },
+  {
     path: "src/domain/planning/settings.ts",
     limit: 120,
     next: "Planning settings normalization should stay pure and split platform policy when introduced.",
@@ -547,6 +557,8 @@ const requiredSourceFiles = [
   "src/features/plan/BroadcastGridAside.tsx",
   "src/features/briefing/BriefView.tsx",
   "src/features/editing/EditView.tsx",
+  "src/features/editing/EditorialVisualStage.tsx",
+  "src/features/editing/EditorialVisualFields.tsx",
   "src/features/release/ReleaseView.tsx",
   "src/features/analytics/AnalyticsView.tsx",
 ];

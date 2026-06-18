@@ -53,7 +53,7 @@ Production note: approved plan slots now enter an editorial work queue immediate
 `Рабочий стол` tabs: the first tab lists approved posts with the shared
 filter/search/group pattern, and the second edits one selected post through
 `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Финал` remains only a compatibility
-artifact until the draft-approval slice removes that tab. `Выпуск` is the future
+artifact; it is not a user-facing tab. `Выпуск` is the future
 publication log for delivery attempts, platform statuses, external links, and errors;
 it should not edit text or visual content.
 
@@ -355,9 +355,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   post; there is no separate `Написать драфт` action.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
-- After text approval, the selected post shows `следующий шаг: Визуал`. Slice 1.10.6
-  adds the full visual decision screen. A post becomes ready for release only after
-  text approval and visual approval or `без визуала`.
+- After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,
+  `Мем + генерация`, or `Без визуала`. The first three modes use one `Бриф`
+  field; `Без визуала` has no extra field. Save or approve the visual placeholder.
+  A post becomes ready for release only after text approval and visual approval or
+  `без визуала`.
 - Open `Выпуск` to inspect delivery state. Until platform integrations exist, this
   section may still expose the compatibility manual export surface; the target model
   is a publication log, not a text or visual editor.

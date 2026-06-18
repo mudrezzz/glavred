@@ -11,15 +11,18 @@ import {
   type ContentPlanItem,
   type EditorialLearningNote,
   type PostBriefEditPatch,
+  type PostVisualEditPatch,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
   buildApproveDraftTextPatch,
+  buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
+  buildSaveVisualDraftPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
@@ -103,6 +106,14 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     );
   }
 
+  function saveCurrentVisualDraft(patch: PostVisualEditPatch) {
+    patchWorkspace(buildSaveVisualDraftPatch(workspace, patch), 'Визуал сохранен');
+  }
+
+  function approveCurrentVisual(patch: PostVisualEditPatch) {
+    patchWorkspace(buildApproveVisualPatch(workspace, patch), 'Визуал утвержден');
+  }
+
   function createReleaseFromFinalText() {
     if (!workspace.finalText || workspace.finalText.approvalStatus !== 'approved') return;
     const releasePackage = createReleasePackage(workspace.finalText, workspace.contentPlanItem);
@@ -176,6 +187,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     addInsightToPlan,
     approveCurrentBrief,
     approveCurrentFinalText,
+    approveCurrentVisual,
     approvePlanSlot,
     captureLearningNote,
     copyCurrentFinalText,
@@ -188,6 +200,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     markCurrentReleaseReady,
     returnEditorialWorkItemToCandidates,
     saveContentPlanSettings,
+    saveCurrentVisualDraft,
     selectEditorialWorkItem,
     toggleReleaseChecklist,
     updateCurrentLearningNote,

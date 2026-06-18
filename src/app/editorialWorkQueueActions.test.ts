@@ -5,11 +5,13 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
   buildApproveDraftTextPatch,
+  buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
+  buildSaveVisualDraftPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
@@ -96,9 +98,15 @@ describe('editorial work queue actions', () => {
       approvedText.finalText!,
       withDraft.contentPlanItem!
     );
+    const visualPatch = buildApproveVisualPatch({ ...withDraft, ...approvedText }, {
+      mode: 'generate',
+      brief: 'Old visual brief',
+      prompt: 'Old prompt'
+    });
     const current = {
       ...withDraft,
       ...approvedText,
+      ...visualPatch,
       releasePackage,
       editorialLearningNote
     };
@@ -106,11 +114,55 @@ describe('editorial work queue actions', () => {
 
     expect(patch.postDraft?.body).toBe('Saved revised draft');
     expect(patch.finalText).toBeNull();
+    expect(patch.postVisual).toBeNull();
     expect(patch.releasePackage).toBeNull();
     expect(patch.editorialLearningNote).toBeNull();
     expect(patch.editorialWorkItems?.[0].draft?.body).toBe('Saved revised draft');
     expect(patch.editorialWorkItems?.[0].finalText).toBeNull();
+    expect(patch.editorialWorkItems?.[0].visual).toBeNull();
     expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
+  });
+
+  it('saves and approves visual decisions without marking the post ready for release', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const approvedBrief = buildApproveBriefAndCreateDraftPatch(withSlot);
+    const withDraft = { ...withSlot, ...approvedBrief };
+    const approvedText = buildApproveDraftTextPatch(withDraft);
+    const withText = { ...withDraft, ...approvedText };
+    const saved = buildSaveVisualDraftPatch(withText, {
+      mode: 'memeSearch',
+      brief: 'Найти мем про фальшивый прогресс после demo.'
+    });
+    const approved = buildApproveVisualPatch({ ...withText, ...saved }, {
+      mode: 'memeSearch',
+      brief: 'Найти мем про фальшивый прогресс после demo.'
+    });
+
+    expect(saved.postVisual?.mode).toBe('memeSearch');
+    expect(saved.postVisual?.brief).toBe('Найти мем про фальшивый прогресс после demo.');
+    expect(saved.postVisual?.memeSearchQuery).toBe('');
+    expect(saved.postVisual?.approvalStatus).toBe('draft');
+    expect(saved.editorialWorkItems?.[0].visual?.id).toBe(saved.postVisual?.id);
+    expect(saved.editorialWorkItems?.[0].stage).toBe('visual');
+    expect(approved.postVisual?.approvalStatus).toBe('approved');
+    expect(approved.editorialWorkItems?.[0].visual?.approvalStatus).toBe('approved');
+    expect(approved.editorialWorkItems?.[0].stage).toBe('visual');
+    expect(approved.editorialWorkItems?.[0].stage).not.toBe('readyForRelease');
+  });
+
+  it('supports all visual modes as local placeholder artifacts', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const withDraft = { ...withSlot, ...buildApproveBriefAndCreateDraftPatch(withSlot) };
+    const withText = { ...withDraft, ...buildApproveDraftTextPatch(withDraft) };
+
+    expect(buildSaveVisualDraftPatch(withText, { mode: 'generate', brief: 'Сгенерировать образ про adoption gap' }).postVisual?.mode).toBe('generate');
+    expect(buildSaveVisualDraftPatch(withText, { mode: 'memeSearch', brief: 'Найти мем про demo magic' }).postVisual?.mode).toBe('memeSearch');
+    expect(buildSaveVisualDraftPatch(withText, { mode: 'memeRemix', brief: 'Взять мем и кастомизировать под AI-B2B' }).postVisual?.mode).toBe('memeRemix');
+    expect(buildApproveVisualPatch(withText, { mode: 'noVisual', brief: '', notes: '' }).postVisual?.mode).toBe('noVisual');
   });
 
   it('edits the selected brief and clears stale downstream artifacts', () => {

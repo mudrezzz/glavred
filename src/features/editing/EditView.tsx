@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { PostBriefEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
+import type { PostBriefEditPatch, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { EditorialPostsAside, EditorialWorkbenchAside } from './EditorialWorkAside';
 import { EditorialWorkbench } from './EditorialWorkbench';
 import { EditorialWorkGroupList, EditorialWorkQueueList } from './EditorialWorkQueueList';
@@ -20,18 +20,22 @@ export function EditView({
   onEditBrief,
   onDraftChange,
   onGoPlan,
+  onSaveVisual,
   onReturnWorkItem,
   onSelectWorkItem,
-  onApproveFinal
+  onApproveFinal,
+  onApproveVisual
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
+  onSaveVisual: (patch: PostVisualEditPatch) => void;
   onReturnWorkItem: (workItemId: string) => void;
   onSelectWorkItem: (workItemId: string) => void;
   onApproveFinal: (body?: string) => void;
+  onApproveVisual: (patch: PostVisualEditPatch) => void;
 }) {
   const [mode, setMode] = useState<'posts' | 'workbench'>('posts');
   const [filters, setFilters] = useState<EditorialWorkQueueFilters>(defaultEditorialWorkQueueFilters);
@@ -118,9 +122,11 @@ export function EditView({
               workspace={workspace}
               onApproveBrief={onApproveBrief}
               onApproveFinal={onApproveFinal}
+              onApproveVisual={onApproveVisual}
               onDraftChange={onDraftChange}
               onEditBrief={onEditBrief}
               onGoPlan={onGoPlan}
+              onSaveVisual={onSaveVisual}
             />
           </section>
           <EditorialWorkbenchAside workspace={workspace} />
