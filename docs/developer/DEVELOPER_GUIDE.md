@@ -298,9 +298,17 @@ requires small entities, explicit rules, validator scores, and evidence links.
 
 ## Architecture Boundaries
 
-The implemented flow is:
+The implemented flow still contains compatibility release artifacts:
 
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> PostCandidate -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+
+The target production boundary is:
+
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> PostCandidate -> InsightCard -> BroadcastContentPlan -> EditorialWorkItem -> approved PostBrief -> approved PostDraft -> Visual -> ReadyPost -> PublicationLogEntry -> EditorialLearningNote`
+
+`FinalText` and `ReleasePackage` should be treated as compatibility/manual-export
+artifacts until their cleanup slices. Do not add new user-facing preparation behavior
+to `Выпуск`.
 
 Planning architecture is being corrected after Slice 1.4. The broadcast grid is the
 current compatibility layer, but the intended flow is:
@@ -449,14 +457,14 @@ Use these boundaries:
   Slice 1.10 creates or updates the selected work item and prepares its initial
   `PostBrief` when a plan slot is approved; future production actions should accept an
   explicit work-item id so editing one post does not overwrite another queued post.
-- `Редактура` owns the production queue from approved slot to final text. Its UX rule
+- `Редактура` owns the production queue from approved slot to ready post. Its UX rule
   is `section header -> Посты / Рабочий стол tabs -> filter card -> search ->
   list/group toggle -> framed rows -> selected-post workbench`. The selected-post
-  workbench should reuse the existing `Фабула -> Драфт -> Финал` flow, with these
-  stages inside the selected post rather than as section-level tabs.
-- `Выпуск` owns the release queue for finalized posts. It should reuse the current
-  release package/checklist/copy/Markdown workbench for a selected work item instead
-  of creating a second release UI.
+  workbench owns post preparation: `Фабула`, `Драфт`, `Визуал`, and
+  `readyForRelease`.
+- `Выпуск` owns delivery history for ready posts. It should show publication log
+  records, statuses, external links, platform errors, and retry notes. It must not
+  edit text, visual, brief, candidate, or slot artifacts.
 - `WorkspaceState.contentPlanSettings` is normalized on load. It owns period, tempo,
   publishing days/times, candidate limits, default platform, and signal-selection
   policy. Saving settings clears generated plan slots and downstream production

@@ -20,6 +20,7 @@ import {
   createPostDraft,
   createReleasePackage
 } from '../application/editorialServices';
+import type { WorkspaceState } from '../domain/editorialWorkspace';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
 
@@ -555,6 +556,25 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.editorialWorkItems[0].brief).toBeNull();
     expect(loaded.editorialWorkItems[0].editorialChecks).toEqual([]);
     expect(loaded.selectedEditorialWorkItemId).toBe(workItem.id);
+  });
+
+  it('normalizes legacy final editorial work stage to visual', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const workItem = {
+      ...createEditorialWorkItem(workspace.contentPlanItems[0]),
+      stage: 'final'
+    } as unknown as WorkspaceState['editorialWorkItems'][number];
+
+    store.save({
+      ...workspace,
+      editorialWorkItems: [workItem],
+      selectedEditorialWorkItemId: workItem.id
+    });
+
+    const loaded = store.load();
+
+    expect(loaded.editorialWorkItems[0].stage).toBe('visual');
   });
 
   it('saves and loads an approved final text', () => {

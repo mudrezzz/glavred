@@ -11,11 +11,15 @@ npm run dev
 
 It shows the first working Glavred editorial cabinet:
 
-`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+`AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> SourceSignal -> InsightCard -> BroadcastContentPlan -> approved PostBrief -> PostDraft -> EditorialChecks -> approved text -> Visual -> ReadyPost -> PublicationLogEntry -> EditorialLearningNote`
+
+`FinalText` and `ReleasePackage` still exist as compatibility/manual-export artifacts
+in the current runtime, but the demo path is moving to `Редактура -> Визуал -> Выпуск`:
+content is prepared in `Редактура`; `Выпуск` records delivery state.
 
 The app uses the `ui-design-systems/ui-kit/glavred-app` reference shape: sidebar,
-topbar, cards, HITL gates, plan area, brief area, editorial review area, manual release
-area, analytics prep area, and the new author memory workspace.
+topbar, cards, HITL gates, plan area, brief area, editorial review area, future release
+log area, analytics prep area, and the new author memory workspace.
 
 ## Permanent Demo Scenario
 
@@ -27,8 +31,8 @@ area, analytics prep area, and the new author memory workspace.
   deployment economics, not from demo magic.
 - Source signal: AI-B2B pilots often fail between impressive demo and regular user
   adoption.
-- Expected output: an approved Telegram research note packaged for manual export and
-  followed by captured editorial learning.
+- Expected output: an approved Telegram research note with a completed visual decision,
+  ready for release logging and followed by captured editorial learning.
 
 ## Seeded Author Memory
 
@@ -114,9 +118,11 @@ its initial post brief for `Редактура`.
 
 Approved plan slots now appear as an editorial work queue in `Редактура`. `Посты`
 lists queued work items with filters and row actions; `Рабочий стол` edits one
-selected post with the existing `Фабула -> Драфт -> Финал` experience. `Выпуск` still
-uses the compatibility single-post release package/checklist/copy/Markdown workbench
-until the release queue slice.
+selected post through `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Финал` is no
+longer a user-facing tab; text approval belongs in `Драфт`. `Выпуск` is the future
+publication log for ready posts, publication attempts, external links, platform errors,
+and retry notes. The existing manual package/checklist/copy/Markdown surface is only a
+compatibility bridge until release-log slices replace it.
 
 ## External Sources Scenario
 
@@ -152,7 +158,7 @@ npm run docs:screenshots
 ```
 
 The wiki covers the same AI Product Manager demo: author memory, production flow,
-manual release, and analytics learning note.
+future release log, manual export compatibility, and analytics learning note.
 
 If the GitHub Wiki has not been initialized yet, GitHub redirects the URL back to the
 repository. Create the first temporary Wiki page in the web UI once, then run
@@ -225,18 +231,17 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     draft/final/release artifacts until the updated brief is approved again.
 28. Review the automatically prepared draft checks and editor notes.
 29. Edit the draft text.
-30. Click `Утвердить текст`.
-31. Open `Выпуск`.
-32. Click `Подготовить выпуск`.
-33. Review target, checklist, final text, and Markdown preview.
-34. Complete the checklist and click `Готово к выпуску`.
-35. Click `Скопировать текст` or `Скачать Markdown`.
-36. Open `Аналитика`.
-37. Click `Подготовить аналитику`.
-38. Enter manual metrics and editorial conclusions.
-39. Click `Зафиксировать выводы`.
-40. Reload the page to confirm state persists.
-42. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
+30. Click `Утвердить текст` in `Драфт`.
+31. Confirm the draft shows `Текст утвержден` and `следующий шаг: Визуал`. The full
+    visual decision screen starts in Slice 1.10.6.
+32. Open `Выпуск` to inspect the publication log or, until integrations exist, the
+    compatibility manual export surface.
+33. Open `Аналитика`.
+34. Click `Подготовить аналитику`.
+35. Enter manual metrics and editorial conclusions.
+36. Click `Зафиксировать выводы`.
+37. Reload the page to confirm state persists.
+39. Use `Сбросить демо` to restore the seeded AI Product Manager scenario.
 
 ## Reference Materials
 

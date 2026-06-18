@@ -20,6 +20,11 @@ The revised planning flow is:
 
 `Редакционная модель -> Сигналы -> Кандидаты постов -> Сетка вещания -> Фабула поста -> Редактура -> Выпуск -> Аналитика`
 
+Roadmap correction after Slice 1.10.4: `Редактура` owns the full post-preparation
+chain `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Выпуск` is not a preparation
+workbench; it is the future publication log for ready posts, delivery attempts,
+statuses, external links, and platform errors.
+
 Responsibilities:
 
 - `Редакционная модель`: defines author, audience, goals, topics, fabulas, rules,
@@ -98,9 +103,16 @@ readiness statuses.
 Before the full readiness calendar, approved slots enter an editorial work queue.
 Approving a slot creates or updates the stable `EditorialWorkItem` and prepares its
 initial post brief automatically. `Редактура` owns `Посты` for queue review and
-`Рабочий стол` for the selected-post `Фабула -> Драфт -> Финал` workbench; `Выпуск`
-owns the release queue for finalized posts. Calendar readiness should be derived from
-these work items instead of singleton post artifacts.
+`Рабочий стол` for the selected-post preparation workbench. `Выпуск` owns publication
+logging for ready posts, not release preparation. Calendar readiness should be derived
+from work items, ready-post state, and publication log entries instead of singleton
+post artifacts.
+
+The target readiness model replaces the old `Финал -> release queue` language with:
+draft text is approved inside `Драфт`, the selected post then passes through `Визуал`,
+and only a text-approved plus visual-approved or `без визуала` post becomes
+`ReadyPost`. Release/calendar readiness should read that state and future
+`PublicationLogEntry` records, not a release package checklist.
 
 ## Calendar View
 
@@ -213,7 +225,7 @@ operational.
    - implement calendar view over the same filtered grid rows.
 7. `Slice 1.9: Editorial Work Queue Foundation`
    - turn approved slots into `Редактура` work items and reuse the selected-post
-     `Фабула -> Драфт -> Финал` workbench.
+     selected-post workbench.
 8. `Slice 1.10: Редактура как очередь постов и рабочий стол`
    - create the work item and initial brief on slot approval;
    - split `Редактура` into `Посты` and `Рабочий стол`.

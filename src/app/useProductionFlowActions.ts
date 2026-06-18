@@ -1,15 +1,11 @@
 import {
-  createEditorNotes,
   createEditorialLearningNote,
   createWorkspaceInsightCard,
-  createReleasePackage,
-  runEditorialChecks
+  createReleasePackage
 } from '../application/editorialServices';
 import {
-  approveFinalText,
   markLearningNoteCaptured,
   markReleaseReady,
-  reviseDraft,
   toggleReleaseChecklistItem,
   type ContentPlanSettings,
   type ContentPlanItem,
@@ -19,11 +15,12 @@ import {
 } from '../domain/editorialWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
+  buildApproveDraftTextPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
+  buildSaveDraftTextPatch,
   buildSelectEditorialWorkItemPatch,
-  withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
@@ -96,26 +93,13 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function updateDraftBody(body: string) {
-    if (!workspace.postDraft || !workspace.postBrief) return;
-    const postDraft = reviseDraft(workspace.postDraft, body);
-    const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
-    const editorNotes = createEditorNotes(editorialChecks);
-    patchWorkspace(withEditorialWorkItemSync(workspace, {
-      postDraft,
-      editorialChecks,
-      editorNotes,
-      finalText: null,
-      releasePackage: null,
-      editorialLearningNote: null
-    }));
+    patchWorkspace(buildSaveDraftTextPatch(workspace, body));
   }
 
-  function approveCurrentFinalText() {
-    if (!workspace.postDraft) return;
-    const finalText = approveFinalText(workspace.postDraft);
+  function approveCurrentFinalText(body?: string) {
     patchWorkspace(
-      withEditorialWorkItemSync(workspace, { finalText, releasePackage: null, editorialLearningNote: null }),
-      'Финальный текст утвержден'
+      buildApproveDraftTextPatch(workspace, body),
+      'Текст утвержден · следующий шаг: Визуал'
     );
   }
 

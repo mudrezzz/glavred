@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { FinalText, PostBriefEditPatch, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
+import { useEffect, useState } from 'react';
+import type { PostBriefEditPatch, PostDraft, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefStage } from './EditorialBriefStage';
 
@@ -13,7 +13,7 @@ export function EditorialWorkbench({
 }: {
   workspace: WorkspaceState;
   onApproveBrief: () => void;
-  onApproveFinal: () => void;
+  onApproveFinal: (body?: string) => void;
   onDraftChange: (body: string) => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
@@ -21,9 +21,9 @@ export function EditorialWorkbench({
   const brief = workspace.postBrief;
   const draft = workspace.postDraft;
   const finalText = workspace.finalText;
-  const [tab, setTab] = useState<'brief' | 'draft' | 'final'>(() => {
+  const [tab, setTab] = useState<'brief' | 'draft'>(() => {
     if (!brief || brief.approvalStatus !== 'approved') return 'brief';
-    return finalText ? 'final' : 'draft';
+    return 'draft';
   });
 
   if (!workspace.selectedEditorialWorkItemId) {
@@ -33,7 +33,7 @@ export function EditorialWorkbench({
           <Icon name="brief" size={28} />
         </div>
         <h2>Выберите пост из очереди</h2>
-        <p>Редактура работает с конкретным утвержденным слотом: сначала откройте строку в очереди, затем готовьте фабулу, драфт и финал.</p>
+        <p>Редактура работает с конкретным утвержденным слотом: сначала откройте строку в очереди, затем готовьте фабулу, драфт и визуал.</p>
       </section>
     );
   }
@@ -62,9 +62,6 @@ export function EditorialWorkbench({
         <button className={`tab${tab === 'draft' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'draft'} onClick={() => setTab('draft')}>
           Драфт
         </button>
-        <button className={`tab${tab === 'final' ? ' active' : ''}`} type="button" role="tab" aria-selected={tab === 'final'} onClick={() => setTab('final')}>
-          Финал
-        </button>
       </div>
       {tab === 'brief' ? (
         <EditorialBriefStage
@@ -89,15 +86,39 @@ export function EditorialWorkbench({
         </section>
       ) : (
         <section className="doc">
-          {tab === 'draft' && <DraftEditor draft={draft} onDraftChange={onDraftChange} />}
-          {tab === 'final' && <FinalTextView finalText={finalText} draft={draft} onApproveFinal={onApproveFinal} />}
+          <DraftEditor
+            draft={draft}
+            isTextApproved={finalText?.approvalStatus === 'approved'}
+            onApproveDraft={onApproveFinal}
+            onDraftChange={onDraftChange}
+            onOpenBrief={() => setTab('brief')}
+          />
         </section>
       )}
     </section>
   );
 }
 
-function DraftEditor({ draft, onDraftChange }: { draft: PostDraft; onDraftChange: (body: string) => void }) {
+function DraftEditor({
+  draft,
+  isTextApproved,
+  onApproveDraft,
+  onDraftChange,
+  onOpenBrief
+}: {
+  draft: PostDraft;
+  isTextApproved: boolean;
+  onApproveDraft: (body: string) => void;
+  onDraftChange: (body: string) => void;
+  onOpenBrief: () => void;
+}) {
+  const [body, setBody] = useState(draft.body);
+  const hasUnsavedChanges = body !== draft.body;
+
+  useEffect(() => {
+    setBody(draft.body);
+  }, [draft.body, draft.id]);
+
   return (
     <>
       <div className="doc-head">
@@ -110,53 +131,36 @@ function DraftEditor({ draft, onDraftChange }: { draft: PostDraft; onDraftChange
           {draft.status === 'revised' ? 'Отредактирован' : 'Драфт'}
         </span>
       </div>
+      {isTextApproved ? (
+        <div className="final-status">
+          <span className="pill ok">
+            <i />
+            Текст утвержден
+          </span>
+          <span>следующий шаг: Визуал</span>
+        </div>
+      ) : null}
       <label className="draft-editor">
         <span className="k">Текст</span>
         <textarea
           aria-label="Текст драфта"
-          value={draft.body}
-          onChange={(event) => onDraftChange(event.target.value)}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
         />
       </label>
+      {hasUnsavedChanges ? <p className="muted">Есть несохраненные правки.</p> : null}
+      <div className="inline-actions">
+        <button className="btn btn-pri" type="button" onClick={() => onApproveDraft(body)}>
+          <Icon name="check" size={16} />
+          Утвердить текст
+        </button>
+        <button className="btn btn-sec" type="button" disabled={!hasUnsavedChanges} onClick={() => onDraftChange(body)}>
+          Сохранить правки
+        </button>
+        <button className="btn btn-sec" type="button" onClick={onOpenBrief}>
+          Вернуться к фабуле
+        </button>
+      </div>
     </>
-  );
-}
-
-function FinalTextView({
-  finalText,
-  draft,
-  onApproveFinal
-}: {
-  finalText: FinalText | null;
-  draft: PostDraft;
-  onApproveFinal: () => void;
-}) {
-  if (!finalText) {
-    return (
-      <div className="final-empty">
-        <h2>Финал еще не утвержден</h2>
-        <p>Проверьте драфт, замечания редакторов и нажмите «Утвердить текст».</p>
-        <div className="inline-actions">
-          <button className="btn btn-pri" type="button" onClick={onApproveFinal}>
-            <Icon name="check" size={16} />
-            Утвердить текст
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <article className="final-doc">
-      <div className="final-status">
-        <span className="pill ok">
-          <i />
-          Финальный текст утвержден
-        </span>
-        <span>на основе версии {draft.version}</span>
-      </div>
-      <h2>{finalText.title}</h2>
-      <pre>{finalText.body}</pre>
-    </article>
   );
 }

@@ -70,7 +70,7 @@ export function stageLabel(stage: EditorialWorkItem['stage']): string {
   const labels: Record<EditorialWorkItem['stage'], string> = {
     brief: 'Фабула',
     draft: 'Драфт',
-    final: 'Финал',
+    visual: 'Визуал',
     readyForRelease: 'Готов к выпуску'
   };
   return labels[stage];

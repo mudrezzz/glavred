@@ -4,10 +4,12 @@ import { approveFinalText, approvePostBrief } from '../domain/editorialWorkspace
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   buildApproveBriefAndCreateDraftPatch,
+  buildApproveDraftTextPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
+  buildSaveDraftTextPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
@@ -60,6 +62,54 @@ describe('editorial work queue actions', () => {
     expect(patch.editorNotes?.length).toBeGreaterThan(0);
     expect(patch.editorialWorkItems?.[0].brief?.approvalStatus).toBe('approved');
     expect(patch.editorialWorkItems?.[0].draft?.id).toBe(patch.postDraft?.id);
+    expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
+  });
+
+  it('approves draft text into visual readiness without marking the post ready for release', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const approvedBrief = buildApproveBriefAndCreateDraftPatch(withSlot);
+    const withDraft = { ...withSlot, ...approvedBrief };
+    const patch = buildApproveDraftTextPatch(withDraft, 'Approved text with inline edits');
+
+    expect(patch.postDraft?.body).toBe('Approved text with inline edits');
+    expect(patch.finalText?.body).toBe('Approved text with inline edits');
+    expect(patch.finalText?.approvalStatus).toBe('approved');
+    expect(patch.releasePackage).toBeNull();
+    expect(patch.editorialLearningNote).toBeNull();
+    expect(patch.editorialWorkItems?.[0].finalText?.id).toBe(patch.finalText?.id);
+    expect(patch.editorialWorkItems?.[0].stage).toBe('visual');
+    expect(patch.editorialWorkItems?.[0].status).toBe('todo');
+  });
+
+  it('saving draft edits clears stale approved text and release artifacts', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const approvedBrief = buildApproveBriefAndCreateDraftPatch(withSlot);
+    const withDraft = { ...withSlot, ...approvedBrief };
+    const approvedText = buildApproveDraftTextPatch(withDraft);
+    const releasePackage = createReleasePackage(approvedText.finalText!, withDraft.contentPlanItem!);
+    const editorialLearningNote = createEditorialLearningNote(
+      { ...releasePackage, status: 'exported' as const },
+      approvedText.finalText!,
+      withDraft.contentPlanItem!
+    );
+    const current = {
+      ...withDraft,
+      ...approvedText,
+      releasePackage,
+      editorialLearningNote
+    };
+    const patch = buildSaveDraftTextPatch(current, 'Saved revised draft');
+
+    expect(patch.postDraft?.body).toBe('Saved revised draft');
+    expect(patch.finalText).toBeNull();
+    expect(patch.releasePackage).toBeNull();
+    expect(patch.editorialLearningNote).toBeNull();
+    expect(patch.editorialWorkItems?.[0].draft?.body).toBe('Saved revised draft');
+    expect(patch.editorialWorkItems?.[0].finalText).toBeNull();
     expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
   });
 

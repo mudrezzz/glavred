@@ -111,11 +111,11 @@ function deriveEditorialWorkState(artifacts: EditorialWorkArtifacts): {
   status: EditorialWorkStatus;
 } {
   if (artifacts.finalText?.approvalStatus === 'approved') {
-    return { stage: 'readyForRelease', status: 'approved' };
+    return { stage: 'visual', status: 'todo' };
   }
 
   if (artifacts.finalText) {
-    return { stage: 'final', status: 'inProgress' };
+    return { stage: 'draft', status: 'inProgress' };
   }
 
   if (artifacts.draft) {

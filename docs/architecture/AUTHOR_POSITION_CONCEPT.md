@@ -199,10 +199,15 @@ draft/edit flows and still require explicit author save/approval.
 
 ## Relationship to Current Implementation
 
-The current flow remains a valid production layer:
+The current flow remains a valid production compatibility layer:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> PostBrief -> PostDraft -> EditorialChecks -> FinalText -> ReleasePackage -> EditorialLearningNote`
 
-The next slices should add Author Memory and Author Position Model above this layer,
-then gradually route the existing production flow through those entities and
-validators.
+The target production boundary now routes preparation through:
+
+`SourceSignal -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> PostBrief -> PostDraft -> Visual -> ReadyPost -> PublicationLogEntry -> EditorialLearningNote`
+
+`FinalText` and `ReleasePackage` remain compatibility/manual-export artifacts. Future
+slices should keep author memory and author position above this layer, route production
+through those entities and validators, and treat `Выпуск` as delivery log rather than
+an editorial workbench.

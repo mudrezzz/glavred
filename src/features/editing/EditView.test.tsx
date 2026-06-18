@@ -120,6 +120,42 @@ describe('EditView', () => {
     expect(context.querySelectorAll('.candidate-fact.wide')).toHaveLength(1);
   });
 
+  it('approves draft text from the draft stage without a final tab', () => {
+    const workspace = createWorkspaceWithQueue();
+    const onDraftChange = vi.fn();
+    const onApproveFinal = vi.fn();
+
+    renderEdit(workspace, { onApproveFinal, onDraftChange });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    const workbench = within(screen.getByTestId('editorial-workbench'));
+
+    expect(workbench.queryByRole('tab', { name: /Финал/i })).not.toBeInTheDocument();
+    expect(workbench.getByRole('tab', { name: /Драфт/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: /Сохранить правки/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Утвердить текст/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Вернуться к фабуле/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Текст драфта'), { target: { value: 'Unsaved draft edit' } });
+    expect(onDraftChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить правки/i }));
+    expect(onDraftChange).toHaveBeenCalledWith('Unsaved draft edit');
+
+    fireEvent.change(screen.getByLabelText('Текст драфта'), { target: { value: 'Approved draft edit' } });
+    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
+    expect(onApproveFinal).toHaveBeenCalledWith('Approved draft edit');
+  });
+
+  it('shows visual stage in queue filters instead of final', () => {
+    const workspace = createWorkspaceWithQueue();
+
+    renderEdit(workspace);
+
+    expect(screen.getByRole('option', { name: /Визуал/i })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Финал/i })).not.toBeInTheDocument();
+  });
+
   it('edits the current fabula brief and drops the stale draft from the workbench', () => {
     const workspace = createWorkspaceWithQueue();
 
@@ -173,6 +209,8 @@ describe('EditView', () => {
 function renderEdit(
   workspace: WorkspaceState,
   overrides: Partial<{
+    onApproveFinal: (body?: string) => void;
+    onDraftChange: (body: string) => void;
     onReturnWorkItem: (itemId: string) => void;
     onSelectWorkItem: (itemId: string) => void;
   }> = {}
@@ -182,8 +220,8 @@ function renderEdit(
       workspace={workspace}
       onApproveBrief={vi.fn()}
       onEditBrief={vi.fn()}
-      onApproveFinal={vi.fn()}
-      onDraftChange={vi.fn()}
+      onApproveFinal={overrides.onApproveFinal ?? vi.fn()}
+      onDraftChange={overrides.onDraftChange ?? vi.fn()}
       onGoPlan={vi.fn()}
       onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
       onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}

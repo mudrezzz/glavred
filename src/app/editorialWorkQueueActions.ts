@@ -1,11 +1,13 @@
 import {
   approvePostBrief,
+  approveFinalText,
   approveContentPlanSlot,
   applyPlanWarnings,
   createEditorialWorkItem,
   detectBroadcastPlanConflicts,
   editPostBrief,
   replacePostCandidate,
+  reviseDraft,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
   type ContentPlanItem,
@@ -201,6 +203,39 @@ export function buildEditCurrentBriefPatch(
     editorialChecks: [],
     editorNotes: [],
     finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildSaveDraftTextPatch(workspace: WorkspaceState, body: string): Partial<WorkspaceState> {
+  if (!workspace.postDraft || !workspace.postBrief) return {};
+
+  const postDraft = reviseDraft(workspace.postDraft, body);
+  const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
+  const editorNotes = createEditorNotes(editorialChecks);
+
+  return withEditorialWorkItemSync(workspace, {
+    postDraft,
+    editorialChecks,
+    editorNotes,
+    finalText: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildApproveDraftTextPatch(workspace: WorkspaceState, body?: string): Partial<WorkspaceState> {
+  if (!workspace.postDraft) return {};
+
+  const shouldSaveDraft = typeof body === 'string' && body !== workspace.postDraft.body;
+  const savedPatch = shouldSaveDraft ? buildSaveDraftTextPatch(workspace, body) : {};
+  const postDraft = savedPatch.postDraft ?? workspace.postDraft;
+  const finalText = approveFinalText(postDraft);
+
+  return withEditorialWorkItemSync({ ...workspace, ...savedPatch }, {
+    ...savedPatch,
+    finalText,
     releasePackage: null,
     editorialLearningNote: null
   });

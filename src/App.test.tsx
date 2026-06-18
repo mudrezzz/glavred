@@ -23,7 +23,6 @@ function createApprovedBrief() {
 
 function createApprovedFinalText() {
   createApprovedBrief();
-  fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
   fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
 }
 
@@ -737,7 +736,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Перейти в выпуск/i })).toBeInTheDocument();
   });
 
-  it('creates, edits, approves, and persists a final text', () => {
+  it('creates, edits, approves, and persists approved draft text', () => {
     const { unmount } = render(<App />);
 
     createApprovedBrief();
@@ -750,22 +749,22 @@ describe('App', () => {
     const draftEditor = screen.getByLabelText('Текст драфта');
     fireEvent.change(draftEditor, {
       target: {
-        value: `${(draftEditor as HTMLTextAreaElement).value}\n\nРучная редакторская правка перед финалом.`
+            value: `${(draftEditor as HTMLTextAreaElement).value}\n\nРучная редакторская правка перед утверждением текста.`
       }
     });
-    fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
     fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
 
-    expect(screen.getAllByText(/Финальный текст утвержден/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/следующий шаг: Визуал/i).length).toBeGreaterThan(0);
 
     unmount();
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
-    fireEvent.click(screen.getByRole('tab', { name: /Финал/i }));
-    expect(screen.getAllByText(/Финальный текст утвержден/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Ручная редакторская правка/i)).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Финал/i })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    expect(screen.getByDisplayValue(/Ручная редакторская правка/i)).toBeInTheDocument();
   });
 
   it('prepares, marks ready, exports, and persists a manual release package', async () => {

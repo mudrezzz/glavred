@@ -31,7 +31,7 @@ export function EditView({
   onGoPlan: () => void;
   onReturnWorkItem: (workItemId: string) => void;
   onSelectWorkItem: (workItemId: string) => void;
-  onApproveFinal: () => void;
+  onApproveFinal: (body?: string) => void;
 }) {
   const [mode, setMode] = useState<'posts' | 'workbench'>('posts');
   const [filters, setFilters] = useState<EditorialWorkQueueFilters>(defaultEditorialWorkQueueFilters);
@@ -54,7 +54,7 @@ export function EditView({
         <div className="project-profile-main">
           <span className="rub">Редактура</span>
           <h2>Очередь постов и рабочий стол</h2>
-          <p>Утвержденные слоты из плана попадают сюда как посты. В очереди выбирайте пост, на рабочем столе ведите его через стадии фабулы, драфта и финала.</p>
+          <p>Утвержденные слоты из плана попадают сюда как посты. В очереди выбирайте пост, на рабочем столе ведите его через стадии фабулы, драфта и визуала.</p>
         </div>
         <div className="project-profile-meta signals-header-stats">
           <div><b>{workspace.editorialWorkItems.length}</b><span>постов</span></div>

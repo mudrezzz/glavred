@@ -132,10 +132,16 @@ function normalizePostCandidate(candidate: WorkspaceState['postCandidates'][numb
   return current;
 }
 
-function normalizeEditorialWorkItem(item: WorkspaceState['editorialWorkItems'][number]): WorkspaceState['editorialWorkItems'][number] {
+type StoredEditorialWorkItem = Omit<WorkspaceState['editorialWorkItems'][number], 'stage'> & {
+  stage?: string;
+};
+
+function normalizeEditorialWorkItem(item: StoredEditorialWorkItem): WorkspaceState['editorialWorkItems'][number] {
+  const stage = item.stage === 'final' ? 'visual' : item.stage ?? 'brief';
+
   return {
     ...item,
-    stage: item.stage ?? 'brief',
+    stage: stage as WorkspaceState['editorialWorkItems'][number]['stage'],
     status: item.status ?? 'todo',
     brief: item.brief ?? null,
     draft: item.draft ?? null,

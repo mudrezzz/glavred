@@ -15,11 +15,14 @@ The durable product loop is:
 
 `Author Memory -> Author Position Model -> Editorial System -> Content Production -> Release -> Learning`
 
-The already implemented production loop remains valuable:
+The already implemented production loop remains valuable as a compatibility layer:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
-It is now treated as a downstream production layer, not the product center.
+It is now treated as a downstream production layer, not the product center. The next
+production correction moves the user-facing editorial chain to
+`Фабула -> Драфт -> Визуал -> Готов к выпуску`; `FinalText` and `ReleasePackage`
+remain compatibility artifacts until the release-log model replaces manual export.
 
 ## Source Requirements
 
@@ -2341,7 +2344,7 @@ Status:
     context.
   - Add a queue surface to `Редактура` using the shared large-list pattern:
     `filter card -> search -> list/group toggle -> framed rows -> bottom-left actions`.
-  - Selecting a row should open the current one-post `Фабула/Драфт/Финал` workbench
+  - Selecting a row should open the then-current one-post compatibility workbench
     for that work item, initially reusing compatibility fields if needed.
 - Out of scope:
   - Full migration of every production action to work-item ids.
@@ -2353,8 +2356,9 @@ Status:
     compatibility fields during this slice.
   - Do not rebuild `BriefView`, `EditView`, or `ReleaseView`; wrap/reuse their current
     behavior around selected work-item context.
-  - The first queue can seed item status from existing artifacts:
-    `brief`, `draft`, `final`, `readyForRelease`.
+  - Historical Slice 1.9 note: the first queue seeded item status from then-current
+    compatibility artifacts. After Slice 1.10.5, `FinalText` remains internal
+    compatibility state and the user-facing stage after draft approval is `visual`.
 - Architecture impact:
   - Add role-owned domain/application helpers for editorial work items.
   - Keep `Редактура` UI under `src/features/editing`; avoid growing `App.tsx` or
@@ -2372,7 +2376,7 @@ Status:
   - Update SAO, developer guide, user guide, demo docs, and wiki production flow.
 - Demo impact:
   - Demo shows at least two approved slots in the editorial queue, with one selected
-    for the existing `Фабула -> Драфт -> Финал` flow.
+    for the compatibility selected-post flow.
 - Acceptance criteria:
   - Approved slots appear in `Редактура` as production work items.
   - The author can select a post before editing it.
@@ -2386,7 +2390,7 @@ Status:
   - Added `EditorialWorkItem`, workspace queue fields, storage normalization, stable
     upsert from approved plan slots, and selected-item compatibility hydration.
   - `Редактура` now starts with the shared list pattern and renders the selected
-    `Фабула -> Драфт -> Финал` workbench below the queue.
+    compatibility workbench below the queue.
   - Historical note: before Slice 1.10, `Подготовить фабулу поста` opened
     `Редактура`; after Slice 1.10, slot approval prepares the brief automatically.
     `BriefView` remains a compatibility surface.
@@ -2413,8 +2417,8 @@ Status:
   - `Вернуть в кандидаты` reverses the approved plan slot, removes the work item from
     the queue, clears its production artifacts, and returns the linked candidate to
     draft review state when available.
-  - `Рабочий стол` has a searchable post picker and keeps `Фабула -> Драфт -> Финал`
-    as stages inside the selected post workbench.
+  - `Рабочий стол` has a searchable post picker and keeps the selected-post stages
+    inside the selected post workbench.
   - Add right panels for queue summary and selected-post workbench context.
 - Out of scope:
   - Release queue.
@@ -2486,8 +2490,9 @@ Status:
   - `Утвердить фабулу` now approves the `PostBrief` and creates the deterministic
     `PostDraft`, checks, and editor notes in one application transition.
   - Remove the `Написать драфт` action and prop chain from `Редактура`.
-  - Keep `Фабула / Драфт / Финал` as stages inside the selected post workbench.
-  - Treat a work item with a draft artifact as stage `draft`, not as `final`.
+  - Historical note: this slice still had a `Финал` workbench stage; Slice 1.10.5
+    removes that tab and approves text directly from `Драфт`.
+  - Treat a work item with a draft artifact as stage `draft`, not as approved text.
 - Architecture impact:
   - Draft creation stays in role-owned application helpers, not in React JSX.
   - Compatibility fields are still synchronized with the selected `EditorialWorkItem`.
@@ -2562,47 +2567,160 @@ Status:
 - Docs:
   - Update SAO, user guide, demo docs, wiki, and roadmap.
 
-### Slice 1.11: Release Queue
+### Slice 1.10.5: Draft Approval Without Final Tab
+
+- Status: Done
+- Goal: Remove `Финал` as a separate workbench tab and approve post text directly in
+  `Драфт`.
+- User value: The author edits and approves the post where the text is visible, instead
+  of switching to another tab only to press `Утвердить текст`.
+- Scope:
+  - Move `Утвердить текст` into the `Драфт` stage.
+  - Add clear draft actions at the bottom-left: `Сохранить правки`, `Утвердить текст`,
+    and `Вернуться к фабуле`.
+  - Remove or hide the `Финал` tab from `Редактура -> Рабочий стол`.
+  - Keep `FinalText` as a compatibility approved-text artifact for storage, release,
+    and analytics bridges, but stop exposing `Финал` as a user workflow step.
+  - Editing an already approved draft returns the selected work item to `draft` and
+    clears stale visual/release/learning state.
+- Out of scope:
+  - Visual generation or visual approval.
+  - Real platform publication.
+  - Renaming `FinalText` in the domain model.
+- Architecture impact:
+  - Text approval remains owned by `src/features/editing` and production application
+    actions.
+  - `Выпуск` must not regain text-editing or text-approval behavior.
+- Tests:
+  - Domain/application test: approving a draft creates or updates the compatibility
+    approved-text artifact and moves the work item toward visual readiness. Done.
+  - UI test: `Финал` tab is absent and `Утвердить текст` is visible in `Драфт`. Done.
+  - UI test: draft edits have explicit save/approve behavior and do not require
+    switching tabs. Done.
+- Docs:
+  - Update user guide, demo docs, wiki, and SAO to describe `Драфт` as the text
+    approval stage.
+- Acceptance criteria:
+  - A selected post workbench shows `Фабула / Драфт`, not `Фабула / Драфт / Финал`.
+  - Text approval is completed from `Драфт`.
+  - The next visible production step is `Визуал`.
+- Implementation result:
+  - `Редактура -> Рабочий стол` now shows only `Фабула / Драфт`.
+  - Draft text uses an explicit edit buffer with `Сохранить правки` and
+    `Утвердить текст`; typing no longer persists silently.
+  - Approving text still creates compatibility `FinalText`, but the selected work item
+    moves to `visual/todo` instead of `readyForRelease`.
+  - Legacy stored work items with stage `final` normalize to `visual`.
+
+### Slice 1.10.6: Visual Stage Foundation
 
 - Status: Ready
-- Goal: Turn `Выпуск` into a queue of finalized posts while reusing the existing
-  release package/checklist/export workbench.
-- User value: The author can prepare, check, copy, download, and mark releases for
-  multiple finalized posts without losing which post is being released.
+- Goal: Add `Визуал` as the stage after text approval.
+- User value: The author finishes a post as a complete publication unit, not only as
+  text.
 - Scope:
-  - List work items whose final text is approved.
-  - Add release filters/search/grouping by platform, release status, date, and topic.
-  - Selecting a release row opens the existing package/checklist/copy/Markdown
-    workbench for that work item.
-  - Release package state is stored on the work item.
-  - Analytics learning attaches to the released work item.
+  - Add a `Визуал` stage inside the selected post workbench after approved text.
+  - Store a minimal visual artifact: mode, prompt/brief, source meme/search query,
+    selected asset placeholder, approval status, and notes.
+  - Support three visual creation modes:
+    - `Сгенерировать`: prepare an image prompt/brief for a future generation adapter.
+    - `Найти мем`: prepare an internet meme/search query and selected found reference.
+    - `Мем + генерация`: choose a meme/reference and prepare transformation instructions
+      for a future hybrid adapter.
+  - Support `без визуала` as an explicit mode.
+  - Show the approved text context while preparing the visual.
+  - Keep the visual stage local and deterministic/demo-ready.
 - Out of scope:
-  - Autoposting or platform APIs.
-  - External calendar integrations.
-  - Release bulk actions.
-- Implementation notes:
-  - Reuse `ReleaseView` behavior as a selected-release workbench.
-  - Keep manual export semantics: copy/download can mark only the selected work item
-    exported.
+  - Real image generation.
+  - Real internet search or meme crawling.
+  - Real hybrid image transformation.
+  - Asset upload pipeline.
+  - Platform-specific crop presets beyond simple labels.
 - Architecture impact:
-  - Release actions become work-item-specific and should not mutate global
-    `releasePackage` as the source of truth.
+  - `Редактура` owns visual preparation and approval.
+  - Visual state belongs to the selected `EditorialWorkItem`; it is not owned by
+    `Выпуск`.
+  - Visual mode is a domain enum, not free-form UI text, so future generation/search
+    adapters can attach to it without changing the workbench contract.
 - Tests:
-  - Preparing release for one work item does not affect another finalized work item.
-  - Checklist/copy/download act on selected work item.
-  - UI shows queue first and workbench second.
-- Docs:
-  - Update user guide, demo docs, wiki, and SAO.
-- Demo impact:
-  - Demo can show one finalized post ready for package and one exported post ready for
-    analytics.
+  - Domain/application tests for visual artifact creation, editing, approval, and
+    `без визуала` mode.
+  - Domain/application tests for the three visual modes: generate, meme search, and
+    hybrid meme-based generation.
+  - UI tests for the `Визуал` stage, mode selector, bottom-left actions, and visible
+    text context.
 - Acceptance criteria:
-  - `Выпуск` starts with a release queue.
-  - Existing release package UX remains available for the selected post.
-  - Analytics prep can identify the released work item.
-- Risks:
-  - Release and analytics are currently tightly coupled to singleton fields; migrate
-    in small helpers and keep compatibility until tests cover the queue.
+  - Approved text leads to a visible `Визуал` stage.
+  - The author can choose `Сгенерировать`, `Найти мем`, `Мем + генерация`, or
+    `без визуала`.
+  - Each visual mode shows the right fields and can be saved/approved as a placeholder
+    without real external calls.
+
+### Slice 1.10.7: Ready Post Handoff
+
+- Status: Backlog
+- Goal: Define when an editorial work item becomes `readyForRelease`.
+- User value: The author sees a clear finish line in `Редактура`: text is approved and
+  visual decision is complete.
+- Scope:
+  - Mark a post `readyForRelease` when text is approved and either visual is approved
+    or `без визуала` is selected.
+  - Introduce the future `ReadyPost` projection for release-log consumption.
+  - Show ready state in `Редактура -> Посты` and `Рабочий стол`.
+  - Keep `Выпуск` passive: it reads ready posts later, but does not edit them.
+- Out of scope:
+  - Publication attempts.
+  - Platform integrations.
+  - Analytics ingestion.
+- Architecture impact:
+  - `ReadyPost` is a handoff projection from editing to release delivery.
+  - `ReleasePackage` remains compatibility/manual-export state until Slice 1.11
+    replaces it with release log entries.
+- Tests:
+  - Domain/application tests for ready-state rules.
+  - UI tests for ready badges and no-visual readiness.
+- Acceptance criteria:
+  - Ready status requires text approval and visual completion.
+  - Ready posts can be listed as candidates for future release logging.
+
+### Slice 1.11: Release Log Foundation
+
+- Status: Backlog
+- Goal: Turn `Выпуск` into a publication log for ready and published posts, not an
+  editorial workbench.
+- User value: After content is approved in `Редактура`, `Выпуск` shows delivery state:
+  what is ready, what was attempted, what was published, and what failed.
+- Scope:
+  - Add a release log list for `ReadyPost` / publication attempts.
+  - Track publication status, platform, scheduled/published time, external link, adapter
+    status, error message, and retry notes.
+  - Add filters/search/grouping by platform, publication status, date, and topic.
+  - Keep any existing `ReleasePackage` UI as compatibility/manual-export surface only
+    until it is replaced by log entries.
+  - Prepare the boundary for future `PublicationAdapter` integrations.
+- Out of scope:
+  - Editing text or visual.
+  - Release checklist as content-preparation workflow.
+  - Real platform APIs, autoposting, or external calendar integrations.
+- Implementation notes:
+  - `Выпуск` consumes ready posts and publication attempts.
+  - Publication attempts create `PublicationLogEntry` records; they do not mutate
+    production text or visual artifacts.
+- Architecture impact:
+  - `Редактура` owns preparation: fabula, draft, visual, and ready state.
+  - `Выпуск` owns delivery: attempts, statuses, external links, and platform errors.
+  - `ReleasePackage` is compatibility/manual-export state and should not become the
+    future source of truth.
+- Tests:
+  - Ready posts appear in release log without exposing editing actions.
+  - Publication log entries track status/link/error independently of editorial content.
+  - UI shows a log/list first and no text/visual editing workbench.
+- Docs:
+  - Update user guide, demo docs, wiki, SAO, and ADR references.
+- Acceptance criteria:
+  - `Выпуск` is described and implemented as a release log foundation.
+  - Text and visual changes are only done in `Редактура`.
+  - Manual export is clearly compatibility behavior until platform adapters exist.
 
 ### Slice 1.12: Calendar View for Broadcast Plan
 
@@ -2750,6 +2868,7 @@ Status:
 - Slice 1.10.3: Editorial Workbench Selection and Picker Repair. Completed
   2026-06-17.
 - Slice 1.10.4: Editable Fabula Brief With Candidate Context. Completed 2026-06-17.
+- Slice 1.10.5: Draft Approval Without Final Tab. Completed 2026-06-18.
 
 ## Blocked Items
 
@@ -2770,4 +2889,4 @@ Status:
 
 ## Next Recommended Task
 
-Resume product work with `Slice 1.11: Release Queue`.
+Resume product work with `Slice 1.10.6: Visual Stage Foundation`.

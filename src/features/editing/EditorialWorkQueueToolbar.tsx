@@ -41,7 +41,7 @@ export function EditorialWorkQueueToolbar({
             <option value="all">Все стадии</option>
             <option value="brief">Фабула</option>
             <option value="draft">Драфт</option>
-            <option value="final">Финал</option>
+            <option value="visual">Визуал</option>
             <option value="readyForRelease">Готов к выпуску</option>
           </select>
         </label>

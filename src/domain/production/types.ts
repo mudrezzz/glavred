@@ -6,7 +6,7 @@ export type EditorialCheckStatus = 'passed' | 'warning' | 'failed';
 export type ReleaseStatus = 'draft' | 'ready' | 'exported';
 export type ReleaseTarget = 'telegram' | 'linkedin';
 export type AnalyticsStatus = 'draft' | 'captured';
-export type EditorialWorkStage = 'brief' | 'draft' | 'final' | 'readyForRelease';
+export type EditorialWorkStage = 'brief' | 'draft' | 'visual' | 'readyForRelease';
 export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
 
 export interface PostBrief {

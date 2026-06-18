@@ -13,8 +13,9 @@ The current repository contains the first working local-first editorial cabinet.
 implements author memory, evidence-backed author-position assertions, reviewed
 signals/radars, and an editable production flow from approved signal to insight card,
 broadcast content grid, approved post brief, deterministic draft, editorial checks,
-approved final text, manual release package, copy/Markdown export, and captured
-editorial learning note.
+approved text, visual decision, ready state, publication log, and captured editorial
+learning note. The current `FinalText` and `ReleasePackage` artifacts remain
+compatibility/manual-export surfaces until the release-log slices replace them.
 
 `Память автора` is now the main entry point: titleless thought capture, optional local
 file attachments, local link previews, targeted corrections, search/filtering, lazy
@@ -68,9 +69,11 @@ slots, while request-more generation and a true readiness calendar remain future
 
 Approved slots now enter an editorial work queue: `Редактура` has `Посты` and
 `Рабочий стол` tabs, lists production work items with the shared filter/search/group
-pattern, lets a post return to candidates, and reuses the existing
-`Фабула -> Драфт -> Финал` workbench for the selected post. `Выпуск` still uses the
-compatibility single-post release workbench; a release queue remains future work.
+pattern, lets a post return to candidates, and owns selected-post preparation. The
+target chain is `Фабула -> Драфт -> Визуал -> готов к выпуску`: text approval belongs
+in `Драфт`, visual approval or `без визуала` completes readiness, and `Выпуск` is the
+future publication log for delivery attempts, statuses, external links, and platform
+errors.
 
 Attached files are stored as local demo evidence only. Real document parsing,
 extraction, OCR, and AI analysis are explicitly deferred.

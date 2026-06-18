@@ -53,6 +53,11 @@ editorial learning note:
 
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
+`FinalText` and `ReleasePackage` are compatibility artifacts from the one-post manual
+export perimeter. The target editorial chain is now
+`Фабула -> Драфт -> Визуал -> readyForRelease -> PublicationLogEntry`: all preparation
+happens in `Редактура`, and `Выпуск` becomes a delivery log for ready posts.
+
 The source-to-release part remains useful as a production layer. It is no longer the
 conceptual center of the product. Author memory, author-position assertions,
 structured topics/fabulas, validator results, and reviewed signals now sit above that
@@ -72,19 +77,26 @@ goals, forbidden topics, and topics; style remains a later drafting/review conce
 Filtered signals stay visible for human review instead of being deleted automatically.
 Slice 1.9 adds the first production queue in `Редактура`: approved plan slots become
 stable `EditorialWorkItem` records, the screen starts with the shared large-list
-pattern, and the selected item hydrates the existing `Фабула -> Драфт -> Финал`
-workbench through compatibility fields.
+pattern, and the selected item hydrates the selected-post workbench through
+compatibility fields.
 Slice 1.10 removes the extra `Подготовить фабулу поста` handoff. Approving a slot in
 `План` now creates or updates the stable editorial work item and prepares its initial
 `PostBrief` immediately. `Редактура` is organized as `Посты` plus `Рабочий стол`:
 the first tab manages the production queue, while the second edits one selected post
-with the existing `Фабула -> Драфт -> Финал` stages inside the workbench.
+inside the workbench.
 
 Slice 1.10.4 makes the `Фабула` stage editable inside that workbench. The workbench
 shows read-only candidate and slot context, but `PostBrief` remains a production
 artifact with only brief fields. Editing an approved fabula returns the selected work
 item to stage `brief` and invalidates stale draft, checks, notes, final text, release
 package, and learning note before the author approves the fabula again.
+
+The Slice 1.10.5-1.11 roadmap corrects the remaining production boundary. `Финал`
+should disappear as a user-facing workbench tab; text approval belongs in `Драфт`.
+After text approval, `Редактура` adds a `Визуал` stage and marks the post
+`readyForRelease` only after text and visual decisions are complete. `Выпуск` then
+owns publication attempts, statuses, external links, and platform errors; it does not
+edit text, visual, candidate context, or brief artifacts.
 
 Real AI provider calls, publication automation, backend sync, and real metrics
 ingestion remain future slices. The near-term priority is not provider integration; it
@@ -163,19 +175,24 @@ turning the product into generic content generation.
 - `EditorialWorkQueue`: stores approved posts as production work items. Each work
   item keeps its source slot/candidate context plus its own brief, draft, checks,
   editor notes, and final text. Slot approval creates or updates the work item and
-  prepares the initial brief automatically. Release package and analytics learning
-  note remain compatibility singleton fields until the release queue slice. The queue
-  replaces the singleton production mental model while allowing the current
-  single-post editors to be reused as selected-item workbenches.
+  prepares the initial brief automatically. The target item lifecycle is brief,
+  draft, visual, and ready state; final text, release package, and analytics learning
+  note remain compatibility fields until implementation slices replace them. The queue
+  replaces the singleton production mental model while allowing current single-post
+  editors to be reused as selected-item workbenches.
 - `Briefing`: turns an approved plan item into a post brief with thesis, conflict,
   author position, evidence, examples, structure, CTA, risks, sources, and approval
   status. The selected-post workbench can edit those brief fields; candidate and slot
   context is assembled separately from workspace entities and is displayed read-only.
-- `Drafting`: turns an approved post brief into an editable draft.
+- `Drafting`: turns an approved post brief into an editable draft and owns text
+  approval in the target UX.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
-  notes before final approval.
-- `ReleasePackaging`: turns approved final text into platform targets, Markdown
-  preview, release checklist, and manual export status.
+  notes before text approval.
+- `VisualPreparation`: future selected-post stage for visual brief, visual asset
+  placeholder, approval state, or explicit `без визуала`.
+- `ReleaseLog`: future delivery layer that records ready posts, publication attempts,
+  platform statuses, external links, adapter errors, and retry notes. The existing
+  manual release package remains compatibility behavior until this model replaces it.
 - `AnalyticsPrep`: turns an exported release package into manual metric fields and an
   editorial learning note.
 - `AIProviderBoundary`: defines how future provider-backed services can replace
@@ -234,11 +251,13 @@ Target structure:
   brief editing as a separate top-level workflow destination.
 - `src/features/editing`: editorial work queue and selected-post workbench. It owns
   the `Посты / Рабочий стол` tabs, lists approved posts first, lets the author return
-  a work item to candidates, and reuses the existing `Фабула -> Драфт -> Финал`
-  editing flow for the selected work item.
-- `src/features/release`: release queue and selected-release workbench. It should list
-  finalized posts first, then reuse the existing manual package/checklist/copy/Markdown
-  flow for the selected work item.
+  a work item to candidates, and owns the selected-post preparation stages. The target
+  stage model is `Фабула -> Драфт -> Визуал -> readyForRelease`; `Финал` remains only a
+  compatibility approved-text artifact until the draft-approval slice removes the tab.
+- `src/features/release`: publication log and delivery history. It should list ready
+  posts and publication attempts, then show status, external links, adapter errors, and
+  retry notes. It must not become a text, visual, checklist, or package-preparation
+  workbench.
 - `src/features/analytics`: manual metrics and editorial learning note UI.
 - `src/features/context-chat`: collapsible context assistant overlay, deterministic
   suggestions, and future provider-backed chat adapter boundary.
@@ -544,8 +563,9 @@ Current implemented production contracts:
 - `EditorialCheck`: type, title, check status, summary, findings.
 - `EditorNote`: agent, tone, text, target.
 - `FinalText`: draft, title, body, approval status, approved time.
-- `ReleasePackage`: final text, targets, Markdown, checklist, release status, updated
-  time.
+- `ReleasePackage`: compatibility/manual-export surface with final text, targets,
+  Markdown, checklist, release status, and updated time. It is not the future source of
+  truth for release state.
 - `EditorialLearningNote`: release package, manual metrics, editorial conclusions,
   analytics status, updated time, captured time.
 - `WorkspaceStore`: load and save current local workspace state.
@@ -570,6 +590,14 @@ Future author-position contracts:
   acceptance mode, and author reason.
 - `EvidencePolicy`: whether imported material can support assertions, is archive-only,
   or is ignored as evidence.
+- `ReadyPost`: read/projection model produced by `Редактура` when a post has approved
+  text and either an approved visual or explicit `без визуала` mode.
+- `PublicationLogEntry`: delivery log record for a ready post, publication attempt,
+  external link, status, adapter error, retry note, or manual/exported publication
+  event.
+- `PublicationAdapter`: infrastructure boundary for future Telegram/social/blog
+  delivery integrations. Adapters write publication log entries; they do not edit
+  editorial artifacts.
 
 ## Conceptual AI Provider Interfaces
 
@@ -655,12 +683,15 @@ research experience building AI-B2B products:
 12. The author approves a slot; the slot enters the editorial work queue as a
    selected production work item and receives an initial post fabula/brief.
 13. Inside `Редактура -> Рабочий стол`, the author chooses a post, approves the
-   fabula/brief, creates a draft, and approves final text for that selected work item.
-14. `Drafting` creates an editable research-note draft.
-15. `EditorialChecks` returns style, anti-AI, fact-check, and policy checks plus editor
-   notes.
-16. Inside `Выпуск`, the author prepares a manual Telegram release package for the
-   selected finalized work item and captures analytics learning after export.
+   fabula/brief, reviews the draft, and approves the post text in `Драфт`.
+14. `Drafting` creates an editable research-note draft, and `EditorialChecks` returns
+   style, anti-AI, fact-check, and policy checks plus editor notes.
+15. The next target stage is `Визуал`: the author prepares or explicitly skips the
+   visual. After text approval and visual approval or `без визуала`, the selected work
+   item becomes `readyForRelease`.
+16. `Выпуск` becomes a publication log for ready posts and publication attempts.
+   Until platform integrations exist, any manual export package remains compatibility
+   behavior rather than the conceptual release model.
 
 ## Extension Points
 
@@ -675,9 +706,10 @@ research experience building AI-B2B products:
   review; later slices should add request-more variants and calendar slot binding while
   keeping current `contentPlanItems` as a compatibility layer.
 - Approved plan slots become editorial work items immediately on slot approval.
-  `Редактура` and `Выпуск` should operate on a selected work-item id so one post can
-  move through fabula, draft, final, release, and analytics without overwriting
-  another approved post.
+  `Редактура` should operate on a selected work-item id so one post can move through
+  fabula, draft, visual, and ready state without overwriting another approved post.
+  `Выпуск` should consume ready posts and write publication log entries; it should not
+  edit production artifacts.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
@@ -689,7 +721,9 @@ research experience building AI-B2B products:
   drafting, and check services after author position and validators exist.
 - Backend persistence can replace `LocalWorkspaceStore` behind the same workspace store
   interface.
-- Platform publication APIs can attach after the manual release package.
+- Platform publication APIs should attach through `PublicationAdapter` and write
+  `PublicationLogEntry` records for ready posts. The manual release package is only a
+  compatibility bridge.
 - Real analytics ingestion can replace manual metric entry behind the analytics prep
   shape.
 
