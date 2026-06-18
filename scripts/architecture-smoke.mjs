@@ -336,6 +336,16 @@ const LARGE_SOURCE_BASELINES = [
     next: "Visual mode fields should stay presentational; keep visual generation/search logic in application/domain adapters.",
   },
   {
+    path: "src/features/editing/EditorialVisualVariants.tsx",
+    limit: 150,
+    next: "Visual variant cards should stay presentational; keep variant generation in application services.",
+  },
+  {
+    path: "src/application/visualVariantService.ts",
+    limit: 130,
+    next: "Visual variant service should stay deterministic until real adapters are introduced behind explicit ports.",
+  },
+  {
     path: "src/domain/planning/settings.ts",
     limit: 120,
     next: "Planning settings normalization should stay pure and split platform policy when introduced.",
@@ -559,8 +569,10 @@ const requiredSourceFiles = [
   "src/features/editing/EditView.tsx",
   "src/features/editing/EditorialVisualStage.tsx",
   "src/features/editing/EditorialVisualFields.tsx",
+  "src/features/editing/EditorialVisualVariants.tsx",
   "src/features/release/ReleaseView.tsx",
   "src/features/analytics/AnalyticsView.tsx",
+  "src/application/visualVariantService.ts",
 ];
 
 for (const requiredFile of requiredSourceFiles) {

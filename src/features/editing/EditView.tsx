@@ -20,7 +20,9 @@ export function EditView({
   onEditBrief,
   onDraftChange,
   onGoPlan,
+  onPrepareVisualVariants,
   onSaveVisual,
+  onSelectVisualVariant,
   onReturnWorkItem,
   onSelectWorkItem,
   onApproveFinal,
@@ -31,7 +33,9 @@ export function EditView({
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onDraftChange: (body: string) => void;
   onGoPlan: () => void;
+  onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
+  onSelectVisualVariant: (variantId: string) => void;
   onReturnWorkItem: (workItemId: string) => void;
   onSelectWorkItem: (workItemId: string) => void;
   onApproveFinal: (body?: string) => void;
@@ -126,7 +130,9 @@ export function EditView({
               onDraftChange={onDraftChange}
               onEditBrief={onEditBrief}
               onGoPlan={onGoPlan}
+              onPrepareVisualVariants={onPrepareVisualVariants}
               onSaveVisual={onSaveVisual}
+              onSelectVisualVariant={onSelectVisualVariant}
             />
           </section>
           <EditorialWorkbenchAside workspace={workspace} />

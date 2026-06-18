@@ -12,6 +12,8 @@ export function EditorialWorkbench({
   onDraftChange,
   onEditBrief,
   onGoPlan,
+  onPrepareVisualVariants,
+  onSelectVisualVariant,
   onSaveVisual
 }: {
   workspace: WorkspaceState;
@@ -21,6 +23,8 @@ export function EditorialWorkbench({
   onDraftChange: (body: string) => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
+  onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
+  onSelectVisualVariant: (variantId: string) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
 }) {
   const brief = workspace.postBrief;
@@ -89,7 +93,9 @@ export function EditorialWorkbench({
           workspace={workspace}
           onApproveVisual={onApproveVisual}
           onOpenDraft={() => setTab('draft')}
+          onPrepareVisualVariants={onPrepareVisualVariants}
           onSaveVisual={onSaveVisual}
+          onSelectVisualVariant={onSelectVisualVariant}
         />
       ) : !draft ? (
         <section className="card draft-start">

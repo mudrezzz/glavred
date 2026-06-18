@@ -133,6 +133,8 @@ export function App() {
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}
           onSaveVisual={controller.saveCurrentVisualDraft}
+          onPrepareVisualVariants={controller.prepareCurrentVisualVariants}
+          onSelectVisualVariant={controller.selectCurrentVisualVariant}
           onApproveVisual={controller.approveCurrentVisual}
         />
       )}

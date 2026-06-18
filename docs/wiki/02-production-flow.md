@@ -79,8 +79,9 @@ then returns the selected post to `Фабула`.
 
 Slice 1.10.5-1.10.7 note: `Финал` is no longer the target user-facing stage. Text is
 edited and approved in `Драфт`; after text approval the post moves to `Визуал`.
-The post becomes `готов к выпуску` only when text is approved and the visual is
-approved or explicitly skipped with `без визуала`.
+Visual modes follow `Бриф -> Подготовить варианты -> Выбрать -> Утвердить визуал`;
+`без визуала` remains the only direct shortcut. The post becomes `готов к выпуску`
+only when text is approved and the visual is approved or explicitly skipped.
 
 Slice 1.11 note: `Выпуск` is a publication log, not a preparation workbench. It records
 ready posts, publication attempts, statuses, external links, platform errors, and

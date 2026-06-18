@@ -2665,6 +2665,45 @@ Status:
   - Visual approval does not mark the item `readyForRelease`; Slice 1.10.7 owns that
     handoff rule.
 
+### Slice 1.10.6.1: Visual Variants Review Flow
+
+- Status: Done
+- Goal: Turn `Визуал` from a direct approval button into a review flow:
+  `Бриф -> Подготовить варианты -> Выбрать вариант -> Утвердить визуал`.
+- User value: The author can compare visual directions before approving the post's
+  visual decision, matching the future generate/search/remix adapters.
+- Scope:
+  - Add `PostVisualVariant` and store variants, selected variant, and batch number
+    inside `PostVisual`.
+  - Generate deterministic placeholder variants for `Сгенерировать`, `Найти мем`,
+    and `Мем + генерация`.
+  - Keep `Без визуала` as a shortcut decision without a brief or variant list.
+  - Add transitions for preparing variants, selecting a variant, approving only a
+    selected variant, and confirming no visual.
+  - Reset variants, selection, and approval when mode or brief is edited.
+  - Update the visual workbench and right panel readiness summary.
+- Out of scope:
+  - Real image generation.
+  - Real internet meme search.
+  - Real image remix or asset upload.
+  - Marking the post `readyForRelease`.
+- Architecture impact:
+  - Variant generation is deterministic application logic, not React state.
+  - `PostVisual` remains selected-post compatibility state until the full work-item
+    production model replaces singleton artifacts.
+  - Future image/search/remix adapters will attach after the same review contract.
+- Tests:
+  - Domain/application tests for preparing, selecting, approving, no-visual shortcut,
+    invalid selection, and reset after brief edits. Done.
+  - UI tests for no direct visual approval before variants, variant cards, selection,
+    approval after selection, more variants, edit brief, and no-visual shortcut. Done.
+- Acceptance criteria:
+  - `Утвердить визуал` is unavailable until a visual variant is selected.
+  - `Подготовить варианты` creates three deterministic placeholder cards for visual
+    modes.
+  - `Без визуала` can be confirmed without variants.
+  - `К выпуску: нет` remains true until Slice 1.10.7.
+
 ### Slice 1.10.7: Ready Post Handoff
 
 - Status: Ready
@@ -2879,6 +2918,7 @@ Status:
 - Slice 1.10.4: Editable Fabula Brief With Candidate Context. Completed 2026-06-17.
 - Slice 1.10.5: Draft Approval Without Final Tab. Completed 2026-06-18.
 - Slice 1.10.6: Visual Stage Foundation. Completed 2026-06-18.
+- Slice 1.10.6.1: Visual Variants Review Flow. Completed 2026-06-18.
 
 ## Blocked Items
 

@@ -1,4 +1,4 @@
-import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, ReleasePackage, VisualMode } from './types';
+import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, PostVisualVariant, ReleasePackage, VisualMode } from './types';
 
 export type PostBriefEditPatch = Pick<
   PostBrief,
@@ -82,6 +82,9 @@ export function createPostVisual(workItemId: string, mode: VisualMode = 'generat
     transformationInstructions: '',
     assetPlaceholder: '',
     notes: '',
+    variants: [],
+    selectedVariantId: null,
+    variantBatch: 0,
     approvalStatus: 'draft',
     updatedAt: now,
     approvedAt: null
@@ -89,9 +92,47 @@ export function createPostVisual(workItemId: string, mode: VisualMode = 'generat
 }
 
 export function editPostVisual(postVisual: PostVisual, patch: PostVisualEditPatch): PostVisual {
+  const normalizedPatch = normalizeVisualPatch(patch);
+  const shouldResetVariants =
+    Object.prototype.hasOwnProperty.call(normalizedPatch, 'mode') ||
+    Object.prototype.hasOwnProperty.call(normalizedPatch, 'brief');
+
   return {
     ...postVisual,
-    ...normalizeVisualPatch(patch),
+    ...normalizedPatch,
+    variants: shouldResetVariants ? [] : postVisual.variants,
+    selectedVariantId: shouldResetVariants ? null : postVisual.selectedVariantId,
+    approvalStatus: 'draft',
+    updatedAt: new Date().toISOString(),
+    approvedAt: null
+  };
+}
+
+export function preparePostVisualVariants(
+  postVisual: PostVisual,
+  patch: PostVisualEditPatch,
+  variants: PostVisualVariant[]
+): PostVisual {
+  const nextBatch = postVisual.variantBatch + 1;
+  const updated = editPostVisual(postVisual, patch);
+
+  return {
+    ...updated,
+    variants,
+    selectedVariantId: null,
+    variantBatch: nextBatch,
+    approvalStatus: 'draft',
+    updatedAt: new Date().toISOString(),
+    approvedAt: null
+  };
+}
+
+export function selectPostVisualVariant(postVisual: PostVisual, variantId: string): PostVisual {
+  if (!postVisual.variants.some((variant) => variant.id === variantId)) return postVisual;
+
+  return {
+    ...postVisual,
+    selectedVariantId: variantId,
     approvalStatus: 'draft',
     updatedAt: new Date().toISOString(),
     approvedAt: null
@@ -100,6 +141,12 @@ export function editPostVisual(postVisual: PostVisual, patch: PostVisualEditPatc
 
 export function approvePostVisual(postVisual: PostVisual, patch: PostVisualEditPatch = {}): PostVisual {
   const updated = editPostVisual(postVisual, patch);
+  const canApprove =
+    updated.mode === 'noVisual' ||
+    Boolean(updated.selectedVariantId && updated.variants.some((variant) => variant.id === updated.selectedVariantId));
+
+  if (!canApprove) return updated;
+
   const now = new Date().toISOString();
 
   return {

@@ -8,10 +8,12 @@ import {
   buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
+  buildPrepareVisualVariantsPatch,
   buildPrepareBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
   buildSaveVisualDraftPatch,
+  buildSelectVisualVariantPatch,
   buildSelectEditorialWorkItemPatch,
   withEditorialWorkItemSync
 } from './editorialWorkQueueActions';
@@ -123,7 +125,7 @@ describe('editorial work queue actions', () => {
     expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
   });
 
-  it('saves and approves visual decisions without marking the post ready for release', () => {
+  it('prepares, selects, and approves visual variants without marking the post ready for release', () => {
     const workspace = createDemoWorkspace();
     const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
     const withSlot = { ...workspace, ...approvedSlot };
@@ -131,38 +133,73 @@ describe('editorial work queue actions', () => {
     const withDraft = { ...withSlot, ...approvedBrief };
     const approvedText = buildApproveDraftTextPatch(withDraft);
     const withText = { ...withDraft, ...approvedText };
-    const saved = buildSaveVisualDraftPatch(withText, {
+    const prepared = buildPrepareVisualVariantsPatch(withText, {
       mode: 'memeSearch',
       brief: 'Найти мем про фальшивый прогресс после demo.'
     });
-    const approved = buildApproveVisualPatch({ ...withText, ...saved }, {
-      mode: 'memeSearch',
-      brief: 'Найти мем про фальшивый прогресс после demo.'
-    });
+    const blockedApproval = buildApproveVisualPatch({ ...withText, ...prepared });
+    const selected = buildSelectVisualVariantPatch(
+      { ...withText, ...prepared },
+      prepared.postVisual!.variants[1].id
+    );
+    const approved = buildApproveVisualPatch({ ...withText, ...prepared, ...selected });
 
-    expect(saved.postVisual?.mode).toBe('memeSearch');
-    expect(saved.postVisual?.brief).toBe('Найти мем про фальшивый прогресс после demo.');
-    expect(saved.postVisual?.memeSearchQuery).toBe('');
-    expect(saved.postVisual?.approvalStatus).toBe('draft');
-    expect(saved.editorialWorkItems?.[0].visual?.id).toBe(saved.postVisual?.id);
-    expect(saved.editorialWorkItems?.[0].stage).toBe('visual');
+    expect(prepared.postVisual?.mode).toBe('memeSearch');
+    expect(prepared.postVisual?.brief).toBe('Найти мем про фальшивый прогресс после demo.');
+    expect(prepared.postVisual?.memeSearchQuery).toBe('');
+    expect(prepared.postVisual?.variants).toHaveLength(3);
+    expect(prepared.postVisual?.selectedVariantId).toBeNull();
+    expect(prepared.postVisual?.variantBatch).toBe(1);
+    expect(prepared.postVisual?.approvalStatus).toBe('draft');
+    expect(prepared.editorialWorkItems?.[0].visual?.id).toBe(prepared.postVisual?.id);
+    expect(prepared.editorialWorkItems?.[0].stage).toBe('visual');
+    expect(blockedApproval.postVisual?.approvalStatus).toBe('draft');
+    expect(selected.postVisual?.selectedVariantId).toBe(prepared.postVisual?.variants[1].id);
     expect(approved.postVisual?.approvalStatus).toBe('approved');
     expect(approved.editorialWorkItems?.[0].visual?.approvalStatus).toBe('approved');
     expect(approved.editorialWorkItems?.[0].stage).toBe('visual');
     expect(approved.editorialWorkItems?.[0].stage).not.toBe('readyForRelease');
   });
 
-  it('supports all visual modes as local placeholder artifacts', () => {
+  it('supports all visual modes as local placeholder variant artifacts', () => {
     const workspace = createDemoWorkspace();
     const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
     const withSlot = { ...workspace, ...approvedSlot };
     const withDraft = { ...withSlot, ...buildApproveBriefAndCreateDraftPatch(withSlot) };
     const withText = { ...withDraft, ...buildApproveDraftTextPatch(withDraft) };
 
-    expect(buildSaveVisualDraftPatch(withText, { mode: 'generate', brief: 'Сгенерировать образ про adoption gap' }).postVisual?.mode).toBe('generate');
-    expect(buildSaveVisualDraftPatch(withText, { mode: 'memeSearch', brief: 'Найти мем про demo magic' }).postVisual?.mode).toBe('memeSearch');
-    expect(buildSaveVisualDraftPatch(withText, { mode: 'memeRemix', brief: 'Взять мем и кастомизировать под AI-B2B' }).postVisual?.mode).toBe('memeRemix');
+    expect(buildPrepareVisualVariantsPatch(withText, { mode: 'generate', brief: 'Сгенерировать образ про adoption gap' }).postVisual?.variants).toHaveLength(3);
+    expect(buildPrepareVisualVariantsPatch(withText, { mode: 'memeSearch', brief: 'Найти мем про demo magic' }).postVisual?.variants).toHaveLength(3);
+    expect(buildPrepareVisualVariantsPatch(withText, { mode: 'memeRemix', brief: 'Взять мем и кастомизировать под AI-B2B' }).postVisual?.variants).toHaveLength(3);
     expect(buildApproveVisualPatch(withText, { mode: 'noVisual', brief: '', notes: '' }).postVisual?.mode).toBe('noVisual');
+  });
+
+  it('keeps visual approval draft when selecting an unknown variant and resets variants after brief edits', () => {
+    const workspace = createDemoWorkspace();
+    const approvedSlot = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);
+    const withSlot = { ...workspace, ...approvedSlot };
+    const withDraft = { ...withSlot, ...buildApproveBriefAndCreateDraftPatch(withSlot) };
+    const withText = { ...withDraft, ...buildApproveDraftTextPatch(withDraft) };
+    const prepared = buildPrepareVisualVariantsPatch(withText, {
+      mode: 'generate',
+      brief: 'Initial visual brief'
+    });
+    const unknownSelection = buildSelectVisualVariantPatch({ ...withText, ...prepared }, 'missing-variant');
+    const selected = buildSelectVisualVariantPatch(
+      { ...withText, ...prepared },
+      prepared.postVisual!.variants[0].id
+    );
+    const approved = buildApproveVisualPatch({ ...withText, ...prepared, ...selected });
+    const edited = buildSaveVisualDraftPatch({ ...withText, ...prepared, ...selected, ...approved }, {
+      mode: 'generate',
+      brief: 'Edited visual brief'
+    });
+
+    expect(unknownSelection.postVisual?.selectedVariantId).toBeNull();
+    expect(approved.postVisual?.approvalStatus).toBe('approved');
+    expect(edited.postVisual?.variants).toEqual([]);
+    expect(edited.postVisual?.selectedVariantId).toBeNull();
+    expect(edited.postVisual?.approvalStatus).toBe('draft');
   });
 
   it('edits the selected brief and clears stale downstream artifacts', () => {

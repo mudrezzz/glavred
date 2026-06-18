@@ -461,7 +461,9 @@ Use these boundaries:
   is `section header -> Посты / Рабочий стол tabs -> filter card -> search ->
   list/group toggle -> framed rows -> selected-post workbench`. The selected-post
   workbench owns post preparation: `Фабула`, `Драфт`, `Визуал`, and
-  `readyForRelease`.
+  `readyForRelease`. Visual modes must pass through the review contract:
+  brief, prepare deterministic or adapter-backed variants, select one variant,
+  then approve. `noVisual` is the only direct visual completion path.
 - `Выпуск` owns delivery history for ready posts. It should show publication log
   records, statuses, external links, platform errors, and retry notes. It must not
   edit text, visual, brief, candidate, or slot artifacts.

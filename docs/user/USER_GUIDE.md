@@ -357,7 +357,8 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,
   `Мем + генерация`, or `Без визуала`. The first three modes use one `Бриф`
-  field; `Без визуала` has no extra field. Save or approve the visual placeholder.
+  field; `Без визуала` has no extra field. For visual modes, prepare deterministic
+  variants, select one, then approve the selected visual placeholder.
   A post becomes ready for release only after text approval and visual approval or
   `без визуала`.
 - Open `Выпуск` to inspect delivery state. Until platform integrations exist, this

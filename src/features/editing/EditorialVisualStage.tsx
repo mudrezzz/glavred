@@ -2,17 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import type { PostVisualEditPatch, VisualMode, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialVisualFields, modeLabels, toVisualDraft, toVisualPatch, type VisualDraft } from './EditorialVisualFields';
+import { EditorialVisualVariants } from './EditorialVisualVariants';
 
 export function EditorialVisualStage({
   workspace,
   onApproveVisual,
   onOpenDraft,
-  onSaveVisual
+  onPrepareVisualVariants,
+  onSaveVisual,
+  onSelectVisualVariant
 }: {
   workspace: WorkspaceState;
   onApproveVisual: (patch: PostVisualEditPatch) => void;
   onOpenDraft: () => void;
+  onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
+  onSelectVisualVariant: (variantId: string) => void;
 }) {
   const finalText = workspace.finalText;
   const selected = workspace.editorialWorkItems.find((item) => item.id === workspace.selectedEditorialWorkItemId) ?? null;
@@ -44,6 +49,8 @@ export function EditorialVisualStage({
   }
 
   const isApproved = savedVisual?.approvalStatus === 'approved' && !hasUnsavedChanges;
+  const hasPreparedVariants = Boolean(savedVisual?.variants.length) && !hasUnsavedChanges && draft.mode !== 'noVisual';
+  const selectedVariantId = savedVisual?.selectedVariantId ?? null;
 
   return (
     <section className="visual-stage" data-testid="editorial-visual-stage">
@@ -83,17 +90,40 @@ export function EditorialVisualStage({
         ))}
       </div>
 
-      <EditorialVisualFields draft={draft} onChange={setDraft} />
+      {!hasPreparedVariants ? <EditorialVisualFields draft={draft} onChange={setDraft} /> : null}
+      {hasPreparedVariants ? (
+        <EditorialVisualVariants
+          selectedVariantId={selectedVariantId}
+          variants={savedVisual?.variants ?? []}
+          onSelect={onSelectVisualVariant}
+        />
+      ) : null}
 
       {hasUnsavedChanges ? <p className="muted">Есть несохраненные правки визуала.</p> : null}
       <div className="inline-actions">
-        <button className="btn btn-pri" type="button" onClick={() => onApproveVisual(toVisualPatch(draft))}>
-          <Icon name="check" size={16} />
-          {draft.mode === 'noVisual' ? 'Подтвердить без визуала' : 'Утвердить визуал'}
-        </button>
-        <button className="btn btn-sec" type="button" disabled={!hasUnsavedChanges} onClick={() => onSaveVisual(toVisualPatch(draft))}>
-          Сохранить правки
-        </button>
+        {draft.mode === 'noVisual' ? (
+          <button className="btn btn-pri" type="button" onClick={() => onApproveVisual(toVisualPatch(draft))}>
+            <Icon name="check" size={16} />
+            Подтвердить без визуала
+          </button>
+        ) : hasPreparedVariants ? (
+          <>
+            <button className="btn btn-pri" type="button" disabled={!selectedVariantId} onClick={() => onApproveVisual({})}>
+              <Icon name="check" size={16} />
+              Утвердить визуал
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onPrepareVisualVariants(toVisualPatch(draft))}>
+              Еще варианты
+            </button>
+            <button className="btn btn-sec" type="button" onClick={() => onSaveVisual(toVisualPatch(draft))}>
+              Править бриф
+            </button>
+          </>
+        ) : (
+          <button className="btn btn-pri" type="button" disabled={!draft.brief.trim()} onClick={() => onPrepareVisualVariants(toVisualPatch(draft))}>
+            Подготовить варианты
+          </button>
+        )}
         <button className="btn btn-sec" type="button" onClick={onOpenDraft}>
           Вернуться к драфту
         </button>

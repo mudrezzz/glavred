@@ -5,6 +5,7 @@ import {
   approvePostBrief,
   approvePostCandidate,
   approveFinalText,
+  createPostVisual,
   createEditorialWorkItem,
   type ContentPlanItem,
   type PostVisualEditPatch,
@@ -170,12 +171,12 @@ describe('EditView', () => {
     expect(screen.getByRole('button', { name: /Вернуться к драфту/i })).toBeInTheDocument();
   });
 
-  it('edits and approves visual placeholder modes from a local buffer', () => {
+  it('prepares visual variants from a local brief buffer', () => {
     const workspace = createWorkspaceWithApprovedText();
     const onSaveVisual = vi.fn();
-    const onApproveVisual = vi.fn();
+    const onPrepareVisualVariants = vi.fn();
 
-    renderEdit(workspace, { onApproveVisual, onSaveVisual });
+    renderEdit(workspace, { onPrepareVisualVariants, onSaveVisual });
 
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
     expect(within(screen.getByTestId('editorial-workbench')).getByRole('tab', { name: /Визуал/i })).toHaveAttribute('aria-selected', 'true');
@@ -189,28 +190,62 @@ describe('EditView', () => {
     expect(screen.queryByLabelText('Prompt')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Reference title')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Утвердить визуал/i })).not.toBeInTheDocument();
     expect(onSaveVisual).not.toHaveBeenCalled();
+    expect(onPrepareVisualVariants).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: /Сохранить правки/i }));
-    expect(onSaveVisual).toHaveBeenCalledWith(expect.objectContaining({
+    fireEvent.click(screen.getByRole('button', { name: /Подготовить варианты/i }));
+    expect(onPrepareVisualVariants).toHaveBeenCalledWith(expect.objectContaining({
       mode: 'generate',
-      brief: 'Визуал про разрыв между demo и adoption',
-      prompt: '',
-      memeSearchQuery: '',
-      notes: ''
+      brief: 'Визуал про разрыв между demo и adoption'
     }));
 
     fireEvent.click(screen.getByRole('button', { name: /Найти мем/i }));
     expect(screen.getByLabelText('Бриф')).toBeInTheDocument();
     expect(screen.queryByLabelText('Meme search query')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Бриф'), { target: { value: 'Найти мем про фальшивое ощущение прогресса' } });
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить визуал/i }));
-    expect(onApproveVisual).toHaveBeenCalledWith(expect.objectContaining({
+    fireEvent.click(screen.getByRole('button', { name: /Подготовить варианты/i }));
+    expect(onPrepareVisualVariants).toHaveBeenCalledWith(expect.objectContaining({
       mode: 'memeSearch',
       brief: 'Найти мем про фальшивое ощущение прогресса',
       memeSearchQuery: '',
       memeReferenceTitle: ''
     }));
+  });
+
+  it('selects and approves a prepared visual variant', () => {
+    const workspace = createWorkspaceWithPreparedVisualVariants();
+    const onApproveVisual = vi.fn();
+    const onPrepareVisualVariants = vi.fn();
+    const onSaveVisual = vi.fn();
+    const onSelectVisualVariant = vi.fn();
+
+    const rendered = renderEdit(workspace, { onApproveVisual, onPrepareVisualVariants, onSaveVisual, onSelectVisualVariant });
+
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    expect(screen.getAllByTestId('editorial-visual-variant')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: /Утвердить визуал/i })).toBeDisabled();
+
+    fireEvent.click(within(screen.getAllByTestId('editorial-visual-variant')[1]).getByRole('button', { name: /Выбрать/i }));
+    expect(onSelectVisualVariant).toHaveBeenCalledWith(workspace.postVisual!.variants[1].id);
+
+    rendered.unmount();
+    const selectedWorkspace = {
+      ...workspace,
+      postVisual: {
+        ...workspace.postVisual!,
+        selectedVariantId: workspace.postVisual!.variants[1].id
+      }
+    };
+    renderEdit(selectedWorkspace, { onApproveVisual, onPrepareVisualVariants, onSaveVisual, onSelectVisualVariant });
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Утвердить визуал/i }));
+    expect(onApproveVisual).toHaveBeenCalledWith({});
+
+    fireEvent.click(screen.getByRole('button', { name: /Еще варианты/i }));
+    expect(onPrepareVisualVariants).toHaveBeenCalledWith(expect.objectContaining({ mode: 'generate' }));
+    fireEvent.click(screen.getByRole('button', { name: /Править бриф/i }));
+    expect(onSaveVisual).toHaveBeenCalledWith(expect.objectContaining({ mode: 'generate' }));
   });
 
   it('shows no-visual approval copy', () => {
@@ -287,7 +322,9 @@ function renderEdit(
     onApproveFinal: (body?: string) => void;
     onApproveVisual: (patch: PostVisualEditPatch) => void;
     onDraftChange: (body: string) => void;
+    onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
     onSaveVisual: (patch: PostVisualEditPatch) => void;
+    onSelectVisualVariant: (variantId: string) => void;
     onReturnWorkItem: (itemId: string) => void;
     onSelectWorkItem: (itemId: string) => void;
   }> = {}
@@ -301,8 +338,10 @@ function renderEdit(
       onApproveVisual={overrides.onApproveVisual ?? vi.fn()}
       onDraftChange={overrides.onDraftChange ?? vi.fn()}
       onGoPlan={vi.fn()}
+      onPrepareVisualVariants={overrides.onPrepareVisualVariants ?? vi.fn()}
       onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
       onSaveVisual={overrides.onSaveVisual ?? vi.fn()}
+      onSelectVisualVariant={overrides.onSelectVisualVariant ?? vi.fn()}
       onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}
     />
   );
@@ -325,8 +364,10 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
       onApproveVisual={vi.fn()}
       onDraftChange={vi.fn()}
       onGoPlan={vi.fn()}
+      onPrepareVisualVariants={vi.fn()}
       onReturnWorkItem={vi.fn()}
       onSaveVisual={vi.fn()}
+      onSelectVisualVariant={vi.fn()}
       onSelectWorkItem={(itemId) =>
         setCurrent((previous) => ({
           ...previous,
@@ -384,6 +425,58 @@ function createWorkspaceWithApprovedText(): WorkspaceState {
   return {
     ...workspace,
     finalText,
+    editorialWorkItems: workItems
+  };
+}
+
+function createWorkspaceWithPreparedVisualVariants(): WorkspaceState {
+  const workspace = createWorkspaceWithApprovedText();
+  const workItemId = workspace.selectedEditorialWorkItemId!;
+  const visual = {
+    ...createPostVisual(workItemId, 'generate'),
+    brief: 'Визуал про разрыв между demo и adoption',
+    variants: [
+      {
+        id: `visual-${workItemId}-variant-1-1`,
+        visualId: `visual-${workItemId}`,
+        mode: 'generate' as const,
+        title: 'Контраст до и после',
+        description: 'Два состояния продукта рядом.',
+        previewLabel: 'Вариант 1',
+        rationale: 'Показывает разрыв между demo и adoption.',
+        risks: ['Не сделать слишком рекламно.']
+      },
+      {
+        id: `visual-${workItemId}-variant-1-2`,
+        visualId: `visual-${workItemId}`,
+        mode: 'generate' as const,
+        title: 'Воронка внедрения',
+        description: 'Схема перехода от demo к workflow.',
+        previewLabel: 'Вариант 2',
+        rationale: 'Поддерживает тезис о системном переходе.',
+        risks: ['Не перегрузить деталями.']
+      },
+      {
+        id: `visual-${workItemId}-variant-1-3`,
+        visualId: `visual-${workItemId}`,
+        mode: 'generate' as const,
+        title: 'Пауза после пилота',
+        description: 'Команда застряла после успешного пилота.',
+        previewLabel: 'Вариант 3',
+        rationale: 'Передает главный конфликт поста.',
+        risks: ['Не драматизировать слишком сильно.']
+      }
+    ],
+    selectedVariantId: null,
+    variantBatch: 1
+  };
+  const workItems = workspace.editorialWorkItems.map((item) =>
+    item.id === workItemId ? { ...item, visual } : item
+  );
+
+  return {
+    ...workspace,
+    postVisual: visual,
     editorialWorkItems: workItems
   };
 }

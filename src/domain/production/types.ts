@@ -10,6 +10,18 @@ export type EditorialWorkStage = 'brief' | 'draft' | 'visual' | 'readyForRelease
 export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
 export type VisualMode = 'generate' | 'memeSearch' | 'memeRemix' | 'noVisual';
 
+export interface PostVisualVariant {
+  id: string;
+  visualId: string;
+  mode: VisualMode;
+  title: string;
+  description: string;
+  previewLabel: string;
+  rationale: string;
+  risks: string[];
+  sourceUrl?: string;
+}
+
 export interface PostBrief {
   id: string;
   planItemId: string;
@@ -80,6 +92,9 @@ export interface PostVisual {
   transformationInstructions: string;
   assetPlaceholder: string;
   notes: string;
+  variants: PostVisualVariant[];
+  selectedVariantId: string | null;
+  variantBatch: number;
   approvalStatus: ApprovalStatus;
   updatedAt: string;
   approvedAt: string | null;

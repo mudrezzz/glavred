@@ -9,8 +9,10 @@ import {
   detectBroadcastPlanConflicts,
   editPostVisual,
   editPostBrief,
+  preparePostVisualVariants,
   replacePostCandidate,
   reviseDraft,
+  selectPostVisualVariant,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
   type ContentPlanItem,
@@ -26,6 +28,7 @@ import {
   createWorkspaceInsightCard,
   runEditorialChecks
 } from '../application/editorialServices';
+import { createVisualVariants } from '../application/visualVariantService';
 
 const legacyBriefId = 'brief-ai-demo-to-adoption';
 const legacyBriefTitle = 'Почему AI-B2B демо еще не продукт';
@@ -263,6 +266,41 @@ export function buildSaveVisualDraftPatch(
 
   const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, patch.mode ?? 'generate');
   const postVisual = editPostVisual(currentVisual, patch);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildPrepareVisualVariantsPatch(
+  workspace: WorkspaceState,
+  patch: PostVisualEditPatch
+): Partial<WorkspaceState> {
+  const workItemId = workspace.selectedEditorialWorkItemId;
+  if (!workItemId || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const currentVisual = workspace.postVisual ?? createPostVisual(workItemId, patch.mode ?? 'generate');
+  const draftVisual = editPostVisual(currentVisual, patch);
+  const nextBatch = currentVisual.variantBatch + 1;
+  const variants = createVisualVariants(draftVisual, nextBatch);
+  const postVisual = preparePostVisualVariants(currentVisual, patch, variants);
+
+  return withEditorialWorkItemSync(workspace, {
+    postVisual,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildSelectVisualVariantPatch(
+  workspace: WorkspaceState,
+  variantId: string
+): Partial<WorkspaceState> {
+  if (!workspace.postVisual || workspace.finalText?.approvalStatus !== 'approved') return {};
+
+  const postVisual = selectPostVisualVariant(workspace.postVisual, variantId);
 
   return withEditorialWorkItemSync(workspace, {
     postVisual,

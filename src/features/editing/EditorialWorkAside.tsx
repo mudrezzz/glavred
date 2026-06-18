@@ -59,6 +59,8 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
         <dl className="side-dl">
           <div><dt>Текст</dt><dd>{workspace.finalText?.approvalStatus === 'approved' ? 'Утвержден' : 'Не утвержден'}</dd></div>
           <div><dt>Визуал</dt><dd>{visual ? visualStatusLabel(visual.approvalStatus, visual.mode) : 'Не начат'}</dd></div>
+          <div><dt>Варианты</dt><dd>{visual?.mode === 'noVisual' ? 'Не нужны' : visual?.variants.length ? `${visual.variants.length} подготовлено` : 'Не подготовлены'}</dd></div>
+          <div><dt>Выбор</dt><dd>{visual?.mode === 'noVisual' ? 'Без визуала' : visual?.selectedVariantId ? 'Вариант выбран' : 'Не выбран'}</dd></div>
           <div><dt>К выпуску</dt><dd>Нет</dd></div>
         </dl>
         {visualWarnings.length > 0 ? (
@@ -109,6 +111,8 @@ function getVisualWarnings(workspace: WorkspaceState, visual: WorkspaceState['po
   if (workspace.finalText?.approvalStatus !== 'approved') return ['Сначала утвердите текст в Драфт.'];
   if (!visual) return ['Визуальное решение еще не начато.'];
   if (visual.mode !== 'noVisual' && !visual.brief) return ['Заполните бриф визуала.'];
+  if (visual.mode !== 'noVisual' && visual.variants.length === 0) return ['Подготовьте варианты визуала.'];
+  if (visual.mode !== 'noVisual' && !visual.selectedVariantId) return ['Выберите вариант визуала.'];
   return [];
 }
 

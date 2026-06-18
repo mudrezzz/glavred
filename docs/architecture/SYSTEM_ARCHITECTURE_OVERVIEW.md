@@ -103,6 +103,11 @@ Slice 1.10.6 implements the first `Визуал` foundation as local selected-po
 `noVisual`), one user-facing visual brief, compatibility fields for future adapters,
 and approval status. The workbench deliberately exposes only one Russian `Бриф`
 field for `generate`, `memeSearch`, and `memeRemix`; `noVisual` has no extra field.
+Slice 1.10.6.1 adds the review contract around that state: deterministic
+`PostVisualVariant` placeholders are prepared from the current mode and brief, one
+variant must be selected before visual approval, and editing the mode or brief resets
+variants, selection, and approval. `noVisual` remains the only shortcut that can be
+approved without variants.
 Real image generation, internet meme search, and hybrid meme-based image
 transformation remain adapter-backed future slices; React workbench code stores the
 decision contract only.
@@ -198,8 +203,9 @@ turning the product into generic content generation.
 - `EditorialChecks`: models style, anti-AI, fact-check, and policy checks plus editor
   notes before text approval.
 - `VisualPreparation`: selected-post stage for one visual brief, visual mode,
-  approval state, or explicit `без визуала`. It owns the local decision contract;
-  provider-backed generation/search/remix adapters attach later.
+  deterministic or adapter-backed variants, selected variant, approval state, or
+  explicit `без визуала`. It owns the local review contract; provider-backed
+  generation/search/remix adapters attach later.
 - `ReleaseLog`: future delivery layer that records ready posts, publication attempts,
   platform statuses, external links, adapter errors, and retry notes. The existing
   manual release package remains compatibility behavior until this model replaces it.

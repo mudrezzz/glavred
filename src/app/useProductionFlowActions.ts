@@ -20,9 +20,11 @@ import {
   buildApproveVisualPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
+  buildPrepareVisualVariantsPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
   buildSaveVisualDraftPatch,
+  buildSelectVisualVariantPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
@@ -114,6 +116,14 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     patchWorkspace(buildApproveVisualPatch(workspace, patch), 'Визуал утвержден');
   }
 
+  function prepareCurrentVisualVariants(patch: PostVisualEditPatch) {
+    patchWorkspace(buildPrepareVisualVariantsPatch(workspace, patch), 'Варианты визуала подготовлены');
+  }
+
+  function selectCurrentVisualVariant(variantId: string) {
+    patchWorkspace(buildSelectVisualVariantPatch(workspace, variantId), 'Вариант визуала выбран');
+  }
+
   function createReleaseFromFinalText() {
     if (!workspace.finalText || workspace.finalText.approvalStatus !== 'approved') return;
     const releasePackage = createReleasePackage(workspace.finalText, workspace.contentPlanItem);
@@ -198,9 +208,11 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     editCurrentBrief,
     generateBroadcastPlan,
     markCurrentReleaseReady,
+    prepareCurrentVisualVariants,
     returnEditorialWorkItemToCandidates,
     saveContentPlanSettings,
     saveCurrentVisualDraft,
+    selectCurrentVisualVariant,
     selectEditorialWorkItem,
     toggleReleaseChecklist,
     updateCurrentLearningNote,

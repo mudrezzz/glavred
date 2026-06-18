@@ -576,6 +576,18 @@ describe('LocalWorkspaceStore', () => {
       transformationInstructions: 'Replace the caption with product adoption context.',
       assetPlaceholder: 'visual-placeholder',
       notes: 'Demo only.',
+      variants: [{
+        id: `visual-${workItem.id}-variant-1-1`,
+        visualId: `visual-${workItem.id}`,
+        mode: 'memeRemix',
+        title: 'Custom meme',
+        description: 'Demo variant',
+        previewLabel: 'MEME',
+        rationale: 'Fits the post.',
+        risks: ['Check tone.']
+      }],
+      selectedVariantId: `visual-${workItem.id}-variant-1-1`,
+      variantBatch: 1,
       approvalStatus: 'approved',
       updatedAt: '2026-06-18T10:00:00.000Z',
       approvedAt: '2026-06-18T10:00:00.000Z'
@@ -591,7 +603,45 @@ describe('LocalWorkspaceStore', () => {
     const loaded = store.load();
 
     expect(loaded.postVisual?.mode).toBe('memeRemix');
+    expect(loaded.postVisual?.variants).toHaveLength(1);
+    expect(loaded.postVisual?.selectedVariantId).toBe(`visual-${workItem.id}-variant-1-1`);
     expect(loaded.editorialWorkItems[0].visual?.approvalStatus).toBe('approved');
+  });
+
+  it('normalizes legacy visual state without variants', () => {
+    const store = new LocalWorkspaceStore(createMemoryStorage());
+    const workspace = createDemoWorkspace();
+    const workItem = createEditorialWorkItem(workspace.contentPlanItems[0]);
+    const legacyVisual = {
+      id: `visual-${workItem.id}`,
+      workItemId: workItem.id,
+      mode: 'generate',
+      brief: 'Legacy brief',
+      prompt: '',
+      memeSearchQuery: '',
+      memeReferenceTitle: '',
+      memeReferenceUrl: '',
+      transformationInstructions: '',
+      assetPlaceholder: '',
+      notes: '',
+      approvalStatus: 'draft',
+      updatedAt: '2026-06-18T10:00:00.000Z',
+      approvedAt: null
+    };
+
+    store.save({
+      ...workspace,
+      editorialWorkItems: [{ ...workItem, visual: legacyVisual as WorkspaceState['postVisual'] }],
+      selectedEditorialWorkItemId: workItem.id,
+      postVisual: legacyVisual as WorkspaceState['postVisual']
+    });
+
+    const loaded = store.load();
+
+    expect(loaded.postVisual?.variants).toEqual([]);
+    expect(loaded.postVisual?.selectedVariantId).toBeNull();
+    expect(loaded.postVisual?.variantBatch).toBe(0);
+    expect(loaded.editorialWorkItems[0].visual?.variants).toEqual([]);
   });
 
   it('normalizes legacy final editorial work stage to visual', () => {

@@ -116,7 +116,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     editorialChecks: saved.editorialChecks ?? [],
     editorNotes: saved.editorNotes ?? [],
     finalText: saved.finalText ?? null,
-    postVisual: saved.postVisual ?? null,
+    postVisual: saved.postVisual ? normalizePostVisual(saved.postVisual) : null,
     releasePackage: saved.releasePackage ?? null,
     editorialLearningNote: saved.editorialLearningNote ?? null,
     externalSources: saved.externalSources ?? demo.externalSources,
@@ -149,7 +149,16 @@ function normalizeEditorialWorkItem(item: StoredEditorialWorkItem): WorkspaceSta
     editorialChecks: item.editorialChecks ?? [],
     editorNotes: item.editorNotes ?? [],
     finalText: item.finalText ?? null,
-    visual: item.visual ?? null
+    visual: item.visual ? normalizePostVisual(item.visual) : null
+  };
+}
+
+function normalizePostVisual(visual: NonNullable<WorkspaceState['postVisual']>): NonNullable<WorkspaceState['postVisual']> {
+  return {
+    ...visual,
+    variants: visual.variants ?? [],
+    selectedVariantId: visual.selectedVariantId ?? null,
+    variantBatch: visual.variantBatch ?? 0
   };
 }
 
