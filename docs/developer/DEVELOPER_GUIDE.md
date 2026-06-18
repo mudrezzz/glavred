@@ -259,6 +259,33 @@ Draft generation API:
 - The frontend keeps local workspace persistence; backend sync is not part of this
   slice.
 
+Draft generation observability:
+
+- Backend draft runs store full local sanitized trace in `AiRun.requestPayload` and
+  `AiRun.resultPayload`: prompt messages, provider request summary, generated draft
+  body, provider metadata, fallback flag, and safe error context.
+- Frontend workspace stores only `PostDraft.generation`: source, `AiRun` id, provider,
+  model, fallback flag, timestamp, and optional error.
+- Never store or return API keys, `Authorization` headers, secret env values, or
+  absolute local paths in AI run payloads.
+
+Useful debug commands while the backend is running:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/ai-runs?capability=draftGeneration&limit=5"
+Invoke-RestMethod "http://localhost:8000/api/ai-runs/<AI_RUN_ID>"
+```
+
+How to read draft generation source:
+
+- OpenRouter success: frontend shows `source=openrouter`, an `AiRun ID`, provider,
+  model, and `fallbackUsed=false`; the backend run has provider response metadata.
+- Backend deterministic fallback: frontend shows `source=backendFallback`,
+  `fallbackUsed=true`, and an `AiRun ID`; the backend run contains the provider/config
+  error and fallback draft body.
+- Frontend local emergency fallback: frontend shows `source=localFallback`,
+  `aiRunId=null`; the backend was unreachable, so no backend run was recorded.
+
 Backend OOP/SRP rules:
 
 - API handlers must not contain prompt logic, persistence logic, provider calls, or

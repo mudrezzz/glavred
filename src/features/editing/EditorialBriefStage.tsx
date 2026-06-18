@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { PostBrief, PostBriefEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefContextPanel } from './EditorialBriefContextPanel';
@@ -8,6 +8,7 @@ import { getEditorialWorkItemContext } from './editorialWorkItemContext';
 export function EditorialBriefStage({
   brief,
   workspace,
+  isDraftGenerating,
   onApproveBrief,
   onEditBrief,
   onGoPlan,
@@ -15,6 +16,7 @@ export function EditorialBriefStage({
 }: {
   brief: PostBrief;
   workspace: WorkspaceState;
+  isDraftGenerating: boolean;
   onApproveBrief: () => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onGoPlan: () => void;
@@ -46,11 +48,11 @@ export function EditorialBriefStage({
             <button
               className="btn btn-pri"
               type="button"
-              disabled={brief.approvalStatus === 'approved'}
+              disabled={brief.approvalStatus === 'approved' || isDraftGenerating}
               onClick={approveBrief}
             >
               <Icon name="check" size={16} />
-              {brief.approvalStatus === 'approved' ? 'Фабула утверждена' : 'Утвердить фабулу'}
+              {isDraftGenerating ? 'Генерируем драфт' : brief.approvalStatus === 'approved' ? 'Фабула утверждена' : 'Утвердить фабулу'}
             </button>
             <button className="btn btn-sec" type="button" onClick={() => setIsEditing(true)}>
               Редактировать

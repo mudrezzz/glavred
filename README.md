@@ -169,6 +169,10 @@ draft-generation endpoint: `POST /api/drafts/generate`. When OpenRouter is confi
 approving a fabula can generate the draft through the backend; missing provider config
 or provider errors fall back to deterministic drafting and are recorded in local SQLite
 at `AI_RUN_AUDIT_DB_PATH` (default `var/glavred-ai-runs.sqlite3`, ignored by Git).
+Draft runs store a local sanitized trace with prompt messages, provider metadata,
+generated draft body, fallback flag, and safe error context. The UI stores only a
+summary and the `AiRun ID`; inspect the full trace through
+`GET /api/ai-runs/{id}`.
 
 Run tests:
 

@@ -5,7 +5,12 @@ from typing import Any
 
 import httpx
 
-from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
+from backend.app.domain.draft_generation import (
+    DRAFT_RESPONSE_FORMAT,
+    DRAFT_TEMPERATURE,
+    DraftGenerationRequest,
+    GeneratedDraft,
+)
 from backend.app.settings import BackendSettings
 
 
@@ -16,7 +21,12 @@ class OpenRouterDraftResult:
 
 
 class OpenRouterDraftAdapter:
-    def generate(self, settings: BackendSettings, request: DraftGenerationRequest) -> OpenRouterDraftResult:
+    def generate(
+        self,
+        settings: BackendSettings,
+        request: DraftGenerationRequest,
+        messages: list[dict[str, str]],
+    ) -> OpenRouterDraftResult:
         api_key = settings.openrouter_api_key.get_secret_value() if settings.openrouter_api_key else ""
         response = httpx.post(
             f"{settings.openrouter_base_url.rstrip('/')}/chat/completions",
@@ -28,9 +38,9 @@ class OpenRouterDraftAdapter:
             },
             json={
                 "model": settings.openrouter_default_model,
-                "messages": self._messages(request),
-                "temperature": 0.4,
-                "response_format": {"type": "json_object"},
+                "messages": messages,
+                "temperature": DRAFT_TEMPERATURE,
+                "response_format": DRAFT_RESPONSE_FORMAT,
             },
             timeout=45,
         )
@@ -59,48 +69,6 @@ class OpenRouterDraftAdapter:
                 "usage": payload.get("usage"),
             },
         )
-
-    def _messages(self, request: DraftGenerationRequest) -> list[dict[str, str]]:
-        brief = request.brief
-        model = request.editorial_model
-        return [
-            {
-                "role": "system",
-                "content": (
-                    "You are Glavred, an editorial drafting assistant. "
-                    "Return strict JSON only with keys title and body. "
-                    "Write in Russian unless the source material clearly requires another language."
-                ),
-            },
-            {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "brief": {
-                            "title": brief.title,
-                            "rubric": brief.rubric,
-                            "audience": brief.audience,
-                            "thesis": brief.thesis,
-                            "conflict": brief.conflict,
-                            "authorPosition": brief.author_position,
-                            "evidence": brief.evidence,
-                            "examples": brief.examples,
-                            "structure": brief.structure,
-                            "cta": brief.cta,
-                            "risks": brief.risks,
-                            "sources": brief.sources,
-                        },
-                        "editorialModel": {
-                            "audience": model.audience,
-                            "styleRules": model.style_rules,
-                            "forbiddenTopics": model.forbidden_topics,
-                            "goals": model.goals,
-                        },
-                    },
-                    ensure_ascii=False,
-                ),
-            },
-        ]
 
     def _extract_content(self, payload: dict[str, Any]) -> str:
         choices = payload.get("choices")

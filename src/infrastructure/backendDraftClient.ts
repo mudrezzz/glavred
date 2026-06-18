@@ -1,17 +1,12 @@
-import type { EditorialModel, PostBrief, PostDraft } from '../domain/editorialWorkspace';
+import type { DraftGenerationTrace, EditorialModel, PostBrief, PostDraft } from '../domain/editorialWorkspace';
 
 export type BackendAiRun = {
   id: string;
-  capability: string;
-  status: string;
   provider: string;
   model: string | null;
-  requestPayload: Record<string, unknown>;
-  resultPayload: Record<string, unknown> | null;
   error: string | null;
   fallbackUsed: boolean;
   createdAt: string;
-  updatedAt: string;
 };
 
 export type BackendDraftResponse = {
@@ -19,11 +14,20 @@ export type BackendDraftResponse = {
   aiRun: BackendAiRun;
 };
 
+type FetchDraft = typeof fetch;
+
+let draftFetchOverride: FetchDraft | null = null;
+
+export function setBackendDraftFetchForTests(fetcher: FetchDraft | null) {
+  draftFetchOverride = fetcher;
+}
+
 export async function generateBackendDraft(
   brief: PostBrief,
   editorialModel: EditorialModel
 ): Promise<BackendDraftResponse> {
-  const response = await fetch(`${apiBaseUrl()}/api/drafts/generate`, {
+  const fetchDraft = draftFetchOverride ?? fetch;
+  const response = await fetchDraft(`${apiBaseUrl()}/api/drafts/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -55,10 +59,29 @@ export async function generateBackendDraft(
     throw new Error(`Backend draft generation failed with HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<BackendDraftResponse>;
+  const payload = await response.json() as BackendDraftResponse;
+  return {
+    ...payload,
+    draft: {
+      ...payload.draft,
+      generation: generationTraceFromRun(payload.aiRun)
+    }
+  };
 }
 
 function apiBaseUrl(): string {
   const env = (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env;
   return (env?.VITE_API_BASE_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+}
+
+function generationTraceFromRun(aiRun: BackendAiRun): DraftGenerationTrace {
+  return {
+    source: aiRun.fallbackUsed ? 'backendFallback' : 'openrouter',
+    aiRunId: aiRun.id,
+    provider: aiRun.provider,
+    model: aiRun.model,
+    fallbackUsed: aiRun.fallbackUsed,
+    createdAt: aiRun.createdAt,
+    error: aiRun.error
+  };
 }

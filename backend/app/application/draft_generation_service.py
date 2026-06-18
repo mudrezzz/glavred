@@ -2,6 +2,8 @@ from typing import Protocol
 
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
+from backend.app.application.draft_generation_audit import build_draft_request_trace, build_draft_result_trace
+from backend.app.application.draft_prompt_builder import build_draft_prompt_messages
 from backend.app.domain.ai_run import AiRun, AiRunCapability, AiRunProvider
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -31,8 +33,16 @@ class DraftGenerationService:
         self._deterministic_draft_service = deterministic_draft_service
 
     def generate(self, request: DraftGenerationRequest) -> tuple[GeneratedDraft, AiRun]:
-        request_payload = self._request_payload(request)
         openrouter_status = self._openrouter_validator.evaluate(self._settings)
+        provider = AiRunProvider.OPENROUTER if openrouter_status.configured else AiRunProvider.DETERMINISTIC
+        model = self._settings.openrouter_default_model if openrouter_status.configured else None
+        messages = build_draft_prompt_messages(request)
+        request_payload = build_draft_request_trace(
+            request,
+            provider=provider,
+            model=model,
+            messages=messages,
+        )
         if not openrouter_status.configured:
             draft = self._deterministic_draft_service.create_draft(request)
             return draft, self._create_fallback_run(
@@ -44,17 +54,16 @@ class DraftGenerationService:
             )
 
         try:
-            result = self._openrouter_adapter.generate(self._settings, request)
+            result = self._openrouter_adapter.generate(self._settings, request, messages)
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
                 model=self._settings.openrouter_default_model,
                 request_payload=request_payload,
-                result_payload={
-                    "draftId": result.draft.id,
-                    "title": result.draft.title,
-                    "provider": result.raw_response,
-                },
+                result_payload=build_draft_result_trace(
+                    result.draft,
+                    provider_response=result.raw_response,
+                ),
                 fallback_used=False,
             )
             return result.draft, run
@@ -82,24 +91,14 @@ class DraftGenerationService:
             provider=provider,
             model=model,
             request_payload=request_payload,
-            result_payload={
-                "draftId": draft.id,
-                "title": draft.title,
-                "fallback": "deterministic",
-            },
+            result_payload=build_draft_result_trace(
+                draft,
+                provider_response=None,
+                fallback="deterministic",
+            ),
             fallback_used=True,
             error=error,
         )
-
-    def _request_payload(self, request: DraftGenerationRequest) -> dict[str, object]:
-        return {
-            "briefId": request.brief.id,
-            "title": request.brief.title,
-            "rubric": request.brief.rubric,
-            "audience": request.brief.audience,
-            "thesis": request.brief.thesis,
-            "modelAudience": request.editorial_model.audience,
-        }
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)

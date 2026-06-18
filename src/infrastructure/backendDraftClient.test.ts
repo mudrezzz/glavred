@@ -47,6 +47,15 @@ describe('backendDraftClient', () => {
     expect(body.brief.authorPosition).toBe(workspace.postBrief!.authorPosition);
     expect(body.editorialModel.styleRules).toEqual(workspace.editorialModel.styleRules);
     expect(result.draft.body).toBe('Backend body');
+    expect(result.draft.generation).toEqual({
+      source: 'openrouter',
+      aiRunId: 'run-1',
+      provider: 'openrouter',
+      model: 'openrouter/test-model',
+      fallbackUsed: false,
+      createdAt: '2026-06-18T00:00:00+00:00',
+      error: null
+    });
     vi.unstubAllGlobals();
   });
 

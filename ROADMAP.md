@@ -3082,6 +3082,47 @@ Status:
   - Dockerized frontend runs at `http://localhost:5176`; backend remains at
     `http://localhost:8000`. Done.
 
+### Slice 2.3.2: AI Run Observability and Draft Generation Status
+
+- Status: Done
+- Goal: Make draft generation diagnosable in backend audit records and understandable
+  in the editorial UI while keeping workspace state local-first.
+- Scope:
+  - Store full local sanitized draft-generation trace in `AiRun.requestPayload`:
+    capability input, prompt messages, provider request summary, model,
+    temperature, and response format. Done.
+  - Store full generated draft body and provider/fallback metadata in
+    `AiRun.resultPayload`. Done.
+  - Keep secrets, authorization headers, API keys, and absolute local paths out of
+    audit responses. Done.
+  - Add lightweight `PostDraft.generation` metadata in frontend workspace state:
+    source, `AiRun` id, provider, model, fallback flag, timestamp, and optional
+    error. Done.
+  - Show draft-generation pending state immediately after `Утвердить фабулу` and
+    block duplicate clicks while the backend run is pending. Done.
+  - Show trace summary in `Драфт` and the `Рабочий стол` side panel, including
+    OpenRouter success, backend fallback, or local emergency fallback. Done.
+- Out of scope:
+  - Streaming, queueing, retries, prompt management UI, AI-run history UI, workspace
+    backend persistence, and LangGraph integration.
+- Architecture impact:
+  - Prompt construction and audit payload assembly live in application modules, not
+    API handlers or infrastructure adapters.
+  - OpenRouter adapter returns provider metadata and receives already-built prompt
+    messages for auditability.
+  - Frontend stores only trace summary and `AiRun` id; the full prompt/body trace
+    stays in local SQLite audit storage.
+- Tests:
+  - Backend tests cover OpenRouter success trace, fallback trace, full draft body,
+    provider metadata, and secret redaction. Done.
+  - Frontend tests cover generation pending UI, duplicate-click blocking, backend
+    trace metadata, backend fallback metadata, and local emergency fallback. Done.
+- Acceptance criteria:
+  - `GET /api/ai-runs/{id}` returns enough trace to answer what prompt/messages were
+    sent, what provider returned, and whether fallback was used. Done.
+  - After `Утвердить фабулу`, the user sees generation progress instead of an empty
+    draft screen. Done.
+
 ### Slice 2.4: Document AI Platform Import Adapter
 
 - Status: Ready
@@ -3198,6 +3239,8 @@ Status:
 - Slice 2.2: AI Run Contract and Audit Trail. Completed 2026-06-18.
 - Slice 2.3: First OpenRouter Draft Run. Completed 2026-06-18.
 - Slice 2.3.1: Dockerized Local Full-Stack Runner. Completed 2026-06-18.
+- Slice 2.3.2: AI Run Observability and Draft Generation Status. Completed
+  2026-06-18.
 
 ## Blocked Items
 

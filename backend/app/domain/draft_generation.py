@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+DRAFT_RESPONSE_FORMAT = {"type": "json_object"}
+DRAFT_TEMPERATURE = 0.4
+
 
 @dataclass(frozen=True)
 class DraftBriefContext:

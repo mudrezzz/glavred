@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import type { PostBriefEditPatch, PostDraft, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
+﻿import { useEffect, useState } from 'react';
+import type { DraftGenerationUiState, PostBriefEditPatch, PostDraft, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefStage } from './EditorialBriefStage';
 import { EditorialVisualStage } from './EditorialVisualStage';
 
 export function EditorialWorkbench({
   workspace,
+  draftGenerationState,
   onApproveBrief,
   onApproveFinal,
   onApproveVisual,
@@ -20,6 +21,7 @@ export function EditorialWorkbench({
   onSaveVisual
 }: {
   workspace: WorkspaceState;
+  draftGenerationState: DraftGenerationUiState;
   onApproveBrief: () => void;
   onApproveFinal: (body?: string) => void;
   onApproveVisual: (patch: PostVisualEditPatch) => void;
@@ -41,6 +43,12 @@ export function EditorialWorkbench({
     if (finalText?.approvalStatus === 'approved') return 'visual';
     return 'draft';
   });
+
+  useEffect(() => {
+    if (draftGenerationState.status === 'generating') {
+      setTab('draft');
+    }
+  }, [draftGenerationState.status]);
 
   if (!workspace.selectedEditorialWorkItemId) {
     return (
@@ -86,6 +94,7 @@ export function EditorialWorkbench({
         <EditorialBriefStage
           brief={brief}
           workspace={workspace}
+          isDraftGenerating={draftGenerationState.status === 'generating'}
           onApproveBrief={onApproveBrief}
           onEditBrief={(patch) => {
             onEditBrief(patch);
@@ -106,11 +115,18 @@ export function EditorialWorkbench({
           onSelectMemeReference={onSelectMemeReference}
           onSelectVisualVariant={onSelectVisualVariant}
         />
+      ) : draftGenerationState.status === 'generating' ? (
+        <section className="card draft-start draft-generation-pending" aria-live="polite">
+          <span className="rub">{brief.rubric}</span>
+          <h2>Генерируем драфт</h2>
+          <p>Backend отправляет утвержденную фабулу в OpenRouter. Драфт появится здесь автоматически, когда run завершится.</p>
+          <div className="draft-generation-spinner" aria-hidden="true" />
+        </section>
       ) : !draft ? (
         <section className="card draft-start">
           <span className="rub">{brief.rubric}</span>
           <h2>{brief.title}</h2>
-          <p>Драфт появится после утверждения фабулы.</p>
+          <p>Драфт появится после утверждения фабулы. Если генерация уже запускалась, проверьте статус справа или повторите утверждение фабулы.</p>
           <button className="btn btn-sec" type="button" onClick={() => setTab('brief')}>
             Вернуться к фабуле
           </button>
@@ -120,6 +136,7 @@ export function EditorialWorkbench({
           <DraftEditor
             draft={draft}
             isTextApproved={finalText?.approvalStatus === 'approved'}
+            generationState={draftGenerationState}
             onApproveDraft={onApproveFinal}
             onDraftChange={onDraftChange}
             onOpenBrief={() => setTab('brief')}
@@ -133,12 +150,14 @@ export function EditorialWorkbench({
 function DraftEditor({
   draft,
   isTextApproved,
+  generationState,
   onApproveDraft,
   onDraftChange,
   onOpenBrief
 }: {
   draft: PostDraft;
   isTextApproved: boolean;
+  generationState: DraftGenerationUiState;
   onApproveDraft: (body: string) => void;
   onDraftChange: (body: string) => void;
   onOpenBrief: () => void;
@@ -171,6 +190,7 @@ function DraftEditor({
           <span>следующий шаг: Визуал</span>
         </div>
       ) : null}
+      <DraftGenerationSummary draft={draft} generationState={generationState} />
       <label className="draft-editor">
         <span className="k">Текст</span>
         <textarea
@@ -193,5 +213,40 @@ function DraftEditor({
         </button>
       </div>
     </>
+  );
+}
+
+function DraftGenerationSummary({
+  draft,
+  generationState
+}: {
+  draft: PostDraft;
+  generationState: DraftGenerationUiState;
+}) {
+  const generation = draft.generation;
+  if (generationState.status === 'failed') {
+    return (
+      <div className="draft-generation-summary warning">
+        <b>Backend run не записан</b>
+        <span>Использован локальный fallback. Причина: {generationState.error}</span>
+      </div>
+    );
+  }
+  if (!generation) return null;
+
+  const sourceLabel = generation.source === 'openrouter'
+    ? 'OpenRouter'
+    : generation.source === 'backendFallback'
+      ? 'Backend fallback'
+      : 'Local fallback';
+
+  return (
+    <div className={`draft-generation-summary${generation.fallbackUsed ? ' warning' : ''}`}>
+      <b>AI trace: {sourceLabel}</b>
+      <span>
+        Provider: {generation.provider ?? 'none'} · Model: {generation.model ?? 'none'} · AiRun: {generation.aiRunId ?? 'not recorded'}
+      </span>
+      {generation.error ? <span>Ошибка: {generation.error}</span> : null}
+    </div>
   );
 }

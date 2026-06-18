@@ -1,4 +1,4 @@
-import type { EditorialWorkItem, WorkspaceState } from '../../domain/editorialWorkspace';
+import type { DraftGenerationSource, DraftGenerationUiState, EditorialWorkItem, WorkspaceState } from '../../domain/editorialWorkspace';
 import { stageLabel, workStatusLabel } from './editorialWorkQueueFilters';
 
 export function EditorialPostsAside({ items }: { items: EditorialWorkItem[] }) {
@@ -35,7 +35,13 @@ export function EditorialPostsAside({ items }: { items: EditorialWorkItem[] }) {
   );
 }
 
-export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceState }) {
+export function EditorialWorkbenchAside({
+  workspace,
+  draftGenerationState
+}: {
+  workspace: WorkspaceState;
+  draftGenerationState: DraftGenerationUiState;
+}) {
   const selected = workspace.editorialWorkItems.find((item) => item.id === workspace.selectedEditorialWorkItemId);
   const visual = workspace.postVisual ?? selected?.visual ?? null;
   const visualWarnings = getVisualWarnings(workspace, visual);
@@ -77,6 +83,17 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
         ) : null}
       </section>
       <section className="panel">
+        <h3>AI trace</h3>
+        <dl className="side-dl">
+          <div><dt>Статус</dt><dd>{draftGenerationState.status === 'generating' ? 'Генерация идет' : workspace.postDraft?.generation ? 'Записан' : 'Нет run'}</dd></div>
+          <div><dt>Источник</dt><dd>{draftSourceLabel(workspace.postDraft?.generation?.source)}</dd></div>
+          <div><dt>Provider</dt><dd>{workspace.postDraft?.generation?.provider ?? 'none'}</dd></div>
+          <div><dt>Model</dt><dd>{workspace.postDraft?.generation?.model ?? 'none'}</dd></div>
+          <div><dt>AiRun</dt><dd>{workspace.postDraft?.generation?.aiRunId ?? 'not recorded'}</dd></div>
+          {draftGenerationState.status === 'failed' ? <div><dt>Ошибка</dt><dd>{draftGenerationState.error}</dd></div> : null}
+        </dl>
+      </section>
+      <section className="panel">
         <h3>Проверки</h3>
         <div className="checks compact-checks">
           {workspace.editorialChecks.length > 0 ? workspace.editorialChecks.map((check) => (
@@ -102,6 +119,13 @@ export function EditorialWorkbenchAside({ workspace }: { workspace: WorkspaceSta
       </section>
     </aside>
   );
+}
+
+function draftSourceLabel(source: DraftGenerationSource | undefined): string {
+  if (source === 'openrouter') return 'OpenRouter';
+  if (source === 'backendFallback') return 'Backend fallback';
+  if (source === 'localFallback') return 'Local fallback';
+  return 'Нет';
 }
 
 function visualStatusLabel(status: string, mode: string): string {

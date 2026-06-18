@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { PostBriefEditPatch, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
+import type { DraftGenerationUiState, PostBriefEditPatch, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
 import { EditorialPostsAside, EditorialWorkbenchAside } from './EditorialWorkAside';
 import { EditorialWorkbench } from './EditorialWorkbench';
 import { EditorialWorkGroupList, EditorialWorkQueueList } from './EditorialWorkQueueList';
@@ -16,6 +16,7 @@ import {
 
 export function EditView({
   workspace,
+  draftGenerationState = { status: 'idle' },
   onApproveBrief,
   onEditBrief,
   onDraftChange,
@@ -32,6 +33,7 @@ export function EditView({
   onApproveVisual
 }: {
   workspace: WorkspaceState;
+  draftGenerationState?: DraftGenerationUiState;
   onApproveBrief: () => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
   onDraftChange: (body: string) => void;
@@ -130,6 +132,7 @@ export function EditView({
             />
             <EditorialWorkbench
               workspace={workspace}
+              draftGenerationState={draftGenerationState}
               onApproveBrief={onApproveBrief}
               onApproveFinal={onApproveFinal}
               onApproveVisual={onApproveVisual}
@@ -144,7 +147,7 @@ export function EditView({
               onSelectVisualVariant={onSelectVisualVariant}
             />
           </section>
-          <EditorialWorkbenchAside workspace={workspace} />
+          <EditorialWorkbenchAside workspace={workspace} draftGenerationState={draftGenerationState} />
         </div>
       )}
     </div>

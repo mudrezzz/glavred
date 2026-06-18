@@ -341,6 +341,25 @@ record `fallbackUsed: true`. The frontend still stores workspace state locally; 
 uses the backend only for draft generation and keeps a local emergency fallback if the
 backend itself is unreachable.
 
+Slice 2.3.2 makes AI execution observable. Every backend draft run stores a full
+local sanitized trace in `AiRun` JSON payloads:
+
+- `requestPayload`: capability input, prompt messages, provider request summary,
+  model, temperature, and response format.
+- `resultPayload`: generated draft id/title/body/version/status, provider response
+  id/model/usage when available, fallback flag, and safe error context.
+
+The trace is intentionally local development audit data. API keys, authorization
+headers, secret env values, and absolute local paths must never be stored or returned.
+React workspace state stores only lightweight `PostDraft.generation` metadata:
+source, `AiRun` id, provider, model, fallback flag, created time, and optional error.
+The full prompt/body trace remains behind `GET /api/ai-runs/{id}`. Provider-backed
+slices must include this observability surface before they are considered complete.
+The `Редактура -> Рабочий стол` UI also treats draft generation as asynchronous work:
+after `Утвердить фабулу`, the draft tab shows a pending state, duplicate approval is
+blocked, and the completed draft shows whether it came from OpenRouter, backend
+fallback, or frontend local emergency fallback.
+
 The Dockerized local stack is an execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.

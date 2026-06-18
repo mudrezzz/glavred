@@ -90,6 +90,13 @@ ready posts, publication attempts, statuses, external links, platform errors, an
 retry notes. Until platform integrations exist, manual export remains compatibility
 behavior.
 
+Slice 2.3.2 note: draft generation is visible and auditable. After `????????? ??????`,
+`?????` shows a pending state until the backend responds. Completed drafts show whether
+they came from OpenRouter, backend deterministic fallback, or frontend local emergency
+fallback. Backend-recorded drafts include an `AiRun ID`; use `/api/ai-runs/{id}` to
+inspect sanitized prompt messages, provider metadata, generated body, and fallback/error
+context.
+
 ## Ограничения текущего demo
 
 - Инсайт, план и фабула создаются deterministic-сервисами.

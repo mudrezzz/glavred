@@ -1,4 +1,4 @@
-import {
+﻿import {
   createEditorialLearningNote,
   createWorkspaceInsightCard,
   createReleasePackage
@@ -14,7 +14,6 @@ import {
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
-  buildApproveBriefAndCreateDraftPatch,
   buildApproveDraftTextPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
@@ -22,12 +21,11 @@ import {
   buildSaveDraftTextPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
-import { buildApproveBriefWithGeneratedDraftPatch } from './productionDraftActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
 import { createProductionVisualActions } from './productionVisualActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
-import { generateBackendDraft } from '../infrastructure/backendDraftClient';
+import { useDraftGenerationController } from './useDraftGenerationController';
 
 type ProductionFlowActionsParams = {
   patchWorkspace: WorkspacePatch;
@@ -36,30 +34,31 @@ type ProductionFlowActionsParams = {
 
 export function useProductionFlowActions({ patchWorkspace, workspace }: ProductionFlowActionsParams) {
   const visualActions = createProductionVisualActions({ patchWorkspace, workspace });
+  const draftGeneration = useDraftGenerationController({ patchWorkspace, workspace });
 
   function createInsightFromCurrentSignal() {
     const insightCard = createWorkspaceInsightCard(workspace);
-    patchWorkspace({ insightCard }, 'Карточка инсайта собрана');
+    patchWorkspace({ insightCard }, 'РљР°СЂС‚РѕС‡РєР° РёРЅСЃР°Р№С‚Р° СЃРѕР±СЂР°РЅР°');
   }
 
   function addInsightToPlan() {
     patchWorkspace(
       buildAddInsightToPlanPatch(workspace),
-      'Инсайт добавлен в план'
+      'РРЅСЃР°Р№С‚ РґРѕР±Р°РІР»РµРЅ РІ РїР»Р°РЅ'
     );
   }
 
   function generateBroadcastPlan() {
     patchWorkspace(
       buildGenerateBroadcastPlanPatch(workspace),
-      'Сетка вещания собрана'
+      'РЎРµС‚РєР° РІРµС‰Р°РЅРёСЏ СЃРѕР±СЂР°РЅР°'
     );
   }
 
   function saveContentPlanSettings(contentPlanSettings: ContentPlanSettings) {
     patchWorkspace(
       buildSaveContentPlanSettingsPatch(workspace, contentPlanSettings),
-      'Настройка сетки сохранена, план нужно пересобрать'
+      'РќР°СЃС‚СЂРѕР№РєР° СЃРµС‚РєРё СЃРѕС…СЂР°РЅРµРЅР°, РїР»Р°РЅ РЅСѓР¶РЅРѕ РїРµСЂРµСЃРѕР±СЂР°С‚СЊ'
     );
   }
 
@@ -68,7 +67,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function approvePlanSlot(itemId: string) {
-    patchWorkspace(buildApprovePlanSlotPatch(workspace, itemId), 'Слот сетки утвержден');
+    patchWorkspace(buildApprovePlanSlotPatch(workspace, itemId), 'РЎР»РѕС‚ СЃРµС‚РєРё СѓС‚РІРµСЂР¶РґРµРЅ');
   }
 
   function selectEditorialWorkItem(workItemId: string) {
@@ -78,33 +77,15 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   function returnEditorialWorkItemToCandidates(workItemId: string) {
     patchWorkspace(
       buildReturnEditorialWorkItemToCandidatesPatch(workspace, workItemId),
-      'Пост возвращен в кандидаты'
+      'РџРѕСЃС‚ РІРѕР·РІСЂР°С‰РµРЅ РІ РєР°РЅРґРёРґР°С‚С‹'
     );
   }
 
   function editCurrentBrief(patch: PostBriefEditPatch) {
     patchWorkspace(
       buildEditCurrentBriefPatch(workspace, patch),
-      'Фабула обновлена, драфт нужно пересобрать'
+      'Р¤Р°Р±СѓР»Р° РѕР±РЅРѕРІР»РµРЅР°, РґСЂР°С„С‚ РЅСѓР¶РЅРѕ РїРµСЂРµСЃРѕР±СЂР°С‚СЊ'
     );
-  }
-
-  async function approveCurrentBriefWithBackend() {
-    if (!workspace.postBrief) return;
-    try {
-      const result = await generateBackendDraft(workspace.postBrief, workspace.editorialModel);
-      patchWorkspace(
-        buildApproveBriefWithGeneratedDraftPatch(workspace, result.draft),
-        result.aiRun.fallbackUsed
-          ? 'Фабула утверждена, драфт подготовлен fallback-сервисом'
-          : 'Фабула утверждена, драфт подготовлен через backend'
-      );
-    } catch {
-      patchWorkspace(
-        buildApproveBriefAndCreateDraftPatch(workspace),
-        'Фабула утверждена, backend недоступен: локальный драфт подготовлен'
-      );
-    }
   }
 
   function updateDraftBody(body: string) {
@@ -114,14 +95,14 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   function approveCurrentFinalText(body?: string) {
     patchWorkspace(
       buildApproveDraftTextPatch(workspace, body),
-      'Текст утвержден · следующий шаг: Визуал'
+      'РўРµРєСЃС‚ СѓС‚РІРµСЂР¶РґРµРЅ В· СЃР»РµРґСѓСЋС‰РёР№ С€Р°Рі: Р’РёР·СѓР°Р»'
     );
   }
 
   function createReleaseFromFinalText() {
     if (!workspace.finalText || workspace.finalText.approvalStatus !== 'approved') return;
     const releasePackage = createReleasePackage(workspace.finalText, workspace.contentPlanItem);
-    patchWorkspace({ releasePackage, editorialLearningNote: null }, 'Пакет ручного выпуска подготовлен');
+    patchWorkspace({ releasePackage, editorialLearningNote: null }, 'РџР°РєРµС‚ СЂСѓС‡РЅРѕРіРѕ РІС‹РїСѓСЃРєР° РїРѕРґРіРѕС‚РѕРІР»РµРЅ');
   }
 
   function toggleReleaseChecklist(itemId: string) {
@@ -137,7 +118,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     const releasePackage = markReleaseReady(workspace.releasePackage);
     patchWorkspace(
       { releasePackage, editorialLearningNote: null },
-      releasePackage.status === 'ready' ? 'Выпуск готов' : 'Закройте чеклист выпуска'
+      releasePackage.status === 'ready' ? 'Р’С‹РїСѓСЃРє РіРѕС‚РѕРІ' : 'Р—Р°РєСЂРѕР№С‚Рµ С‡РµРєР»РёСЃС‚ РІС‹РїСѓСЃРєР°'
     );
   }
 
@@ -149,7 +130,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
         releasePackage: markReleaseManuallyExported(workspace.releasePackage),
         editorialLearningNote: null
       },
-      'Текст скопирован для ручного выпуска'
+      'РўРµРєСЃС‚ СЃРєРѕРїРёСЂРѕРІР°РЅ РґР»СЏ СЂСѓС‡РЅРѕРіРѕ РІС‹РїСѓСЃРєР°'
     );
   }
 
@@ -161,7 +142,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
         releasePackage: markReleaseManuallyExported(workspace.releasePackage),
         editorialLearningNote: null
       },
-      'Markdown скачан для ручного выпуска'
+      'Markdown СЃРєР°С‡Р°РЅ РґР»СЏ СЂСѓС‡РЅРѕРіРѕ РІС‹РїСѓСЃРєР°'
     );
   }
 
@@ -172,7 +153,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
       workspace.finalText,
       workspace.contentPlanItem
     );
-    patchWorkspace({ editorialLearningNote }, 'Аналитика подготовлена');
+    patchWorkspace({ editorialLearningNote }, 'РђРЅР°Р»РёС‚РёРєР° РїРѕРґРіРѕС‚РѕРІР»РµРЅР°');
   }
 
   function updateCurrentLearningNote(editorialLearningNote: EditorialLearningNote) {
@@ -183,13 +164,13 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     if (!workspace.editorialLearningNote) return;
     patchWorkspace(
       { editorialLearningNote: markLearningNoteCaptured(workspace.editorialLearningNote) },
-      'Редакционные выводы зафиксированы'
+      'Р РµРґР°РєС†РёРѕРЅРЅС‹Рµ РІС‹РІРѕРґС‹ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹'
     );
   }
 
   return {
     addInsightToPlan,
-    approveCurrentBrief: approveCurrentBriefWithBackend,
+    approveCurrentBrief: draftGeneration.approveCurrentBrief,
     approveCurrentFinalText,
     approvePlanSlot,
     captureLearningNote,
@@ -208,6 +189,7 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     updateCurrentLearningNote,
     updateDraftBody,
     updatePlanItemAndWarnings,
+    draftGenerationState: draftGeneration.draftGenerationState,
     ...visualActions
   };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import { buildApprovePlanSlotPatch } from './editorialWorkQueueActions';
-import { buildApproveBriefWithGeneratedDraftPatch } from './productionDraftActions';
+import { buildApproveBriefWithGeneratedDraftPatch, buildApproveBriefWithLocalFallbackDraftPatch } from './productionDraftActions';
 
 describe('production draft actions', () => {
   it('syncs a backend generated draft into the selected editorial work item', () => {
@@ -15,7 +15,15 @@ describe('production draft actions', () => {
       body: 'Backend body',
       version: 1,
       status: 'draft',
-      updatedAt: '2026-06-18T00:00:00+00:00'
+      updatedAt: '2026-06-18T00:00:00+00:00',
+      generation: {
+        source: 'openrouter',
+        aiRunId: 'run-1',
+        provider: 'openrouter',
+        model: 'openrouter/test-model',
+        fallbackUsed: false,
+        createdAt: '2026-06-18T00:00:00+00:00'
+      }
     });
 
     expect(patch.postBrief?.approvalStatus).toBe('approved');
@@ -23,8 +31,24 @@ describe('production draft actions', () => {
     expect(patch.editorialChecks?.length).toBeGreaterThan(0);
     expect(patch.editorNotes?.length).toBeGreaterThan(0);
     expect(patch.editorialWorkItems?.[0].draft?.body).toBe('Backend body');
+    expect(patch.editorialWorkItems?.[0].draft?.generation?.aiRunId).toBe('run-1');
     expect(patch.editorialWorkItems?.[0].stage).toBe('draft');
     expect(patch.finalText).toBeNull();
     expect(patch.postVisual).toBeNull();
+  });
+
+  it('marks local emergency fallback drafts without an AI run id', () => {
+    const workspace = createDemoWorkspace();
+    const withBrief = { ...workspace, ...buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id) };
+
+    const patch = buildApproveBriefWithLocalFallbackDraftPatch(withBrief, 'Backend unavailable');
+
+    expect(patch.postDraft?.generation).toMatchObject({
+      source: 'localFallback',
+      aiRunId: null,
+      fallbackUsed: true,
+      error: 'Backend unavailable'
+    });
+    expect(patch.editorialWorkItems?.[0].draft?.generation?.source).toBe('localFallback');
   });
 });

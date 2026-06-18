@@ -1,4 +1,4 @@
-import { createEditorNotes, runEditorialChecks } from '../application/editorialServices';
+import { createEditorNotes, createPostDraft, runEditorialChecks } from '../application/editorialServices';
 import { approvePostBrief, type PostDraft, type WorkspaceState } from '../domain/editorialWorkspace';
 import { withEditorialWorkItemSync } from './editorialWorkQueueActions';
 
@@ -31,4 +31,25 @@ export function buildApproveBriefWithGeneratedDraftPatch(
     releasePackage: null,
     editorialLearningNote: null
   });
+}
+
+export function buildApproveBriefWithLocalFallbackDraftPatch(
+  workspace: WorkspaceState,
+  error: string
+): Partial<WorkspaceState> {
+  if (!workspace.postBrief) return {};
+  const postBrief = approvePostBrief(workspace.postBrief);
+  const postDraft: PostDraft = {
+    ...createPostDraft(postBrief, workspace.editorialModel),
+    generation: {
+      source: 'localFallback',
+      aiRunId: null,
+      provider: null,
+      model: null,
+      fallbackUsed: true,
+      createdAt: new Date().toISOString(),
+      error
+    }
+  };
+  return buildApproveBriefWithGeneratedDraftPatch({ ...workspace, postBrief }, postDraft);
 }

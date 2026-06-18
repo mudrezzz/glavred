@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
+import { goToSignals, openFoundSignals } from '../../test-support/signalsFlowDriver';
+import { setBackendDraftFetchForTests } from '../../infrastructure/backendDraftClient';
 
 describe('Editorial workbench app flow', () => {
   beforeEach(() => {
@@ -25,6 +27,30 @@ describe('Editorial workbench app flow', () => {
 
     expect(screen.getByTestId('editorial-work-empty')).toHaveTextContent(/План/i);
     expect(screen.getByTestId('editorial-work-toolbar')).toBeInTheDocument();
+  });
+
+  it('shows draft generation progress while backend draft run is pending', async () => {
+    render(<App />);
+
+    goToSignals();
+    openFoundSignals();
+    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
+    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
+
+    const pendingFetch = vi.fn(() => new Promise<Response>(() => undefined)) as unknown as typeof fetch;
+    setBackendDraftFetchForTests(pendingFetch);
+    try {
+      fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
+
+      expect(await screen.findByText(/Генерируем драфт/i)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('tab', { name: /Фабула/i }));
+      expect(screen.getByRole('button', { name: /Генерируем драфт/i })).toBeDisabled();
+    } finally {
+      setBackendDraftFetchForTests(null);
+    }
   });
 
   it('creates, edits, approves, and persists approved draft text', async () => {

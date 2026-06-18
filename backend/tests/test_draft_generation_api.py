@@ -51,7 +51,12 @@ def make_client(tmp_path, *, configured: bool, adapter: object | None = None) ->
 
 @dataclass
 class SuccessfulDraftAdapter:
-    def generate(self, settings: BackendSettings, request: DraftGenerationRequest) -> OpenRouterDraftResult:
+    def generate(
+        self,
+        settings: BackendSettings,
+        request: DraftGenerationRequest,
+        messages: list[dict[str, str]],
+    ) -> OpenRouterDraftResult:
         return OpenRouterDraftResult(
             draft=GeneratedDraft(
                 id=f"draft-{request.brief.id}",
@@ -70,7 +75,12 @@ class SuccessfulDraftAdapter:
 class FailingDraftAdapter:
     message: str
 
-    def generate(self, settings: BackendSettings, request: DraftGenerationRequest) -> OpenRouterDraftResult:
+    def generate(
+        self,
+        settings: BackendSettings,
+        request: DraftGenerationRequest,
+        messages: list[dict[str, str]],
+    ) -> OpenRouterDraftResult:
         raise ValueError(self.message)
 
 
@@ -93,6 +103,9 @@ def test_generate_draft_uses_openrouter_when_configured(tmp_path) -> None:
     assert payload["aiRun"]["status"] == "succeeded"
     assert payload["aiRun"]["provider"] == "openrouter"
     assert payload["aiRun"]["fallbackUsed"] is False
+    assert payload["aiRun"]["requestPayload"]["providerRequest"]["messages"][1]["content"]
+    assert payload["aiRun"]["resultPayload"]["draft"]["body"] == "OpenRouter draft body"
+    assert payload["aiRun"]["resultPayload"]["providerResponse"]["id"] == "run-provider-id"
     assert "secret-token" not in response.text
 
 
@@ -108,6 +121,9 @@ def test_generate_draft_falls_back_when_openrouter_is_missing(tmp_path) -> None:
     assert payload["aiRun"]["provider"] == "deterministic"
     assert payload["aiRun"]["fallbackUsed"] is True
     assert payload["aiRun"]["error"] == "OpenRouter is not configured"
+    assert payload["aiRun"]["requestPayload"]["providerRequest"]["provider"] == "deterministic"
+    assert payload["aiRun"]["resultPayload"]["draft"]["body"] == payload["draft"]["body"]
+    assert payload["aiRun"]["resultPayload"]["fallback"] == "deterministic"
 
 
 def test_generate_draft_falls_back_on_provider_error_without_exposing_secret(tmp_path) -> None:
@@ -131,4 +147,16 @@ def test_generate_draft_records_run_visible_in_ai_run_list(tmp_path) -> None:
     loaded = client.get(f"/api/ai-runs/{created['aiRun']['id']}").json()
 
     assert listed[0]["id"] == created["aiRun"]["id"]
-    assert loaded["resultPayload"]["draftId"] == created["draft"]["id"]
+    assert loaded["resultPayload"]["draft"]["draftId"] == created["draft"]["id"]
+
+
+def test_generate_draft_trace_does_not_expose_authorization_or_secret(tmp_path) -> None:
+    client = make_client(tmp_path, configured=True, adapter=SuccessfulDraftAdapter())
+
+    response = client.post("/api/drafts/generate", json=make_payload())
+
+    assert response.status_code == 200
+    serialized = response.text.lower()
+    assert "secret-token" not in serialized
+    assert "authorization" not in serialized
+    assert "bearer" not in serialized

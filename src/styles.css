@@ -3776,6 +3776,46 @@ select:focus {
   line-height: 1.62;
 }
 
+.draft-generation-pending {
+  align-items: start;
+}
+
+.draft-generation-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--ink-100);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.draft-generation-summary {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+  color: var(--ink-700);
+  font: var(--ui-sm);
+}
+
+.draft-generation-summary b {
+  color: var(--ink-900);
+}
+
+.draft-generation-summary.warning {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--ink-200));
+  background: var(--accent-tint);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .visual-stage {
   min-width: 0;
   display: grid;
