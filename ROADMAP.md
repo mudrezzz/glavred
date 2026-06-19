@@ -3320,9 +3320,27 @@ Status:
     candidate only.
   - Completed 2026-06-19.
 
-### Slice 2.9: Validator and Revision Loop
+### Slice 2.8.1: AI Run Trace Workbench
 
 - Status: Ready
+- Goal: Turn `/ai-runs` from a raw JSON page into a usable trace analysis workbench.
+- Scope:
+  - Keep `/ai-runs` outside the main cabinet navigation, but render it with the same
+    design-system rhythm and cabinet spacing.
+  - Add a compact run lookup header, summary metrics, and provider/fallback/status
+    cards.
+  - Parse known trace payloads into semantic sections: draft step, provider request,
+    prompt messages, candidate/material/strategy result, provider metadata, fallback
+    context, and raw JSON.
+  - Show prompt messages as a searchable/filterable message list with role badges and
+    a readable selected-message panel.
+  - Wrap JSON in readable, copyable, line-wrapped panels; raw JSON remains available
+    but is not the primary analysis surface.
+  - Do not add backend endpoints; use `GET /api/ai-runs/{id}` as the source of truth.
+
+### Slice 2.9: Validator and Revision Loop
+
+- Status: Backlog
 - Goal: Add iterative validation and correction until target score or iteration limit.
 - Scope:
   - Validate against publisher rules, topic fit, fabula fit, evidence grounding,
@@ -3465,4 +3483,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.9: Validator and Revision Loop`.
+Continue the backend track with `Slice 2.8.1: AI Run Trace Workbench`.
