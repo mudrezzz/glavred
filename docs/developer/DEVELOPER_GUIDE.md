@@ -955,6 +955,18 @@ OpenRouter planning calls are wired only in the worker pipeline factory. API rou
 and Celery task bodies stay thin, while `openrouter_json_adapter.py` owns the actual
 provider JSON call.
 
+To debug Slice 2.8, inspect `steps[4].artifactPayload`. It contains:
+
+- `directions`: deterministic draft directions derived from strategy and rules;
+- `candidates`: generated or fallback title/body/rationale/risk alternatives;
+- `selection`: deterministic v1 scorecard and selected candidate id;
+- `aiRunIds`: child provider/fallback runs for each candidate.
+
+Open child runs through `GET /api/ai-runs/{id}` to inspect candidate prompts,
+provider metadata, fallback status, and sanitized candidate results. The frontend still
+receives one selected `finalDraft`; alternatives are trace/debug data until a future UI
+review slice.
+
 Drafting steps should be narrow:
 
 1. Build full context.
@@ -987,8 +999,8 @@ The first backend implementation order is:
 6. Full draft-run context builder. Done.
 7. Rule-pack compiler. Done.
 8. Material plan and draft strategy steps. Done.
-9. Multi-candidate draft generation. Next.
-10. Validator and revision loop.
+9. Multi-candidate draft generation. Done.
+10. Validator and revision loop. Next.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

@@ -111,6 +111,16 @@ Slice 2.7 adds the planning boundary:
   prompt/response traces stay in `AiRun`;
 - final prose generation remains deterministic until candidate-generation slices.
 
+Slice 2.8 adds the candidate-generation boundary:
+
+- worker step `draft` stores multiple draft candidates and a deterministic selection
+  artifact;
+- deterministic directions are created from `DraftStrategy`, `RulePack`, and context;
+- each provider-backed candidate creates a child `AiRun`; per-candidate provider
+  failures fall back independently;
+- `DraftRun.final_draft` remains the selected candidate only, preserving frontend
+  compatibility while alternatives remain available in the orchestration trace.
+
 ## Consequences
 
 - Slice 2.4 implements `Draft Run Contract and Queue Foundation`.
@@ -127,6 +137,9 @@ Slice 2.7 adds the planning boundary:
 - Material planning and draft strategy are separate application boundaries. Candidate
   generation must consume their artifacts instead of rebuilding planning context from
   raw workspace state.
+- Candidate generation is a separate application boundary. Selection artifacts must
+  be stored on the `draft` step and must not require new SQL columns or a new step enum
+  until validators/revision loops justify it.
 - Validators become first-class application/domain concepts, not hidden prompt text.
 - Frontend drafting UX should track queued/running/completed states and show named
   steps rather than a single loading state.

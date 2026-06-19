@@ -446,8 +446,33 @@ Planning ownership is split:
   calls.
 - `backend/app/infrastructure/draft_run_pipeline_factory.py` owns worker-time wiring.
 
-The final prose draft is still deterministic in Slice 2.7; strategy-driven candidate
-generation starts in Slice 2.8.
+Slice 2.8 turns the worker's `draft` step into multi-candidate generation. The
+worker creates deterministic candidate directions from `DraftStrategy`, asks
+OpenRouter for one JSON draft candidate per direction when configured, falls back per
+candidate when a provider call fails, stores all candidates in
+`steps[4].artifactPayload`, and writes only the selected candidate to
+`DraftRun.finalDraft`.
+
+Candidate ownership is split:
+
+- `backend/app/domain/draft_candidates.py` defines provider-free candidate, score, and
+  selection DTOs.
+- `backend/app/application/draft_candidate_direction_service.py` owns deterministic
+  direction policy.
+- `backend/app/application/draft_candidate_generation_service.py` owns draft-candidate
+  step orchestration and child `AiRun` creation.
+- `backend/app/application/draft_candidate_selection_service.py` owns deterministic v1
+  candidate scoring.
+- `backend/app/application/draft_candidate_prompts.py` owns candidate prompt messages.
+- `backend/app/application/draft_candidate_audit.py` owns sanitized child `AiRun`
+  traces.
+- `backend/app/application/deterministic_draft_candidate_service.py` owns candidate
+  fallback generation.
+- `backend/app/application/draft_run_draft_step_service.py` owns the legacy
+  deterministic draft-step fallback when candidate generation is not wired.
+
+Validator scoring and revision loops remain Slice 2.9; Slice 2.8 selection is a
+deterministic first-pass scorecard, not a full validator.
 
 Concrete Slice 2.4 files:
 
@@ -463,13 +488,22 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_rule_pack_sections.py`
 - `backend/app/application/draft_material_plan_service.py`
 - `backend/app/application/draft_strategy_service.py`
+- `backend/app/application/draft_candidate_generation_service.py`
+- `backend/app/application/draft_candidate_direction_service.py`
+- `backend/app/application/draft_candidate_selection_service.py`
 - `backend/app/application/draft_planning_prompts.py`
 - `backend/app/application/draft_planning_audit.py`
+- `backend/app/application/draft_candidate_prompts.py`
+- `backend/app/application/draft_candidate_audit.py`
+- `backend/app/application/deterministic_draft_candidate_service.py`
+- `backend/app/application/draft_run_pipeline_ports.py`
+- `backend/app/application/draft_run_draft_step_service.py`
 - `backend/app/application/deterministic_draft_planning_service.py`
 - `backend/app/application/deterministic_draft_planning_step_services.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_rule_pack.py`
 - `backend/app/domain/draft_planning.py`
+- `backend/app/domain/draft_candidates.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

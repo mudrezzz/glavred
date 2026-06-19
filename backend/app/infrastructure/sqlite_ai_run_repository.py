@@ -50,10 +50,10 @@ class SqliteAiRunRepository:
         query = "SELECT * FROM ai_runs"
         params: tuple[Any, ...]
         if capability is None:
-            query += " ORDER BY created_at DESC LIMIT ?"
+            query += " ORDER BY created_at DESC, rowid DESC LIMIT ?"
             params = (limit,)
         else:
-            query += " WHERE capability = ? ORDER BY created_at DESC LIMIT ?"
+            query += " WHERE capability = ? ORDER BY created_at DESC, rowid DESC LIMIT ?"
             params = (capability.value, limit)
 
         with self._connect() as connection:

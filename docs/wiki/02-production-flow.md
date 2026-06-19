@@ -96,9 +96,9 @@ After fabula approval, `Драфт` shows queued/running progress until the work
 snapshot of the selected post: plan slot, candidate when available, source signal,
 topic, fabula, publisher rules, and author-position evidence. Use
 `/api/draft-runs/{id}` to inspect the context summary in step 0, the compiled
-RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3, worker steps,
-final draft, and safe errors. Planning provider calls link child `AiRun` ids for
-prompt/provider traces.
+RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3, draft candidates
+and deterministic selection in step 4, final draft, and safe errors. Planning and
+candidate provider calls link child `AiRun` ids for prompt/provider traces.
 
 ## Ограничения текущего demo
 

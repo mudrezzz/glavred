@@ -1,4 +1,4 @@
-from typing import Any, Protocol
+from typing import Any
 
 from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompiler
 from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
@@ -10,36 +10,15 @@ from backend.app.application.deterministic_draft_planning_step_services import (
     DeterministicMaterialPlanStepService,
     DeterministicStrategyStepService,
 )
+from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
+from backend.app.application.draft_run_draft_step_service import LegacyDraftStepService
+from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.domain.draft_run import (
     DraftRun,
     DraftRunStatus,
     DraftRunStepKey,
     DraftRunStepStatus,
 )
-
-
-class DraftRunPipelineRepository(Protocol):
-    def get(self, run_id: str) -> DraftRun | None: ...
-
-    def set_run_status(
-        self,
-        run_id: str,
-        status: DraftRunStatus,
-        *,
-        error: str | None = None,
-        final_draft: dict[str, Any] | None = None,
-        ai_run_ids: list[str] | None = None,
-    ) -> None: ...
-
-    def set_step_status(
-        self,
-        run_id: str,
-        key: DraftRunStepKey,
-        status: DraftRunStepStatus,
-        *,
-        artifact_payload: dict[str, Any] | None = None,
-        error: str | None = None,
-    ) -> None: ...
 
 
 class DraftRunPipeline:
@@ -50,13 +29,14 @@ class DraftRunPipeline:
         rule_pack_compiler: DraftRulePackCompiler | None = None,
         material_plan_service: Any = None,
         strategy_service: Any = None,
+        candidate_generation_service: DraftCandidateGenerationService | None = None,
     ) -> None:
         self._repository = repository
-        self._deterministic_draft_service = deterministic_draft_service
         self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
         fallback = DeterministicDraftPlanningService()
         self._material_plan_service = material_plan_service or DeterministicMaterialPlanStepService(fallback)
         self._strategy_service = strategy_service or DeterministicStrategyStepService(fallback)
+        self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
 
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
@@ -84,8 +64,16 @@ class DraftRunPipeline:
             )
             ai_run_ids.extend(_ai_ids(strategy_result.ai_run_id))
             self._complete_step(run_id, DraftRunStepKey.STRATEGY, strategy_result.artifact_payload)
-            draft_payload = draft_to_payload(self._deterministic_draft_service.create_draft(request))
-            self._complete_step(run_id, DraftRunStepKey.DRAFT, {"draft": draft_payload})
+            draft_result = self._draft_step_service.create(
+                request=request,
+                context_summary=context_summary,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+                draft_strategy=_payload(strategy_result.artifact_payload, "draftStrategy"),
+            )
+            ai_run_ids.extend(draft_result.ai_run_ids)
+            draft_payload = draft_to_payload(draft_result.final_draft)
+            self._complete_step(run_id, DraftRunStepKey.DRAFT, draft_result.artifact_payload)
             self._complete_step(
                 run_id,
                 DraftRunStepKey.VALIDATION,
@@ -116,11 +104,9 @@ class DraftRunPipeline:
         self._repository.set_step_status(run_id, key, DraftRunStepStatus.RUNNING)
         self._repository.set_step_status(run_id, key, DraftRunStepStatus.SUCCEEDED, artifact_payload=artifact_payload)
 
-
 def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
     value = artifact.get(key)
     return value if isinstance(value, dict) else {}
-
 
 def _ai_ids(ai_run_id: str | None) -> list[str]:
     return [ai_run_id] if ai_run_id else []

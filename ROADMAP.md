@@ -3303,21 +3303,26 @@ Status:
   - Step artifacts include `source`, `aiRunId`, `fallbackUsed`, `error?`, and the
     full material-plan or draft-strategy payload.
   - `DraftRun.ai_run_ids` records child planning `AiRun` ids for trace inspection.
-  - Final prose generation remains deterministic until Slice 2.8.
+  - Final prose generation remained deterministic until Slice 2.8.
 
-### Slice 2.8: Multi-Candidate Draft Generation
+### Slice 2.8: Agentic Multi-Candidate Draft Generation
 
-- Status: Ready
+- Status: Done
 - Goal: Generate and compare several draft candidates instead of one draft.
 - Scope:
-  - Generate 2-3 draft candidates from one strategy.
-  - Store candidate title/body/rationale/risk.
-  - Select the best candidate by validator score while preserving alternatives for
-    debug and future UI review.
+  - Generate 2-3 draft candidates from strategy, rule pack, material plan, and
+    context.
+  - Store candidate title/body/rationale/evidence/risk plus child `AiRun` ids in
+    `steps[4].artifactPayload`.
+  - Select the best candidate with deterministic v1 scorecard while preserving
+    alternatives for debug and future UI review.
+  - Keep `DraftRun.finalDraft` frontend-compatible by returning the selected
+    candidate only.
+  - Completed 2026-06-19.
 
 ### Slice 2.9: Validator and Revision Loop
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add iterative validation and correction until target score or iteration limit.
 - Scope:
   - Validate against publisher rules, topic fit, fabula fit, evidence grounding,
@@ -3439,6 +3444,7 @@ Status:
 - Slice 2.5: Draft Run Context Builder. Completed 2026-06-19.
 - Slice 2.6: Draft Rule Pack Compiler. Completed 2026-06-19.
 - Slice 2.7: Material Plan and Draft Strategy Steps. Completed 2026-06-19.
+- Slice 2.8: Agentic Multi-Candidate Draft Generation. Completed 2026-06-19.
 
 ## Blocked Items
 
@@ -3459,4 +3465,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.8: Multi-Candidate Draft Generation`.
+Continue the backend track with `Slice 2.9: Validator and Revision Loop`.

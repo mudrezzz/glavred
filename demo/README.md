@@ -245,8 +245,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
     summary, compiled rule pack in step 1, material plan in step 2, draft strategy in
-    step 3, final draft, and errors. Planning child `AiRun` ids can be inspected
-    through `/api/ai-runs/{id}`. If the
+    step 3, draft candidates and selection in step 4, final draft, and errors.
+    Planning and candidate child `AiRun` ids can be inspected through
+    `/api/ai-runs/{id}`. If the
     backend is unreachable, the UI marks the draft as local fallback with no recorded
     backend run.
 29. Edit the draft text.

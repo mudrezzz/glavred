@@ -29,6 +29,12 @@ contains `MaterialPlan`; `steps[3].artifactPayload` contains `DraftStrategy`. Ea
 planning step links to a child `AiRun` with the OpenRouter prompt/response trace or
 deterministic fallback record.
 
+Slice 2.8 changes the `draft` step from one deterministic draft into a branching
+candidate generation step. `steps[4].artifactPayload` contains deterministic
+directions, 2-3 draft candidates, child `AiRun` ids, and a deterministic v1 selection
+scorecard. The UI still applies one selected draft; alternative candidates are
+available through trace/debug until a future review UI exists.
+
 The `Фабула` stage also displays read-only candidate and slot context. The author edits
 only the `PostBrief` production artifact there. If an approved fabula is edited,
 Glavred clears stale draft, checks, final text, release, and learning artifacts before

@@ -195,10 +195,11 @@ and applies the final draft when the worker completes. The run request now inclu
 available, source signal, topic, fabula, publisher rules, and author-position
 evidence. The worker compiles the context into a deterministic `RulePack`, then uses
 OpenRouter-backed planning steps with deterministic fallback for `MaterialPlan` and
-`DraftStrategy`. Inspect `GET /api/draft-runs/{id}`: `steps[0].artifactPayload` is
-context, `steps[1]` is the rule pack, `steps[2]` is the material plan, and `steps[3]`
-is the draft strategy. Later slices will add candidate generation, validators,
-revision loop, and selected draft.
+`DraftStrategy`, then generates several draft candidates in `steps[4].artifactPayload`.
+Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context, `steps[1]` is the rule
+pack, `steps[2]` is the material plan, `steps[3]` is the draft strategy, and `steps[4]`
+contains directions, candidates, child `AiRun` ids, and deterministic selection. Later
+slices will add validators, revision loop, and candidate review UI.
 
 Run tests:
 
