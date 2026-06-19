@@ -3285,17 +3285,29 @@ Status:
 
 ### Slice 2.7: Material Plan and Draft Strategy Steps
 
-- Status: Ready
+- Status: Done
 - Goal: Add the first LLM-assisted planning steps before draft generation.
 - Scope:
   - Generate a material plan from context and rule pack.
   - Generate a draft strategy from material plan and fabula/topic rules.
   - Store both as draft-run artifacts with child `AiRun` records.
   - Fall back to deterministic planning if OpenRouter is unavailable.
+- Architecture impact:
+  - Material planning and strategy are application services with provider calls
+    behind infrastructure adapters and child `AiRun` audit records.
+  - `draft_run_pipeline.py` remains a coordinator; provider calls and prompt
+    builders stay in role-owned modules.
+- Done:
+  - Worker `materialPlan` and `strategy` steps now call OpenRouter when configured
+    and deterministic fallback otherwise.
+  - Step artifacts include `source`, `aiRunId`, `fallbackUsed`, `error?`, and the
+    full material-plan or draft-strategy payload.
+  - `DraftRun.ai_run_ids` records child planning `AiRun` ids for trace inspection.
+  - Final prose generation remains deterministic until Slice 2.8.
 
 ### Slice 2.8: Multi-Candidate Draft Generation
 
-- Status: Backlog
+- Status: Ready
 - Goal: Generate and compare several draft candidates instead of one draft.
 - Scope:
   - Generate 2-3 draft candidates from one strategy.
@@ -3426,6 +3438,7 @@ Status:
 - Slice 2.4: Draft Run Contract and Queue Foundation. Completed 2026-06-19.
 - Slice 2.5: Draft Run Context Builder. Completed 2026-06-19.
 - Slice 2.6: Draft Rule Pack Compiler. Completed 2026-06-19.
+- Slice 2.7: Material Plan and Draft Strategy Steps. Completed 2026-06-19.
 
 ## Blocked Items
 
@@ -3446,4 +3459,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.7: Material Plan and Draft Strategy Steps`.
+Continue the backend track with `Slice 2.8: Multi-Candidate Draft Generation`.

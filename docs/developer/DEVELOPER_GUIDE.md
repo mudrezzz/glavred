@@ -945,6 +945,16 @@ To debug Slice 2.6, inspect `steps[1].artifactPayload`. It contains the compiled
 Do not add rule-pack compilation to `draft_run_context_builder.py` or
 `draft_run_pipeline.py`; the compiler and section mappers own that boundary.
 
+To debug Slice 2.7, inspect `steps[2].artifactPayload` for `MaterialPlan` and
+`steps[3].artifactPayload` for `DraftStrategy`. Each artifact includes `source`,
+`aiRunId`, `fallbackUsed`, optional `error`, and the full planning payload. Open the
+child run through `GET /api/ai-runs/{aiRunId}` to see prompt messages, model,
+provider metadata, fallback status, and sanitized result trace.
+
+OpenRouter planning calls are wired only in the worker pipeline factory. API routes
+and Celery task bodies stay thin, while `openrouter_json_adapter.py` owns the actual
+provider JSON call.
+
 Drafting steps should be narrow:
 
 1. Build full context.
@@ -974,10 +984,10 @@ The first backend implementation order is:
 3. First OpenRouter-backed editorial run with deterministic fallback.
 4. AI run observability and trace inspection.
 5. Queued `DraftRun` contract with Redis/Celery worker foundation. Done.
-6. Full draft-run context builder. Next.
-7. Rule-pack compiler.
-8. Material plan and draft strategy steps.
-9. Multi-candidate draft generation.
+6. Full draft-run context builder. Done.
+7. Rule-pack compiler. Done.
+8. Material plan and draft strategy steps. Done.
+9. Multi-candidate draft generation. Next.
 10. Validator and revision loop.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until

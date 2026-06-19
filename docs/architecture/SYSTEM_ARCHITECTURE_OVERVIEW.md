@@ -423,6 +423,32 @@ Rule-pack ownership is intentionally split:
 
 The next backend implementation slice is `Material Plan and Draft Strategy Steps`.
 
+Slice 2.7 implements the first OpenRouter-assisted planning steps inside the queued
+runner. The worker's `materialPlan` step consumes context summary plus `RulePack` and
+produces evidence inventory, missing evidence, risky claims, grounding plan, source
+notes, and open questions. The `strategy` step consumes context summary, `RulePack`,
+and material plan, then produces thesis angle, opening move, argument sequence,
+fabula usage, CTA plan, forbidden moves, and tone notes. Both steps create child
+`AiRun` audit records; missing provider configuration, provider errors, or invalid
+JSON use deterministic fallback and mark `fallbackUsed=true`.
+
+Planning ownership is split:
+
+- `backend/app/domain/draft_planning.py` defines provider-free planning DTOs.
+- `backend/app/application/draft_material_plan_service.py` owns material-plan step
+  orchestration.
+- `backend/app/application/draft_strategy_service.py` owns draft-strategy step
+  orchestration.
+- `backend/app/application/draft_planning_prompts.py` owns prompt messages.
+- `backend/app/application/draft_planning_audit.py` owns sanitized child `AiRun`
+  traces.
+- `backend/app/infrastructure/openrouter_json_adapter.py` owns generic provider JSON
+  calls.
+- `backend/app/infrastructure/draft_run_pipeline_factory.py` owns worker-time wiring.
+
+The final prose draft is still deterministic in Slice 2.7; strategy-driven candidate
+generation starts in Slice 2.8.
+
 Concrete Slice 2.4 files:
 
 - `backend/app/domain/draft_run.py`
@@ -435,8 +461,17 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_run_context_builder.py`
 - `backend/app/application/draft_rule_pack_compiler.py`
 - `backend/app/application/draft_rule_pack_sections.py`
+- `backend/app/application/draft_material_plan_service.py`
+- `backend/app/application/draft_strategy_service.py`
+- `backend/app/application/draft_planning_prompts.py`
+- `backend/app/application/draft_planning_audit.py`
+- `backend/app/application/deterministic_draft_planning_service.py`
+- `backend/app/application/deterministic_draft_planning_step_services.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_rule_pack.py`
+- `backend/app/domain/draft_planning.py`
+- `backend/app/infrastructure/openrouter_json_adapter.py`
+- `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`
 - `backend/app/infrastructure/celery_app.py`
 - `backend/app/infrastructure/celery_draft_run_dispatcher.py`

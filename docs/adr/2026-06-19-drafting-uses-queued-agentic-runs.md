@@ -102,6 +102,15 @@ Slice 2.6 adds the rule-pack boundary:
 - domain DTOs stay provider-free, and pipeline/context builder files do not own
   rule-pack category mapping.
 
+Slice 2.7 adds the planning boundary:
+
+- worker steps `materialPlan` and `strategy` create child `AiRun` records;
+- OpenRouter is used when configured, with deterministic fallback for missing config,
+  provider errors, and invalid JSON;
+- material plan and strategy artifacts are stored on `DraftRunStep`, while provider
+  prompt/response traces stay in `AiRun`;
+- final prose generation remains deterministic until candidate-generation slices.
+
 ## Consequences
 
 - Slice 2.4 implements `Draft Run Contract and Queue Foundation`.
@@ -115,6 +124,9 @@ Slice 2.6 adds the rule-pack boundary:
 - Rule-pack compilation is a separate application boundary. Material planning,
   strategy, provider prompts, and validators must consume the `RulePack` artifact
   rather than rebuilding constraints from raw context.
+- Material planning and draft strategy are separate application boundaries. Candidate
+  generation must consume their artifacts instead of rebuilding planning context from
+  raw workspace state.
 - Validators become first-class application/domain concepts, not hidden prompt text.
 - Frontend drafting UX should track queued/running/completed states and show named
   steps rather than a single loading state.

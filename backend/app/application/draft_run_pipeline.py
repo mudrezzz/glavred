@@ -5,6 +5,11 @@ from backend.app.application.draft_run_context_builder import build_draft_run_co
 from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_payloads import draft_to_payload, request_from_payload
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
+from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
+from backend.app.application.deterministic_draft_planning_step_services import (
+    DeterministicMaterialPlanStepService,
+    DeterministicStrategyStepService,
+)
 from backend.app.domain.draft_run import (
     DraftRun,
     DraftRunStatus,
@@ -43,10 +48,15 @@ class DraftRunPipeline:
         repository: DraftRunPipelineRepository,
         deterministic_draft_service: DeterministicDraftService,
         rule_pack_compiler: DraftRulePackCompiler | None = None,
+        material_plan_service: Any = None,
+        strategy_service: Any = None,
     ) -> None:
         self._repository = repository
         self._deterministic_draft_service = deterministic_draft_service
         self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
+        fallback = DeterministicDraftPlanningService()
+        self._material_plan_service = material_plan_service or DeterministicMaterialPlanStepService(fallback)
+        self._strategy_service = strategy_service or DeterministicStrategyStepService(fallback)
 
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
@@ -55,38 +65,25 @@ class DraftRunPipeline:
         self._repository.set_run_status(run_id, DraftRunStatus.RUNNING)
         try:
             request = request_from_payload(run.request_payload)
-            context_summary = build_draft_run_context_summary(
-                request,
-                context_from_payload(run.request_payload),
+            context_summary = build_draft_run_context_summary(request, context_from_payload(run.request_payload))
+            self._complete_step(run_id, DraftRunStepKey.CONTEXT, context_summary)
+            rule_pack = self._rule_pack_compiler.compile(context_summary).to_payload()
+            self._complete_step(run_id, DraftRunStepKey.RULE_PACK, rule_pack)
+            ai_run_ids: list[str] = []
+            material_plan_result = self._material_plan_service.create(
+                context_summary=context_summary,
+                rule_pack=rule_pack,
             )
-            self._complete_step(
-                run_id,
-                DraftRunStepKey.CONTEXT,
-                context_summary,
+            ai_run_ids.extend(_ai_ids(material_plan_result.ai_run_id))
+            material_plan = _payload(material_plan_result.artifact_payload, "materialPlan")
+            self._complete_step(run_id, DraftRunStepKey.MATERIAL_PLAN, material_plan_result.artifact_payload)
+            strategy_result = self._strategy_service.create(
+                context_summary=context_summary,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
             )
-            self._complete_step(
-                run_id,
-                DraftRunStepKey.RULE_PACK,
-                self._rule_pack_compiler.compile(context_summary).to_payload(),
-            )
-            self._complete_step(
-                run_id,
-                DraftRunStepKey.MATERIAL_PLAN,
-                {
-                    "evidence": request.brief.evidence,
-                    "examples": request.brief.examples,
-                    "sources": request.brief.sources,
-                },
-            )
-            self._complete_step(
-                run_id,
-                DraftRunStepKey.STRATEGY,
-                {
-                    "thesis": request.brief.thesis,
-                    "conflict": request.brief.conflict,
-                    "cta": request.brief.cta,
-                },
-            )
+            ai_run_ids.extend(_ai_ids(strategy_result.ai_run_id))
+            self._complete_step(run_id, DraftRunStepKey.STRATEGY, strategy_result.artifact_payload)
             draft_payload = draft_to_payload(self._deterministic_draft_service.create_draft(request))
             self._complete_step(run_id, DraftRunStepKey.DRAFT, {"draft": draft_payload})
             self._complete_step(
@@ -98,11 +95,7 @@ class DraftRunPipeline:
                 },
             )
             self._complete_step(run_id, DraftRunStepKey.COMPLETE, {"status": "succeeded"})
-            self._repository.set_run_status(
-                run_id,
-                DraftRunStatus.SUCCEEDED,
-                final_draft=draft_payload,
-            )
+            self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_payload, ai_run_ids=ai_run_ids)
         except Exception as exc:
             self._repository.set_run_status(
                 run_id,
@@ -121,9 +114,13 @@ class DraftRunPipeline:
         artifact_payload: dict[str, Any],
     ) -> None:
         self._repository.set_step_status(run_id, key, DraftRunStepStatus.RUNNING)
-        self._repository.set_step_status(
-            run_id,
-            key,
-            DraftRunStepStatus.SUCCEEDED,
-            artifact_payload=artifact_payload,
-        )
+        self._repository.set_step_status(run_id, key, DraftRunStepStatus.SUCCEEDED, artifact_payload=artifact_payload)
+
+
+def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
+    value = artifact.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _ai_ids(ai_run_id: str | None) -> list[str]:
+    return [ai_run_id] if ai_run_id else []
