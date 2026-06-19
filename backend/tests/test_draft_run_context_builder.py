@@ -11,6 +11,9 @@ def test_context_builder_normalizes_full_draft_context() -> None:
     summary = build_draft_run_context_summary(request=request_from_payload(payload), context=request_context)
 
     assert summary["workItem"]["id"] == "work-item-1"
+    assert summary["brief"]["conflict"] == payload["brief"]["conflict"]
+    assert summary["brief"]["authorPosition"] == payload["brief"]["authorPosition"]
+    assert summary["brief"]["cta"] == payload["brief"]["cta"]
     assert summary["planSlot"]["expectedEffect"] == "Clarify adoption gap"
     assert summary["candidate"]["confidence"] == 88
     assert summary["sourceSignal"]["authorCorrection"] == "Use workflow framing"

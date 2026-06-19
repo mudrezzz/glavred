@@ -587,6 +587,16 @@ const BACKEND_SOURCE_BASELINES = [
     next: "DraftRun context builder should stay pure summary normalization; split per entity before adding rule compilation.",
   },
   {
+    path: "backend/app/application/draft_rule_pack_compiler.py",
+    limit: 80,
+    next: "Draft rule-pack compiler should stay orchestration-only; section builders own category mapping.",
+  },
+  {
+    path: "backend/app/application/draft_rule_pack_sections.py",
+    limit: 210,
+    next: "Draft rule-pack sections should split by category before validator or scoring logic is added.",
+  },
+  {
     path: "backend/app/application/draft_run_pipeline.py",
     limit: 140,
     next: "DraftRun pipeline should stay deterministic v1 orchestration; split step executors before adding real reasoning loops.",
@@ -620,6 +630,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/domain/draft_run_context.py",
     limit: 70,
     next: "DraftRun context DTOs should stay provider-free and infrastructure-free.",
+  },
+  {
+    path: "backend/app/domain/draft_rule_pack.py",
+    limit: 100,
+    next: "Draft RulePack DTOs should stay provider-free and persistence-free.",
   },
   {
     path: "backend/app/infrastructure/openrouter_config.py",
@@ -695,6 +710,16 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_run_context_builder.py",
     limit: 160,
     next: "DraftRun context builder tests should stay focused on context normalization.",
+  },
+  {
+    path: "backend/tests/test_draft_rule_pack_compiler.py",
+    limit: 100,
+    next: "Draft RulePack compiler tests should split by source category before growing.",
+  },
+  {
+    path: "backend/tests/test_draft_run_pipeline_rule_pack.py",
+    limit: 60,
+    next: "DraftRun pipeline rule-pack failure tests should stay separate from happy-path step tests.",
   },
   {
     path: "backend/tests/test_draft_run_repository.py",
@@ -1065,6 +1090,8 @@ if (fileExists("backend")) {
     "backend/app/application/draft_run_payloads.py",
     "backend/app/application/draft_run_context_payloads.py",
     "backend/app/application/draft_run_context_builder.py",
+    "backend/app/application/draft_rule_pack_compiler.py",
+    "backend/app/application/draft_rule_pack_sections.py",
     "backend/app/application/draft_run_pipeline.py",
     "backend/app/application/draft_run_service.py",
     "backend/app/domain/health.py",
@@ -1072,6 +1099,7 @@ if (fileExists("backend")) {
     "backend/app/domain/draft_generation.py",
     "backend/app/domain/draft_run.py",
     "backend/app/domain/draft_run_context.py",
+    "backend/app/domain/draft_rule_pack.py",
     "backend/app/infrastructure/openrouter_config.py",
     "backend/app/infrastructure/openrouter_draft_adapter.py",
     "backend/app/infrastructure/sqlite_ai_run_repository.py",
@@ -1087,6 +1115,8 @@ if (fileExists("backend")) {
     "backend/tests/test_draft_run_api.py",
     "backend/tests/test_draft_run_pipeline.py",
     "backend/tests/test_draft_run_context_builder.py",
+    "backend/tests/test_draft_rule_pack_compiler.py",
+    "backend/tests/test_draft_run_pipeline_rule_pack.py",
     "backend/tests/test_draft_run_repository.py",
   ];
 
@@ -1429,6 +1459,8 @@ const requiredSaoFragments = [
   "backend/app/application/draft_run_service.py",
   "backend/app/application/draft_run_pipeline.py",
   "backend/app/application/draft_run_context_builder.py",
+  "backend/app/application/draft_rule_pack_compiler.py",
+  "backend/app/application/draft_rule_pack_sections.py",
   "backend/app/infrastructure/openrouter_config.py",
   "backend/app/infrastructure/openrouter_draft_adapter.py",
   "backend/app/infrastructure/sqlite_ai_run_repository.py",
@@ -1436,6 +1468,7 @@ const requiredSaoFragments = [
   "backend/app/infrastructure/celery_app.py",
   "backend/app/infrastructure/draft_run_tasks.py",
   "backend/app/domain/draft_run_context.py",
+  "backend/app/domain/draft_rule_pack.py",
   "src/application/draftRunContext.ts",
   "Dockerized local stack",
   "Redis",

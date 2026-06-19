@@ -15,11 +15,14 @@
 текущий шаг в `Драфт`, а затем применяет завершенный deterministic-драфт к выбранному
 посту. Старый синхронный `/api/drafts/generate` остается compatibility fallback.
 
-Slice 2.5 adds the full `draftContext` snapshot to this run. The backend trace now
+Slice 2.6 adds the full `draftContext` snapshot and compiled `RulePack` to this run.
+The backend trace now
 shows which work item, plan slot, candidate when available, signal, topic, fabula,
 publisher rules, and author-position evidence were used to build the draft context.
-The backend still does not own workspace persistence; React sends the selected-post
-snapshot with the run request.
+`steps[1].artifactPayload` shows the explicit hard/soft constraints, evidence,
+dramaturgy, topic-fit, forbidden moves, and quality rubric that later planning and
+generation steps must consume. The backend still does not own workspace persistence;
+React sends the selected-post snapshot with the run request.
 
 The `Фабула` stage also displays read-only candidate and slot context. The author edits
 only the `PostBrief` production artifact there. If an approved fabula is edited,

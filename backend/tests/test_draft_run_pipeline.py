@@ -55,6 +55,8 @@ def test_draft_run_pipeline_executes_all_steps_and_writes_final_draft(tmp_path) 
     assert [step.status.value for step in result.steps] == ["succeeded"] * 7
     assert result.steps[0].artifact_payload["brief"]["title"] == request.brief.title
     assert result.steps[0].artifact_payload["compatibility"]["briefOnly"] is True
+    assert result.steps[1].artifact_payload["metadata"]["version"] == "rule-pack-v1"
+    assert result.steps[1].artifact_payload["draftIntent"]["title"] == request.brief.title
 
 
 def test_draft_run_pipeline_writes_context_summary(tmp_path) -> None:
@@ -79,3 +81,9 @@ def test_draft_run_pipeline_writes_context_summary(tmp_path) -> None:
     assert context_step["publisherRules"]["total"] == 1
     assert context_step["authorPositionEvidence"]["total"] == 1
     assert context_step["missingContext"][0]["entity"] == "topic"
+
+    rule_pack_step = result.steps[1].artifact_payload
+    assert rule_pack_step["draftIntent"]["thesis"] == request.brief.thesis
+    assert rule_pack_step["metadata"]["briefOnly"] is False
+    assert rule_pack_step["topicFitRequirements"]
+    assert rule_pack_step["dramaturgyRequirements"]

@@ -932,6 +932,19 @@ To debug Slice 2.5, open `GET /api/draft-runs/{id}` and inspect
 `steps[0].artifactPayload`; it is the canonical normalized context used by later
 rule-pack slices.
 
+To debug Slice 2.6, inspect `steps[1].artifactPayload`. It contains the compiled
+`RulePack` used by later material-planning and prompt layers:
+
+- `hardConstraints` and `softConstraints` from publisher rules and candidate intent;
+- `evidenceRequirements` from brief, candidate, signal, and fabula proof needs;
+- `dramaturgyRequirements` from the selected fabula;
+- `topicFitRequirements` from topic purpose, audience value, stance, and rules;
+- `forbiddenMoves` from topic forbidden angles, publisher bans, and candidate risks;
+- `qualityRubric` as deterministic v1 evaluation criteria.
+
+Do not add rule-pack compilation to `draft_run_context_builder.py` or
+`draft_run_pipeline.py`; the compiler and section mappers own that boundary.
+
 Drafting steps should be narrow:
 
 1. Build full context.

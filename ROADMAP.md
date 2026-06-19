@@ -2794,7 +2794,7 @@ Status:
 
 ### Slice 1.10.7: Ready Post Handoff
 
-- Status: Ready
+- Status: Done
 - Goal: Define when an editorial work item becomes `readyForRelease`.
 - User value: The author sees a clear finish line in `Редактура`: text is approved and
   visual decision is complete.
@@ -3263,7 +3263,7 @@ Status:
 
 ### Slice 2.6: Draft Rule Pack Compiler
 
-- Status: Ready
+- Status: Done
 - Goal: Compile publisher, topic, fabula, signal, and brief constraints into explicit
   rule packs before generation.
 - Scope:
@@ -3271,10 +3271,21 @@ Status:
     requirements, topic-fit requirements, and quality rubric.
   - Record rule-pack artifacts in draft-run trace.
   - Keep validators separate from prompt builders.
+- Architecture impact:
+  - RulePack domain DTOs stay provider-free and persistence-free.
+  - Rule-pack compilation is isolated in role-owned application modules, not added
+    to near-limit context, pipeline, run-domain, or SQLite repository files.
+- Done:
+  - Added provider-free `RulePack`, `RulePackRule`, and `RulePackRequirement`.
+  - Added deterministic compilation from normalized context summary to
+    hard/soft constraints, evidence requirements, dramaturgy requirements,
+    topic-fit requirements, quality rubric, and forbidden moves.
+  - Worker `rulePack` step now writes the compiled artifact to draft-run trace.
+  - Brief-only compatibility runs still receive a minimal rule pack.
 
 ### Slice 2.7: Material Plan and Draft Strategy Steps
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add the first LLM-assisted planning steps before draft generation.
 - Scope:
   - Generate a material plan from context and rule pack.
@@ -3414,6 +3425,7 @@ Status:
 - Slice 2.3.4: Agentic Draft Runner Architecture Plan. Completed 2026-06-19.
 - Slice 2.4: Draft Run Contract and Queue Foundation. Completed 2026-06-19.
 - Slice 2.5: Draft Run Context Builder. Completed 2026-06-19.
+- Slice 2.6: Draft Rule Pack Compiler. Completed 2026-06-19.
 
 ## Blocked Items
 
@@ -3434,4 +3446,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.6: Draft Rule Pack Compiler`.
+Continue the backend track with `Slice 2.7: Material Plan and Draft Strategy Steps`.

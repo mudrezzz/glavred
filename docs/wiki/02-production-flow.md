@@ -90,14 +90,14 @@ ready posts, publication attempts, statuses, external links, platform errors, an
 retry notes. Until platform integrations exist, manual export remains compatibility
 behavior.
 
-Slice 2.5 note: draft generation is visible and auditable through a queued `DraftRun`.
+Slice 2.6 note: draft generation is visible and auditable through a queued `DraftRun`.
 After fabula approval, `Драфт` shows queued/running progress until the worker finishes.
 `POST /api/draft-runs` receives the approved brief plus a read-only `draftContext`
 snapshot of the selected post: plan slot, candidate when available, source signal,
 topic, fabula, publisher rules, and author-position evidence. Use
-`/api/draft-runs/{id}` to inspect the context step summary, worker steps, final draft,
-and safe errors. Future provider calls inside a run will link child `AiRun` ids for
-prompt/provider traces.
+`/api/draft-runs/{id}` to inspect the context summary in step 0, the compiled
+RulePack in step 1, worker steps, final draft, and safe errors. Future provider calls
+inside a run will link child `AiRun` ids for prompt/provider traces.
 
 ## Ограничения текущего demo
 

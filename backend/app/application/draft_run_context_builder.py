@@ -120,6 +120,9 @@ def _brief_summary(request: DraftGenerationRequest) -> dict[str, Any]:
         "rubric": request.brief.rubric,
         "audience": request.brief.audience or request.editorial_model.audience,
         "thesis": request.brief.thesis,
+        "conflict": request.brief.conflict,
+        "authorPosition": request.brief.author_position,
+        "cta": request.brief.cta,
         "evidenceCount": len(request.brief.evidence),
         "sourceCount": len(request.brief.sources),
     }

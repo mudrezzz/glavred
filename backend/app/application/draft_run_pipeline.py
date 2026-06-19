@@ -1,5 +1,6 @@
 from typing import Any, Protocol
 
+from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompiler
 from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_payloads import draft_to_payload, request_from_payload
@@ -41,9 +42,11 @@ class DraftRunPipeline:
         self,
         repository: DraftRunPipelineRepository,
         deterministic_draft_service: DeterministicDraftService,
+        rule_pack_compiler: DraftRulePackCompiler | None = None,
     ) -> None:
         self._repository = repository
         self._deterministic_draft_service = deterministic_draft_service
+        self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
 
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
@@ -52,19 +55,19 @@ class DraftRunPipeline:
         self._repository.set_run_status(run_id, DraftRunStatus.RUNNING)
         try:
             request = request_from_payload(run.request_payload)
+            context_summary = build_draft_run_context_summary(
+                request,
+                context_from_payload(run.request_payload),
+            )
             self._complete_step(
                 run_id,
                 DraftRunStepKey.CONTEXT,
-                build_draft_run_context_summary(request, context_from_payload(run.request_payload)),
+                context_summary,
             )
             self._complete_step(
                 run_id,
                 DraftRunStepKey.RULE_PACK,
-                {
-                    "styleRules": request.editorial_model.style_rules,
-                    "forbiddenTopics": request.editorial_model.forbidden_topics,
-                    "goals": request.editorial_model.goals,
-                },
+                self._rule_pack_compiler.compile(context_summary).to_payload(),
             )
             self._complete_step(
                 run_id,

@@ -194,8 +194,10 @@ and applies the final draft when the worker completes. The run request now inclu
 `draftContext` snapshot from the selected editorial post: plan slot, candidate when
 available, source signal, topic, fabula, publisher rules, and author-position
 evidence. The current worker still uses deterministic placeholder steps; later slices
-will add rule-pack compilation, material planning, candidate generation, validators,
-revision loop, and selected draft.
+now compiles the context into a deterministic `RulePack` trace artifact. Inspect
+`GET /api/draft-runs/{id}`: `steps[0].artifactPayload` is the context summary and
+`steps[1].artifactPayload` is the rule pack. Later slices will add material planning,
+candidate generation, validators, revision loop, and selected draft.
 
 Run tests:
 

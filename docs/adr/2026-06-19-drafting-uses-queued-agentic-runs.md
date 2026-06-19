@@ -93,6 +93,15 @@ Slice 2.5 adds the first real context boundary:
 - `PostBrief` remains the approved fabula artifact and must not absorb slot,
   candidate, signal, topic, fabula, or publisher-rule fields.
 
+Slice 2.6 adds the rule-pack boundary:
+
+- worker step `rulePack` stores a compiled `RulePack` artifact, not a prompt blob;
+- the compiler consumes the normalized context summary and brief/editorial-model
+  compatibility inputs;
+- missing context is copied into rule-pack warnings instead of failing the run;
+- domain DTOs stay provider-free, and pipeline/context builder files do not own
+  rule-pack category mapping.
+
 ## Consequences
 
 - Slice 2.4 implements `Draft Run Contract and Queue Foundation`.
@@ -103,6 +112,9 @@ Slice 2.5 adds the first real context boundary:
 - Context building is a separate application boundary. Backend provider steps must use
   the normalized `DraftRunContext`/context step artifact rather than re-reading
   frontend workspace state.
+- Rule-pack compilation is a separate application boundary. Material planning,
+  strategy, provider prompts, and validators must consume the `RulePack` artifact
+  rather than rebuilding constraints from raw context.
 - Validators become first-class application/domain concepts, not hidden prompt text.
 - Frontend drafting UX should track queued/running/completed states and show named
   steps rather than a single loading state.

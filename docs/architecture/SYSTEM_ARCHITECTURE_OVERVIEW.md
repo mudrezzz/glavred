@@ -404,6 +404,25 @@ later rule-pack compilation.
 `PostBrief` must not absorb these source fields; it remains the author-approved
 production brief. The next backend implementation slice is `Draft Rule Pack Compiler`.
 
+Slice 2.6 implements the first explicit rule-pack boundary. The worker no longer
+stores a placeholder `rulePack` step: it compiles the normalized context summary into
+a provider-free `RulePack` artifact with hard constraints, soft constraints, evidence
+requirements, dramaturgy requirements, topic-fit requirements, a quality rubric, and
+forbidden moves. Missing context is copied into rule-pack warnings instead of failing
+the run. This keeps later material planning and prompt work from reading one large
+prompt blob.
+
+Rule-pack ownership is intentionally split:
+
+- `backend/app/domain/draft_rule_pack.py` defines provider-free DTOs only.
+- `backend/app/application/draft_rule_pack_compiler.py` orchestrates compilation.
+- `backend/app/application/draft_rule_pack_sections.py` maps source context into
+  rule-pack categories.
+- `backend/app/application/draft_run_pipeline.py` only calls the compiler and writes
+  `steps[1].artifactPayload`.
+
+The next backend implementation slice is `Material Plan and Draft Strategy Steps`.
+
 Concrete Slice 2.4 files:
 
 - `backend/app/domain/draft_run.py`
@@ -414,7 +433,10 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_run_payloads.py`
 - `backend/app/application/draft_run_context_payloads.py`
 - `backend/app/application/draft_run_context_builder.py`
+- `backend/app/application/draft_rule_pack_compiler.py`
+- `backend/app/application/draft_rule_pack_sections.py`
 - `backend/app/domain/draft_run_context.py`
+- `backend/app/domain/draft_rule_pack.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`
 - `backend/app/infrastructure/celery_app.py`
 - `backend/app/infrastructure/celery_draft_run_dispatcher.py`
