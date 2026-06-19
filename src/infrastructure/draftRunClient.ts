@@ -1,4 +1,6 @@
+import type { DraftRunContextSnapshot } from '../application/draftRunContext';
 import type { DraftGenerationTrace, EditorialModel, PostBrief, PostDraft } from '../domain/editorialWorkspace';
+import { createDraftRunRequestPayload } from './draftRunRequestPayload';
 
 type FetchDraftRun = typeof fetch;
 
@@ -45,12 +47,13 @@ export function setDraftRunPollingForTests(options: { intervalMs?: number; timeo
 
 export async function startDraftRun(
   brief: PostBrief,
-  editorialModel: EditorialModel
+  editorialModel: EditorialModel,
+  draftContext?: DraftRunContextSnapshot
 ): Promise<DraftRunCreateResponse> {
   const response = await draftRunFetch()(`${apiBaseUrl()}/api/draft-runs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(draftRequestPayload(brief, editorialModel))
+    body: JSON.stringify(createDraftRunRequestPayload(brief, editorialModel, draftContext))
   });
   if (!response.ok) {
     throw new Error(`DraftRun creation failed with HTTP ${response.status}`);
@@ -122,31 +125,5 @@ function generationTraceFromRun(run: DraftRunResponse): DraftGenerationTrace {
     fallbackUsed: false,
     createdAt: run.createdAt,
     error: run.error
-  };
-}
-
-function draftRequestPayload(brief: PostBrief, editorialModel: EditorialModel) {
-  return {
-    brief: {
-      id: brief.id,
-      title: brief.title,
-      rubric: brief.rubric,
-      audience: brief.audience,
-      thesis: brief.thesis,
-      conflict: brief.conflict,
-      authorPosition: brief.authorPosition,
-      evidence: brief.evidence,
-      examples: brief.examples,
-      structure: brief.structure,
-      cta: brief.cta,
-      risks: brief.risks,
-      sources: brief.sources
-    },
-    editorialModel: {
-      audience: editorialModel.audience,
-      styleRules: editorialModel.styleRules,
-      forbiddenTopics: editorialModel.forbiddenTopics,
-      goals: editorialModel.goals
-    }
   };
 }

@@ -354,6 +354,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   gate. Glavred starts a backend `DraftRun`, shows queued/running progress in
   `Драфт`, then applies the completed draft to the selected post. There is no separate
   `Написать драфт` action.
+- The run is created with a read-only context snapshot of the selected post: plan
+  slot, candidate when available, source signal, topic, fabula, publisher rules, and
+  author-position evidence. This appears in backend trace/debug, not as a new UI
+  screen.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

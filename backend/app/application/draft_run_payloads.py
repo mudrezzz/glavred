@@ -6,10 +6,12 @@ from backend.app.domain.draft_generation import (
     DraftGenerationRequest,
     GeneratedDraft,
 )
+from backend.app.domain.draft_run_context import DraftRunContext
+from backend.app.application.draft_run_context_payloads import context_input_summary, context_to_payload
 
 
-def request_to_payload(request: DraftGenerationRequest) -> dict[str, Any]:
-    return {
+def request_to_payload(request: DraftGenerationRequest, draft_context: DraftRunContext | None = None) -> dict[str, Any]:
+    payload = {
         "brief": {
             "id": request.brief.id,
             "title": request.brief.title,
@@ -32,6 +34,9 @@ def request_to_payload(request: DraftGenerationRequest) -> dict[str, Any]:
             "goals": request.editorial_model.goals,
         },
     }
+    if draft_context is not None:
+        payload["draftContext"] = context_to_payload(draft_context)
+    return payload
 
 
 def request_from_payload(payload: dict[str, Any]) -> DraftGenerationRequest:
@@ -74,8 +79,8 @@ def draft_to_payload(draft: GeneratedDraft) -> dict[str, Any]:
     }
 
 
-def input_summary_from_request(request: DraftGenerationRequest) -> dict[str, Any]:
-    return {
+def input_summary_from_request(request: DraftGenerationRequest, draft_context: DraftRunContext | None = None) -> dict[str, Any]:
+    summary = {
         "briefId": request.brief.id,
         "title": request.brief.title,
         "rubric": request.brief.rubric,
@@ -84,3 +89,6 @@ def input_summary_from_request(request: DraftGenerationRequest) -> dict[str, Any
         "ruleCount": len(request.editorial_model.style_rules),
         "goalCount": len(request.editorial_model.goals),
     }
+    if draft_context is not None:
+        summary["context"] = context_input_summary(draft_context)
+    return summary

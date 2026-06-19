@@ -391,10 +391,18 @@ The target drafting pipeline is:
 
 `EditorialWorkItem -> DraftRunContext -> RulePack -> MaterialPlan -> DraftStrategy -> DraftCandidates -> ValidatorResults -> RevisionAttempts -> SelectedDraft`
 
-The context builder must include approved brief, plan slot, post candidate, source
-signal, topic, fabula, publisher rules, and later author-memory evidence. `PostBrief`
-must not absorb these source fields; it remains the author-approved production brief.
-The next backend implementation slice is `Draft Run Context Builder`.
+Slice 2.5 implements the first context builder without moving workspace persistence
+to the backend. React builds an immutable `draftContext` snapshot from the selected
+`EditorialWorkItem` and sends it with `POST /api/draft-runs`. The snapshot includes
+approved brief, plan slot, post candidate when available, source signal, topic,
+fabula, publisher rules, project profile, editorial model, and up to 10
+author-position assertions sorted by confirmed status and confidence. Missing linked
+entities are recorded in `missingContext` instead of failing the run. The worker's
+`context` step normalizes this snapshot into a compact summary for trace/debug and
+later rule-pack compilation.
+
+`PostBrief` must not absorb these source fields; it remains the author-approved
+production brief. The next backend implementation slice is `Draft Rule Pack Compiler`.
 
 Concrete Slice 2.4 files:
 
@@ -404,11 +412,16 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_run_service.py`
 - `backend/app/application/draft_run_pipeline.py`
 - `backend/app/application/draft_run_payloads.py`
+- `backend/app/application/draft_run_context_payloads.py`
+- `backend/app/application/draft_run_context_builder.py`
+- `backend/app/domain/draft_run_context.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`
 - `backend/app/infrastructure/celery_app.py`
 - `backend/app/infrastructure/celery_draft_run_dispatcher.py`
 - `backend/app/infrastructure/draft_run_tasks.py`
 - `src/infrastructure/draftRunClient.ts`
+- `src/infrastructure/draftRunRequestPayload.ts`
+- `src/application/draftRunContext.ts`
 
 The Dockerized local stack is an execution wrapper around the same boundaries:
 

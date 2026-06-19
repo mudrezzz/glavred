@@ -242,11 +242,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     risks from the approved candidate and slot. Editing an approved fabula clears stale
     draft/final/release artifacts until the updated brief is approved again.
 28. Review the automatically prepared draft checks and editor notes. During generation
-    the `Драфт` stage shows a pending state. If the backend is running with OpenRouter
-    configured, the draft came from `/api/drafts/generate` and shows an `AiRun ID`;
-    inspect that id through `/api/ai-runs/{id}` to see the sanitized prompt/messages,
-    provider metadata, draft body, and fallback/error context. If the backend is
-    unreachable, the UI marks the draft as local fallback with no recorded `AiRun`.
+    the `Драфт` stage shows a queued/running `DraftRun`. Inspect
+    `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
+    summary, worker steps, final draft, and errors. If a later step calls OpenRouter,
+    linked child `AiRun` ids can be inspected through `/api/ai-runs/{id}`. If the
+    backend is unreachable, the UI marks the draft as local fallback with no recorded
+    backend run.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

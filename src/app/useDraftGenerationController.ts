@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { buildDraftRunContext } from '../application/draftRunContext';
 import type { DraftGenerationUiState, WorkspaceState } from '../domain/editorialWorkspace';
 import { generateBackendDraft } from '../infrastructure/backendDraftClient';
 import {
@@ -31,7 +32,8 @@ export function useDraftGenerationController({
     try {
       const createdRun = await startDraftRun(
         requestWorkspace.postBrief,
-        requestWorkspace.editorialModel
+        requestWorkspace.editorialModel,
+        buildDraftRunContext(requestWorkspace)
       );
       setState({
         status: 'generating',

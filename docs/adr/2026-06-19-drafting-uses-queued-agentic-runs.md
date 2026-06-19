@@ -82,6 +82,17 @@ Slice 2.4 implements the first baseline of this decision:
 - frontend polling after `Утвердить фабулу`;
 - `/api/drafts/generate` retained as compatibility fallback.
 
+Slice 2.5 adds the first real context boundary:
+
+- frontend sends a read-only `draftContext` snapshot with `POST /api/draft-runs`;
+- backend stores the raw snapshot in `DraftRun.requestPayload`;
+- worker `context` step writes a normalized summary for trace/debug and future
+  rule-pack compilation;
+- missing linked entities are recorded as `missingContext`, not treated as a hard
+  run failure;
+- `PostBrief` remains the approved fabula artifact and must not absorb slot,
+  candidate, signal, topic, fabula, or publisher-rule fields.
+
 ## Consequences
 
 - Slice 2.4 implements `Draft Run Contract and Queue Foundation`.
@@ -89,6 +100,9 @@ Slice 2.4 implements the first baseline of this decision:
   transition, not the long-term drafting interface.
 - Future prompt work must be split by step: context/rule pack, material plan, draft
   strategy, candidate generation, validation, and revision.
+- Context building is a separate application boundary. Backend provider steps must use
+  the normalized `DraftRunContext`/context step artifact rather than re-reading
+  frontend workspace state.
 - Validators become first-class application/domain concepts, not hidden prompt text.
 - Frontend drafting UX should track queued/running/completed states and show named
   steps rather than a single loading state.

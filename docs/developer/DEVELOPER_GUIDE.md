@@ -219,6 +219,7 @@ Current backend files:
 - `backend/app/api/ai_runs.py`: `/api/ai-runs` create/read/list audit routes.
 - `backend/app/api/drafts.py`: `/api/drafts/generate` route for backend-assisted
   draft generation.
+- `backend/app/api/draft_runs.py`: queued draft-run routes.
 - `backend/app/api/dependencies.py`: request-time application service wiring.
 - `backend/app/application/health_service.py`: health use-case orchestration.
 - `backend/app/application/ai_run_service.py`: AI run audit use case, payload
@@ -227,15 +228,30 @@ Current backend files:
   orchestration for draft generation.
 - `backend/app/application/deterministic_draft_service.py`: deterministic backend
   fallback draft generation.
+- `backend/app/application/draft_run_service.py`: durable run creation and dispatch
+  orchestration.
+- `backend/app/application/draft_run_pipeline.py`: deterministic worker pipeline over
+  named run steps.
+- `backend/app/application/draft_run_payloads.py`: brief/model/draft payload mapping.
+- `backend/app/application/draft_run_context_payloads.py`: context snapshot payload
+  mapping.
+- `backend/app/application/draft_run_context_builder.py`: normalized context summary
+  builder for the worker `context` step.
 - `backend/app/domain/health.py`: provider-free health value objects.
 - `backend/app/domain/ai_run.py`: provider-agnostic AI run entity and enums.
 - `backend/app/domain/draft_generation.py`: provider-free draft generation contracts.
+- `backend/app/domain/draft_run.py`: provider-free queued run and step entities.
+- `backend/app/domain/draft_run_context.py`: provider-free context DTOs.
 - `backend/app/infrastructure/openrouter_config.py`: OpenRouter config validator with
   no provider call.
 - `backend/app/infrastructure/openrouter_draft_adapter.py`: OpenRouter chat
   completions adapter for draft generation.
 - `backend/app/infrastructure/sqlite_ai_run_repository.py`: stdlib SQLite audit
   repository.
+- `backend/app/infrastructure/sqlite_draft_run_repository.py`: stdlib SQLite run/step
+  repository.
+- `backend/app/infrastructure/celery_app.py`, `celery_draft_run_dispatcher.py`, and
+  `draft_run_tasks.py`: queue wiring and worker entrypoints.
 
 AI run audit API:
 
@@ -887,6 +903,20 @@ Slice 2.4 runtime endpoints:
 - `GET /api/draft-runs/{id}/events`: polling alias for the same read-model; not SSE
   yet.
 
+Slice 2.5 context contract:
+
+- Frontend builds `draftContext` in `src/application/draftRunContext.ts` from the
+  selected `EditorialWorkItem` and current local `WorkspaceState`.
+- The HTTP payload mapper in `src/infrastructure/draftRunRequestPayload.ts` sends
+  `brief`, `editorialModel`, and optional `draftContext` to `POST /api/draft-runs`.
+- Backend stores the raw snapshot in `DraftRun.requestPayload` and normalizes it in
+  `backend/app/application/draft_run_context_builder.py`.
+- The worker's `context` step artifact should show work item, plan slot, candidate
+  if available, source signal, topic, fabula, publisher rule groups,
+  author-position evidence, and `missingContext`.
+- Old requests without `draftContext` still work and are marked as brief-only
+  compatibility runs in the context step artifact.
+
 Local services:
 
 - `REDIS_URL` points to the queue broker/result backend.
@@ -898,6 +928,9 @@ Local services:
 
 `AiRun` remains provider-call audit. `DraftRun` is orchestration audit and may later
 link child `AiRun` ids when individual steps call OpenRouter or other providers.
+To debug Slice 2.5, open `GET /api/draft-runs/{id}` and inspect
+`steps[0].artifactPayload`; it is the canonical normalized context used by later
+rule-pack slices.
 
 Drafting steps should be narrow:
 

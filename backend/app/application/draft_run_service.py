@@ -6,6 +6,7 @@ from backend.app.application.draft_run_payloads import (
 )
 from backend.app.domain.draft_generation import DraftGenerationRequest
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, create_queued_draft_run
+from backend.app.domain.draft_run_context import DraftRunContext
 
 
 class DraftRunRepository(Protocol):
@@ -33,10 +34,14 @@ class DraftRunService:
         self._repository = repository
         self._dispatcher = dispatcher
 
-    def create_run(self, request: DraftGenerationRequest) -> DraftRun:
+    def create_run(
+        self,
+        request: DraftGenerationRequest,
+        draft_context: DraftRunContext | None = None,
+    ) -> DraftRun:
         run = create_queued_draft_run(
-            request_payload=request_to_payload(request),
-            input_summary=input_summary_from_request(request),
+            request_payload=request_to_payload(request, draft_context),
+            input_summary=input_summary_from_request(request, draft_context),
         )
         self._repository.save(run)
         try:

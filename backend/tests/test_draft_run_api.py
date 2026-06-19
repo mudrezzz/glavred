@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import create_app
 from backend.app.settings import BackendSettings
+from backend.tests.test_draft_run_context_builder import make_context
 
 
 def make_payload() -> dict[str, Any]:
@@ -69,6 +70,19 @@ def test_create_draft_run_returns_queued_and_dispatches(tmp_path) -> None:
     payload = response.json()
     assert payload["status"] == "queued"
     assert dispatcher.calls == [payload["runId"]]
+
+
+def test_create_draft_run_persists_draft_context(tmp_path) -> None:
+    dispatcher = RecordingDispatcher()
+    client = make_client(tmp_path, dispatcher)
+    request_payload = make_payload()
+    request_payload["draftContext"] = make_context()
+
+    created = client.post("/api/draft-runs", json=request_payload).json()
+    loaded = client.get(f"/api/draft-runs/{created['runId']}").json()
+
+    assert loaded["inputSummary"]["context"]["hasCandidate"] is True
+    assert loaded["inputSummary"]["context"]["publisherRuleCount"] == 1
 
 
 def test_get_draft_run_returns_steps_and_hides_paths(tmp_path) -> None:

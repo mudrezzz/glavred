@@ -3242,7 +3242,7 @@ Status:
 
 ### Slice 2.5: Draft Run Context Builder
 
-- Status: Ready
+- Status: Done
 - Goal: Build the full draft-run context from the selected editorial work item.
 - Scope:
   - Include approved brief, plan slot, post candidate, source signal, topic, fabula,
@@ -3252,10 +3252,18 @@ Status:
 - Architecture impact:
   - Context builder is an application service with provider-free DTOs.
   - `PostBrief` must not absorb candidate/slot/source fields.
+- Done:
+  - Frontend builds a read-only `draftContext` snapshot from the selected work item
+    and sends it to `POST /api/draft-runs`.
+  - Backend persists `draftContext` in the durable `DraftRun.requestPayload`.
+  - Worker `context` step writes a normalized summary with work item, plan slot,
+    candidate, source signal, topic, fabula, publisher rules, author-position
+    evidence, and `missingContext`.
+  - Old brief/editorial-model-only requests remain compatible.
 
 ### Slice 2.6: Draft Rule Pack Compiler
 
-- Status: Backlog
+- Status: Ready
 - Goal: Compile publisher, topic, fabula, signal, and brief constraints into explicit
   rule packs before generation.
 - Scope:
@@ -3405,6 +3413,7 @@ Status:
 - Slice 2.3.3: AI Run Trace Debug Page. Completed 2026-06-18.
 - Slice 2.3.4: Agentic Draft Runner Architecture Plan. Completed 2026-06-19.
 - Slice 2.4: Draft Run Contract and Queue Foundation. Completed 2026-06-19.
+- Slice 2.5: Draft Run Context Builder. Completed 2026-06-19.
 
 ## Blocked Items
 
@@ -3425,4 +3434,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.5: Draft Run Context Builder`.
+Continue the backend track with `Slice 2.6: Draft Rule Pack Compiler`.

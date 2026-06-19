@@ -1,5 +1,7 @@
 from typing import Any, Protocol
 
+from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
+from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_payloads import draft_to_payload, request_from_payload
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
 from backend.app.domain.draft_run import (
@@ -53,12 +55,7 @@ class DraftRunPipeline:
             self._complete_step(
                 run_id,
                 DraftRunStepKey.CONTEXT,
-                {
-                    "briefTitle": request.brief.title,
-                    "audience": request.brief.audience or request.editorial_model.audience,
-                    "evidenceCount": len(request.brief.evidence),
-                    "sourceCount": len(request.brief.sources),
-                },
+                build_draft_run_context_summary(request, context_from_payload(run.request_payload)),
             )
             self._complete_step(
                 run_id,

@@ -190,10 +190,12 @@ summary and the `AiRun ID`; inspect the full trace through
 
 The synchronous draft endpoint is a provider-integration compatibility path, not the
 primary drafting model. The primary UI path starts a queued `DraftRun`, polls status,
-and applies the final draft when the worker completes. Slice 2.4 uses deterministic
-placeholder steps; later slices will replace those steps with full context building,
-rule-pack compilation, material planning, candidate generation, validators, revision
-loop, and selected draft.
+and applies the final draft when the worker completes. The run request now includes a
+`draftContext` snapshot from the selected editorial post: plan slot, candidate when
+available, source signal, topic, fabula, publisher rules, and author-position
+evidence. The current worker still uses deterministic placeholder steps; later slices
+will add rule-pack compilation, material planning, candidate generation, validators,
+revision loop, and selected draft.
 
 Run tests:
 

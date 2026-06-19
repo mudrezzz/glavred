@@ -40,7 +40,7 @@ describe('Editorial workbench app flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
 
-    const pendingFetch = vi.fn().mockImplementation(async (_url, init) => {
+    const pendingFetchMock = vi.fn().mockImplementation(async (_url: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === 'POST') {
         return {
           ok: true,
@@ -48,13 +48,21 @@ describe('Editorial workbench app flow', () => {
         };
       }
       return new Promise<Response>(() => undefined);
-    }) as unknown as typeof fetch;
+    });
+    const pendingFetch = pendingFetchMock as unknown as typeof fetch;
     setDraftRunFetchForTests(pendingFetch);
     setDraftRunPollingForTests({ intervalMs: 1, timeoutMs: 1000 });
     try {
       fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
 
       expect(await screen.findByText(/Генерируем драфт/i)).toBeInTheDocument();
+      const postCall = pendingFetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
+      const payload = JSON.parse(String(postCall?.[1]?.body));
+      expect(payload.draftContext.workItem).toBeTruthy();
+      expect(payload.draftContext.sourceSignal).toBeTruthy();
+      expect(payload.draftContext.topic).toBeTruthy();
+      expect(payload.draftContext.fabula).toBeTruthy();
+      expect(payload.draftContext.publisherRules.length).toBeGreaterThan(0);
       fireEvent.click(screen.getByRole('tab', { name: /Фабула/i }));
       expect(screen.getByRole('button', { name: /Генерируем драфт/i })).toBeDisabled();
     } finally {

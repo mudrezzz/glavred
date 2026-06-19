@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import create_draft_run_service
 from backend.app.api.draft_generation_contracts import DraftGenerateRequest, to_draft_generation_request
+from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_service import DraftRunService
 from backend.app.domain.draft_run import DraftRun, DraftRunStep
 
@@ -16,6 +17,10 @@ class DraftRunCreateResponse(BaseModel):
     status: str
 
     model_config = {"populate_by_name": True}
+
+
+class DraftRunCreateRequest(DraftGenerateRequest):
+    draft_context: dict[str, Any] | None = Field(default=None, alias="draftContext")
 
 
 class DraftRunStepResponse(BaseModel):
@@ -46,10 +51,13 @@ class DraftRunResponse(BaseModel):
 
 @router.post("", response_model=DraftRunCreateResponse, response_model_by_alias=True)
 def create_draft_run(
-    request: DraftGenerateRequest,
+    request: DraftRunCreateRequest,
     service: DraftRunService = Depends(create_draft_run_service),
 ) -> DraftRunCreateResponse:
-    run = service.create_run(to_draft_generation_request(request))
+    run = service.create_run(
+        to_draft_generation_request(request),
+        context_from_payload({"draftContext": request.draft_context}),
+    )
     return DraftRunCreateResponse(run_id=run.id, status=run.status.value)
 
 
