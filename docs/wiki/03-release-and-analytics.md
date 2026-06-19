@@ -11,8 +11,9 @@
 
 `Фабула -> Драфт -> Визуал -> Готов к выпуску`
 
-После `Утвердить фабулу` Glavred автоматически готовит deterministic-драфт из
-утвержденной фабулы и редакционной модели.
+После `Утвердить фабулу` Glavred создает backend `DraftRun`, показывает очередь и
+текущий шаг в `Драфт`, а затем применяет завершенный deterministic-драфт к выбранному
+посту. Старый синхронный `/api/drafts/generate` остается compatibility fallback.
 
 The `Фабула` stage also displays read-only candidate and slot context. The author edits
 only the `PostBrief` production artifact there. If an approved fabula is edited,

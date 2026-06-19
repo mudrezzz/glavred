@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { expect, vi } from 'vitest';
-import { setBackendDraftFetchForTests } from '../infrastructure/backendDraftClient';
+import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../infrastructure/draftRunClient';
 import { goToSignals, openFoundSignals } from './signalsFlowDriver';
 
 export async function createApprovedBrief() {
@@ -11,45 +11,24 @@ export async function createApprovedBrief() {
   fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
   fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
   fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
-  const backendDraftFetch = vi.fn().mockResolvedValue({
+  const draftRunFetch = vi.fn().mockImplementation(async (_url, init) => ({
     ok: true,
-    json: async () => ({
-      draft: {
-        id: 'draft-app-flow',
-        briefId: 'brief-app-flow',
-        title: 'AI-B2B demo еще не продукт',
-        body: 'AI-B2B продукт начинается не с впечатляющего demo, а с доказуемого workflow improvement, evals и доверия пользователя к границам системы.',
-        status: 'draft',
-        version: 1,
-        updatedAt: '2026-06-18T00:00:00.000Z'
-      },
-      aiRun: {
-        id: 'airun-app-flow',
-        capability: 'draftGeneration',
-        status: 'succeeded',
-        provider: 'openrouter',
-        model: 'openai/gpt-4.1-mini',
-        requestPayload: {},
-        resultPayload: {},
-        error: null,
-        fallbackUsed: false,
-        createdAt: '2026-06-18T00:00:00.000Z',
-        updatedAt: '2026-06-18T00:00:00.000Z'
-      }
-    })
-  }) as unknown as typeof fetch;
-  setBackendDraftFetchForTests(backendDraftFetch);
+    json: async () => init?.method === 'POST' ? makeCreatedRun() : makeCompletedRun()
+  })) as unknown as typeof fetch;
+  setDraftRunFetchForTests(draftRunFetch);
+  setDraftRunPollingForTests({ intervalMs: 1, timeoutMs: 1000 });
   try {
     fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
     await waitFor(() => {
-      expect(backendDraftFetch).toHaveBeenCalled();
+      expect(draftRunFetch).toHaveBeenCalled();
     });
     fireEvent.click(screen.getByRole('tab', { name: /Драфт/i }));
     await waitFor(() => {
       expect(screen.getByLabelText('Текст драфта')).toBeInTheDocument();
     });
   } finally {
-    setBackendDraftFetchForTests(null);
+    setDraftRunFetchForTests(null);
+    setDraftRunPollingForTests({ intervalMs: 1600, timeoutMs: 120000 });
   }
 }
 
@@ -71,4 +50,43 @@ export async function createExportedRelease() {
   await waitFor(() => {
     expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
   });
+}
+
+function makeCreatedRun() {
+  return { runId: 'draft-run-app-flow', status: 'queued' };
+}
+
+function makeCompletedRun() {
+  return {
+    id: 'draft-run-app-flow',
+    status: 'succeeded',
+    steps: [
+      step('context', 'Сбор контекста'),
+      step('complete', 'Завершение')
+    ],
+    finalDraft: {
+      id: 'draft-app-flow',
+      briefId: 'brief-app-flow',
+      title: 'AI-B2B demo еще не продукт',
+      body: 'AI-B2B продукт начинается не с впечатляющего demo, а с доказуемого workflow improvement, evals и доверия пользователя к границам системы.',
+      status: 'draft',
+      version: 1,
+      updatedAt: '2026-06-18T00:00:00.000Z'
+    },
+    error: null,
+    createdAt: '2026-06-18T00:00:00.000Z',
+    updatedAt: '2026-06-18T00:00:00.000Z'
+  };
+}
+
+function step(key: string, title: string) {
+  return {
+    key,
+    title,
+    status: 'succeeded',
+    artifactPayload: {},
+    error: null,
+    startedAt: null,
+    completedAt: null
+  };
 }

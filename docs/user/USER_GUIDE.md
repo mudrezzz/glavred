@@ -350,9 +350,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Open `Редактура`.
 - In `Посты`, expand a queued post and use `К рабочему столу`, or open `Рабочий стол`
   and choose a post from the searchable picker.
-- Review, edit if needed, and approve the prepared post brief through the second HITL gate.
-  Glavred immediately prepares the draft and opens the `Драфт` stage for the selected
-  post; there is no separate `Написать драфт` action.
+- Review, edit if needed, and approve the prepared post brief through the second HITL
+  gate. Glavred starts a backend `DraftRun`, shows queued/running progress in
+  `Драфт`, then applies the completed draft to the selected post. There is no separate
+  `Написать драфт` action.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

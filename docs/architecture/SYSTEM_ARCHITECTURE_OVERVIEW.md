@@ -368,12 +368,55 @@ the HTTP mapper is `src/infrastructure/aiRunTraceClient.ts`. This keeps trace
 inspection separate from production draft generation and avoids expanding the
 near-limit draft client.
 
+Slice 2.4 introduces the first durable queued drafting runner. The current
+`/api/drafts/generate` endpoint remains a useful compatibility/provider-integration
+surface, but the primary draft path starts a long-running `DraftRun`:
+
+- `DraftRun` is the parent orchestration record for one post-drafting attempt.
+- `DraftRunStep` records named stages such as context build, rule-pack compilation,
+  material planning, draft strategy, candidate generation, validation, revision, and
+  result selection.
+- `AiRun` remains the audit record for one provider call inside a `DraftRun`.
+- Rule packs and validators are first-class application/domain concepts; they must not
+  be hidden as one large prompt.
+- `POST /api/draft-runs` creates a durable run and dispatches a Celery task.
+- `GET /api/draft-runs/{id}` and `/events` expose a polling read-model with steps,
+  artifacts, error, and final draft when ready.
+- SQLite stores orchestration state in `DRAFT_RUN_DB_PATH`
+  (`var/glavred-draft-runs.sqlite3` by default).
+- Celery and Redis run under infrastructure modules only. API handlers do not own task
+  bodies, queue logic, SQL, or provider calls.
+
+The target drafting pipeline is:
+
+`EditorialWorkItem -> DraftRunContext -> RulePack -> MaterialPlan -> DraftStrategy -> DraftCandidates -> ValidatorResults -> RevisionAttempts -> SelectedDraft`
+
+The context builder must include approved brief, plan slot, post candidate, source
+signal, topic, fabula, publisher rules, and later author-memory evidence. `PostBrief`
+must not absorb these source fields; it remains the author-approved production brief.
+The next backend implementation slice is `Draft Run Context Builder`.
+
+Concrete Slice 2.4 files:
+
+- `backend/app/domain/draft_run.py`
+- `backend/app/api/draft_runs.py`
+- `backend/app/api/draft_generation_contracts.py`
+- `backend/app/application/draft_run_service.py`
+- `backend/app/application/draft_run_pipeline.py`
+- `backend/app/application/draft_run_payloads.py`
+- `backend/app/infrastructure/sqlite_draft_run_repository.py`
+- `backend/app/infrastructure/celery_app.py`
+- `backend/app/infrastructure/celery_draft_run_dispatcher.py`
+- `backend/app/infrastructure/draft_run_tasks.py`
+- `src/infrastructure/draftRunClient.ts`
+
 The Dockerized local stack is an execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.
 - `docker/frontend.Dockerfile` builds only the Vite frontend and Node dependencies.
-- `compose.yaml` wires the two services, publishes `8000` and `5176`, injects local
-  `.env` values at runtime, and mounts `./var` for SQLite audit state.
+- `compose.yaml` wires frontend, backend, Redis, and Celery worker services; publishes
+  `8000`, `5176`, and local Redis; injects `.env` values at runtime; and mounts
+  `./var` for SQLite audit/run state.
 - `.dockerignore` excludes `.env`, local caches, `node_modules`, build outputs, and
   audit data from the Docker build context.
 
@@ -806,17 +849,27 @@ Future author-position contracts:
 ## Conceptual AI Provider Interfaces
 
 These interfaces are documented for future implementation and are not runtime
-TypeScript contracts in Slice 0.8:
+TypeScript contracts in Slice 0.8. After Slice 2.3.4, drafting is modeled as a
+multi-step run rather than a single provider request:
 
 - `AiProviderAdapter`: infrastructure-side adapter that performs provider-specific
-  calls for one capability.
-- `DraftGenerationRequest`: approved `PostBrief`, `EditorialModel` or future
-  `AuthorPositionModel`, optional previous learning context, locale, output
-  constraints, and caller context.
-- `DraftGenerationResult`: title, draft body, notes, risks, provider metadata, and a
-  shape that can be mapped into `PostDraft`.
-- `PromptTemplate`: stable prompt layers and variables used by the application service
-  before calling an adapter.
+  calls for one capability or one `DraftRunStep`.
+- `DraftRunContext`: provider-free DTO assembled from the selected work item,
+  approved brief, plan slot, post candidate, source signal, topic, fabula, publisher
+  rules, and future author-memory evidence.
+- `RulePack`: explicit hard constraints, soft constraints, evidence requirements,
+  dramaturgy requirements, topic-fit requirements, and quality rubric.
+- `MaterialPlan`: what evidence exists, what is missing, which claims are risky, and
+  how the post should stay grounded.
+- `DraftStrategy`: thesis, opening, argument sequence, fabula use, CTA, and forbidden
+  moves before prose generation.
+- `DraftCandidate`: one generated title/body/rationale/risk attempt.
+- `ValidatorResult`: narrow quality result for publisher rules, topic fit, fabula fit,
+  evidence grounding, anti-AI style, forbidden topics, audience value, structure, or
+  claim risk.
+- `RevisionAttempt`: targeted correction instruction plus resulting candidate.
+- `PromptTemplate`: stable prompt layers and variables used by application step
+  services before calling an adapter.
 - `ProviderRunMetadata`: provider name, model name if known, run id if available,
   latency, token estimates when available, and fallback status.
 - `ProviderError`: normalized error information that does not expose SDK-specific

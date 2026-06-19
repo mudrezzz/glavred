@@ -3150,28 +3150,162 @@ Status:
   - A developer can open `/ai-runs`, paste an `AiRun ID`, and see the detailed local
     trace. Done.
 
-### Slice 2.4: Document AI Platform Import Adapter
+### Slice 2.3.4: Agentic Draft Runner Architecture Plan
+
+- Status: Done
+- Goal: Replace the "one request, one draft" drafting direction with a queued,
+  traceable multi-step agent runner architecture before implementation starts.
+- Scope:
+  - Define `DraftRun` as the long-running orchestration record above individual
+    provider `AiRun` calls. Done.
+  - Document the target pipeline: context build, rule-pack compilation, material
+    plan, draft strategy, candidate drafts, validators, revision loop, and result
+    selection. Done.
+  - Confirm that topic, fabula, signal, post candidate, publisher rules, and approved
+    brief context cannot be flattened into one prompt. Done.
+  - Move the next backend priority from document import to queued draft execution.
+    Done.
+- Out of scope:
+  - Runtime queue implementation.
+  - Real multi-step LLM orchestration.
+  - Frontend status UI changes beyond roadmap/docs.
+- Architecture impact:
+  - `DraftRun` owns orchestration state; `AiRun` remains a provider-call audit record.
+  - Celery/Redis become the preferred local queue/worker direction for long drafting
+    runs.
+  - Validators and rule packs are first-class application/domain concepts, not prompt
+    text hidden inside one request.
+- Tests:
+  - `npm run test:architecture` for docs/architecture guardrails.
+- Acceptance criteria:
+  - Roadmap, SAO, developer docs, and ADR agree that the next implementation slice is
+    queued `DraftRun`, not a bigger synchronous prompt. Done.
+
+### Slice 2.4: Draft Run Contract and Queue Foundation
+
+- Status: Done
+- Goal: Introduce the first durable queued drafting runner without real complex LLM
+  reasoning yet.
+- User value: After approving a fabula, the author sees a real long-running drafting
+  job with status, steps, and trace instead of a synchronous black-box request.
+- Scope:
+  - Add Redis and Celery to the local Docker stack. Done.
+  - Add provider-free `DraftRun`, `DraftRunStep`, and `DraftRunStatus` domain
+    contracts. Done.
+  - Add SQLite persistence for draft runs and steps in
+    `var/glavred-draft-runs.sqlite3`. Done.
+  - Add `POST /api/draft-runs`, `GET /api/draft-runs/{id}`, and
+    `GET /api/draft-runs/{id}/events` polling read-model. Done.
+  - Add a Celery task that executes a deterministic placeholder pipeline:
+    build context -> compile rule pack -> create material plan -> create draft
+    strategy -> generate deterministic draft -> validate -> complete. Done.
+  - Keep existing `POST /api/drafts/generate` as compatibility fallback during the
+    transition. Done.
+  - Update frontend `Утвердить фабулу` to start a draft run and show queued/running
+    status before draft completion. Done.
+- Out of scope:
+  - Real OpenRouter multi-step reasoning.
+  - Real search/retrieval.
+  - LangGraph integration.
+  - Multi-candidate draft review.
+  - Full workspace backend persistence.
+- Implementation notes:
+  - API handlers remain thin.
+  - Application services own run creation, task dispatch, and state transitions.
+  - Infrastructure owns Celery, Redis, persistence adapters, and provider calls.
+  - Domain stays provider-free, queue-free, and persistence-free.
+- Architecture impact:
+  - This slice creates the backend execution model for all future long AI workflows.
+  - `DraftRun` is the parent orchestration trace; individual LLM/provider calls inside
+    it will create child `AiRun` records in later slices.
+  - Architecture smoke adds backend baselines and forbidden-import checks for queue
+    modules. Done.
+- Tests:
+  - Backend tests for creating a queued run, worker task step transitions, completed
+    deterministic draft, and dispatch failure. Done.
+  - Frontend tests for pending/running/completed states after approving a fabula. Done.
+  - `npm run test:backend`, `npm run test:architecture`, `npm test -- --run`,
+    `npm run smoke`, and `docker compose config --quiet`. Done.
+- Docs:
+  - Update SAO, developer guide, README, and demo docs with draft-run startup and
+    debugging instructions. Done.
+- Demo impact:
+  - Demo shows a queued draft run progressing through named steps. Done.
+- Acceptance criteria:
+  - A draft run can be started, tracked, completed, and inspected locally. Done.
+  - The UI no longer treats drafting as a single synchronous provider request. Done.
+  - Existing emergency fallback remains available if backend/worker is unavailable. Done.
+- Risks:
+  - Introducing queue infrastructure can create boilerplate; keep modules role-owned
+    and small.
+  - Worker state and frontend polling can drift; keep status contracts explicit.
+
+### Slice 2.5: Draft Run Context Builder
 
 - Status: Ready
-- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
-  document/archive analysis.
+- Goal: Build the full draft-run context from the selected editorial work item.
 - Scope:
-  - Add a facade over `langgraph-document-ai-platform`.
-  - Accept a local document/archive input through a backend use case.
-  - Return review candidates, not direct author-position assertions.
-  - Keep the library out of React, domain objects, and API handlers.
+  - Include approved brief, plan slot, post candidate, source signal, topic, fabula,
+    publisher rules, and available author-position evidence.
+  - Expose context summary in draft-run trace.
+  - Do not mutate workspace state from context building.
+- Architecture impact:
+  - Context builder is an application service with provider-free DTOs.
+  - `PostBrief` must not absorb candidate/slot/source fields.
 
-### Deferred: AI Drafting Adapter Skeleton
+### Slice 2.6: Draft Rule Pack Compiler
+
+- Status: Backlog
+- Goal: Compile publisher, topic, fabula, signal, and brief constraints into explicit
+  rule packs before generation.
+- Scope:
+  - Produce hard constraints, soft constraints, evidence requirements, dramaturgy
+    requirements, topic-fit requirements, and quality rubric.
+  - Record rule-pack artifacts in draft-run trace.
+  - Keep validators separate from prompt builders.
+
+### Slice 2.7: Material Plan and Draft Strategy Steps
+
+- Status: Backlog
+- Goal: Add the first LLM-assisted planning steps before draft generation.
+- Scope:
+  - Generate a material plan from context and rule pack.
+  - Generate a draft strategy from material plan and fabula/topic rules.
+  - Store both as draft-run artifacts with child `AiRun` records.
+  - Fall back to deterministic planning if OpenRouter is unavailable.
+
+### Slice 2.8: Multi-Candidate Draft Generation
+
+- Status: Backlog
+- Goal: Generate and compare several draft candidates instead of one draft.
+- Scope:
+  - Generate 2-3 draft candidates from one strategy.
+  - Store candidate title/body/rationale/risk.
+  - Select the best candidate by validator score while preserving alternatives for
+    debug and future UI review.
+
+### Slice 2.9: Validator and Revision Loop
+
+- Status: Backlog
+- Goal: Add iterative validation and correction until target score or iteration limit.
+- Scope:
+  - Validate against publisher rules, topic fit, fabula fit, evidence grounding,
+    anti-AI style, forbidden topics, audience value, structure, and claim risk.
+  - Revise the draft using targeted failure summaries.
+  - Stop by `targetScore`, `maxIterations`, or no-improvement rule.
+  - Return the best attempt with scorecard and unresolved warnings.
+
+### Deferred: Document AI Platform Import Adapter
 
 - Status: Deferred
-- Goal: Add a runtime provider-agnostic drafting adapter skeleton without real provider
-  calls.
+- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
+  document/archive analysis.
 - Reason deferred:
-  - AI drafting should be constrained by author memory, author position, topic/fabula
-    entities, and validators first.
+  - The current product risk is drafting orchestration, not archive import. The next
+    backend foundation should establish durable queue/run semantics first.
 - Re-open when:
-  - `AuthorMemory`, first `AuthorPositionModel`, topics/fabulas, and validator
-    baseline are implemented.
+  - Queued `DraftRun` semantics and trace contracts are stable enough to reuse for
+    document workflows.
 
 ## Completed Slices
 
@@ -3269,6 +3403,8 @@ Status:
 - Slice 2.3.2: AI Run Observability and Draft Generation Status. Completed
   2026-06-18.
 - Slice 2.3.3: AI Run Trace Debug Page. Completed 2026-06-18.
+- Slice 2.3.4: Agentic Draft Runner Architecture Plan. Completed 2026-06-19.
+- Slice 2.4: Draft Run Contract and Queue Foundation. Completed 2026-06-19.
 
 ## Blocked Items
 
@@ -3289,4 +3425,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.4: Document AI Platform Import Adapter`.
+Continue the backend track with `Slice 2.5: Draft Run Context Builder`.

@@ -361,6 +361,11 @@ const LARGE_SOURCE_BASELINES = [
     next: "Backend draft client should stay a thin HTTP mapper; move orchestration into app/application modules.",
   },
   {
+    path: "src/infrastructure/draftRunClient.ts",
+    limit: 170,
+    next: "DraftRun client should stay a thin polling HTTP mapper; keep orchestration in app controllers.",
+  },
+  {
     path: "src/app/productionDraftActions.ts",
     limit: 70,
     next: "Production draft actions should stay a thin workspace patch builder for backend-generated drafts.",
@@ -479,6 +484,11 @@ const TEST_FILE_BASELINES = [
     next: "Backend draft client tests should stay focused on request/response mapping.",
   },
   {
+    path: "src/infrastructure/draftRunClient.test.ts",
+    limit: 130,
+    next: "DraftRun client tests should stay focused on run start/poll/final-draft mapping.",
+  },
+  {
     path: "src/app/productionDraftActions.test.ts",
     limit: 70,
     next: "Production draft action tests should stay focused on generated-draft workspace sync.",
@@ -517,6 +527,16 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft routes should stay thin and delegate generation to DraftGenerationService.",
   },
   {
+    path: "backend/app/api/draft_generation_contracts.py",
+    limit: 100,
+    next: "Draft request/response contracts should stay mapping-only and framework-light.",
+  },
+  {
+    path: "backend/app/api/draft_runs.py",
+    limit: 120,
+    next: "DraftRun routes should stay thin and delegate orchestration to DraftRunService.",
+  },
+  {
     path: "backend/app/application/health_service.py",
     limit: 90,
     next: "Health service should stay focused on liveness/readiness orchestration.",
@@ -537,6 +557,21 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Deterministic draft fallback should stay a small fallback service.",
   },
   {
+    path: "backend/app/application/draft_run_payloads.py",
+    limit: 100,
+    next: "DraftRun payload mapping should stay serialization-only.",
+  },
+  {
+    path: "backend/app/application/draft_run_pipeline.py",
+    limit: 140,
+    next: "DraftRun pipeline should stay deterministic v1 orchestration; split step executors before adding real reasoning loops.",
+  },
+  {
+    path: "backend/app/application/draft_run_service.py",
+    limit: 80,
+    next: "DraftRun service should stay queue/audit orchestration only.",
+  },
+  {
     path: "backend/app/domain/health.py",
     limit: 60,
     next: "Health domain objects should stay provider-free and framework-free.",
@@ -552,6 +587,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft generation domain contracts should stay provider-free and framework-free.",
   },
   {
+    path: "backend/app/domain/draft_run.py",
+    limit: 120,
+    next: "DraftRun domain objects should stay provider-free and infrastructure-free.",
+  },
+  {
     path: "backend/app/infrastructure/openrouter_config.py",
     limit: 80,
     next: "OpenRouter config validator must not perform provider calls.",
@@ -565,6 +605,26 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/infrastructure/sqlite_ai_run_repository.py",
     limit: 130,
     next: "SQLite AI run repository should stay audit-storage-only; split schema/mappers before adding more tables.",
+  },
+  {
+    path: "backend/app/infrastructure/celery_app.py",
+    limit: 60,
+    next: "Celery app wiring should stay infrastructure-only and config-only.",
+  },
+  {
+    path: "backend/app/infrastructure/celery_draft_run_dispatcher.py",
+    limit: 40,
+    next: "Celery dispatcher should stay a tiny task submission adapter.",
+  },
+  {
+    path: "backend/app/infrastructure/draft_run_tasks.py",
+    limit: 70,
+    next: "Celery task body should stay a thin infrastructure entrypoint over DraftRunPipeline.",
+  },
+  {
+    path: "backend/app/infrastructure/sqlite_draft_run_repository.py",
+    limit: 230,
+    next: "SQLite DraftRun repository should own storage only; split mappers/schema before adding more tables.",
   },
   {
     path: "backend/tests/test_settings.py",
@@ -590,6 +650,21 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_generation_api.py",
     limit: 170,
     next: "Draft generation API tests should split by success/fallback/provider errors before growing further.",
+  },
+  {
+    path: "backend/tests/test_draft_run_api.py",
+    limit: 130,
+    next: "DraftRun API tests should split by create/read/worker handoff before growing further.",
+  },
+  {
+    path: "backend/tests/test_draft_run_pipeline.py",
+    limit: 100,
+    next: "DraftRun pipeline tests should split by step execution when real reasoning is added.",
+  },
+  {
+    path: "backend/tests/test_draft_run_repository.py",
+    limit: 100,
+    next: "DraftRun repository tests should split by schema/write/query behavior before growing further.",
   },
 ];
 
@@ -744,6 +819,7 @@ const requiredEnvFragments = [
   "DATABASE_URL=",
   "REDIS_URL=",
   "AI_RUN_AUDIT_DB_PATH=",
+  "DRAFT_RUN_DB_PATH=",
   "OPENROUTER_API_KEY=",
   "OPENROUTER_BASE_URL=",
   "OPENROUTER_DEFAULT_MODEL=",
@@ -776,6 +852,11 @@ const requiredDockerFiles = [
 
 for (const requiredFile of requiredDockerFiles) {
   assert(fileExists(requiredFile), `Missing Docker local-stack file: ${requiredFile}`);
+}
+
+const composeSource = fileExists("compose.yaml") ? readText("compose.yaml") : "";
+for (const fragment of ["redis:", "worker:", "REDIS_URL: redis://redis:6379/0"]) {
+  assert(composeSource.includes(fragment), `compose.yaml is missing queued-run fragment: ${fragment}`);
 }
 
 const requiredSourceFiles = [
@@ -855,6 +936,7 @@ const requiredSourceFiles = [
   "src/application/visualVariantService.ts",
   "src/application/visualMemeRemixService.ts",
   "src/infrastructure/backendDraftClient.ts",
+  "src/infrastructure/draftRunClient.ts",
   "src/app/productionDraftActions.ts",
   "src/app/productionVisualActions.ts",
 ];
@@ -937,21 +1019,34 @@ if (fileExists("backend")) {
     "backend/app/api/health.py",
     "backend/app/api/ai_runs.py",
     "backend/app/api/drafts.py",
+    "backend/app/api/draft_generation_contracts.py",
+    "backend/app/api/draft_runs.py",
     "backend/app/application/health_service.py",
     "backend/app/application/ai_run_service.py",
     "backend/app/application/draft_generation_service.py",
     "backend/app/application/deterministic_draft_service.py",
+    "backend/app/application/draft_run_payloads.py",
+    "backend/app/application/draft_run_pipeline.py",
+    "backend/app/application/draft_run_service.py",
     "backend/app/domain/health.py",
     "backend/app/domain/ai_run.py",
     "backend/app/domain/draft_generation.py",
+    "backend/app/domain/draft_run.py",
     "backend/app/infrastructure/openrouter_config.py",
     "backend/app/infrastructure/openrouter_draft_adapter.py",
     "backend/app/infrastructure/sqlite_ai_run_repository.py",
+    "backend/app/infrastructure/celery_app.py",
+    "backend/app/infrastructure/celery_draft_run_dispatcher.py",
+    "backend/app/infrastructure/draft_run_tasks.py",
+    "backend/app/infrastructure/sqlite_draft_run_repository.py",
     "backend/tests/test_settings.py",
     "backend/tests/test_health_api.py",
     "backend/tests/test_ai_run_api.py",
     "backend/tests/test_ai_run_repository.py",
     "backend/tests/test_draft_generation_api.py",
+    "backend/tests/test_draft_run_api.py",
+    "backend/tests/test_draft_run_pipeline.py",
+    "backend/tests/test_draft_run_repository.py",
   ];
 
   for (const requiredFile of requiredBackendFiles) {
@@ -1211,6 +1306,9 @@ const backendDomainForbiddenImports = [
   "fastapi",
   "httpx",
   "requests",
+  "celery",
+  "redis",
+  "sqlite3",
   "sqlalchemy",
   "pydantic_settings",
   "uvicorn",
@@ -1222,6 +1320,9 @@ const backendDomainForbiddenImports = [
 const backendApiForbiddenImports = [
   "httpx",
   "requests",
+  "celery",
+  "redis",
+  "sqlite3",
   "openai",
   "langgraph_document_ai_platform",
   "langgraph",
@@ -1280,13 +1381,21 @@ const requiredSaoFragments = [
   "backend/app/api/health.py",
   "backend/app/api/ai_runs.py",
   "backend/app/api/drafts.py",
+  "backend/app/api/draft_runs.py",
   "backend/app/application/health_service.py",
   "backend/app/application/ai_run_service.py",
   "backend/app/application/draft_generation_service.py",
+  "backend/app/application/draft_run_service.py",
+  "backend/app/application/draft_run_pipeline.py",
   "backend/app/infrastructure/openrouter_config.py",
   "backend/app/infrastructure/openrouter_draft_adapter.py",
   "backend/app/infrastructure/sqlite_ai_run_repository.py",
+  "backend/app/infrastructure/sqlite_draft_run_repository.py",
+  "backend/app/infrastructure/celery_app.py",
+  "backend/app/infrastructure/draft_run_tasks.py",
   "Dockerized local stack",
+  "Redis",
+  "Celery",
   "compose.yaml",
   "docker/backend.Dockerfile",
   "docker/frontend.Dockerfile",

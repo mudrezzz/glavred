@@ -45,3 +45,8 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-16-post-candidate-uses-fabula-not-format.md](2026-06-16-post-candidate-uses-fabula-not-format.md)
 - [2026-06-17-approved-posts-use-editorial-work-queue.md](2026-06-17-approved-posts-use-editorial-work-queue.md)
 - [2026-06-17-plan-slot-approval-creates-editorial-work-item-and-brief.md](2026-06-17-plan-slot-approval-creates-editorial-work-item-and-brief.md)
+- [2026-06-18-ai-run-observability-stores-local-trace.md](2026-06-18-ai-run-observability-stores-local-trace.md)
+- [2026-06-18-app-flow-tests-follow-feature-ownership.md](2026-06-18-app-flow-tests-follow-feature-ownership.md)
+- [2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md](2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md)
+- [2026-06-18-release-is-publication-log-not-editorial-workbench.md](2026-06-18-release-is-publication-log-not-editorial-workbench.md)
+- [2026-06-19-drafting-uses-queued-agentic-runs.md](2026-06-19-drafting-uses-queued-agentic-runs.md)

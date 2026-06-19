@@ -119,7 +119,13 @@ export function EditorialWorkbench({
         <section className="card draft-start draft-generation-pending" aria-live="polite">
           <span className="rub">{brief.rubric}</span>
           <h2>Генерируем драфт</h2>
-          <p>Backend отправляет утвержденную фабулу в OpenRouter. Драфт появится здесь автоматически, когда run завершится.</p>
+          <p>Backend поставил DraftRun в очередь и выполняет шаги раннера. Драфт появится здесь автоматически, когда run завершится.</p>
+          {draftGenerationState.runId ? (
+            <p className="muted">DraftRun: {draftGenerationState.runId}</p>
+          ) : null}
+          {draftGenerationState.stepLabel ? (
+            <p className="muted">Текущий шаг: {draftGenerationState.stepLabel}</p>
+          ) : null}
           <div className="draft-generation-spinner" aria-hidden="true" />
         </section>
       ) : !draft ? (
@@ -234,11 +240,13 @@ function DraftGenerationSummary({
   }
   if (!generation) return null;
 
-  const sourceLabel = generation.source === 'openrouter'
-    ? 'OpenRouter'
-    : generation.source === 'backendFallback'
-      ? 'Backend fallback'
-      : 'Local fallback';
+  const sourceLabel = generation.source === 'draftRun'
+    ? 'DraftRun'
+    : generation.source === 'openrouter'
+      ? 'OpenRouter'
+      : generation.source === 'backendFallback'
+        ? 'Backend fallback'
+        : 'Local fallback';
 
   return (
     <div className={`draft-generation-summary${generation.fallbackUsed ? ' warning' : ''}`}>
@@ -246,6 +254,7 @@ function DraftGenerationSummary({
       <span>
         Provider: {generation.provider ?? 'none'} · Model: {generation.model ?? 'none'} · AiRun: {generation.aiRunId ?? 'not recorded'}
       </span>
+      {generation.draftRunId ? <span>DraftRun: {generation.draftRunId}</span> : null}
       {generation.error ? <span>Ошибка: {generation.error}</span> : null}
     </div>
   );

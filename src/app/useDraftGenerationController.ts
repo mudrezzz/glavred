@@ -1,11 +1,17 @@
 import { useRef, useState } from 'react';
-import { generateBackendDraft } from '../infrastructure/backendDraftClient';
-import type { WorkspacePatch } from './useWorkspacePersistence';
 import type { DraftGenerationUiState, WorkspaceState } from '../domain/editorialWorkspace';
+import { generateBackendDraft } from '../infrastructure/backendDraftClient';
+import {
+  currentDraftRunStep,
+  draftFromCompletedRun,
+  startDraftRun,
+  waitForDraftRun
+} from '../infrastructure/draftRunClient';
 import {
   buildApproveBriefWithGeneratedDraftPatch,
   buildApproveBriefWithLocalFallbackDraftPatch
 } from './productionDraftActions';
+import type { WorkspacePatch } from './useWorkspacePersistence';
 
 export function useDraftGenerationController({
   patchWorkspace,
@@ -23,28 +29,79 @@ export function useDraftGenerationController({
     if (!requestWorkspace.postBrief || state.status === 'generating') return;
     setState({ status: 'generating', startedAt: new Date().toISOString() });
     try {
-      const result = await generateBackendDraft(requestWorkspace.postBrief, requestWorkspace.editorialModel);
-      const currentWorkspace = workspaceRef.current.postBrief
-        ? workspaceRef.current
-        : requestWorkspace;
-      patchWorkspace(
-        buildApproveBriefWithGeneratedDraftPatch(currentWorkspace, result.draft),
-        result.aiRun.fallbackUsed
-          ? 'Фабула утверждена, драфт подготовлен backend fallback'
-          : 'Фабула утверждена, драфт подготовлен через OpenRouter'
+      const createdRun = await startDraftRun(
+        requestWorkspace.postBrief,
+        requestWorkspace.editorialModel
+      );
+      setState({
+        status: 'generating',
+        startedAt: new Date().toISOString(),
+        runId: createdRun.runId
+      });
+      const completedRun = await waitForDraftRun(createdRun.runId, (run) => {
+        const step = currentDraftRunStep(run);
+        setState({
+          status: 'generating',
+          startedAt: new Date().toISOString(),
+          runId: run.id,
+          step: step?.key ?? null,
+          stepLabel: step?.title ?? null
+        });
+      });
+      if (completedRun.status !== 'succeeded') {
+        throw new Error(completedRun.error ?? 'DraftRun failed');
+      }
+      applyGeneratedDraft(
+        requestWorkspace,
+        draftFromCompletedRun(completedRun),
+        'Фабула утверждена, драфт подготовлен через DraftRun'
       );
       setState({ status: 'idle' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Backend draft generation failed';
-      const currentWorkspace = workspaceRef.current.postBrief
-        ? workspaceRef.current
-        : requestWorkspace;
-      patchWorkspace(
-        buildApproveBriefWithLocalFallbackDraftPatch(currentWorkspace, message),
-        'Фабула утверждена, backend недоступен: использован локальный fallback'
-      );
-      setState({ status: 'failed', error: message, fallbackUsed: true });
+      const message = error instanceof Error ? error.message : 'DraftRun failed';
+      if (await tryCompatibilityDraft(requestWorkspace)) return;
+      applyLocalFallback(requestWorkspace, message);
     }
+  }
+
+  async function tryCompatibilityDraft(requestWorkspace: WorkspaceState) {
+    if (!requestWorkspace.postBrief) return false;
+    try {
+      const result = await generateBackendDraft(
+        requestWorkspace.postBrief,
+        requestWorkspace.editorialModel
+      );
+      applyGeneratedDraft(
+        requestWorkspace,
+        result.draft,
+        result.aiRun.fallbackUsed
+          ? 'DraftRun недоступен, драфт подготовлен backend fallback'
+          : 'DraftRun недоступен, драфт подготовлен compatibility endpoint'
+      );
+      setState({ status: 'idle' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function applyGeneratedDraft(
+    requestWorkspace: WorkspaceState,
+    draft: WorkspaceState['postDraft'],
+    message: string
+  ) {
+    if (!draft) return;
+    const currentWorkspace = workspaceRef.current.postBrief ? workspaceRef.current : requestWorkspace;
+    patchWorkspace(buildApproveBriefWithGeneratedDraftPatch(currentWorkspace, draft), message);
+  }
+
+  function applyLocalFallback(requestWorkspace: WorkspaceState, message: string) {
+    const currentWorkspace = workspaceRef.current.postBrief ? workspaceRef.current : requestWorkspace;
+    patchWorkspace(
+      buildApproveBriefWithLocalFallbackDraftPatch(currentWorkspace, message),
+      'Фабула утверждена, backend run недоступен: использован локальный fallback'
+    );
+    setState({ status: 'failed', error: message, fallbackUsed: true });
   }
 
   return {

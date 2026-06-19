@@ -854,33 +854,63 @@ Rules for future AI-assisted drafting:
 - Local-first deterministic behavior remains the default for demo, tests, offline
   development, and provider failure.
 
-The conceptual drafting boundary is:
+The target drafting boundary is no longer a single request/response provider call.
+The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
+integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`approved PostBrief + EditorialModel + optional EditorialLearningNote -> DraftGenerationRequest -> DraftingProvider -> DraftGenerationResult -> PostDraft`
+`EditorialWorkItem -> DraftRunContext -> RulePack -> MaterialPlan -> DraftStrategy -> DraftCandidates -> ValidatorResults -> RevisionAttempts -> SelectedDraft`
 
-Conceptual interfaces for the next implementation slice:
+Conceptual interfaces for the next implementation slices:
 
+- `DraftRun`: durable orchestration record for one post-drafting attempt.
+- `DraftRunStep`: named stage with status, input summary, output artifact, error, and
+  timing.
+- `DraftRunContext`: selected work item plus approved brief, plan slot, post candidate,
+  source signal, topic, fabula, publisher rules, and future author-memory evidence.
+- `RulePack`: hard constraints, soft constraints, evidence requirements, dramaturgy
+  requirements, topic-fit requirements, and quality rubric.
+- `MaterialPlan`: evidence inventory, missing evidence, risky claims, grounding plan,
+  and retrieval/search needs.
+- `DraftStrategy`: thesis, opening, argument sequence, fabula use, CTA, and forbidden
+  moves.
+- `DraftCandidate`: one generated draft attempt with rationale and risks.
+- `ValidatorResult`: focused score/findings for one rule family.
+- `RevisionAttempt`: targeted correction input and candidate output.
+- `AiRun`: one provider call audit record inside a parent `DraftRun`.
 - `AiProviderAdapter`: provider-specific adapter behind an application boundary.
-- `DraftGenerationRequest`: brief, editorial model, optional learning note, locale,
-  constraints, and caller context.
-- `DraftGenerationResult`: draft title/body, notes, risks, and provider metadata that
-  can be mapped into `PostDraft`.
-- `PromptTemplate`: layered prompt definition for system/context, editorial model,
-  brief, output contract, and HITL reminder.
-- `ProviderRunMetadata`: normalized run information such as provider, model, run id,
-  latency, token estimates, and fallback mode.
-- `ProviderError`: normalized error object handled by application services.
-- `AiFallbackPolicy`: fallback rules for disabled providers, missing configuration,
-  provider errors, invalid results, or local demo mode.
 
-Prompt architecture for drafting:
+Slice 2.4 runtime endpoints:
 
-1. System/context layer: careful editorial assistant.
-2. Editorial model layer: author, audience, position, style rules, rubrics, forbidden
-   topics, and goals.
-3. Brief layer: thesis, conflict, evidence, examples, CTA, risks, and sources.
-4. Output contract layer: draft body, notes, risks, and metadata.
-5. Human approval reminder: AI proposes a draft, but never approves final text.
+- `POST /api/draft-runs`: persists a queued run and dispatches a Celery task.
+- `GET /api/draft-runs/{id}`: polling read-model with steps, artifacts, final draft,
+  and safe error.
+- `GET /api/draft-runs/{id}/events`: polling alias for the same read-model; not SSE
+  yet.
+
+Local services:
+
+- `REDIS_URL` points to the queue broker/result backend.
+- `DRAFT_RUN_DB_PATH` points to SQLite orchestration state
+  (`var/glavred-draft-runs.sqlite3` by default).
+- `npm run dev:backend` starts FastAPI.
+- `npm run dev:worker` starts the Celery worker on Windows-friendly `solo` pool.
+- `docker compose up --build` starts frontend, backend, Redis, and worker together.
+
+`AiRun` remains provider-call audit. `DraftRun` is orchestration audit and may later
+link child `AiRun` ids when individual steps call OpenRouter or other providers.
+
+Drafting steps should be narrow:
+
+1. Build full context.
+2. Compile rule packs.
+3. Plan materials.
+4. Choose draft strategy.
+5. Generate several candidates.
+6. Validate candidates.
+7. Revise failed candidates with targeted instructions.
+8. Stop by target score, maximum iterations, hard-constraint failure, or no-improvement
+   rule.
+9. Select the best attempt and surface unresolved warnings.
 
 Slice 0.8 intentionally adds no provider SDKs, API keys, environment variables,
 backend, streaming, billing, or real provider calls.
@@ -896,7 +926,16 @@ The first backend implementation order is:
 1. Backend foundation and OpenRouter environment validation.
 2. AI run contract and audit trail.
 3. First OpenRouter-backed editorial run with deterministic fallback.
-4. `langgraph-document-ai-platform` adapter for document/archive import review.
+4. AI run observability and trace inspection.
+5. Queued `DraftRun` contract with Redis/Celery worker foundation. Done.
+6. Full draft-run context builder. Next.
+7. Rule-pack compiler.
+8. Material plan and draft strategy steps.
+9. Multi-candidate draft generation.
+10. Validator and revision loop.
+
+`langgraph-document-ai-platform` import remains important, but it should wait until
+the queued-run pattern is stable enough to reuse for document workflows.
 
 Every backend slice must update architecture smoke with the files and forbidden-import
 rules it introduces. `npm run test:architecture` remains mandatory even before a

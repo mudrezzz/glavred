@@ -9,11 +9,12 @@ export type AnalyticsStatus = 'draft' | 'captured';
 export type EditorialWorkStage = 'brief' | 'draft' | 'visual' | 'readyForRelease';
 export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
 export type VisualMode = 'generate' | 'memeSearch' | 'memeRemix' | 'noVisual';
-export type DraftGenerationSource = 'openrouter' | 'backendFallback' | 'localFallback';
+export type DraftGenerationSource = 'draftRun' | 'openrouter' | 'backendFallback' | 'localFallback';
 
 export interface DraftGenerationTrace {
   source: DraftGenerationSource;
   aiRunId: string | null;
+  draftRunId?: string | null;
   provider: string | null;
   model: string | null;
   fallbackUsed: boolean;
@@ -23,7 +24,7 @@ export interface DraftGenerationTrace {
 
 export type DraftGenerationUiState =
   | { status: 'idle' }
-  | { status: 'generating'; startedAt: string }
+  | { status: 'generating'; startedAt: string; runId?: string | null; step?: string | null; stepLabel?: string | null }
   | { status: 'failed'; error: string; fallbackUsed: true };
 
 export interface PostVisualVariant {

@@ -129,10 +129,12 @@ its initial post brief for `Редактура`.
 Approved plan slots now appear as an editorial work queue in `Редактура`. `Посты`
 lists queued work items with filters and row actions; `Рабочий стол` edits one
 selected post through `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Финал` is no
-longer a user-facing tab; text approval belongs in `Драфт`. `Выпуск` is the future
-publication log for ready posts, publication attempts, external links, platform errors,
-and retry notes. The existing manual package/checklist/copy/Markdown surface is only a
-compatibility bridge until release-log slices replace it.
+longer a user-facing tab; text approval belongs in `Драфт`. Approving `Фабула`
+starts a backend `DraftRun`, shows queued/running step progress, and applies the
+completed draft when the worker finishes. `Выпуск` is the future publication log for
+ready posts, publication attempts, external links, platform errors, and retry notes.
+The existing manual package/checklist/copy/Markdown surface is only a compatibility
+bridge until release-log slices replace it.
 
 ## External Sources Scenario
 

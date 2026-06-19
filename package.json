@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:backend": "python -m backend.app",
+    "dev:worker": "celery -A backend.app.infrastructure.celery_app worker --loglevel=INFO --pool=solo",
     "build": "tsc --noEmit && vite build",
     "docs:screenshots": "node scripts/capture-wiki-screenshots.mjs",
     "docs:wiki:publish": "node scripts/publish-wiki.mjs",

@@ -89,6 +89,9 @@ export function EditorialWorkbenchAside({
           <div><dt>Источник</dt><dd>{draftSourceLabel(workspace.postDraft?.generation?.source)}</dd></div>
           <div><dt>Provider</dt><dd>{workspace.postDraft?.generation?.provider ?? 'none'}</dd></div>
           <div><dt>Model</dt><dd>{workspace.postDraft?.generation?.model ?? 'none'}</dd></div>
+          {draftGenerationState.status === 'generating' ? <div><dt>DraftRun</dt><dd>{draftGenerationState.runId ?? 'queued'}</dd></div> : null}
+          {draftGenerationState.status === 'generating' ? <div><dt>Шаг</dt><dd>{draftGenerationState.stepLabel ?? 'ожидаем worker'}</dd></div> : null}
+          {workspace.postDraft?.generation?.draftRunId ? <div><dt>DraftRun</dt><dd>{workspace.postDraft.generation.draftRunId}</dd></div> : null}
           <div><dt>AiRun</dt><dd>{workspace.postDraft?.generation?.aiRunId ?? 'not recorded'}</dd></div>
           {draftGenerationState.status === 'failed' ? <div><dt>Ошибка</dt><dd>{draftGenerationState.error}</dd></div> : null}
         </dl>
@@ -122,6 +125,7 @@ export function EditorialWorkbenchAside({
 }
 
 function draftSourceLabel(source: DraftGenerationSource | undefined): string {
+  if (source === 'draftRun') return 'DraftRun';
   if (source === 'openrouter') return 'OpenRouter';
   if (source === 'backendFallback') return 'Backend fallback';
   if (source === 'localFallback') return 'Local fallback';

@@ -146,7 +146,8 @@ docker compose up --build
 ```
 
 Then open `http://localhost:5176`. The backend is published at
-`http://localhost:8000`, and local AI run audit data is written under `var/`.
+`http://localhost:8000`, Redis is published at `localhost:6379`, and local AI/DraftRun
+audit data is written under `var/`.
 Docker Compose reads local secrets from `.env`; `.env` is ignored by Git and is not
 copied into the Docker build context.
 
@@ -164,15 +165,35 @@ Run the backend:
 npm run dev:backend
 ```
 
-The backend currently exposes health endpoints, AI run audit endpoints, and the first
-draft-generation endpoint: `POST /api/drafts/generate`. When OpenRouter is configured,
-approving a fabula can generate the draft through the backend; missing provider config
-or provider errors fall back to deterministic drafting and are recorded in local SQLite
-at `AI_RUN_AUDIT_DB_PATH` (default `var/glavred-ai-runs.sqlite3`, ignored by Git).
+Run the backend worker locally when you are not using Docker:
+
+```bash
+npm run dev:worker
+```
+
+The backend currently exposes health endpoints, AI run audit endpoints, the
+compatibility draft endpoint `POST /api/drafts/generate`, and the primary queued draft
+runner:
+
+- `POST /api/draft-runs`
+- `GET /api/draft-runs/{id}`
+- `GET /api/draft-runs/{id}/events`
+
+When OpenRouter is configured, the compatibility endpoint can generate drafts through
+the provider; missing provider config or provider errors fall back to deterministic
+drafting and are recorded in local SQLite at `AI_RUN_AUDIT_DB_PATH` (default
+`var/glavred-ai-runs.sqlite3`, ignored by Git).
 Draft runs store a local sanitized trace with prompt messages, provider metadata,
 generated draft body, fallback flag, and safe error context. The UI stores only a
 summary and the `AiRun ID`; inspect the full trace through
 `GET /api/ai-runs/{id}` or the separate debug page at `/ai-runs`.
+
+The synchronous draft endpoint is a provider-integration compatibility path, not the
+primary drafting model. The primary UI path starts a queued `DraftRun`, polls status,
+and applies the final draft when the worker completes. Slice 2.4 uses deterministic
+placeholder steps; later slices will replace those steps with full context building,
+rule-pack compilation, material planning, candidate generation, validators, revision
+loop, and selected draft.
 
 Run tests:
 

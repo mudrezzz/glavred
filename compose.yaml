@@ -1,4 +1,14 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -10,6 +20,8 @@ services:
       GLAVRED_API_PORT: 8000
       GLAVRED_CORS_ORIGINS: http://localhost:5176,http://127.0.0.1:5176
       OPENROUTER_HTTP_REFERER: http://localhost:5176
+      REDIS_URL: redis://redis:6379/0
+      DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
     ports:
       - "8000:8000"
     volumes:
@@ -25,6 +37,25 @@ services:
       interval: 60s
       timeout: 3s
       retries: 6
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: celery -A backend.app.infrastructure.celery_app worker --loglevel=INFO --pool=solo
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
+    volumes:
+      - ./var:/app/var
+    depends_on:
+      redis:
+        condition: service_healthy
 
   frontend:
     build:

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
 import { goToSignals, openFoundSignals } from '../../test-support/signalsFlowDriver';
-import { setBackendDraftFetchForTests } from '../../infrastructure/backendDraftClient';
+import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../../infrastructure/draftRunClient';
 
 describe('Editorial workbench app flow', () => {
   beforeEach(() => {
@@ -40,8 +40,17 @@ describe('Editorial workbench app flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
 
-    const pendingFetch = vi.fn(() => new Promise<Response>(() => undefined)) as unknown as typeof fetch;
-    setBackendDraftFetchForTests(pendingFetch);
+    const pendingFetch = vi.fn().mockImplementation(async (_url, init) => {
+      if (init?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ({ runId: 'draft-run-pending', status: 'queued' })
+        };
+      }
+      return new Promise<Response>(() => undefined);
+    }) as unknown as typeof fetch;
+    setDraftRunFetchForTests(pendingFetch);
+    setDraftRunPollingForTests({ intervalMs: 1, timeoutMs: 1000 });
     try {
       fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
 
@@ -49,7 +58,8 @@ describe('Editorial workbench app flow', () => {
       fireEvent.click(screen.getByRole('tab', { name: /Фабула/i }));
       expect(screen.getByRole('button', { name: /Генерируем драфт/i })).toBeDisabled();
     } finally {
-      setBackendDraftFetchForTests(null);
+      setDraftRunFetchForTests(null);
+      setDraftRunPollingForTests({ intervalMs: 1600, timeoutMs: 120000 });
     }
   });
 
