@@ -199,7 +199,12 @@ OpenRouter-backed planning steps with deterministic fallback for `MaterialPlan` 
 Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context, `steps[1]` is the rule
 pack, `steps[2]` is the material plan, `steps[3]` is the draft strategy, and `steps[4]`
 contains directions, candidates, child `AiRun` ids, and deterministic selection. Later
-slices will add validators, revision loop, and candidate review UI.
+slices now follow the documented quality spine before validator work: source ledger,
+feasibility gate, post contract, rule-registry v2, rhetorical plans, validators,
+ranking, directed revision, regression report, and human decision learning. The next
+backend slice is `Source Ledger Foundation`, so future validators can judge drafts
+against explicit claim provenance and locked editorial invariants instead of guessing
+from final text.
 
 Run tests:
 

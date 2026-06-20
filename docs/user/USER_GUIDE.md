@@ -358,6 +358,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   slot, candidate when available, source signal, topic, fabula, publisher rules, and
   author-position evidence. This appears in backend trace/debug, not as a new UI
   screen.
+- The drafting backend is being expanded as an artifact pipeline, not a single larger
+  prompt. The next backend quality layers are source ledger, feasibility gate, post
+  contract, rule registry, validators, ranking, directed revision, and regression. The
+  main editor will keep showing a compact draft and warnings; full trace details stay
+  in `/ai-runs`.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

@@ -250,6 +250,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     `/api/ai-runs/{id}`. If the
     backend is unreachable, the UI marks the draft as local fallback with no recorded
     backend run.
+    Next backend drafting slices add a source ledger and post contract before
+    validators/revision, so the trace will show which claims were allowed and which
+    editorial invariants the draft had to preserve.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

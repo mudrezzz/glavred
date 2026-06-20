@@ -50,3 +50,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md](2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md)
 - [2026-06-18-release-is-publication-log-not-editorial-workbench.md](2026-06-18-release-is-publication-log-not-editorial-workbench.md)
 - [2026-06-19-drafting-uses-queued-agentic-runs.md](2026-06-19-drafting-uses-queued-agentic-runs.md)
+- [2026-06-20-drafting-quality-requires-source-ledger-and-post-contract.md](2026-06-20-drafting-quality-requires-source-ledger-and-post-contract.md)

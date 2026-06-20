@@ -100,6 +100,14 @@ RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3, draft candi
 and deterministic selection in step 4, final draft, and safe errors. Planning and
 candidate provider calls link child `AiRun` ids for prompt/provider traces.
 
+Post-2.8 quality note: the next drafting work is not a generic validator loop. Glavred
+must first create a `SourceLedger` and `PostContract` inside the queued `DraftRun`.
+The ledger records grounded claims, provenance, confidence, allowed use, risky claims,
+and forbidden inferences. The contract locks the approved thesis, audience value,
+CTA, allowed claims, forbidden moves, platform constraints, and fabula obligations.
+Only after those artifacts exist can validators and directed revisions judge whether a
+candidate draft is truly acceptable.
+
 ## Ограничения текущего demo
 
 - Инсайт, план и фабула создаются deterministic-сервисами.

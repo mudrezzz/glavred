@@ -888,7 +888,11 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> RulePack -> MaterialPlan -> DraftStrategy -> DraftCandidates -> ValidatorResults -> RevisionAttempts -> SelectedDraft`
+`EditorialWorkItem -> DraftRunContext -> RuleRegistrySnapshot -> SourceLedger -> FeasibilityGate -> PostContract -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+
+This order is a workflow rule. Do not implement the validator/revision loop before
+the source ledger and post contract exist: validators need claim ids, allowed-use
+policy, forbidden inferences, and locked editorial invariants to judge generated text.
 
 Conceptual interfaces for the next implementation slices:
 
@@ -897,15 +901,27 @@ Conceptual interfaces for the next implementation slices:
   timing.
 - `DraftRunContext`: selected work item plus approved brief, plan slot, post candidate,
   source signal, topic, fabula, publisher rules, and future author-memory evidence.
+- `RuleRegistrySnapshot`: selected drafting rules with ids, scope, priority, severity,
+  observable criteria, validator type, examples, and repair policy.
+- `SourceLedger`: source/candidate/brief claims, provenance, confidence, allowed use,
+  risks, forbidden inferences, and author corrections.
+- `FeasibilityReport`: pre-writing gate that may return feasible, feasible with
+  constraints, needs research, needs human decision, or infeasible.
+- `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden moves,
+  platform constraints, and fabula obligations.
 - `RulePack`: hard constraints, soft constraints, evidence requirements, dramaturgy
   requirements, topic-fit requirements, and quality rubric.
 - `MaterialPlan`: evidence inventory, missing evidence, risky claims, grounding plan,
   and retrieval/search needs.
 - `DraftStrategy`: thesis, opening, argument sequence, fabula use, CTA, and forbidden
   moves.
+- `RhetoricalPlan`: one editorial route for applying the same post contract.
 - `DraftCandidate`: one generated draft attempt with rationale and risks.
+- `DeterministicLinter`: hard local checks before provider-backed validation.
 - `ValidatorResult`: focused score/findings for one rule family.
+- `PairwiseRanking`: comparison and scorecard across candidates.
 - `RevisionAttempt`: targeted correction input and candidate output.
+- `RegressionReport`: re-check after a directed revision.
 - `AiRun`: one provider call audit record inside a parent `DraftRun`.
 - `AiProviderAdapter`: provider-specific adapter behind an application boundary.
 
@@ -981,18 +997,41 @@ provider metadata, fallback status, and sanitized candidate results. The fronten
 receives one selected `finalDraft`; alternatives are trace/debug data until a future UI
 review slice.
 
+The next artifacts must make candidate validation meaningful:
+
+- `SourceLedger` comes before validators and stores claim ids, provenance, confidence,
+  allowed-use policy, risks, and forbidden inferences.
+- `FeasibilityReport` can stop unsafe drafting before prose is generated.
+- `PostContract` locks the thesis, audience value, CTA, allowed claims, forbidden
+  moves, platform constraints, and fabula obligations.
+
+Do not add validator prompts that judge final text without these artifacts. They would
+not know what the text was allowed to claim or what invariants a revision must
+preserve.
+
 Drafting steps should be narrow:
 
 1. Build full context.
-2. Compile rule packs.
-3. Plan materials.
-4. Choose draft strategy.
-5. Generate several candidates.
-6. Validate candidates.
-7. Revise failed candidates with targeted instructions.
-8. Stop by target score, maximum iterations, hard-constraint failure, or no-improvement
-   rule.
-9. Select the best attempt and surface unresolved warnings.
+2. Select machine-readable rules into a rule registry snapshot.
+3. Build a source ledger with claim ids, provenance, allowed use, risks, and forbidden
+   inferences.
+4. Run a feasibility gate before prose generation.
+5. Lock a post contract from the approved brief, candidate, slot, source ledger, and
+   rules.
+6. Compile the compact rule pack used by planning and prompts.
+7. Plan materials.
+8. Choose several rhetorical plans / draft strategies.
+9. Generate several candidates.
+10. Run deterministic lint checks.
+11. Validate candidates with narrow validators.
+12. Rank candidates pairwise and select the strongest attempt.
+13. Apply one directed revision when findings are actionable.
+14. Re-run regression checks.
+15. Surface the selected draft, unresolved warnings, claim provenance, and human
+    decision data.
+
+The main editor should see a compact report. The full artifact chain belongs in the
+`/ai-runs` DraftRun trace workbench.
 
 Slice 0.8 intentionally adds no provider SDKs, API keys, environment variables,
 backend, streaming, billing, or real provider calls.
@@ -1014,7 +1053,13 @@ The first backend implementation order is:
 7. Rule-pack compiler. Done.
 8. Material plan and draft strategy steps. Done.
 9. Multi-candidate draft generation. Done.
-10. Validator and revision loop. Next.
+10. Source ledger foundation. Next.
+11. Feasibility gate and post contract.
+12. Rule registry v2 and validator bindings.
+13. Contract-based rhetorical plans.
+14. Deterministic linter and validator orchestrator.
+15. Pairwise ranking and directed revision.
+16. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

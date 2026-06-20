@@ -55,6 +55,9 @@ Use this format in `ROADMAP.md`:
 - Ensure each iteration can leave the product demonstrable.
 - Keep blocked questions explicit.
 - Always identify the next recommended task.
+- For Glavred drafting/backend roadmap work, preserve the documented drafting quality
+  order: source ledger and post contract come before validator/revision loops. If a
+  slice skips ahead, record the reason and architecture impact explicitly.
 
 ## Completion checklist
 

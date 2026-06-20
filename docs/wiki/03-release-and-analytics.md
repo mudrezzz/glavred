@@ -35,6 +35,13 @@ directions, 2-3 draft candidates, child `AiRun` ids, and a deterministic v1 sele
 scorecard. The UI still applies one selected draft; alternative candidates are
 available through trace/debug until a future review UI exists.
 
+The next quality layer is source-ledger and contract work, not immediate validator
+looping. `SourceLedger` will record claim ids, provenance, allowed use, risks, and
+forbidden inferences. `PostContract` will lock the approved thesis, audience value,
+CTA, platform constraints, and fabula obligations. Validator reports and directed
+revision should consume those artifacts instead of judging generated text in
+isolation.
+
 The `Фабула` stage also displays read-only candidate and slot context. The author edits
 only the `PostBrief` production artifact there. If an approved fabula is edited,
 Glavred clears stale draft, checks, final text, release, and learning artifacts before

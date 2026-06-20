@@ -121,6 +121,19 @@ Slice 2.8 adds the candidate-generation boundary:
 - `DraftRun.final_draft` remains the selected candidate only, preserving frontend
   compatibility while alternatives remain available in the orchestration trace.
 
+ADR `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` extends
+this decision with the post-2.8 quality spine:
+
+- create a `SourceLedger` before validators so claim provenance, allowed use, risks,
+  and forbidden inferences are explicit;
+- run a feasibility gate before prose generation when source grounding is weak;
+- lock a `PostContract` before strategy, validation, and revision;
+- only then add deterministic lint, validators, pairwise ranking, directed revision,
+  regression, and human-decision learning.
+
+Future drafting slices must preserve that order unless `ROADMAP.md` explicitly
+records why a later stage is safe to implement earlier.
+
 ## Consequences
 
 - Slice 2.4 implements `Draft Run Contract and Queue Foundation`.
@@ -140,6 +153,9 @@ Slice 2.8 adds the candidate-generation boundary:
 - Candidate generation is a separate application boundary. Selection artifacts must
   be stored on the `draft` step and must not require new SQL columns or a new step enum
   until validators/revision loops justify it.
+- Validator/revision work must not start from generated text alone. It must consume a
+  source ledger and post contract so checks can reason about claim provenance,
+  allowed-use policy, and locked editorial invariants.
 - Validators become first-class application/domain concepts, not hidden prompt text.
 - Frontend drafting UX should track queued/running/completed states and show named
   steps rather than a single loading state.

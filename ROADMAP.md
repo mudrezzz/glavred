@@ -3358,16 +3358,136 @@ Status:
     design/visual smoke coverage for `/ai-runs`.
   - Completed 2026-06-19.
 
-### Slice 2.9: Validator and Revision Loop
+### Slice 2.9: Source Ledger Foundation
 
 - Status: Ready
-- Goal: Add iterative validation and correction until target score or iteration limit.
+- Goal: Add the source-ledger layer before validators and revision.
+- User value: Glavred starts tracking which claims are grounded, allowed, risky, or
+  forbidden before it writes or judges a post.
 - Scope:
-  - Validate against publisher rules, topic fit, fabula fit, evidence grounding,
-    anti-AI style, forbidden topics, audience value, structure, and claim risk.
-  - Revise the draft using targeted failure summaries.
-  - Stop by `targetScore`, `maxIterations`, or no-improvement rule.
-  - Return the best attempt with scorecard and unresolved warnings.
+  - Add provider-free `SourceLedger`, `SourceLedgerClaim`, and
+    `ForbiddenInference` DTOs.
+  - Build a DraftRun-local ledger from approved brief, post candidate, source signal,
+    author correction, candidate evidence, risks, and author-position evidence.
+  - Store the ledger in a dedicated DraftRun artifact before material planning or as a
+    named payload consumed by later steps.
+  - Include provenance ids, confidence, allowed-use notes, risky claims, and missing
+    source warnings.
+  - Keep old brief-only runs compatible with a minimal ledger and explicit warnings.
+- Out of scope:
+  - Real web search or archive retrieval.
+  - Claim-level UI in the main workbench.
+  - Validator scoring or revision.
+- Implementation notes:
+  - Do not expand near-limit context builder or pipeline files; add role-owned ledger
+    domain/application modules.
+  - `SourceLedger` is not a replacement for `SourceSignal`; it is a drafting artifact
+    that says what can safely be used.
+- Architecture impact:
+  - Enforces ADR `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract`.
+  - Future validators must consume ledger claims instead of inferring provenance from
+    final draft text.
+- Tests:
+  - Ledger builder extracts claims and risks from full context.
+  - Missing source/candidate data creates warnings instead of failing the run.
+  - Brief-only compatibility run creates a minimal ledger.
+  - `npm run test:backend`, `npm run test:architecture`, `npm test -- --run`,
+    `npm run smoke`, `docker compose config --quiet`.
+- Docs:
+  - Update SAO, developer guide, user/demo/wiki notes, and roadmap.
+- Demo impact:
+  - Demo DraftRun trace shows claim/provenance inventory before draft writing.
+- Acceptance criteria:
+  - A developer can inspect a DraftRun and see source claims, allowed use, risks, and
+    forbidden inferences.
+  - No validator/revision behavior is added yet.
+- Risks:
+  - Claim extraction can become over-complicated; keep v1 deterministic and traceable.
+
+### Slice 2.10: Feasibility Gate and Post Contract
+
+- Status: Backlog
+- Goal: Decide whether the approved post can be written safely and lock the editorial
+  contract before prose generation.
+- User value: Weak or under-sourced posts stop with a clear reason instead of producing
+  a confident but unsafe draft.
+- Scope:
+  - Add `FeasibilityReport` with statuses `feasible`, `feasible_with_constraints`,
+    `needs_research`, `needs_human_decision`, and `infeasible`.
+  - Add `PostContract` with locked thesis, audience value, CTA, allowed claims,
+    forbidden moves, platform constraints, and fabula obligations.
+  - Store both artifacts in DraftRun trace.
+  - If the run is not feasible, return a readable blocked state instead of silently
+    generating a weak draft.
+- Architecture impact:
+  - `PostContract` becomes the invariant consumed by strategies, candidates,
+    validators, and revisions.
+  - `PostBrief` remains editable fabula content and must not absorb contract/ledger
+    fields.
+- Tests:
+  - Feasible full context proceeds.
+  - Missing evidence produces constrained or needs-human status.
+  - Infeasible context does not generate a final draft.
+
+### Slice 2.11: Rule Registry v2 and Validator Bindings
+
+- Status: Backlog
+- Goal: Evolve the current rule pack into a machine-readable rule registry snapshot.
+- Scope:
+  - Add rule ids, scope, conditions, priority, severity, observable criteria,
+    validator type, examples, and repair policy.
+  - Compile a selected `RuleRegistrySnapshot` for each DraftRun.
+  - Derive the existing `RulePack` from registry snapshot, source ledger, and post
+    contract.
+- Architecture impact:
+  - Validators and directed revisions must reference rule ids instead of anonymous
+    prose constraints.
+
+### Slice 2.12: Contract-Based Rhetorical Plans
+
+- Status: Backlog
+- Goal: Generate several rhetorical plans from source ledger, post contract, rule pack,
+  material plan, and fabula.
+- Scope:
+  - Replace the single strategy mental model with 2-3 plans such as research,
+    contrast/polemic, and practical/checklist.
+  - Store plans with planned moves, claims to use, claims to avoid, CTA route, and
+    risks.
+  - Draft candidates must consume one plan each.
+
+### Slice 2.13: Deterministic Linter and Validator Orchestrator
+
+- Status: Backlog
+- Goal: Add hard checks and narrow validators after candidates are generated.
+- Scope:
+  - Deterministic linter for length, structure, required CTA, forbidden tokens,
+    unsupported claim references, and platform constraints.
+  - LLM-assisted validators for source grounding, publisher/voice, topic/fabula,
+    coherence/compression, and audience value.
+  - Store validator reports with rule ids, claim ids, severity, findings, and repair
+    guidance.
+
+### Slice 2.14: Pairwise Ranking and Directed Revision
+
+- Status: Backlog
+- Goal: Choose the best candidate and perform one targeted repair without losing the
+  post contract.
+- Scope:
+  - Pairwise rank candidates with a traceable scorecard.
+  - Build one directed revision instruction from concrete lint/validator findings.
+  - Preserve locked claims and forbidden moves during revision.
+  - Keep the best previous candidate if revision regression is worse.
+
+### Slice 2.15: Regression Report and Editor Decision Learning
+
+- Status: Backlog
+- Goal: Re-run checks after repair and capture the human editor's final decision.
+- Scope:
+  - Store `RegressionReport` after directed revision.
+  - Show compact editor-facing report: why selected, used claims, unresolved risks,
+    and validation status.
+  - Save human edits, overrides, rejected machine moves, and rule-improvement signals
+    for future learning.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -3506,4 +3626,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.9: Validator and Revision Loop`.
+Continue the backend track with `Slice 2.9: Source Ledger Foundation`.

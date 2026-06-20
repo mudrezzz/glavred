@@ -57,6 +57,12 @@ Implement one small, complete, tested, documented product increment.
   database sessions, queues, file systems, or `langgraph-document-ai-platform`.
 - If a backend slice changes environment variables, update `.env.example`,
   developer docs, and architecture smoke checks. Never commit real `.env` secrets.
+- For drafting/backend slices, read ADRs
+  `2026-06-19-drafting-uses-queued-agentic-runs` and
+  `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` before
+  editing. Do not jump from draft candidates directly to a validator/revision loop:
+  source ledger, feasibility gate, and post contract must exist first unless
+  `ROADMAP.md` explicitly records a safe exception.
 
 ## Completion checklist
 

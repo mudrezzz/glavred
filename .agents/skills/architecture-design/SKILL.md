@@ -50,6 +50,12 @@ Use the following sources, in this order:
     - infrastructure adapters own OpenRouter, database, queue, file, publication, and
       `langgraph-document-ai-platform` calls;
     - no 2-3k line backend files, god services, or boilerplate-only packages.
+11. For Glavred drafting architecture, preserve the quality spine:
+    `DraftRunContext -> RuleRegistrySnapshot -> SourceLedger -> FeasibilityGate ->
+    PostContract -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates ->
+    Linter/Validators -> Ranking -> DirectedRevision -> Regression -> HumanDecision`.
+    Do not design validator/revision slices before claim provenance and post-contract
+    artifacts are explicit.
 
 ## Required outputs
 

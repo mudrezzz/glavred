@@ -401,7 +401,15 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> RulePack -> MaterialPlan -> DraftStrategy -> DraftCandidates -> ValidatorResults -> RevisionAttempts -> SelectedDraft`
+`EditorialWorkItem -> DraftRunContext -> RuleRegistrySnapshot -> SourceLedger -> FeasibilityGate -> PostContract -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+
+This order is intentional. Future drafting work must not jump directly from
+multi-candidate generation to a generic validator loop. Validators and revisions need
+a source ledger and a post contract first: otherwise they cannot know which claims are
+allowed, which inferences are forbidden, or which editorial invariants must survive a
+rewrite. ADR
+`2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` records this
+rule.
 
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
@@ -485,6 +493,28 @@ Candidate ownership is split:
 
 Validator scoring and revision loops remain Slice 2.9; Slice 2.8 selection is a
 deterministic first-pass scorecard, not a full validator.
+
+The post-2.8 drafting quality spine is now:
+
+- `RuleRegistrySnapshot`: selected machine-readable rules with ids, scope, priority,
+  severity, observable criteria, validator type, examples, and repair policy.
+- `SourceLedger`: atomic claims from the signal, candidate, approved brief, author
+  correction, and author-position evidence. It stores provenance, confidence, allowed
+  use, risks, and forbidden inferences.
+- `FeasibilityReport`: a pre-writing decision that marks the run as feasible,
+  feasible with constraints, needing research, needing human decision, or infeasible.
+- `PostContract`: locked editorial invariants for the post: thesis, audience value,
+  CTA, allowed claims, forbidden moves, platform constraints, and fabula obligations.
+- `RhetoricalPlan`: one possible route for writing the same contract, including
+  planned moves, claims to use, claims to avoid, and CTA route.
+- `DeterministicLinter`, `ValidatorReport`, `PairwiseRanking`, `DirectedRevision`,
+  and `RegressionReport`: the later quality loop. These artifacts must consume the
+  source ledger and post contract; they must not reconstruct provenance or invariants
+  from generated text alone.
+
+The next backend implementation slice is `Source Ledger Foundation`. It comes before
+the validator/revision loop so that future checks can reason about explicit claim ids
+and allowed-use policy.
 
 Concrete Slice 2.4 files:
 
@@ -973,17 +1003,31 @@ multi-step run rather than a single provider request:
 - `DraftRunContext`: provider-free DTO assembled from the selected work item,
   approved brief, plan slot, post candidate, source signal, topic, fabula, publisher
   rules, and future author-memory evidence.
+- `RuleRegistrySnapshot`: selected drafting rules with ids, scope, priority, severity,
+  observable criteria, validator type, examples, and repair policy.
+- `SourceLedger`: claim/provenance inventory built from source signal, candidate,
+  brief, author corrections, and author-position evidence.
+- `FeasibilityReport`: pre-writing decision that can stop a run before unsafe prose is
+  generated.
+- `PostContract`: locked editorial intent and constraints that later strategy,
+  candidate, validator, and revision steps must preserve.
 - `RulePack`: explicit hard constraints, soft constraints, evidence requirements,
   dramaturgy requirements, topic-fit requirements, and quality rubric.
 - `MaterialPlan`: what evidence exists, what is missing, which claims are risky, and
   how the post should stay grounded.
 - `DraftStrategy`: thesis, opening, argument sequence, fabula use, CTA, and forbidden
   moves before prose generation.
+- `RhetoricalPlan`: one route for applying the post contract and fabula to the same
+  source ledger.
 - `DraftCandidate`: one generated title/body/rationale/risk attempt.
+- `DeterministicLinter`: hard local checks before provider-backed validation.
 - `ValidatorResult`: narrow quality result for publisher rules, topic fit, fabula fit,
   evidence grounding, anti-AI style, forbidden topics, audience value, structure, or
   claim risk.
+- `PairwiseRanking`: traceable comparison of draft candidates.
 - `RevisionAttempt`: targeted correction instruction plus resulting candidate.
+- `RegressionReport`: post-revision re-check proving whether the repair improved or
+  damaged the candidate.
 - `PromptTemplate`: stable prompt layers and variables used by application step
   services before calling an adapter.
 - `ProviderRunMetadata`: provider name, model name if known, run id if available,
