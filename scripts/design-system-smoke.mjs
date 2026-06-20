@@ -641,6 +641,19 @@ async function assertAiRunTraceDesign(page) {
     });
     const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     if (overflow > 2) result.push(`AI run trace page overflows horizontally by ${overflow}px.`);
+    document.querySelectorAll('.ai-run-child-calls button').forEach((button) => {
+      const rect = button.getBoundingClientRect();
+      const parentRect = button.closest('.ai-run-timeline-step')?.getBoundingClientRect();
+      if (rect.height > 120) {
+        result.push(`AI run child call row is too tall (${Math.round(rect.height)}px).`);
+      }
+      if (parentRect && rect.right > parentRect.right + 1) {
+        result.push('AI run child call overflows its timeline step.');
+      }
+      if (!button.querySelector('.ai-run-call-meta')) {
+        result.push('AI run child call does not render compact metadata.');
+      }
+    });
     return result;
   });
   failIfAny('AI run trace design contract', [...await page.evaluate(sharedDesignChecks), ...failures]);

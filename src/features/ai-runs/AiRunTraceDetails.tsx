@@ -90,12 +90,17 @@ function AiRunTimeline({
                     key={call.id}
                     onClick={() => onSelect(call.detailId)}
                   >
-                    <Icon name="spark" size={14} />
-                    <span>
-                      <strong>{call.title}</strong>
-                      <small>{call.provider} · {call.model} · fallback {call.fallback}</small>
+                    <span className="ai-run-call-icon">
+                      <Icon name="spark" size={14} />
                     </span>
-                    <code>{call.id}</code>
+                    <span className="ai-run-call-body">
+                      <strong>{call.title}</strong>
+                      <span className="ai-run-call-meta">
+                        <small>{call.provider} · {call.model}</small>
+                        <small>fallback {call.fallback}</small>
+                        <code>{call.id}</code>
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>

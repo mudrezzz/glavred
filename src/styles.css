@@ -5196,16 +5196,16 @@ select:focus {
 
 .ai-run-timeline-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .ai-run-timeline-step {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
-  padding: 14px;
+  padding: 10px;
 }
 
 .ai-run-timeline-step > button {
@@ -5216,7 +5216,7 @@ select:focus {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  padding: 8px;
+  padding: 9px 10px;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -5262,22 +5262,55 @@ select:focus {
 
 .ai-run-child-calls {
   display: grid;
-  gap: 8px;
-  padding-left: 18px;
+  gap: 6px;
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
 }
 
 .ai-run-child-calls button {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) minmax(120px, auto);
-  gap: 10px;
-  align-items: center;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 12px;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
+}
+
+.ai-run-call-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  background: var(--surface-soft);
+  color: var(--accent);
+}
+
+.ai-run-call-body {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ai-run-call-body strong {
+  color: var(--ink);
+  font: 800 15px/1.25 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.ai-run-call-meta {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
 }
 
 .ai-run-child-calls small,
@@ -5285,6 +5318,10 @@ select:focus {
   color: var(--muted);
   font: 700 12px/1.3 var(--font-sans);
   overflow-wrap: anywhere;
+}
+
+.ai-run-child-calls code {
+  max-width: 100%;
 }
 
 .ai-run-detail-panel {
@@ -5452,9 +5489,12 @@ select:focus {
   }
 
   .ai-run-message-rows button,
-  .ai-run-timeline-step > button,
-  .ai-run-child-calls button {
+  .ai-run-timeline-step > button {
     grid-template-columns: 24px minmax(74px, auto) minmax(0, 1fr);
+  }
+
+  .ai-run-child-calls button {
+    grid-template-columns: 22px minmax(0, 1fr);
   }
 
   .ai-run-detail-panel {

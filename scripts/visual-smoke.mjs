@@ -164,6 +164,7 @@ function assertAiRunTraceLayout(result) {
   if (!result.topTabsCanonical) failures.push(`${result.viewport}: AI run top tabs are not canonical.`);
   if (!result.detailTabsCanonical) failures.push(`${result.viewport}: AI run detail tabs are not canonical.`);
   if (result.customJsonTabs) failures.push(`${result.viewport}: AI run custom JSON tabs are still rendered.`);
+  if (result.childCallMaxHeight > 120) failures.push(`${result.viewport}: AI run child call rows are too tall (${Math.round(result.childCallMaxHeight)}px).`);
   if (result.pageOverflow > 2) failures.push(`${result.viewport}: AI run trace page overflows by ${result.pageOverflow}px.`);
   if (result.detailOverflow > 2) failures.push(`${result.viewport}: AI run detail panel overflows by ${result.detailOverflow}px.`);
 
@@ -206,6 +207,10 @@ async function assertAiRunTraceAtViewport(page, viewport, viewportName) {
         topTabsCanonical: Boolean(document.querySelector('.ai-run-main-tabs.tabs .tab')),
         detailTabsCanonical: Boolean(document.querySelector('.ai-run-detail-tabs.tabs .tab')),
         customJsonTabs: Boolean(document.querySelector('.ai-run-json-tabs')),
+        childCallMaxHeight: Math.max(
+          0,
+          ...Array.from(document.querySelectorAll('.ai-run-child-calls button')).map((button) => button.getBoundingClientRect().height)
+        ),
         pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         detailOverflow
       };
