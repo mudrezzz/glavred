@@ -1,5 +1,6 @@
 import type { DraftGenerationSource, DraftGenerationUiState, EditorialWorkItem, WorkspaceState } from '../../domain/editorialWorkspace';
 import { stageLabel, workStatusLabel } from './editorialWorkQueueFilters';
+import { TraceRunLink } from './TraceRunLink';
 
 export function EditorialPostsAside({ items }: { items: EditorialWorkItem[] }) {
   const todo = items.filter((item) => item.status === 'todo').length;
@@ -89,9 +90,9 @@ export function EditorialWorkbenchAside({
           <div><dt>Источник</dt><dd>{draftSourceLabel(workspace.postDraft?.generation?.source)}</dd></div>
           <div><dt>Provider</dt><dd>{workspace.postDraft?.generation?.provider ?? 'none'}</dd></div>
           <div><dt>Model</dt><dd>{workspace.postDraft?.generation?.model ?? 'none'}</dd></div>
-          {draftGenerationState.status === 'generating' ? <div><dt>DraftRun</dt><dd>{draftGenerationState.runId ?? 'queued'}</dd></div> : null}
+          {draftGenerationState.status === 'generating' ? <div><dt>DraftRun</dt><dd>{draftGenerationState.runId ? <TraceRunLink runId={draftGenerationState.runId} label={draftGenerationState.runId} /> : 'queued'}</dd></div> : null}
           {draftGenerationState.status === 'generating' ? <div><dt>Шаг</dt><dd>{draftGenerationState.stepLabel ?? 'ожидаем worker'}</dd></div> : null}
-          {workspace.postDraft?.generation?.draftRunId ? <div><dt>DraftRun</dt><dd>{workspace.postDraft.generation.draftRunId}</dd></div> : null}
+          {workspace.postDraft?.generation?.draftRunId ? <div><dt>DraftRun</dt><dd><TraceRunLink runId={workspace.postDraft.generation.draftRunId} label={workspace.postDraft.generation.draftRunId} /></dd></div> : null}
           <div><dt>AiRun</dt><dd>{workspace.postDraft?.generation?.aiRunId ?? 'not recorded'}</dd></div>
           {draftGenerationState.status === 'failed' ? <div><dt>Ошибка</dt><dd>{draftGenerationState.error}</dd></div> : null}
         </dl>

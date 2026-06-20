@@ -537,6 +537,115 @@ function assertStableSignalsLayout(before, after, label) {
   failIfAny(`${label} layout stability`, failures);
 }
 
+async function installAiRunTraceMocks(page) {
+  const draftRun = {
+    id: 'draft-run-smoke',
+    status: 'succeeded',
+    inputSummary: { title: 'Trace smoke' },
+    steps: [
+      step('context', { workItem: { title: 'Trace smoke post' } }),
+      step('rulePack', { hardConstraints: [{ text: 'No hype' }] }),
+      step('materialPlan', { materialPlan: { availableEvidence: ['signal'], missingEvidence: ['benchmark'] }, aiRunId: 'ai-material' }),
+      step('strategy', { draftStrategy: { thesisAngle: 'workflow before model', openingMove: 'pilot gap' }, aiRunId: 'ai-strategy' }),
+      step('draft', {
+        candidates: [{ id: 'candidate-1', title: 'Candidate', body: 'Body', aiRunId: 'ai-candidate' }],
+        selection: { selectedCandidateId: 'candidate-1', rationale: 'Best score' }
+      }),
+      step('validation', { status: 'placeholder-passed' }),
+      step('complete', { status: 'succeeded' })
+    ],
+    finalDraft: { title: 'Selected draft', body: 'Selected body' },
+    error: null,
+    aiRunIds: ['ai-material', 'ai-strategy', 'ai-candidate'],
+    createdAt: '2026-06-19T00:00:00+00:00',
+    updatedAt: '2026-06-19T00:00:03+00:00'
+  };
+  const aiRuns = Object.fromEntries(draftRun.aiRunIds.map((id) => [id, aiRun(id)]));
+
+  await page.route('**/api/draft-runs/**', (route) => route.fulfill({ status: 200, json: draftRun }));
+  await page.route('**/api/ai-runs/**', (route) => {
+    const id = route.request().url().split('/').pop();
+    return route.fulfill({ status: aiRuns[id] ? 200 : 404, json: aiRuns[id] ?? { detail: 'not found' } });
+  });
+
+  function step(key, artifactPayload) {
+    return {
+      key,
+      status: 'succeeded',
+      title: key,
+      artifactPayload,
+      error: null,
+      startedAt: '2026-06-19T00:00:00+00:00',
+      completedAt: '2026-06-19T00:00:01+00:00'
+    };
+  }
+
+  function aiRun(id) {
+    const draftRunStep = id === 'ai-candidate' ? 'draftCandidate' : id.replace('ai-', '');
+    return {
+      id,
+      capability: 'draftGeneration',
+      status: 'succeeded',
+      provider: 'openrouter',
+      model: 'deepseek/deepseek-v3.2',
+      requestPayload: {
+        draftRunStep,
+        providerRequest: {
+          messages: [
+            { role: 'system', content: 'Return JSON' },
+            { role: 'user', content: JSON.stringify({ task: draftRunStep, input: 'trace smoke payload' }) }
+          ]
+        }
+      },
+      resultPayload: { draftRunStep, result: { thesisAngle: 'angle' } },
+      error: null,
+      fallbackUsed: false,
+      createdAt: '2026-06-19T00:00:00+00:00',
+      updatedAt: '2026-06-19T00:00:01+00:00'
+    };
+  }
+}
+
+async function assertAiRunTraceDesign(page) {
+  await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'networkidle' });
+  await page.locator('[data-testid="ai-run-timeline"]').waitFor();
+  const failures = await page.evaluate(() => {
+    const result = [];
+    const tabs = document.querySelector('.ai-run-main-tabs');
+    const detailTabs = document.querySelector('.ai-run-detail-tabs');
+    const detail = document.querySelector('[data-testid="ai-run-detail-panel"]');
+    const timeline = document.querySelector('[data-testid="ai-run-timeline"]');
+    const jsonTabs = document.querySelector('.ai-run-json-tabs');
+
+    if (!tabs?.classList.contains('tabs') || tabs.querySelectorAll('.tab').length < 2) {
+      result.push('AI run trace top tabs do not use canonical .tabs .tab.');
+    }
+    if (!detailTabs?.classList.contains('tabs') || detailTabs.querySelectorAll('.tab').length < 3) {
+      result.push('AI run trace detail tabs do not use canonical .tabs .tab.');
+    }
+    if (jsonTabs) {
+      result.push('AI run trace still renders custom JSON tabs.');
+    }
+    [detail, timeline].forEach((element) => {
+      if (!element) return;
+      const style = window.getComputedStyle(element);
+      const minPadding = Math.min(
+        Number.parseFloat(style.paddingTop || '0') || 0,
+        Number.parseFloat(style.paddingRight || '0') || 0,
+        Number.parseFloat(style.paddingBottom || '0') || 0,
+        Number.parseFloat(style.paddingLeft || '0') || 0
+      );
+      if (minPadding < 18) {
+        result.push(`${element.className}: AI run trace panel padding is too small (${minPadding}px).`);
+      }
+    });
+    const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+    if (overflow > 2) result.push(`AI run trace page overflows horizontally by ${overflow}px.`);
+    return result;
+  });
+  failIfAny('AI run trace design contract', [...await page.evaluate(sharedDesignChecks), ...failures]);
+}
+
 async function main() {
   const server = runDevServer();
   let stderr = '';
@@ -594,6 +703,10 @@ async function main() {
     await assertEditingDesign(page);
     await page.getByRole('tab', { name: /Рабочий стол/ }).click();
     await assertEditingDesign(page);
+
+    await installAiRunTraceMocks(page);
+    await assertAiRunTraceDesign(page);
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
     await page.setViewportSize({ width: 2048, height: 1100 });
     await page.reload({ waitUntil: 'networkidle' });

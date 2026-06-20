@@ -296,10 +296,24 @@ Frontend debug page:
 
 - Open `http://localhost:5176/ai-runs` in Docker, or `http://localhost:5173/ai-runs`
   in local Vite.
-- Paste the `AiRun ID` from the draft trace summary.
-- Or open a direct link: `http://localhost:5176/ai-runs?runId=<AI_RUN_ID>`.
+- Get the parent `DraftRun ID` from `Редактура -> Рабочий стол -> Драфт`: the
+  draft generation summary and the right `AI trace` panel show the id and include
+  a direct link to `/ai-runs?runId=<DRAFT_RUN_ID>`.
+- Paste a parent `DraftRun ID` to inspect the whole queued agentic pipeline.
+- Or paste a child `AiRun ID` to inspect one provider call.
+- Direct links work for both modes:
+  `http://localhost:5176/ai-runs?runId=<DRAFT_RUN_ID>` or
+  `http://localhost:5176/ai-runs?runId=<AI_RUN_ID>`.
 - The page is intentionally outside the main cabinet navigation and only reads
   backend audit data.
+- The trace workbench tries `GET /api/draft-runs/{id}` first. If the backend returns
+  `404`, it falls back to `GET /api/ai-runs/{id}`. Other backend/network errors are
+  shown as errors and are not masked as another id type.
+- In parent `DraftRun` mode, the `Трейс` tab shows logical steps and all child LLM
+  calls under their owning step. Click a step or child `AiRun` to inspect details.
+- The `Смысловой результат` tab shows material plan, strategy, draft candidates,
+  selection, and final draft artifacts. Raw JSON remains available in the detail
+  panel, but it is not the primary analysis surface.
 
 How to read draft generation source:
 

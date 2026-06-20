@@ -361,12 +361,24 @@ blocked, and the completed draft shows whether it came from OpenRouter, backend
 fallback, or frontend local emergency fallback.
 
 Slice 2.3.3 adds a separate frontend debug page for this trace: `/ai-runs`.
-It is not part of the main editorial cabinet navigation. The page accepts one
-`AiRun ID`, calls `GET /api/ai-runs/{id}`, and renders the run summary plus raw
-request/result JSON for local debugging. The page lives under `src/features/ai-runs`;
-the HTTP mapper is `src/infrastructure/aiRunTraceClient.ts`. This keeps trace
-inspection separate from production draft generation and avoids expanding the
-near-limit draft client.
+It is not part of the main editorial cabinet navigation. Slice 2.8.1 turns that
+page into a trace workbench for one child `AiRun`: feature-owned parser modules
+convert known audit payloads into semantic sections, prompt messages, provider/
+fallback summary cards, and wrapped JSON. Slice 2.8.1.1 promotes the page to a
+parent `DraftRun` workbench: the page first calls `GET /api/draft-runs/{id}`;
+only if that returns `404` does it call `GET /api/ai-runs/{id}`. For parent
+runs, it loads all child `AiRun` records and renders the logical timeline
+`context -> rulePack -> materialPlan -> strategy -> draft -> validation ->
+complete`, with LLM calls nested under the owning logical step.
+
+Raw JSON remains available for auditability, but it is not the primary analysis
+surface. The top-level workbench tabs are canonical `.tabs .tab`: `Трейс` for
+timeline/details and `Смысловой результат` for material plan, strategy, draft
+candidates, selection, and final draft artifacts. The page lives under
+`src/features/ai-runs`; the child-call HTTP mapper remains
+`src/infrastructure/aiRunTraceClient.ts`, while parent timeline aggregation lives
+in `src/infrastructure/runTraceClient.ts`. This keeps trace inspection separate
+from production draft generation and avoids expanding the near-limit draft client.
 
 Slice 2.4 introduces the first durable queued drafting runner. The current
 `/api/drafts/generate` endpoint remains a useful compatibility/provider-integration

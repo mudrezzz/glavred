@@ -3,6 +3,7 @@ import type { DraftGenerationUiState, PostBriefEditPatch, PostDraft, PostVisualE
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefStage } from './EditorialBriefStage';
 import { EditorialVisualStage } from './EditorialVisualStage';
+import { TraceRunLink } from './TraceRunLink';
 
 export function EditorialWorkbench({
   workspace,
@@ -121,7 +122,11 @@ export function EditorialWorkbench({
           <h2>Генерируем драфт</h2>
           <p>Backend поставил DraftRun в очередь и выполняет шаги раннера. Драфт появится здесь автоматически, когда run завершится.</p>
           {draftGenerationState.runId ? (
-            <p className="muted">DraftRun: {draftGenerationState.runId}</p>
+            <div className="trace-run-box">
+              <span>DraftRun ID</span>
+              <code>{draftGenerationState.runId}</code>
+              <TraceRunLink runId={draftGenerationState.runId} />
+            </div>
           ) : null}
           {draftGenerationState.stepLabel ? (
             <p className="muted">Текущий шаг: {draftGenerationState.stepLabel}</p>
@@ -254,7 +259,13 @@ function DraftGenerationSummary({
       <span>
         Provider: {generation.provider ?? 'none'} · Model: {generation.model ?? 'none'} · AiRun: {generation.aiRunId ?? 'not recorded'}
       </span>
-      {generation.draftRunId ? <span>DraftRun: {generation.draftRunId}</span> : null}
+      {generation.draftRunId ? (
+        <div className="trace-run-box">
+          <span>DraftRun ID</span>
+          <code>{generation.draftRunId}</code>
+          <TraceRunLink runId={generation.draftRunId} />
+        </div>
+      ) : null}
       {generation.error ? <span>Ошибка: {generation.error}</span> : null}
     </div>
   );

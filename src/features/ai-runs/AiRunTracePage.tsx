@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchAiRunTrace, type AiRunTrace } from '../../infrastructure/aiRunTraceClient';
+import { fetchRunTrace, type RunTraceBundle } from '../../infrastructure/runTraceClient';
 import { Icon } from '../../shared/ui/Icon';
+import { AiRunTraceDetails } from './AiRunTraceDetails';
 
 export function AiRunTracePage() {
   const initialRunId = useMemo(() => new URLSearchParams(window.location.search).get('runId') ?? '', []);
   const [runId, setRunId] = useState(initialRunId);
-  const [trace, setTrace] = useState<AiRunTrace | null>(null);
+  const [trace, setTrace] = useState<RunTraceBundle | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
   const [error, setError] = useState('');
 
@@ -19,11 +20,11 @@ export function AiRunTracePage() {
     setStatus('loading');
     setError('');
     try {
-      setTrace(await fetchAiRunTrace(targetRunId));
+      setTrace(await fetchRunTrace(targetRunId));
       setStatus('idle');
     } catch (caught) {
       setTrace(null);
-      setError(caught instanceof Error ? caught.message : 'AI run request failed');
+      setError(caught instanceof Error ? caught.message : 'Run trace request failed');
       setStatus('failed');
     }
   }
@@ -34,7 +35,10 @@ export function AiRunTracePage() {
         <div>
           <span className="rub">AI run trace</span>
           <h1>Трассировка запуска</h1>
-          <p>Введите run-id, чтобы посмотреть prompt/messages, provider metadata, результат и fallback context из backend audit.</p>
+          <p>
+            Введите DraftRun ID, чтобы увидеть весь агентный пайплайн, или AiRun ID,
+            чтобы разобрать один provider call.
+          </p>
         </div>
         <a className="btn btn-sec" href="/">
           В кабинет
@@ -48,7 +52,7 @@ export function AiRunTracePage() {
             aria-label="Run ID"
             value={runId}
             onChange={(event) => setRunId(event.target.value)}
-            placeholder="Например: airun-..."
+            placeholder="Например: draftrun-... или airun-..."
           />
         </label>
         <button className="btn btn-pri" type="button" disabled={status === 'loading'} onClick={() => void loadTrace()}>
@@ -64,48 +68,5 @@ export function AiRunTracePage() {
         </section>
       ) : null}
     </main>
-  );
-}
-
-function AiRunTraceDetails({ trace }: { trace: AiRunTrace }) {
-  return (
-    <section className="ai-run-details">
-      <div className="card ai-run-summary">
-        <TraceMetric label="Capability" value={trace.capability} />
-        <TraceMetric label="Status" value={trace.status} />
-        <TraceMetric label="Provider" value={trace.provider} />
-        <TraceMetric label="Model" value={trace.model ?? 'none'} />
-        <TraceMetric label="Fallback" value={trace.fallbackUsed ? 'yes' : 'no'} />
-        <TraceMetric label="Created" value={trace.createdAt} />
-      </div>
-
-      {trace.error ? (
-        <section className="card ai-run-panel warning">
-          <span className="rub">Error</span>
-          <p>{trace.error}</p>
-        </section>
-      ) : null}
-
-      <TraceJson title="Request payload" value={trace.requestPayload} />
-      <TraceJson title="Result payload" value={trace.resultPayload ?? {}} />
-    </section>
-  );
-}
-
-function TraceMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="summary-item">
-      <b>{value}</b>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function TraceJson({ title, value }: { title: string; value: Record<string, unknown> }) {
-  return (
-    <section className="card ai-run-panel">
-      <span className="rub">{title}</span>
-      <pre>{JSON.stringify(value, null, 2)}</pre>
-    </section>
   );
 }

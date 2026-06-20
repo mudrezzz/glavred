@@ -3322,7 +3322,7 @@ Status:
 
 ### Slice 2.8.1: AI Run Trace Workbench
 
-- Status: Ready
+- Status: Done
 - Goal: Turn `/ai-runs` from a raw JSON page into a usable trace analysis workbench.
 - Scope:
   - Keep `/ai-runs` outside the main cabinet navigation, but render it with the same
@@ -3337,10 +3337,30 @@ Status:
   - Wrap JSON in readable, copyable, line-wrapped panels; raw JSON remains available
     but is not the primary analysis surface.
   - Do not add backend endpoints; use `GET /api/ai-runs/{id}` as the source of truth.
+  - Completed 2026-06-19.
+
+### Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair
+
+- Status: Done
+- Goal: Make `/ai-runs` analyze a full queued `DraftRun`, not only one child
+  OpenRouter call.
+- Scope:
+  - Accept either a parent `DraftRun ID` or a single `AiRun ID`.
+  - Try `GET /api/draft-runs/{id}` first; only after `404`, fall back to
+    `GET /api/ai-runs/{id}`.
+  - For parent runs, load all child `AiRun` records and render the logical runner
+    timeline: `context -> rulePack -> materialPlan -> strategy -> draft ->
+    validation -> complete`.
+  - Show child LLM calls inside their logical step with provider, model, status,
+    fallback flag, and `AiRun ID`.
+  - Move semantic artifacts into a canonical `Смысловой результат` tab.
+  - Replace custom trace tabs with canonical `.tabs .tab`, repair spacing, and add
+    design/visual smoke coverage for `/ai-runs`.
+  - Completed 2026-06-19.
 
 ### Slice 2.9: Validator and Revision Loop
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add iterative validation and correction until target score or iteration limit.
 - Scope:
   - Validate against publisher rules, topic fit, fabula fit, evidence grounding,
@@ -3463,6 +3483,9 @@ Status:
 - Slice 2.6: Draft Rule Pack Compiler. Completed 2026-06-19.
 - Slice 2.7: Material Plan and Draft Strategy Steps. Completed 2026-06-19.
 - Slice 2.8: Agentic Multi-Candidate Draft Generation. Completed 2026-06-19.
+- Slice 2.8.1: AI Run Trace Workbench. Completed 2026-06-19.
+- Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair. Completed
+  2026-06-19.
 
 ## Blocked Items
 
@@ -3483,4 +3506,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.8.1: AI Run Trace Workbench`.
+Continue the backend track with `Slice 2.9: Validator and Revision Loop`.

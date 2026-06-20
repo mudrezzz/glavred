@@ -157,6 +157,97 @@ function assertPlanLayout(result) {
   }
 }
 
+function assertAiRunTraceLayout(result) {
+  const failures = [];
+  if (!result.timelineExists) failures.push(`${result.viewport}: AI run timeline is missing.`);
+  if (!result.detailExists) failures.push(`${result.viewport}: AI run detail panel is missing.`);
+  if (!result.topTabsCanonical) failures.push(`${result.viewport}: AI run top tabs are not canonical.`);
+  if (!result.detailTabsCanonical) failures.push(`${result.viewport}: AI run detail tabs are not canonical.`);
+  if (result.customJsonTabs) failures.push(`${result.viewport}: AI run custom JSON tabs are still rendered.`);
+  if (result.pageOverflow > 2) failures.push(`${result.viewport}: AI run trace page overflows by ${result.pageOverflow}px.`);
+  if (result.detailOverflow > 2) failures.push(`${result.viewport}: AI run detail panel overflows by ${result.detailOverflow}px.`);
+
+  if (failures.length) {
+    throw new Error(`AI run trace visual smoke failed:\n- ${failures.join('\n- ')}`);
+  }
+}
+
+async function assertAiRunTraceAtViewport(page, viewport, viewportName) {
+  page = await page.context().browser().newPage();
+  try {
+    await page.setViewportSize(viewport);
+    const draftRun = {
+      id: 'draft-run-smoke',
+      status: 'succeeded',
+      inputSummary: {},
+      steps: [
+        step('context', { workItem: { title: 'Trace smoke' } }),
+        step('materialPlan', { materialPlan: { availableEvidence: ['signal'] }, aiRunId: 'ai-material' }),
+        step('draft', { candidates: [{ id: 'candidate-1', title: 'Candidate', body: 'Body' }], selection: { selectedCandidateId: 'candidate-1' } })
+      ],
+      finalDraft: { title: 'Selected', body: 'Selected body' },
+      error: null,
+      aiRunIds: ['ai-material'],
+      createdAt: '2026-06-19T00:00:00+00:00',
+      updatedAt: '2026-06-19T00:00:01+00:00'
+    };
+    await page.route('**/api/draft-runs/**', (route) => route.fulfill({ status: 200, json: draftRun }));
+    await page.route('**/api/ai-runs/**', (route) => route.fulfill({ status: 200, json: aiRun('ai-material') }));
+    await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'networkidle' });
+    await page.locator('[data-testid="ai-run-timeline"]').waitFor();
+
+    const result = await page.evaluate((name) => {
+      const detail = document.querySelector('[data-testid="ai-run-detail-panel"]');
+      const detailOverflow = detail ? detail.scrollWidth - detail.clientWidth : 0;
+      return {
+        viewport: name,
+        timelineExists: Boolean(document.querySelector('[data-testid="ai-run-timeline"]')),
+        detailExists: Boolean(detail),
+        topTabsCanonical: Boolean(document.querySelector('.ai-run-main-tabs.tabs .tab')),
+        detailTabsCanonical: Boolean(document.querySelector('.ai-run-detail-tabs.tabs .tab')),
+        customJsonTabs: Boolean(document.querySelector('.ai-run-json-tabs')),
+        pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        detailOverflow
+      };
+    }, viewportName);
+
+    assertAiRunTraceLayout(result);
+  } finally {
+    await page.close();
+  }
+
+  function step(key, artifactPayload) {
+    return {
+      key,
+      status: 'succeeded',
+      title: key,
+      artifactPayload,
+      error: null,
+      startedAt: '2026-06-19T00:00:00+00:00',
+      completedAt: '2026-06-19T00:00:01+00:00'
+    };
+  }
+
+  function aiRun(id) {
+    return {
+      id,
+      capability: 'draftGeneration',
+      status: 'succeeded',
+      provider: 'openrouter',
+      model: 'deepseek/deepseek-v3.2',
+      requestPayload: {
+        draftRunStep: 'materialPlan',
+        providerRequest: { messages: [{ role: 'system', content: 'Return JSON' }, { role: 'user', content: '{"task":"trace"}' }] }
+      },
+      resultPayload: { result: { availableEvidence: ['signal'] } },
+      error: null,
+      fallbackUsed: false,
+      createdAt: '2026-06-19T00:00:00+00:00',
+      updatedAt: '2026-06-19T00:00:01+00:00'
+    };
+  }
+}
+
 async function assertPlanAtViewport(page, viewport, viewportName) {
   page = await page.context().browser().newPage();
   try {
@@ -484,6 +575,8 @@ async function main() {
     await assertSignalsAtViewport(page, { width: 390, height: 760 }, 'mobile');
     await assertPlanAtViewport(page, { width: 1440, height: 1024 }, 'desktop');
     await assertPlanAtViewport(page, { width: 1180, height: 820 }, 'laptop');
+    await assertAiRunTraceAtViewport(page, { width: 1440, height: 1024 }, 'desktop');
+    await assertAiRunTraceAtViewport(page, { width: 390, height: 760 }, 'mobile');
 
     await browser.close();
   } catch (error) {

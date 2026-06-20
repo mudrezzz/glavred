@@ -56,6 +56,7 @@ describe('Editorial workbench app flow', () => {
       fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
 
       expect(await screen.findByText(/Генерируем драфт/i)).toBeInTheDocument();
+      expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/ai-runs?runId=draft-run-pending')).toBe(true);
       const postCall = pendingFetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
       const payload = JSON.parse(String(postCall?.[1]?.body));
       expect(payload.draftContext.workItem).toBeTruthy();
