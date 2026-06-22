@@ -275,6 +275,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const materialPlan = asRecord(payload.materialPlan) ?? (step === 'materialPlan' ? asRecord(payload.result) : null);
   const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
+  const ruleRegistry = asRecord(payload.ruleRegistrySnapshot);
   const strategy = asRecord(payload.draftStrategy) ?? (step === 'strategy' ? asRecord(payload.result) : null);
   const candidate = asRecord(payload.candidate);
   const candidates = asArray(payload.candidates);
@@ -283,6 +284,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
 
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) sections.push(postContractSection(postContract));
+  if (ruleRegistry) sections.push(ruleRegistrySection(ruleRegistry));
   if (materialPlan) sections.push(materialPlanSection(materialPlan));
   if (strategy) sections.push(strategySection(strategy));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
@@ -309,6 +311,30 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function ruleRegistrySection(payload: Record<string, unknown>): TraceSemanticSection {
+  const metadata = asRecord(payload.metadata);
+  const rules = asArray(payload.rules) ?? [];
+  return {
+    id: 'ruleRegistry',
+    title: 'Rule registry',
+    fields: compactFields([
+      ['Version', payload.version],
+      ['Rules', metadata?.ruleCount ?? rules.length],
+      ['By severity', metadata?.bySeverity],
+      ['By category', metadata?.byCategory],
+      ['Validator bindings', metadata?.byValidatorType],
+      ['Feasibility', metadata?.feasibilityStatus],
+      ['Post contract', metadata?.postContractStatus],
+      ['Key rules', rules.slice(0, 8).map((item) => {
+        const rule = asRecord(item);
+        if (!rule) return null;
+        const binding = asRecord(rule.binding);
+        return `${rule.id} · ${rule.severity} · ${binding?.validatorType}: ${rule.title}`;
+      }).filter(Boolean)]
+    ])
+  };
 }
 
 function feasibilitySection(payload: Record<string, unknown>): TraceSemanticSection {

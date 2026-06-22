@@ -31,3 +31,23 @@ def test_draft_run_pipeline_marks_run_failed_when_rule_pack_compiler_fails(tmp_p
 
     assert result.status == DraftRunStatus.FAILED
     assert result.error == "compiler exploded"
+
+
+def test_draft_run_pipeline_writes_rule_registry_inside_rule_pack_step(tmp_path) -> None:
+    repository = SqliteDraftRunRepository(tmp_path / "draft-runs.sqlite3")
+    request = make_request()
+    draft_context = context_from_payload({"draftContext": make_context()})
+    run = create_queued_draft_run(
+        request_payload=request_to_payload(request, draft_context),
+        input_summary={"title": request.brief.title},
+    )
+    repository.save(run)
+
+    result = DraftRunPipeline(repository, DeterministicDraftService()).execute(run.id)
+    rule_pack = result.steps[3].artifact_payload
+
+    assert result.status == DraftRunStatus.SUCCEEDED
+    assert rule_pack["metadata"]["registryVersion"] == "rule-registry-v2"
+    assert rule_pack["ruleRegistrySnapshot"]["version"] == "rule-registry-v2"
+    assert rule_pack["ruleRegistrySnapshot"]["metadata"]["ruleCount"] > 0
+    assert rule_pack["ruleRegistrySnapshot"]["rules"][0]["binding"]["validatorType"]

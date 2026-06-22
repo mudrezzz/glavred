@@ -62,9 +62,10 @@ class RulePack:
     forbidden_moves: list[RulePackRule] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     warnings: list[dict[str, Any]] = field(default_factory=list)
+    rule_registry_snapshot: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "draftIntent": self.draft_intent,
             "hardConstraints": [item.to_payload() for item in self.hard_constraints],
             "softConstraints": [item.to_payload() for item in self.soft_constraints],
@@ -76,3 +77,6 @@ class RulePack:
             "metadata": self.metadata,
             "warnings": self.warnings,
         }
+        if self.rule_registry_snapshot is not None:
+            payload["ruleRegistrySnapshot"] = self.rule_registry_snapshot
+        return payload

@@ -245,7 +245,7 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
     summary, `sourceLedger` in step 0, feasibility in step 1, post contract in step 2,
-    compiled rule pack in step 3, material plan in step 4, draft strategy in step 5,
+    compiled rule pack plus `ruleRegistrySnapshot` in step 3, material plan in step 4, draft strategy in step 5,
     draft candidates and selection in step 6, final draft, and errors. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
     local fallback draft is created. A missing candidate link alone no longer blocks
@@ -255,8 +255,8 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     backend is unreachable, the UI marks the draft as local fallback with no recorded
     backend run.
     The source ledger now shows which claims are allowed, risky, or forbidden, while
-    feasibility and post contract lock whether and how the post may be written before
-    validators/revision.
+    feasibility, post contract, and rule registry lock whether and how the post may
+    be written before validators/revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

@@ -95,9 +95,10 @@ After fabula approval, `Драфт` shows queued/running progress until the work
 `POST /api/draft-runs` receives the approved brief plus a read-only `draftContext`
 snapshot of the selected post: plan slot, candidate when available, source signal,
 topic, fabula, publisher rules, and author-position evidence. Use
-`/api/draft-runs/{id}` to inspect the context summary and `sourceLedger` in step 0,
-the compiled RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3,
-draft candidates and deterministic selection in step 4, final draft, and safe errors.
+`/api/draft-runs/{id}` to inspect the context summary and `sourceLedger` in the
+`context` step, the quality gate in `feasibility`, the locked `PostContract`, the
+compiled `RulePack` plus `ruleRegistrySnapshot`, `MaterialPlan`, `DraftStrategy`,
+draft candidates and deterministic selection, final draft, and safe errors.
 Planning and candidate provider calls link child `AiRun` ids for prompt/provider
 traces.
 
@@ -108,6 +109,12 @@ quality-blocked run is a valid outcome: no final draft is produced, and the edit
 the reason plus a trace link. Only after SourceLedger, FeasibilityReport, and
 PostContract exist can validators and directed revisions judge whether a candidate
 draft is truly acceptable.
+
+Post-2.11 rule note: the `rulePack` artifact now also contains
+`ruleRegistrySnapshot`. This registry gives future validators stable rule ids,
+severity, scope, observable criteria, validator type, and repair policy. The visible
+editor flow is unchanged; the new artifact is inspected through `/ai-runs?runId=...`
+or `GET /api/draft-runs/{id}`.
 
 ## Ограничения текущего demo
 

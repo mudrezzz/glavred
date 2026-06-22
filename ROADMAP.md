@@ -3477,7 +3477,7 @@ Status:
 
 ### Slice 2.11: Rule Registry v2 and Validator Bindings
 
-- Status: Ready
+- Status: Done
 - Goal: Evolve the current rule pack into a machine-readable rule registry snapshot.
 - Scope:
   - Add rule ids, scope, conditions, priority, severity, observable criteria,
@@ -3488,10 +3488,19 @@ Status:
 - Architecture impact:
   - Validators and directed revisions must reference rule ids instead of anonymous
     prose constraints.
+- Done:
+  - Added provider-free `RuleRegistrySnapshot`, `RuleRegistryRule`, and `RuleBinding`
+    DTOs.
+  - Added role-owned registry compiler modules and kept `RulePack` as a compatibility
+    payload derived from the registry.
+  - Stored `ruleRegistrySnapshot` inside the existing `rulePack` DraftRun step without
+    changing step order or SQLite schema.
+  - Updated `/ai-runs` semantic trace to show a readable Rule registry summary.
+  - Completed 2026-06-22.
 
 ### Slice 2.12: Contract-Based Rhetorical Plans
 
-- Status: Backlog
+- Status: Ready
 - Goal: Generate several rhetorical plans from source ledger, post contract, rule pack,
   material plan, and fabula.
 - Scope:
@@ -3656,6 +3665,7 @@ Status:
 - Slice 2.10: Feasibility Gate and Post Contract. Completed 2026-06-20.
 - Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration.
   Completed 2026-06-22.
+- Slice 2.11: Rule Registry v2 and Validator Bindings. Completed 2026-06-22.
 
 ## Blocked Items
 
@@ -3676,4 +3686,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.11: Rule Registry v2 and Validator Bindings`.
+Continue the backend track with `Slice 2.12: Contract-Based Rhetorical Plans`.

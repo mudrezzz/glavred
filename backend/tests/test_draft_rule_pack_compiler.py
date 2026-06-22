@@ -22,8 +22,10 @@ def test_rule_pack_compiler_uses_full_context_categories() -> None:
     pack = compile_payload(payload)
 
     assert pack["metadata"]["version"] == "rule-pack-v1"
+    assert pack["metadata"]["registryVersion"] == "rule-registry-v2"
     assert pack["metadata"]["missingContextCount"] == 1
     assert pack["warnings"][0]["entity"] == "topic"
+    assert pack["ruleRegistrySnapshot"]["metadata"]["ruleCount"] >= 10
     assert pack["draftIntent"]["thesis"] == "Demo magic is not adoption."
     assert pack["draftIntent"]["conflict"] == "Demo looks strong, rollout remains weak."
     assert has_source(pack["softConstraints"], "publisherRules.styleVoice")
@@ -46,6 +48,7 @@ def test_rule_pack_compiler_keeps_brief_only_request_compatible() -> None:
     assert has_source(pack["hardConstraints"], "publisherRules.forbiddenTopics")
     assert has_source(pack["softConstraints"], "publisherRules.goals")
     assert pack["warnings"] == []
+    assert pack["ruleRegistrySnapshot"]["metadata"]["briefOnly"] is True
     assert len(pack["qualityRubric"]) == 4
 
 

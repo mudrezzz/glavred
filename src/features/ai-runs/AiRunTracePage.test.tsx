@@ -68,6 +68,7 @@ describe('AiRunTracePage', () => {
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Смысловой результат' }));
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Material plan');
+    expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Rule registry');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Draft strategy');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Draft candidate 1');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Selected draft');
@@ -183,7 +184,34 @@ const draftRunResponse = {
   inputSummary: { title: 'AI product discovery' },
   steps: [
     makeStep('context', { workItem: { title: 'Post title' } }),
-    makeStep('rulePack', { hardConstraints: [{ text: 'No hype' }] }),
+    makeStep('rulePack', {
+      hardConstraints: [{ text: 'No hype' }],
+      ruleRegistrySnapshot: {
+        version: 'rule-registry-v2',
+        metadata: {
+          ruleCount: 2,
+          bySeverity: { hard: 1, soft: 1 },
+          byCategory: { hardConstraints: 1, evidenceRequirements: 1 },
+          byValidatorType: { deterministic: 1, llm: 1 },
+          feasibilityStatus: 'feasible_with_constraints',
+          postContractStatus: 'created'
+        },
+        rules: [
+          {
+            id: 'contract:thesis',
+            title: 'Locked thesis',
+            severity: 'hard',
+            binding: { validatorType: 'deterministic' }
+          },
+          {
+            id: 'ledger:claim:signal-summary',
+            title: 'Source claim use',
+            severity: 'soft',
+            binding: { validatorType: 'llm' }
+          }
+        ]
+      }
+    }),
     makeStep('materialPlan', {
       source: 'openrouter',
       aiRunId: 'ai-material',

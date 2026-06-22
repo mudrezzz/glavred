@@ -422,7 +422,7 @@ entities are recorded in `missingContext` instead of failing the run. The worker
 later rule-pack compilation.
 
 `PostBrief` must not absorb these source fields; it remains the author-approved
-production brief. The next backend implementation slice is `Draft Rule Pack Compiler`.
+production brief.
 
 Slice 2.6 implements the first explicit rule-pack boundary. The worker no longer
 stores a placeholder `rulePack` step: it compiles the normalized context summary into
@@ -436,10 +436,29 @@ Rule-pack ownership is intentionally split:
 
 - `backend/app/domain/draft_rule_pack.py` defines provider-free DTOs only.
 - `backend/app/application/draft_rule_pack_compiler.py` orchestrates compilation.
+- `backend/app/application/draft_rule_pack_from_registry.py` maps selected registry
+  rules back into the compatibility `RulePack` payload.
 - `backend/app/application/draft_rule_pack_sections.py` maps source context into
   rule-pack categories.
 - `backend/app/application/draft_run_pipeline.py` only calls the compiler and writes
   `steps[1].artifactPayload`.
+
+Slice 2.11 upgrades this boundary into a machine-readable registry without changing
+the DraftRun step order or SQLite schema. The worker still writes a top-level
+compatibility `RulePack` payload in the `rulePack` step, but that payload now includes
+`ruleRegistrySnapshot`. Validators and directed revisions must consume rule ids from
+that snapshot instead of anonymous prose constraints.
+
+Rule-registry ownership is intentionally split:
+
+- `backend/app/domain/draft_rule_registry.py` defines provider-free registry DTOs.
+- `backend/app/application/draft_rule_registry_compiler.py` orchestrates registry
+  compilation from context, SourceLedger, FeasibilityReport, and PostContract.
+- `backend/app/application/draft_rule_registry_contract.py` maps PostContract claims,
+  obligations, CTA, thesis, and forbidden moves into rules.
+- `backend/app/application/draft_rule_registry_sections.py` maps brief, publisher,
+  topic, fabula, source-ledger, candidate, and source-signal inputs into registry
+  rules.
 
 The next backend implementation slice is `Material Plan and Draft Strategy Steps`.
 
@@ -547,6 +566,7 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_feasibility.py`
 - `backend/app/domain/draft_post_contract.py`
+- `backend/app/domain/draft_rule_registry.py`
 - `backend/app/api/draft_runs.py`
 - `backend/app/api/draft_generation_contracts.py`
 - `backend/app/application/draft_run_service.py`

@@ -7,9 +7,9 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'materialPlan', 'draft']);
-    expect(viewModel.timeline[3].childCalls[0].id).toBe('ai-material');
-    expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-candidate');
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'draft']);
+    expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-material');
+    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-candidate');
     expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('2');
   });
 
@@ -20,6 +20,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Material plan');
     expect(titles).toContain('Feasibility report');
     expect(titles).toContain('Post contract');
+    expect(titles).toContain('Rule registry');
     expect(titles).toContain('Draft candidate 1');
     expect(titles).toContain('Candidate selection');
     expect(titles).toContain('Selected draft');
@@ -78,6 +79,41 @@ function makeDraftRunBundle(): RunTraceBundle {
             thesis: 'Thesis',
             claims: [{ id: 'signal-summary' }],
             forbiddenMoves: ['Do not invent facts']
+          },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'rulePack',
+          status: 'succeeded',
+          title: 'Rule Pack',
+          artifactPayload: {
+            ruleRegistrySnapshot: {
+              version: 'rule-registry-v2',
+              metadata: {
+                ruleCount: 2,
+                bySeverity: { hard: 1, soft: 1 },
+                byCategory: { hardConstraints: 1, evidenceRequirements: 1 },
+                byValidatorType: { deterministic: 1, llm: 1 },
+                feasibilityStatus: 'feasible_with_constraints',
+                postContractStatus: 'created'
+              },
+              rules: [
+                {
+                  id: 'contract:thesis',
+                  title: 'Locked thesis',
+                  severity: 'hard',
+                  binding: { validatorType: 'deterministic' }
+                },
+                {
+                  id: 'ledger:claim:signal-summary',
+                  title: 'Source claim use',
+                  severity: 'soft',
+                  binding: { validatorType: 'llm' }
+                }
+              ]
+            }
           },
           error: null,
           startedAt: null,

@@ -975,6 +975,29 @@ To debug Slice 2.6, inspect `steps[1].artifactPayload`. It contains the compiled
 Do not add rule-pack compilation to `draft_run_context_builder.py` or
 `draft_run_pipeline.py`; the compiler and section mappers own that boundary.
 
+Slice 2.11 keeps the compatibility `RulePack` shape but adds
+`ruleRegistrySnapshot` inside the same `rulePack` step artifact. This snapshot is the
+machine-readable contract future validators and directed revisions must consume:
+
+- every rule has a stable id, source, scope, category, priority, severity, condition,
+  observable criteria, validator type, and repair policy;
+- rule ids reference SourceLedger claim ids or PostContract obligations when
+  applicable;
+- `RulePack` is now derived from the registry snapshot and remains a compatibility
+  payload for material planning and prompt layers;
+- `/ai-runs?runId=<DraftRun ID>` shows a `Rule registry` semantic section with counts
+  by severity, category, validator type, and key rules.
+
+Rule-registry ownership is split so near-limit modules stay stable:
+
+- `backend/app/domain/draft_rule_registry.py` defines provider-free DTOs.
+- `backend/app/application/draft_rule_registry_compiler.py` orchestrates compilation.
+- `backend/app/application/draft_rule_registry_contract.py` maps PostContract rules.
+- `backend/app/application/draft_rule_registry_sections.py` maps brief, publisher,
+  topic, fabula, source-ledger, candidate, and source-signal rules.
+- `backend/app/application/draft_rule_pack_from_registry.py` maps registry rules back
+  to the compatibility RulePack.
+
 To debug Slice 2.7, inspect `steps[2].artifactPayload` for `MaterialPlan` and
 `steps[3].artifactPayload` for `DraftStrategy`. Each artifact includes `source`,
 `aiRunId`, `fallbackUsed`, optional `error`, and the full planning payload. Open the
