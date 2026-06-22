@@ -1,8 +1,10 @@
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
+from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_payloads import request_to_payload
 from backend.app.application.draft_run_pipeline import DraftRunPipeline
 from backend.app.domain.draft_run import DraftRunStatus, create_queued_draft_run
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
+from backend.tests.test_draft_run_context_builder import make_context
 from backend.tests.test_draft_run_pipeline import make_request
 
 
@@ -14,8 +16,9 @@ class FailingRulePackCompiler:
 def test_draft_run_pipeline_marks_run_failed_when_rule_pack_compiler_fails(tmp_path) -> None:
     repository = SqliteDraftRunRepository(tmp_path / "draft-runs.sqlite3")
     request = make_request()
+    draft_context = context_from_payload({"draftContext": make_context()})
     run = create_queued_draft_run(
-        request_payload=request_to_payload(request),
+        request_payload=request_to_payload(request, draft_context),
         input_summary={"title": request.brief.title},
     )
     repository.save(run)

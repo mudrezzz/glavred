@@ -997,17 +997,37 @@ provider metadata, fallback status, and sanitized candidate results. The fronten
 receives one selected `finalDraft`; alternatives are trace/debug data until a future UI
 review slice.
 
+To debug Slice 2.9, inspect `steps[0].artifactPayload.sourceLedger`. It is written
+inside the existing `context` step, not as a new `DraftRunStepKey` and not as a new
+SQLite table. The v1 ledger contains:
+
+- `claims`: brief intent, candidate claims, source claims, topic/fabula constraints,
+  and author-position evidence with stable local ids;
+- `risks`: candidate and brief risks that must not be turned into facts;
+- `forbiddenInferences`: negative reasoning rules such as not inventing source facts
+  or strengthening author correction into external proof;
+- `warnings`: missing source/candidate/evidence/context signals that future gates
+  should consume.
+
 The next artifacts must make candidate validation meaningful:
 
-- `SourceLedger` comes before validators and stores claim ids, provenance, confidence,
-  allowed-use policy, risks, and forbidden inferences.
-- `FeasibilityReport` can stop unsafe drafting before prose is generated.
+- `SourceLedger` now comes before validators and stores claim ids, provenance,
+  confidence, allowed-use policy, risks, and forbidden inferences.
+- `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
+  DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
+  this is a quality decision, not an infrastructure failure.
+- Candidate link recovery is part of DraftRun input hygiene. `src/application/postCandidateLinking.ts`
+  is shared by plan-slot approval and `src/application/draftRunContext.ts`; missing
+  `postCandidateId` must not block a run when source signal evidence, approved brief
+  evidence, topic, and fabula are present.
 - `PostContract` locks the thesis, audience value, CTA, allowed claims, forbidden
-  moves, platform constraints, and fabula obligations.
+  moves, platform constraints, and fabula obligations for later strategy,
+  validation, ranking, and revision steps.
 
 Do not add validator prompts that judge final text without these artifacts. They would
 not know what the text was allowed to claim or what invariants a revision must
-preserve.
+preserve. The next backend slice should move anonymous rule-pack constraints into a
+machine-readable rule registry snapshot with stable ids.
 
 Drafting steps should be narrow:
 
@@ -1053,9 +1073,9 @@ The first backend implementation order is:
 7. Rule-pack compiler. Done.
 8. Material plan and draft strategy steps. Done.
 9. Multi-candidate draft generation. Done.
-10. Source ledger foundation. Next.
-11. Feasibility gate and post contract.
-12. Rule registry v2 and validator bindings.
+10. Source ledger foundation. Done.
+11. Feasibility gate and post contract. Done.
+12. Rule registry v2 and validator bindings. Next.
 13. Contract-based rhetorical plans.
 14. Deterministic linter and validator orchestrator.
 15. Pairwise ranking and directed revision.

@@ -25,6 +25,13 @@ export interface DraftGenerationTrace {
 export type DraftGenerationUiState =
   | { status: 'idle' }
   | { status: 'generating'; startedAt: string; runId?: string | null; step?: string | null; stepLabel?: string | null }
+  | {
+      status: 'blocked';
+      runId: string;
+      feasibilityStatus: string;
+      reason: string;
+      findings: string[];
+    }
   | { status: 'failed'; error: string; fallbackUsed: true };
 
 export interface PostVisualVariant {

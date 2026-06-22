@@ -35,12 +35,12 @@ directions, 2-3 draft candidates, child `AiRun` ids, and a deterministic v1 sele
 scorecard. The UI still applies one selected draft; alternative candidates are
 available through trace/debug until a future review UI exists.
 
-The next quality layer is source-ledger and contract work, not immediate validator
-looping. `SourceLedger` will record claim ids, provenance, allowed use, risks, and
-forbidden inferences. `PostContract` will lock the approved thesis, audience value,
-CTA, platform constraints, and fabula obligations. Validator reports and directed
-revision should consume those artifacts instead of judging generated text in
-isolation.
+Slice 2.10 adds feasibility and post-contract artifacts after `SourceLedger`. The
+runner can stop before prose when evidence is too weak; that blocked state is a
+quality outcome, not a release failure. `PostContract` now locks the approved thesis,
+audience value, CTA, platform constraints, allowed claims, forbidden moves, and fabula
+obligations. Validator reports and directed revision should consume those artifacts
+instead of judging generated text in isolation.
 
 The `Фабула` stage also displays read-only candidate and slot context. The author edits
 only the `PostBrief` production artifact there. If an approved fabula is edited,

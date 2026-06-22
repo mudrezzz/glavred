@@ -244,15 +244,19 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 28. Review the automatically prepared draft checks and editor notes. During generation
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
-    summary, compiled rule pack in step 1, material plan in step 2, draft strategy in
-    step 3, draft candidates and selection in step 4, final draft, and errors.
+    summary, `sourceLedger` in step 0, feasibility in step 1, post contract in step 2,
+    compiled rule pack in step 3, material plan in step 4, draft strategy in step 5,
+    draft candidates and selection in step 6, final draft, and errors. If feasibility
+    blocks the post, the demo shows a readable stopped-before-generation state and no
+    local fallback draft is created. A missing candidate link alone no longer blocks
+    the demo when the source signal, brief evidence, topic, and fabula are present.
     Planning and candidate child `AiRun` ids can be inspected through
     `/api/ai-runs/{id}`. If the
     backend is unreachable, the UI marks the draft as local fallback with no recorded
     backend run.
-    Next backend drafting slices add a source ledger and post contract before
-    validators/revision, so the trace will show which claims were allowed and which
-    editorial invariants the draft had to preserve.
+    The source ledger now shows which claims are allowed, risky, or forbidden, while
+    feasibility and post contract lock whether and how the post may be written before
+    validators/revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

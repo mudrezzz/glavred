@@ -1,4 +1,5 @@
 import type { WorkspaceState } from '../domain/editorialWorkspace';
+import { findLinkedPostCandidate } from './postCandidateLinking';
 
 export type DraftRunMissingContext = {
   entity: string;
@@ -24,7 +25,7 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
   const missingContext: DraftRunMissingContext[] = [];
   const workItem = findSelectedWorkItem(workspace, missingContext);
   const planSlot = findPlanSlot(workspace, workItem, missingContext);
-  const candidate = findCandidate(workspace, workItem, missingContext);
+  const candidate = findCandidate(workspace, workItem, planSlot, missingContext);
   const sourceSignal = findSourceSignal(workspace, workItem, candidate, planSlot, missingContext);
   const topic = findTopic(workspace, workItem, candidate, planSlot, missingContext);
   const fabula = findFabula(workspace, workItem, candidate, planSlot, missingContext);
@@ -125,17 +126,12 @@ function findPlanSlot(
 function findCandidate(
   workspace: WorkspaceState,
   workItem: WorkItem | null,
+  planSlot: PlanSlot | null,
   missingContext: DraftRunMissingContext[]
 ): Candidate | null {
-  const candidateId = workItem?.postCandidateId ?? workspace.postCandidate?.id;
-  if (!candidateId) return workspace.postCandidate;
-  const candidate =
-    workspace.postCandidates.find((item) => item.id === candidateId) ??
-    (workspace.postCandidate?.id === candidateId ? workspace.postCandidate : null);
-  if (!candidate) {
-    missingContext.push({ entity: 'postCandidate', id: candidateId, reason: 'Post candidate was not found' });
-  }
-  return candidate;
+  return findLinkedPostCandidate(workspace, workItem, planSlot, (entity, id, reason) =>
+    missingContext.push({ entity, id, reason })
+  );
 }
 
 function findSourceSignal(

@@ -1,4 +1,4 @@
-# User Guide
+﻿# User Guide
 
 Glavred currently provides a local-first editorial cabinet with author memory and a
 working production flow.
@@ -359,10 +359,13 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   author-position evidence. This appears in backend trace/debug, not as a new UI
   screen.
 - The drafting backend is being expanded as an artifact pipeline, not a single larger
-  prompt. The next backend quality layers are source ledger, feasibility gate, post
-  contract, rule registry, validators, ranking, directed revision, and regression. The
-  main editor will keep showing a compact draft and warnings; full trace details stay
-  in `/ai-runs`.
+  prompt. The draft trace now includes a `SourceLedger` with claim provenance,
+  allowed use, risks, and forbidden inferences. The runner then checks feasibility and
+  locks a `PostContract` before writing. If the post is too weakly sourced, `Драфт`
+  shows "Пост остановлен до генерации" with the reason and trace link instead of
+  inventing a weak draft. If only the candidate link is missing but source signal, brief evidence, topic, and fabula are present, Glavred proceeds with constraints instead of stopping the run. The next backend quality layers are rule registry,
+  validators, ranking, directed revision, and regression. The main editor will keep
+  showing compact status and warnings; full trace details stay in `/ai-runs`.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

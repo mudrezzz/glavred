@@ -32,6 +32,7 @@ import {
 } from '../application/editorialServices';
 import { createMemeReferences, createMemeRemixVariants } from '../application/visualMemeRemixService';
 import { createVisualVariants } from '../application/visualVariantService';
+import { findLinkedPostCandidate } from '../application/postCandidateLinking';
 
 const legacyBriefId = 'brief-ai-demo-to-adoption';
 const legacyBriefTitle = 'Почему AI-B2B демо еще не продукт';
@@ -55,7 +56,8 @@ export function buildApprovePlanSlotPatch(workspace: WorkspaceState, itemId: str
     workspace.fabulas,
     workspace.topicFabulaMatrix
   );
-  const editorialWorkItem = createEditorialWorkItem(contentPlanItem, { brief: postBrief }, workspace.postCandidate?.id);
+  const linkedCandidate = findLinkedPostCandidate(workspace, null, contentPlanItem);
+  const editorialWorkItem = createEditorialWorkItem(contentPlanItem, { brief: postBrief }, linkedCandidate?.id);
   const editorialWorkItems = upsertEditorialWorkItem(workspace.editorialWorkItems, editorialWorkItem);
 
   return {

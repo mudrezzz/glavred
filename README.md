@@ -193,18 +193,20 @@ primary drafting model. The primary UI path starts a queued `DraftRun`, polls st
 and applies the final draft when the worker completes. The run request now includes a
 `draftContext` snapshot from the selected editorial post: plan slot, candidate when
 available, source signal, topic, fabula, publisher rules, and author-position
-evidence. The worker compiles the context into a deterministic `RulePack`, then uses
-OpenRouter-backed planning steps with deterministic fallback for `MaterialPlan` and
-`DraftStrategy`, then generates several draft candidates in `steps[4].artifactPayload`.
-Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context, `steps[1]` is the rule
-pack, `steps[2]` is the material plan, `steps[3]` is the draft strategy, and `steps[4]`
-contains directions, candidates, child `AiRun` ids, and deterministic selection. Later
-slices now follow the documented quality spine before validator work: source ledger,
-feasibility gate, post contract, rule-registry v2, rhetorical plans, validators,
-ranking, directed revision, regression report, and human decision learning. The next
-backend slice is `Source Ledger Foundation`, so future validators can judge drafts
-against explicit claim provenance and locked editorial invariants instead of guessing
-from final text.
+evidence. The worker writes a `SourceLedger` into
+`steps[0].artifactPayload.sourceLedger`, runs `feasibility` and `postContract`, then
+continues into `RulePack`, `MaterialPlan`, `DraftStrategy`, and several draft
+candidates. Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context plus source
+ledger, `steps[1]` is feasibility, `steps[2]` is the post contract, `steps[3]` is the
+rule pack, and later steps contain planning, strategy, candidates, validation, and
+completion. If feasibility blocks the post, the run succeeds with `finalDraft=null`
+and `complete.status=blocked`; the UI shows that the post was stopped before
+generation and links to the trace. Missing candidate links are recovered from the
+approved source/topic/fabula context where possible; if the source and brief evidence
+are sufficient, the run proceeds with constraints instead of blocking. The next
+backend slice is `Rule Registry v2 and
+Validator Bindings`, so future validators can reference explicit rule ids, claim
+provenance, and locked editorial invariants instead of guessing from final text.
 
 Run tests:
 

@@ -3360,7 +3360,7 @@ Status:
 
 ### Slice 2.9: Source Ledger Foundation
 
-- Status: Ready
+- Status: Done
 - Goal: Add the source-ledger layer before validators and revision.
 - User value: Glavred starts tracking which claims are grounded, allowed, risky, or
   forbidden before it writes or judges a post.
@@ -3369,8 +3369,8 @@ Status:
     `ForbiddenInference` DTOs.
   - Build a DraftRun-local ledger from approved brief, post candidate, source signal,
     author correction, candidate evidence, risks, and author-position evidence.
-  - Store the ledger in a dedicated DraftRun artifact before material planning or as a
-    named payload consumed by later steps.
+  - Store the ledger inside `steps[0].artifactPayload.sourceLedger` without adding a
+    new `DraftRunStepKey` or SQLite migration. Done.
   - Include provenance ids, confidence, allowed-use notes, risky claims, and missing
     source warnings.
   - Keep old brief-only runs compatible with a minimal ledger and explicit warnings.
@@ -3380,7 +3380,7 @@ Status:
   - Validator scoring or revision.
 - Implementation notes:
   - Do not expand near-limit context builder or pipeline files; add role-owned ledger
-    domain/application modules.
+    domain/application modules. Done.
   - `SourceLedger` is not a replacement for `SourceSignal`; it is a drafting artifact
     that says what can safely be used.
 - Architecture impact:
@@ -3399,14 +3399,15 @@ Status:
   - Demo DraftRun trace shows claim/provenance inventory before draft writing.
 - Acceptance criteria:
   - A developer can inspect a DraftRun and see source claims, allowed use, risks, and
-    forbidden inferences.
-  - No validator/revision behavior is added yet.
+    forbidden inferences. Done.
+  - No validator/revision behavior is added yet. Done.
+  - Completed 2026-06-20.
 - Risks:
   - Claim extraction can become over-complicated; keep v1 deterministic and traceable.
 
 ### Slice 2.10: Feasibility Gate and Post Contract
 
-- Status: Backlog
+- Status: Done
 - Goal: Decide whether the approved post can be written safely and lock the editorial
   contract before prose generation.
 - User value: Weak or under-sourced posts stop with a clear reason instead of producing
@@ -3428,10 +3429,55 @@ Status:
   - Feasible full context proceeds.
   - Missing evidence produces constrained or needs-human status.
   - Infeasible context does not generate a final draft.
+- Done:
+  - Added `feasibility` and `postContract` DraftRun logical steps before `rulePack`.
+  - Added deterministic feasibility gate over `SourceLedger` claims, warnings, risks,
+    and forbidden inferences.
+  - Added `PostContract` artifact for safe runs and `postContract: notCreated` for
+    blocked runs.
+  - Quality-blocked runs finish as `DraftRun.status=succeeded` with `finalDraft=null`
+    and `complete.status=blocked`, so frontend shows a blocked state instead of using
+    compatibility/local fallback.
+  - `/ai-runs` semantic trace now reads feasibility and contract artifacts.
+  - Completed 2026-06-20.
+
+### Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration
+
+- Status: Done
+- Goal: Fix a false quality block when an approved plan slot has source/topic/fabula
+  evidence but the editorial work item lost `postCandidateId`.
+- User value: The author does not get a confusing "stopped before generation" result
+  when Glavred can safely recover or proceed from the approved source context.
+- Scope:
+  - Recover linked post candidates during plan-slot approval and DraftRun context
+    building.
+  - Avoid guessing when several approved candidates match the same signal.
+  - Calibrate feasibility so `missing-candidate` is constrained, not blocking, when
+    source signal evidence, brief evidence, topic, and fabula are present.
+  - Keep hard blocking for missing/ambiguous candidate links when evidence is not
+    strong enough.
+- Architecture impact:
+  - Candidate linking lives in a role-owned frontend application helper shared by
+    plan approval and DraftRun context.
+  - Feasibility evidence checks live in a backend policy helper instead of expanding
+    the near-limit feasibility gate.
+- Tests:
+  - Candidate recovery by `postCandidateId`, by source/topic/fabula, and ambiguous
+    source-only matches.
+  - Plan-slot approval persists recovered `postCandidateId`.
+  - Feasibility proceeds with constraints when candidate is missing but source/brief
+    evidence is available.
+  - Pipeline continues to draft for the recovered/constrained case and still blocks
+    genuinely weak context.
+- Done:
+  - Diagnosed `DraftRun d5d17b60-a711-485f-923e-91a93f263f12`: it stopped because
+    `candidate=null` while source signal, topic, fabula, and evidence were present.
+  - Added shared candidate-link recovery and adjusted feasibility policy.
+  - Completed 2026-06-22.
 
 ### Slice 2.11: Rule Registry v2 and Validator Bindings
 
-- Status: Backlog
+- Status: Ready
 - Goal: Evolve the current rule pack into a machine-readable rule registry snapshot.
 - Scope:
   - Add rule ids, scope, conditions, priority, severity, observable criteria,
@@ -3606,6 +3652,10 @@ Status:
 - Slice 2.8.1: AI Run Trace Workbench. Completed 2026-06-19.
 - Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair. Completed
   2026-06-19.
+- Slice 2.9: Source Ledger Foundation. Completed 2026-06-20.
+- Slice 2.10: Feasibility Gate and Post Contract. Completed 2026-06-20.
+- Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration.
+  Completed 2026-06-22.
 
 ## Blocked Items
 
@@ -3626,4 +3676,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.9: Source Ledger Foundation`.
+Continue the backend track with `Slice 2.11: Rule Registry v2 and Validator Bindings`.

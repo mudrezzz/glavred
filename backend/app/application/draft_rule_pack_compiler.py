@@ -23,6 +23,11 @@ class DraftRulePackCompiler:
         signal = as_dict(context_summary.get("sourceSignal"))
         publisher_rules = as_dict(context_summary.get("publisherRules"))
         missing_context = as_list_of_dicts(context_summary.get("missingContext"))
+        source_ledger = as_dict(context_summary.get("sourceLedger"))
+        feasibility = as_dict(context_summary.get("feasibilityReport"))
+        post_contract = as_dict(context_summary.get("postContract"))
+        source_ledger_metadata = as_dict(source_ledger.get("metadata"))
+        source_ledger_warnings = as_list_of_dicts(source_ledger.get("warnings"))
 
         hard_constraints, soft_constraints = publisher_constraints(publisher_rules)
         hard_constraints.extend(candidate_constraints(candidate))
@@ -47,6 +52,10 @@ class DraftRulePackCompiler:
                 "version": "rule-pack-v1",
                 "briefOnly": bool(context_summary.get("compatibility", {}).get("briefOnly")),
                 "missingContextCount": len(missing_context),
+                "sourceLedgerClaimCount": source_ledger_metadata.get("claimCount", 0),
+                "sourceLedgerWarningCount": source_ledger_metadata.get("warningCount", 0),
+                "feasibilityStatus": feasibility.get("status"),
+                "postContractStatus": post_contract.get("status"),
             },
-            warnings=missing_context,
+            warnings=[*missing_context, *source_ledger_warnings],
         )

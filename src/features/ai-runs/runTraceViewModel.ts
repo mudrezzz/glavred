@@ -273,12 +273,16 @@ function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
 function sectionsFromPayload(step: string, payload: Record<string, unknown>): TraceSemanticSection[] {
   const sections: TraceSemanticSection[] = [];
   const materialPlan = asRecord(payload.materialPlan) ?? (step === 'materialPlan' ? asRecord(payload.result) : null);
+  const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
+  const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
   const strategy = asRecord(payload.draftStrategy) ?? (step === 'strategy' ? asRecord(payload.result) : null);
   const candidate = asRecord(payload.candidate);
   const candidates = asArray(payload.candidates);
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
 
+  if (feasibility) sections.push(feasibilitySection(feasibility));
+  if (postContract) sections.push(postContractSection(postContract));
   if (materialPlan) sections.push(materialPlanSection(materialPlan));
   if (strategy) sections.push(strategySection(strategy));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
@@ -305,6 +309,49 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function feasibilitySection(payload: Record<string, unknown>): TraceSemanticSection {
+  return {
+    id: 'feasibility',
+    title: 'Feasibility report',
+    fields: compactFields([
+      ['Status', payload.status],
+      ['Summary', payload.summary],
+      ['Blocked', payload.blocked],
+      ['Allowed claims', payload.allowedClaimIds],
+      ['Qualified claims', payload.qualifiedClaimIds],
+      ['Findings', asArray(payload.findings)?.map((item) => asRecord(item)?.detail ?? asRecord(item)?.title)]
+    ])
+  };
+}
+
+function postContractSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const topic = asRecord(payload.topic);
+  const fabula = asRecord(payload.fabula);
+  return {
+    id: 'postContract',
+    title: 'Post contract',
+    fields: compactFields([
+      ['Status', payload.status],
+      ['Title', payload.title],
+      ['Thesis', payload.thesis],
+      ['Audience', payload.audience],
+      ['Value', payload.value],
+      ['Goal', payload.goal],
+      ['CTA', payload.cta],
+      ['Platform', payload.platform],
+      ['Publication', [payload.date, payload.time].filter(Boolean).join(' · ')],
+      ['Topic', topic?.title ?? topic?.id],
+      ['Fabula', fabula?.title ?? fabula?.id],
+      ['Claims', payload.claims],
+      ['Forbidden moves', payload.forbiddenMoves],
+      ['Evidence obligations', payload.evidenceObligations],
+      ['Fabula obligations', payload.fabulaObligations],
+      ['Risk notes', payload.riskNotes],
+      ['Reason', payload.reason]
+    ])
+  };
 }
 
 function materialPlanSection(payload: Record<string, unknown>): TraceSemanticSection {
@@ -403,6 +450,8 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
 function stepLabel(step: string): string {
   const labels: Record<string, string> = {
     context: 'Context',
+    feasibility: 'Feasibility',
+    postContract: 'Post contract',
     rulePack: 'Rule pack',
     materialPlan: 'Material plan',
     strategy: 'Draft strategy',

@@ -38,6 +38,52 @@ describe('editorial work queue actions', () => {
     expect(secondPatch.editorialWorkItems).toHaveLength(1);
   });
 
+  it('keeps the recovered post candidate link when approving a plan slot', () => {
+    const workspace = createDemoWorkspace();
+    const signal = workspace.sourceSignals[0];
+    const topic = workspace.topics[0];
+    const fabula = workspace.fabulas[0];
+    const candidate = {
+      id: 'candidate-recovered',
+      sourceSignalId: signal.id,
+      topicId: topic.id,
+      fabulaId: fabula.id,
+      audience: 'AI PM',
+      value: 'Показать adoption gap',
+      goal: 'Собрать аудиторию',
+      platform: 'Telegram',
+      title: 'Demo не равно adoption',
+      thesis: 'Пилот не доказывает регулярное использование.',
+      evidenceSummary: 'Usage не стал регулярным после пилота.',
+      confidence: 88,
+      risks: ['Не звучать противником прототипов'],
+      approvalStatus: 'approved' as const
+    };
+    const slot = {
+      id: 'slot-recovered',
+      insightId: 'insight-recovered',
+      title: candidate.title,
+      platform: 'Telegram',
+      date: '2026-06-22',
+      time: '10:00',
+      priority: 'high',
+      format: 'research',
+      expectedEffect: 'Проверить adoption gap',
+      sourceSignalId: signal.id,
+      topicId: topic.id,
+      topicTitle: topic.title,
+      fabulaId: fabula.id,
+      fabulaTitle: fabula.title,
+      approvalStatus: 'draft' as const
+    };
+    const patch = buildApprovePlanSlotPatch(
+      { ...workspace, contentPlanItems: [slot], postCandidates: [candidate], postCandidate: null },
+      slot.id
+    );
+
+    expect(patch.editorialWorkItems?.[0].postCandidateId).toBe(candidate.id);
+  });
+
   it('keeps selected work item artifacts tied to the chosen plan slot', () => {
     const workspace = createDemoWorkspace();
     const firstPatch = buildApprovePlanSlotPatch(workspace, workspace.contentPlanItems[0].id);

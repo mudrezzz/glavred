@@ -95,18 +95,19 @@ After fabula approval, `Драфт` shows queued/running progress until the work
 `POST /api/draft-runs` receives the approved brief plus a read-only `draftContext`
 snapshot of the selected post: plan slot, candidate when available, source signal,
 topic, fabula, publisher rules, and author-position evidence. Use
-`/api/draft-runs/{id}` to inspect the context summary in step 0, the compiled
-RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3, draft candidates
-and deterministic selection in step 4, final draft, and safe errors. Planning and
-candidate provider calls link child `AiRun` ids for prompt/provider traces.
+`/api/draft-runs/{id}` to inspect the context summary and `sourceLedger` in step 0,
+the compiled RulePack in step 1, MaterialPlan in step 2, DraftStrategy in step 3,
+draft candidates and deterministic selection in step 4, final draft, and safe errors.
+Planning and candidate provider calls link child `AiRun` ids for prompt/provider
+traces.
 
-Post-2.8 quality note: the next drafting work is not a generic validator loop. Glavred
-must first create a `SourceLedger` and `PostContract` inside the queued `DraftRun`.
-The ledger records grounded claims, provenance, confidence, allowed use, risky claims,
-and forbidden inferences. The contract locks the approved thesis, audience value,
-CTA, allowed claims, forbidden moves, platform constraints, and fabula obligations.
-Only after those artifacts exist can validators and directed revisions judge whether a
-candidate draft is truly acceptable.
+Post-2.10 quality note: the drafting work is not a generic validator loop. Glavred
+creates a `SourceLedger` inside `steps[0].artifactPayload.sourceLedger`, then runs
+`feasibility` and `postContract` before rule-pack/planning/draft generation. A
+quality-blocked run is a valid outcome: no final draft is produced, and the editor sees
+the reason plus a trace link. Only after SourceLedger, FeasibilityReport, and
+PostContract exist can validators and directed revisions judge whether a candidate
+draft is truly acceptable.
 
 ## Ограничения текущего demo
 

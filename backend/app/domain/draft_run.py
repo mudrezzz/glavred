@@ -4,51 +4,19 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
+from backend.app.domain.draft_run_steps import (
+    DRAFT_RUN_STEP_ORDER,
+    STEP_TITLES,
+    DraftRunStepKey,
+    DraftRunStepStatus,
+)
+
 
 class DraftRunStatus(StrEnum):
     QUEUED = "queued"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
-
-
-class DraftRunStepStatus(StrEnum):
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-
-
-class DraftRunStepKey(StrEnum):
-    CONTEXT = "context"
-    RULE_PACK = "rulePack"
-    MATERIAL_PLAN = "materialPlan"
-    STRATEGY = "strategy"
-    DRAFT = "draft"
-    VALIDATION = "validation"
-    COMPLETE = "complete"
-
-
-DRAFT_RUN_STEP_ORDER: tuple[DraftRunStepKey, ...] = (
-    DraftRunStepKey.CONTEXT,
-    DraftRunStepKey.RULE_PACK,
-    DraftRunStepKey.MATERIAL_PLAN,
-    DraftRunStepKey.STRATEGY,
-    DraftRunStepKey.DRAFT,
-    DraftRunStepKey.VALIDATION,
-    DraftRunStepKey.COMPLETE,
-)
-
-
-STEP_TITLES: dict[DraftRunStepKey, str] = {
-    DraftRunStepKey.CONTEXT: "Сбор контекста",
-    DraftRunStepKey.RULE_PACK: "Правила издательства",
-    DraftRunStepKey.MATERIAL_PLAN: "План материалов",
-    DraftRunStepKey.STRATEGY: "Стратегия драфта",
-    DraftRunStepKey.DRAFT: "Черновик текста",
-    DraftRunStepKey.VALIDATION: "Проверка результата",
-    DraftRunStepKey.COMPLETE: "Завершение",
-}
 
 
 @dataclass(frozen=True)

@@ -491,8 +491,8 @@ Candidate ownership is split:
 - `backend/app/application/draft_run_draft_step_service.py` owns the legacy
   deterministic draft-step fallback when candidate generation is not wired.
 
-Validator scoring and revision loops remain Slice 2.9; Slice 2.8 selection is a
-deterministic first-pass scorecard, not a full validator.
+Validator scoring and revision loops remain later work; Slice 2.8 selection is a
+deterministic first-pass scorecard, and Slice 2.9 adds provenance but not a validator.
 
 The post-2.8 drafting quality spine is now:
 
@@ -512,13 +512,41 @@ The post-2.8 drafting quality spine is now:
   source ledger and post contract; they must not reconstruct provenance or invariants
   from generated text alone.
 
-The next backend implementation slice is `Source Ledger Foundation`. It comes before
-the validator/revision loop so that future checks can reason about explicit claim ids
-and allowed-use policy.
+Slice 2.9 implements the first `SourceLedger` inside
+`steps[0].artifactPayload.sourceLedger`. The ledger is not a new `DraftRunStepKey` and
+does not require a SQLite schema change. It records deterministic claim ids, source
+provenance, allowed use, confidence, risks, forbidden inferences, and missing-context
+warnings before rule-pack/material-plan/draft work. The next backend implementation
+slice is `Rule Registry v2 and Validator Bindings`; it should consume the ledger and
+post contract instead of reconstructing provenance or invariants from generated text.
 
-Concrete Slice 2.4 files:
+Slice 2.10 inserts two logical steps after `context/sourceLedger` and before
+`rulePack`: `feasibility` and `postContract`. `FeasibilityReport` decides whether the
+post can be written safely from the available ledger claims. Only `feasible` and
+`feasible_with_constraints` continue into prose generation. `needs_research`,
+`needs_human_decision`, and `infeasible` complete the `DraftRun` as a successful
+quality-blocked run: `DraftRun.status=succeeded`, `finalDraft=null`, and
+`complete.status=blocked`. The frontend must show this as "post stopped before
+generation" and must not trigger compatibility or local fallback. `PostContract`
+locks thesis, audience, value, goal, CTA, slot/platform, allowed claim ids, forbidden
+moves, evidence obligations, fabula obligations, and risk notes for all later
+strategy, candidate, validator, ranking, and revision slices.
+
+Slice 2.10.1 calibrates the first feasibility gate against a real false-block case:
+`DraftRun d5d17b60-a711-485f-923e-91a93f263f12` had source signal, topic, fabula,
+brief evidence, and source evidence, but the `EditorialWorkItem` had no
+`postCandidateId`. Candidate linking now uses a shared selector during plan-slot
+approval and DraftRun context building. If the candidate link is missing but source
+signal evidence, approved brief evidence, topic, and fabula are present, feasibility
+continues as `feasible_with_constraints`. If candidate recovery is ambiguous or the
+source context is weak, the run still stops as a quality-blocked human-decision case.
+
+Concrete queued drafting files:
 
 - `backend/app/domain/draft_run.py`
+- `backend/app/domain/draft_run_steps.py`
+- `backend/app/domain/draft_feasibility.py`
+- `backend/app/domain/draft_post_contract.py`
 - `backend/app/api/draft_runs.py`
 - `backend/app/api/draft_generation_contracts.py`
 - `backend/app/application/draft_run_service.py`
@@ -526,6 +554,12 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_run_payloads.py`
 - `backend/app/application/draft_run_context_payloads.py`
 - `backend/app/application/draft_run_context_builder.py`
+- `backend/app/application/draft_source_ledger_builder.py`
+- `backend/app/application/draft_source_ledger_sections.py`
+- `backend/app/application/draft_feasibility_gate.py`
+- `backend/app/application/draft_feasibility_policy.py`
+- `backend/app/application/draft_post_contract_builder.py`
+- `backend/app/application/draft_quality_gate.py`
 - `backend/app/application/draft_rule_pack_compiler.py`
 - `backend/app/application/draft_rule_pack_sections.py`
 - `backend/app/application/draft_material_plan_service.py`
@@ -542,7 +576,11 @@ Concrete Slice 2.4 files:
 - `backend/app/application/draft_run_draft_step_service.py`
 - `backend/app/application/deterministic_draft_planning_service.py`
 - `backend/app/application/deterministic_draft_planning_step_services.py`
+- `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_run_context.py`
+- `backend/app/domain/draft_source_ledger.py`
+- `backend/app/domain/draft_feasibility.py`
+- `backend/app/domain/draft_post_contract.py`
 - `backend/app/domain/draft_rule_pack.py`
 - `backend/app/domain/draft_planning.py`
 - `backend/app/domain/draft_candidates.py`
@@ -555,6 +593,7 @@ Concrete Slice 2.4 files:
 - `src/infrastructure/draftRunClient.ts`
 - `src/infrastructure/draftRunRequestPayload.ts`
 - `src/application/draftRunContext.ts`
+- `src/application/postCandidateLinking.ts`
 
 The Dockerized local stack is an execution wrapper around the same boundaries:
 

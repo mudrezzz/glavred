@@ -5296,13 +5296,15 @@ select:focus {
 .ai-run-call-body {
   min-width: 0;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ai-run-call-body strong {
   color: var(--ink);
   font: 800 15px/1.25 var(--font-sans);
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ai-run-call-meta {
@@ -5317,7 +5319,9 @@ select:focus {
 .ai-run-child-calls code {
   color: var(--muted);
   font: 700 12px/1.3 var(--font-sans);
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ai-run-child-calls code {
@@ -5495,6 +5499,8 @@ select:focus {
 
   .ai-run-child-calls button {
     grid-template-columns: 22px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px;
   }
 
   .ai-run-detail-panel {

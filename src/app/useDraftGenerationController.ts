@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { buildDraftRunContext } from '../application/draftRunContext';
 import type { DraftGenerationUiState, WorkspaceState } from '../domain/editorialWorkspace';
 import { generateBackendDraft } from '../infrastructure/backendDraftClient';
+import { blockedInfoFromCompletedRun } from '../infrastructure/draftRunBlocked';
 import {
   currentDraftRunStep,
   draftFromCompletedRun,
@@ -52,6 +53,11 @@ export function useDraftGenerationController({
       });
       if (completedRun.status !== 'succeeded') {
         throw new Error(completedRun.error ?? 'DraftRun failed');
+      }
+      const blockedInfo = blockedInfoFromCompletedRun(completedRun);
+      if (blockedInfo) {
+        setState({ status: 'blocked', ...blockedInfo });
+        return;
       }
       applyGeneratedDraft(
         requestWorkspace,

@@ -133,6 +133,34 @@ export function EditorialWorkbench({
           ) : null}
           <div className="draft-generation-spinner" aria-hidden="true" />
         </section>
+      ) : draftGenerationState.status === 'blocked' ? (
+        <section className="card draft-start draft-generation-blocked" aria-live="polite">
+          <span className="rub">{brief.rubric}</span>
+          <h2>Пост остановлен до генерации</h2>
+          <p>{draftGenerationState.reason}</p>
+          <div className="trace-run-box">
+            <span>DraftRun ID</span>
+            <code>{draftGenerationState.runId}</code>
+            <TraceRunLink runId={draftGenerationState.runId} />
+          </div>
+          <div className="facts-grid">
+            <div className="fact-card">
+              <span className="k">Feasibility</span>
+              <strong>{draftGenerationState.feasibilityStatus}</strong>
+            </div>
+            {draftGenerationState.findings.slice(0, 3).map((finding, index) => (
+              <div className="fact-card" key={`${finding}-${index}`}>
+                <span className="k">Finding</span>
+                <strong>{finding}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="inline-actions">
+            <button className="btn btn-sec" type="button" onClick={() => setTab('brief')}>
+              Вернуться к фабуле
+            </button>
+          </div>
+        </section>
       ) : !draft ? (
         <section className="card draft-start">
           <span className="rub">{brief.rubric}</span>

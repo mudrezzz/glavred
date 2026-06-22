@@ -7,9 +7,9 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'materialPlan', 'draft']);
-    expect(viewModel.timeline[1].childCalls[0].id).toBe('ai-material');
-    expect(viewModel.timeline[2].childCalls[0].id).toBe('ai-candidate');
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'materialPlan', 'draft']);
+    expect(viewModel.timeline[3].childCalls[0].id).toBe('ai-material');
+    expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-candidate');
     expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('2');
   });
 
@@ -18,6 +18,8 @@ describe('buildRunTraceViewModel', () => {
     const titles = viewModel.semanticSections.map((section) => section.title);
 
     expect(titles).toContain('Material plan');
+    expect(titles).toContain('Feasibility report');
+    expect(titles).toContain('Post contract');
     expect(titles).toContain('Draft candidate 1');
     expect(titles).toContain('Candidate selection');
     expect(titles).toContain('Selected draft');
@@ -49,6 +51,34 @@ function makeDraftRunBundle(): RunTraceBundle {
           status: 'succeeded',
           title: 'Context',
           artifactPayload: { workItem: { title: 'Post' } },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'feasibility',
+          status: 'succeeded',
+          title: 'Feasibility',
+          artifactPayload: {
+            status: 'feasible_with_constraints',
+            summary: 'Can write with constraints',
+            findings: [{ detail: 'Use qualified claims' }]
+          },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'postContract',
+          status: 'succeeded',
+          title: 'Post Contract',
+          artifactPayload: {
+            status: 'created',
+            title: 'Post',
+            thesis: 'Thesis',
+            claims: [{ id: 'signal-summary' }],
+            forbiddenMoves: ['Do not invent facts']
+          },
           error: null,
           startedAt: null,
           completedAt: null
