@@ -45,10 +45,13 @@ export function useDraftGenerationController({
         const step = currentDraftRunStep(run);
         setState({
           status: 'generating',
-          startedAt: new Date().toISOString(),
+          startedAt: run.createdAt,
           runId: run.id,
           step: step?.key ?? null,
-          stepLabel: step?.title ?? null
+          stepLabel: step?.title ?? null,
+          isStale: Boolean(run.isStale),
+          staleReason: run.staleReason ?? null,
+          lastProgressAt: run.lastProgressAt ?? run.updatedAt
         });
       });
       if (completedRun.status !== 'succeeded') {

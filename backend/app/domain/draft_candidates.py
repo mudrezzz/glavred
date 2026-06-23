@@ -8,6 +8,7 @@ class DraftCandidateDirection:
     title: str
     angle: str
     instruction: str
+    rhetorical_plan_id: str | None = None
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -15,6 +16,7 @@ class DraftCandidateDirection:
             "title": self.title,
             "angle": self.angle,
             "instruction": self.instruction,
+            "rhetoricalPlanId": self.rhetorical_plan_id,
         }
 
 
@@ -34,6 +36,7 @@ class DraftCandidate:
         return {
             "id": self.id,
             "direction": self.direction.to_payload(),
+            "rhetoricalPlanId": self.direction.rhetorical_plan_id or self.direction.id,
             "title": self.title,
             "body": self.body,
             "rationale": self.rationale,

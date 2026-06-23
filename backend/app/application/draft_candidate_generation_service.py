@@ -44,11 +44,13 @@ class DraftCandidateGenerationService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        rhetorical_plans: dict[str, Any] | None = None,
     ) -> DraftCandidateGenerationResult:
         directions = self._direction_service.create_directions(
             context_summary=context_summary,
             rule_pack=rule_pack,
             draft_strategy=draft_strategy,
+            rhetorical_plans=rhetorical_plans,
         )
         candidate_payloads: list[dict[str, Any]] = []
         ai_run_ids: list[str] = []
@@ -65,6 +67,7 @@ class DraftCandidateGenerationService:
             "source": _artifact_source(candidate_payloads),
             "fallbackUsed": fallback_used,
             "aiRunIds": ai_run_ids,
+            "rhetoricalPlanSet": rhetorical_plans,
             "directions": [direction.to_payload() for direction in directions],
             "candidates": candidate_payloads,
             "selection": selection,

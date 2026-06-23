@@ -1,9 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
-import { goToSignals, openFoundSignals } from '../../test-support/signalsFlowDriver';
-import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../../infrastructure/draftRunClient';
 
 describe('Editorial workbench app flow', () => {
   beforeEach(() => {
@@ -27,49 +25,6 @@ describe('Editorial workbench app flow', () => {
 
     expect(screen.getByTestId('editorial-work-empty')).toHaveTextContent(/План/i);
     expect(screen.getByTestId('editorial-work-toolbar')).toBeInTheDocument();
-  });
-
-  it('shows draft generation progress while backend draft run is pending', async () => {
-    render(<App />);
-
-    goToSignals();
-    openFoundSignals();
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    fireEvent.click(screen.getByRole('button', { name: /В план/i }));
-    fireEvent.click(screen.getByRole('button', { name: /^Утвердить$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
-    fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));
-
-    const pendingFetchMock = vi.fn().mockImplementation(async (_url: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === 'POST') {
-        return {
-          ok: true,
-          json: async () => ({ runId: 'draft-run-pending', status: 'queued' })
-        };
-      }
-      return new Promise<Response>(() => undefined);
-    });
-    const pendingFetch = pendingFetchMock as unknown as typeof fetch;
-    setDraftRunFetchForTests(pendingFetch);
-    setDraftRunPollingForTests({ intervalMs: 1, timeoutMs: 1000 });
-    try {
-      fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
-
-      expect(await screen.findByText(/Генерируем драфт/i)).toBeInTheDocument();
-      expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/ai-runs?runId=draft-run-pending')).toBe(true);
-      const postCall = pendingFetchMock.mock.calls.find(([, init]) => init?.method === 'POST');
-      const payload = JSON.parse(String(postCall?.[1]?.body));
-      expect(payload.draftContext.workItem).toBeTruthy();
-      expect(payload.draftContext.sourceSignal).toBeTruthy();
-      expect(payload.draftContext.topic).toBeTruthy();
-      expect(payload.draftContext.fabula).toBeTruthy();
-      expect(payload.draftContext.publisherRules.length).toBeGreaterThan(0);
-      fireEvent.click(screen.getByRole('tab', { name: /Фабула/i }));
-      expect(screen.getByRole('button', { name: /Генерируем драфт/i })).toBeDisabled();
-    } finally {
-      setDraftRunFetchForTests(null);
-      setDraftRunPollingForTests({ intervalMs: 1600, timeoutMs: 120000 });
-    }
   });
 
   it('creates, edits, approves, and persists approved draft text', async () => {

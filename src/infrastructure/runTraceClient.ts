@@ -18,6 +18,9 @@ export type DraftRunTrace = {
   finalDraft: Record<string, unknown> | null;
   error: string | null;
   aiRunIds: string[];
+  isStale?: boolean;
+  staleReason?: string | null;
+  lastProgressAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

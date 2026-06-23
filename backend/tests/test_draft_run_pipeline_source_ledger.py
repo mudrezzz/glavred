@@ -27,7 +27,8 @@ def test_pipeline_writes_source_ledger_into_context_step(tmp_path) -> None:
     assert source_ledger["metadata"]["version"] == "source-ledger-v1"
     assert source_ledger["metadata"]["claimCount"] > 0
     assert "signal-author-correction" in claim_ids
-    assert len(result.steps) == 9
+    assert len(result.steps) == 10
+    assert result.steps[6].key.value == "rhetoricalPlans"
 
 
 def test_pipeline_exposes_source_ledger_metadata_to_rule_pack(tmp_path) -> None:

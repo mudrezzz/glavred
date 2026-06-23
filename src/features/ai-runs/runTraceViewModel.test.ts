@@ -7,10 +7,11 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'draft']);
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
     expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-material');
-    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-candidate');
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('2');
+    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-plans');
+    expect(viewModel.timeline[6].childCalls[0].id).toBe('ai-candidate');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('3');
   });
 
   it('moves material plan, strategy candidates and selected draft into semantic sections', () => {
@@ -21,6 +22,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Feasibility report');
     expect(titles).toContain('Post contract');
     expect(titles).toContain('Rule registry');
+    expect(titles).toContain('Rhetorical plan 1');
     expect(titles).toContain('Draft candidate 1');
     expect(titles).toContain('Candidate selection');
     expect(titles).toContain('Selected draft');
@@ -129,12 +131,34 @@ function makeDraftRunBundle(): RunTraceBundle {
           completedAt: null
         },
         {
+          key: 'rhetoricalPlans',
+          status: 'succeeded',
+          title: 'Rhetorical Plans',
+          artifactPayload: {
+            rhetoricalPlanSet: {
+              plans: [{
+                id: 'research',
+                title: 'Research route',
+                angle: 'Explain through evidence',
+                openingMove: 'Start from the signal',
+                claimIdsToAvoid: [],
+                requiredRuleIds: ['contract:thesis'],
+                risks: ['Overclaiming']
+              }]
+            }
+          },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
           key: 'draft',
           status: 'succeeded',
           title: 'Draft',
           artifactPayload: {
             candidates: [{
               id: 'candidate-1',
+              rhetoricalPlanId: 'research',
               title: 'Candidate',
               body: 'Body',
               aiRunId: 'ai-candidate'
@@ -148,11 +172,15 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-material', 'ai-candidate'],
+      aiRunIds: ['ai-material', 'ai-plans', 'ai-candidate'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
-    childAiRuns: [makeAiRun('ai-material', 'materialPlan'), makeAiRun('ai-candidate', 'draftCandidate')],
+    childAiRuns: [
+      makeAiRun('ai-material', 'materialPlan'),
+      makeAiRun('ai-plans', 'rhetoricalPlans'),
+      makeAiRun('ai-candidate', 'draftCandidate')
+    ],
     missingAiRunIds: []
   };
 }

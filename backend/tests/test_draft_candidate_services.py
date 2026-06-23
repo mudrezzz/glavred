@@ -54,6 +54,20 @@ def test_direction_builder_returns_three_stable_directions() -> None:
     assert [direction.id for direction in directions] == ["research", "polemic", "checklist"]
 
 
+def test_direction_builder_uses_rhetorical_plans_when_available() -> None:
+    context_summary, rule_pack = context_and_rule_pack()
+
+    directions = DraftCandidateDirectionService().create_directions(
+        context_summary=context_summary,
+        rule_pack=rule_pack,
+        draft_strategy={"thesisAngle": "workflow before model"},
+        rhetorical_plans={"plans": [{"id": "contrast", "title": "Contrast plan", "angle": "Show the false belief"}]},
+    )
+
+    assert [direction.id for direction in directions] == ["contrast"]
+    assert directions[0].rhetorical_plan_id == "contrast"
+
+
 def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
     service = candidate_service(tmp_path, SuccessfulCandidateAdapter(), configured=True)
@@ -64,12 +78,14 @@ def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> Non
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
         draft_strategy={"thesisAngle": "workflow before model"},
+        rhetorical_plans={"plans": [{"id": "research", "title": "Research plan"}]},
     )
 
     assert result.artifact_payload["source"] == "openrouter"
-    assert len(result.artifact_payload["candidates"]) == 3
+    assert len(result.artifact_payload["candidates"]) == 1
+    assert result.artifact_payload["candidates"][0]["rhetoricalPlanId"] == "research"
     assert result.artifact_payload["selection"]["selectedCandidateId"]
-    assert len(result.ai_run_ids) == 3
+    assert len(result.ai_run_ids) == 1
     run = ai_service(tmp_path).get_run(result.ai_run_ids[0])
     assert run is not None
     assert run.provider == AiRunProvider.OPENROUTER

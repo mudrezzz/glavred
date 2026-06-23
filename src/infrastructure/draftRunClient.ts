@@ -28,6 +28,10 @@ export type DraftRunResponse = {
   steps: DraftRunStepResponse[];
   finalDraft: PostDraft | null;
   error: string | null;
+  aiRunIds?: string[];
+  isStale?: boolean;
+  staleReason?: string | null;
+  lastProgressAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -80,10 +84,10 @@ export async function waitForDraftRun(
     if (run.status === 'succeeded' || run.status === 'failed') {
       return run;
     }
-    if (Date.now() - startedAt > pollingTimeoutMs) {
-      throw new Error(`DraftRun ${runId} timed out`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, pollingIntervalMs));
+    const intervalMs = Date.now() - startedAt > pollingTimeoutMs
+      ? Math.max(pollingIntervalMs, 5000)
+      : pollingIntervalMs;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 }
 

@@ -232,6 +232,10 @@ Current backend files:
   orchestration.
 - `backend/app/application/draft_run_pipeline.py`: deterministic worker pipeline over
   named run steps.
+- `backend/app/application/draft_run_progress.py`: step start/success/failure helper
+  that persists long-running step state and child `AiRun` ids incrementally.
+- `backend/app/application/draft_run_staleness.py`: computed stale-state inspector for
+  queued/running runs with no recent timestamp progress.
 - `backend/app/application/draft_run_payloads.py`: brief/model/draft payload mapping.
 - `backend/app/application/draft_run_context_payloads.py`: context snapshot payload
   mapping.
@@ -932,7 +936,8 @@ Slice 2.4 runtime endpoints:
 
 - `POST /api/draft-runs`: persists a queued run and dispatches a Celery task.
 - `GET /api/draft-runs/{id}`: polling read-model with steps, artifacts, final draft,
-  and safe error.
+  safe error, and computed stale fields (`isStale`, `staleReason`,
+  `lastProgressAt`).
 - `GET /api/draft-runs/{id}/events`: polling alias for the same read-model; not SSE
   yet.
 
@@ -964,6 +969,20 @@ link child `AiRun` ids when individual steps call OpenRouter or other providers.
 To debug Slice 2.5, open `GET /api/draft-runs/{id}` and inspect
 `steps[0].artifactPayload`; it is the canonical normalized context used by later
 rule-pack slices.
+
+DraftRun fallback discipline:
+
+- Once `POST /api/draft-runs` returns a run id, the frontend must keep that queued
+  run as the primary path while it is `queued` or `running`.
+- Polling timeout is not a reason to call `/api/drafts/generate`; show a long-running
+  state with current step, elapsed time, DraftRun ID, and trace link instead.
+- `isStale=true` means the run has had no timestamp progress for five minutes. It is
+  diagnostic state for `/ai-runs` and the draft screen, not a silent fallback trigger.
+- `/api/drafts/generate` and frontend local fallback are allowed only when the run was
+  not created, the backend is unreachable, or the run fails explicitly according to
+  the existing error path.
+- If Celery hits a real task timeout, the worker records a failed `DraftRun` with a
+  safe error; secrets and provider headers must not appear in the error.
 
 To debug Slice 2.6, inspect `steps[1].artifactPayload`. It contains the compiled
 `RulePack` used by later material-planning and prompt layers:
@@ -1038,6 +1057,28 @@ Open child runs through `GET /api/ai-runs/{id}` to inspect candidate prompts,
 provider metadata, fallback status, and sanitized candidate results. The frontend still
 receives one selected `finalDraft`; alternatives are trace/debug data until a future UI
 review slice.
+
+To debug Slice 2.12, inspect `steps[6].artifactPayload`. It contains:
+
+- `rhetoricalPlanSet`: 2-3 routes for writing the locked `PostContract`;
+- `source`, `fallbackUsed`, `aiRunId`, and optional `error`;
+- each plan's moves, claims to use, claims to avoid, required rule ids, size intent,
+  CTA route, risks, and rationale.
+
+Draft candidates are now plan execution artifacts. In `steps[7].artifactPayload`,
+each candidate must include `rhetoricalPlanId`, and child `AiRun` traces should show
+which plan was sent to the model. Do not add new candidate directions that bypass the
+`rhetoricalPlans` step.
+
+Rhetorical-plan ownership is split:
+
+- `backend/app/domain/draft_rhetorical_plan.py`: provider-free plan DTOs.
+- `backend/app/application/draft_rhetorical_plan_service.py`: step orchestration.
+- `backend/app/application/draft_rhetorical_plan_prompts.py`: prompt messages.
+- `backend/app/application/draft_rhetorical_plan_audit.py`: sanitized child traces.
+- `backend/app/application/deterministic_rhetorical_plan_service.py`: fallback plans.
+- `backend/app/application/deterministic_rhetorical_plan_step_service.py`: default
+  pipeline adapter.
 
 To debug Slice 2.9, inspect `steps[0].artifactPayload.sourceLedger`. It is written
 inside the existing `context` step, not as a new `DraftRunStepKey` and not as a new
@@ -1117,9 +1158,9 @@ The first backend implementation order is:
 9. Multi-candidate draft generation. Done.
 10. Source ledger foundation. Done.
 11. Feasibility gate and post contract. Done.
-12. Rule registry v2 and validator bindings. Next.
-13. Contract-based rhetorical plans.
-14. Deterministic linter and validator orchestrator.
+12. Rule registry v2 and validator bindings. Done.
+13. Contract-based rhetorical plans. Done.
+14. Deterministic linter and validator orchestrator. Next.
 15. Pairwise ranking and directed revision.
 16. Regression report and editor decision learning.
 

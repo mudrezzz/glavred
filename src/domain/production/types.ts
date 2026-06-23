@@ -24,7 +24,7 @@ export interface DraftGenerationTrace {
 
 export type DraftGenerationUiState =
   | { status: 'idle' }
-  | { status: 'generating'; startedAt: string; runId?: string | null; step?: string | null; stepLabel?: string | null }
+  | { status: 'generating'; startedAt: string; runId?: string | null; step?: string | null; stepLabel?: string | null; isStale?: boolean; staleReason?: string | null; lastProgressAt?: string | null }
   | {
       status: 'blocked';
       runId: string;

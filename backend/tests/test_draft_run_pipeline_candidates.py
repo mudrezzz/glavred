@@ -23,7 +23,7 @@ def test_pipeline_writes_draft_candidates_and_selected_final_draft(tmp_path) -> 
         candidate_generation_service=StaticCandidateGenerationService(),
     ).execute(run.id)
 
-    draft_step = result.steps[6].artifact_payload
+    draft_step = result.steps[7].artifact_payload
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.ai_run_ids == ["ai-candidate-1", "ai-candidate-2"]
     assert result.final_draft["title"] == "Selected title"
@@ -35,6 +35,7 @@ class StaticCandidateGenerationService:
     def create(self, **kwargs) -> DraftCandidateGenerationResult:
         assert kwargs["material_plan"] is not None
         assert kwargs["draft_strategy"] is not None
+        assert kwargs["rhetorical_plans"]["plans"]
         return DraftCandidateGenerationResult(
             artifact_payload={
                 "source": "mixed",

@@ -87,6 +87,7 @@ export function EditorialWorkbenchAside({
         <h3>AI trace</h3>
         <dl className="side-dl">
           <div><dt>Статус</dt><dd>{draftGenerationState.status === 'generating' ? 'Генерация идет' : workspace.postDraft?.generation ? 'Записан' : 'Нет run'}</dd></div>
+          {draftGenerationState.status === 'generating' && draftGenerationState.isStale ? <div><dt>Прогресс</dt><dd>Нет обновлений больше 5 минут</dd></div> : null}
           <div><dt>Источник</dt><dd>{draftSourceLabel(workspace.postDraft?.generation?.source)}</dd></div>
           <div><dt>Provider</dt><dd>{workspace.postDraft?.generation?.provider ?? 'none'}</dd></div>
           <div><dt>Model</dt><dd>{workspace.postDraft?.generation?.model ?? 'none'}</dd></div>

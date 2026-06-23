@@ -98,7 +98,7 @@ topic, fabula, publisher rules, and author-position evidence. Use
 `/api/draft-runs/{id}` to inspect the context summary and `sourceLedger` in the
 `context` step, the quality gate in `feasibility`, the locked `PostContract`, the
 compiled `RulePack` plus `ruleRegistrySnapshot`, `MaterialPlan`, `DraftStrategy`,
-draft candidates and deterministic selection, final draft, and safe errors.
+`RhetoricalPlans`, draft candidates and deterministic selection, final draft, and safe errors.
 Planning and candidate provider calls link child `AiRun` ids for prompt/provider
 traces.
 
@@ -118,11 +118,17 @@ or `GET /api/draft-runs/{id}`.
 
 Post-2.11.1 size note: publication length is a contract layer. Plan settings own
 editable publication size profiles, plan slots may lock a profile, and fabulas own
-only compact/standard/deep scale intent. The backend resolves these inputs into
+only scale intent. The final range is resolved in `PostContract` and exposed to
+`RuleRegistrySnapshot`. The backend resolves these inputs into
 `PostContract.publicationSizeContract`, and the rule registry emits deterministic
 rules for hard max length, target range, paragraph/section range, and density.
 Candidates do not get `format` or size fields, and fabulas are not duplicated per
 platform.
+
+Post-2.12 rhetorical planning note: candidates now execute explicit rhetorical plans.
+`steps[6].artifactPayload.rhetoricalPlanSet` contains 2-3 routes with moves, claims to
+use, claims to avoid, CTA route, size intent, risks, and rationale. `steps[7]` contains
+draft candidates, and each candidate references the `rhetoricalPlanId` it executed.
 
 ## Ограничения текущего demo
 

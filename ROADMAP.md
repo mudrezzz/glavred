@@ -3527,7 +3527,7 @@ Status:
 
 ### Slice 2.12: Contract-Based Rhetorical Plans
 
-- Status: Ready
+- Status: Done
 - Goal: Generate several rhetorical plans from source ledger, post contract, rule pack,
   material plan, and fabula.
 - Scope:
@@ -3536,10 +3536,46 @@ Status:
   - Store plans with planned moves, claims to use, claims to avoid, CTA route, and
     risks.
   - Draft candidates must consume one plan each.
+- Done:
+  - Added provider-free rhetorical plan DTOs and deterministic fallback plans.
+  - Added OpenRouter-backed rhetorical planning step with child `AiRun` audit and
+    fallback behavior.
+  - Inserted `rhetoricalPlans` between `strategy` and `draft` without changing SQLite
+    schema.
+  - Linked every draft candidate to a `rhetoricalPlanId`.
+  - Updated `/ai-runs` semantic trace to show rhetorical plans and candidate plan
+    linkage.
+  - Completed 2026-06-23.
+
+### Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline
+
+- Status: Done
+- Goal: Stop live queued `DraftRun` records from being masked by the old
+  compatibility draft endpoint when provider-backed steps take longer than the
+  frontend polling timeout.
+- Scope:
+  - Mark long-running worker steps `running` before OpenRouter/application calls.
+  - Persist child `AiRun` ids incrementally as each LLM/application step completes.
+  - Add computed `isStale`, `staleReason`, and `lastProgressAt` fields to
+    `GET /api/draft-runs/{id}` without changing SQLite schema.
+  - Treat a live queued/running `DraftRun` as the primary source of truth in the
+    frontend; do not call `/api/drafts/generate` merely because polling has taken a
+    long time.
+  - Show long-running/stale state, current step, DraftRun ID, and trace link in
+    `Редактура -> Рабочий стол -> Драфт`.
+  - Show `stale-running` state in `/ai-runs` timeline.
+- Done:
+  - Added step progress helper and stale inspector.
+  - Added Celery task time limits and safe timeout failure handling.
+  - Updated frontend polling discipline so live runs keep polling instead of falling
+    back after timeout.
+  - Added stale/last-progress UX in the draft generation screen and right panel.
+  - Updated trace view-model to render stale-running state.
+  - Completed 2026-06-23.
 
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add hard checks and narrow validators after candidates are generated.
 - Scope:
   - Deterministic linter for length, structure, required CTA, forbidden tokens,
@@ -3694,6 +3730,9 @@ Status:
   Completed 2026-06-22.
 - Slice 2.11: Rule Registry v2 and Validator Bindings. Completed 2026-06-22.
 - Slice 2.11.1: Publication Size Contract Foundation. Completed 2026-06-23.
+- Slice 2.12: Contract-Based Rhetorical Plans. Completed 2026-06-23.
+- Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline. Completed
+  2026-06-23.
 
 ## Blocked Items
 
@@ -3714,4 +3753,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.12: Contract-Based Rhetorical Plans`.
+Continue the backend track with `Slice 2.13: Deterministic Linter and Validator Orchestrator`.

@@ -131,6 +131,16 @@ export function EditorialWorkbench({
           {draftGenerationState.stepLabel ? (
             <p className="muted">Текущий шаг: {draftGenerationState.stepLabel}</p>
           ) : null}
+          <p className="muted">Идет: {formatElapsed(draftGenerationState.startedAt)}</p>
+          {draftGenerationState.lastProgressAt ? (
+            <p className="muted">Последний прогресс: {formatDateTime(draftGenerationState.lastProgressAt)}</p>
+          ) : null}
+          {draftGenerationState.isStale ? (
+            <div className="draft-generation-summary warning">
+              <b>Нет прогресса больше 5 минут</b>
+              <span>{draftGenerationState.staleReason ?? 'Runner еще может завершиться. Проверьте trace перед повторным запуском.'}</span>
+            </div>
+          ) : null}
           <div className="draft-generation-spinner" aria-hidden="true" />
         </section>
       ) : draftGenerationState.status === 'blocked' ? (
@@ -184,6 +194,21 @@ export function EditorialWorkbench({
       )}
     </section>
   );
+}
+
+function formatElapsed(startedAt: string): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return minutes > 0 ? `${minutes} мин ${rest} сек` : `${rest} сек`;
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).format(new Date(value));
 }
 
 function DraftEditor({

@@ -7,6 +7,7 @@ from backend.app.api.dependencies import create_draft_run_service
 from backend.app.api.draft_generation_contracts import DraftGenerateRequest, to_draft_generation_request
 from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_service import DraftRunService
+from backend.app.application.draft_run_staleness import inspect_draft_run_staleness
 from backend.app.domain.draft_run import DraftRun, DraftRunStep
 
 router = APIRouter(prefix="/api/draft-runs")
@@ -43,6 +44,9 @@ class DraftRunResponse(BaseModel):
     final_draft: dict[str, Any] | None = Field(serialization_alias="finalDraft")
     error: str | None
     ai_run_ids: list[str] = Field(serialization_alias="aiRunIds")
+    is_stale: bool = Field(serialization_alias="isStale")
+    stale_reason: str | None = Field(serialization_alias="staleReason")
+    last_progress_at: str = Field(serialization_alias="lastProgressAt")
     created_at: str = Field(serialization_alias="createdAt")
     updated_at: str = Field(serialization_alias="updatedAt")
 
@@ -81,6 +85,7 @@ def get_draft_run_events(
 
 
 def serialize_run(run: DraftRun) -> DraftRunResponse:
+    staleness = inspect_draft_run_staleness(run)
     return DraftRunResponse(
         id=run.id,
         status=run.status.value,
@@ -89,6 +94,9 @@ def serialize_run(run: DraftRun) -> DraftRunResponse:
         final_draft=run.final_draft,
         error=run.error,
         ai_run_ids=run.ai_run_ids,
+        is_stale=staleness.is_stale,
+        stale_reason=staleness.stale_reason,
+        last_progress_at=staleness.last_progress_at.isoformat(),
         created_at=run.created_at.isoformat(),
         updated_at=run.updated_at.isoformat(),
     )

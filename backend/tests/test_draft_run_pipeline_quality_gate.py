@@ -29,6 +29,7 @@ def test_feasible_run_writes_gate_contract_and_continues_to_draft(tmp_path) -> N
         "rulePack",
         "materialPlan",
         "strategy",
+        "rhetoricalPlans",
         "draft",
         "validation",
         "complete",

@@ -510,6 +510,38 @@ Candidate ownership is split:
 - `backend/app/application/draft_run_draft_step_service.py` owns the legacy
   deterministic draft-step fallback when candidate generation is not wired.
 
+Slice 2.12 inserts `RhetoricalPlans` between `DraftStrategy` and `DraftCandidates`.
+The worker now writes a separate `rhetoricalPlans` step artifact, and candidate
+generation consumes that artifact instead of inventing its own directions. Each draft
+candidate must reference the `rhetoricalPlanId` it executes.
+
+Rhetorical-plan ownership is split:
+
+- `backend/app/domain/draft_rhetorical_plan.py` defines provider-free plan DTOs.
+- `backend/app/application/draft_rhetorical_plan_service.py` owns the OpenRouter /
+  fallback step orchestration.
+- `backend/app/application/draft_rhetorical_plan_prompts.py` owns plan prompt
+  messages.
+- `backend/app/application/draft_rhetorical_plan_audit.py` owns sanitized child
+  `AiRun` traces.
+- `backend/app/application/deterministic_rhetorical_plan_service.py` owns fallback
+  plan generation.
+- `backend/app/application/deterministic_rhetorical_plan_step_service.py` owns the
+  compatibility step adapter used when provider-backed planning is not wired.
+
+Slice 2.12.1 fixes the orchestration discipline for long-running queued runs.
+Provider-backed steps can legitimately take longer than the old frontend polling
+timeout. A created `DraftRun` in `queued` or `running` state remains the primary
+source of truth and must not be replaced by `/api/drafts/generate` simply because the
+polling window elapsed. Long-running steps (`materialPlan`, `strategy`,
+`rhetoricalPlans`, and `draft`) are written as `running` before the provider or
+application call starts. Child `AiRun` ids are persisted after each step completes,
+not only at final run completion. `GET /api/draft-runs/{id}` computes
+`isStale`, `staleReason`, and `lastProgressAt` from existing timestamps; stale means
+"no progress for five minutes", not automatic failure and not permission to silently
+fallback. Celery task time limits are allowed to mark a real timeout as `failed` with
+a safe error.
+
 Validator scoring and revision loops remain later work; Slice 2.8 selection is a
 deterministic first-pass scorecard, and Slice 2.9 adds provenance but not a validator.
 
@@ -583,6 +615,8 @@ Concrete queued drafting files:
 - `backend/app/api/draft_generation_contracts.py`
 - `backend/app/application/draft_run_service.py`
 - `backend/app/application/draft_run_pipeline.py`
+- `backend/app/application/draft_run_progress.py`
+- `backend/app/application/draft_run_staleness.py`
 - `backend/app/application/draft_run_payloads.py`
 - `backend/app/application/draft_run_context_payloads.py`
 - `backend/app/application/draft_run_context_builder.py`

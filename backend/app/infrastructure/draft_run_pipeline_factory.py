@@ -2,10 +2,12 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_draft_candidate_service import DeterministicDraftCandidateService
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
+from backend.app.application.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
 from backend.app.application.draft_candidate_direction_service import DraftCandidateDirectionService
 from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
 from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
 from backend.app.application.draft_material_plan_service import DraftMaterialPlanService
+from backend.app.application.draft_rhetorical_plan_service import DraftRhetoricalPlanService
 from backend.app.application.draft_run_pipeline import DraftRunPipeline
 from backend.app.application.draft_strategy_service import DraftStrategyService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -36,6 +38,13 @@ def build_draft_run_pipeline(settings: BackendSettings) -> DraftRunPipeline:
             openrouter_validator=openrouter_validator,
             openrouter_adapter=openrouter_adapter,
             deterministic_planning_service=deterministic_planning_service,
+        ),
+        rhetorical_plan_service=DraftRhetoricalPlanService(
+            settings=settings,
+            ai_run_service=ai_run_service,
+            openrouter_validator=openrouter_validator,
+            openrouter_adapter=openrouter_adapter,
+            deterministic_plan_service=DeterministicRhetoricalPlanService(),
         ),
         candidate_generation_service=DraftCandidateGenerationService(
             settings=settings,

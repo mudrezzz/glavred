@@ -30,10 +30,12 @@ planning step links to a child `AiRun` with the OpenRouter prompt/response trace
 deterministic fallback record.
 
 Slice 2.8 changes the `draft` step from one deterministic draft into a branching
-candidate generation step. `steps[4].artifactPayload` contains deterministic
-directions, 2-3 draft candidates, child `AiRun` ids, and a deterministic v1 selection
-scorecard. The UI still applies one selected draft; alternative candidates are
-available through trace/debug until a future review UI exists.
+candidate generation step. Slice 2.12 adds `RhetoricalPlans` before that draft step:
+`steps[6].artifactPayload` stores 2-3 writing routes, and `steps[7].artifactPayload`
+stores one draft candidate per route. Each candidate references its
+`rhetoricalPlanId`, child `AiRun` ids, and deterministic v1 selection scorecard. The
+UI still applies one selected draft; alternative candidates and plans are available
+through trace/debug until a future review UI exists.
 
 Slice 2.10 adds feasibility and post-contract artifacts after `SourceLedger`. The
 runner can stop before prose when evidence is too weak; that blocked state is a

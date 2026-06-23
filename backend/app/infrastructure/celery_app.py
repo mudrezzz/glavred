@@ -17,6 +17,8 @@ def create_celery_app() -> Celery:
         result_serializer="json",
         timezone="UTC",
         task_track_started=True,
+        task_soft_time_limit=900,
+        task_time_limit=960,
     )
     return app
 

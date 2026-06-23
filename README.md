@@ -195,18 +195,20 @@ and applies the final draft when the worker completes. The run request now inclu
 available, source signal, topic, fabula, publisher rules, and author-position
 evidence. The worker writes a `SourceLedger` into
 `steps[0].artifactPayload.sourceLedger`, runs `feasibility` and `postContract`, then
-continues into `RulePack`, `MaterialPlan`, `DraftStrategy`, and several draft
-candidates. Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context plus source
+continues into `RulePack`, `MaterialPlan`, `DraftStrategy`, `RhetoricalPlans`, and
+several draft candidates. Inspect `GET /api/draft-runs/{id}`: `steps[0]` is context plus source
 ledger, `steps[1]` is feasibility, `steps[2]` is the post contract, `steps[3]` is the
 rule pack plus `ruleRegistrySnapshot`, and later steps contain planning, strategy,
-candidates, validation, and completion. If feasibility blocks the post, the run succeeds with `finalDraft=null`
+rhetorical plans, candidates, validation, and completion. If feasibility blocks the post, the run succeeds with `finalDraft=null`
 and `complete.status=blocked`; the UI shows that the post was stopped before
 generation and links to the trace. Missing candidate links are recovered from the
 approved source/topic/fabula context where possible; if the source and brief evidence
 are sufficient, the run proceeds with constraints instead of blocking. The rule
 registry snapshot gives future validators explicit rule ids, claim provenance, and
-locked editorial invariants instead of forcing them to guess from final text. The next
-backend slice is `Contract-Based Rhetorical Plans`.
+locked editorial invariants instead of forcing them to guess from final text.
+Rhetorical plans now define the routes candidates execute; candidates no longer invent
+their own directions. The next backend slice is `Deterministic Linter and Validator
+Orchestrator`.
 
 Run tests:
 

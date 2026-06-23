@@ -113,7 +113,7 @@ function buildDraftRunViewModel(
       id: `step-${step.key}`,
       key: step.key,
       title: step.title || stepLabel(step.key),
-      status: step.status,
+      status: traceStepStatus(draftRun, step),
       error: step.error,
       detailId: stepDetail.id,
       childCalls
@@ -152,10 +152,11 @@ function buildDraftRunViewModel(
     title: 'DraftRun trace',
     summary: [
       { label: 'Run type', value: 'DraftRun' },
-      { label: 'Status', value: draftRun.status },
+      { label: 'Status', value: draftRun.isStale ? 'stale-running' : draftRun.status },
       { label: 'Steps', value: String(draftRun.steps.length) },
       { label: 'LLM calls', value: String(childAiRuns.length) },
       { label: 'Missing calls', value: String(missingAiRunIds.length) },
+      { label: 'Last progress', value: draftRun.lastProgressAt ?? draftRun.updatedAt },
       { label: 'Created', value: draftRun.createdAt },
       { label: 'Updated', value: draftRun.updatedAt }
     ],
@@ -164,6 +165,17 @@ function buildDraftRunViewModel(
     details,
     initialDetailId: firstDetailId
   };
+}
+
+function traceStepStatus(draftRun: DraftRunTrace, step: DraftRunTraceStep): string {
+  if (!draftRun.isStale) return step.status;
+  if (step.status === 'running') return 'stale-running';
+  const hasRunningStep = draftRun.steps.some((item) => item.status === 'running');
+  if (!hasRunningStep && step.status === 'pending') {
+    const firstPending = draftRun.steps.find((item) => item.status === 'pending');
+    return firstPending?.key === step.key ? 'stale-running' : step.status;
+  }
+  return step.status;
 }
 
 function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
@@ -277,6 +289,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
   const ruleRegistry = asRecord(payload.ruleRegistrySnapshot);
   const strategy = asRecord(payload.draftStrategy) ?? (step === 'strategy' ? asRecord(payload.result) : null);
+  const rhetoricalPlanSet = asRecord(payload.rhetoricalPlanSet);
   const candidate = asRecord(payload.candidate);
   const candidates = asArray(payload.candidates);
   const selection = asRecord(payload.selection);
@@ -291,6 +304,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (ruleRegistry) sections.push(ruleRegistrySection(ruleRegistry));
   if (materialPlan) sections.push(materialPlanSection(materialPlan));
   if (strategy) sections.push(strategySection(strategy));
+  if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates) {
     candidates.forEach((item, index) => {
@@ -315,6 +329,34 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function rhetoricalPlanSections(payload: Record<string, unknown>): TraceSemanticSection[] {
+  const plans = asArray(payload.plans) ?? [];
+  if (plans.length === 0) {
+    return [{ id: 'rhetoricalPlans', title: 'Rhetorical plans', fields: objectToFields(payload) }];
+  }
+  return plans.map((item, index) => {
+    const plan = asRecord(item) ?? {};
+    return {
+      id: `rhetorical-plan-${stringValue(plan.id) ?? index + 1}`,
+      title: `Rhetorical plan ${index + 1}`,
+      fields: compactFields([
+        ['Plan ID', plan.id],
+        ['Title', plan.title],
+        ['Angle', plan.angle],
+        ['Opening move', plan.openingMove],
+        ['Moves', plan.moves],
+        ['Claims to use', plan.claimsToUse],
+        ['Claims to avoid', plan.claimIdsToAvoid],
+        ['Required rules', plan.requiredRuleIds],
+        ['Size intent', plan.sizeIntent],
+        ['CTA route', plan.ctaRoute],
+        ['Risks', plan.risks],
+        ['Why this plan', plan.whyThisPlan]
+      ])
+    };
+  });
 }
 
 function ruleRegistrySection(payload: Record<string, unknown>): TraceSemanticSection {
@@ -440,6 +482,7 @@ function candidateSection(payload: Record<string, unknown>, title: string): Trac
     title,
     fields: compactFields([
       ['Direction', asRecord(payload.direction)?.label ?? asRecord(payload.direction)?.id],
+      ['Rhetorical plan', payload.rhetoricalPlanId ?? asRecord(payload.direction)?.rhetoricalPlanId],
       ['Title', payload.title],
       ['Rationale', payload.rationale],
       ['Used evidence', payload.usedEvidence],
@@ -504,6 +547,7 @@ function stepLabel(step: string): string {
     rulePack: 'Rule pack',
     materialPlan: 'Material plan',
     strategy: 'Draft strategy',
+    rhetoricalPlans: 'Rhetorical plans',
     draft: 'Draft candidates',
     draftCandidate: 'Draft candidate',
     validation: 'Validation',

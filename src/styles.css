@@ -5294,6 +5294,16 @@ select:focus {
   color: #2d8052;
 }
 
+.ai-run-status.running,
+.ai-run-status.stale-running {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  color: var(--accent);
+}
+
+.ai-run-status.pending {
+  color: var(--ink-500);
+}
+
 .ai-run-status.failed {
   border-color: rgba(224, 73, 44, 0.32);
   color: var(--accent);

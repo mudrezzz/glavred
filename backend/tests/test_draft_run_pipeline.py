@@ -53,7 +53,7 @@ def test_draft_run_pipeline_executes_all_steps_and_writes_final_draft(tmp_path) 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.final_draft["briefId"] == "brief-demo"
     assert result.final_draft["body"]
-    assert [step.status.value for step in result.steps] == ["succeeded"] * 9
+    assert [step.status.value for step in result.steps] == ["succeeded"] * 10
     assert result.steps[0].artifact_payload["brief"]["title"] == request.brief.title
     assert result.steps[0].artifact_payload["workItem"]["id"] == "work-item-1"
     assert result.steps[3].artifact_payload["metadata"]["version"] == "rule-pack-v1"

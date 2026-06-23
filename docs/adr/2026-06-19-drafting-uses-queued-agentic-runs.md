@@ -115,7 +115,8 @@ Slice 2.8 adds the candidate-generation boundary:
 
 - worker step `draft` stores multiple draft candidates and a deterministic selection
   artifact;
-- deterministic directions are created from `DraftStrategy`, `RulePack`, and context;
+- Slice 2.12 adds a separate `rhetoricalPlans` step before `draft`;
+- candidates execute explicit rhetorical plans and must reference `rhetoricalPlanId`;
 - each provider-backed candidate creates a child `AiRun`; per-candidate provider
   failures fall back independently;
 - `DraftRun.final_draft` remains the selected candidate only, preserving frontend
