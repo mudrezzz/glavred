@@ -195,12 +195,13 @@ and applies the final draft when the worker completes. The run request now inclu
 available, source signal, topic, fabula, publisher rules, and author-position
 evidence. The worker writes a `SourceLedger` into
 `steps[0].artifactPayload.sourceLedger`, normalizes approved brief sources into
-`steps[1].artifactPayload.sourceIntent`, creates a `ResearchPlan`, runs `feasibility`
+`steps[1].artifactPayload.sourceIntent`, creates a `ResearchPlan`, executes available
+public-evidence retrieval in `steps[2].artifactPayload`, runs `feasibility`
 and `postContract`, then continues into `RulePack`, `MaterialPlan`, `DraftStrategy`,
 `RhetoricalPlans`, and several draft candidates. Inspect `GET /api/draft-runs/{id}`:
 `steps[0]` is context plus source ledger, `steps[1]` is source intent and research
-plan, `steps[2]` is feasibility, `steps[3]` is the post contract, `steps[4]` is the
-rule pack plus `ruleRegistrySnapshot`, and later steps contain planning, strategy,
+plan, `steps[2]` is public evidence retrieval, `steps[3]` is feasibility, `steps[4]`
+is the post contract, `steps[5]` is the rule pack plus `ruleRegistrySnapshot`, and later steps contain planning, strategy,
 rhetorical plans, candidates, validation, and completion. If feasibility blocks the post, the run succeeds with `finalDraft=null`
 and `complete.status=blocked`; the UI shows that the post was stopped before
 generation and links to the trace. Missing candidate links are recovered from the
@@ -211,9 +212,10 @@ locked editorial invariants instead of forcing them to guess from final text.
 Rhetorical plans now define the routes candidates execute; candidates no longer invent
 their own directions. `Фабула -> Источники` is now source intent rather than raw prompt
 text: URLs, named sources, human-language research requests, proof needs, framing
-hints, and exclusions become a research plan before writing. The next backend slices
-execute that plan through public evidence extraction, enriched `SourceLedger`, and
-`EvidenceSynthesis`.
+hints, and exclusions become a research plan before writing. Public evidence v1 reads
+explicit URLs and records search tasks as `notConfigured` until a search provider is
+selected. The next backend slice merges retrieved public evidence into the
+`SourceLedger` and creates `EvidenceSynthesis`.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

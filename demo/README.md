@@ -248,9 +248,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
     summary, `sourceLedger` in step 0, source intent and `ResearchPlan` in step 1,
-    feasibility in step 2, post contract in step 3, compiled rule pack plus
-    `ruleRegistrySnapshot` in step 4, material plan in step 5, draft strategy in step 6,
-    rhetorical plans in step 7, draft candidates and selection in step 8, final draft,
+    public evidence URL reads and skipped search attempts in step 2, feasibility in
+    step 3, post contract in step 4, compiled rule pack plus
+    `ruleRegistrySnapshot` in step 5, material plan in step 6, draft strategy in step 7,
+    rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
     and errors. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
     local fallback draft is created. A missing candidate link alone no longer blocks

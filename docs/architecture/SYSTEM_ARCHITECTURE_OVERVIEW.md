@@ -478,8 +478,11 @@ model fabulas can use `auto` source discovery hints or manual instructions, whil
 `PostBrief.sources` remains the approved runtime override for one post. DraftRun
 context carries the fabula policy for diagnostics, but the `sourceIntent` step still
 uses only the approved `PostBrief.sources`.
-The runner still needs the public-evidence retrieval/extraction layer before
-validators.
+Slice 2.12.4 adds `publicEvidence` immediately after `sourceIntent`: exact URL tasks
+are read through an infrastructure URL reader, while general search tasks are traced
+as `notConfigured` until a search provider is selected. The retrieved items are
+visible in DraftRun trace but are not yet merged into `SourceLedger`; that merge and
+evidence synthesis remain the next slice before validators.
 
 Slice 2.7 implements the first OpenRouter-assisted planning steps inside the queued
 runner. The worker's `materialPlan` step consumes context summary plus `RulePack` and
@@ -636,6 +639,12 @@ The public-evidence research layer has its own ownership boundary:
 
 - `backend/app/domain/draft_source_intent.py` defines provider-free `SourceIntent` and
   `ResearchPlan` DTOs;
+- `backend/app/domain/draft_public_evidence.py` defines provider-free
+  `PublicEvidenceBatch`, attempts, items, and warnings;
+- `backend/app/application/public_evidence_retrieval_service.py` executes the public
+  evidence step through application ports and marks unconfigured search honestly;
+- `backend/app/infrastructure/public_url_reader.py` owns direct URL HTTP reads and
+  lightweight text extraction;
 - `backend/app/application/source_intent_normalizer.py` owns deterministic
   line-by-line classification;
 - `backend/app/application/source_research_plan_service.py` owns the OpenRouter /

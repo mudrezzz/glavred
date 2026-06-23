@@ -316,6 +316,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const materialPlan = asRecord(payload.materialPlan) ?? (step === 'materialPlan' ? asRecord(payload.result) : null);
   const sourceIntent = asRecord(payload.sourceIntent);
   const researchPlan = asRecord(payload.researchPlan);
+  const publicEvidence = asRecord(payload.publicEvidence) ?? (step === 'publicEvidence' ? payload : null);
   const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
   const ruleRegistry = asRecord(payload.ruleRegistrySnapshot);
@@ -328,6 +329,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
 
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
+  if (publicEvidence) sections.push(publicEvidenceSection(publicEvidence));
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) {
     sections.push(postContractSection(postContract));
@@ -396,6 +398,41 @@ function researchPlanSection(payload: Record<string, unknown>): TraceSemanticSec
       ['Warnings', payload.warnings]
     ])
   };
+}
+
+function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const attempts = asArray(payload.attempts) ?? [];
+  const items = asArray(payload.items) ?? [];
+  const warnings = asArray(payload.warnings) ?? [];
+  return {
+    id: 'publicEvidence',
+    title: 'Public evidence',
+    fields: compactFields([
+      ['Evidence items', items.length],
+      ['Attempts', attempts.map(publicEvidenceAttemptValue)],
+      ['Extracted evidence', items.map(publicEvidenceItemValue)],
+      ['Warnings', warnings.map(publicEvidenceWarningValue)],
+      ['Search provider', asRecord(payload.metadata)?.searchProvider]
+    ])
+  };
+}
+
+function publicEvidenceAttemptValue(item: unknown): unknown {
+  const attempt = asRecord(item);
+  if (!attempt) return item;
+  return `${attempt.kind}: ${attempt.status} · ${attempt.target}`;
+}
+
+function publicEvidenceItemValue(item: unknown): unknown {
+  const evidence = asRecord(item);
+  if (!evidence) return item;
+  return `${evidence.sourceTitle} · ${evidence.allowedUse} · ${evidence.snippet}`;
+}
+
+function publicEvidenceWarningValue(item: unknown): unknown {
+  const warning = asRecord(item);
+  if (!warning) return item;
+  return `${warning.code}: ${warning.message}`;
 }
 
 function rhetoricalPlanSections(payload: Record<string, unknown>): TraceSemanticSection[] {
@@ -612,6 +649,7 @@ function stepLabel(step: string): string {
     context: 'Context',
     sourceIntent: 'Source intent',
     sourceIntentResearchPlan: 'Source research plan',
+    publicEvidence: 'Public evidence',
     feasibility: 'Feasibility',
     postContract: 'Post contract',
     rulePack: 'Rule pack',

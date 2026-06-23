@@ -25,6 +25,7 @@ def test_feasible_run_writes_gate_contract_and_continues_to_draft(tmp_path) -> N
     assert [step.key.value for step in result.steps] == [
         "context",
         "sourceIntent",
+        "publicEvidence",
         "feasibility",
         "postContract",
         "rulePack",
@@ -35,9 +36,9 @@ def test_feasible_run_writes_gate_contract_and_continues_to_draft(tmp_path) -> N
         "validation",
         "complete",
     ]
-    assert result.steps[2].artifact_payload["status"] == "feasible_with_constraints"
-    assert result.steps[3].artifact_payload["status"] == "created"
-    assert result.steps[4].artifact_payload["metadata"]["feasibilityStatus"] == "feasible_with_constraints"
+    assert result.steps[3].artifact_payload["status"] == "feasible_with_constraints"
+    assert result.steps[4].artifact_payload["status"] == "created"
+    assert result.steps[5].artifact_payload["metadata"]["feasibilityStatus"] == "feasible_with_constraints"
 
 
 def test_blocked_run_succeeds_without_final_draft_or_fallback(tmp_path) -> None:
@@ -53,9 +54,10 @@ def test_blocked_run_succeeds_without_final_draft_or_fallback(tmp_path) -> None:
 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.final_draft is None
-    assert result.steps[2].artifact_payload["status"] == "needs_human_decision"
-    assert result.steps[3].artifact_payload["status"] == "notCreated"
-    assert result.steps[4].status.value == "pending"
+    assert result.steps[2].artifact_payload["metadata"]["searchProvider"] == "notConfigured"
+    assert result.steps[3].artifact_payload["status"] == "needs_human_decision"
+    assert result.steps[4].artifact_payload["status"] == "notCreated"
+    assert result.steps[5].status.value == "pending"
     assert result.steps[-1].artifact_payload["status"] == "blocked"
     assert result.steps[-1].artifact_payload["blockedBy"] == "feasibility"
 
@@ -76,5 +78,5 @@ def test_missing_candidate_link_with_source_evidence_continues_to_draft(tmp_path
 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.final_draft is not None
-    assert result.steps[2].artifact_payload["status"] == "feasible_with_constraints"
-    assert result.steps[3].artifact_payload["status"] == "created"
+    assert result.steps[3].artifact_payload["status"] == "feasible_with_constraints"
+    assert result.steps[4].artifact_payload["status"] == "created"

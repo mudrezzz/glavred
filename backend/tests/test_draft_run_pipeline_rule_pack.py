@@ -44,7 +44,7 @@ def test_draft_run_pipeline_writes_rule_registry_inside_rule_pack_step(tmp_path)
     repository.save(run)
 
     result = DraftRunPipeline(repository, DeterministicDraftService()).execute(run.id)
-    rule_pack = result.steps[4].artifact_payload
+    rule_pack = result.steps[5].artifact_payload
 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert rule_pack["metadata"]["registryVersion"] == "rule-registry-v2"

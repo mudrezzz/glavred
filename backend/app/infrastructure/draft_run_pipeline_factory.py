@@ -10,9 +10,11 @@ from backend.app.application.draft_material_plan_service import DraftMaterialPla
 from backend.app.application.draft_rhetorical_plan_service import DraftRhetoricalPlanService
 from backend.app.application.draft_run_pipeline import DraftRunPipeline
 from backend.app.application.draft_strategy_service import DraftStrategyService
+from backend.app.application.public_evidence_retrieval_service import PublicEvidenceRetrievalService
 from backend.app.application.source_research_plan_service import SourceResearchPlanService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
+from backend.app.infrastructure.public_url_reader import HttpxPublicUrlReader
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
 from backend.app.settings import BackendSettings
@@ -46,6 +48,7 @@ def build_draft_run_pipeline(settings: BackendSettings) -> DraftRunPipeline:
             openrouter_validator=openrouter_validator,
             openrouter_adapter=openrouter_adapter,
         ),
+        public_evidence_service=PublicEvidenceRetrievalService(url_reader=HttpxPublicUrlReader()),
         rhetorical_plan_service=DraftRhetoricalPlanService(
             settings=settings,
             ai_run_service=ai_run_service,

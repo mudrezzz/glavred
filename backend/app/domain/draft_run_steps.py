@@ -11,6 +11,7 @@ class DraftRunStepStatus(StrEnum):
 class DraftRunStepKey(StrEnum):
     CONTEXT = "context"
     SOURCE_INTENT = "sourceIntent"
+    PUBLIC_EVIDENCE = "publicEvidence"
     FEASIBILITY = "feasibility"
     POST_CONTRACT = "postContract"
     RULE_PACK = "rulePack"
@@ -25,6 +26,7 @@ class DraftRunStepKey(StrEnum):
 DRAFT_RUN_STEP_ORDER: tuple[DraftRunStepKey, ...] = (
     DraftRunStepKey.CONTEXT,
     DraftRunStepKey.SOURCE_INTENT,
+    DraftRunStepKey.PUBLIC_EVIDENCE,
     DraftRunStepKey.FEASIBILITY,
     DraftRunStepKey.POST_CONTRACT,
     DraftRunStepKey.RULE_PACK,
@@ -38,15 +40,16 @@ DRAFT_RUN_STEP_ORDER: tuple[DraftRunStepKey, ...] = (
 
 
 STEP_TITLES: dict[DraftRunStepKey, str] = {
-    DraftRunStepKey.SOURCE_INTENT: "План источников",
-    DraftRunStepKey.CONTEXT: "Сбор контекста",
-    DraftRunStepKey.FEASIBILITY: "Проверка возможности",
-    DraftRunStepKey.POST_CONTRACT: "Контракт поста",
-    DraftRunStepKey.RULE_PACK: "Правила издательства",
-    DraftRunStepKey.MATERIAL_PLAN: "План материалов",
-    DraftRunStepKey.STRATEGY: "Стратегия драфта",
-    DraftRunStepKey.RHETORICAL_PLANS: "Риторические планы",
-    DraftRunStepKey.DRAFT: "Черновик текста",
-    DraftRunStepKey.VALIDATION: "Проверка результата",
-    DraftRunStepKey.COMPLETE: "Завершение",
+    DraftRunStepKey.CONTEXT: "Context",
+    DraftRunStepKey.SOURCE_INTENT: "Source plan",
+    DraftRunStepKey.PUBLIC_EVIDENCE: "Public evidence",
+    DraftRunStepKey.FEASIBILITY: "Feasibility",
+    DraftRunStepKey.POST_CONTRACT: "Post contract",
+    DraftRunStepKey.RULE_PACK: "Rule pack",
+    DraftRunStepKey.MATERIAL_PLAN: "Material plan",
+    DraftRunStepKey.STRATEGY: "Draft strategy",
+    DraftRunStepKey.RHETORICAL_PLANS: "Rhetorical plans",
+    DraftRunStepKey.DRAFT: "Draft candidates",
+    DraftRunStepKey.VALIDATION: "Validation",
+    DraftRunStepKey.COMPLETE: "Complete",
 }

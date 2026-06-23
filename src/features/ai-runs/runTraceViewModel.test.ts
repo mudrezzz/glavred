@@ -7,13 +7,13 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'sourceIntent', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
-    expect(viewModel.timeline[1].childCalls[0].id).toBe('ai-source');
-    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-material');
-    expect(viewModel.timeline[6].childCalls[0].id).toBe('ai-plans');
-    expect(viewModel.timeline[7].childCalls[0].id).toBe('ai-candidate');
-    expect(viewModel.timeline[7].childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
-    expect(viewModel.timeline[7].childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'sourceIntent', 'publicEvidence', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
+    expect(traceStep(viewModel, 'sourceIntent')?.childCalls[0].id).toBe('ai-source');
+    expect(traceStep(viewModel, 'materialPlan')?.childCalls[0].id).toBe('ai-material');
+    expect(traceStep(viewModel, 'rhetoricalPlans')?.childCalls[0].id).toBe('ai-plans');
+    expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
+    expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
+    expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
     expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('4');
   });
 
@@ -61,6 +61,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Material plan');
     expect(titles).toContain('Source intent');
     expect(titles).toContain('Research plan');
+    expect(titles).toContain('Public evidence');
     expect(titles).toContain('Feasibility report');
     expect(titles).toContain('Post contract');
     expect(titles).toContain('Rule registry');
@@ -88,6 +89,16 @@ describe('buildRunTraceViewModel', () => {
     const sourceIntent = viewModel.semanticSections.find((section) => section.id === 'sourceIntent');
 
     expect(sourceIntent?.fields).toContainEqual({ label: 'Sources origin', value: 'fabulaManual' });
+  });
+
+  it('shows public evidence attempts and skipped search tasks', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const publicEvidence = viewModel.semanticSections.find((section) => section.id === 'publicEvidence');
+
+    expect(publicEvidence?.fields).toContainEqual({ label: 'Evidence items', value: '1' });
+    expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('readUrl: succeeded');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('search: notConfigured');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Extracted evidence')?.value).toContain('Independent report');
   });
 });
 
@@ -126,6 +137,42 @@ function makeDraftRunBundle(): RunTraceBundle {
               verificationTasks: [{ kind: 'findPublicSources', instruction: 'Find public commentary' }],
               exclusions: ['vendor blogs']
             }
+          },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'publicEvidence',
+          status: 'succeeded',
+          title: 'Public Evidence',
+          artifactPayload: {
+            source: 'publicEvidenceRetrievalV1',
+            attempts: [
+              {
+                id: 'url-task-1',
+                kind: 'readUrl',
+                target: 'https://example.com/report',
+                status: 'succeeded'
+              },
+              {
+                id: 'search-task-2',
+                kind: 'search',
+                target: 'Find public commentary',
+                status: 'notConfigured'
+              }
+            ],
+            items: [
+              {
+                id: 'public-evidence-url-task-1',
+                sourceTitle: 'Independent report',
+                sourceUrl: 'https://example.com/report',
+                snippet: 'Adoption depends on workflow integration.',
+                allowedUse: 'needsQualification'
+              }
+            ],
+            warnings: [],
+            metadata: { searchProvider: 'notConfigured' }
           },
           error: null,
           startedAt: null,
@@ -320,4 +367,8 @@ function makeAiRun(id: string, step: string) {
     createdAt: '2026-06-19T00:00:00+00:00',
     updatedAt: '2026-06-19T00:00:01+00:00'
   };
+}
+
+function traceStep(viewModel: ReturnType<typeof buildRunTraceViewModel>, key: string) {
+  return viewModel.timeline.find((item) => item.key === key);
 }

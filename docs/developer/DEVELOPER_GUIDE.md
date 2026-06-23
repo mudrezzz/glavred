@@ -1118,10 +1118,13 @@ The next artifacts must make candidate validation meaningful:
   remains the runtime input; if an editor changes it in `Редактура`, that override is
   what the backend receives.
 - `ResearchPlan` decides what to read, search, verify, or avoid before writing.
-- Public evidence extraction must create `PublicEvidenceItem` records with provenance,
-  confidence, allowed-use policy, and risk notes.
-- `SourceLedger` now comes before validators and stores internal plus public claim ids,
-  provenance, confidence, allowed-use policy, risks, and forbidden inferences.
+- `publicEvidence` executes the available research plan: v1 reads exact URL tasks
+  through infrastructure and records general search tasks as `notConfigured` until a
+  search provider is chosen. A planned search task is not proof.
+- Public evidence extraction creates `PublicEvidenceItem` records with provenance,
+  confidence, allowed-use policy, and extraction notes.
+- `SourceLedger` comes before validators and stores internal claim ids now; public
+  claim merge is the next slice after `publicEvidence`.
 - `EvidenceSynthesis` must explain which public material confirms, qualifies,
   contradicts, or fails to support the intended post.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
@@ -1147,7 +1150,7 @@ Drafting steps should be narrow:
 3. Build a seed source ledger with claim ids, provenance, allowed use, risks, and forbidden
    inferences.
 4. Plan public research from the fabula, signal, source ledger, and author position.
-5. Read/search/extract public evidence through infrastructure adapters.
+5. Read exact URLs and trace unconfigured search tasks through infrastructure adapters.
 6. Merge public evidence into the source ledger and synthesize what it changes.
 7. Run a feasibility gate before prose generation.
 8. Lock a post contract from the approved brief, candidate, slot, source ledger, and

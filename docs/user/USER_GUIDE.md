@@ -371,8 +371,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   inventing a weak draft. If only the candidate link is missing but source signal,
   brief evidence, topic, and fabula are present, Glavred proceeds with constraints
   instead of stopping the run. Source intent, research plan, rule registry, and
-  rhetorical plans are already visible in `/ai-runs`. The next backend quality layers
-  are public evidence retrieval, enriched SourceLedger, validators, ranking, directed
+  rhetorical plans are already visible in `/ai-runs`. Public evidence v1 now reads
+  exact URLs and records unconfigured search tasks in trace; the next backend quality layers
+  are enriched SourceLedger, validators, ranking, directed
   revision, and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
   severity, criteria, and validator bindings. The PostContract also contains
   `publicationSizeContract` with target length range, hard max, paragraph/section
@@ -386,9 +387,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   `Источники и исследовательские поручения`. It is the final per-post override and
   accepts URLs, source names, and plain instructions such as "нужно мнение лидеров
   мнений по этой теме", plus prefixes like `url:`, `найти:`, `проверить:`, and
-  `не использовать:`. DraftRuns normalize those approved lines into source intent and
-  a research plan before writing. The next backend slice will execute that plan
-  through retrieval/extraction and merge public evidence into the SourceLedger.
+  `не использовать:`. DraftRuns normalize those approved lines into source intent,
+  build a research plan, read exact URLs, and show skipped search tasks as
+  `notConfigured`. The next backend slice will merge public evidence into the SourceLedger.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

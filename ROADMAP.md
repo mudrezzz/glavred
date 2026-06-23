@@ -3721,15 +3721,15 @@ Status:
 
 ### Slice 2.12.4: Public Evidence Retrieval Foundation
 
-- Status: Ready
+- Status: Done
 - Goal: Add the first retrieval/extraction foundation for approved source intent.
 - User value: Glavred starts grounding drafts in public material instead of only the
   internal signal/fabula bundle.
 - Scope:
   - Add provider-free `PublicEvidenceItem`.
   - Add infrastructure boundary for URL read/search adapters.
-  - In v1, support deterministic/manual placeholder extraction from URL/search seeds
-    without relying on full production search.
+  - In v1, support real one-URL reads for explicit URL seeds and trace search tasks
+    as `notConfigured` until a search provider is selected.
   - Store extraction results and failures in DraftRun trace.
   - Keep secrets and browser/provider details out of domain/API handlers.
 - Out of scope:
@@ -3750,13 +3750,17 @@ Status:
 - Demo impact:
   - Demo can show placeholder external evidence records in `/ai-runs`.
 - Acceptance criteria:
-  - Public evidence appears as structured trace data, not as hidden prompt context.
+  - Public evidence appears as structured trace data, not as hidden prompt context. Done.
+- Validation:
+  - Targeted backend and trace tests passed during implementation.
+- Completed:
+  - Completed 2026-06-24.
 - Risks:
   - Placeholder retrieval must not pretend to be real proof; label source clearly.
 
 ### Slice 2.12.5: SourceLedger External Evidence Merge
 
-- Status: Backlog
+- Status: Ready
 - Goal: Merge public evidence into the source ledger and synthesize what it changes
   before feasibility, post contract, rule registry, and drafting.
 - User value: The runner can explain which external material supports, qualifies, or
@@ -3955,6 +3959,7 @@ Status:
 - Slice 2.12.2.1: Draft Candidate Scorecard Trace UI. Completed 2026-06-23.
 - Slice 2.12.3: Source Intent and Research Plan. Completed 2026-06-23.
 - Slice 2.12.3.1: Fabula Research Strategy Defaults. Completed 2026-06-23.
+- Slice 2.12.4: Public Evidence Retrieval Foundation. Completed 2026-06-24.
 
 ## Blocked Items
 
@@ -3975,4 +3980,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.12.4: Public Evidence Retrieval Foundation`.
+Continue the backend track with `Slice 2.12.5: SourceLedger External Evidence Merge`.

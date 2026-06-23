@@ -76,14 +76,19 @@ Public evidence enters drafting through typed artifacts:
   support.
 - enriched `SourceLedger`: internal and public claims in one provenance-aware ledger.
 
+Slice 2.12.4 implements the first retrieval foundation. Exact URLs are read through
+an infrastructure URL reader and become `PublicEvidenceItem` records in the
+`publicEvidence` DraftRun step. General search tasks are recorded as `notConfigured`
+attempts until a search provider is selected; they must not be treated as proof.
+
 External web/retrieval adapters belong in infrastructure. Application services own the
 research orchestration and evidence reconciliation. Domain DTOs remain provider-free.
 
 ## Consequences
 
-- Source intent and research planning are now the first implemented public-evidence
-  layer. The next backend work is public evidence retrieval/extraction and
-  source-ledger merge, not validators yet.
+- Source intent, research planning, and exact-URL public evidence retrieval are now
+  implemented public-evidence layers. The next backend work is source-ledger merge and
+  evidence synthesis, not validators yet.
 - `FeasibilityGate`, `PostContract`, validators, ranking, and directed revision must
   consume the enriched ledger when public evidence exists.
 - The main editor UI can stay compact. Full research artifacts belong in `/ai-runs`
