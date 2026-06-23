@@ -29,6 +29,7 @@ def build_draft_run_context_summary(
                 },
             },
             "authorPositionEvidence": {"total": 0, "items": []},
+            "publicationSize": {},
             "missingContext": [],
             "compatibility": {"briefOnly": True},
         }
@@ -108,6 +109,7 @@ def build_draft_run_context_summary(
             "total": len(context.author_position_evidence),
             "items": context.author_position_evidence[:10],
         },
+        publication_size=context.publication_size,
         missing_context=context.missing_context,
     )
     return summary.to_payload()

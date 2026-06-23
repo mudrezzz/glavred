@@ -74,6 +74,7 @@ export function createContentPlanItem(insight: InsightCard): ContentPlanItem {
     fabulaId: insight.fabulaId,
     fabulaTitle: insight.fabulaTitle,
     sourceSignalId: insight.signalId,
+    publicationSizeProfileId: undefined,
     manualOverride: false,
     weightWarningIds: []
   };
@@ -121,6 +122,7 @@ export function createBroadcastPlan(workspace: WorkspaceState, startDate = new D
       fabulaId: pair.fabula.id,
       fabulaTitle: pair.fabula.title,
       sourceSignalId: existingInsight.signalId,
+      publicationSizeProfileId: settings.defaultPublicationSizeProfileId,
       manualOverride: false,
       weightWarningIds: []
     };

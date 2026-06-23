@@ -560,12 +560,24 @@ signal evidence, approved brief evidence, topic, and fabula are present, feasibi
 continues as `feasible_with_constraints`. If candidate recovery is ambiguous or the
 source context is weak, the run still stops as a quality-blocked human-decision case.
 
+Slice 2.11.1 adds the first publication-size contract without coupling fabulas to
+platforms. `ContentPlanSettings.publicationSizeProfiles` stores editable demo profiles
+such as Telegram post, LinkedIn post, and LinkedIn article. A plan slot may lock one
+profile through `ContentPlanItem.publicationSizeProfileId`; otherwise the settings
+default or platform demo default is used. `Fabula.sizeIntent` stores only dramaturgical
+scale (`compact`, `standard`, `deep`) and never means "this fabula is for Telegram".
+The backend resolves these inputs into `PostContract.publicationSizeContract`, then
+`RuleRegistrySnapshot` emits deterministic size rules for hard max length, target
+range, paragraph/section range, and density. `PostCandidate` stays a concept and does
+not regain `format` or size fields.
+
 Concrete queued drafting files:
 
 - `backend/app/domain/draft_run.py`
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_feasibility.py`
 - `backend/app/domain/draft_post_contract.py`
+- `backend/app/domain/publication_size.py`
 - `backend/app/domain/draft_rule_registry.py`
 - `backend/app/api/draft_runs.py`
 - `backend/app/api/draft_generation_contracts.py`
@@ -579,9 +591,11 @@ Concrete queued drafting files:
 - `backend/app/application/draft_feasibility_gate.py`
 - `backend/app/application/draft_feasibility_policy.py`
 - `backend/app/application/draft_post_contract_builder.py`
+- `backend/app/application/publication_size_contract_resolver.py`
 - `backend/app/application/draft_quality_gate.py`
 - `backend/app/application/draft_rule_pack_compiler.py`
 - `backend/app/application/draft_rule_pack_sections.py`
+- `backend/app/application/draft_rule_registry_size.py`
 - `backend/app/application/draft_material_plan_service.py`
 - `backend/app/application/draft_strategy_service.py`
 - `backend/app/application/draft_candidate_generation_service.py`

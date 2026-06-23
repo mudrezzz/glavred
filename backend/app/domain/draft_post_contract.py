@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.app.domain.publication_size import PublicationSizeContract
+
 
 @dataclass(frozen=True)
 class PostContractClaim:
@@ -51,6 +53,7 @@ class PostContract:
     forbidden_moves: list[str] = field(default_factory=list)
     evidence_obligations: list[PostContractObligation] = field(default_factory=list)
     fabula_obligations: list[PostContractObligation] = field(default_factory=list)
+    publication_size_contract: PublicationSizeContract | None = None
     risk_notes: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -72,6 +75,7 @@ class PostContract:
             "forbiddenMoves": self.forbidden_moves,
             "evidenceObligations": [item.to_payload() for item in self.evidence_obligations],
             "fabulaObligations": [item.to_payload() for item in self.fabula_obligations],
+            "publicationSizeContract": self.publication_size_contract.to_payload() if self.publication_size_contract else None,
             "riskNotes": self.risk_notes,
             "metadata": self.metadata,
         }

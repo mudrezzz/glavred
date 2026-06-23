@@ -18,6 +18,7 @@ def context_from_payload(payload: dict[str, Any]) -> DraftRunContext | None:
         editorial_model=_dict_or_empty(raw_context.get("editorialModel")),
         publisher_rules=_list_of_dicts(raw_context.get("publisherRules")),
         author_position_evidence=_list_of_dicts(raw_context.get("authorPositionEvidence")),
+        publication_size=_dict_or_empty(raw_context.get("publicationSize")),
         missing_context=_list_of_dicts(raw_context.get("missingContext")),
     )
 
@@ -34,6 +35,7 @@ def context_to_payload(context: DraftRunContext) -> dict[str, Any]:
         "editorialModel": context.editorial_model,
         "publisherRules": context.publisher_rules,
         "authorPositionEvidence": context.author_position_evidence,
+        "publicationSize": context.publication_size,
         "missingContext": context.missing_context,
     }
 
@@ -48,6 +50,7 @@ def context_input_summary(context: DraftRunContext) -> dict[str, Any]:
         "hasFabula": context.fabula is not None,
         "publisherRuleCount": len(context.publisher_rules),
         "authorEvidenceCount": len(context.author_position_evidence),
+        "hasPublicationSize": bool(context.publication_size),
         "missingContextCount": len(context.missing_context),
     }
 

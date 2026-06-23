@@ -632,6 +632,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft post contract builder should stay contract assembly only; split obligation mappers before growing.",
   },
   {
+    path: "backend/app/application/publication_size_contract_resolver.py",
+    limit: 120,
+    next: "Publication size resolution should stay isolated from post contract and rule registry compilation.",
+  },
+  {
     path: "backend/app/application/draft_quality_gate.py",
     limit: 70,
     next: "Draft quality gate should stay orchestration-only between feasibility and contract.",
@@ -660,6 +665,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/application/draft_rule_registry_contract.py",
     limit: 120,
     next: "Draft rule-registry contract mapper should stay focused on PostContract rules.",
+  },
+  {
+    path: "backend/app/application/draft_rule_registry_size.py",
+    limit: 110,
+    next: "Publication-size registry rules should stay deterministic and contract-owned.",
   },
   {
     path: "backend/app/application/draft_rule_registry_sections.py",
@@ -802,6 +812,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft post contract DTOs should stay provider-free and persistence-free.",
   },
   {
+    path: "backend/app/domain/publication_size.py",
+    limit: 60,
+    next: "Publication size contract DTOs should stay provider-free and persistence-free.",
+  },
+  {
     path: "backend/app/domain/draft_rule_pack.py",
     limit: 100,
     next: "Draft RulePack DTOs should stay provider-free and persistence-free.",
@@ -915,6 +930,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_feasibility_and_contract.py",
     limit: 120,
     next: "Draft feasibility and contract tests should split by policy and contract mapping before growing.",
+  },
+  {
+    path: "backend/tests/test_publication_size_contract.py",
+    limit: 110,
+    next: "Publication size contract tests should stay focused on resolver and deterministic registry rules.",
   },
   {
     path: "backend/tests/test_draft_rule_pack_compiler.py",
@@ -1336,12 +1356,14 @@ if (fileExists("backend")) {
     "backend/app/application/draft_feasibility_gate.py",
     "backend/app/application/draft_feasibility_policy.py",
     "backend/app/application/draft_post_contract_builder.py",
+    "backend/app/application/publication_size_contract_resolver.py",
     "backend/app/application/draft_quality_gate.py",
     "backend/app/application/draft_rule_pack_compiler.py",
     "backend/app/application/draft_rule_pack_sections.py",
     "backend/app/application/draft_rule_pack_from_registry.py",
     "backend/app/application/draft_rule_registry_compiler.py",
     "backend/app/application/draft_rule_registry_contract.py",
+    "backend/app/application/draft_rule_registry_size.py",
     "backend/app/application/draft_rule_registry_sections.py",
     "backend/app/application/draft_material_plan_service.py",
     "backend/app/application/draft_strategy_service.py",
@@ -1370,6 +1392,7 @@ if (fileExists("backend")) {
     "backend/app/domain/draft_source_ledger.py",
     "backend/app/domain/draft_feasibility.py",
     "backend/app/domain/draft_post_contract.py",
+    "backend/app/domain/publication_size.py",
     "backend/app/domain/draft_rule_pack.py",
     "backend/app/domain/draft_rule_registry.py",
     "backend/app/domain/draft_planning.py",
@@ -1393,6 +1416,7 @@ if (fileExists("backend")) {
     "backend/tests/test_draft_run_context_builder.py",
     "backend/tests/test_draft_source_ledger_builder.py",
     "backend/tests/test_draft_feasibility_and_contract.py",
+    "backend/tests/test_publication_size_contract.py",
     "backend/tests/test_draft_rule_pack_compiler.py",
     "backend/tests/test_draft_rule_registry_compiler.py",
     "backend/tests/test_draft_planning_services.py",

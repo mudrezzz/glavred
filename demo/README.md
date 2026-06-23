@@ -227,9 +227,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     topic, fabula, value, and risks.
 21. Click `В план`.
 22. In `План`, open `Настройка сетки` if you want to change period, tempo, days/times,
-    candidate limits, platform, or signal policy; save settings before rebuilding.
+    candidate limits, platform, signal policy, or publication size profile; save settings before rebuilding.
     Slice 1.8.1 note: select dates directly in the mini-calendar; the counter shows
     target, selected, remaining, or extra slots while you click.
+    Slice 2.11.1 note: `Размер публикации` edits demo profiles such as Telegram post,
+    LinkedIn post, or LinkedIn article. Fabulas keep only compact/standard/deep scale,
+    so the same `Signal X Topic X Fabula` can still be reused across platforms.
 23. Switch the broadcast grid to `Календарь` to see candidate counts by publish date,
     then click a date to inspect that day's same slot cards.
 24. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or
@@ -256,7 +259,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     backend run.
     The source ledger now shows which claims are allowed, risky, or forbidden, while
     feasibility, post contract, and rule registry lock whether and how the post may
-    be written before validators/revision.
+    be written before validators/revision. `PostContract.publicationSizeContract`
+    shows the resolved size profile, target range, hard max, paragraph/section range,
+    density, and fabula scale.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

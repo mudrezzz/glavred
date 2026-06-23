@@ -1,4 +1,6 @@
 import type { ContentPlanSettings, PlanningPeriod, PublishSlot, SignalSelectionPolicy } from './types';
+import { DEFAULT_PUBLICATION_SIZE_PROFILE_ID, DEFAULT_PUBLICATION_SIZE_PROFILES } from './publicationSize';
+import { normalizePublicationSizeSettings } from './publicationSizeSettings';
 
 const PERIOD_DAYS: Record<PlanningPeriod, number> = {
   week: 7,
@@ -19,7 +21,9 @@ export const DEFAULT_CONTENT_PLAN_SETTINGS: ContentPlanSettings = {
   minCandidatesPerSlot: 1,
   maxCandidatesPerSlot: 2,
   defaultPlatform: 'Telegram',
-  signalSelectionPolicy: 'hitl-only'
+  signalSelectionPolicy: 'hitl-only',
+  publicationSizeProfiles: DEFAULT_PUBLICATION_SIZE_PROFILES,
+  defaultPublicationSizeProfileId: DEFAULT_PUBLICATION_SIZE_PROFILE_ID
 };
 
 export function getPlanningHorizonDays(period: PlanningPeriod): number {
@@ -46,6 +50,7 @@ export function normalizeContentPlanSettings(
   const signalSelectionPolicy = VALID_POLICIES.includes(saved?.signalSelectionPolicy as SignalSelectionPolicy)
     ? (saved?.signalSelectionPolicy as SignalSelectionPolicy)
     : fallback.signalSelectionPolicy;
+  const sizeSettings = normalizePublicationSizeSettings(saved, fallback);
 
   return {
     period,
@@ -57,7 +62,8 @@ export function normalizeContentPlanSettings(
     minCandidatesPerSlot,
     maxCandidatesPerSlot,
     defaultPlatform,
-    signalSelectionPolicy
+    signalSelectionPolicy,
+    ...sizeSettings
   };
 }
 

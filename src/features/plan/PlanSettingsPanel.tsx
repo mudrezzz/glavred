@@ -6,6 +6,7 @@ import {
   type ContentPlanSettings
 } from '../../domain/editorialWorkspace';
 import { MiniPublishCalendar } from './MiniPublishCalendar';
+import { PublicationSizeSettings } from './PublicationSizeSettings';
 import { getWeekdaysFromSlots, togglePublishSlot } from './planningCalendar';
 
 export function PlanSettingsPanel({
@@ -116,6 +117,7 @@ export function PlanSettingsPanel({
           <input value={timesText} placeholder="10:00, 17:30" onChange={(event) => setTimesText(event.target.value)} />
         </label>
       </div>
+      <PublicationSizeSettings settings={draft} onChange={setDraft} />
       <MiniPublishCalendar settings={normalizedDraft} onToggleDate={toggleDate} />
       <div className="plan-settings-summary">
         <div><strong>{demandSummary.slotCount}</strong><span>слотов в каркасе</span></div>

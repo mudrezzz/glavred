@@ -1,4 +1,5 @@
 import type { AuthorPositionAssertion } from '../author-memory/types';
+import type { FabulaSizeIntent } from '../planning/publicationSize';
 import type { EditorialEntityStatus, WeightRange } from '../shared/types';
 
 // Editorial model contains structured rules and catalogs that validate future posts.
@@ -140,6 +141,7 @@ export interface Fabula {
   proofRequirements: string[];
   rules: string[];
   weightRange: WeightRange;
+  sizeIntent: FabulaSizeIntent;
   status: EditorialEntityStatus;
 }
 

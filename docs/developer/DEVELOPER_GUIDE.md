@@ -909,6 +909,9 @@ Conceptual interfaces for the next implementation slices:
   constraints, needs research, needs human decision, or infeasible.
 - `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden moves,
   platform constraints, and fabula obligations.
+- `PublicationSizeContract`: target publication kind, character range, hard max,
+  paragraph/section range, density, and fabula scale intent resolved inside
+  `PostContract`.
 - `RulePack`: hard constraints, soft constraints, evidence requirements, dramaturgy
   requirements, topic-fit requirements, and quality rubric.
 - `MaterialPlan`: evidence inventory, missing evidence, risky claims, grounding plan,
@@ -997,6 +1000,22 @@ Rule-registry ownership is split so near-limit modules stay stable:
   topic, fabula, source-ledger, candidate, and source-signal rules.
 - `backend/app/application/draft_rule_pack_from_registry.py` maps registry rules back
   to the compatibility RulePack.
+
+Slice 2.11.1 adds publication-size contracts:
+
+- `ContentPlanSettings.publicationSizeProfiles` stores editable demo defaults for
+  platform/kind/length profiles.
+- `ContentPlanItem.publicationSizeProfileId` may lock a slot to one profile.
+- `Fabula.sizeIntent` is only a dramaturgical scale (`compact`, `standard`, `deep`);
+  do not create platform-specific fabula duplicates.
+- Frontend sends `draftContext.publicationSize` through
+  `src/application/draftRunPublicationContext.ts`.
+- Backend resolves `PostContract.publicationSizeContract` in
+  `backend/app/application/publication_size_contract_resolver.py`.
+- `backend/app/application/draft_rule_registry_size.py` emits deterministic size rule
+  ids for hard max, target range, paragraphs, sections, and density.
+- Future validators must reference these rule ids; do not re-derive post size from
+  free-text prompt instructions.
 
 To debug Slice 2.7, inspect `steps[2].artifactPayload` for `MaterialPlan` and
 `steps[3].artifactPayload` for `DraftStrategy`. Each artifact includes `source`,

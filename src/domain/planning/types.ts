@@ -1,4 +1,5 @@
 import type { ApprovalStatus } from '../shared/types';
+import type { PublicationSizeProfile } from './publicationSize';
 
 // Planning keeps the broadcast grid compatible with the older single-slot flow.
 export interface InsightCard {
@@ -36,6 +37,7 @@ export interface ContentPlanItem {
   fabulaTitle?: string;
   manualOverride?: boolean;
   sourceSignalId?: string;
+  publicationSizeProfileId?: string;
   weightWarningIds?: string[];
 }
 
@@ -53,6 +55,8 @@ export interface ContentPlanSettings {
   maxCandidatesPerSlot: number;
   defaultPlatform: string;
   signalSelectionPolicy: SignalSelectionPolicy;
+  publicationSizeProfiles: PublicationSizeProfile[];
+  defaultPublicationSizeProfileId: string;
 }
 
 export interface PlanWeightWarning {

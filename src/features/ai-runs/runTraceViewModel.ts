@@ -283,7 +283,11 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const draft = asRecord(payload.draft);
 
   if (feasibility) sections.push(feasibilitySection(feasibility));
-  if (postContract) sections.push(postContractSection(postContract));
+  if (postContract) {
+    sections.push(postContractSection(postContract));
+    const sizeContract = asRecord(postContract.publicationSizeContract);
+    if (sizeContract) sections.push(publicationSizeSection(sizeContract));
+  }
   if (ruleRegistry) sections.push(ruleRegistrySection(ruleRegistry));
   if (materialPlan) sections.push(materialPlanSection(materialPlan));
   if (strategy) sections.push(strategySection(strategy));
@@ -333,6 +337,25 @@ function ruleRegistrySection(payload: Record<string, unknown>): TraceSemanticSec
         const binding = asRecord(rule.binding);
         return `${rule.id} · ${rule.severity} · ${binding?.validatorType}: ${rule.title}`;
       }).filter(Boolean)]
+    ])
+  };
+}
+
+function publicationSizeSection(payload: Record<string, unknown>): TraceSemanticSection {
+  return {
+    id: 'publicationSizeContract',
+    title: 'Publication size contract',
+    fields: compactFields([
+      ['Profile', payload.title ?? payload.profileId],
+      ['Platform', payload.platform],
+      ['Kind', payload.publicationKind],
+      ['Chars', `${payload.minChars}-${payload.maxChars} target ${payload.targetChars}`],
+      ['Hard max', payload.hardMaxChars],
+      ['Paragraphs', payload.paragraphRange],
+      ['Sections', payload.sectionRange],
+      ['Density', payload.density],
+      ['Fabula scale', payload.fabulaSizeIntent],
+      ['Source', payload.source]
     ])
   };
 }

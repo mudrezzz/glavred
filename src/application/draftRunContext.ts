@@ -1,5 +1,6 @@
 import type { WorkspaceState } from '../domain/editorialWorkspace';
 import { findLinkedPostCandidate } from './postCandidateLinking';
+import { buildPublicationSizeContext } from './draftRunPublicationContext';
 
 export type DraftRunMissingContext = {
   entity: string;
@@ -18,6 +19,7 @@ export type DraftRunContextSnapshot = {
   editorialModel: Record<string, unknown>;
   publisherRules: Record<string, unknown>[];
   authorPositionEvidence: Record<string, unknown>[];
+  publicationSize: Record<string, unknown>;
   missingContext: DraftRunMissingContext[];
 };
 
@@ -29,6 +31,7 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
   const sourceSignal = findSourceSignal(workspace, workItem, candidate, planSlot, missingContext);
   const topic = findTopic(workspace, workItem, candidate, planSlot, missingContext);
   const fabula = findFabula(workspace, workItem, candidate, planSlot, missingContext);
+  const publicationSize = buildPublicationSizeContext(workspace, workItem, planSlot, fabula);
 
   return {
     workItem: workItem ? compactWorkItem(workItem) : null,
@@ -75,6 +78,7 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
         status: assertion.status,
         evidence: assertion.evidence
       })),
+    publicationSize,
     missingContext
   };
 }
@@ -218,7 +222,8 @@ function compactPlanSlot(item: PlanSlot) {
     topicTitle: item.topicTitle ?? null,
     fabulaId: item.fabulaId ?? null,
     fabulaTitle: item.fabulaTitle ?? null,
-    sourceSignalId: item.sourceSignalId ?? null
+    sourceSignalId: item.sourceSignalId ?? null,
+    publicationSizeProfileId: item.publicationSizeProfileId ?? null
   };
 }
 
@@ -282,6 +287,7 @@ function compactFabula(fabula: Fabula) {
     proofRequirements: fabula.proofRequirements,
     rules: fabula.rules,
     weightRange: fabula.weightRange,
+    sizeIntent: fabula.sizeIntent,
     status: fabula.status
   };
 }

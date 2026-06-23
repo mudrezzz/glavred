@@ -14,6 +14,7 @@ class DraftRunContext:
     editorial_model: dict[str, Any] = field(default_factory=dict)
     publisher_rules: list[dict[str, Any]] = field(default_factory=list)
     author_position_evidence: list[dict[str, Any]] = field(default_factory=list)
+    publication_size: dict[str, Any] = field(default_factory=dict)
     missing_context: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -28,6 +29,7 @@ class DraftRunContextSummary:
     fabula: dict[str, Any] | None
     publisher_rules: dict[str, Any]
     author_position_evidence: dict[str, Any]
+    publication_size: dict[str, Any]
     missing_context: list[dict[str, Any]]
 
     def to_payload(self) -> dict[str, Any]:
@@ -41,5 +43,6 @@ class DraftRunContextSummary:
             "fabula": self.fabula,
             "publisherRules": self.publisher_rules,
             "authorPositionEvidence": self.author_position_evidence,
+            "publicationSize": self.publication_size,
             "missingContext": self.missing_context,
         }

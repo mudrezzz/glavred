@@ -41,6 +41,7 @@ export function createFabulaDraft(): Fabula {
     proofRequirements: [],
     rules: [],
     weightRange: { min: 5, max: 15 },
+    sizeIntent: 'standard',
     status: 'active'
   };
 }
@@ -50,7 +51,7 @@ export function addTopic(topics: Topic[], topic: Topic): Topic[] {
 }
 
 export function addFabula(fabulas: Fabula[], fabula: Fabula): Fabula[] {
-  return [...fabulas, { ...fabula, weightRange: normalizeWeightRange(fabula.weightRange) }];
+  return [...fabulas, { ...fabula, weightRange: normalizeWeightRange(fabula.weightRange), sizeIntent: fabula.sizeIntent ?? 'standard' }];
 }
 
 export function deleteTopic(

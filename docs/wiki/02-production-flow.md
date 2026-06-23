@@ -116,6 +116,14 @@ severity, scope, observable criteria, validator type, and repair policy. The vis
 editor flow is unchanged; the new artifact is inspected through `/ai-runs?runId=...`
 or `GET /api/draft-runs/{id}`.
 
+Post-2.11.1 size note: publication length is a contract layer. Plan settings own
+editable publication size profiles, plan slots may lock a profile, and fabulas own
+only compact/standard/deep scale intent. The backend resolves these inputs into
+`PostContract.publicationSizeContract`, and the rule registry emits deterministic
+rules for hard max length, target range, paragraph/section range, and density.
+Candidates do not get `format` or size fields, and fabulas are not duplicated per
+platform.
+
 ## Ограничения текущего demo
 
 - Инсайт, план и фабула создаются deterministic-сервисами.

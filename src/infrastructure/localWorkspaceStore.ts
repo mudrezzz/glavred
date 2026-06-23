@@ -15,6 +15,7 @@ import {
   type WorkspaceState,
   type WorkspaceStore
 } from '../domain/editorialWorkspace';
+import { normalizeFabulaSizeIntent } from '../domain/planning/publicationSize';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
 
@@ -54,7 +55,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   }));
   const fabulas = (saved.fabulas ?? demo.fabulas).map((fabula) => ({
     ...fabula,
-    weightRange: normalizeWeightRange(fabula.weightRange)
+    weightRange: normalizeWeightRange(fabula.weightRange),
+    sizeIntent: normalizeFabulaSizeIntent(fabula.sizeIntent)
   }));
   const contentPlanItems = (saved.contentPlanItems ?? (saved.contentPlanItem ? [saved.contentPlanItem] : demo.contentPlanItems)).map(
     (item) => ({
@@ -62,6 +64,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
       time: item.time ?? demo.contentPlanSettings.publishingTimes[0],
       manualOverride: item.manualOverride ?? false,
       sourceSignalId: item.sourceSignalId ?? saved.sourceSignal?.id ?? demo.sourceSignal.id,
+      publicationSizeProfileId: item.publicationSizeProfileId,
       weightWarningIds: item.weightWarningIds ?? []
     })
   );

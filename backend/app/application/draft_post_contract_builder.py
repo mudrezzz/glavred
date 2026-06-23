@@ -6,9 +6,13 @@ from backend.app.domain.draft_post_contract import (
     PostContractClaim,
     PostContractObligation,
 )
+from backend.app.application.publication_size_contract_resolver import PublicationSizeContractResolver
 
 
 class PostContractBuilder:
+    def __init__(self, publication_size_resolver: PublicationSizeContractResolver | None = None) -> None:
+        self._publication_size_resolver = publication_size_resolver or PublicationSizeContractResolver()
+
     def build(self, context_artifact: dict[str, Any], report: FeasibilityReport) -> PostContract:
         brief = _as_dict(context_artifact.get("brief"))
         candidate = _as_dict(context_artifact.get("candidate"))
@@ -36,6 +40,7 @@ class PostContractBuilder:
             forbidden_moves=[str(item.get("statement")) for item in _as_list_of_dicts(ledger.get("forbiddenInferences")) if item.get("statement")],
             evidence_obligations=_obligations(claims, "evidence", {"sourceSignal", "sourceSignal.evidence", "candidate", "brief.evidence"}),
             fabula_obligations=_obligations(claims, "fabula", {"fabula.proofRequirements", "fabula.rules"}),
+            publication_size_contract=self._publication_size_resolver.resolve(context_artifact),
             risk_notes=[str(item.get("detail")) for item in _as_list_of_dicts(ledger.get("risks")) if item.get("detail")],
             metadata={"version": "post-contract-v1", "feasibilityStatus": report.status.value},
         )

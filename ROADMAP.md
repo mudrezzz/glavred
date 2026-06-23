@@ -3498,6 +3498,33 @@ Status:
   - Updated `/ai-runs` semantic trace to show a readable Rule registry summary.
   - Completed 2026-06-22.
 
+### Slice 2.11.1: Publication Size Contract Foundation
+
+- Status: Done
+- Goal: Add an explicit publication-size contract without hard-linking fabulas to
+  platforms.
+- User value: Planning can express whether a post is a Telegram note, LinkedIn post,
+  or article-sized artifact while keeping `Signal X Topic X Fabula` reusable.
+- Scope:
+  - Add editable publication size profiles to `ContentPlanSettings`.
+  - Add optional `publicationSizeProfileId` to plan slots.
+  - Add `Fabula.sizeIntent = compact | standard | deep` as dramaturgical scale, not
+    platform binding.
+  - Send publication-size context to queued `DraftRun`.
+  - Resolve `PublicationSizeContract` inside `PostContract`.
+  - Add deterministic size rules to `RuleRegistrySnapshot`.
+- Architecture impact:
+  - Size constraints live in `PostContract` / `RuleRegistry`, not in `PostCandidate`
+    and not in platform-specific fabula forks.
+  - Slot profile wins over plan default; plan default wins over platform demo default;
+    fabula scale adjusts target range without crossing hard limits.
+- Done:
+  - Added frontend/domain publication size profiles and fabula scale intent.
+  - Added plan settings UI for publication size profiles and fabula scale selector.
+  - Added backend `PublicationSizeContract` resolver and registry size rules.
+  - Added trace rendering for the size contract.
+  - Completed 2026-06-23.
+
 ### Slice 2.12: Contract-Based Rhetorical Plans
 
 - Status: Ready
@@ -3666,6 +3693,7 @@ Status:
 - Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration.
   Completed 2026-06-22.
 - Slice 2.11: Rule Registry v2 and Validator Bindings. Completed 2026-06-22.
+- Slice 2.11.1: Publication Size Contract Foundation. Completed 2026-06-23.
 
 ## Blocked Items
 

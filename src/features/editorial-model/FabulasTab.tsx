@@ -23,6 +23,7 @@ import {
   type WorkspaceState
 } from '../../domain/editorialWorkspace';
 import { WeightRangeEditor } from '../../shared/ui/WeightRangeEditor';
+import { FabulaSizeIntentSelect, fabulaSizeIntentLabel } from './FabulaSizeIntentSelect';
 import { EditorialValidationPanel, ValidationBadge } from './ValidationPanel';
 import {
   EDITORIAL_TABS,
@@ -140,6 +141,7 @@ export function FabulaListView({
             <span className="entity-title-placeholder">{draft.title.trim() || 'Новая фабула'}</span>
             <div className="entity-row-meta">
               <span className="entity-meta-chip">{draft.weightRange.min}-{draft.weightRange.max}%</span>
+              <span className="entity-meta-chip">{fabulaSizeIntentLabel(draft.sizeIntent)}</span>
               <span className={`status-chip ${draft.status}`}>{draft.status === 'active' ? 'активно' : 'пауза'}</span>
               <span className="entity-meta-chip">{draft.rules.length} правил</span>
               <span className="entity-meta-chip">{draft.proofRequirements.length} proof</span>
@@ -175,6 +177,7 @@ export function FabulaListView({
               </button>
               <div className="entity-row-meta">
                 <span className="entity-meta-chip">{fabula.weightRange.min}-{fabula.weightRange.max}%</span>
+                <span className="entity-meta-chip">{fabulaSizeIntentLabel(fabula.sizeIntent)}</span>
                 <span className={`status-chip ${fabula.status}`}>{fabula.status === 'active' ? 'активно' : 'пауза'}</span>
                 <span className="entity-meta-chip">{fabula.rules.length} правил</span>
                 <span className="entity-meta-chip">{fabula.proofRequirements.length} proof</span>
@@ -206,6 +209,8 @@ export function FabulaListView({
                       <dd>{fabula.proofRequirements.join('; ')}</dd>
                       <dt>Правила</dt>
                       <dd>{fabula.rules.join('; ')}</dd>
+                      <dt>Масштаб</dt>
+                      <dd>{fabulaSizeIntentLabel(fabula.sizeIntent)}</dd>
                       <dt>Применимые темы</dt>
                       <dd>{topics.filter((topic) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((topic) => topic.title).join(', ')}</dd>
                     </dl>
@@ -255,6 +260,7 @@ function FabulaEditor({
           <textarea value={fabula.dramaturgy} onChange={(event) => onChange({ ...fabula, dramaturgy: event.target.value })} />
         </label>
         <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
+        <FabulaSizeIntentSelect fabula={fabula} onChange={onChange} />
         <label>
           Структура
           <textarea value={fabula.structure.join('\n')} onChange={(event) => onChange({ ...fabula, structure: splitLines(event.target.value) })} />

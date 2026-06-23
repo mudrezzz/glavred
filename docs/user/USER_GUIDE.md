@@ -43,9 +43,11 @@ The wiki explains the current product through real screenshots:
 
 Planning note: the current `План` screen is a local-first broadcast grid prototype
 with explicit `Настройка сетки`. Settings define period, tempo, publishing days/times,
-candidate limits, default platform, and signal policy. The grid is still not the final
-calendar model: it creates publish-window slots and fills them with deterministic
-topic/fabula ideas from the approved signal/candidate layer.
+candidate limits, default platform, signal policy, and publication-size profiles. The
+grid is still not the final calendar model: it creates publish-window slots and fills
+them with deterministic topic/fabula ideas from the approved signal/candidate layer.
+Publication size is not a candidate field: the slot/profile defines platform-kind
+length, while the selected fabula only contributes a compact/standard/deep scale.
 
 Production note: approved plan slots now enter an editorial work queue immediately.
 `План` decides what should be produced and when; approving a slot creates the
@@ -320,7 +322,7 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Use `Отменить последнее групповое действие` when the latest bulk decision should be
   reverted.
 - Open `Редакционная модель`, review the project profile in `Издательство`, add or edit one structured rule, and check the right-side validation panel.
-- Open `Темы` and `Фабулы`, expand one row, use `Редактировать`, then `Сохранить` or `Отменить`.
+- Open `Темы` and `Фабулы`, expand one row, use `Редактировать`, then `Сохранить` or `Отменить`. In `Фабулы`, `Масштаб` sets compact/standard/deep dramaturgical size intent without binding the fabula to a platform.
 - Open `Матрица`, toggle one compatibility checkbox, then use `Сохранить матрицу` or `Отменить`.
 - Open `Сигналы`.
 - Inspect `Радары`, then open `Найденные сигналы`.
@@ -333,6 +335,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Open `Настройка сетки` when the publishing frame needs to change. Save settings
   explicitly; saved changes clear the current grid and downstream production artifacts
   so the plan can be rebuilt.
+- In `Размер публикации`, choose the default publication profile and edit platform,
+  publication kind, and min/target/max character range. These demo defaults are
+  editable planning assumptions, not hard-coded official platform guarantees.
 - Review the broadcast grid: each slot has date, time, platform, topic, fabula,
   priority, status, and advisory warnings. The side summary separates available
   candidates from approved concepts and shows deficit/proficit.
@@ -366,7 +371,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   inventing a weak draft. If only the candidate link is missing but source signal, brief evidence, topic, and fabula are present, Glavred proceeds with constraints instead of stopping the run. The next backend quality layers are rule registry,
   rhetorical plans, validators, ranking, directed revision, and regression. The rule
   registry is already visible in `/ai-runs` as stable rule ids, severity, criteria,
-  and validator bindings. The main editor will keep
+  and validator bindings. The PostContract also contains `publicationSizeContract`
+  with target length range, hard max, paragraph/section range, density, and fabula
+  scale. The main editor will keep
   showing compact status and warnings; full trace details stay in `/ai-runs`.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.

@@ -3198,6 +3198,50 @@ select:focus {
   text-transform: none;
 }
 
+.publication-size-settings {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunk);
+}
+
+.publication-size-header {
+  display: grid;
+  gap: 6px;
+}
+
+.publication-size-header p {
+  margin: 0;
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.publication-size-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.publication-size-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.publication-size-grid input,
+.publication-size-grid select {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .plan-settings-wide,
 .plan-settings-days {
   grid-column: span 2;
@@ -4890,6 +4934,7 @@ select:focus {
   .broadcast-edit-grid,
   .plan-settings-grid,
   .plan-settings-summary,
+  .publication-size-grid,
   .signals-layout,
   .signals-stack .entity-row-main,
   .signal-filters,

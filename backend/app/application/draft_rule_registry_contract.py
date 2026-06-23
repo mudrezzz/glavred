@@ -5,6 +5,7 @@ from backend.app.application.draft_rule_registry_sections import (
     as_list_of_dicts,
     registry_rule,
 )
+from backend.app.application.draft_rule_registry_size import publication_size_registry
 from backend.app.domain.draft_rule_registry import RuleRegistrySeverity, RuleRegistryValidatorType
 
 
@@ -39,6 +40,7 @@ def contract_registry(contract: dict[str, Any]) -> list:
     rules.extend(_contract_claim_rules(contract))
     rules.extend(_obligation_rules(contract, "evidenceObligations", "evidenceRequirements"))
     rules.extend(_obligation_rules(contract, "fabulaObligations", "dramaturgyRequirements"))
+    rules.extend(publication_size_registry(contract))
     rules.extend(
         registry_rule(
             f"contract:forbidden:{index}",

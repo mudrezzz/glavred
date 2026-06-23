@@ -1,5 +1,5 @@
 import { createAuthorMemoryEvent, createBroadcastPlan, inferAuthorPositionAssertions } from '../application/editorialServices';
-import { createDefaultTopicFabulaMatrix } from '../domain/editorialWorkspace';
+import { createDefaultTopicFabulaMatrix, DEFAULT_CONTENT_PLAN_SETTINGS } from '../domain/editorialWorkspace';
 import type { WorkspaceState } from '../domain/editorialWorkspace';
 import { demoAuthorNotes } from './demoAuthorMemory';
 import { demoArchiveRecords, demoExternalSources, demoImportCandidates } from './demoImports';
@@ -64,6 +64,7 @@ export function createDemoWorkspace(): WorkspaceState {
     contentPlanItem: null,
     contentPlanItems: [],
     contentPlanSettings: {
+      ...DEFAULT_CONTENT_PLAN_SETTINGS,
       period: 'month',
       postsPerWeek: 3,
       planningHorizonDays: 30,

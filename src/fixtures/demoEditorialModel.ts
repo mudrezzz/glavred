@@ -184,6 +184,7 @@ export const demoFabulas: Fabula[] = [
     proofRequirements: ['Авторская заметка', 'Минимум один пример из интервью или пилота'],
     rules: ['Держать тон исследования', 'Не превращать вывод в чеклист без позиции'],
     weightRange: { min: 25, max: 35 },
+    sizeIntent: 'standard',
     status: 'active'
   },
   {
@@ -195,6 +196,7 @@ export const demoFabulas: Fabula[] = [
     proofRequirements: ['Контрпример', 'Риск для продукта или GTM'],
     rules: ['Не высмеивать аудиторию', 'Давать замену мифу'],
     weightRange: { min: 15, max: 25 },
+    sizeIntent: 'standard',
     status: 'active'
   },
   {
@@ -206,6 +208,7 @@ export const demoFabulas: Fabula[] = [
     proofRequirements: ['Связь с темой', 'Минимум один failure mode'],
     rules: ['Фреймворк должен быть применим за один рабочий созвон', 'Не добавлять декоративные шаги'],
     weightRange: { min: 20, max: 30 },
+    sizeIntent: 'deep',
     status: 'active'
   },
   {
@@ -217,6 +220,7 @@ export const demoFabulas: Fabula[] = [
     proofRequirements: ['Сигнал из источника', 'Проверяемый урок'],
     rules: ['Не раскрывать приватные детали', 'Фокусироваться на системе, а не на виноватых'],
     weightRange: { min: 10, max: 20 },
+    sizeIntent: 'standard',
     status: 'active'
   },
   {
@@ -228,6 +232,7 @@ export const demoFabulas: Fabula[] = [
     proofRequirements: ['Evidence из памяти автора', 'Ограничения тезиса'],
     rules: ['Позиция должна быть острой, но не декларативной', 'Добавлять границы применимости'],
     weightRange: { min: 10, max: 20 },
+    sizeIntent: 'compact',
     status: 'active'
   }
 ];
