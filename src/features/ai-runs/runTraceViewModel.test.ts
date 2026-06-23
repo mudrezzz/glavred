@@ -29,7 +29,21 @@ describe('buildRunTraceViewModel', () => {
     ]);
     expect(viewModel.details.find((detail) => detail.id === 'draft-scorecard-detail')?.summary).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: 'Selected candidate', value: 'candidate-1' })
+        expect.objectContaining({ label: 'Selected candidate', value: 'candidate-1' }),
+        expect.objectContaining({ label: 'Score spread', value: '+14' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'draft-scorecard-detail')?.summary).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Rows' })
+      ])
+    );
+    const scorecardSection = viewModel.semanticSections.find((section) => section.id === 'draft-scorecard');
+    expect(scorecardSection?.kind).toBe('scorecard');
+    expect(scorecardSection?.scorecard?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ candidateId: 'candidate-1', selected: true, total: '80', riskPenalty: '-2' }),
+        expect.objectContaining({ candidateId: 'candidate-2', selected: false, total: '66', riskPenalty: '-8' })
       ])
     );
     expect(viewModel.details.find((detail) => detail.id === 'draft-selection-detail')?.summary).toEqual(

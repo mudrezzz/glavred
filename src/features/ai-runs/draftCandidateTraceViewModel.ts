@@ -1,6 +1,13 @@
 import type { AiRunTrace } from '../../infrastructure/aiRunTraceClient';
 import type { DraftRunTraceStep } from '../../infrastructure/runTraceClient';
-import type { TraceChildCall, TraceDetail, TraceField, TraceSemanticSection } from './runTraceViewModel';
+import type {
+  TraceChildCall,
+  TraceDetail,
+  TraceField,
+  TraceScorecardModel,
+  TraceScorecardRow,
+  TraceSemanticSection
+} from './runTraceViewModel';
 
 type DraftCandidateTrace = {
   id: string;
@@ -215,7 +222,7 @@ function scorecardDetail(
     summary: compactFields([
       ['Candidates', scorecard.size],
       ['Selected candidate', selectedCandidateId],
-      ['Rows', scoreRows(scorecard, candidates)]
+      ['Score spread', scoreSpread(scorecard, selectedCandidateId)]
     ]),
     sections: [scorecardSemanticSection(scorecard, candidates, selectedCandidateId)],
     messages: [],
@@ -268,10 +275,12 @@ function scorecardSemanticSection(
   return {
     id: 'draft-scorecard',
     title: 'Draft scorecard',
+    kind: 'scorecard',
     fields: compactFields([
       ['Selected candidate', selectedCandidateId],
-      ['Score rows', scoreRows(scorecard, candidates)]
-    ])
+      ['Score spread', scoreSpread(scorecard, selectedCandidateId)]
+    ]),
+    scorecard: scorecardModel(scorecard, candidates, selectedCandidateId)
   };
 }
 
@@ -300,15 +309,55 @@ function scoreSection(score: Record<string, unknown>, selected: boolean): TraceS
   };
 }
 
-function scoreRows(scorecard: Map<string, Record<string, unknown>>, candidates: DraftCandidateTrace[]): string {
-  return Array.from(scorecard.values())
-    .map((score) => {
+function scorecardModel(
+  scorecard: Map<string, Record<string, unknown>>,
+  candidates: DraftCandidateTrace[],
+  selectedCandidateId: string | null
+): TraceScorecardModel {
+  return {
+    selectedCandidateId: selectedCandidateId ?? '',
+    scoreSpread: scoreSpread(scorecard, selectedCandidateId),
+    rows: Array.from(scorecard.values()).map((score): TraceScorecardRow => {
       const candidateId = stringValue(score.candidateId) ?? '';
-      const title = candidates.find((candidate) => candidate.id === candidateId)?.title ?? candidateId;
-      const total = displayValue(score.total);
-      return `${candidateId} · ${title}: total ${total}; hard ${displayValue(score.hardConstraintFit)}, evidence ${displayValue(score.evidenceGrounding)}, topic ${displayValue(score.topicFit)}, fabula ${displayValue(score.fabulaFit)}, value ${displayValue(score.audienceValue)}, risk -${displayValue(score.riskPenalty)}`;
+      const candidate = candidates.find((item) => item.id === candidateId);
+      return {
+        candidateId,
+        title: candidate?.title ?? candidateId,
+        selected: selectedCandidateId === candidateId,
+        total: displayValue(score.total),
+        hardConstraintFit: displayValue(score.hardConstraintFit),
+        evidenceGrounding: displayValue(score.evidenceGrounding),
+        topicFit: displayValue(score.topicFit),
+        fabulaFit: displayValue(score.fabulaFit),
+        audienceValue: displayValue(score.audienceValue),
+        riskPenalty: displayRiskPenalty(score.riskPenalty)
+      };
     })
-    .join('\n');
+  };
+}
+
+function scoreSpread(scorecard: Map<string, Record<string, unknown>>, selectedCandidateId: string | null): string {
+  if (!selectedCandidateId) return '';
+  const selectedTotal = numericValue(scorecard.get(selectedCandidateId)?.total);
+  if (selectedTotal == null) return '';
+  const nextBest = Array.from(scorecard.entries())
+    .filter(([candidateId]) => candidateId !== selectedCandidateId)
+    .map(([, score]) => numericValue(score.total))
+    .filter((value): value is number => value != null)
+    .sort((left, right) => right - left)[0];
+  if (nextBest == null) return 'no comparison';
+  const spread = selectedTotal - nextBest;
+  return spread >= 0 ? `+${spread}` : String(spread);
+}
+
+function displayRiskPenalty(value: unknown): string {
+  const numeric = numericValue(value);
+  if (numeric == null) return displayValue(value);
+  return numeric === 0 ? '0' : `-${numeric}`;
+}
+
+function numericValue(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function scoreFields(score: Record<string, unknown>): TraceField[] {

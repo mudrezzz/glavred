@@ -92,8 +92,12 @@ describe('AiRunTracePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Показать трассировку/i }));
 
     fireEvent.click(await screen.findByText('Скоринг кандидатов'));
-    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('total 80');
-    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('candidate-2');
+    const scorecard = within(screen.getByTestId('ai-run-detail-panel')).getByTestId('ai-run-scorecard');
+    expect(scorecard).toHaveTextContent('Candidate title');
+    expect(scorecard).toHaveTextContent('Alternative candidate');
+    expect(scorecard).toHaveTextContent('80');
+    expect(scorecard).toHaveTextContent('68');
+    expect(screen.getByTestId('ai-run-detail-panel')).not.toHaveTextContent('Score rows');
 
     fireEvent.click(screen.getByText('Выбор итогового драфта'));
     expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('Candidate title');

@@ -5210,6 +5210,93 @@ select:focus {
   font: 900 20px/1.2 var(--font-sans);
 }
 
+.ai-run-scorecard {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ai-run-scorecard-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--muted);
+  font: var(--label);
+  text-transform: uppercase;
+}
+
+.ai-run-scorecard-table {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ai-run-scorecard-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.7fr) repeat(7, minmax(42px, 0.45fr));
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px 12px;
+}
+
+.ai-run-scorecard-row.head {
+  background: transparent;
+  border-color: transparent;
+  padding-block: 0;
+  color: var(--muted);
+  font: var(--label);
+  text-transform: uppercase;
+}
+
+.ai-run-scorecard-row.selected {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.ai-run-scorecard-row > span {
+  min-width: 0;
+  color: var(--ink);
+  font: 800 14px/1.25 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.ai-run-scorecard-row.head > span {
+  color: var(--muted);
+  font: var(--label);
+}
+
+.ai-run-scorecard-row .total {
+  font: 900 18px/1.1 var(--font-sans);
+}
+
+.ai-run-scorecard-candidate {
+  display: grid;
+  gap: 4px;
+}
+
+.ai-run-scorecard-candidate strong {
+  font: 900 15px/1.25 var(--font-sans);
+}
+
+.ai-run-scorecard-candidate code {
+  color: var(--muted);
+  font: 700 12px/1.25 var(--font-mono);
+}
+
+.ai-run-scorecard-candidate em {
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--accent);
+  font: 800 11px/1 var(--font-sans);
+  font-style: normal;
+  text-transform: uppercase;
+}
+
 .ai-run-fields {
   display: grid;
   gap: 12px;
@@ -5574,6 +5661,24 @@ select:focus {
 
   .ai-run-detail-panel {
     position: static;
+  }
+
+  .ai-run-scorecard-row,
+  .ai-run-scorecard-row.head {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-run-scorecard-row.head {
+    display: none;
+  }
+
+  .ai-run-scorecard-row > span:not(.ai-run-scorecard-candidate)::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: var(--muted);
+    font: var(--label);
+    text-transform: uppercase;
   }
 }
 

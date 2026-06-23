@@ -3605,6 +3605,34 @@ Status:
   - Repaired nested trace row wrapping so provider/model/id values do not break layout.
   - Completed 2026-06-23.
 
+### Slice 2.12.2.1: Scorecard Trace Table Repair
+
+- Status: Done
+- Goal: Make the draft candidate scorecard readable as a comparison table instead of
+  duplicated text rows in the generic detail renderer.
+- User value: A developer or operator can inspect why one draft candidate won without
+  parsing a long blob of `total/hard/evidence/topic/fabula/value/risk` text.
+- Scope:
+  - Keep backend API, DraftRun steps, and SQLite schema unchanged.
+  - Render scorecard rows as a dedicated table in `/ai-runs`.
+  - Show candidate title, compact candidate id, total score, criterion breakdown,
+    risk penalty, and selected/winner state.
+  - Remove duplicated score rows from the readable detail summary.
+  - Preserve JSON/Raw tabs for audit fallback.
+- Out of scope:
+  - Changing candidate selection logic.
+  - Adding manual candidate selection.
+  - Adding a new durable scoring step.
+- Architecture impact:
+  - Scorecard tables are a frontend trace view-model projection of existing
+    `draft.artifactPayload.selection.scorecard` data.
+  - Runtime orchestration and persisted backend artifacts stay unchanged.
+- Done:
+  - Added typed scorecard semantic sections.
+  - Added a dedicated scorecard comparison table renderer.
+  - Updated trace tests so scorecard details are not rendered as `Rows` text blobs.
+  - Completed 2026-06-23.
+
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
 - Status: Ready

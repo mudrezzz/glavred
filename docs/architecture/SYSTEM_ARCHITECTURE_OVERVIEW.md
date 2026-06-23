@@ -377,7 +377,10 @@ timeline/details and `Смысловой результат` for material plan, 
 candidates, scorecard, selected candidate, and final draft artifacts. Slice 2.12.2
 adds derived read-model nodes inside the existing `draft` step for candidates,
 deterministic scoring, and final selection; these nodes are UI/debug projections
-from `draft.artifactPayload`, not new durable backend steps. The page lives under
+from `draft.artifactPayload`, not new durable backend steps. Slice 2.12.2.1 renders
+the deterministic scorecard as a comparison table over
+`draft.artifactPayload.selection.scorecard` instead of a generic long text field, so
+candidate scoring remains inspectable without changing orchestration. The page lives under
 `src/features/ai-runs`; the child-call HTTP mapper remains
 `src/infrastructure/aiRunTraceClient.ts`, while parent timeline aggregation lives
 in `src/infrastructure/runTraceClient.ts`. This keeps trace inspection separate

@@ -318,6 +318,10 @@ Frontend debug page:
 - The `draft` step is expanded with derived read-model nodes for each candidate,
   deterministic scorecard, and selected draft. These nodes come from the existing
   `draft.artifactPayload`; they do not change backend step order or SQLite schema.
+- Draft candidate scorecards render as comparison tables in the trace workbench:
+  candidate title/id, total score, hard constraints, evidence, topic, fabula,
+  audience value, risk penalty, and selected/winner state. Do not fall back to
+  generic long `Score rows` text for scorecard analysis.
 - The `Смысловой результат` tab shows material plan, strategy, draft candidates,
   scorecard, selected candidate, and final draft artifacts. Raw JSON remains
   available in the detail panel, but it is not the primary analysis surface.

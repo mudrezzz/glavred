@@ -25,6 +25,27 @@ export type TraceSemanticSection = {
   title: string;
   fields: TraceField[];
   body?: string;
+  kind?: 'fields' | 'scorecard';
+  scorecard?: TraceScorecardModel;
+};
+
+export type TraceScorecardModel = {
+  selectedCandidateId: string;
+  scoreSpread: string;
+  rows: TraceScorecardRow[];
+};
+
+export type TraceScorecardRow = {
+  candidateId: string;
+  title: string;
+  selected: boolean;
+  total: string;
+  hardConstraintFit: string;
+  evidenceGrounding: string;
+  topicFit: string;
+  fabulaFit: string;
+  audienceValue: string;
+  riskPenalty: string;
 };
 
 export type TraceChildCall = {

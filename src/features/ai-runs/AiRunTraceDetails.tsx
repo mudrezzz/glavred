@@ -7,6 +7,7 @@ import {
   type RunTraceViewModel,
   type TraceDetail,
   type TraceMessage,
+  type TraceScorecardModel,
   type TraceSemanticSection,
   type TraceTimelineStep
 } from './runTraceViewModel';
@@ -215,9 +216,51 @@ function AiRunSemanticGrid({ sections, compact = false }: { sections: TraceSeman
         <article className="ai-run-semantic-card" key={section.id}>
           <h2>{section.title}</h2>
           <TraceFields fields={section.fields} />
+          {section.kind === 'scorecard' && section.scorecard ? (
+            <AiRunScorecardTable scorecard={section.scorecard} />
+          ) : null}
           {section.body ? <p className="ai-run-body-text">{section.body}</p> : null}
         </article>
       ))}
+    </div>
+  );
+}
+
+function AiRunScorecardTable({ scorecard }: { scorecard: TraceScorecardModel }) {
+  return (
+    <div className="ai-run-scorecard" data-testid="ai-run-scorecard">
+      <div className="ai-run-scorecard-head">
+        <span>{scorecard.rows.length} candidates</span>
+        <span>Winner spread {scorecard.scoreSpread || 'n/a'}</span>
+      </div>
+      <div className="ai-run-scorecard-table" role="table" aria-label="Draft candidate scorecard">
+        <div className="ai-run-scorecard-row head" role="row">
+          <span role="columnheader">Candidate</span>
+          <span role="columnheader">Total</span>
+          <span role="columnheader">Hard</span>
+          <span role="columnheader">Evidence</span>
+          <span role="columnheader">Topic</span>
+          <span role="columnheader">Fabula</span>
+          <span role="columnheader">Value</span>
+          <span role="columnheader">Risk</span>
+        </div>
+        {scorecard.rows.map((row) => (
+          <div className={`ai-run-scorecard-row${row.selected ? ' selected' : ''}`} role="row" key={row.candidateId}>
+            <span className="ai-run-scorecard-candidate" role="cell" data-label="Candidate">
+              <strong>{row.title}</strong>
+              <code>{row.candidateId}</code>
+              {row.selected ? <em>selected</em> : null}
+            </span>
+            <span className="total" role="cell" data-label="Total">{row.total}</span>
+            <span role="cell" data-label="Hard">{row.hardConstraintFit}</span>
+            <span role="cell" data-label="Evidence">{row.evidenceGrounding}</span>
+            <span role="cell" data-label="Topic">{row.topicFit}</span>
+            <span role="cell" data-label="Fabula">{row.fabulaFit}</span>
+            <span role="cell" data-label="Value">{row.audienceValue}</span>
+            <span role="cell" data-label="Risk">{row.riskPenalty}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
