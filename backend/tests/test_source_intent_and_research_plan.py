@@ -70,9 +70,13 @@ def test_source_research_plan_service_creates_openrouter_ai_run(tmp_path) -> Non
         openrouter_adapter=SuccessfulAdapter(),
     )
 
-    result = service.create(request=make_request(["найти: мнение лидеров мнений по этой теме"]), context_artifact={"brief": {"title": "Post"}})
+    result = service.create(
+        request=make_request(["найти: мнение лидеров мнений по этой теме"]),
+        context_artifact={"brief": {"title": "Post"}, "sourceIntentDefaults": {"sourcesOrigin": "fabulaManual"}},
+    )
 
     assert result.artifact_payload["source"] == "openrouter"
+    assert result.artifact_payload["sourcesOrigin"] == "fabulaManual"
     assert result.artifact_payload["fallbackUsed"] is False
     assert result.artifact_payload["researchPlan"]["researchQuestions"]
     run = ai_service(tmp_path).get_run(result.ai_run_id or "")

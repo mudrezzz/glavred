@@ -24,6 +24,7 @@ import {
 } from '../../domain/editorialWorkspace';
 import { WeightRangeEditor } from '../../shared/ui/WeightRangeEditor';
 import { FabulaSizeIntentSelect, fabulaSizeIntentLabel } from './FabulaSizeIntentSelect';
+import { FabulaResearchStrategyEditor } from './FabulaResearchStrategyEditor';
 import { EditorialValidationPanel, ValidationBadge } from './ValidationPanel';
 import {
   EDITORIAL_TABS,
@@ -211,6 +212,8 @@ export function FabulaListView({
                       <dd>{fabula.rules.join('; ')}</dd>
                       <dt>Масштаб</dt>
                       <dd>{fabulaSizeIntentLabel(fabula.sizeIntent)}</dd>
+                      <dt>Источники</dt>
+                      <dd>{fabula.researchStrategy.mode === 'auto' ? 'Автоопределение' : `${fabula.researchStrategy.instructions.length} поруч.`}</dd>
                       <dt>Применимые темы</dt>
                       <dd>{topics.filter((topic) => isMatrixEnabled(topic.id, fabula.id, matrix)).map((topic) => topic.title).join(', ')}</dd>
                     </dl>
@@ -261,6 +264,7 @@ function FabulaEditor({
         </label>
         <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
         <FabulaSizeIntentSelect fabula={fabula} onChange={onChange} />
+        <FabulaResearchStrategyEditor fabula={fabula} onChange={onChange} />
         <label>
           Структура
           <textarea value={fabula.structure.join('\n')} onChange={(event) => onChange({ ...fabula, structure: splitLines(event.target.value) })} />

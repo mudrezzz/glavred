@@ -4,10 +4,18 @@ import type {
   Fabula,
   InsightCard,
   PostBrief,
+  PostCandidate,
+  SourceSignal,
   Topic,
   TopicFabulaMatrixEntry
 } from '../domain/editorialWorkspace';
 import { selectCompatibleTopicFabula } from '../domain/editorialWorkspace';
+import { createBriefResearchSources } from './fabulaResearchStrategyService';
+
+export type PostBriefContextOptions = {
+  candidate?: PostCandidate | null;
+  sourceSignal?: SourceSignal | null;
+};
 
 export function createPostBrief(
   planItem: ContentPlanItem,
@@ -15,7 +23,8 @@ export function createPostBrief(
   model: EditorialModel,
   topics: Topic[] = [],
   fabulas: Fabula[] = [],
-  matrix: TopicFabulaMatrixEntry[] = []
+  matrix: TopicFabulaMatrixEntry[] = [],
+  options: PostBriefContextOptions = {}
 ): PostBrief {
   const pair =
     planItem.topicId && planItem.fabulaId
@@ -63,7 +72,14 @@ export function createPostBrief(
       'Не уйти в академичность без практического критерия для AI PM',
       'Подтвердить публичными примерами или явно пометить наблюдения как research notes автора'
     ],
-    sources: [planItem.platform, 'Авторская память', 'Customer interviews о внедрении AI-функций'],
+    sources: createBriefResearchSources({
+      planItem,
+      insight,
+      topic,
+      fabula,
+      candidate: options.candidate,
+      sourceSignal: options.sourceSignal
+    }),
     approvalStatus: 'draft',
     topicId: topic?.id ?? insight.topicId,
     topicTitle: topic?.title ?? insight.topicTitle,

@@ -1216,6 +1216,35 @@ button:disabled {
   gap: 12px;
 }
 
+.fabula-research-editor {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.field-group-header {
+  display: grid;
+  gap: 3px;
+}
+
+.field-group-header span {
+  color: var(--ink-900);
+  font: var(--ui-md);
+  font-weight: 700;
+}
+
+.field-group-header small {
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.fabula-research-editor .tabs {
+  margin-bottom: 0;
+}
+
 .editorial-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;

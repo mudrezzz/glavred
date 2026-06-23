@@ -215,6 +215,12 @@ hints, and exclusions become a research plan before writing. The next backend sl
 execute that plan through public evidence extraction, enriched `SourceLedger`, and
 `EvidenceSynthesis`.
 
+Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
+configured research instructions into new work briefs, while auto fabulas create
+readable prompts from the post context. `PostBrief.sources` remains the approved
+per-post override and is the only source input consumed by the DraftRun `sourceIntent`
+step.
+
 Run tests:
 
 ```bash

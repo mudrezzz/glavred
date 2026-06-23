@@ -185,6 +185,14 @@ export const demoFabulas: Fabula[] = [
     rules: ['Держать тон исследования', 'Не превращать вывод в чеклист без позиции'],
     weightRange: { min: 25, max: 35 },
     sizeIntent: 'standard',
+    researchStrategy: {
+      mode: 'manual',
+      instructions: [
+        'найти: публичные кейсы или интервью, где AI-фича ломается после демо на этапе adoption',
+        'проверить: свежие наблюдения про evals, trust loop и workflow improvement',
+        'не использовать: vendor blogs без независимых данных'
+      ]
+    },
     status: 'active'
   },
   {
@@ -197,6 +205,7 @@ export const demoFabulas: Fabula[] = [
     rules: ['Не высмеивать аудиторию', 'Давать замену мифу'],
     weightRange: { min: 15, max: 25 },
     sizeIntent: 'standard',
+    researchStrategy: { mode: 'auto', instructions: [] },
     status: 'active'
   },
   {
@@ -209,6 +218,7 @@ export const demoFabulas: Fabula[] = [
     rules: ['Фреймворк должен быть применим за один рабочий созвон', 'Не добавлять декоративные шаги'],
     weightRange: { min: 20, max: 30 },
     sizeIntent: 'deep',
+    researchStrategy: { mode: 'auto', instructions: [] },
     status: 'active'
   },
   {
@@ -221,6 +231,7 @@ export const demoFabulas: Fabula[] = [
     rules: ['Не раскрывать приватные детали', 'Фокусироваться на системе, а не на виноватых'],
     weightRange: { min: 10, max: 20 },
     sizeIntent: 'standard',
+    researchStrategy: { mode: 'auto', instructions: [] },
     status: 'active'
   },
   {
@@ -233,6 +244,13 @@ export const demoFabulas: Fabula[] = [
     rules: ['Позиция должна быть острой, но не декларативной', 'Добавлять границы применимости'],
     weightRange: { min: 10, max: 20 },
     sizeIntent: 'compact',
+    researchStrategy: {
+      mode: 'manual',
+      instructions: [
+        'найти: сильные публичные позиции практиков, которые спорят с AI-first подходом',
+        'проверить: внешние данные или кейсы про ограничения тезиса'
+      ]
+    },
     status: 'active'
   }
 ];

@@ -1,4 +1,5 @@
 import type { AuthorPositionAssertion } from '../author-memory/types';
+import type { FabulaResearchStrategy } from './researchStrategy';
 import type { FabulaSizeIntent } from '../planning/publicationSize';
 import type { EditorialEntityStatus, WeightRange } from '../shared/types';
 
@@ -142,6 +143,7 @@ export interface Fabula {
   rules: string[];
   weightRange: WeightRange;
   sizeIntent: FabulaSizeIntent;
+  researchStrategy: FabulaResearchStrategy;
   status: EditorialEntityStatus;
 }
 

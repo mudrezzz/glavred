@@ -15,6 +15,7 @@ import {
   type WorkspaceState,
   type WorkspaceStore
 } from '../domain/editorialWorkspace';
+import { normalizeFabulaResearchStrategy } from '../domain/editorial-model/researchStrategy';
 import { normalizeFabulaSizeIntent } from '../domain/planning/publicationSize';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
@@ -56,7 +57,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   const fabulas = (saved.fabulas ?? demo.fabulas).map((fabula) => ({
     ...fabula,
     weightRange: normalizeWeightRange(fabula.weightRange),
-    sizeIntent: normalizeFabulaSizeIntent(fabula.sizeIntent)
+    sizeIntent: normalizeFabulaSizeIntent(fabula.sizeIntent),
+    researchStrategy: normalizeFabulaResearchStrategy(fabula.researchStrategy)
   }));
   const contentPlanItems = (saved.contentPlanItems ?? (saved.contentPlanItem ? [saved.contentPlanItem] : demo.contentPlanItems)).map(
     (item) => ({

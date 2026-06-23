@@ -30,6 +30,7 @@ def build_draft_run_context_summary(
             },
             "authorPositionEvidence": {"total": 0, "items": []},
             "publicationSize": {},
+            "sourceIntentDefaults": {},
             "missingContext": [],
             "compatibility": {"briefOnly": True},
         }
@@ -103,6 +104,7 @@ def build_draft_run_context_summary(
             "proofRequirements",
             "rules",
             "weightRange",
+            "researchStrategy",
         ),
         publisher_rules=_group_rules(context.publisher_rules),
         author_position_evidence={
@@ -110,6 +112,7 @@ def build_draft_run_context_summary(
             "items": context.author_position_evidence[:10],
         },
         publication_size=context.publication_size,
+        source_intent_defaults=context.source_intent_defaults,
         missing_context=context.missing_context,
     )
     return summary.to_payload()

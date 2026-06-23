@@ -7,6 +7,7 @@ import type {
   TopicFabulaMatrixEntry,
   TopicFabulaWarning,
 } from './types';
+import { defaultFabulaResearchStrategy, normalizeFabulaResearchStrategy } from './researchStrategy';
 
 // Topic/fabula catalog transitions preserve matrix compatibility and advisory weights.
 export function normalizeWeightRange(range: WeightRange): WeightRange {
@@ -42,6 +43,7 @@ export function createFabulaDraft(): Fabula {
     rules: [],
     weightRange: { min: 5, max: 15 },
     sizeIntent: 'standard',
+    researchStrategy: { ...defaultFabulaResearchStrategy, instructions: [] },
     status: 'active'
   };
 }
@@ -51,7 +53,7 @@ export function addTopic(topics: Topic[], topic: Topic): Topic[] {
 }
 
 export function addFabula(fabulas: Fabula[], fabula: Fabula): Fabula[] {
-  return [...fabulas, { ...fabula, weightRange: normalizeWeightRange(fabula.weightRange), sizeIntent: fabula.sizeIntent ?? 'standard' }];
+  return [...fabulas, { ...fabula, weightRange: normalizeWeightRange(fabula.weightRange), sizeIntent: fabula.sizeIntent ?? 'standard', researchStrategy: normalizeFabulaResearchStrategy(fabula.researchStrategy) }];
 }
 
 export function deleteTopic(

@@ -378,12 +378,17 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   `publicationSizeContract` with target length range, hard max, paragraph/section
   range, density, and fabula scale. The main editor will keep
   showing compact status and warnings; full trace details stay in `/ai-runs`.
-- The `Источники` field in `Фабула` is now shown as `Источники и исследовательские
-  поручения`. It accepts URLs, source names, and plain instructions such as "нужно
-  мнение лидеров мнений по этой теме", plus explicit prefixes like `url:`, `найти:`,
-  `проверить:`, and `не использовать:`. DraftRuns normalize those lines into source
-  intent and a research plan before writing. The next backend slice will execute that
-  plan through retrieval/extraction and merge public evidence into the SourceLedger.
+- Research defaults are configured in `Редакционная модель -> Фабулы` as
+  `Исследовательская стратегия`. `Автоопределение` lets Glavred create human-readable
+  research instructions from the post context; `Задать вручную` copies the fabula's
+  instructions into new work briefs.
+- In `Редактура -> Рабочий стол -> Фабула`, the same field is shown as
+  `Источники и исследовательские поручения`. It is the final per-post override and
+  accepts URLs, source names, and plain instructions such as "нужно мнение лидеров
+  мнений по этой теме", plus prefixes like `url:`, `найти:`, `проверить:`, and
+  `не использовать:`. DraftRuns normalize those approved lines into source intent and
+  a research plan before writing. The next backend slice will execute that plan
+  through retrieval/extraction and merge public evidence into the SourceLedger.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

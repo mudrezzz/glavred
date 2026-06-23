@@ -326,7 +326,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
 
-  if (sourceIntent) sections.push(sourceIntentSection(sourceIntent));
+  if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) {
@@ -358,12 +358,13 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   return sections;
 }
 
-function sourceIntentSection(payload: Record<string, unknown>): TraceSemanticSection {
+function sourceIntentSection(payload: Record<string, unknown>, sourcesOrigin?: string): TraceSemanticSection {
   const items = asArray(payload.items) ?? [];
   return {
     id: 'sourceIntent',
     title: 'Source intent',
     fields: compactFields([
+      ['Sources origin', sourcesOrigin],
       ['Items', items.length],
       ['URLs', items.filter((item) => asRecord(item)?.kind === 'url').map(sourceIntentValue)],
       ['Research requests', items.filter((item) => asRecord(item)?.kind === 'researchRequest').map(sourceIntentValue)],

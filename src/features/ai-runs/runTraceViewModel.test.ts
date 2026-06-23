@@ -82,6 +82,13 @@ describe('buildRunTraceViewModel', () => {
   it('pretty prints JSON strings for readable message detail', () => {
     expect(prettyTraceValue('{"brief":{"title":"Debug"}}')).toContain('\n  "brief"');
   });
+
+  it('shows source origin in source intent semantic section', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const sourceIntent = viewModel.semanticSections.find((section) => section.id === 'sourceIntent');
+
+    expect(sourceIntent?.fields).toContainEqual({ label: 'Sources origin', value: 'fabulaManual' });
+  });
 });
 
 function makeDraftRunBundle(): RunTraceBundle {
@@ -106,6 +113,7 @@ function makeDraftRunBundle(): RunTraceBundle {
           status: 'succeeded',
           title: 'Source Intent',
           artifactPayload: {
+            sourcesOrigin: 'fabulaManual',
             sourceIntent: {
               items: [
                 { id: 'source-intent-1', kind: 'researchRequest', value: 'мнение лидеров мнений' },

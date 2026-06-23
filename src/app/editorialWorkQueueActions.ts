@@ -48,15 +48,17 @@ export function buildApprovePlanSlotPatch(workspace: WorkspaceState, itemId: str
   }
 
   const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
+  const linkedCandidate = findLinkedPostCandidate(workspace, null, contentPlanItem);
+  const linkedSignal = findSourceSignalForBrief(workspace, linkedCandidate, contentPlanItem);
   const postBrief = createPostBrief(
     contentPlanItem,
     insightCard,
     workspace.editorialModel,
     workspace.topics,
     workspace.fabulas,
-    workspace.topicFabulaMatrix
+    workspace.topicFabulaMatrix,
+    { candidate: linkedCandidate, sourceSignal: linkedSignal }
   );
-  const linkedCandidate = findLinkedPostCandidate(workspace, null, contentPlanItem);
   const editorialWorkItem = createEditorialWorkItem(contentPlanItem, { brief: postBrief }, linkedCandidate?.id);
   const editorialWorkItems = upsertEditorialWorkItem(workspace.editorialWorkItems, editorialWorkItem);
 
@@ -118,13 +120,16 @@ export function buildReturnEditorialWorkItemToCandidatesPatch(
 
 export function buildPrepareBriefPatch(workspace: WorkspaceState, item: ContentPlanItem): Partial<WorkspaceState> {
   const insightCard = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
+  const linkedCandidate = findLinkedPostCandidate(workspace, null, item);
+  const linkedSignal = findSourceSignalForBrief(workspace, linkedCandidate, item);
   const postBrief = createPostBrief(
     item,
     insightCard,
     workspace.editorialModel,
     workspace.topics,
     workspace.fabulas,
-    workspace.topicFabulaMatrix
+    workspace.topicFabulaMatrix,
+    { candidate: linkedCandidate, sourceSignal: linkedSignal }
   );
   const editorialWorkItem = createEditorialWorkItem(
     item,
@@ -136,7 +141,7 @@ export function buildPrepareBriefPatch(workspace: WorkspaceState, item: ContentP
       finalText: null,
       visual: null
     },
-    workspace.postCandidate?.id
+    linkedCandidate?.id ?? workspace.postCandidate?.id
   );
 
   return {
@@ -154,6 +159,15 @@ export function buildPrepareBriefPatch(workspace: WorkspaceState, item: ContentP
     editorialLearningNote: null,
     activeSection: 'edit'
   };
+}
+
+function findSourceSignalForBrief(
+  workspace: WorkspaceState,
+  candidate: PostCandidate | null,
+  item: ContentPlanItem
+) {
+  const signalId = candidate?.sourceSignalId ?? item.sourceSignalId ?? workspace.sourceSignal?.id;
+  return workspace.sourceSignals.find((signal) => signal.id === signalId) ?? workspace.sourceSignal ?? null;
 }
 
 export function buildSelectEditorialWorkItemPatch(

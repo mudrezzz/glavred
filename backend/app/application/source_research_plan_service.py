@@ -47,6 +47,7 @@ class SourceResearchPlanService:
     def create(self, *, request: DraftGenerationRequest, context_artifact: dict[str, Any]) -> DraftPlanningStepResult:
         source_intent = self._normalizer.normalize(request)
         source_intent_payload = source_intent.to_payload()
+        source_origin = _source_origin(context_artifact, request.brief.sources)
         messages = build_source_research_plan_messages(context_artifact=context_artifact, source_intent=source_intent_payload)
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
@@ -59,7 +60,7 @@ class SourceResearchPlanService:
             source_intent=source_intent_payload,
         )
         if not status.configured:
-            return self._fallback(source_intent_payload, source_intent, request_payload, provider, model, "OpenRouter is not configured")
+            return self._fallback(source_intent_payload, source_intent, request_payload, provider, model, "OpenRouter is not configured", source_origin)
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
@@ -80,11 +81,11 @@ class SourceResearchPlanService:
                 fallback_used=False,
             )
             return DraftPlanningStepResult(
-                artifact_payload=self._artifact("openrouter", source_intent_payload, plan_payload, run.id, fallback_used=False),
+                artifact_payload=self._artifact("openrouter", source_origin, source_intent_payload, plan_payload, run.id, fallback_used=False),
                 ai_run_id=run.id,
             )
         except Exception as exc:
-            return self._fallback(source_intent_payload, source_intent, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc))
+            return self._fallback(source_intent_payload, source_intent, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc), source_origin)
 
     def _fallback(
         self,
@@ -94,6 +95,7 @@ class SourceResearchPlanService:
         provider: AiRunProvider,
         model: str | None,
         error: str,
+        source_origin: str,
     ) -> DraftPlanningStepResult:
         plan_payload = self._deterministic_plan_service.create(source_intent).to_payload()
         run = self._ai_run_service.create_completed_run(
@@ -110,13 +112,14 @@ class SourceResearchPlanService:
             error=error,
         )
         return DraftPlanningStepResult(
-            artifact_payload=self._artifact("deterministicFallback", source_intent_payload, plan_payload, run.id, fallback_used=True, error=error),
+            artifact_payload=self._artifact("deterministicFallback", source_origin, source_intent_payload, plan_payload, run.id, fallback_used=True, error=error),
             ai_run_id=run.id,
         )
 
     def _artifact(
         self,
         source: str,
+        sources_origin: str,
         source_intent: dict[str, Any],
         research_plan: dict[str, Any],
         ai_run_id: str,
@@ -124,7 +127,7 @@ class SourceResearchPlanService:
         fallback_used: bool,
         error: str | None = None,
     ) -> dict[str, Any]:
-        artifact = {"source": source, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "sourceIntent": source_intent, "researchPlan": research_plan}
+        artifact = {"source": source, "sourcesOrigin": sources_origin, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "sourceIntent": source_intent, "researchPlan": research_plan}
         if error:
             artifact["error"] = error
         return artifact
@@ -136,3 +139,10 @@ class SourceResearchPlanService:
             if token:
                 message = message.replace(token, "[redacted]")
         return f"{error.__class__.__name__}: {message[:180]}"
+
+
+def _source_origin(context_artifact: dict[str, Any], sources: list[str]) -> str:
+    defaults = context_artifact.get("sourceIntentDefaults")
+    if isinstance(defaults, dict) and isinstance(defaults.get("sourcesOrigin"), str):
+        return defaults["sourcesOrigin"]
+    return "empty" if not sources else "userOverride"

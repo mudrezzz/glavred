@@ -473,6 +473,11 @@ Rule-registry ownership is intentionally split:
 Slice 2.12.3 implements `SourceIntent` and `ResearchPlan`. Approved brief sources are
 now normalized before feasibility: URLs, named sources, human-language research
 requests, proof needs, framing hints, and exclusions become a typed research plan.
+Slice 2.12.3.1 moves source defaults up into `Fabula.researchStrategy`: editorial
+model fabulas can use `auto` source discovery hints or manual instructions, while
+`PostBrief.sources` remains the approved runtime override for one post. DraftRun
+context carries the fabula policy for diagnostics, but the `sourceIntent` step still
+uses only the approved `PostBrief.sources`.
 The runner still needs the public-evidence retrieval/extraction layer before
 validators.
 

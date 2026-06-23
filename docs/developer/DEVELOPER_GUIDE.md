@@ -1112,6 +1112,11 @@ The next artifacts must make candidate validation meaningful:
   human-language research requests, required proof, exclusions, and framing-only
   material. Do not treat sources as one prompt string or pass a plain request directly
   as search keywords.
+- `Fabula.researchStrategy` is the editorial-model default policy for those sources:
+  `auto` creates human-readable research instructions when a work brief is created,
+  while `manual` copies configured instructions into the brief. `PostBrief.sources`
+  remains the runtime input; if an editor changes it in `Редактура`, that override is
+  what the backend receives.
 - `ResearchPlan` decides what to read, search, verify, or avoid before writing.
 - Public evidence extraction must create `PublicEvidenceItem` records with provenance,
   confidence, allowed-use policy, and risk notes.

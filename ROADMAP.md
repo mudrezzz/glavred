@@ -3679,6 +3679,46 @@ Status:
   - Source classification can be too heuristic; keep it conservative and visible in
     trace.
 
+### Slice 2.12.3.1: Fabula Research Strategy Defaults
+
+- Status: Done
+- Goal: Move source/research defaults from per-post editing into
+  `Редакционная модель -> Фабулы`, while keeping `Редактура -> Фабула` as the final
+  per-post override.
+- User value: The author does not have to retype the same source strategy for every
+  post, but can still override the exact research instructions before generation.
+- Scope:
+  - Add `Fabula.researchStrategy` with `auto` and `manual` modes.
+  - Normalize legacy fabulas with auto research strategy defaults.
+  - Add a research strategy editor to `Редакционная модель -> Фабулы`.
+  - Seed new `PostBrief.sources` from fabula manual instructions or deterministic
+    auto instructions based on topic, fabula, candidate, signal, and proof needs.
+  - Keep `PostBrief.sources: string[]` as the approved runtime input for DraftRun.
+  - Add trace diagnostics for source origin: `fabulaManual`, `fabulaAuto`,
+    `userOverride`, or `empty`.
+- Out of scope:
+  - Real web search.
+  - URL fetching.
+  - Retrieval/extraction.
+  - New DraftRun steps or SQLite schema changes.
+- Architecture impact:
+  - `Fabula.researchStrategy` is default policy.
+  - `PostBrief.sources` is the concrete approved override for one post.
+  - `SourceIntent` continues to consume only approved brief sources.
+- Tests:
+  - Legacy fabula normalization. Done.
+  - Manual and auto research source seeding. Done.
+  - Fabula editor mode/instructions behavior. Done.
+  - DraftRun context and trace origin diagnostics. Done.
+- Docs:
+  - README, SAO, developer guide, user guide, demo docs, and research ADR updated.
+    Done.
+- Acceptance criteria:
+  - Research defaults can be configured on a fabula. Done.
+  - New work briefs receive manual or auto sources. Done.
+  - The editor can override sources before DraftRun. Done.
+  - Completed 2026-06-23.
+
 ### Slice 2.12.4: Public Evidence Retrieval Foundation
 
 - Status: Ready
@@ -3911,6 +3951,10 @@ Status:
 - Slice 2.12: Contract-Based Rhetorical Plans. Completed 2026-06-23.
 - Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline. Completed
   2026-06-23.
+- Slice 2.12.2: Draft Candidate Scoring and Selection Trace. Completed 2026-06-23.
+- Slice 2.12.2.1: Draft Candidate Scorecard Trace UI. Completed 2026-06-23.
+- Slice 2.12.3: Source Intent and Research Plan. Completed 2026-06-23.
+- Slice 2.12.3.1: Fabula Research Strategy Defaults. Completed 2026-06-23.
 
 ## Blocked Items
 

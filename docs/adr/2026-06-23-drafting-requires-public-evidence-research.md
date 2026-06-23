@@ -62,6 +62,12 @@ proof, exclusions, and framing-only sources. A plain request like "нужно м
 лидеров мнений по этой теме" must become a research plan before any search adapter
 sees it; it must not be sent directly as raw keywords.
 
+Slice 2.12.3.1 clarifies where those sources start. `Fabula.researchStrategy` is the
+editorial-model default policy: manual mode copies configured instructions into a
+new work brief, and auto mode creates readable research prompts from the current
+topic, fabula, candidate, signal, and proof requirements. `PostBrief.sources` remains
+the approved runtime input and may override the fabula default for one post.
+
 Public evidence enters drafting through typed artifacts:
 
 - `ResearchPlan`: what to check, read, search, or verify.

@@ -49,6 +49,7 @@ export type {
   ValidatorSuggestionSeverity,
   ValidatorTargetType,
 } from './editorial-model/types';
+export type { FabulaResearchStrategy, FabulaResearchStrategyMode } from './editorial-model/researchStrategy';
 export type { BroadcastGridDemandSummary, ContentPlanItem, ContentPlanSettings, InsightCard, PlanWeightWarning, PlanningPeriod, PublishSlot, PublishWindow, SignalSelectionPolicy } from './planning/types';
 export type { PostCandidate } from './post-candidates/types';
 export type {
@@ -156,7 +157,6 @@ import type {
   SourceSignal,
 } from './signals/types';
 import type { WorkspaceState } from './workspace/types';
-
 export * from './editorial-model/transitions';
 export * from './planning/settings';
 export * from './planning/schedule';

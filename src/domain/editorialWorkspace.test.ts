@@ -701,7 +701,10 @@ describe('editorial workspace domain', () => {
     const workspace = createDemoWorkspace();
     const insight = createInsightCard(workspace.sourceSignal, workspace.editorialModel);
     const planItem = createContentPlanItem(insight);
-    const brief = approvePostBrief(createPostBrief(planItem, insight, workspace.editorialModel));
+    const brief = approvePostBrief({
+      ...createPostBrief(planItem, insight, workspace.editorialModel),
+      sources: ['customer interview']
+    });
     const draft = createPostDraft(brief, workspace.editorialModel);
     const checks = runEditorialChecks(draft, brief, workspace.editorialModel);
     const notes = createEditorNotes(checks);

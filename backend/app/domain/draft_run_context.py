@@ -15,6 +15,7 @@ class DraftRunContext:
     publisher_rules: list[dict[str, Any]] = field(default_factory=list)
     author_position_evidence: list[dict[str, Any]] = field(default_factory=list)
     publication_size: dict[str, Any] = field(default_factory=dict)
+    source_intent_defaults: dict[str, Any] = field(default_factory=dict)
     missing_context: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -30,6 +31,7 @@ class DraftRunContextSummary:
     publisher_rules: dict[str, Any]
     author_position_evidence: dict[str, Any]
     publication_size: dict[str, Any]
+    source_intent_defaults: dict[str, Any]
     missing_context: list[dict[str, Any]]
 
     def to_payload(self) -> dict[str, Any]:
@@ -44,5 +46,6 @@ class DraftRunContextSummary:
             "publisherRules": self.publisher_rules,
             "authorPositionEvidence": self.author_position_evidence,
             "publicationSize": self.publication_size,
+            "sourceIntentDefaults": self.source_intent_defaults,
             "missingContext": self.missing_context,
         }

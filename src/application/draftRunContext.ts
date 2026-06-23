@@ -1,6 +1,7 @@
 import type { WorkspaceState } from '../domain/editorialWorkspace';
 import { findLinkedPostCandidate } from './postCandidateLinking';
 import { buildPublicationSizeContext } from './draftRunPublicationContext';
+import { buildSourceIntentDefaults } from './draftRunSourceIntentContext';
 
 export type DraftRunMissingContext = {
   entity: string;
@@ -20,6 +21,7 @@ export type DraftRunContextSnapshot = {
   publisherRules: Record<string, unknown>[];
   authorPositionEvidence: Record<string, unknown>[];
   publicationSize: Record<string, unknown>;
+  sourceIntentDefaults: Record<string, unknown>;
   missingContext: DraftRunMissingContext[];
 };
 
@@ -77,8 +79,9 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
         confidence: assertion.confidence,
         status: assertion.status,
         evidence: assertion.evidence
-      })),
+    })),
     publicationSize,
+    sourceIntentDefaults: buildSourceIntentDefaults(workspace, workItem, planSlot, candidate, sourceSignal, topic, fabula),
     missingContext
   };
 }
@@ -288,6 +291,7 @@ function compactFabula(fabula: Fabula) {
     rules: fabula.rules,
     weightRange: fabula.weightRange,
     sizeIntent: fabula.sizeIntent,
+    researchStrategy: fabula.researchStrategy,
     status: fabula.status
   };
 }

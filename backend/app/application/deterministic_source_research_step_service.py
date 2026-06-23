@@ -21,6 +21,7 @@ class DeterministicSourceResearchStepService:
         return DraftPlanningStepResult(
             artifact_payload={
                 "source": "deterministicFallback",
+                "sourcesOrigin": _source_origin(context_artifact, request.brief.sources),
                 "aiRunId": None,
                 "fallbackUsed": True,
                 "sourceIntent": source_intent.to_payload(),
@@ -29,3 +30,10 @@ class DeterministicSourceResearchStepService:
             },
             ai_run_id=None,
         )
+
+
+def _source_origin(context_artifact: dict[str, Any], sources: list[str]) -> str:
+    defaults = context_artifact.get("sourceIntentDefaults")
+    if isinstance(defaults, dict) and isinstance(defaults.get("sourcesOrigin"), str):
+        return defaults["sourcesOrigin"]
+    return "empty" if not sources else "userOverride"

@@ -264,6 +264,11 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     be written before validators/revision. `PostContract.publicationSizeContract`
     shows the resolved size profile, target range, hard max, paragraph/section range,
     density, and fabula scale.
+    Demo fabulas include a research strategy default: manual strategies copy their
+    instructions into a new work brief, while auto strategies create readable research
+    prompts from topic, fabula, candidate, signal, and proof needs. The workbench
+    `Фабула -> Источники и исследовательские поручения` field remains the final
+    per-post override.
     `Фабула -> Источники` is now shown as source intent: URLs, source names, proof
     requests, exclusions, and human-language instructions become a local research plan.
     Upcoming public-evidence slices execute that plan, extract external evidence, merge

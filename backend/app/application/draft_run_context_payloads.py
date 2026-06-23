@@ -19,9 +19,9 @@ def context_from_payload(payload: dict[str, Any]) -> DraftRunContext | None:
         publisher_rules=_list_of_dicts(raw_context.get("publisherRules")),
         author_position_evidence=_list_of_dicts(raw_context.get("authorPositionEvidence")),
         publication_size=_dict_or_empty(raw_context.get("publicationSize")),
+        source_intent_defaults=_dict_or_empty(raw_context.get("sourceIntentDefaults")),
         missing_context=_list_of_dicts(raw_context.get("missingContext")),
     )
-
 
 def context_to_payload(context: DraftRunContext) -> dict[str, Any]:
     return {
@@ -36,9 +36,9 @@ def context_to_payload(context: DraftRunContext) -> dict[str, Any]:
         "publisherRules": context.publisher_rules,
         "authorPositionEvidence": context.author_position_evidence,
         "publicationSize": context.publication_size,
+        "sourceIntentDefaults": context.source_intent_defaults,
         "missingContext": context.missing_context,
     }
-
 
 def context_input_summary(context: DraftRunContext) -> dict[str, Any]:
     return {
@@ -51,9 +51,9 @@ def context_input_summary(context: DraftRunContext) -> dict[str, Any]:
         "publisherRuleCount": len(context.publisher_rules),
         "authorEvidenceCount": len(context.author_position_evidence),
         "hasPublicationSize": bool(context.publication_size),
+        "hasSourceIntentDefaults": bool(context.source_intent_defaults),
         "missingContextCount": len(context.missing_context),
     }
-
 
 def _dict_or_none(value: Any) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
