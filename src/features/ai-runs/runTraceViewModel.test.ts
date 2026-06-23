@@ -11,7 +11,32 @@ describe('buildRunTraceViewModel', () => {
     expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-material');
     expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-plans');
     expect(viewModel.timeline[6].childCalls[0].id).toBe('ai-candidate');
+    expect(viewModel.timeline[6].childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
+    expect(viewModel.timeline[6].childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
     expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('3');
+  });
+
+  it('expands draft candidates, scoring and selection as readable trace nodes', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const draftStep = viewModel.timeline.find((step) => step.key === 'draft');
+
+    expect(draftStep?.childCalls.map((call) => call.title)).toEqual([
+      'Draft candidates',
+      'Кандидат 1: Candidate · выбран',
+      'Кандидат 2: Alternative',
+      'Скоринг кандидатов',
+      'Выбор итогового драфта'
+    ]);
+    expect(viewModel.details.find((detail) => detail.id === 'draft-scorecard-detail')?.summary).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Selected candidate', value: 'candidate-1' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'draft-selection-detail')?.summary).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'Selected title', value: 'Candidate' })
+      ])
+    );
   });
 
   it('moves material plan, strategy candidates and selected draft into semantic sections', () => {
@@ -23,8 +48,9 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Post contract');
     expect(titles).toContain('Rule registry');
     expect(titles).toContain('Rhetorical plan 1');
-    expect(titles).toContain('Draft candidate 1');
-    expect(titles).toContain('Candidate selection');
+    expect(titles).toContain('Кандидат 1: Candidate · выбран');
+    expect(titles).toContain('Draft scorecard');
+    expect(titles).toContain('Selected draft candidate');
     expect(titles).toContain('Selected draft');
   });
 
@@ -161,9 +187,48 @@ function makeDraftRunBundle(): RunTraceBundle {
               rhetoricalPlanId: 'research',
               title: 'Candidate',
               body: 'Body',
+              rationale: 'Best grounded draft',
+              source: 'openrouter',
+              fallbackUsed: false,
               aiRunId: 'ai-candidate'
+            }, {
+              id: 'candidate-2',
+              rhetoricalPlanId: 'contrast',
+              title: 'Alternative',
+              body: 'Alternative body',
+              rationale: 'Sharper but riskier',
+              risks: ['overclaiming'],
+              source: 'openrouter',
+              fallbackUsed: false,
+              aiRunId: null
             }],
-            selection: { selectedCandidateId: 'candidate-1', rationale: 'Best' }
+            selection: {
+              selectedCandidateId: 'candidate-1',
+              reason: 'Best',
+              scorecard: [
+                {
+                  candidateId: 'candidate-1',
+                  hardConstraintFit: 20,
+                  evidenceGrounding: 20,
+                  topicFit: 15,
+                  fabulaFit: 15,
+                  audienceValue: 12,
+                  riskPenalty: 2,
+                  total: 80
+                },
+                {
+                  candidateId: 'candidate-2',
+                  hardConstraintFit: 19,
+                  evidenceGrounding: 16,
+                  topicFit: 15,
+                  fabulaFit: 12,
+                  audienceValue: 12,
+                  riskPenalty: 8,
+                  total: 66
+                }
+              ],
+              unresolvedRisks: []
+            }
           },
           error: null,
           startedAt: null,

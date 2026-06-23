@@ -32,6 +32,9 @@ describe('AiRunTracePage', () => {
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-material');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-strategy');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-candidate');
+    expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Кандидат 1');
+    expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Скоринг кандидатов');
+    expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Выбор итогового драфта');
   });
 
   it('uses canonical tabs for top-level and detail switching', async () => {
@@ -70,8 +73,31 @@ describe('AiRunTracePage', () => {
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Material plan');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Rule registry');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Draft strategy');
-    expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Draft candidate 1');
+    expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Кандидат 1');
+    expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Draft scorecard');
+    expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Selected draft candidate');
     expect(screen.getByTestId('ai-run-semantic-grid')).toHaveTextContent('Selected draft');
+  });
+
+  it('opens draft scorecard and selected candidate details from the timeline', async () => {
+    setRunTraceFetchForTests(vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => draftRunResponse })
+      .mockResolvedValueOnce({ ok: true, json: async () => materialPlanAiRun })
+      .mockResolvedValueOnce({ ok: true, json: async () => strategyAiRun })
+      .mockResolvedValueOnce({ ok: true, json: async () => candidateAiRun }) as unknown as typeof fetch);
+
+    render(<AiRunTracePage />);
+
+    fireEvent.change(screen.getByLabelText('Run ID'), { target: { value: 'draft-run-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Показать трассировку/i }));
+
+    fireEvent.click(await screen.findByText('Скоринг кандидатов'));
+    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('total 80');
+    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('candidate-2');
+
+    fireEvent.click(screen.getByText('Выбор итогового драфта'));
+    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('Candidate title');
+    expect(screen.getByTestId('ai-run-detail-panel')).toHaveTextContent('Best fit');
   });
 
   it('selects a child LLM call and shows prompt messages plus provider metadata', async () => {
@@ -86,7 +112,8 @@ describe('AiRunTracePage', () => {
     fireEvent.change(screen.getByLabelText('Run ID'), { target: { value: 'draft-run-1' } });
     fireEvent.click(screen.getByRole('button', { name: /Показать трассировку/i }));
 
-    fireEvent.click(await screen.findByText('ai-candidate'));
+    const timeline = await screen.findByTestId('ai-run-timeline');
+    fireEvent.click(within(timeline).getAllByText('ai-candidate')[0]);
     const detail = screen.getByTestId('ai-run-detail-panel');
     expect(detail).toHaveTextContent('LLM call');
     expect(detail).toHaveTextContent('Return JSON');
@@ -240,8 +267,47 @@ const draftRunResponse = {
         weaknesses: ['needs source'],
         source: 'openrouter',
         aiRunId: 'ai-candidate'
+      }, {
+        id: 'candidate-2',
+        direction: { id: 'contrast', label: 'Contrast' },
+        rhetoricalPlanId: 'contrast',
+        title: 'Alternative candidate',
+        body: 'Alternative body',
+        rationale: 'Stronger contrast, weaker evidence.',
+        usedEvidence: ['pilot usage'],
+        ruleCoverage: ['topic fit'],
+        risks: ['claim risk', 'tone risk'],
+        weaknesses: ['needs more source'],
+        source: 'openrouter',
+        aiRunId: null
       }],
-      selection: { selectedCandidateId: 'candidate-1', rationale: 'Best fit', scorecard: { topicFit: 90 } }
+      selection: {
+        selectedCandidateId: 'candidate-1',
+        reason: 'Best fit',
+        scorecard: [
+          {
+            candidateId: 'candidate-1',
+            hardConstraintFit: 20,
+            evidenceGrounding: 20,
+            topicFit: 16,
+            fabulaFit: 16,
+            audienceValue: 12,
+            riskPenalty: 4,
+            total: 80
+          },
+          {
+            candidateId: 'candidate-2',
+            hardConstraintFit: 18,
+            evidenceGrounding: 16,
+            topicFit: 16,
+            fabulaFit: 14,
+            audienceValue: 12,
+            riskPenalty: 8,
+            total: 68
+          }
+        ],
+        unresolvedRisks: []
+      }
     }),
     makeStep('validation', { status: 'placeholder-passed' }),
     makeStep('complete', { status: 'succeeded' })

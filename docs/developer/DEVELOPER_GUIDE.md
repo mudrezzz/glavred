@@ -315,9 +315,12 @@ Frontend debug page:
   shown as errors and are not masked as another id type.
 - In parent `DraftRun` mode, the `Трейс` tab shows logical steps and all child LLM
   calls under their owning step. Click a step or child `AiRun` to inspect details.
+- The `draft` step is expanded with derived read-model nodes for each candidate,
+  deterministic scorecard, and selected draft. These nodes come from the existing
+  `draft.artifactPayload`; they do not change backend step order or SQLite schema.
 - The `Смысловой результат` tab shows material plan, strategy, draft candidates,
-  selection, and final draft artifacts. Raw JSON remains available in the detail
-  panel, but it is not the primary analysis surface.
+  scorecard, selected candidate, and final draft artifacts. Raw JSON remains
+  available in the detail panel, but it is not the primary analysis surface.
 
 How to read draft generation source:
 

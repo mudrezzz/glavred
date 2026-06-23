@@ -374,7 +374,10 @@ complete`, with LLM calls nested under the owning logical step.
 Raw JSON remains available for auditability, but it is not the primary analysis
 surface. The top-level workbench tabs are canonical `.tabs .tab`: `Трейс` for
 timeline/details and `Смысловой результат` for material plan, strategy, draft
-candidates, selection, and final draft artifacts. The page lives under
+candidates, scorecard, selected candidate, and final draft artifacts. Slice 2.12.2
+adds derived read-model nodes inside the existing `draft` step for candidates,
+deterministic scoring, and final selection; these nodes are UI/debug projections
+from `draft.artifactPayload`, not new durable backend steps. The page lives under
 `src/features/ai-runs`; the child-call HTTP mapper remains
 `src/infrastructure/aiRunTraceClient.ts`, while parent timeline aggregation lives
 in `src/infrastructure/runTraceClient.ts`. This keeps trace inspection separate

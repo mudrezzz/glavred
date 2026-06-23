@@ -5294,6 +5294,12 @@ select:focus {
   color: #2d8052;
 }
 
+.ai-run-status.selected,
+.ai-run-status.computed {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  color: var(--accent);
+}
+
 .ai-run-status.running,
 .ai-run-status.stale-running {
   border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
@@ -5337,6 +5343,10 @@ select:focus {
   cursor: pointer;
 }
 
+.ai-run-child-calls button.artifact {
+  background: var(--surface);
+}
+
 .ai-run-call-icon {
   width: 22px;
   height: 22px;
@@ -5357,9 +5367,7 @@ select:focus {
 .ai-run-call-body strong {
   color: var(--ink);
   font: 800 15px/1.25 var(--font-sans);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .ai-run-call-meta {
@@ -5374,13 +5382,19 @@ select:focus {
 .ai-run-child-calls code {
   color: var(--muted);
   font: 700 12px/1.3 var(--font-sans);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .ai-run-child-calls code {
   max-width: 100%;
+}
+
+.ai-run-call-meta small span {
+  color: var(--ink-500);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .ai-run-detail-panel {

@@ -1,5 +1,9 @@
 import type { AiRunTrace } from '../../infrastructure/aiRunTraceClient';
 import type { DraftRunTrace, DraftRunTraceStep, RunTraceBundle } from '../../infrastructure/runTraceClient';
+import {
+  buildDraftCandidateSemanticSections,
+  buildDraftCandidateTraceArtifacts
+} from './draftCandidateTraceViewModel';
 
 export type TraceRole = 'system' | 'user' | 'assistant' | 'tool' | 'unknown';
 
@@ -31,6 +35,8 @@ export type TraceChildCall = {
   status: string;
   fallback: string;
   detailId: string;
+  kind?: 'llm' | 'artifact';
+  meta?: TraceField[];
 };
 
 export type TraceTimelineStep = {
@@ -109,6 +115,8 @@ function buildDraftRunViewModel(
           detailId: detail.id
         };
       });
+    const draftCandidateTrace = buildDraftCandidateTraceArtifacts(step, childAiRuns);
+    details.push(...draftCandidateTrace.details);
     return {
       id: `step-${step.key}`,
       key: step.key,
@@ -116,7 +124,7 @@ function buildDraftRunViewModel(
       status: traceStepStatus(draftRun, step),
       error: step.error,
       detailId: stepDetail.id,
-      childCalls
+      childCalls: [...childCalls, ...draftCandidateTrace.childCalls]
     };
   });
 
@@ -306,13 +314,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (strategy) sections.push(strategySection(strategy));
   if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
-  if (candidates) {
-    candidates.forEach((item, index) => {
-      const candidateRecord = asRecord(item);
-      if (candidateRecord) sections.push(candidateSection(candidateRecord, `Draft candidate ${index + 1}`));
-    });
-  }
-  if (selection) sections.push(selectionSection(selection));
+  if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
   if (draft) {
     sections.push({
       id: 'draft',

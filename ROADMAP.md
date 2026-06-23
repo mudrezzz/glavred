@@ -3573,6 +3573,38 @@ Status:
   - Updated trace view-model to render stale-running state.
   - Completed 2026-06-23.
 
+### Slice 2.12.2: Draft Candidate Scoring and Selection Trace
+
+- Status: Done
+- Goal: Make the `draft` trace step readable as candidate generation, scoring, and
+  final selection instead of one large JSON artifact.
+- User value: A developer or operator can inspect a DraftRun and immediately see
+  which draft candidates were generated, how each candidate scored, and why the
+  selected draft won.
+- Scope:
+  - Add derived trace nodes inside the existing `draft` step for candidate artifacts,
+    deterministic scorecard, and final selection.
+  - Keep backend steps, API responses, and SQLite schema unchanged.
+  - Show candidate details, rhetorical plan linkage, source/fallback, score, risks,
+    weaknesses, and child `AiRun ID` in `/ai-runs`.
+  - Show scorecard and selected-draft rationale as separate readable detail panels.
+  - Keep raw JSON available as fallback, but make it secondary to the readable trace.
+- Out of scope:
+  - Manual candidate selection in the editor UI.
+  - New backend `DraftRunStepKey` values.
+  - Validator/revision loop behavior.
+- Architecture impact:
+  - `/ai-runs` may render derived read-model nodes for large step artifacts, but those
+    nodes do not change durable backend step order.
+  - Runtime orchestration remains `rhetoricalPlans -> draft -> validation`.
+- Done:
+  - Added feature-owned draft candidate trace read-model module.
+  - Added derived `Кандидат`, `Скоринг кандидатов`, and `Выбор итогового драфта`
+    nodes under the `draft` timeline step.
+  - Added semantic sections for draft candidates, scorecard, and selected candidate.
+  - Repaired nested trace row wrapping so provider/model/id values do not break layout.
+  - Completed 2026-06-23.
+
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
 - Status: Ready

@@ -85,7 +85,7 @@ function AiRunTimeline({
               <div className="ai-run-child-calls">
                 {step.childCalls.map((call) => (
                   <button
-                    className={selectedDetailId === call.detailId ? 'active' : ''}
+                    className={`${selectedDetailId === call.detailId ? 'active' : ''}${call.kind === 'artifact' ? ' artifact' : ''}`}
                     type="button"
                     key={call.id}
                     onClick={() => onSelect(call.detailId)}
@@ -96,9 +96,19 @@ function AiRunTimeline({
                     <span className="ai-run-call-body">
                       <strong>{call.title}</strong>
                       <span className="ai-run-call-meta">
-                        <small>{call.provider} · {call.model}</small>
-                        <small>fallback {call.fallback}</small>
-                        <code>{call.id}</code>
+                        {call.meta && call.meta.length > 0 ? (
+                          call.meta.map((field) => (
+                            <small key={field.label}>
+                              <span>{field.label}</span> {field.value}
+                            </small>
+                          ))
+                        ) : (
+                          <>
+                            <small>{call.provider} · {call.model}</small>
+                            <small>fallback {call.fallback}</small>
+                            <code>{call.id}</code>
+                          </>
+                        )}
                       </span>
                     </span>
                   </button>
