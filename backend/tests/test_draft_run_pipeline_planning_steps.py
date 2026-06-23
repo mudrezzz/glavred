@@ -25,8 +25,8 @@ def test_draft_run_pipeline_writes_planning_steps_and_ai_run_ids(tmp_path) -> No
 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.ai_run_ids == ["ai-material", "ai-strategy"]
-    assert result.steps[4].artifact_payload["materialPlan"]["availableEvidence"] == ["evidence"]
-    assert result.steps[5].artifact_payload["draftStrategy"]["thesisAngle"] == "angle"
+    assert result.steps[5].artifact_payload["materialPlan"]["availableEvidence"] == ["evidence"]
+    assert result.steps[6].artifact_payload["draftStrategy"]["thesisAngle"] == "angle"
 
 
 class StaticMaterialPlanService:

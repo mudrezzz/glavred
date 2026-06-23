@@ -27,8 +27,8 @@ def test_pipeline_writes_source_ledger_into_context_step(tmp_path) -> None:
     assert source_ledger["metadata"]["version"] == "source-ledger-v1"
     assert source_ledger["metadata"]["claimCount"] > 0
     assert "signal-author-correction" in claim_ids
-    assert len(result.steps) == 10
-    assert result.steps[6].key.value == "rhetoricalPlans"
+    assert len(result.steps) == 11
+    assert result.steps[7].key.value == "rhetoricalPlans"
 
 
 def test_pipeline_exposes_source_ledger_metadata_to_rule_pack(tmp_path) -> None:
@@ -44,7 +44,7 @@ def test_pipeline_exposes_source_ledger_metadata_to_rule_pack(tmp_path) -> None:
     result = DraftRunPipeline(repository, DeterministicDraftService()).execute(run.id)
 
     source_ledger_metadata = result.steps[0].artifact_payload["sourceLedger"]["metadata"]
-    rule_pack_metadata = result.steps[3].artifact_payload["metadata"]
+    rule_pack_metadata = result.steps[4].artifact_payload["metadata"]
 
     assert rule_pack_metadata["sourceLedgerClaimCount"] == source_ledger_metadata["claimCount"]
     assert rule_pack_metadata["sourceLedgerWarningCount"] == source_ledger_metadata["warningCount"]

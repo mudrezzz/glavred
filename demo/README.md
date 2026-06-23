@@ -247,9 +247,11 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 28. Review the automatically prepared draft checks and editor notes. During generation
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
-    summary, `sourceLedger` in step 0, feasibility in step 1, post contract in step 2,
-    compiled rule pack plus `ruleRegistrySnapshot` in step 3, material plan in step 4, draft strategy in step 5,
-    draft candidates and selection in step 6, final draft, and errors. If feasibility
+    summary, `sourceLedger` in step 0, source intent and `ResearchPlan` in step 1,
+    feasibility in step 2, post contract in step 3, compiled rule pack plus
+    `ruleRegistrySnapshot` in step 4, material plan in step 5, draft strategy in step 6,
+    rhetorical plans in step 7, draft candidates and selection in step 8, final draft,
+    and errors. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
     local fallback draft is created. A missing candidate link alone no longer blocks
     the demo when the source signal, brief evidence, topic, and fabula are present.
@@ -262,6 +264,11 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     be written before validators/revision. `PostContract.publicationSizeContract`
     shows the resolved size profile, target range, hard max, paragraph/section range,
     density, and fabula scale.
+    `Фабула -> Источники` is now shown as source intent: URLs, source names, proof
+    requests, exclusions, and human-language instructions become a local research plan.
+    Upcoming public-evidence slices execute that plan, extract external evidence, merge
+    it into `SourceLedger`, and show the synthesis in the same trace before validators
+    or directed revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

@@ -3633,9 +3633,127 @@ Status:
   - Updated trace tests so scorecard details are not rendered as `Rows` text blobs.
   - Completed 2026-06-23.
 
-### Slice 2.13: Deterministic Linter and Validator Orchestrator
+### Slice 2.12.3: Source Intent and Research Plan
+
+- Status: Done
+- Goal: Normalize approved fabula `sources` into a typed source intent and build the
+  first research plan before prose generation.
+- User value: The author can tell Glavred which external sources or public proof
+  should support the post, and the runner treats that as research work rather than as
+  another prompt paragraph.
+- Scope:
+  - Add provider-free DTOs for `SourceIntent`, `SourceIntentItem`, and `ResearchPlan`.
+  - Parse approved `PostBrief.sources` into URL seeds, search-query hints, required
+    proof, optional proof, and framing-only sources.
+  - Add a DraftRun artifact after context/source ledger that states what should be
+    read, searched, verified, or avoided.
+  - Show source intent and research plan in `/ai-runs` semantic trace.
+  - Keep actual web retrieval/search out of this slice.
+  - Add `Редактура -> Рабочий стол -> Фабула` source-intent preview while preserving
+    `PostBrief.sources: string[]`.
+- Out of scope:
+  - Real internet search.
+  - URL fetching.
+  - Evidence extraction.
+  - Validator/revision behavior.
+- Architecture impact:
+  - Approved fabula sources become typed drafting inputs, not raw prompt text.
+  - `PostBrief` keeps its current shape; the new artifacts live in DraftRun
+    application/domain modules and trace payloads.
+  - API routes remain thin; no provider or web calls in React/domain/API handlers.
+- Tests:
+  - Source strings become deterministic source intent items. Done.
+  - URL/search/framing/required proof cases are classified. Done.
+  - Research plan survives missing or empty sources. Done.
+  - DraftRun trace shows source intent and research plan. Done.
+- Docs:
+  - Update SAO/developer docs with `SourceIntent -> ResearchPlan`. Done.
+- Demo impact:
+  - Demo fabula sources can include one external proof hint, but no live web calls yet.
+- Acceptance criteria:
+  - `/ai-runs?runId=...` shows what the runner intends to research before writing.
+    Done.
+  - Draft generation still completes through existing fallback/provider paths. Done.
+  - Completed 2026-06-23.
+- Risks:
+  - Source classification can be too heuristic; keep it conservative and visible in
+    trace.
+
+### Slice 2.12.4: Public Evidence Retrieval Foundation
 
 - Status: Ready
+- Goal: Add the first retrieval/extraction foundation for approved source intent.
+- User value: Glavred starts grounding drafts in public material instead of only the
+  internal signal/fabula bundle.
+- Scope:
+  - Add provider-free `PublicEvidenceItem`.
+  - Add infrastructure boundary for URL read/search adapters.
+  - In v1, support deterministic/manual placeholder extraction from URL/search seeds
+    without relying on full production search.
+  - Store extraction results and failures in DraftRun trace.
+  - Keep secrets and browser/provider details out of domain/API handlers.
+- Out of scope:
+  - Full crawler.
+  - Full web search product UI.
+  - Paid search provider selection UX.
+  - Validators and directed revision.
+- Architecture impact:
+  - Public retrieval is infrastructure-owned; application services reconcile output.
+  - External claims must carry provenance, confidence, allowed use, and extraction
+    notes.
+- Tests:
+  - URL/search seeds create evidence items or safe extraction warnings.
+  - Adapter failures are traceable and safe.
+  - No generated draft treats failed retrieval as proof.
+- Docs:
+  - Update debug docs with public evidence trace reading.
+- Demo impact:
+  - Demo can show placeholder external evidence records in `/ai-runs`.
+- Acceptance criteria:
+  - Public evidence appears as structured trace data, not as hidden prompt context.
+- Risks:
+  - Placeholder retrieval must not pretend to be real proof; label source clearly.
+
+### Slice 2.12.5: SourceLedger External Evidence Merge
+
+- Status: Backlog
+- Goal: Merge public evidence into the source ledger and synthesize what it changes
+  before feasibility, post contract, rule registry, and drafting.
+- User value: The runner can explain which external material supports, qualifies, or
+  weakens the post before it writes candidates.
+- Scope:
+  - Add `EvidenceSynthesis`.
+  - Merge `PublicEvidenceItem` records into the existing SourceLedger.
+  - Mark external claims as `canState`, `needsQualification`,
+    `canUseAsFraming`, or `doNotState`.
+  - Feed enriched ledger/synthesis into feasibility and post contract.
+  - Show enriched ledger and synthesis in `/ai-runs`.
+- Out of scope:
+  - Validator scoring.
+  - Directed revision.
+  - Long-term source cache.
+- Architecture impact:
+  - Feasibility and PostContract must consume enriched ledger when public evidence
+    exists.
+  - Validators remain deferred until the source ledger includes both internal and
+    public claims.
+- Tests:
+  - External evidence creates ledger claims with stable ids.
+  - Weak/contradictory evidence produces warnings or qualified allowed use.
+  - Feasibility uses enriched evidence without silently bypassing missing proof.
+- Docs:
+  - Update ADR/SAO if implementation changes the accepted research layer.
+- Demo impact:
+  - Demo trace should show at least one external claim merged into ledger.
+- Acceptance criteria:
+  - DraftRun trace shows internal claims, public claims, and synthesis before
+    contract/rule planning.
+- Risks:
+  - Over-trusting external snippets; keep allowed-use conservative.
+
+### Slice 2.13: Deterministic Linter and Validator Orchestrator
+
+- Status: Backlog
 - Goal: Add hard checks and narrow validators after candidates are generated.
 - Scope:
   - Deterministic linter for length, structure, required CTA, forbidden tokens,
@@ -3813,4 +3931,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.13: Deterministic Linter and Validator Orchestrator`.
+Continue the backend track with `Slice 2.12.4: Public Evidence Retrieval Foundation`.

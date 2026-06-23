@@ -82,7 +82,7 @@ function BriefSnapshot({ brief }: { brief: PostBrief }) {
         <InfoBlock title="Примеры" items={brief.examples} wide />
         <InfoBlock title="Структура" items={brief.structure} wide />
         <InfoBlock title="Риски" items={brief.risks} wide />
-        <InfoBlock title="Источники" items={brief.sources} wide />
+        <InfoBlock title="Источники и исследовательские поручения" items={brief.sources} wide />
       </div>
     </div>
   );

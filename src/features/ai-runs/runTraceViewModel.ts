@@ -314,6 +314,8 @@ function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
 function sectionsFromPayload(step: string, payload: Record<string, unknown>): TraceSemanticSection[] {
   const sections: TraceSemanticSection[] = [];
   const materialPlan = asRecord(payload.materialPlan) ?? (step === 'materialPlan' ? asRecord(payload.result) : null);
+  const sourceIntent = asRecord(payload.sourceIntent);
+  const researchPlan = asRecord(payload.researchPlan);
   const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
   const ruleRegistry = asRecord(payload.ruleRegistrySnapshot);
@@ -324,6 +326,8 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
 
+  if (sourceIntent) sections.push(sourceIntentSection(sourceIntent));
+  if (researchPlan) sections.push(researchPlanSection(researchPlan));
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) {
     sections.push(postContractSection(postContract));
@@ -352,6 +356,45 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function sourceIntentSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const items = asArray(payload.items) ?? [];
+  return {
+    id: 'sourceIntent',
+    title: 'Source intent',
+    fields: compactFields([
+      ['Items', items.length],
+      ['URLs', items.filter((item) => asRecord(item)?.kind === 'url').map(sourceIntentValue)],
+      ['Research requests', items.filter((item) => asRecord(item)?.kind === 'researchRequest').map(sourceIntentValue)],
+      ['Proof needs', items.filter((item) => asRecord(item)?.kind === 'proofNeed').map(sourceIntentValue)],
+      ['Exclusions', items.filter((item) => asRecord(item)?.kind === 'exclusion').map(sourceIntentValue)],
+      ['Warnings', payload.warnings]
+    ])
+  };
+}
+
+function sourceIntentValue(item: unknown): unknown {
+  const record = asRecord(item);
+  return record?.instruction ?? record?.value ?? record?.raw;
+}
+
+function researchPlanSection(payload: Record<string, unknown>): TraceSemanticSection {
+  return {
+    id: 'researchPlan',
+    title: 'Research plan',
+    fields: compactFields([
+      ['Questions', payload.researchQuestions],
+      ['Source targets', payload.sourceTargets],
+      ['Verification tasks', asArray(payload.verificationTasks)?.map((item) => {
+        const task = asRecord(item);
+        return task ? `${task.kind}: ${task.instruction}` : null;
+      })],
+      ['Query candidates', payload.queryCandidates],
+      ['Exclusions', payload.exclusions],
+      ['Warnings', payload.warnings]
+    ])
+  };
 }
 
 function rhetoricalPlanSections(payload: Record<string, unknown>): TraceSemanticSection[] {
@@ -559,12 +602,15 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
   const resultPayload = aiRun.resultPayload ?? {};
   const step = stringValue(requestPayload.draftRunStep) ?? stringValue(resultPayload.draftRunStep);
   if (step === 'draftCandidate') return 'draft';
+  if (step === 'sourceIntentResearchPlan') return 'sourceIntent';
   return step ?? 'unknown';
 }
 
 function stepLabel(step: string): string {
   const labels: Record<string, string> = {
     context: 'Context',
+    sourceIntent: 'Source intent',
+    sourceIntentResearchPlan: 'Source research plan',
     feasibility: 'Feasibility',
     postContract: 'Post contract',
     rulePack: 'Rule pack',

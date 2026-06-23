@@ -55,18 +55,25 @@ revision steps call OpenRouter or another provider.
 The drafting runner should follow this staged pipeline:
 
 1. Build full context from the selected editorial work item.
-2. Compile rule packs from publisher, topic, fabula, signal, candidate, and brief
-   constraints.
-3. Create a material plan that identifies available evidence, missing evidence, risky
+2. Normalize approved-brief source requests into source intent.
+3. Build a seed source ledger from signal, candidate, brief, author correction, and
+   author-position evidence.
+4. Plan public research from source intent, source ledger, signal, fabula, and author
+   position.
+5. Read/search/extract public evidence through infrastructure adapters.
+6. Merge public evidence into an enriched source ledger and evidence synthesis.
+7. Compile rule packs from publisher, topic, fabula, signal, candidate, brief, public
+   evidence, and contract constraints.
+8. Create a material plan that identifies available evidence, missing evidence, risky
    claims, and grounding strategy.
-4. Create a draft strategy that defines thesis, opening, argument sequence,
+9. Create a draft strategy that defines thesis, opening, argument sequence,
    dramaturgy, CTA, and forbidden moves.
-5. Generate several draft candidates.
-6. Validate candidates using narrow validators.
-7. Revise failed candidates with targeted correction instructions.
-8. Stop by target score, hard-constraint failures, maximum iterations, or no-improvement
+10. Generate several draft candidates.
+11. Validate candidates using narrow validators.
+12. Revise failed candidates with targeted correction instructions.
+13. Stop by target score, hard-constraint failures, maximum iterations, or no-improvement
    rule.
-9. Select the best attempt and return traceable scorecard/warnings.
+14. Select the best attempt and return traceable scorecard/warnings.
 
 Celery and Redis are the preferred local worker/queue direction for this class of
 long-running backend work. The queue is infrastructure. Domain objects must not import
@@ -131,6 +138,10 @@ this decision with the post-2.8 quality spine:
 - lock a `PostContract` before strategy, validation, and revision;
 - only then add deterministic lint, validators, pairwise ranking, directed revision,
   regression, and human-decision learning.
+
+ADR `2026-06-23-drafting-requires-public-evidence-research` further inserts
+drafting-time public research before feasibility and validator work. Approved fabula
+sources must become source intent and public evidence artifacts, not one larger prompt.
 
 Future drafting slices must preserve that order unless `ROADMAP.md` explicitly
 records why a later stage is safe to implement earlier.

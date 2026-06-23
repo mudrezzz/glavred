@@ -899,7 +899,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> RuleRegistrySnapshot -> SourceLedger -> FeasibilityGate -> PostContract -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -912,10 +912,17 @@ Conceptual interfaces for the next implementation slices:
   timing.
 - `DraftRunContext`: selected work item plus approved brief, plan slot, post candidate,
   source signal, topic, fabula, publisher rules, and future author-memory evidence.
+- `SourceIntent`: normalized approved-brief sources, URL seeds, search hints, required
+  proof, optional proof, and framing-only material.
 - `RuleRegistrySnapshot`: selected drafting rules with ids, scope, priority, severity,
   observable criteria, validator type, examples, and repair policy.
 - `SourceLedger`: source/candidate/brief claims, provenance, confidence, allowed use,
   risks, forbidden inferences, and author corrections.
+- `ResearchPlan`: explicit read/search/verify plan before prose generation.
+- `PublicEvidenceItem`: external claim with source, confidence, allowed use, and
+  extraction notes.
+- `EvidenceSynthesis`: reconciliation of public evidence with signal, fabula, and
+  author position.
 - `FeasibilityReport`: pre-writing gate that may return feasible, feasible with
   constraints, needs research, needs human decision, or infeasible.
 - `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden moves,
@@ -1101,8 +1108,17 @@ SQLite table. The v1 ledger contains:
 
 The next artifacts must make candidate validation meaningful:
 
-- `SourceLedger` now comes before validators and stores claim ids, provenance,
-  confidence, allowed-use policy, risks, and forbidden inferences.
+- `SourceIntent` normalizes approved `PostBrief.sources` into URL seeds, source names,
+  human-language research requests, required proof, exclusions, and framing-only
+  material. Do not treat sources as one prompt string or pass a plain request directly
+  as search keywords.
+- `ResearchPlan` decides what to read, search, verify, or avoid before writing.
+- Public evidence extraction must create `PublicEvidenceItem` records with provenance,
+  confidence, allowed-use policy, and risk notes.
+- `SourceLedger` now comes before validators and stores internal plus public claim ids,
+  provenance, confidence, allowed-use policy, risks, and forbidden inferences.
+- `EvidenceSynthesis` must explain which public material confirms, qualifies,
+  contradicts, or fails to support the intended post.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1115,29 +1131,33 @@ The next artifacts must make candidate validation meaningful:
   validation, ranking, and revision steps.
 
 Do not add validator prompts that judge final text without these artifacts. They would
-not know what the text was allowed to claim or what invariants a revision must
-preserve. The next backend slice should move anonymous rule-pack constraints into a
-machine-readable rule registry snapshot with stable ids.
+not know what the text was allowed to claim, what public evidence was actually used,
+or what invariants a revision must preserve. ADR
+`2026-06-23-drafting-requires-public-evidence-research` records this rule.
 
 Drafting steps should be narrow:
 
 1. Build full context.
-2. Select machine-readable rules into a rule registry snapshot.
-3. Build a source ledger with claim ids, provenance, allowed use, risks, and forbidden
+2. Normalize approved-fabula sources into source intent.
+3. Build a seed source ledger with claim ids, provenance, allowed use, risks, and forbidden
    inferences.
-4. Run a feasibility gate before prose generation.
-5. Lock a post contract from the approved brief, candidate, slot, source ledger, and
+4. Plan public research from the fabula, signal, source ledger, and author position.
+5. Read/search/extract public evidence through infrastructure adapters.
+6. Merge public evidence into the source ledger and synthesize what it changes.
+7. Run a feasibility gate before prose generation.
+8. Lock a post contract from the approved brief, candidate, slot, source ledger, and
    rules.
-6. Compile the compact rule pack used by planning and prompts.
-7. Plan materials.
-8. Choose several rhetorical plans / draft strategies.
-9. Generate several candidates.
-10. Run deterministic lint checks.
-11. Validate candidates with narrow validators.
-12. Rank candidates pairwise and select the strongest attempt.
-13. Apply one directed revision when findings are actionable.
-14. Re-run regression checks.
-15. Surface the selected draft, unresolved warnings, claim provenance, and human
+9. Select machine-readable rules into a rule registry snapshot.
+10. Compile the compact rule pack used by planning and prompts.
+11. Plan materials.
+12. Choose several rhetorical plans / draft strategies.
+13. Generate several candidates.
+14. Run deterministic lint checks.
+15. Validate candidates with narrow validators.
+16. Rank candidates pairwise and select the strongest attempt.
+17. Apply one directed revision when findings are actionable.
+18. Re-run regression checks.
+19. Surface the selected draft, unresolved warnings, claim provenance, and human
     decision data.
 
 The main editor should see a compact report. The full artifact chain belongs in the
@@ -1167,9 +1187,12 @@ The first backend implementation order is:
 11. Feasibility gate and post contract. Done.
 12. Rule registry v2 and validator bindings. Done.
 13. Contract-based rhetorical plans. Done.
-14. Deterministic linter and validator orchestrator. Next.
-15. Pairwise ranking and directed revision.
-16. Regression report and editor decision learning.
+14. Source intent and research plan. Done.
+15. Public evidence retrieval foundation. Next.
+16. SourceLedger external evidence merge.
+17. Deterministic linter and validator orchestrator.
+18. Pairwise ranking and directed revision.
+19. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

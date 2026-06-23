@@ -96,9 +96,10 @@ After fabula approval, `Драфт` shows queued/running progress until the work
 snapshot of the selected post: plan slot, candidate when available, source signal,
 topic, fabula, publisher rules, and author-position evidence. Use
 `/api/draft-runs/{id}` to inspect the context summary and `sourceLedger` in the
-`context` step, the quality gate in `feasibility`, the locked `PostContract`, the
-compiled `RulePack` plus `ruleRegistrySnapshot`, `MaterialPlan`, `DraftStrategy`,
-`RhetoricalPlans`, draft candidates and deterministic selection, final draft, and safe errors.
+`context` step, `SourceIntent` plus `ResearchPlan` in `sourceIntent`, the quality gate
+in `feasibility`, the locked `PostContract`, the compiled `RulePack` plus
+`ruleRegistrySnapshot`, `MaterialPlan`, `DraftStrategy`, `RhetoricalPlans`, draft
+candidates and deterministic selection, final draft, and safe errors.
 Planning and candidate provider calls link child `AiRun` ids for prompt/provider
 traces.
 
@@ -126,9 +127,16 @@ Candidates do not get `format` or size fields, and fabulas are not duplicated pe
 platform.
 
 Post-2.12 rhetorical planning note: candidates now execute explicit rhetorical plans.
-`steps[6].artifactPayload.rhetoricalPlanSet` contains 2-3 routes with moves, claims to
-use, claims to avoid, CTA route, size intent, risks, and rationale. `steps[7]` contains
+`steps[7].artifactPayload.rhetoricalPlanSet` contains 2-3 routes with moves, claims to
+use, claims to avoid, CTA route, size intent, risks, and rationale. `steps[8]` contains
 draft candidates, and each candidate references the `rhetoricalPlanId` it executed.
+
+Post-2.12.3 source intent note: the approved `Фабула` now has `Источники и
+исследовательские поручения`. These lines are not dumped into one prompt and are not
+sent directly as search keywords. URLs, named sources, plain requests such as "нужно
+мнение лидеров мнений по этой теме", proof checks, framing hints, and exclusions
+become `SourceIntent`, then a local `ResearchPlan`. Public evidence extraction,
+enriched `SourceLedger`, and `EvidenceSynthesis` remain the next backend layer.
 
 ## Ограничения текущего demo
 

@@ -10,6 +10,7 @@ class DraftRunStepStatus(StrEnum):
 
 class DraftRunStepKey(StrEnum):
     CONTEXT = "context"
+    SOURCE_INTENT = "sourceIntent"
     FEASIBILITY = "feasibility"
     POST_CONTRACT = "postContract"
     RULE_PACK = "rulePack"
@@ -23,6 +24,7 @@ class DraftRunStepKey(StrEnum):
 
 DRAFT_RUN_STEP_ORDER: tuple[DraftRunStepKey, ...] = (
     DraftRunStepKey.CONTEXT,
+    DraftRunStepKey.SOURCE_INTENT,
     DraftRunStepKey.FEASIBILITY,
     DraftRunStepKey.POST_CONTRACT,
     DraftRunStepKey.RULE_PACK,
@@ -36,6 +38,7 @@ DRAFT_RUN_STEP_ORDER: tuple[DraftRunStepKey, ...] = (
 
 
 STEP_TITLES: dict[DraftRunStepKey, str] = {
+    DraftRunStepKey.SOURCE_INTENT: "План источников",
     DraftRunStepKey.CONTEXT: "Сбор контекста",
     DraftRunStepKey.FEASIBILITY: "Проверка возможности",
     DraftRunStepKey.POST_CONTRACT: "Контракт поста",

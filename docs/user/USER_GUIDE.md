@@ -368,13 +368,22 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   allowed use, risks, and forbidden inferences. The runner then checks feasibility and
   locks a `PostContract` before writing. If the post is too weakly sourced, `Драфт`
   shows "Пост остановлен до генерации" with the reason and trace link instead of
-  inventing a weak draft. If only the candidate link is missing but source signal, brief evidence, topic, and fabula are present, Glavred proceeds with constraints instead of stopping the run. The next backend quality layers are rule registry,
-  rhetorical plans, validators, ranking, directed revision, and regression. The rule
-  registry is already visible in `/ai-runs` as stable rule ids, severity, criteria,
-  and validator bindings. The PostContract also contains `publicationSizeContract`
-  with target length range, hard max, paragraph/section range, density, and fabula
-  scale. The main editor will keep
+  inventing a weak draft. If only the candidate link is missing but source signal,
+  brief evidence, topic, and fabula are present, Glavred proceeds with constraints
+  instead of stopping the run. Source intent, research plan, rule registry, and
+  rhetorical plans are already visible in `/ai-runs`. The next backend quality layers
+  are public evidence retrieval, enriched SourceLedger, validators, ranking, directed
+  revision, and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
+  severity, criteria, and validator bindings. The PostContract also contains
+  `publicationSizeContract` with target length range, hard max, paragraph/section
+  range, density, and fabula scale. The main editor will keep
   showing compact status and warnings; full trace details stay in `/ai-runs`.
+- The `Источники` field in `Фабула` is now shown as `Источники и исследовательские
+  поручения`. It accepts URLs, source names, and plain instructions such as "нужно
+  мнение лидеров мнений по этой теме", plus explicit prefixes like `url:`, `найти:`,
+  `проверить:`, and `не использовать:`. DraftRuns normalize those lines into source
+  intent and a research plan before writing. The next backend slice will execute that
+  plan through retrieval/extraction and merge public evidence into the SourceLedger.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

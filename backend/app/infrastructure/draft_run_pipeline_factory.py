@@ -10,6 +10,7 @@ from backend.app.application.draft_material_plan_service import DraftMaterialPla
 from backend.app.application.draft_rhetorical_plan_service import DraftRhetoricalPlanService
 from backend.app.application.draft_run_pipeline import DraftRunPipeline
 from backend.app.application.draft_strategy_service import DraftStrategyService
+from backend.app.application.source_research_plan_service import SourceResearchPlanService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
@@ -38,6 +39,12 @@ def build_draft_run_pipeline(settings: BackendSettings) -> DraftRunPipeline:
             openrouter_validator=openrouter_validator,
             openrouter_adapter=openrouter_adapter,
             deterministic_planning_service=deterministic_planning_service,
+        ),
+        source_research_plan_service=SourceResearchPlanService(
+            settings=settings,
+            ai_run_service=ai_run_service,
+            openrouter_validator=openrouter_validator,
+            openrouter_adapter=openrouter_adapter,
         ),
         rhetorical_plan_service=DraftRhetoricalPlanService(
             settings=settings,

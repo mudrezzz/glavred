@@ -4247,6 +4247,43 @@ select:focus {
   grid-column: 1 / -1;
 }
 
+.brief-source-intent-editor {
+  align-items: stretch;
+}
+
+.brief-source-intent-editor .field-hint {
+  color: var(--ink-500);
+  font: var(--body-sm);
+  line-height: 1.45;
+}
+
+.brief-source-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.brief-source-preview-row {
+  display: grid;
+  grid-template-columns: minmax(110px, max-content) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.brief-source-preview-row .pill {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.brief-source-preview-row span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .brief-edit-actions,
 .editorial-brief-actions {
   margin-top: 2px;

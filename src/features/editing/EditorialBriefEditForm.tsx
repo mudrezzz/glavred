@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PostBrief, PostBriefEditPatch } from '../../domain/editorialWorkspace';
+import { BriefSourceIntentEditor } from './BriefSourceIntentEditor';
 
 export function EditorialBriefEditForm({
   brief,
@@ -71,10 +72,7 @@ export function EditorialBriefEditForm({
           Риски
           <textarea value={draft.risks} onChange={(event) => update('risks', event.target.value)} />
         </label>
-        <label className="brief-edit-wide">
-          Источники
-          <textarea value={draft.sources} onChange={(event) => update('sources', event.target.value)} />
-        </label>
+        <BriefSourceIntentEditor value={draft.sources} onChange={(value) => update('sources', value)} />
       </div>
       <div className="inline-actions brief-edit-actions">
         <button className="btn btn-pri" type="button" onClick={() => onSave(toPatch(draft))}>

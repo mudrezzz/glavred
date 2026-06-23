@@ -36,32 +36,40 @@ The target drafting pipeline is:
 
 1. `DraftRunContext`: selected work item, slot, candidate, signal, topic, fabula,
    publisher rules, author-position evidence, and approved brief.
-2. `RuleRegistrySnapshot`: selected machine-readable rules with ids, scope,
+2. `SourceIntent`: normalized approved-brief source requests, including URLs,
+   search-query hints, required proof, optional proof, and framing-only sources.
+3. seed `SourceLedger`: internal source/candidate/brief claims, provenance,
+   confidence, allowed use, risks, forbidden inferences, and author corrections.
+4. `ResearchPlan`: what public material to read, search, verify, or avoid.
+5. `PublicResearch` / `EvidenceExtraction`: external source retrieval and extracted
+   public claims with provenance.
+6. enriched `SourceLedger` and `EvidenceSynthesis`: merge internal and public claims,
+   then state what public material confirms, qualifies, contradicts, or cannot
+   support.
+7. `FeasibilityGate`: `feasible`, `feasible_with_constraints`, `needs_research`,
+   `needs_human_decision`, or `infeasible`.
+8. `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden
+   moves, platform constraints, and fabula obligations.
+9. `RuleRegistrySnapshot`: selected machine-readable rules with ids, scope,
    priority, severity, observable criteria, validator type, examples, and repair
    policy.
-3. `SourceLedger`: atomic source/candidate/brief claims, provenance, confidence,
-   allowed use, risks, forbidden inferences, and author corrections.
-4. `FeasibilityGate`: `feasible`, `feasible_with_constraints`, `needs_research`,
-   `needs_human_decision`, or `infeasible`.
-5. `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden
-   moves, platform constraints, and fabula obligations.
-6. `RulePack`: compact execution rules derived from the registry, contract, source
+10. `RulePack`: compact execution rules derived from the registry, contract, source
    ledger, topic, fabula, and publisher constraints.
-7. `MaterialPlan`: what evidence is available, missing, risky, and how the draft will
+11. `MaterialPlan`: what evidence is available, missing, risky, and how the draft will
    stay grounded.
-8. `RhetoricalPlans` / `DraftStrategy`: several possible editorial routes for the same
+12. `RhetoricalPlans` / `DraftStrategy`: several possible editorial routes for the same
    contract.
-9. `DraftCandidates`: several generated texts with rationale, used evidence, risks,
+13. `DraftCandidates`: several generated texts with rationale, used evidence, risks,
    weaknesses, and child `AiRun` ids.
-10. `DeterministicLinter`: fast hard-rule checks before expensive LLM judging.
-11. `ValidatorReports`: source grounding, publisher/voice, topic/fabula, coherence,
+14. `DeterministicLinter`: fast hard-rule checks before expensive LLM judging.
+15. `ValidatorReports`: source grounding, publisher/voice, topic/fabula, coherence,
    compression, and audience-value checks.
-12. `PairwiseRanking`: compare candidates and keep a traceable scorecard.
-13. `DirectedRevision`: one targeted repair of the selected candidate against concrete
+16. `PairwiseRanking`: compare candidates and keep a traceable scorecard.
+17. `DirectedRevision`: one targeted repair of the selected candidate against concrete
    findings while preserving the post contract.
-14. `RegressionReport`: re-run checks after the revision and keep the best attempt if
+18. `RegressionReport`: re-run checks after the revision and keep the best attempt if
    the revision made the text worse.
-15. `HumanDecision`: editor approval, manual edits, unresolved risks, and learning
+19. `HumanDecision`: editor approval, manual edits, unresolved risks, and learning
    signals for later rule and prompt improvement.
 
 Future drafting slices must advance this chain in order unless a roadmap entry
@@ -69,8 +77,9 @@ explicitly explains why a later stage can be implemented safely earlier.
 
 ## Consequences
 
-- The next backend drafting slice is `Source Ledger Foundation`, not the validator
-  loop.
+- Validator work must wait for the public-evidence research layer after the first
+  source-ledger/contract slices. Otherwise validation would judge prose before the
+  runner has searched/read the sources requested by the approved fabula.
 - A validator/revision loop must consume `SourceLedger` and `PostContract`; it must not
   infer claim provenance only from the final draft text.
 - `PostBrief` remains the approved fabula artifact. It must not absorb source ledger,

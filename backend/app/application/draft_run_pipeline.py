@@ -9,6 +9,7 @@ from backend.app.application.deterministic_draft_service import DeterministicDra
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.deterministic_draft_planning_step_services import DeterministicMaterialPlanStepService, DeterministicStrategyStepService
 from backend.app.application.deterministic_rhetorical_plan_step_service import DeterministicRhetoricalPlanStepService
+from backend.app.application.deterministic_source_research_step_service import DeterministicSourceResearchStepService
 from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
 from backend.app.application.draft_run_draft_step_service import LegacyDraftStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
@@ -25,6 +26,7 @@ class DraftRunPipeline:
         rule_pack_compiler: DraftRulePackCompiler | None = None,
         material_plan_service: Any = None,
         strategy_service: Any = None,
+        source_research_plan_service: Any = None,
         rhetorical_plan_service: Any = None,
         candidate_generation_service: DraftCandidateGenerationService | None = None,
         source_ledger_builder: SourceLedgerBuilder | None = None,
@@ -37,6 +39,7 @@ class DraftRunPipeline:
         fallback = DeterministicDraftPlanningService()
         self._material_plan_service = material_plan_service or DeterministicMaterialPlanStepService(fallback)
         self._strategy_service = strategy_service or DeterministicStrategyStepService(fallback)
+        self._source_research_plan_service = source_research_plan_service or DeterministicSourceResearchStepService()
         self._rhetorical_plan_service = rhetorical_plan_service or DeterministicRhetoricalPlanStepService()
         self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
 
@@ -52,6 +55,10 @@ class DraftRunPipeline:
             source_ledger = self._source_ledger_builder.build(context_summary, request).to_payload()
             context_artifact = {**context_summary, "sourceLedger": source_ledger}
             progress.complete(DraftRunStepKey.CONTEXT, context_artifact)
+            source_result = self._source_research_plan_service.create(request=request, context_artifact=context_artifact)
+            progress.add_ai_run_id(source_result.ai_run_id)
+            context_artifact = {**context_artifact, **source_result.artifact_payload}
+            progress.complete(DraftRunStepKey.SOURCE_INTENT, source_result.artifact_payload)
             quality_gate_result = self._quality_gate.evaluate(context_artifact)
             progress.complete(DraftRunStepKey.FEASIBILITY, quality_gate_result.feasibility_report)
             progress.complete(DraftRunStepKey.POST_CONTRACT, quality_gate_result.post_contract)
@@ -126,7 +133,6 @@ class DraftRunPipeline:
         if loaded is None:
             raise ValueError(f"DraftRun {run_id} disappeared")
         return loaded
-
 def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
     value = artifact.get(key)
     return value if isinstance(value, dict) else {}

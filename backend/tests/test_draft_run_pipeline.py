@@ -53,11 +53,13 @@ def test_draft_run_pipeline_executes_all_steps_and_writes_final_draft(tmp_path) 
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.final_draft["briefId"] == "brief-demo"
     assert result.final_draft["body"]
-    assert [step.status.value for step in result.steps] == ["succeeded"] * 10
+    assert [step.status.value for step in result.steps] == ["succeeded"] * 11
     assert result.steps[0].artifact_payload["brief"]["title"] == request.brief.title
     assert result.steps[0].artifact_payload["workItem"]["id"] == "work-item-1"
-    assert result.steps[3].artifact_payload["metadata"]["version"] == "rule-pack-v1"
-    assert result.steps[3].artifact_payload["draftIntent"]["title"] == request.brief.title
+    assert result.steps[1].key.value == "sourceIntent"
+    assert result.steps[1].artifact_payload["sourceIntent"]["items"][0]["instruction"] == "author note"
+    assert result.steps[4].artifact_payload["metadata"]["version"] == "rule-pack-v1"
+    assert result.steps[4].artifact_payload["draftIntent"]["title"] == request.brief.title
 
 
 def test_draft_run_pipeline_writes_context_summary(tmp_path) -> None:
@@ -83,7 +85,10 @@ def test_draft_run_pipeline_writes_context_summary(tmp_path) -> None:
     assert context_step["authorPositionEvidence"]["total"] == 1
     assert context_step["missingContext"][0]["entity"] == "topic"
 
-    rule_pack_step = result.steps[3].artifact_payload
+    source_intent_step = result.steps[1].artifact_payload
+    assert source_intent_step["researchPlan"]["verificationTasks"]
+
+    rule_pack_step = result.steps[4].artifact_payload
     assert rule_pack_step["draftIntent"]["thesis"] == request.brief.thesis
     assert rule_pack_step["metadata"]["briefOnly"] is False
     assert rule_pack_step["topicFitRequirements"]

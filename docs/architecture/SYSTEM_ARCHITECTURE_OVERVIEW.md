@@ -407,15 +407,19 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> RuleRegistrySnapshot -> SourceLedger -> FeasibilityGate -> PostContract -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
 a source ledger and a post contract first: otherwise they cannot know which claims are
 allowed, which inferences are forbidden, or which editorial invariants must survive a
-rewrite. ADR
+rewrite. They also need public evidence when the approved fabula asks the runner to
+use external sources; otherwise validators can only inspect an internally grounded but
+dry draft. ADR
 `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` records this
 rule.
+ADR `2026-06-23-drafting-requires-public-evidence-research` records the public
+evidence research layer.
 
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
@@ -466,7 +470,11 @@ Rule-registry ownership is intentionally split:
   topic, fabula, source-ledger, candidate, and source-signal inputs into registry
   rules.
 
-The next backend implementation slice is `Material Plan and Draft Strategy Steps`.
+Slice 2.12.3 implements `SourceIntent` and `ResearchPlan`. Approved brief sources are
+now normalized before feasibility: URLs, named sources, human-language research
+requests, proof needs, framing hints, and exclusions become a typed research plan.
+The runner still needs the public-evidence retrieval/extraction layer before
+validators.
 
 Slice 2.7 implements the first OpenRouter-assisted planning steps inside the queued
 runner. The worker's `materialPlan` step consumes context summary plus `RulePack` and
@@ -549,15 +557,24 @@ fallback. Celery task time limits are allowed to mark a real timeout as `failed`
 a safe error.
 
 Validator scoring and revision loops remain later work; Slice 2.8 selection is a
-deterministic first-pass scorecard, and Slice 2.9 adds provenance but not a validator.
+deterministic first-pass scorecard, Slice 2.9 adds internal provenance, and the next
+quality correction adds drafting-time public evidence before validators.
 
 The post-2.8 drafting quality spine is now:
 
 - `RuleRegistrySnapshot`: selected machine-readable rules with ids, scope, priority,
   severity, observable criteria, validator type, examples, and repair policy.
+- `SourceIntent`: normalized approved-fabula source requests: URLs, search-query
+  hints, required proof, optional proof, and framing-only material.
 - `SourceLedger`: atomic claims from the signal, candidate, approved brief, author
   correction, and author-position evidence. It stores provenance, confidence, allowed
   use, risks, and forbidden inferences.
+- `ResearchPlan`: what the runner should read, search, verify, or avoid before prose
+  generation.
+- `PublicEvidenceItem`: one extracted external claim with source, confidence, allowed
+  use, and risk notes.
+- `EvidenceSynthesis`: how public material confirms, qualifies, contradicts, or fails
+  to support the intended post.
 - `FeasibilityReport`: a pre-writing decision that marks the run as feasible,
   feasible with constraints, needing research, needing human decision, or infeasible.
 - `PostContract`: locked editorial invariants for the post: thesis, audience value,
@@ -569,13 +586,14 @@ The post-2.8 drafting quality spine is now:
   source ledger and post contract; they must not reconstruct provenance or invariants
   from generated text alone.
 
-Slice 2.9 implements the first `SourceLedger` inside
+Slice 2.9 implements the first seed `SourceLedger` inside
 `steps[0].artifactPayload.sourceLedger`. The ledger is not a new `DraftRunStepKey` and
 does not require a SQLite schema change. It records deterministic claim ids, source
 provenance, allowed use, confidence, risks, forbidden inferences, and missing-context
-warnings before rule-pack/material-plan/draft work. The next backend implementation
-slice is `Rule Registry v2 and Validator Bindings`; it should consume the ledger and
-post contract instead of reconstructing provenance or invariants from generated text.
+warnings before rule-pack/material-plan/draft work. The public-evidence layer extends
+this ledger: approved-brief sources become `SourceIntent`, then `ResearchPlan`,
+public evidence extraction, and `EvidenceSynthesis`, before feasibility and
+post-contract decisions are treated as final.
 
 Slice 2.10 inserts two logical steps after `context/sourceLedger` and before
 `rulePack`: `feasibility` and `postContract`. `FeasibilityReport` decides whether the
@@ -608,6 +626,28 @@ The backend resolves these inputs into `PostContract.publicationSizeContract`, t
 `RuleRegistrySnapshot` emits deterministic size rules for hard max length, target
 range, paragraph/section range, and density. `PostCandidate` stays a concept and does
 not regain `format` or size fields.
+
+The public-evidence research layer has its own ownership boundary:
+
+- `backend/app/domain/draft_source_intent.py` defines provider-free `SourceIntent` and
+  `ResearchPlan` DTOs;
+- `backend/app/application/source_intent_normalizer.py` owns deterministic
+  line-by-line classification;
+- `backend/app/application/source_research_plan_service.py` owns the OpenRouter /
+  fallback research-plan step orchestration;
+- `backend/app/application/source_research_prompts.py` owns research-plan prompt
+  messages;
+- `backend/app/application/source_research_audit.py` owns sanitized child `AiRun`
+  traces;
+- `backend/app/application/deterministic_source_research_plan_service.py` and
+  `backend/app/application/deterministic_source_research_step_service.py` own local
+  fallback planning;
+- later services extract/reconcile evidence and merge public claims into the source
+  ledger;
+- infrastructure adapters should own URL reading, web search, browser/search APIs,
+  external source retrieval, and provider-specific evidence extraction calls;
+- React should only send approved brief sources and show compact progress/trace links;
+  it must not call web search or provider APIs directly.
 
 Concrete queued drafting files:
 
@@ -1116,10 +1156,18 @@ multi-step run rather than a single provider request:
 - `DraftRunContext`: provider-free DTO assembled from the selected work item,
   approved brief, plan slot, post candidate, source signal, topic, fabula, publisher
   rules, and future author-memory evidence.
+- `SourceIntent`: normalized approved-brief source requests, URL seeds, search hints,
+  required proof, optional proof, and framing-only material.
 - `RuleRegistrySnapshot`: selected drafting rules with ids, scope, priority, severity,
   observable criteria, validator type, examples, and repair policy.
 - `SourceLedger`: claim/provenance inventory built from source signal, candidate,
-  brief, author corrections, and author-position evidence.
+  brief, author corrections, author-position evidence, and later public evidence.
+- `ResearchPlan`: explicit plan for what to read, search, verify, or avoid before
+  prose generation.
+- `PublicEvidenceItem`: external claim extracted from URL/search/source material with
+  provenance, confidence, allowed use, and extraction notes.
+- `EvidenceSynthesis`: reconciliation of public evidence with signal, fabula, and
+  author position before feasibility and contract decisions.
 - `FeasibilityReport`: pre-writing decision that can stop a run before unsafe prose is
   generated.
 - `PostContract`: locked editorial intent and constraints that later strategy,

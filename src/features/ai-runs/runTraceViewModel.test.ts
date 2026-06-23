@@ -7,13 +7,14 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
-    expect(viewModel.timeline[4].childCalls[0].id).toBe('ai-material');
-    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-plans');
-    expect(viewModel.timeline[6].childCalls[0].id).toBe('ai-candidate');
-    expect(viewModel.timeline[6].childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
-    expect(viewModel.timeline[6].childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('3');
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'sourceIntent', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
+    expect(viewModel.timeline[1].childCalls[0].id).toBe('ai-source');
+    expect(viewModel.timeline[5].childCalls[0].id).toBe('ai-material');
+    expect(viewModel.timeline[6].childCalls[0].id).toBe('ai-plans');
+    expect(viewModel.timeline[7].childCalls[0].id).toBe('ai-candidate');
+    expect(viewModel.timeline[7].childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
+    expect(viewModel.timeline[7].childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('4');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -58,6 +59,8 @@ describe('buildRunTraceViewModel', () => {
     const titles = viewModel.semanticSections.map((section) => section.title);
 
     expect(titles).toContain('Material plan');
+    expect(titles).toContain('Source intent');
+    expect(titles).toContain('Research plan');
     expect(titles).toContain('Feasibility report');
     expect(titles).toContain('Post contract');
     expect(titles).toContain('Rule registry');
@@ -94,6 +97,28 @@ function makeDraftRunBundle(): RunTraceBundle {
           status: 'succeeded',
           title: 'Context',
           artifactPayload: { workItem: { title: 'Post' } },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'sourceIntent',
+          status: 'succeeded',
+          title: 'Source Intent',
+          artifactPayload: {
+            sourceIntent: {
+              items: [
+                { id: 'source-intent-1', kind: 'researchRequest', value: 'мнение лидеров мнений' },
+                { id: 'source-intent-2', kind: 'exclusion', value: 'vendor blogs' }
+              ]
+            },
+            researchPlan: {
+              researchQuestions: ['What do opinion leaders say?'],
+              sourceTargets: ['independent analysts'],
+              verificationTasks: [{ kind: 'findPublicSources', instruction: 'Find public commentary' }],
+              exclusions: ['vendor blogs']
+            }
+          },
           error: null,
           startedAt: null,
           completedAt: null
@@ -251,11 +276,12 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-material', 'ai-plans', 'ai-candidate'],
+      aiRunIds: ['ai-source', 'ai-material', 'ai-plans', 'ai-candidate'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
     childAiRuns: [
+      makeAiRun('ai-source', 'sourceIntentResearchPlan'),
       makeAiRun('ai-material', 'materialPlan'),
       makeAiRun('ai-plans', 'rhetoricalPlans'),
       makeAiRun('ai-candidate', 'draftCandidate')
