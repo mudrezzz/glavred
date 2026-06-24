@@ -406,6 +406,7 @@ function validationSection(payload: Record<string, unknown>): TraceSemanticSecti
       ['Candidate quality', reports.map(validationCandidateValue)],
       ['Size findings', validationFindings(reports, 'size.')],
       ['Source attribution findings', validationFindings(reports, 'evidence.attribution')],
+      ['Attribution markers', attributionMarkerFindings(reports)],
       ['Publishability findings', validationFindings(reports, 'publishability.')],
       ['Rule findings', validationFindings(reports, 'rules.')]
     ])
@@ -427,6 +428,23 @@ function validationFindings(reports: unknown[], prefix: string): unknown[] {
       const validatorId = stringValue(finding?.validatorId) ?? '';
       if (!validatorId.startsWith(prefix)) return [];
       return `${candidateId} · ${finding?.severity}: ${finding?.message}\n${finding?.repairGuidance ?? ''}`;
+    });
+  });
+}
+
+function attributionMarkerFindings(reports: unknown[]): unknown[] {
+  return reports.flatMap((item) => {
+    const report = asRecord(item);
+    const candidateId = stringValue(report?.candidateId) ?? 'candidate';
+    return (asArray(report?.findings) ?? []).flatMap((findingItem) => {
+      const finding = asRecord(findingItem);
+      if (finding?.validatorId !== 'evidence.attribution') return [];
+      const metadata = asRecord(finding.metadata);
+      const missing = asArray(metadata?.missingClaimIds) ?? [];
+      const matched = asRecord(metadata?.matchedAttributionMarkers);
+      const expected = asRecord(metadata?.expectedAttributionMarkers);
+      if (!metadata || (missing.length === 0 && !matched && !expected)) return [];
+      return `${candidateId} · missing ${formatList(missing)}\nmatched: ${formatMarkerMap(matched)}\nexpected: ${formatMarkerMap(expected)}`;
     });
   });
 }
@@ -876,6 +894,18 @@ function compactFields(entries: Array<[string, unknown]>): TraceField[] {
 
 function objectToFields(payload: Record<string, unknown>): TraceField[] {
   return Object.entries(payload).map(([label, value]) => ({ label, value: displayValue(value) }));
+}
+
+function formatList(values: unknown[]): string {
+  return values.map((value) => displayValue(value)).filter(Boolean).join(', ') || 'none';
+}
+
+function formatMarkerMap(value: Record<string, unknown> | null): string {
+  if (!value) return 'none';
+  const rows = Object.entries(value)
+    .map(([claimId, markers]) => `${claimId}: ${displayValue(markers).replace(/\n/g, ', ')}`)
+    .filter((row) => !row.endsWith(': '));
+  return rows.join('\n') || 'none';
 }
 
 function displayValue(value: unknown): string {

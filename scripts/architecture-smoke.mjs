@@ -897,6 +897,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft validation linter should split into size/evidence/contract/publishability validators before growing.",
   },
   {
+    path: "backend/app/application/draft_attribution_markers.py",
+    limit: 120,
+    next: "Draft attribution marker extraction should stay deterministic and provider-free.",
+  },
+  {
     path: "backend/app/application/draft_validator_orchestrator.py",
     limit: 110,
     next: "Draft validator orchestrator should stay report assembly only; split validator routing if it grows.",
@@ -1684,6 +1689,7 @@ if (fileExists("backend")) {
     "backend/app/application/draft_run_staleness.py",
     "backend/app/application/draft_run_draft_step_service.py",
     "backend/app/application/draft_validation_linter.py",
+    "backend/app/application/draft_attribution_markers.py",
     "backend/app/application/draft_validator_orchestrator.py",
     "backend/app/application/draft_validation_step.py",
     "backend/app/application/draft_planning_prompts.py",
@@ -2099,6 +2105,7 @@ const requiredSaoFragments = [
   "backend/app/application/draft_run_service.py",
   "backend/app/application/draft_run_pipeline.py",
   "backend/app/application/draft_validation_linter.py",
+  "backend/app/application/draft_attribution_markers.py",
   "backend/app/application/draft_validator_orchestrator.py",
   "backend/app/application/draft_validation_step.py",
   "backend/app/application/draft_run_context_builder.py",

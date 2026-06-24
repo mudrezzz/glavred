@@ -1,6 +1,7 @@
 import re
 from typing import Any
 
+from backend.app.application.draft_attribution_markers import DraftAttributionMarkerMatcher
 from backend.app.domain.draft_validation import DraftValidatorFinding, DraftValidatorStatus
 
 
@@ -103,8 +104,20 @@ class DeterministicDraftLinter:
         external_claims = _external_claims(context_artifact)
         external_claim_ids = [str(claim.get("id")) for claim in external_claims if claim.get("id")]
         attribution_claims = sorted(set(requiring_attribution + [claim_id for claim_id in external_claim_ids if claim_id in used_evidence]))
-        if attribution_claims and _looks_like_public_claim(body) and not _mentions_any_source(body, external_claims):
-            findings.append(_finding("evidence.attribution", DraftValidatorStatus.WARNING, candidate_id, "Source-backed public claim needs visible attribution.", ", ".join(attribution_claims), "Name the source, source title, or qualify the claim.", claim_ids=attribution_claims))
+        if attribution_claims and _looks_like_public_claim(body):
+            attribution = DraftAttributionMarkerMatcher().evaluate(body=body, claims=external_claims, claim_ids=attribution_claims)
+            missing_claims = _strings(attribution.get("missingClaimIds"))
+            if missing_claims:
+                findings.append(_finding(
+                    "evidence.attribution",
+                    DraftValidatorStatus.WARNING,
+                    candidate_id,
+                    "Source-backed public claim needs visible attribution.",
+                    ", ".join(missing_claims),
+                    "Name the source, source title, author, organization, or qualify the claim.",
+                    claim_ids=missing_claims,
+                    metadata=attribution,
+                ))
         return findings
 
     def _rule_findings(self, candidate_id: str, body: str, rule_pack: dict[str, Any]) -> list[DraftValidatorFinding]:
@@ -146,6 +159,7 @@ def _finding(
     *,
     rule_ids: list[str] | None = None,
     claim_ids: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> DraftValidatorFinding:
     return DraftValidatorFinding(
         validator_id=validator_id,
@@ -156,6 +170,7 @@ def _finding(
         repair_guidance=guidance,
         rule_ids=rule_ids or [],
         claim_ids=claim_ids or [],
+        metadata=metadata or {},
     )
 
 
@@ -200,27 +215,6 @@ def _external_claims(context_artifact: dict[str, Any]) -> list[dict[str, Any]]:
     ledger = _dict(context_artifact.get("sourceLedger"))
     claims = _list(ledger.get("claims"))
     return [claim for claim in (_dict(item) for item in claims) if claim.get("type") == "externalEvidenceClaim"]
-
-
-def _mentions_any_source(body: str, claims: list[dict[str, Any]]) -> bool:
-    body_lower = body.lower()
-    for claim in claims:
-        provenance = _dict(claim.get("provenance"))
-        markers = [
-            provenance.get("sourceTitle"),
-            provenance.get("sourceUrl"),
-            provenance.get("source"),
-            claim.get("source"),
-        ]
-        for marker in markers:
-            text = str(marker or "").lower()
-            if text and (text in body_lower or _domain(text) in body_lower):
-                return True
-    return False
-
-
-def _domain(url: str) -> str:
-    return url.replace("https://", "").replace("http://", "").split("/")[0]
 
 
 def _excerpt(body: str, needle: str) -> str:

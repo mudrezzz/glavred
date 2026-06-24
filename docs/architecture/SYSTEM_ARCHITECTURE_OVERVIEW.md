@@ -428,7 +428,10 @@ contract and CTA signals, source attribution, rejected-evidence misuse, forbidde
 moves, raw artifact leakage, and publishability consistency. Findings carry
 validator ids, severity, rule ids, claim ids, evidence excerpts, and repair guidance,
 but they do not alter `finalDraft` selection until the ranking/revision slices consume
-them.
+them. Attribution validation is deterministic and claim-level: source-backed claims
+are checked against markers derived from their own provenance, including source title,
+domain, author/person names, organization names, and source labels. Matching one
+source marker does not satisfy unrelated claims.
 
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
@@ -581,6 +584,9 @@ Validation ownership is split:
   candidate report, finding, and status DTOs.
 - `backend/app/application/draft_validation_linter.py` owns deterministic local
   checks for size, contract signals, evidence, rules, and publishability.
+- `backend/app/application/draft_attribution_markers.py` owns deterministic
+  source-marker extraction and per-claim attribution matching for external ledger
+  claims.
 - `backend/app/application/draft_validator_orchestrator.py` owns candidate iteration
   and report assembly.
 - `backend/app/application/draft_validation_step.py` is the thin pipeline bridge that

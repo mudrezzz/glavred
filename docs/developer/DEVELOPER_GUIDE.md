@@ -995,8 +995,10 @@ Conceptual interfaces for the next implementation slices:
 - `DeterministicLinter`: report-only local checks over candidate prose, size
   contract, post contract, rule registry, material plan, and source ledger.
 - `DraftValidationReport`: per-candidate findings with validator id, severity,
-  rule ids, claim ids, evidence excerpt, and repair guidance. Slice 2.13 writes this
-  to the existing `validation` step but does not change `finalDraft`.
+  rule ids, claim ids, evidence excerpt, repair guidance, and optional diagnostic
+  metadata. Attribution findings use deterministic per-claim provenance markers such
+  as source title, domain, author/person name, organization, or source label. Slice
+  2.13 writes this to the existing `validation` step but does not change `finalDraft`.
 - `ValidatorResult`: future provider-backed score/findings for one rule family.
 - `PairwiseRanking`: comparison and scorecard across candidates.
 - `RevisionAttempt`: targeted correction input and candidate output.
@@ -1280,9 +1282,12 @@ The first backend implementation order is:
 17. Public evidence query and relevance repair. Done.
 18. SourceLedger external evidence merge. Done.
 19. MaterialPlan evidence accountability and retry. Done.
-20. Deterministic linter and validator orchestrator. Next.
-21. Pairwise ranking and directed revision.
-22. Regression report and editor decision learning.
+20. Deterministic linter and validator orchestrator. Done.
+21. Attribution validator calibration. Done.
+22. JSON step retry discipline. Next.
+23. LLM-assisted validator reports.
+24. Pairwise ranking and directed revision.
+25. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

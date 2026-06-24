@@ -81,6 +81,7 @@ describe('buildRunTraceViewModel', () => {
     expect(validation?.fields).toContainEqual({ label: 'Critical findings', value: '0' });
     expect(validation?.fields.find((field) => field.label === 'Candidate quality')?.value).toContain('candidate-1: warning');
     expect(validation?.fields.find((field) => field.label === 'Source attribution findings')?.value).toContain('Source-backed public claim needs visible attribution');
+    expect(validation?.fields.find((field) => field.label === 'Attribution markers')?.value).toContain('expected: external-claim-1: Tian Pan, tianpan.co');
   });
 
   it('shows material plan evidence accountability and retry attempts', () => {
@@ -482,7 +483,13 @@ function makeDraftRunBundle(): RunTraceBundle {
                     claimIds: ['external-claim-1'],
                     message: 'Source-backed public claim needs visible attribution.',
                     evidenceExcerpt: 'external-claim-1',
-                    repairGuidance: 'Name the source.'
+                    repairGuidance: 'Name the source.',
+                    metadata: {
+                      expectedAttributionMarkers: { 'external-claim-1': ['Tian Pan', 'tianpan.co'] },
+                      matchedAttributionMarkers: {},
+                      matchedClaimIds: [],
+                      missingClaimIds: ['external-claim-1']
+                    }
                   }
                 ]
               },

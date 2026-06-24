@@ -71,6 +71,92 @@ def test_validator_reports_size_cta_and_attribution_findings() -> None:
     assert "shape.paragraph-range" in validator_ids
     assert "contract.cta" in validator_ids
     assert "evidence.attribution" in validator_ids
+    attribution = next(finding for finding in findings if finding["validatorId"] == "evidence.attribution")
+    assert attribution["metadata"]["missingClaimIds"] == ["external-evidence-1"]
+    assert "Independent report" in attribution["metadata"]["expectedAttributionMarkers"]["external-evidence-1"]
+
+
+def test_validator_accepts_author_or_organization_attribution_markers() -> None:
+    report = DraftValidatorOrchestrator().validate(
+        draft_artifact={
+            "candidates": [
+                {
+                    "id": "candidate-1",
+                    "title": "Sourced",
+                    "body": "42% of the argument is framed through Tian Pan and SQ Collective.",
+                    "usedEvidence": ["external-evidence-tian", "external-evidence-sq"],
+                }
+            ],
+            "selection": {"selectedCandidateId": "candidate-1", "scorecard": []},
+        },
+        context_artifact={
+            "postContract": {},
+            "sourceLedger": {
+                "claims": [
+                    {
+                        "id": "external-evidence-tian",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "Tian Pan on product discovery", "sourceUrl": "https://tianpan.co/notes/product-discovery"},
+                    },
+                    {
+                        "id": "external-evidence-sq",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "SQ Collective field note", "sourceUrl": "https://sqcollective.example/note"},
+                    },
+                ]
+            },
+        },
+        rule_pack={},
+        material_plan={"claimsRequiringAttribution": ["external-evidence-tian", "external-evidence-sq"]},
+    )
+
+    findings = report.to_payload()["candidateReports"][0]["findings"]
+    assert "evidence.attribution" not in {finding["validatorId"] for finding in findings}
+
+
+def test_validator_matches_attribution_per_claim() -> None:
+    report = DraftValidatorOrchestrator().validate(
+        draft_artifact={
+            "candidates": [
+                {
+                    "id": "candidate-1",
+                    "title": "Partly sourced",
+                    "body": "42% of the argument is sourced from Tian Pan, with another public claim left unattributed.",
+                    "usedEvidence": ["external-evidence-tian", "external-evidence-vamsee"],
+                }
+            ],
+            "selection": {"selectedCandidateId": "candidate-1", "scorecard": []},
+        },
+        context_artifact={
+            "postContract": {},
+            "sourceLedger": {
+                "claims": [
+                    {
+                        "id": "external-evidence-tian",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "Tian Pan on product discovery", "sourceUrl": "https://tianpan.co/notes/product-discovery"},
+                    },
+                    {
+                        "id": "external-evidence-vamsee",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "AI Product Discovery with Vamsee Jasti", "sourceUrl": "https://example.com/vamsee-jasti"},
+                    },
+                ]
+            },
+        },
+        rule_pack={},
+        material_plan={"claimsRequiringAttribution": ["external-evidence-tian", "external-evidence-vamsee"]},
+    )
+
+    findings = report.to_payload()["candidateReports"][0]["findings"]
+    attribution = next(finding for finding in findings if finding["validatorId"] == "evidence.attribution")
+    assert attribution["claimIds"] == ["external-evidence-vamsee"]
+    assert attribution["metadata"]["matchedClaimIds"] == ["external-evidence-tian"]
+    assert attribution["metadata"]["missingClaimIds"] == ["external-evidence-vamsee"]
 
 
 def test_validator_detects_forbidden_moves_and_rejected_evidence() -> None:

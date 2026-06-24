@@ -4020,7 +4020,7 @@ Status:
 
 ### Slice 2.13.1: Attribution Validator Calibration
 
-- Status: Ready
+- Status: Done
 - Goal: Calibrate deterministic attribution validation so it flags real missing
   source attribution without creating false positives for valid author/source mentions.
 - User value:
@@ -4044,10 +4044,15 @@ Status:
   - Candidate with valid author/source mention does not get false attribution warning.
   - Candidate with numeric/public claim and no source marker still gets warning.
   - Trace semantic validation panel shows matched/expected attribution markers.
+- Result:
+  - Attribution validation now matches markers per external claim instead of accepting
+    any source mention globally.
+  - Findings expose expected/matched/missing attribution markers in validation
+    metadata and `/ai-runs` semantic trace.
 
 ### Slice 2.13.2: JSON Step Retry Discipline
 
-- Status: Backlog
+- Status: Ready
 - Goal: Stop going directly to deterministic fallback when an OpenRouter JSON step
   returns malformed JSON or the wrong shape.
 - User value:
@@ -4258,6 +4263,7 @@ Status:
   2026-06-24.
 - Slice 2.13: Deterministic Linter and Validator Orchestrator. Completed
   2026-06-24.
+- Slice 2.13.1: Attribution Validator Calibration. Completed 2026-06-24.
 
 ## Blocked Items
 
@@ -4278,4 +4284,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.13.1: Attribution Validator Calibration`.
+Continue the backend track with `Slice 2.13.2: JSON Step Retry Discipline`.

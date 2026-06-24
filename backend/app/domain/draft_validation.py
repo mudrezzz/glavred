@@ -20,6 +20,7 @@ class DraftValidatorFinding:
     repair_guidance: str
     rule_ids: list[str] = field(default_factory=list)
     claim_ids: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -31,6 +32,7 @@ class DraftValidatorFinding:
             "message": self.message,
             "evidenceExcerpt": self.evidence_excerpt,
             "repairGuidance": self.repair_guidance,
+            "metadata": self.metadata,
         }
 
 
