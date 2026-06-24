@@ -65,6 +65,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Feasibility report');
     expect(titles).toContain('Post contract');
     expect(titles).toContain('Rule registry');
+    expect(titles).toContain('Rhetorical plan attempts');
     expect(titles).toContain('Rhetorical plan 1');
     expect(titles).toContain('Кандидат 1: Candidate · выбран');
     expect(titles).toContain('Draft scorecard');
@@ -82,6 +83,15 @@ describe('buildRunTraceViewModel', () => {
     expect(validation?.fields.find((field) => field.label === 'Candidate quality')?.value).toContain('candidate-1: warning');
     expect(validation?.fields.find((field) => field.label === 'Source attribution findings')?.value).toContain('Source-backed public claim needs visible attribution');
     expect(validation?.fields.find((field) => field.label === 'Attribution markers')?.value).toContain('expected: external-claim-1: Tian Pan, tianpan.co');
+  });
+
+  it('shows rhetorical plan retry attempts in semantic trace', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const attempts = viewModel.semanticSections.find((section) => section.id === 'rhetorical-plan-attempts');
+
+    expect(attempts?.fields.find((field) => field.label === 'Attempts')?.value).toContain('primary: error');
+    expect(attempts?.fields.find((field) => field.label === 'Attempts')?.value).toContain('backup: accepted');
+    expect(attempts?.fields.find((field) => field.label === 'Attempts')?.value).toContain('backup');
   });
 
   it('shows material plan evidence accountability and retry attempts', () => {
@@ -373,6 +383,12 @@ function makeDraftRunBundle(): RunTraceBundle {
           status: 'succeeded',
           title: 'Rhetorical Plans',
           artifactPayload: {
+            source: 'openrouter',
+            fallbackUsed: false,
+            attempts: [
+              { label: 'primary', model: 'deepseek/deepseek-v3.2', status: 'error', aiRunId: 'ai-plans-primary', backup: false, validation: 'ValueError: JSON is not an object' },
+              { label: 'backup', model: 'openai/gpt-4.1-mini', status: 'accepted', aiRunId: 'ai-plans', backup: true }
+            ],
             rhetoricalPlanSet: {
               plans: [{
                 id: 'research',

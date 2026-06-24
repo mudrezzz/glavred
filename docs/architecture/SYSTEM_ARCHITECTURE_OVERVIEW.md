@@ -520,6 +520,11 @@ empty evidence without concrete rejection reasons, the backend retries with a re
 prompt, then optional `OPENROUTER_BACKUP_MODEL`, and only then records deterministic
 emergency fallback.
 
+Slice 2.13.2 applies the same fallback discipline to `rhetoricalPlans`: malformed
+JSON, wrong shape, or too few plans trigger a primary repair retry, then optional
+backup-model retry, and only then deterministic fallback. Each provider attempt is a
+child `AiRun`, and the `rhetoricalPlans` artifact stores an `attempts[]` trace.
+
 Planning ownership is split:
 
 - `backend/app/domain/draft_planning.py` defines provider-free planning DTOs.
@@ -600,8 +605,11 @@ candidate must reference the `rhetoricalPlanId` it executes.
 Rhetorical-plan ownership is split:
 
 - `backend/app/domain/draft_rhetorical_plan.py` defines provider-free plan DTOs.
-- `backend/app/application/draft_rhetorical_plan_service.py` owns the OpenRouter /
-  fallback step orchestration.
+- `backend/app/application/draft_rhetorical_plan_service.py` is the thin step facade.
+- `backend/app/application/draft_rhetorical_plan_retry.py` owns OpenRouter JSON retry
+  attempts and deterministic fallback discipline.
+- `backend/app/application/json_step_retry_policy.py` owns the reusable attempt
+  sequence for JSON-producing LLM steps.
 - `backend/app/application/draft_rhetorical_plan_prompts.py` owns plan prompt
   messages.
 - `backend/app/application/draft_rhetorical_plan_audit.py` owns sanitized child

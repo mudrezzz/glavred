@@ -1,18 +1,12 @@
-from dataclasses import dataclass
 from typing import Any
 
-from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
-from backend.app.application.draft_rhetorical_plan_service import DraftRhetoricalPlanService
-from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
-from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
-from backend.tests.test_draft_planning_services import context_and_rule_pack, settings
-
-
-@dataclass
-class FakeOpenRouterResult:
-    payload: dict[str, Any]
-    raw_response: dict[str, Any]
+from backend.tests.test_draft_planning_services import context_and_rule_pack
+from backend.tests.rhetorical_plan_test_helpers import (
+    FakeOpenRouterResult,
+    ai_service,
+    context_artifact,
+    rhetorical_service,
+)
 
 
 class SuccessfulRhetoricalAdapter:
@@ -63,6 +57,7 @@ def test_rhetorical_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     run = ai_service(tmp_path).get_run(result.ai_run_id or "")
     assert run is not None
     assert run.request_payload["draftRunStep"] == "rhetoricalPlans"
+    assert result.artifact_payload["attempts"][0]["status"] == "accepted"
 
 def test_rhetorical_plan_service_falls_back_without_openrouter(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
@@ -93,26 +88,3 @@ def test_rhetorical_plan_provider_error_falls_back_without_secret(tmp_path) -> N
 
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert "sk-test-secret" not in result.artifact_payload["error"]
-
-def rhetorical_service(tmp_path, adapter: object, *, configured: bool) -> DraftRhetoricalPlanService:
-    return DraftRhetoricalPlanService(
-        settings=settings(configured),
-        ai_run_service=ai_service(tmp_path),
-        openrouter_validator=OpenRouterConfigValidator(),
-        openrouter_adapter=adapter,
-        deterministic_plan_service=DeterministicRhetoricalPlanService(),
-    )
-
-def ai_service(tmp_path) -> AiRunService:
-    return AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3"))
-
-def context_artifact() -> dict[str, Any]:
-    return {
-        "postContract": {
-            "title": "Post",
-            "thesis": "Thesis",
-            "cta": "Check rollout quality",
-            "claims": [{"id": "claim-1"}],
-            "riskNotes": ["Overclaiming"],
-        }
-    }

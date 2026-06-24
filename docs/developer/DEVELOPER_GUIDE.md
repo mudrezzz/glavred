@@ -27,8 +27,8 @@ Required variables for the backend/AI track:
 - `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
-- `OPENROUTER_BACKUP_MODEL`: optional backup model used by accountability retries
-  when a material-planning LLM attempt ignores projected evidence.
+- `OPENROUTER_BACKUP_MODEL`: optional backup model used by JSON repair retries,
+  including material-planning evidence accountability and rhetorical-plan generation.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `OPENROUTER_WEB_TOOLS_ENABLED`: opt-in flag for OpenRouter server-tool web search.
   Default is `false`; set `true` only when you want DraftRun public search tasks to
@@ -1135,9 +1135,14 @@ review slice.
 To debug Slice 2.12, inspect `steps[6].artifactPayload`. It contains:
 
 - `rhetoricalPlanSet`: 2-3 routes for writing the locked `PostContract`;
-- `source`, `fallbackUsed`, `aiRunId`, and optional `error`;
+- `source`, `fallbackUsed`, `aiRunId`, optional `error`, and `attempts[]`;
 - each plan's moves, claims to use, claims to avoid, required rule ids, size intent,
   CTA route, risks, and rationale.
+
+After Slice 2.13.2, malformed rhetorical-plan JSON does not immediately trigger
+deterministic fallback. Inspect `attempts[]` to see primary, repair, optional backup,
+and final fallback attempts with model, child `AiRun ID`, status, and validation
+reason.
 
 Draft candidates are now plan execution artifacts. In `steps[7].artifactPayload`,
 each candidate must include `rhetoricalPlanId`, and child `AiRun` traces should show
@@ -1147,6 +1152,12 @@ which plan was sent to the model. Do not add new candidate directions that bypas
 Rhetorical-plan ownership is split:
 
 - `backend/app/domain/draft_rhetorical_plan.py`: provider-free plan DTOs.
+- `backend/app/application/draft_rhetorical_plan_service.py`: thin facade for the
+  rhetorical-plan step.
+- `backend/app/application/draft_rhetorical_plan_retry.py`: OpenRouter JSON retry and
+  fallback discipline for `rhetoricalPlans`.
+- `backend/app/application/json_step_retry_policy.py`: shared JSON attempt sequence
+  helper.
 - `backend/app/application/draft_rhetorical_plan_service.py`: step orchestration.
 - `backend/app/application/draft_rhetorical_plan_prompts.py`: prompt messages.
 - `backend/app/application/draft_rhetorical_plan_audit.py`: sanitized child traces.
@@ -1284,8 +1295,8 @@ The first backend implementation order is:
 19. MaterialPlan evidence accountability and retry. Done.
 20. Deterministic linter and validator orchestrator. Done.
 21. Attribution validator calibration. Done.
-22. JSON step retry discipline. Next.
-23. LLM-assisted validator reports.
+22. JSON step retry discipline. Done.
+23. LLM-assisted validator reports. Next.
 24. Pairwise ranking and directed revision.
 25. Regression report and editor decision learning.
 

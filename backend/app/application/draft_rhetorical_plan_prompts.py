@@ -11,6 +11,7 @@ def build_rhetorical_plan_messages(
     post_contract: dict[str, Any],
     material_plan: dict[str, Any],
     draft_strategy: dict[str, Any],
+    repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     return [
         {
@@ -47,6 +48,7 @@ def build_rhetorical_plan_messages(
                     "ruleRegistrySnapshot": rule_registry,
                     "materialPlan": material_plan,
                     "draftStrategy": draft_strategy,
+                    "repairContext": repair_context,
                 }
             ),
         },

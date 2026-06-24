@@ -13,6 +13,7 @@ def build_rhetorical_plan_request_trace(
     rule_registry: dict[str, Any],
     material_plan: dict[str, Any],
     draft_strategy: dict[str, Any],
+    attempt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "draftRunStep": "rhetoricalPlans",
@@ -27,6 +28,7 @@ def build_rhetorical_plan_request_trace(
             "availableEvidence": len(material_plan.get("availableEvidence") or []),
             "strategyAngle": draft_strategy.get("thesisAngle"),
         },
+        "attempt": attempt,
     }
 
 
@@ -35,6 +37,7 @@ def build_rhetorical_plan_result_trace(
     result_payload: dict[str, Any],
     provider_response: dict[str, Any] | None,
     fallback: str | None = None,
+    attempt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "draftRunStep": "rhetoricalPlans",
@@ -45,6 +48,8 @@ def build_rhetorical_plan_result_trace(
         payload["providerResponse"] = provider_response
     if fallback:
         payload["fallback"] = fallback
+    if attempt:
+        payload["attempt"] = attempt
     return payload
 
 

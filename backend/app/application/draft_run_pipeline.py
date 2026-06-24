@@ -100,7 +100,7 @@ class DraftRunPipeline:
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
             )
-            progress.add_ai_run_id(plan_result.ai_run_id)
+            progress.add_ai_run_ids(plan_result.ai_run_ids or ([plan_result.ai_run_id] if plan_result.ai_run_id else []))
             rhetorical_plans = _payload(plan_result.artifact_payload, "rhetoricalPlanSet")
             progress.succeed(DraftRunStepKey.RHETORICAL_PLANS, plan_result.artifact_payload)
             progress.start(DraftRunStepKey.DRAFT)

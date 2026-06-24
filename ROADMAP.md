@@ -4052,7 +4052,7 @@ Status:
 
 ### Slice 2.13.2: JSON Step Retry Discipline
 
-- Status: Ready
+- Status: Done
 - Goal: Stop going directly to deterministic fallback when an OpenRouter JSON step
   returns malformed JSON or the wrong shape.
 - User value:
@@ -4077,10 +4077,15 @@ Status:
   - all failed attempts trigger explicit deterministic fallback;
   - valid retry response prevents fallback;
   - trace shows attempts and final source.
+- Result:
+  - `rhetoricalPlans` now uses primary, repair, optional backup, then deterministic
+    fallback.
+  - The step artifact stores `attempts[]`, and DraftRun `aiRunIds` includes all child
+    provider attempts.
 
 ### Slice 2.13.3: LLM-Assisted Validator Reports
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add provider-backed, report-only editorial validators after deterministic
   validation and before ranking/revision.
 - User value:
@@ -4264,6 +4269,7 @@ Status:
 - Slice 2.13: Deterministic Linter and Validator Orchestrator. Completed
   2026-06-24.
 - Slice 2.13.1: Attribution Validator Calibration. Completed 2026-06-24.
+- Slice 2.13.2: JSON Step Retry Discipline. Completed 2026-06-25.
 
 ## Blocked Items
 
@@ -4284,4 +4290,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.13.2: JSON Step Retry Discipline`.
+Continue the backend track with `Slice 2.13.3: LLM-Assisted Validator Reports`.

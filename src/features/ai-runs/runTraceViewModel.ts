@@ -356,6 +356,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (ruleRegistry) sections.push(ruleRegistrySection(ruleRegistry));
   if (materialPlan) sections.push(materialPlanSection(materialPlan, payload));
   if (strategy) sections.push(strategySection(strategy));
+  if (rhetoricalPlanSet && asArray(payload.attempts)) sections.push(rhetoricalPlanAttemptsSection(payload));
   if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
@@ -612,6 +613,19 @@ function publicEvidenceCitationValue(item: unknown): unknown {
   return `${citation.title} · ${citation.url}`;
 }
 
+function rhetoricalPlanAttemptsSection(payload: Record<string, unknown>): TraceSemanticSection {
+  return {
+    id: 'rhetorical-plan-attempts',
+    title: 'Rhetorical plan attempts',
+    fields: compactFields([
+      ['Source', payload.source],
+      ['Fallback', payload.fallbackUsed === true ? 'yes' : 'no'],
+      ['Error', payload.error],
+      ['Attempts', asArray(payload.attempts)?.map(jsonStepAttemptValue)]
+    ])
+  };
+}
+
 function rhetoricalPlanSections(payload: Record<string, unknown>): TraceSemanticSection[] {
   const plans = asArray(payload.plans) ?? [];
   if (plans.length === 0) {
@@ -724,6 +738,13 @@ function postContractSection(payload: Record<string, unknown>): TraceSemanticSec
       ['Reason', payload.reason]
     ])
   };
+}
+
+function jsonStepAttemptValue(item: unknown): unknown {
+  const attempt = asRecord(item);
+  if (!attempt) return item;
+  const validation = attempt.validation ? `\n${displayValue(attempt.validation)}` : '';
+  return `${attempt.label}: ${attempt.status} · ${attempt.model}${attempt.backup ? ' · backup' : ''}${validation}`;
 }
 
 function materialPlanSection(payload: Record<string, unknown>, envelope: Record<string, unknown>): TraceSemanticSection {
