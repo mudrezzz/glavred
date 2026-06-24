@@ -409,6 +409,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   evidence used as proof, forbidden moves, raw artifact leakage, and publishability
   consistency. In the current slice this is diagnostic only: the selected draft still
   opens in `Драфт`, and ranking/revision will use these findings later.
+- The same `validation` trace can also include `LLM validation`: report-only model
+  feedback for source grounding, publisher/author fit, topic/fabula fit,
+  coherence/compression, and audience value. It is visible in `/ai-runs?runId=...`
+  and does not change the selected draft yet.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

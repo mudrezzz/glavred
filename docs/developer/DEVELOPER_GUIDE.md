@@ -1219,6 +1219,14 @@ The next artifacts must make candidate validation meaningful:
   leakage, and publishability consistency. It is report-only in Slice 2.13: bad
   findings are visible in `/ai-runs?runId=...`, but ranking and directed revision
   consume them later.
+- `llmValidationReport` is a sibling field inside the same `validation` artifact.
+  It is report-only in Slice 2.13.3 and checks every candidate with one OpenRouter
+  JSON validation call per candidate. The LLM validator receives the enriched
+  SourceLedger, PostContract, RuleRegistry, MaterialPlan, candidate text, and
+  deterministic findings. It reports source grounding, publisher/author fit,
+  topic/fabula fit, coherence/compression, and audience value. If OpenRouter is not
+  configured, the report is marked `not-run`; if JSON is invalid, the validator uses
+  primary, repair, optional backup, then unavailable status without fake findings.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1253,7 +1261,7 @@ Drafting steps should be narrow:
 12. Choose several rhetorical plans / draft strategies.
 13. Generate several candidates.
 14. Run deterministic lint checks.
-15. Validate candidates with narrow validators.
+15. Validate candidates with report-only LLM validators.
 16. Rank candidates pairwise and select the strongest attempt.
 17. Apply one directed revision when findings are actionable.
 18. Re-run regression checks.
@@ -1296,8 +1304,8 @@ The first backend implementation order is:
 20. Deterministic linter and validator orchestrator. Done.
 21. Attribution validator calibration. Done.
 22. JSON step retry discipline. Done.
-23. LLM-assisted validator reports. Next.
-24. Pairwise ranking and directed revision.
+23. LLM-assisted validator reports. Done.
+24. Pairwise ranking and directed revision. Next.
 25. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until

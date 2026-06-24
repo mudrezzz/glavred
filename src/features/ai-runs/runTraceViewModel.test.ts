@@ -12,9 +12,10 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'materialPlan')?.childCalls[0].id).toBe('ai-material');
     expect(traceStep(viewModel, 'rhetoricalPlans')?.childCalls[0].id).toBe('ai-plans');
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
+    expect(traceStep(viewModel, 'validation')?.childCalls[0].id).toBe('ai-validation-1');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('6');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('7');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -83,6 +84,8 @@ describe('buildRunTraceViewModel', () => {
     expect(validation?.fields.find((field) => field.label === 'Candidate quality')?.value).toContain('candidate-1: warning');
     expect(validation?.fields.find((field) => field.label === 'Source attribution findings')?.value).toContain('Source-backed public claim needs visible attribution');
     expect(validation?.fields.find((field) => field.label === 'Attribution markers')?.value).toContain('expected: external-claim-1: Tian Pan, tianpan.co');
+    expect(validation?.fields.find((field) => field.label === 'LLM validation attempts')?.value).toContain('candidate-1 · primary: accepted');
+    expect(validation?.fields.find((field) => field.label === 'LLM validation findings')?.value).toContain('llm.audience-value');
   });
 
   it('shows rhetorical plan retry attempts in semantic trace', () => {
@@ -518,7 +521,43 @@ function makeDraftRunBundle(): RunTraceBundle {
                 findings: []
               }
             ],
-            metadata: { version: 'draft-validation-v1', reportOnly: true }
+            metadata: { version: 'draft-validation-v1', reportOnly: true },
+            llmValidationReport: {
+              status: 'warning',
+              summary: { candidateCount: 2, criticalCount: 0, warningCount: 1 },
+              candidateReports: [
+                {
+                  candidateId: 'candidate-1',
+                  status: 'warning',
+                  criticalCount: 0,
+                  warningCount: 1,
+                  attempts: [
+                    {
+                      label: 'primary',
+                      model: 'test-model',
+                      status: 'accepted',
+                      candidateId: 'candidate-1',
+                      aiRunId: 'ai-validation-1',
+                      backup: false
+                    }
+                  ],
+                  findings: [
+                    {
+                      validatorId: 'llm.audience-value',
+                      severity: 'warning',
+                      candidateId: 'candidate-1',
+                      ruleIds: ['rule-audience'],
+                      claimIds: [],
+                      message: 'Audience value is too implicit.',
+                      evidenceExcerpt: 'Selected body',
+                      repairGuidance: 'Make the reader value explicit.',
+                      metadata: {}
+                    }
+                  ]
+                }
+              ],
+              metadata: { version: 'llm-draft-validation-v1', reportOnly: true }
+            }
           },
           error: null,
           startedAt: null,
@@ -527,7 +566,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
@@ -537,7 +576,8 @@ function makeDraftRunBundle(): RunTraceBundle {
       makeAiRun('synthesis-run-1', 'externalEvidenceSynthesis'),
       makeAiRun('ai-material', 'materialPlan'),
       makeAiRun('ai-plans', 'rhetoricalPlans'),
-      makeAiRun('ai-candidate', 'draftCandidate')
+      makeAiRun('ai-candidate', 'draftCandidate'),
+      makeAiRun('ai-validation-1', 'llmValidation')
     ],
     missingAiRunIds: []
   };

@@ -13,7 +13,7 @@ from backend.app.application.draft_strategy_service import DraftStrategyService
 from backend.app.application.source_research_plan_service import SourceResearchPlanService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
-from backend.app.infrastructure.draft_run_pipeline_provider_services import build_public_evidence_step_service
+from backend.app.infrastructure.draft_run_pipeline_provider_services import build_public_evidence_step_service, build_validation_step_service
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
 from backend.app.settings import BackendSettings
@@ -68,5 +68,11 @@ def build_draft_run_pipeline(settings: BackendSettings) -> DraftRunPipeline:
             direction_service=DraftCandidateDirectionService(),
             deterministic_candidate_service=DeterministicDraftCandidateService(),
             selection_service=DraftCandidateSelectionService(),
+        ),
+        validation_step_service=build_validation_step_service(
+            settings=settings,
+            ai_run_service=ai_run_service,
+            openrouter_validator=openrouter_validator,
+            openrouter_adapter=openrouter_adapter,
         ),
     )

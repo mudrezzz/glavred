@@ -287,6 +287,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     size/shape, contract/CTA, attribution, rejected evidence, forbidden moves,
     publishability, and raw artifact leakage. These findings are visible in
     `/ai-runs?runId=...` but do not yet change the selected final draft.
+    The same step can also contain `LLM validation` findings for source grounding,
+    publisher/author fit, topic/fabula fit, coherence/compression, and audience
+    value. These are report-only demo diagnostics until ranking/revision consumes
+    them.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

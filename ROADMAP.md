@@ -4085,18 +4085,24 @@ Status:
 
 ### Slice 2.13.3: LLM-Assisted Validator Reports
 
-- Status: Ready
+- Status: Done
+- Completed: 2026-06-25
 - Goal: Add provider-backed, report-only editorial validators after deterministic
   validation and before ranking/revision.
 - User value:
   - Validation starts judging actual editorial quality, not only formal lint issues.
 - Scope:
-  - Add LLM validators for source grounding, author voice/publisher rules,
-    topic/fabula fit, coherence/compression, and audience value.
-  - Validators consume `SourceLedger`, `PostContract`, `RuleRegistry`, `MaterialPlan`,
-    selected candidates, and deterministic validation findings.
-  - Each LLM validator writes structured findings with validator id, severity,
-    rule ids, claim ids, evidence excerpt, and repair guidance.
+  - Added provider-free `LlmDraftValidationReport`,
+    `LlmCandidateValidationReport`, and `LlmValidatorAttempt` DTOs.
+  - Added one report-only OpenRouter JSON validation call per candidate for source
+    grounding, publisher/author fit, topic/fabula fit, coherence/compression, and
+    audience value.
+  - LLM validation consumes `SourceLedger`, `PostContract`, `RuleRegistry`,
+    `MaterialPlan`, draft candidate text, and deterministic validation findings.
+  - Added primary, repair, optional backup-model retry discipline for validation
+    JSON; unconfigured provider returns `not-run` without fake findings.
+  - Saved child `AiRun` ids for validation attempts and exposed them in the DraftRun
+    validation trace.
   - Findings remain report-only; ranking/revision consumes them in 2.14.
 - Out of scope:
   - Automatic rewrite.
@@ -4107,10 +4113,15 @@ Status:
   - Provider malformed/error response falls back safely or marks validator
     unavailable without blocking run.
   - Trace shows deterministic and LLM validation findings separately.
+- Result:
+  - Existing `validation` artifacts now keep deterministic findings and optional
+    `llmValidationReport` side by side.
+  - `/ai-runs?runId=...` shows LLM validation status, attempts, and findings next to
+    deterministic validation.
 
 ### Slice 2.14: Pairwise Ranking and Directed Revision
 
-- Status: Backlog
+- Status: Ready
 - Goal: Choose the best candidate and perform one targeted repair without losing the
   post contract.
 - Scope:
@@ -4270,6 +4281,7 @@ Status:
   2026-06-24.
 - Slice 2.13.1: Attribution Validator Calibration. Completed 2026-06-24.
 - Slice 2.13.2: JSON Step Retry Discipline. Completed 2026-06-25.
+- Slice 2.13.3: LLM-Assisted Validator Reports. Completed 2026-06-25.
 
 ## Blocked Items
 
@@ -4290,4 +4302,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.13.3: LLM-Assisted Validator Reports`.
+Continue the backend track with `Slice 2.14: Pairwise Ranking and Directed Revision`.

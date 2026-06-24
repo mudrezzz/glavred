@@ -1,5 +1,4 @@
 from typing import Any
-
 from backend.app.application.draft_quality_gate import DraftQualityGate
 from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompiler
 from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
@@ -16,10 +15,9 @@ from backend.app.application.draft_run_draft_step_service import LegacyDraftStep
 from backend.app.application.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
-from backend.app.application.draft_validation_step import validation_artifact, validation_not_run_artifact
+from backend.app.application.draft_validation_step_service import DraftValidationStepService
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, DraftRunStepKey
-
 
 class DraftRunPipeline:
     def __init__(
@@ -35,6 +33,7 @@ class DraftRunPipeline:
         candidate_generation_service: DraftCandidateGenerationService | None = None,
         source_ledger_builder: SourceLedgerBuilder | None = None,
         quality_gate: DraftQualityGate | None = None,
+        validation_step_service: DraftValidationStepService | None = None,
     ) -> None:
         self._repository = repository
         self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
@@ -47,7 +46,7 @@ class DraftRunPipeline:
         self._public_evidence_step_service = public_evidence_step_service or PublicEvidenceStepService()
         self._rhetorical_plan_service = rhetorical_plan_service or DeterministicRhetoricalPlanStepService()
         self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
-
+        self._validation_step_service = validation_step_service or DraftValidationStepService()
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
         if run is None:
@@ -115,14 +114,15 @@ class DraftRunPipeline:
             progress.add_ai_run_ids(draft_result.ai_run_ids)
             progress.succeed(DraftRunStepKey.DRAFT, draft_result.artifact_payload)
             if draft_result.final_draft is None:
-                progress.complete(DraftRunStepKey.VALIDATION, validation_not_run_artifact("draft candidate selection blocked"))
+                progress.complete(DraftRunStepKey.VALIDATION, self._validation_step_service.not_run(reason="draft candidate selection blocked").artifact_payload)
                 progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
                 self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
                 return self._loaded(run_id)
-            draft_payload = draft_to_payload(draft_result.final_draft)
-            progress.complete(DraftRunStepKey.VALIDATION, validation_artifact(draft_artifact=draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan))
+            validation_result = self._validation_step_service.validate(draft_artifact=draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan)
+            progress.add_ai_run_ids(validation_result.ai_run_ids)
+            progress.complete(DraftRunStepKey.VALIDATION, validation_result.artifact_payload)
             progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
-            self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_payload, ai_run_ids=progress.ai_run_ids)
+            self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_to_payload(draft_result.final_draft), ai_run_ids=progress.ai_run_ids)
         except Exception as exc:
             safe_error = str(exc)[:500] or "Draft run failed"
             progress.fail_current(safe_error)

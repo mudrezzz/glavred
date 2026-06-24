@@ -433,6 +433,18 @@ are checked against markers derived from their own provenance, including source 
 domain, author/person names, organization names, and source labels. Matching one
 source marker does not satisfy unrelated claims.
 
+Slice 2.13.3 adds the second, provider-backed validation layer without changing
+ranking, revision, or `finalDraft`. The same `validation` step keeps the
+deterministic `DraftValidationReport` and adds a sibling `llmValidationReport`.
+The LLM validator checks every candidate with one structured JSON call per
+candidate. It consumes the enriched SourceLedger, PostContract, RuleRegistry,
+MaterialPlan, candidate text, and deterministic findings, then writes report-only
+findings for source grounding, publisher/author fit, topic/fabula fit,
+coherence/compression, and audience value. If OpenRouter is not configured, the
+LLM report is `not-run` instead of fake fallback findings. If JSON is malformed,
+the validator follows the same primary, repair, optional backup-model retry
+discipline before marking the candidate validation unavailable.
+
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
 `EditorialWorkItem` and sends it with `POST /api/draft-runs`. The snapshot includes
@@ -587,6 +599,8 @@ Validation ownership is split:
 
 - `backend/app/domain/draft_validation.py` defines provider-free validation report,
   candidate report, finding, and status DTOs.
+- `backend/app/domain/draft_llm_validation.py` defines provider-free LLM validation
+  report, candidate report, and attempt DTOs.
 - `backend/app/application/draft_validation_linter.py` owns deterministic local
   checks for size, contract signals, evidence, rules, and publishability.
 - `backend/app/application/draft_attribution_markers.py` owns deterministic
@@ -594,8 +608,18 @@ Validation ownership is split:
   claims.
 - `backend/app/application/draft_validator_orchestrator.py` owns candidate iteration
   and report assembly.
-- `backend/app/application/draft_validation_step.py` is the thin pipeline bridge that
-  writes the existing `validation` step artifact.
+- `backend/app/application/draft_llm_validation_service.py` owns report-only
+  provider-backed validation orchestration.
+- `backend/app/application/draft_llm_validation_prompts.py` owns validator prompt
+  messages.
+- `backend/app/application/draft_llm_validation_audit.py` owns sanitized child
+  `AiRun` traces for validator attempts.
+- `backend/app/application/draft_llm_validation_parser.py` normalizes provider JSON
+  into standard validation findings.
+- `backend/app/application/draft_validation_step_service.py` composes deterministic
+  and LLM reports into the existing `validation` step artifact.
+- `backend/app/application/draft_validation_step.py` remains a compatibility bridge
+  for older deterministic-only validation call sites.
 
 Slice 2.12 inserts `RhetoricalPlans` between `DraftStrategy` and `DraftCandidates`.
 The worker now writes a separate `rhetoricalPlans` step artifact, and candidate
@@ -808,6 +832,11 @@ Concrete queued drafting files:
 - `backend/app/application/draft_run_draft_step_service.py`
 - `backend/app/application/deterministic_draft_planning_service.py`
 - `backend/app/application/deterministic_draft_planning_step_services.py`
+- `backend/app/application/draft_llm_validation_service.py`
+- `backend/app/application/draft_llm_validation_prompts.py`
+- `backend/app/application/draft_llm_validation_audit.py`
+- `backend/app/application/draft_llm_validation_parser.py`
+- `backend/app/application/draft_validation_step_service.py`
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_source_ledger.py`
@@ -817,6 +846,7 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_planning.py`
 - `backend/app/domain/draft_candidates.py`
 - `backend/app/domain/draft_validation.py`
+- `backend/app/domain/draft_llm_validation.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

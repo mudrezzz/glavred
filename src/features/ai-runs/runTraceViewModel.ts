@@ -126,7 +126,7 @@ function buildDraftRunViewModel(
     const stepDetail = buildStepDetail(step);
     details.push(stepDetail);
     const childCalls = childAiRuns
-      .filter((run) => stepKeyForAiRun(run) === step.key)
+      .filter((run) => parentStepForAiRun(run) === step.key)
       .map((run) => {
         const detail = buildAiRunDetail(run);
         details.push(detail);
@@ -198,6 +198,11 @@ function buildDraftRunViewModel(
     details,
     initialDetailId: firstDetailId
   };
+}
+
+function parentStepForAiRun(run: AiRunTrace): string | undefined {
+  const step = stepKeyForAiRun(run);
+  return step === 'llmValidation' ? 'validation' : step;
 }
 
 function traceStepStatus(draftRun: DraftRunTrace, step: DraftRunTraceStep): string {
@@ -382,6 +387,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
 function validationSection(payload: Record<string, unknown>): TraceSemanticSection {
   const summary = asRecord(payload.summary);
   const reports = asArray(payload.candidateReports) ?? [];
+  const llmReport = asRecord(payload.llmValidationReport);
   if (reports.length === 0) {
     return {
       id: 'validation',
@@ -409,7 +415,10 @@ function validationSection(payload: Record<string, unknown>): TraceSemanticSecti
       ['Source attribution findings', validationFindings(reports, 'evidence.attribution')],
       ['Attribution markers', attributionMarkerFindings(reports)],
       ['Publishability findings', validationFindings(reports, 'publishability.')],
-      ['Rule findings', validationFindings(reports, 'rules.')]
+      ['Rule findings', validationFindings(reports, 'rules.')],
+      ['LLM validation status', llmReport?.status],
+      ['LLM validation attempts', llmValidationAttempts(llmReport)],
+      ['LLM validation findings', llmValidationFindings(llmReport)]
     ])
   };
 }
@@ -446,6 +455,33 @@ function attributionMarkerFindings(reports: unknown[]): unknown[] {
       const expected = asRecord(metadata?.expectedAttributionMarkers);
       if (!metadata || (missing.length === 0 && !matched && !expected)) return [];
       return `${candidateId} · missing ${formatList(missing)}\nmatched: ${formatMarkerMap(matched)}\nexpected: ${formatMarkerMap(expected)}`;
+    });
+  });
+}
+
+function llmValidationAttempts(report: Record<string, unknown> | null | undefined): unknown[] {
+  if (!report) return [];
+  return (asArray(report.candidateReports) ?? []).flatMap((item) => {
+    const candidateReport = asRecord(item);
+    const candidateId = stringValue(candidateReport?.candidateId) ?? 'candidate';
+    return (asArray(candidateReport?.attempts) ?? []).map((attemptItem) => {
+      const attempt = asRecord(attemptItem);
+      if (!attempt) return attemptItem;
+      const validation = attempt.validation ? `\n${displayValue(attempt.validation)}` : '';
+      return `${candidateId} · ${attempt.label}: ${attempt.status} · ${attempt.model ?? 'no model'}${attempt.backup ? ' · backup' : ''}${validation}`;
+    });
+  });
+}
+
+function llmValidationFindings(report: Record<string, unknown> | null | undefined): unknown[] {
+  if (!report) return [];
+  return (asArray(report.candidateReports) ?? []).flatMap((item) => {
+    const candidateReport = asRecord(item);
+    const candidateId = stringValue(candidateReport?.candidateId) ?? 'candidate';
+    return (asArray(candidateReport?.findings) ?? []).map((findingItem) => {
+      const finding = asRecord(findingItem);
+      if (!finding) return findingItem;
+      return `${candidateId} · ${finding.severity}: ${finding.validatorId}\n${finding.message}\n${finding.repairGuidance ?? ''}`;
     });
   });
 }
