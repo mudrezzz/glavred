@@ -132,7 +132,7 @@ function buildDraftRunViewModel(
         details.push(detail);
         return {
           id: run.id,
-          title: stepLabel(stepKeyForAiRun(run)),
+          title: aiRunStepLabel(run),
           provider: run.provider,
           model: run.model ?? 'none',
           status: run.status,
@@ -214,13 +214,14 @@ function traceStepStatus(draftRun: DraftRunTrace, step: DraftRunTraceStep): stri
 function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
   const detail = buildAiRunDetail(aiRun);
   const step = stepKeyForAiRun(aiRun);
+  const title = aiRunStepLabel(aiRun);
   return {
     mode: 'aiRun',
     id: aiRun.id,
     title: 'AiRun trace',
     summary: [
       { label: 'Run type', value: 'AiRun' },
-      { label: 'Step', value: stepLabel(step) },
+      { label: 'Step', value: title },
       { label: 'Status', value: aiRun.status },
       { label: 'Provider', value: aiRun.provider },
       { label: 'Model', value: aiRun.model ?? 'none' },
@@ -229,13 +230,13 @@ function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
     timeline: [{
       id: `step-${step}`,
       key: step,
-      title: stepLabel(step),
+      title,
       status: aiRun.status,
       error: aiRun.error,
       detailId: detail.id,
       childCalls: [{
         id: aiRun.id,
-        title: stepLabel(step),
+        title,
         provider: aiRun.provider,
         model: aiRun.model ?? 'none',
         status: aiRun.status,
@@ -271,10 +272,9 @@ function buildAiRunDetail(aiRun: AiRunTrace): TraceDetail {
   const requestPayload = aiRun.requestPayload ?? {};
   const resultPayload = aiRun.resultPayload ?? {};
   const messages = extractMessages(requestPayload);
-  const step = stepKeyForAiRun(aiRun);
   return {
     id: `ai-detail-${aiRun.id}`,
-    title: `${stepLabel(step)} · ${aiRun.id}`,
+    title: `${aiRunStepLabel(aiRun)} · ${aiRun.id}`,
     kicker: 'LLM call',
     summary: [
       { label: 'AiRun ID', value: aiRun.id },
@@ -314,7 +314,7 @@ function buildDraftRunSemanticSections(draftRun: DraftRunTrace): TraceSemanticSe
 function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
   const requestPayload = aiRun.requestPayload ?? {};
   const resultPayload = aiRun.resultPayload ?? {};
-  if (stepKeyForAiRun(aiRun) === 'publicEvidence') {
+  if (rawStepKeyForAiRun(aiRun) === 'publicEvidenceSearch') {
     return [
       publicEvidenceSearchSection(requestPayload, resultPayload),
       ...sectionsFromPayload('publicEvidence', resultPayload)
@@ -329,6 +329,8 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const sourceIntent = asRecord(payload.sourceIntent);
   const researchPlan = asRecord(payload.researchPlan);
   const publicEvidence = asRecord(payload.publicEvidence) ?? (step === 'publicEvidence' ? payload : null);
+  const evidenceSynthesis = asRecord(payload.evidenceSynthesis);
+  const sourceLedger = asRecord(payload.enrichedSourceLedger) ?? asRecord(payload.sourceLedger);
   const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
   const ruleRegistry = asRecord(payload.ruleRegistrySnapshot);
@@ -342,6 +344,8 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
   if (publicEvidence) sections.push(publicEvidenceSection(publicEvidence));
+  if (evidenceSynthesis) sections.push(evidenceSynthesisSection(evidenceSynthesis));
+  if (sourceLedger) sections.push(sourceLedgerSection(sourceLedger));
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) {
     sections.push(postContractSection(postContract));
@@ -480,6 +484,53 @@ function publicEvidenceSearchSection(
       ['Provider model', providerRequest?.model]
     ])
   };
+}
+
+function evidenceSynthesisSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const claims = asArray(payload.externalClaims) ?? [];
+  const warnings = asArray(payload.warnings) ?? [];
+  return {
+    id: 'evidenceSynthesis',
+    title: 'Evidence synthesis',
+    fields: compactFields([
+      ['Source', payload.source],
+      ['External claims', claims.map(externalEvidenceClaimValue)],
+      ['Warnings', warnings.map(publicEvidenceWarningValue)],
+      ['Decisions', payload.decisions],
+      ['Claim count', asRecord(payload.metadata)?.externalClaimCount],
+      ['Warning count', asRecord(payload.metadata)?.warningCount]
+    ])
+  };
+}
+
+function sourceLedgerSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const metadata = asRecord(payload.metadata);
+  const claims = asArray(payload.claims) ?? [];
+  const externalClaims = claims.filter((item) => asRecord(item)?.type === 'externalEvidenceClaim');
+  return {
+    id: 'sourceLedger',
+    title: metadata?.externalClaimCount ? 'Enriched source ledger' : 'Source ledger',
+    fields: compactFields([
+      ['Claims', metadata?.claimCount ?? claims.length],
+      ['Internal claims', metadata?.internalClaimCount],
+      ['External claims', metadata?.externalClaimCount ?? externalClaims.length],
+      ['Warnings', metadata?.warningCount],
+      ['External claim list', externalClaims.map(sourceLedgerExternalClaimValue)]
+    ])
+  };
+}
+
+function externalEvidenceClaimValue(item: unknown): unknown {
+  const claim = asRecord(item);
+  if (!claim) return item;
+  return `${claim.publicEvidenceItemId} В· ${claim.allowedUse} В· ${claim.statement}`;
+}
+
+function sourceLedgerExternalClaimValue(item: unknown): unknown {
+  const claim = asRecord(item);
+  const provenance = asRecord(claim?.provenance);
+  if (!claim) return item;
+  return `${claim.id} В· ${claim.allowedUse} В· ${provenance?.sourceTitle ?? 'public source'}\n${claim.statement}`;
 }
 
 function publicEvidenceCitationValue(item: unknown): unknown {
@@ -689,13 +740,22 @@ function extractMessages(requestPayload: Record<string, unknown>): TraceMessage[
 }
 
 function stepKeyForAiRun(aiRun: AiRunTrace): string {
-  const requestPayload = aiRun.requestPayload ?? {};
-  const resultPayload = aiRun.resultPayload ?? {};
-  const step = stringValue(requestPayload.draftRunStep) ?? stringValue(resultPayload.draftRunStep);
+  const step = rawStepKeyForAiRun(aiRun);
   if (step === 'draftCandidate') return 'draft';
   if (step === 'sourceIntentResearchPlan') return 'sourceIntent';
   if (step === 'publicEvidenceSearch') return 'publicEvidence';
+  if (step === 'externalEvidenceSynthesis') return 'publicEvidence';
   return step ?? 'unknown';
+}
+
+function rawStepKeyForAiRun(aiRun: AiRunTrace): string | null {
+  const requestPayload = aiRun.requestPayload ?? {};
+  const resultPayload = aiRun.resultPayload ?? {};
+  return stringValue(requestPayload.draftRunStep) ?? stringValue(resultPayload.draftRunStep);
+}
+
+function aiRunStepLabel(aiRun: AiRunTrace): string {
+  return stepLabel(rawStepKeyForAiRun(aiRun) ?? stepKeyForAiRun(aiRun));
 }
 
 function stepLabel(step: string): string {
@@ -705,6 +765,7 @@ function stepLabel(step: string): string {
     sourceIntentResearchPlan: 'Source research plan',
     publicEvidence: 'Public evidence',
     publicEvidenceSearch: 'Public evidence search',
+    externalEvidenceSynthesis: 'External evidence synthesis',
     feasibility: 'Feasibility',
     postContract: 'Post contract',
     rulePack: 'Rule pack',

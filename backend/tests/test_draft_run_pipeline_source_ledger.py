@@ -43,7 +43,7 @@ def test_pipeline_exposes_source_ledger_metadata_to_rule_pack(tmp_path) -> None:
 
     result = DraftRunPipeline(repository, DeterministicDraftService()).execute(run.id)
 
-    source_ledger_metadata = result.steps[0].artifact_payload["sourceLedger"]["metadata"]
+    source_ledger_metadata = result.steps[2].artifact_payload["enrichedSourceLedger"]["metadata"]
     rule_pack_metadata = result.steps[5].artifact_payload["metadata"]
 
     assert rule_pack_metadata["sourceLedgerClaimCount"] == source_ledger_metadata["claimCount"]

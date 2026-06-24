@@ -218,8 +218,10 @@ explicit URLs; general search tasks call OpenRouter `openrouter:web_search` when
 attempts. Search tasks are first converted into a readable `builtQuery` from the
 research instruction, not from internal target ids, and returned citations pass a
 conservative relevance guard before they become `PublicEvidenceItem` candidates. The
-next backend slice merges accepted public evidence into the
-`SourceLedger` and creates `EvidenceSynthesis`.
+worker now synthesizes accepted public evidence into `EvidenceSynthesis` and merges
+it into an enriched `SourceLedger` before feasibility, post contract, rule registry,
+planning, rhetorical plans, and candidate generation. Failed, skipped, or disabled
+search attempts stay as warnings and never become proof.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

@@ -3911,18 +3911,19 @@ Status:
 
 ### Slice 2.12.5: SourceLedger External Evidence Merge
 
-- Status: Ready
+- Status: Done (2026-06-24)
 - Goal: Merge public evidence into the source ledger and synthesize what it changes
   before feasibility, post contract, rule registry, and drafting.
 - User value: The runner can explain which external material supports, qualifies, or
   weakens the post before it writes candidates.
 - Scope:
-  - Add `EvidenceSynthesis`.
-  - Merge `PublicEvidenceItem` records into the existing SourceLedger.
+  - Add `EvidenceSynthesis`. Done.
+  - Merge accepted `PublicEvidenceItem` records into the existing SourceLedger. Done.
   - Mark external claims as `canState`, `needsQualification`,
-    `canUseAsFraming`, or `doNotState`.
-  - Feed enriched ledger/synthesis into feasibility and post contract.
-  - Show enriched ledger and synthesis in `/ai-runs`.
+    `canUseAsFraming`, or `doNotState`. Done.
+  - Feed enriched ledger/synthesis into feasibility, post contract, rule registry,
+    planning, and candidates. Done.
+  - Show enriched ledger and synthesis in `/ai-runs`. Done.
 - Out of scope:
   - Validator scoring.
   - Directed revision.
@@ -3933,11 +3934,12 @@ Status:
   - Validators remain deferred until the source ledger includes both internal and
     public claims.
 - Tests:
-  - External evidence creates ledger claims with stable ids.
-  - Weak/contradictory evidence produces warnings or qualified allowed use.
-  - Feasibility uses enriched evidence without silently bypassing missing proof.
+  - External evidence creates ledger claims with stable ids. Done.
+  - Failed/skipped public evidence attempts create warnings, not claims. Done.
+  - Feasibility/post contract/rule registry use the enriched ledger when public
+    evidence exists. Done.
 - Docs:
-  - Update ADR/SAO if implementation changes the accepted research layer.
+  - Update SAO/developer/user/demo docs. Done.
 - Demo impact:
   - Demo trace should show at least one external claim merged into ledger.
 - Acceptance criteria:
@@ -3948,7 +3950,7 @@ Status:
 
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add hard checks and narrow validators after candidates are generated.
 - Scope:
   - Deterministic linter for length, structure, required CTA, forbidden tokens,
@@ -4113,6 +4115,7 @@ Status:
 - Slice 2.12.4: Public Evidence Retrieval Foundation. Completed 2026-06-24.
 - Slice 2.12.4.1: OpenRouter Web Search Adapter. Completed 2026-06-24.
 - Slice 2.12.4.2: Public Evidence Query and Relevance Repair. Completed 2026-06-24.
+- Slice 2.12.5: SourceLedger External Evidence Merge. Completed 2026-06-24.
 
 ## Blocked Items
 
@@ -4133,4 +4136,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.12.5: SourceLedger External Evidence Merge`.
+Continue the backend track with `Slice 2.13: Deterministic Linter and Validator Orchestrator`.

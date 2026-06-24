@@ -51,7 +51,9 @@ Check these failure classes explicitly:
 - **Execution**: run missing, failed, stale, pending steps, missing child `AiRun`.
 - **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch failure.
 - **Research**: source intent absent, research plan too vague, search disabled,
-  failed URL/search attempts, irrelevant accepted citations, evidence not merged.
+  failed URL/search attempts, irrelevant accepted citations, accepted evidence not
+  synthesized into `EvidenceSynthesis`, or external claims missing from enriched
+  `SourceLedger`.
 - **Quality spine**: SourceLedger missing usable claims, feasibility incorrectly blocked
   or passed, PostContract too weak, RuleRegistry lacks enforceable rules.
 - **Planning**: material plan ignores public evidence, strategy is generic, rhetorical
@@ -87,6 +89,8 @@ hide bad output behind polite abstractions.
 
 - Do not treat planned search tasks as proof. Only accepted public evidence or ledger
   claims can support drafting.
+- When public evidence exists, check `EvidenceSynthesis` and enriched
+  `SourceLedger`; raw snippets alone are not enough to prove downstream grounding.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

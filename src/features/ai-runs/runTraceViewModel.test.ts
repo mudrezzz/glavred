@@ -14,7 +14,7 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('5');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('6');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -22,7 +22,7 @@ describe('buildRunTraceViewModel', () => {
     const draftStep = viewModel.timeline.find((step) => step.key === 'draft');
 
     expect(draftStep?.childCalls.map((call) => call.title)).toEqual([
-      'Draft candidates',
+      'Draft candidate',
       'Кандидат 1: Candidate · выбран',
       'Кандидат 2: Alternative',
       'Скоринг кандидатов',
@@ -104,9 +104,22 @@ describe('buildRunTraceViewModel', () => {
     expect(publicEvidence?.fields.find((field) => field.label === 'Search AiRun IDs')?.value).toContain('search-run-1');
     const publicEvidenceStep = viewModel.timeline.find((step) => step.key === 'publicEvidence');
     expect(publicEvidenceStep?.childCalls.map((call) => call.id)).toContain('search-run-1');
+    expect(publicEvidenceStep?.childCalls.map((call) => call.id)).toContain('synthesis-run-1');
     const searchDetail = viewModel.details.find((detail) => detail.id === 'ai-detail-search-run-1');
     expect(searchDetail?.sections[0].fields).toContainEqual({ label: 'Built query', value: 'Find public commentary about AI product trust' });
     expect(searchDetail?.sections[0].fields.find((field) => field.label === 'Rejected citations')?.value).toContain('TARGET Services');
+  });
+
+  it('shows evidence synthesis and enriched ledger as readable semantic sections', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const synthesis = viewModel.semanticSections.find((section) => section.id === 'evidenceSynthesis');
+    const ledger = viewModel.semanticSections.find((section) => section.id === 'sourceLedger');
+
+    expect(synthesis?.fields).toContainEqual({ label: 'Claim count', value: '1' });
+    expect(synthesis?.fields.find((field) => field.label === 'External claims')?.value).toContain('public-evidence-url-task-1');
+    expect(ledger?.title).toBe('Enriched source ledger');
+    expect(ledger?.fields).toContainEqual({ label: 'External claims', value: '1' });
+    expect(ledger?.fields.find((field) => field.label === 'External claim list')?.value).toContain('Independent report');
   });
 });
 
@@ -189,7 +202,29 @@ function makeDraftRunBundle(): RunTraceBundle {
             ],
             warnings: [],
             metadata: { searchProvider: 'openrouter:web_search', model: 'test-model' },
-            aiRunIds: ['search-run-1']
+            aiRunIds: ['search-run-1'],
+            evidenceSynthesis: {
+              source: 'openrouter',
+              externalClaims: [{
+                publicEvidenceItemId: 'public-evidence-url-task-1',
+                statement: 'Independent report qualifies AI trust and adoption claims.',
+                allowedUse: 'needsQualification',
+                confidence: 'medium'
+              }],
+              warnings: [],
+              metadata: { externalClaimCount: 1, warningCount: 0 }
+            },
+            enrichedSourceLedger: {
+              claims: [{
+                id: 'external-evidence-public-evidence-url-task-1',
+                type: 'externalEvidenceClaim',
+                statement: 'Independent report qualifies AI trust and adoption claims.',
+                allowedUse: 'needsQualification',
+                provenance: { sourceTitle: 'Independent report', sourceUrl: 'https://example.com/report' }
+              }],
+              warnings: [],
+              metadata: { claimCount: 1, internalClaimCount: 0, externalClaimCount: 1, warningCount: 0 }
+            }
           },
           error: null,
           startedAt: null,
@@ -356,13 +391,14 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'ai-material', 'ai-plans', 'ai-candidate'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
     childAiRuns: [
       makeAiRun('ai-source', 'sourceIntentResearchPlan'),
       makeAiRun('search-run-1', 'publicEvidenceSearch'),
+      makeAiRun('synthesis-run-1', 'externalEvidenceSynthesis'),
       makeAiRun('ai-material', 'materialPlan'),
       makeAiRun('ai-plans', 'rhetoricalPlans'),
       makeAiRun('ai-candidate', 'draftCandidate')
@@ -391,6 +427,19 @@ function makeAiRun(id: string, step: string) {
     rejectedCitations: [{ title: 'TARGET Services', url: 'https://example.com/target', reason: 'search-result-drift' }],
     evidenceItems: [{ sourceTitle: 'AI product trust report', sourceUrl: 'https://example.com/trust', snippet: 'AI trust depends on evals.' }]
   };
+  const synthesisResult = {
+    draftRunStep: step,
+    evidenceSynthesis: {
+      source: 'openrouter',
+      externalClaims: [{
+        publicEvidenceItemId: 'public-evidence-url-task-1',
+        statement: 'AI trust depends on evals.',
+        allowedUse: 'needsQualification'
+      }],
+      warnings: [],
+      metadata: { externalClaimCount: 1 }
+    }
+  };
   return {
     id,
     capability: 'draftGeneration',
@@ -406,7 +455,11 @@ function makeAiRun(id: string, step: string) {
         ]
       }
     },
-    resultPayload: step === 'publicEvidenceSearch' ? publicEvidenceResult : { draftRunStep: step, result: { thesisAngle: 'angle' } },
+    resultPayload: step === 'publicEvidenceSearch'
+      ? publicEvidenceResult
+      : step === 'externalEvidenceSynthesis'
+        ? synthesisResult
+        : { draftRunStep: step, result: { thesisAngle: 'angle' } },
     error: null,
     fallbackUsed: false,
     createdAt: '2026-06-19T00:00:00+00:00',

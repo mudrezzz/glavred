@@ -97,9 +97,10 @@ research orchestration and evidence reconciliation. Domain DTOs remain provider-
 
 ## Consequences
 
-- Source intent, research planning, and exact-URL public evidence retrieval are now
-  implemented public-evidence layers. The next backend work is source-ledger merge and
-  evidence synthesis, not validators yet.
+- Source intent, research planning, exact-URL public evidence retrieval, optional
+  OpenRouter web search, relevance filtering, source-ledger merge, and evidence
+  synthesis are now implemented public-evidence layers. Validator work must consume
+  those enriched artifacts, not raw search snippets.
 - `FeasibilityGate`, `PostContract`, validators, ranking, and directed revision must
   consume the enriched ledger when public evidence exists.
 - The main editor UI can stay compact. Full research artifacts belong in `/ai-runs`

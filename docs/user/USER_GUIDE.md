@@ -375,14 +375,17 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   exact URLs and, when backend OpenRouter web tools are enabled, executes public
   search tasks through `openrouter:web_search`; otherwise search tasks stay
   `notConfigured` in trace. The trace also shows the built search query and rejected
-  citations when a provider result drifts away from the research task. Draft candidate
+  citations when a provider result drifts away from the research task. Accepted public
+  evidence is then synthesized and merged into an enriched SourceLedger before
+  feasibility, post contract, rule registry, planning, and draft candidates. Planned,
+  failed, disabled, or rejected source attempts stay as warnings and are not treated
+  as proof. Draft candidate
   selection also has a publishability guard: emergency deterministic fallback drafts
   stay visible in trace, but they are excluded or penalized when a publishable provider
   candidate exists. If every candidate is invalid, `Драфт` shows a quality-blocked
   state with the DraftRun ID and trace link instead of silently showing a placeholder
-  draft. The next backend quality layers
-  are enriched SourceLedger, validators, ranking, directed
-  revision, and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
+  draft. The next backend quality layers are validators, ranking, directed revision,
+  and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
   severity, criteria, and validator bindings. The PostContract also contains
   `publicationSizeContract` with target length range, hard max, paragraph/section
   range, density, and fabula scale. The main editor will keep
@@ -397,8 +400,8 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   мнений по этой теме", plus prefixes like `url:`, `найти:`, `проверить:`, and
   `не использовать:`. DraftRuns normalize those approved lines into source intent,
   build a research plan, read exact URLs, and either execute OpenRouter web search or
-  show disabled search tasks as `notConfigured`. The next backend slice will merge
-  public evidence into the SourceLedger.
+  show disabled search tasks as `notConfigured`. Accepted public evidence is merged
+  into the DraftRun SourceLedger before the post is evaluated and written.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

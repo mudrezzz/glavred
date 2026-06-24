@@ -1182,10 +1182,13 @@ The next artifacts must make candidate validation meaningful:
   rejected citations stay in trace as `search-result-drift`.
 - Public evidence extraction creates `PublicEvidenceItem` records with provenance,
   confidence, allowed-use policy, and extraction notes.
-- `SourceLedger` comes before validators and stores internal claim ids now; public
-  claim merge is the next slice after `publicEvidence`.
-- `EvidenceSynthesis` must explain which public material confirms, qualifies,
-  contradicts, or fails to support the intended post.
+- `EvidenceSynthesis` reconciles accepted public evidence before feasibility:
+  only accepted `PublicEvidenceItem` records can become external ledger claims.
+  Failed, skipped, disabled, rejected, or merely planned attempts stay as warnings.
+- The enriched `SourceLedger` now contains internal claim ids plus external claim ids
+  such as `external-evidence-<publicEvidenceItemId>`, and downstream feasibility,
+  post contract, rule registry, planning, rhetorical plans, and draft candidates must
+  consume that enriched ledger.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1258,10 +1261,10 @@ The first backend implementation order is:
 15. Public evidence retrieval foundation. Done.
 16. OpenRouter web search adapter. Done.
 17. Public evidence query and relevance repair. Done.
-18. SourceLedger external evidence merge. Next.
-19. Deterministic linter and validator orchestrator.
+18. SourceLedger external evidence merge. Done.
+19. Deterministic linter and validator orchestrator. Next.
 20. Pairwise ranking and directed revision.
-20. Regression report and editor decision learning.
+21. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

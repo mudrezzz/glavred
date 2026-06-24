@@ -12,8 +12,8 @@ from backend.app.application.deterministic_rhetorical_plan_step_service import D
 from backend.app.application.deterministic_source_research_step_service import DeterministicSourceResearchStepService
 from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
 from backend.app.application.draft_candidate_selection_block import candidate_selection_blocked_payload
-from backend.app.application.public_evidence_retrieval_service import PublicEvidenceRetrievalService
 from backend.app.application.draft_run_draft_step_service import LegacyDraftStepService
+from backend.app.application.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
@@ -29,7 +29,7 @@ class DraftRunPipeline:
         material_plan_service: Any = None,
         strategy_service: Any = None,
         source_research_plan_service: Any = None,
-        public_evidence_service: PublicEvidenceRetrievalService | None = None,
+        public_evidence_step_service: PublicEvidenceStepService | None = None,
         rhetorical_plan_service: Any = None,
         candidate_generation_service: DraftCandidateGenerationService | None = None,
         source_ledger_builder: SourceLedgerBuilder | None = None,
@@ -43,7 +43,7 @@ class DraftRunPipeline:
         self._material_plan_service = material_plan_service or DeterministicMaterialPlanStepService(fallback)
         self._strategy_service = strategy_service or DeterministicStrategyStepService(fallback)
         self._source_research_plan_service = source_research_plan_service or DeterministicSourceResearchStepService()
-        self._public_evidence_service = public_evidence_service or PublicEvidenceRetrievalService()
+        self._public_evidence_step_service = public_evidence_step_service or PublicEvidenceStepService()
         self._rhetorical_plan_service = rhetorical_plan_service or DeterministicRhetoricalPlanStepService()
         self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
 
@@ -64,14 +64,13 @@ class DraftRunPipeline:
             context_artifact = {**context_artifact, **source_result.artifact_payload}
             progress.complete(DraftRunStepKey.SOURCE_INTENT, source_result.artifact_payload)
             progress.start(DraftRunStepKey.PUBLIC_EVIDENCE)
-            public_evidence_batch = self._public_evidence_service.retrieve(
+            public_evidence_result = self._public_evidence_step_service.run(
                 source_intent_artifact=source_result.artifact_payload,
                 context_artifact=context_artifact,
             )
-            progress.add_ai_run_ids(public_evidence_batch.ai_run_ids)
-            public_evidence = public_evidence_batch.to_payload()
-            context_artifact = {**context_artifact, "publicEvidence": public_evidence}
-            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, public_evidence)
+            progress.add_ai_run_ids(public_evidence_result.ai_run_ids)
+            context_artifact = public_evidence_result.context_artifact
+            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, public_evidence_result.artifact_payload)
             quality_gate_result = self._quality_gate.evaluate(context_artifact)
             progress.complete(DraftRunStepKey.FEASIBILITY, quality_gate_result.feasibility_report)
             progress.complete(DraftRunStepKey.POST_CONTRACT, quality_gate_result.post_contract)

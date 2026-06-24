@@ -484,13 +484,15 @@ OpenRouter server-tool search path for general research tasks: when
 `OPENROUTER_WEB_TOOLS_ENABLED=true`, `findPublicSources` and `verifyClaim` tasks call
 `openrouter:web_search`, create child `AiRun` records, and turn returned citations
 into `PublicEvidenceItem` candidates. When the flag or provider config is missing,
-the same tasks remain explicit `notConfigured` attempts. Retrieved items are visible
-in DraftRun trace but are not yet merged into `SourceLedger`. Slice 2.12.4.2 repairs
+the same tasks remain explicit `notConfigured` attempts. Slice 2.12.4.2 repairs
 the query boundary: search uses the human task instruction plus post context, while
 technical target ids stay only as trace links. Returned citations pass a conservative
 relevance guard; rejected citations remain in trace and cannot become evidence
-candidates. SourceLedger merge and evidence synthesis remain the next slice before
-validators.
+candidates. Slice 2.12.5 synthesizes accepted `PublicEvidenceItem` records into
+`EvidenceSynthesis` and merges them into an enriched `SourceLedger` before
+`feasibility`, `postContract`, `RuleRegistry`, planning, rhetorical plans, and draft
+candidates. Failed, skipped, disabled, or rejected attempts stay as warnings and never
+become proof.
 
 Slice 2.7 implements the first OpenRouter-assisted planning steps inside the queued
 runner. The worker's `materialPlan` step consumes context summary plus `RulePack` and
@@ -690,8 +692,19 @@ The public-evidence research layer has its own ownership boundary:
 - `backend/app/application/deterministic_source_research_plan_service.py` and
   `backend/app/application/deterministic_source_research_step_service.py` own local
   fallback planning;
-- later services extract/reconcile evidence and merge public claims into the source
-  ledger;
+- `backend/app/domain/draft_evidence_synthesis.py` defines provider-free
+  `EvidenceSynthesis` and external evidence claim DTOs;
+- `backend/app/application/deterministic_external_evidence_synthesis.py`,
+  `backend/app/application/deterministic_external_evidence_synthesis_step_service.py`,
+  and `backend/app/application/external_evidence_synthesis_prompts.py` own fallback
+  synthesis and prompt construction;
+- `backend/app/application/external_evidence_synthesis_service.py` owns OpenRouter
+  synthesis, while `backend/app/application/draft_public_evidence_step_service.py`
+  coordinates retrieval, synthesis, and merge for the `publicEvidence` step;
+- `backend/app/application/source_ledger_external_evidence_merger.py` merges accepted
+  public evidence into the enriched source ledger;
+- `backend/app/infrastructure/draft_run_pipeline_provider_services.py` owns
+  provider-backed DraftRun dependency wiring for public evidence;
 - infrastructure adapters should own URL reading, web search, browser/search APIs,
   external source retrieval, and provider-specific evidence extraction calls;
 - React should only send approved brief sources and show compact progress/trace links;
@@ -705,6 +718,7 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_post_contract.py`
 - `backend/app/domain/publication_size.py`
 - `backend/app/domain/draft_rule_registry.py`
+- `backend/app/domain/draft_evidence_synthesis.py`
 - `backend/app/api/draft_runs.py`
 - `backend/app/api/draft_generation_contracts.py`
 - `backend/app/application/draft_run_service.py`
@@ -716,6 +730,13 @@ Concrete queued drafting files:
 - `backend/app/application/draft_run_context_builder.py`
 - `backend/app/application/draft_source_ledger_builder.py`
 - `backend/app/application/draft_source_ledger_sections.py`
+- `backend/app/application/draft_public_evidence_step_service.py`
+- `backend/app/application/deterministic_external_evidence_synthesis.py`
+- `backend/app/application/deterministic_external_evidence_synthesis_step_service.py`
+- `backend/app/application/external_evidence_synthesis_prompts.py`
+- `backend/app/application/external_evidence_synthesis_service.py`
+- `backend/app/application/source_ledger_external_evidence_merger.py`
+- `backend/app/infrastructure/draft_run_pipeline_provider_services.py`
 - `backend/app/application/draft_feasibility_gate.py`
 - `backend/app/application/draft_feasibility_policy.py`
 - `backend/app/application/draft_post_contract_builder.py`

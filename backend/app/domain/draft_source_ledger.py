@@ -9,6 +9,7 @@ class SourceLedgerClaimType(StrEnum):
     SOURCE_CLAIM = "sourceClaim"
     TOPIC_FABULA_CONSTRAINT = "topicFabulaConstraint"
     AUTHOR_POSITION_EVIDENCE = "authorPositionEvidence"
+    EXTERNAL_EVIDENCE = "externalEvidenceClaim"
 
 
 class SourceLedgerAllowedUse(StrEnum):

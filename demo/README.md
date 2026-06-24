@@ -277,9 +277,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     `Фабула -> Источники` is now shown as source intent: URLs, source names, proof
     requests, exclusions, and human-language instructions become a local research plan.
     The public-evidence step now reads exact URLs and can execute general search tasks
-    through OpenRouter when backend web tools are enabled. The next public-evidence
-    slice merges those evidence candidates into `SourceLedger` and shows synthesis in
-    the same trace before validators or directed revision.
+    through OpenRouter when backend web tools are enabled. Accepted evidence
+    candidates are synthesized and merged into the DraftRun `SourceLedger`; skipped,
+    failed, or rejected attempts remain warnings in the same trace before validators
+    or directed revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
