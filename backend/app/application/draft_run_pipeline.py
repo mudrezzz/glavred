@@ -11,6 +11,7 @@ from backend.app.application.deterministic_draft_planning_step_services import D
 from backend.app.application.deterministic_rhetorical_plan_step_service import DeterministicRhetoricalPlanStepService
 from backend.app.application.deterministic_source_research_step_service import DeterministicSourceResearchStepService
 from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
+from backend.app.application.draft_candidate_selection_block import candidate_selection_blocked_payload
 from backend.app.application.public_evidence_retrieval_service import PublicEvidenceRetrievalService
 from backend.app.application.draft_run_draft_step_service import LegacyDraftStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
@@ -112,8 +113,13 @@ class DraftRunPipeline:
                 rhetorical_plans=rhetorical_plans,
             )
             progress.add_ai_run_ids(draft_result.ai_run_ids)
-            draft_payload = draft_to_payload(draft_result.final_draft)
             progress.succeed(DraftRunStepKey.DRAFT, draft_result.artifact_payload)
+            if draft_result.final_draft is None:
+                progress.complete(DraftRunStepKey.VALIDATION, {"status": "not-run", "reason": "draft candidate selection blocked"})
+                progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
+                self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
+                return self._loaded(run_id)
+            draft_payload = draft_to_payload(draft_result.final_draft)
             progress.complete(DraftRunStepKey.VALIDATION, {"status": "placeholder-passed", "checks": ["structure", "audience", "rules"]})
             progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
             self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_payload, ai_run_ids=progress.ai_run_ids)

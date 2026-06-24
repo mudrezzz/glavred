@@ -7,5 +7,5 @@ from backend.app.domain.draft_generation import GeneratedDraft
 @dataclass(frozen=True)
 class DraftCandidateGenerationResult:
     artifact_payload: dict[str, Any]
-    final_draft: GeneratedDraft
+    final_draft: GeneratedDraft | None
     ai_run_ids: list[str]

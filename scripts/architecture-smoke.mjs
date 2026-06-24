@@ -792,6 +792,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft candidate selection should stay deterministic v1 scoring only.",
   },
   {
+    path: "backend/app/application/draft_candidate_publishability.py",
+    limit: 100,
+    next: "Draft candidate publishability should stay a provider-free selection guard.",
+  },
+  {
     path: "backend/app/application/draft_candidate_prompts.py",
     limit: 80,
     next: "Draft candidate prompts should stay prompt-message builders only.",
@@ -810,6 +815,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/application/draft_candidate_result.py",
     limit: 30,
     next: "Draft candidate result should stay a tiny application DTO.",
+  },
+  {
+    path: "backend/app/application/draft_candidate_selection_block.py",
+    limit: 40,
+    next: "Draft candidate selection blocked payload should stay a tiny mapper.",
   },
   {
     path: "backend/app/application/draft_run_pipeline_ports.py",
@@ -1099,7 +1109,12 @@ const BACKEND_SOURCE_BASELINES = [
   {
     path: "backend/tests/test_draft_candidate_services.py",
     limit: 180,
-    next: "Draft candidate service tests should split by direction/generation/selection before growing.",
+    next: "Draft candidate service tests should stay focused on direction and generation wiring.",
+  },
+  {
+    path: "backend/tests/test_draft_candidate_selection_guard.py",
+    limit: 110,
+    next: "Draft candidate selection guard tests should stay focused on publishability decisions.",
   },
   {
     path: "backend/tests/test_draft_rhetorical_plan_service.py",
@@ -1110,6 +1125,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_run_pipeline_candidates.py",
     limit: 80,
     next: "DraftRun candidate pipeline tests should stay separate from context/rule/planning tests.",
+  },
+  {
+    path: "backend/tests/test_draft_run_pipeline_candidate_block.py",
+    limit: 80,
+    next: "DraftRun candidate block tests should stay separate from successful candidate pipeline tests.",
   },
   {
     path: "backend/tests/test_draft_run_pipeline_planning_steps.py",
@@ -1547,10 +1567,12 @@ if (fileExists("backend")) {
     "backend/app/application/draft_candidate_direction_service.py",
     "backend/app/application/draft_candidate_generation_service.py",
     "backend/app/application/draft_candidate_selection_service.py",
+    "backend/app/application/draft_candidate_publishability.py",
     "backend/app/application/draft_candidate_prompts.py",
     "backend/app/application/draft_candidate_audit.py",
     "backend/app/application/deterministic_draft_candidate_service.py",
     "backend/app/application/draft_candidate_result.py",
+    "backend/app/application/draft_candidate_selection_block.py",
     "backend/app/application/draft_run_pipeline_ports.py",
     "backend/app/application/draft_run_progress.py",
     "backend/app/application/draft_run_staleness.py",
@@ -1609,8 +1631,10 @@ if (fileExists("backend")) {
     "backend/tests/test_openrouter_public_search_service.py",
     "backend/tests/test_openrouter_public_search_relevance.py",
     "backend/tests/test_draft_candidate_services.py",
+    "backend/tests/test_draft_candidate_selection_guard.py",
     "backend/tests/test_draft_rhetorical_plan_service.py",
     "backend/tests/test_draft_run_pipeline_candidates.py",
+    "backend/tests/test_draft_run_pipeline_candidate_block.py",
     "backend/tests/test_draft_run_pipeline_planning_steps.py",
     "backend/tests/test_draft_run_pipeline_rule_pack.py",
     "backend/tests/test_draft_run_pipeline_source_ledger.py",

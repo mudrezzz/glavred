@@ -524,7 +524,14 @@ worker creates deterministic candidate directions from `DraftStrategy`, asks
 OpenRouter for one JSON draft candidate per direction when configured, falls back per
 candidate when a provider call fails, stores all candidates in
 `steps[4].artifactPayload`, and writes only the selected candidate to
-`DraftRun.finalDraft`.
+`DraftRun.finalDraft`. Slice 2.12.4.3 adds a publishability guard before that write:
+emergency `deterministicFallback` candidates are diagnostic artifacts unless they pass
+the same publishability checks as provider candidates. If at least one provider
+candidate is publishable, fallback candidates are excluded or heavily penalized and
+cannot become the final draft. If no candidate is publishable, the run completes as a
+quality-blocked `DraftRun` with `status=succeeded`, `finalDraft=null`, and
+`complete.blockedBy=draftCandidateSelection`; this must not trigger compatibility or
+local fallback.
 
 Candidate ownership is split:
 
@@ -536,6 +543,9 @@ Candidate ownership is split:
   step orchestration and child `AiRun` creation.
 - `backend/app/application/draft_candidate_selection_service.py` owns deterministic v1
   candidate scoring.
+- `backend/app/application/draft_candidate_publishability.py` owns provider-free
+  publishability, fallback-exclusion, raw-artifact, mojibake, and rewrite-needed
+  checks for candidate selection.
 - `backend/app/application/draft_candidate_prompts.py` owns candidate prompt messages.
 - `backend/app/application/draft_candidate_audit.py` owns sanitized child `AiRun`
   traces.
@@ -719,6 +729,7 @@ Concrete queued drafting files:
 - `backend/app/application/draft_candidate_generation_service.py`
 - `backend/app/application/draft_candidate_direction_service.py`
 - `backend/app/application/draft_candidate_selection_service.py`
+- `backend/app/application/draft_candidate_publishability.py`
 - `backend/app/application/draft_planning_prompts.py`
 - `backend/app/application/draft_planning_audit.py`
 - `backend/app/application/draft_candidate_prompts.py`

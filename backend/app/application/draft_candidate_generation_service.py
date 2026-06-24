@@ -62,7 +62,8 @@ class DraftCandidateGenerationService:
                 ai_run_ids.append(ai_run_id)
             fallback_used = fallback_used or bool(payload.get("fallbackUsed"))
         selection = self._selection_service.select(candidate_payloads).to_payload()
-        selected = _selected_candidate(candidate_payloads, selection["selectedCandidateId"])
+        selected_id = selection.get("selectedCandidateId")
+        selected = _selected_candidate(candidate_payloads, selected_id) if selected_id else None
         artifact = {
             "source": _artifact_source(candidate_payloads),
             "fallbackUsed": fallback_used,
@@ -74,7 +75,7 @@ class DraftCandidateGenerationService:
         }
         return DraftCandidateGenerationResult(
             artifact_payload=artifact,
-            final_draft=_candidate_to_draft(request, selected),
+            final_draft=_candidate_to_draft(request, selected) if selected else None,
             ai_run_ids=ai_run_ids,
         )
 
@@ -176,7 +177,7 @@ class DraftCandidateGenerationService:
         return f"{error.__class__.__name__}: {message[:180]}"
 
 
-def _selected_candidate(candidates: list[dict[str, Any]], selected_id: str) -> dict[str, Any]:
+def _selected_candidate(candidates: list[dict[str, Any]], selected_id: Any) -> dict[str, Any]:
     return next(candidate for candidate in candidates if candidate["id"] == selected_id)
 
 

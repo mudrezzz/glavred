@@ -256,6 +256,8 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
     and errors. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
+    local fallback draft is created. If candidate selection blocks the post, the trace
+    scorecard shows `eligible / penalized / excluded`, penalty, and reasons, and no
     local fallback draft is created. A missing candidate link alone no longer blocks
     the demo when the source signal, brief evidence, topic, and fabula are present.
     Planning and candidate child `AiRun` ids can be inspected through

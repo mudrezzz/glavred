@@ -39,6 +39,10 @@ export type TraceScorecardRow = {
   candidateId: string;
   title: string;
   selected: boolean;
+  publishable: string;
+  selectionStatus: string;
+  selectionPenalty: string;
+  selectionReasons: string;
   total: string;
   hardConstraintFit: string;
   evidenceGrounding: string;

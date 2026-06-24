@@ -97,6 +97,9 @@ describe('AiRunTracePage', () => {
     expect(scorecard).toHaveTextContent('Alternative candidate');
     expect(scorecard).toHaveTextContent('80');
     expect(scorecard).toHaveTextContent('68');
+    expect(scorecard).toHaveTextContent('eligible');
+    expect(scorecard).toHaveTextContent('excluded');
+    expect(scorecard).toHaveTextContent('fallback-candidate-provider-alternative');
     expect(screen.getByTestId('ai-run-detail-panel')).not.toHaveTextContent('Score rows');
 
     fireEvent.click(screen.getByText('Выбор итогового драфта'));
@@ -297,6 +300,10 @@ const draftRunResponse = {
             fabulaFit: 16,
             audienceValue: 12,
             riskPenalty: 4,
+            publishable: true,
+            selectionStatus: 'eligible',
+            selectionPenalty: 0,
+            selectionReasons: [],
             total: 80
           },
           {
@@ -307,6 +314,10 @@ const draftRunResponse = {
             fabulaFit: 14,
             audienceValue: 12,
             riskPenalty: 8,
+            publishable: false,
+            selectionStatus: 'excluded',
+            selectionPenalty: 500,
+            selectionReasons: ['fallback-candidate-provider-alternative'],
             total: 68
           }
         ],

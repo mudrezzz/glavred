@@ -375,7 +375,12 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   exact URLs and, when backend OpenRouter web tools are enabled, executes public
   search tasks through `openrouter:web_search`; otherwise search tasks stay
   `notConfigured` in trace. The trace also shows the built search query and rejected
-  citations when a provider result drifts away from the research task. The next backend quality layers
+  citations when a provider result drifts away from the research task. Draft candidate
+  selection also has a publishability guard: emergency deterministic fallback drafts
+  stay visible in trace, but they are excluded or penalized when a publishable provider
+  candidate exists. If every candidate is invalid, `Драфт` shows a quality-blocked
+  state with the DraftRun ID and trace link instead of silently showing a placeholder
+  draft. The next backend quality layers
   are enriched SourceLedger, validators, ranking, directed
   revision, and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
   severity, criteria, and validator bindings. The PostContract also contains

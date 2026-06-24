@@ -327,8 +327,15 @@ Frontend debug page:
   `draft.artifactPayload`; they do not change backend step order or SQLite schema.
 - Draft candidate scorecards render as comparison tables in the trace workbench:
   candidate title/id, total score, hard constraints, evidence, topic, fabula,
-  audience value, risk penalty, and selected/winner state. Do not fall back to
-  generic long `Score rows` text for scorecard analysis.
+  audience value, risk penalty, publishability status, selection penalty, exclusion
+  reasons, and selected/winner state. Do not fall back to generic long `Score rows`
+  text for scorecard analysis.
+- Emergency `deterministicFallback` candidates are diagnostic unless they pass the
+  publishability guard. If a publishable provider candidate exists, fallback rows must
+  be `excluded` or heavily penalized. If every candidate is invalid, the parent
+  `DraftRun` completes as quality-blocked with `finalDraft=null` and
+  `complete.blockedBy=draftCandidateSelection`; this is not a network/backend failure
+  and must not silently invoke compatibility fallback.
 - The `Смысловой результат` tab shows material plan, strategy, draft candidates,
   scorecard, selected candidate, and final draft artifacts. Raw JSON remains
   available in the detail panel, but it is not the primary analysis surface.

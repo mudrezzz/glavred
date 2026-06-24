@@ -43,8 +43,8 @@ describe('buildRunTraceViewModel', () => {
     expect(scorecardSection?.kind).toBe('scorecard');
     expect(scorecardSection?.scorecard?.rows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ candidateId: 'candidate-1', selected: true, total: '80', riskPenalty: '-2' }),
-        expect.objectContaining({ candidateId: 'candidate-2', selected: false, total: '66', riskPenalty: '-8' })
+        expect.objectContaining({ candidateId: 'candidate-1', selected: true, selectionStatus: 'eligible', total: '80', riskPenalty: '-2' }),
+        expect.objectContaining({ candidateId: 'candidate-2', selected: false, selectionStatus: 'excluded', selectionPenalty: '500', total: '66', riskPenalty: '-8' })
       ])
     );
     expect(viewModel.details.find((detail) => detail.id === 'draft-selection-detail')?.summary).toEqual(
@@ -325,6 +325,10 @@ function makeDraftRunBundle(): RunTraceBundle {
                   fabulaFit: 15,
                   audienceValue: 12,
                   riskPenalty: 2,
+                  publishable: true,
+                  selectionStatus: 'eligible',
+                  selectionPenalty: 0,
+                  selectionReasons: [],
                   total: 80
                 },
                 {
@@ -335,6 +339,10 @@ function makeDraftRunBundle(): RunTraceBundle {
                   fabulaFit: 12,
                   audienceValue: 12,
                   riskPenalty: 8,
+                  publishable: false,
+                  selectionStatus: 'excluded',
+                  selectionPenalty: 500,
+                  selectionReasons: ['fallback-candidate-provider-alternative'],
                   total: 66
                 }
               ],

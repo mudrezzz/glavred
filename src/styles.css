@@ -5299,7 +5299,7 @@ select:focus {
 
 .ai-run-scorecard-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.7fr) repeat(7, minmax(42px, 0.45fr));
+  grid-template-columns: minmax(180px, 1.8fr) minmax(76px, 0.65fr) minmax(58px, 0.5fr) repeat(7, minmax(42px, 0.45fr));
   gap: 8px;
   align-items: center;
   border: 1px solid var(--line);
@@ -5361,6 +5361,13 @@ select:focus {
   font: 800 11px/1 var(--font-sans);
   font-style: normal;
   text-transform: uppercase;
+}
+
+.ai-run-scorecard-candidate small {
+  color: var(--muted);
+  font: 700 12px/1.35 var(--font-sans);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .ai-run-fields {

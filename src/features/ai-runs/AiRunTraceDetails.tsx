@@ -236,6 +236,8 @@ function AiRunScorecardTable({ scorecard }: { scorecard: TraceScorecardModel }) 
       <div className="ai-run-scorecard-table" role="table" aria-label="Draft candidate scorecard">
         <div className="ai-run-scorecard-row head" role="row">
           <span role="columnheader">Candidate</span>
+          <span role="columnheader">Status</span>
+          <span role="columnheader">Penalty</span>
           <span role="columnheader">Total</span>
           <span role="columnheader">Hard</span>
           <span role="columnheader">Evidence</span>
@@ -250,7 +252,10 @@ function AiRunScorecardTable({ scorecard }: { scorecard: TraceScorecardModel }) 
               <strong>{row.title}</strong>
               <code>{row.candidateId}</code>
               {row.selected ? <em>selected</em> : null}
+              {row.selectionReasons ? <small>{row.selectionReasons}</small> : null}
             </span>
+            <span role="cell" data-label="Status">{row.selectionStatus || 'legacy'}</span>
+            <span role="cell" data-label="Penalty">{row.selectionPenalty}</span>
             <span className="total" role="cell" data-label="Total">{row.total}</span>
             <span role="cell" data-label="Hard">{row.hardConstraintFit}</span>
             <span role="cell" data-label="Evidence">{row.evidenceGrounding}</span>

@@ -3850,7 +3850,7 @@ Status:
 
 ### Slice 2.12.4.3: Draft Candidate Fallback Selection Guard
 
-- Status: Ready
+- Status: Done
 - Goal: Prevent emergency deterministic fallback candidates from becoming the final
   draft when at least one provider-generated candidate is available.
 - User value: A temporary provider failure in one branch no longer promotes a
@@ -3876,16 +3876,27 @@ Status:
     placeholder unless all provider candidates are unavailable or invalid.
   - If all candidates are non-publishable, the run should complete with a clear
     blocked/failed drafting artifact rather than silently publishing a placeholder.
+- Implementation result:
+  - Added a provider-free publishability policy for draft candidates.
+  - Extended the draft scorecard with `publishable`, `selectionStatus`,
+    `selectionPenalty`, and `selectionReasons`.
+  - `deterministicFallback` candidates are excluded when a publishable provider
+    candidate exists; raw artifact dumps, mojibake, empty fields, and "needs provider
+    rewrite" weaknesses are excluded.
+  - If no candidate is publishable, the `DraftRun` completes as quality-blocked:
+    `status=succeeded`, `finalDraft=null`, `complete.blockedBy=draftCandidateSelection`.
+  - `/ai-runs` scorecard table and the diagnostics helper now show status, penalty,
+    and exclusion reasons.
 - Architecture impact:
   - Candidate quality gating belongs in role-owned candidate selection/application
     modules, not in API, infrastructure, or DraftRun persistence.
   - Domain DTOs remain provider-free; provider/fallback source is selection metadata.
 - Tests:
-  - Fallback candidate is not selected when a viable OpenRouter candidate exists.
-  - Candidate with raw artifact/object dump is marked non-publishable.
-  - Scorecard includes exclusion/penalty reasons.
-  - All-fallback/all-invalid case returns a clear non-publishable outcome.
-  - Existing successful all-provider candidate selection remains compatible.
+  - Fallback candidate is not selected when a viable OpenRouter candidate exists. Done.
+  - Candidate with raw artifact/object dump is marked non-publishable. Done.
+  - Scorecard includes exclusion/penalty reasons. Done.
+  - All-fallback/all-invalid case returns a clear non-publishable outcome. Done.
+  - Existing successful all-provider candidate selection remains compatible. Done.
 - Docs:
   - Update SAO/developer docs if selection guard becomes an explicit pipeline rule.
 - Demo impact:
@@ -3900,7 +3911,7 @@ Status:
 
 ### Slice 2.12.5: SourceLedger External Evidence Merge
 
-- Status: Backlog
+- Status: Ready
 - Goal: Merge public evidence into the source ledger and synthesize what it changes
   before feasibility, post contract, rule registry, and drafting.
 - User value: The runner can explain which external material supports, qualifies, or
@@ -4122,4 +4133,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.12.4.3: Draft Candidate Fallback Selection Guard`.
+Continue the backend track with `Slice 2.12.5: SourceLedger External Evidence Merge`.

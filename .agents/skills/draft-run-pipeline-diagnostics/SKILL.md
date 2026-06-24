@@ -61,7 +61,8 @@ Check these failure classes explicitly:
   used without synthesized claims.
 - **Selection**: fallback candidate selected over viable provider candidate, identical
   scores, scoring ignores readability/source/fallback, selected candidate contradicts
-  trace warnings.
+  trace warnings, scorecard publishability fields missing or showing unexpected
+  `eligible / penalized / excluded` decisions.
 - **UI/trace**: trace hides the important decision, scorecard unreadable, missing
   DraftRun ID, child runs not linked.
 
@@ -88,6 +89,8 @@ hide bad output behind polite abstractions.
   claims can support drafting.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
+- Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`
+  in draft scorecards before judging why a candidate won or was blocked.
 - Do not recommend validators/revision before the quality spine has the required
   evidence/contract/rule artifacts for that run.
 - Do not change code during pure diagnosis unless the user explicitly asks to implement

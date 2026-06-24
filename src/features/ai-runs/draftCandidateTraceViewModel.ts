@@ -324,6 +324,10 @@ function scorecardModel(
         candidateId,
         title: candidate?.title ?? candidateId,
         selected: selectedCandidateId === candidateId,
+        publishable: displayValue(score.publishable),
+        selectionStatus: displayValue(score.selectionStatus),
+        selectionPenalty: displayValue(score.selectionPenalty),
+        selectionReasons: displayValue(score.selectionReasons),
         total: displayValue(score.total),
         hardConstraintFit: displayValue(score.hardConstraintFit),
         evidenceGrounding: displayValue(score.evidenceGrounding),
@@ -369,6 +373,10 @@ function scoreFields(score: Record<string, unknown>): TraceField[] {
     ['Fabula fit', score.fabulaFit],
     ['Audience value', score.audienceValue],
     ['Risk penalty', score.riskPenalty],
+    ['Publishable', score.publishable],
+    ['Selection status', score.selectionStatus],
+    ['Selection penalty', score.selectionPenalty],
+    ['Selection reasons', score.selectionReasons],
     ['Total', score.total]
   ]);
 }

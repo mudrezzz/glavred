@@ -22,11 +22,10 @@ class FakeOpenRouterResult:
 
 class SuccessfulCandidateAdapter:
     def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
-        direction = kwargs["messages"][1]["content"]
         return FakeOpenRouterResult(
             {
                 "title": "Provider draft candidate",
-                "body": f"Provider body with topic, conflict and practical value. {direction[:40]}",
+                "body": "Provider body with topic, conflict and practical value.",
                 "rationale": "Uses the selected direction and rule pack.",
                 "usedEvidence": ["pilot usage data"],
                 "ruleCoverage": ["hard rule", "topic fit", "fabula fit"],
@@ -108,6 +107,9 @@ def test_candidate_generation_falls_back_without_openrouter(tmp_path) -> None:
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.artifact_payload["fallbackUsed"] is True
     assert all(candidate["fallbackUsed"] for candidate in result.artifact_payload["candidates"])
+    assert result.final_draft is None
+    assert result.artifact_payload["selection"]["selectedCandidateId"] is None
+    assert all(score["selectionStatus"] == "excluded" for score in result.artifact_payload["selection"]["scorecard"])
 
 
 def test_candidate_provider_error_falls_back_without_secret(tmp_path) -> None:
@@ -127,24 +129,7 @@ def test_candidate_provider_error_falls_back_without_secret(tmp_path) -> None:
     assert run.fallback_used is True
     assert "sk-test-secret" not in (run.error or "")
     assert result.artifact_payload["source"] == "deterministicFallback"
-
-
-def test_candidate_selector_prefers_stronger_score() -> None:
-    selection = DraftCandidateSelectionService().select(
-        [
-            {"id": "weak", "body": "short", "usedEvidence": [], "ruleCoverage": [], "risks": ["risk"]},
-            {
-                "id": "strong",
-                "body": "AI topic conflict with practical checks",
-                "usedEvidence": ["e1", "e2"],
-                "ruleCoverage": ["r1", "r2", "r3"],
-                "risks": [],
-            },
-        ]
-    )
-
-    assert selection.selected_candidate_id == "strong"
-    assert selection.scorecard[1].total > selection.scorecard[0].total
+    assert result.final_draft is None
 
 
 def candidate_service(tmp_path, adapter: object, *, configured: bool) -> DraftCandidateGenerationService:

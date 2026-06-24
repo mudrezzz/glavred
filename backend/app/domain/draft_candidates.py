@@ -59,6 +59,10 @@ class DraftCandidateScore:
     fabula_fit: int
     audience_value: int
     risk_penalty: int
+    publishable: bool = True
+    selection_status: str = "eligible"
+    selection_penalty: int = 0
+    selection_reasons: list[str] = field(default_factory=list)
 
     @property
     def total(self) -> int:
@@ -69,6 +73,7 @@ class DraftCandidateScore:
             + self.fabula_fit
             + self.audience_value
             - self.risk_penalty
+            - self.selection_penalty
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -80,13 +85,17 @@ class DraftCandidateScore:
             "fabulaFit": self.fabula_fit,
             "audienceValue": self.audience_value,
             "riskPenalty": self.risk_penalty,
+            "publishable": self.publishable,
+            "selectionStatus": self.selection_status,
+            "selectionPenalty": self.selection_penalty,
+            "selectionReasons": self.selection_reasons,
             "total": self.total,
         }
 
 
 @dataclass(frozen=True)
 class DraftCandidateSelection:
-    selected_candidate_id: str
+    selected_candidate_id: str | None
     reason: str
     scorecard: list[DraftCandidateScore]
     unresolved_risks: list[str] = field(default_factory=list)

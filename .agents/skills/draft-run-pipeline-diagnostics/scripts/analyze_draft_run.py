@@ -199,6 +199,7 @@ def draft_summary(step: dict[str, Any] | None) -> dict[str, Any]:
         "candidateCount": len(candidates),
         "selectedCandidateId": selection.get("selectedCandidateId"),
         "scorecard": selection.get("scorecard"),
+        "selectionReason": selection.get("reason"),
         "candidates": [
             {
                 "id": candidate.get("id"),
@@ -246,6 +247,23 @@ def build_findings(
     selected = draft.get("selectedCandidateId")
     selected_candidate = next((candidate for candidate in draft.get("candidates", []) if candidate.get("id") == selected), None)
     provider_candidates = [candidate for candidate in draft.get("candidates", []) if candidate.get("source") == "openrouter"]
+    scorecard = draft.get("scorecard") if isinstance(draft.get("scorecard"), list) else []
+    excluded = [score for score in scorecard if isinstance(score, dict) and score.get("selectionStatus") == "excluded"]
+    penalized = [score for score in scorecard if isinstance(score, dict) and score.get("selectionStatus") == "penalized"]
+    if excluded:
+        findings.append(
+            "Excluded draft candidates: "
+            + ", ".join(f"{score.get('candidateId')} ({', '.join(score.get('selectionReasons') or [])})" for score in excluded)
+        )
+    if penalized:
+        findings.append(
+            "Penalized draft candidates: "
+            + ", ".join(f"{score.get('candidateId')} (-{score.get('selectionPenalty')})" for score in penalized)
+        )
+    complete_step = next((step for step in steps if step["key"] == "complete"), None)
+    complete_artifact = (complete_step or {}).get("artifact") or {}
+    if complete_artifact.get("blockedBy") == "draftCandidateSelection":
+        findings.append("DraftRun was quality-blocked by draft candidate selection guard.")
     if selected_candidate and selected_candidate.get("source") == "deterministicFallback" and provider_candidates:
         findings.append("Selected candidate is deterministic fallback while provider candidates exist.")
     body = str((final_draft or {}).get("body") or "")
@@ -283,8 +301,20 @@ def print_markdown(summary: dict[str, Any]) -> None:
     print("\n## Draft Selection")
     draft = summary["draft"]
     print(f"- selected: {draft.get('selectedCandidateId')}")
+    print(f"- reason: {draft.get('selectionReason')}")
+    score_by_candidate = {
+        score.get("candidateId"): score
+        for score in draft.get("scorecard") or []
+        if isinstance(score, dict)
+    }
     for candidate in draft.get("candidates", []):
-        print(f"- {candidate['id']}: source={candidate.get('source')}; fallback={candidate.get('fallbackUsed')}; title={candidate.get('title')}")
+        score = score_by_candidate.get(candidate.get("id")) or {}
+        reasons = ",".join(score.get("selectionReasons") or [])
+        print(
+            f"- {candidate['id']}: source={candidate.get('source')}; fallback={candidate.get('fallbackUsed')}; "
+            f"status={score.get('selectionStatus')}; penalty={score.get('selectionPenalty')}; reasons={reasons}; "
+            f"title={candidate.get('title')}"
+        )
     if summary.get("finalDraft"):
         print("\n## Final Draft")
         print(f"- title: {summary['finalDraft']['title']}")
