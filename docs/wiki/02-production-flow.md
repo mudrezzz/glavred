@@ -143,6 +143,12 @@ remains visible as `notConfigured`; accepted public evidence is synthesized into
 contract, rules, planning, and draft candidates. `MaterialPlan` now has an
 accountability gate: it must select projected evidence or explain rejected claims;
 otherwise the runner retries and marks any emergency fallback explicitly in trace.
+After candidate generation, the existing `validation` step writes a deterministic
+`DraftValidationReport` for every candidate. The report checks size/shape, contract
+and CTA signals, attribution, rejected evidence, forbidden moves, raw artifact
+leakage, and publishability consistency. Slice 2.13 is report-only: the selected
+draft still opens normally, while Slice 2.14 will consume the findings for ranking
+and directed revision.
 
 ## Ограничения текущего demo
 

@@ -992,8 +992,12 @@ Conceptual interfaces for the next implementation slices:
   moves.
 - `RhetoricalPlan`: one editorial route for applying the same post contract.
 - `DraftCandidate`: one generated draft attempt with rationale and risks.
-- `DeterministicLinter`: hard local checks before provider-backed validation.
-- `ValidatorResult`: focused score/findings for one rule family.
+- `DeterministicLinter`: report-only local checks over candidate prose, size
+  contract, post contract, rule registry, material plan, and source ledger.
+- `DraftValidationReport`: per-candidate findings with validator id, severity,
+  rule ids, claim ids, evidence excerpt, and repair guidance. Slice 2.13 writes this
+  to the existing `validation` step but does not change `finalDraft`.
+- `ValidatorResult`: future provider-backed score/findings for one rule family.
 - `PairwiseRanking`: comparison and scorecard across candidates.
 - `RevisionAttempt`: targeted correction input and candidate output.
 - `RegressionReport`: re-check after a directed revision.
@@ -1196,6 +1200,12 @@ The next artifacts must make candidate validation meaningful:
   candidate claims were rejected. Empty evidence without accountability triggers a
   primary repair retry, then optional `OPENROUTER_BACKUP_MODEL`, and only then an
   explicitly marked deterministic emergency fallback.
+- `validation` now stores `DraftValidationReport` in the existing DraftRun step.
+  The deterministic linter checks all candidates for size/shape, CTA and contract
+  signals, attribution, rejected-evidence misuse, forbidden moves, raw artifact
+  leakage, and publishability consistency. It is report-only in Slice 2.13: bad
+  findings are visible in `/ai-runs?runId=...`, but ranking and directed revision
+  consume them later.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

@@ -16,6 +16,7 @@ from backend.app.application.draft_run_draft_step_service import LegacyDraftStep
 from backend.app.application.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
+from backend.app.application.draft_validation_step import validation_artifact, validation_not_run_artifact
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, DraftRunStepKey
 
@@ -114,12 +115,12 @@ class DraftRunPipeline:
             progress.add_ai_run_ids(draft_result.ai_run_ids)
             progress.succeed(DraftRunStepKey.DRAFT, draft_result.artifact_payload)
             if draft_result.final_draft is None:
-                progress.complete(DraftRunStepKey.VALIDATION, {"status": "not-run", "reason": "draft candidate selection blocked"})
+                progress.complete(DraftRunStepKey.VALIDATION, validation_not_run_artifact("draft candidate selection blocked"))
                 progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
                 self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
                 return self._loaded(run_id)
             draft_payload = draft_to_payload(draft_result.final_draft)
-            progress.complete(DraftRunStepKey.VALIDATION, {"status": "placeholder-passed", "checks": ["structure", "audience", "rules"]})
+            progress.complete(DraftRunStepKey.VALIDATION, validation_artifact(draft_artifact=draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan))
             progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
             self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_payload, ai_run_ids=progress.ai_run_ids)
         except Exception as exc:
@@ -133,7 +134,6 @@ class DraftRunPipeline:
         if loaded is None:
             raise ValueError(f"DraftRun {run_id} disappeared")
         return loaded
-
 def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
     value = artifact.get(key)
     return value if isinstance(value, dict) else {}

@@ -404,6 +404,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   into the DraftRun SourceLedger before the post is evaluated and written.
 - The trace also shows whether `MaterialPlan` selected enriched evidence, rejected it
   with reasons, retried with a primary/backup model, or used emergency fallback.
+- The trace now includes a `validation` report for every draft candidate. It shows
+  size/shape issues, missing CTA or contract signals, missing attribution, rejected
+  evidence used as proof, forbidden moves, raw artifact leakage, and publishability
+  consistency. In the current slice this is diagnostic only: the selected draft still
+  opens in `Драфт`, and ranking/revision will use these findings later.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

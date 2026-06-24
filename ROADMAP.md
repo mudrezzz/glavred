@@ -3986,15 +3986,117 @@ Status:
 
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
-- Status: Ready
-- Goal: Add hard checks and narrow validators after candidates are generated.
+- Status: Done
+- Completed: 2026-06-24
+- Goal: Add the first report-only validation layer after draft candidates are
+  generated.
 - Scope:
-  - Deterministic linter for length, structure, required CTA, forbidden tokens,
-    unsupported claim references, and platform constraints.
-  - LLM-assisted validators for source grounding, publisher/voice, topic/fabula,
-    coherence/compression, and audience value.
-  - Store validator reports with rule ids, claim ids, severity, findings, and repair
-    guidance.
+  - Added provider-free `DraftValidationReport`, `DraftCandidateValidationReport`,
+    `DraftValidatorFinding`, and `DraftValidatorStatus`.
+  - Added deterministic validators for size/shape, CTA and contract signals,
+    source attribution, rejected evidence misuse, forbidden moves, raw artifact
+    leakage, and publishability consistency.
+  - Replaced the placeholder `validation` step artifact with a real report for all
+    candidates, marking the selected candidate separately.
+  - Kept the slice report-only: findings are visible in trace but do not change
+    `finalDraft` selection.
+  - Updated `/ai-runs?runId=...` semantic trace to show validation summary,
+    per-candidate quality, source attribution findings, size findings, and
+    publishability findings.
+- Explicitly out of scope:
+  - OpenRouter/LLM-assisted validators.
+  - Changing ranking, selection, fallback policy, or directed revision from
+    validation findings.
+
+#### Deferred Follow-Up: LLM-Assisted Validator Reports
+
+- Status: Backlog
+- Goal: Add optional provider-backed validators for source grounding,
+  publisher/voice, topic/fabula fit, coherence/compression, and audience value.
+- Rule:
+  - Provider-backed validators must consume `SourceLedger`, `PostContract`,
+    `RuleRegistry`, `MaterialPlan`, and draft candidates. They must not reconstruct
+    provenance from prose alone.
+
+### Slice 2.13.1: Attribution Validator Calibration
+
+- Status: Ready
+- Goal: Calibrate deterministic attribution validation so it flags real missing
+  source attribution without creating false positives for valid author/source mentions.
+- User value:
+  - `/ai-runs?runId=...` validation warnings become actionable instead of noisy.
+  - Slice 2.14 can consume attribution findings without repairing already-correct
+    drafts.
+- Scope:
+  - Expand attribution markers from `PublicEvidenceItem` and external ledger
+    provenance: source title, domain, URL, author/person names when visible, source
+    organization, and source label.
+  - Treat mentions such as `Tian Pan`, `Vamsee Jasti`, `SQ Collective`, `Alan Knox`,
+    source title, or source domain as valid attribution when they match the referenced
+    claim.
+  - Add trace/debug fields for expected attribution markers and matched markers.
+  - Keep warnings when source-backed claims appear with no visible attribution or
+    qualification.
+- Out of scope:
+  - LLM attribution judgment.
+  - Changing candidate ranking or final draft selection.
+- Tests:
+  - Candidate with valid author/source mention does not get false attribution warning.
+  - Candidate with numeric/public claim and no source marker still gets warning.
+  - Trace semantic validation panel shows matched/expected attribution markers.
+
+### Slice 2.13.2: JSON Step Retry Discipline
+
+- Status: Backlog
+- Goal: Stop going directly to deterministic fallback when an OpenRouter JSON step
+  returns malformed JSON or the wrong shape.
+- User value:
+  - Agentic steps become more reliable and fallback becomes a last resort rather than
+    the first response to provider formatting errors.
+- Scope:
+  - Introduce reusable retry policy for JSON-producing LLM steps:
+    primary attempt -> stricter repair retry -> optional `OPENROUTER_BACKUP_MODEL`
+    retry -> deterministic emergency fallback.
+  - Apply first to `rhetoricalPlans`, because the control run
+    `d2286a22-bf90-43c1-93a0-26d4aab937e1` fell back after
+    `OpenRouter response JSON is not an object`.
+  - Persist attempts in the step artifact: model, aiRunId, status, error, validation
+    result, backup/fallback markers.
+  - Keep provider tokens and raw secrets out of trace.
+- Out of scope:
+  - Changing generated prose quality directly.
+  - Adding retries for every provider step in one large refactor.
+- Tests:
+  - malformed primary response triggers repair retry;
+  - malformed repair response triggers backup retry when configured;
+  - all failed attempts trigger explicit deterministic fallback;
+  - valid retry response prevents fallback;
+  - trace shows attempts and final source.
+
+### Slice 2.13.3: LLM-Assisted Validator Reports
+
+- Status: Backlog
+- Goal: Add provider-backed, report-only editorial validators after deterministic
+  validation and before ranking/revision.
+- User value:
+  - Validation starts judging actual editorial quality, not only formal lint issues.
+- Scope:
+  - Add LLM validators for source grounding, author voice/publisher rules,
+    topic/fabula fit, coherence/compression, and audience value.
+  - Validators consume `SourceLedger`, `PostContract`, `RuleRegistry`, `MaterialPlan`,
+    selected candidates, and deterministic validation findings.
+  - Each LLM validator writes structured findings with validator id, severity,
+    rule ids, claim ids, evidence excerpt, and repair guidance.
+  - Findings remain report-only; ranking/revision consumes them in 2.14.
+- Out of scope:
+  - Automatic rewrite.
+  - Changing final draft selection.
+  - Freeform prose critique without rule/claim references.
+- Tests:
+  - Provider success stores LLM validator findings in `validation` artifact.
+  - Provider malformed/error response falls back safely or marks validator
+    unavailable without blocking run.
+  - Trace shows deterministic and LLM validation findings separately.
 
 ### Slice 2.14: Pairwise Ranking and Directed Revision
 
@@ -4154,6 +4256,8 @@ Status:
 - Slice 2.12.5: SourceLedger External Evidence Merge. Completed 2026-06-24.
 - Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry. Completed
   2026-06-24.
+- Slice 2.13: Deterministic Linter and Validator Orchestrator. Completed
+  2026-06-24.
 
 ## Blocked Items
 
@@ -4174,4 +4278,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.13: Deterministic Linter and Validator Orchestrator`.
+Continue the backend track with `Slice 2.13.1: Attribution Validator Calibration`.

@@ -24,11 +24,15 @@ def test_pipeline_writes_draft_candidates_and_selected_final_draft(tmp_path) -> 
     ).execute(run.id)
 
     draft_step = result.steps[9].artifact_payload
+    validation_step = result.steps[10].artifact_payload
     assert result.status == DraftRunStatus.SUCCEEDED
     assert result.ai_run_ids == ["ai-candidate-1", "ai-candidate-2"]
     assert result.final_draft["title"] == "Selected title"
     assert draft_step["candidates"][0]["id"] == "candidate-1"
     assert draft_step["selection"]["selectedCandidateId"] == "candidate-2"
+    assert validation_step["metadata"]["version"] == "draft-validation-v1"
+    assert validation_step["summary"]["candidateCount"] == 2
+    assert validation_step["candidateReports"][1]["selected"] is True
 
 
 class StaticCandidateGenerationService:

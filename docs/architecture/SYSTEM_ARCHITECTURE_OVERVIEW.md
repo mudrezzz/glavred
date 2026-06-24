@@ -421,6 +421,15 @@ rule.
 ADR `2026-06-23-drafting-requires-public-evidence-research` records the public
 evidence research layer.
 
+Slice 2.13 implements the first report-only validator layer. The existing
+`validation` step now stores a `DraftValidationReport` for every draft candidate,
+including the selected candidate. The deterministic linter checks size/shape,
+contract and CTA signals, source attribution, rejected-evidence misuse, forbidden
+moves, raw artifact leakage, and publishability consistency. Findings carry
+validator ids, severity, rule ids, claim ids, evidence excerpts, and repair guidance,
+but they do not alter `finalDraft` selection until the ranking/revision slices consume
+them.
+
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
 `EditorialWorkItem` and sends it with `POST /api/draft-runs`. The snapshot includes
@@ -566,6 +575,17 @@ Candidate ownership is split:
 - `backend/app/application/draft_run_draft_step_service.py` owns the legacy
   deterministic draft-step fallback when candidate generation is not wired.
 
+Validation ownership is split:
+
+- `backend/app/domain/draft_validation.py` defines provider-free validation report,
+  candidate report, finding, and status DTOs.
+- `backend/app/application/draft_validation_linter.py` owns deterministic local
+  checks for size, contract signals, evidence, rules, and publishability.
+- `backend/app/application/draft_validator_orchestrator.py` owns candidate iteration
+  and report assembly.
+- `backend/app/application/draft_validation_step.py` is the thin pipeline bridge that
+  writes the existing `validation` step artifact.
+
 Slice 2.12 inserts `RhetoricalPlans` between `DraftStrategy` and `DraftCandidates`.
 The worker now writes a separate `rhetoricalPlans` step artifact, and candidate
 generation consumes that artifact instead of inventing its own directions. Each draft
@@ -623,10 +643,11 @@ The post-2.8 drafting quality spine is now:
   CTA, allowed claims, forbidden moves, platform constraints, and fabula obligations.
 - `RhetoricalPlan`: one possible route for writing the same contract, including
   planned moves, claims to use, claims to avoid, and CTA route.
-- `DeterministicLinter`, `ValidatorReport`, `PairwiseRanking`, `DirectedRevision`,
-  and `RegressionReport`: the later quality loop. These artifacts must consume the
-  source ledger and post contract; they must not reconstruct provenance or invariants
-  from generated text alone.
+- `DeterministicLinter` and `ValidatorReport`: implemented report-only checks over
+  candidates, `SourceLedger`, `PostContract`, `RuleRegistry`, and `MaterialPlan`.
+- `PairwiseRanking`, `DirectedRevision`, and `RegressionReport`: the later quality
+  loop. These artifacts must consume the source ledger and post contract; they must
+  not reconstruct provenance or invariants from generated text alone.
 
 Slice 2.9 implements the first seed `SourceLedger` inside
 `steps[0].artifactPayload.sourceLedger`. The ledger is not a new `DraftRunStepKey` and
@@ -761,6 +782,9 @@ Concrete queued drafting files:
 - `backend/app/application/draft_candidate_direction_service.py`
 - `backend/app/application/draft_candidate_selection_service.py`
 - `backend/app/application/draft_candidate_publishability.py`
+- `backend/app/application/draft_validation_linter.py`
+- `backend/app/application/draft_validator_orchestrator.py`
+- `backend/app/application/draft_validation_step.py`
 - `backend/app/application/draft_planning_prompts.py`
 - `backend/app/application/draft_planning_audit.py`
 - `backend/app/application/draft_candidate_prompts.py`
@@ -778,6 +802,7 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_rule_pack.py`
 - `backend/app/domain/draft_planning.py`
 - `backend/app/domain/draft_candidates.py`
+- `backend/app/domain/draft_validation.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

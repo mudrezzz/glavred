@@ -7,7 +7,7 @@ describe('buildRunTraceViewModel', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
 
     expect(viewModel.mode).toBe('draftRun');
-    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'sourceIntent', 'publicEvidence', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft']);
+    expect(viewModel.timeline.map((step) => step.key)).toEqual(['context', 'sourceIntent', 'publicEvidence', 'feasibility', 'postContract', 'rulePack', 'materialPlan', 'rhetoricalPlans', 'draft', 'validation']);
     expect(traceStep(viewModel, 'sourceIntent')?.childCalls[0].id).toBe('ai-source');
     expect(traceStep(viewModel, 'materialPlan')?.childCalls[0].id).toBe('ai-material');
     expect(traceStep(viewModel, 'rhetoricalPlans')?.childCalls[0].id).toBe('ai-plans');
@@ -68,8 +68,19 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Rhetorical plan 1');
     expect(titles).toContain('Кандидат 1: Candidate · выбран');
     expect(titles).toContain('Draft scorecard');
+    expect(titles).toContain('Validation report');
     expect(titles).toContain('Selected draft candidate');
     expect(titles).toContain('Selected draft');
+  });
+
+  it('shows deterministic validation findings as readable semantic trace', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const validation = viewModel.semanticSections.find((section) => section.id === 'validation');
+
+    expect(validation?.fields).toContainEqual({ label: 'Status', value: 'warning' });
+    expect(validation?.fields).toContainEqual({ label: 'Critical findings', value: '0' });
+    expect(validation?.fields.find((field) => field.label === 'Candidate quality')?.value).toContain('candidate-1: warning');
+    expect(validation?.fields.find((field) => field.label === 'Source attribution findings')?.value).toContain('Source-backed public claim needs visible attribution');
   });
 
   it('shows material plan evidence accountability and retry attempts', () => {
@@ -437,6 +448,54 @@ function makeDraftRunBundle(): RunTraceBundle {
               ],
               unresolvedRisks: []
             }
+          },
+          error: null,
+          startedAt: null,
+          completedAt: null
+        },
+        {
+          key: 'validation',
+          status: 'succeeded',
+          title: 'Validation',
+          artifactPayload: {
+            status: 'warning',
+            selectedCandidateId: 'candidate-1',
+            summary: {
+              candidateCount: 2,
+              criticalCount: 0,
+              warningCount: 1,
+              selectedStatus: 'warning'
+            },
+            candidateReports: [
+              {
+                candidateId: 'candidate-1',
+                selected: true,
+                status: 'warning',
+                criticalCount: 0,
+                warningCount: 1,
+                findings: [
+                  {
+                    validatorId: 'evidence.attribution',
+                    severity: 'warning',
+                    candidateId: 'candidate-1',
+                    ruleIds: [],
+                    claimIds: ['external-claim-1'],
+                    message: 'Source-backed public claim needs visible attribution.',
+                    evidenceExcerpt: 'external-claim-1',
+                    repairGuidance: 'Name the source.'
+                  }
+                ]
+              },
+              {
+                candidateId: 'candidate-2',
+                selected: false,
+                status: 'passed',
+                criticalCount: 0,
+                warningCount: 0,
+                findings: []
+              }
+            ],
+            metadata: { version: 'draft-validation-v1', reportOnly: true }
           },
           error: null,
           startedAt: null,

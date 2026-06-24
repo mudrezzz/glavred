@@ -340,6 +340,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const candidates = asArray(payload.candidates);
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
+  const validation = step === 'validation' ? payload : asRecord(payload.validationReport);
 
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
@@ -358,6 +359,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
+  if (validation) sections.push(validationSection(validation));
   if (draft) {
     sections.push({
       id: 'draft',
@@ -374,6 +376,59 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function validationSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const summary = asRecord(payload.summary);
+  const reports = asArray(payload.candidateReports) ?? [];
+  if (reports.length === 0) {
+    return {
+      id: 'validation',
+      title: 'Validation report',
+      fields: compactFields([
+        ['Status', payload.status],
+        ['Reason', asRecord(payload.metadata)?.reason],
+        ['Checks', payload.checks],
+        ['Metadata', payload.metadata]
+      ])
+    };
+  }
+  return {
+    id: 'validation',
+    title: 'Validation report',
+    fields: compactFields([
+      ['Status', payload.status],
+      ['Selected candidate', payload.selectedCandidateId],
+      ['Candidates', summary?.candidateCount ?? reports.length],
+      ['Critical findings', summary?.criticalCount],
+      ['Warnings', summary?.warningCount],
+      ['Selected status', summary?.selectedStatus],
+      ['Candidate quality', reports.map(validationCandidateValue)],
+      ['Size findings', validationFindings(reports, 'size.')],
+      ['Source attribution findings', validationFindings(reports, 'evidence.attribution')],
+      ['Publishability findings', validationFindings(reports, 'publishability.')],
+      ['Rule findings', validationFindings(reports, 'rules.')]
+    ])
+  };
+}
+
+function validationCandidateValue(item: unknown): unknown {
+  const report = asRecord(item);
+  if (!report) return item;
+  return `${report.selected ? 'selected · ' : ''}${report.candidateId}: ${report.status} · critical ${report.criticalCount ?? 0} · warnings ${report.warningCount ?? 0}`;
+}
+
+function validationFindings(reports: unknown[], prefix: string): unknown[] {
+  return reports.flatMap((item) => {
+    const report = asRecord(item);
+    const candidateId = stringValue(report?.candidateId) ?? 'candidate';
+    return (asArray(report?.findings) ?? []).flatMap((findingItem) => {
+      const finding = asRecord(findingItem);
+      const validatorId = stringValue(finding?.validatorId) ?? '';
+      if (!validatorId.startsWith(prefix)) return [];
+      return `${candidateId} · ${finding?.severity}: ${finding?.message}\n${finding?.repairGuidance ?? ''}`;
+    });
+  });
 }
 
 function sourceIntentSection(payload: Record<string, unknown>, sourcesOrigin?: string): TraceSemanticSection {

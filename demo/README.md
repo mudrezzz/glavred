@@ -283,6 +283,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     or directed revision. The `MaterialPlan` trace now shows selected evidence,
     rejected evidence with reasons, repair attempts, backup-model use, and emergency
     fallback if all LLM attempts ignore the enriched ledger.
+    The `validation` trace step now contains deterministic per-candidate findings for
+    size/shape, contract/CTA, attribution, rejected evidence, forbidden moves,
+    publishability, and raw artifact leakage. These findings are visible in
+    `/ai-runs?runId=...` but do not yet change the selected final draft.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
