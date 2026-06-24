@@ -1,0 +1,96 @@
+---
+name: draft-run-pipeline-diagnostics
+description: Use when diagnosing a Glavred DraftRun or AI drafting pipeline result by run id, especially when the user asks why a generated post is bad, stuck, generic, source-free, over-sourced, selected incorrectly, or whether the pipeline should continue as planned.
+---
+
+# Draft Run Pipeline Diagnostics Skill
+
+## Goal
+
+Diagnose one Glavred drafting run with the same method every time, using local
+SQLite trace data and current pipeline code. The output must explain what happened,
+why the result is good or bad, what should be fixed, and whether the roadmap should
+continue unchanged or get an intermediate repair slice.
+
+## Inputs
+
+Require one of:
+
+- parent `DraftRun ID`;
+- child `AiRun ID`, then find or ask for the parent `DraftRun ID` when the pipeline
+  decision depends on sibling calls.
+
+Do not diagnose from screenshots alone when a run id is available.
+
+## Standard Workflow
+
+1. Inspect repo state:
+   - `git status --short --branch`
+   - note whether there are uncommitted pipeline changes that may affect the run.
+2. Extract run trace with the helper script:
+   - `python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py <DraftRun ID>`
+3. If the helper reports missing or ambiguous data, query SQLite directly:
+   - parent DB: `var/glavred-draft-runs.sqlite3`
+   - child AI DB: `var/glavred-ai-runs.sqlite3`
+4. Inspect current code only for the components implicated by the trace:
+   - source intent / public evidence;
+   - source ledger / feasibility / post contract;
+   - rule registry / material plan / strategy / rhetorical plans;
+   - draft candidates / scoring / selection;
+   - fallback behavior.
+5. Compare actual trace to expected slice behavior in `ROADMAP.md`.
+6. Decide one of:
+   - behavior is acceptable for current slice, continue plan;
+   - bugfix slice is needed before continuing;
+   - roadmap slice should be amended because the architecture assumption was wrong.
+
+## Diagnostic Checklist
+
+Check these failure classes explicitly:
+
+- **Execution**: run missing, failed, stale, pending steps, missing child `AiRun`.
+- **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch failure.
+- **Research**: source intent absent, research plan too vague, search disabled,
+  failed URL/search attempts, irrelevant accepted citations, evidence not merged.
+- **Quality spine**: SourceLedger missing usable claims, feasibility incorrectly blocked
+  or passed, PostContract too weak, RuleRegistry lacks enforceable rules.
+- **Planning**: material plan ignores public evidence, strategy is generic, rhetorical
+  plans do not differ meaningfully, size contract ignored.
+- **Drafting**: candidates are generic, technical artifacts leak into prose, raw JSON or
+  Python object dumps appear, citations are stuffed in mechanically, source names are
+  used without synthesized claims.
+- **Selection**: fallback candidate selected over viable provider candidate, identical
+  scores, scoring ignores readability/source/fallback, selected candidate contradicts
+  trace warnings.
+- **UI/trace**: trace hides the important decision, scorecard unreadable, missing
+  DraftRun ID, child runs not linked.
+
+## Output Format
+
+Answer in Russian unless the user asks otherwise.
+
+Use this structure:
+
+1. **Короткий вывод**: one paragraph with the main diagnosis.
+2. **Что произошло по шагам**: concise ordered list from trace.
+3. **Что пошло не так**: concrete root causes, not vague quality comments.
+4. **Почему это произошло**: link symptoms to current code/pipeline behavior.
+5. **Что исправляем**: smallest next slice or exact roadmap adjustment.
+6. **Что не является багом**: only if something is expected for the current slice.
+7. **Как проверить после фикса**: repeatable run/trace checks.
+
+Prefer concrete ids, step names, error strings, candidate ids, and scores. Do not
+hide bad output behind polite abstractions.
+
+## Rules
+
+- Do not treat planned search tasks as proof. Only accepted public evidence or ledger
+  claims can support drafting.
+- Do not accept emergency fallback text as publication-quality unless the trace proves
+  all provider paths are unavailable and the fallback passed publishability checks.
+- Do not recommend validators/revision before the quality spine has the required
+  evidence/contract/rule artifacts for that run.
+- Do not change code during pure diagnosis unless the user explicitly asks to implement
+  a fix.
+- If the issue is a roadmap gap, propose a small intermediate slice and keep the rest
+  of the plan intact.

@@ -343,6 +343,44 @@ How to read draft generation source:
 - Frontend local emergency fallback: frontend shows `source=localFallback`,
   `aiRunId=null`; the backend was unreachable, so no backend run was recorded.
 
+### DraftRun diagnosis workflow
+
+Use the repo skill `$draft-run-pipeline-diagnostics` whenever a concrete run produces
+a bad, generic, stuck, over-sourced, source-free, or wrongly selected post. The skill
+standardizes the analysis so run reviews do not depend on ad hoc SQLite queries.
+
+Fast local extraction:
+
+```bash
+python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py <DraftRun ID>
+```
+
+The helper reads:
+
+- `var/glavred-draft-runs.sqlite3` for the parent run, steps, artifacts, and final
+  draft;
+- `var/glavred-ai-runs.sqlite3` for child provider calls, fallback status, errors,
+  search queries, and candidate branches.
+
+The required diagnostic answer should cover: what happened by step, what failed, why
+the current pipeline allowed it, whether the behavior is expected for the current
+slice, and the smallest repair slice if the plan should be adjusted.
+
+For a fresh end-to-end control run, use `$draft-run-pipeline-evaluation` instead of
+diagnostics directly. It starts a new run through the UI or a prepared API payload,
+waits for the queued backend worker, then hands the resulting `DraftRun ID` to the
+diagnostic workflow.
+
+Wait helper:
+
+```bash
+python .agents/skills/draft-run-pipeline-evaluation/scripts/wait_for_draft_run.py <DraftRun ID>
+```
+
+This helper never calls the compatibility `/api/drafts/generate` endpoint. A live
+queued/running `DraftRun` must remain the source of truth until it succeeds, fails, or
+becomes stale.
+
 Backend OOP/SRP rules:
 
 - API handlers must not contain prompt logic, persistence logic, provider calls, or

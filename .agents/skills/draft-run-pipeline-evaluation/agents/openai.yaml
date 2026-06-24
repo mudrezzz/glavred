@@ -1,0 +1,4 @@
+interface:
+  display_name: "DraftRun Pipeline Evaluation"
+  short_description: "Run a DraftRun end-to-end and diagnose the result"
+  default_prompt: "«апусти контрольный DraftRun, дождись завершени€ и проведи диагностику результата."

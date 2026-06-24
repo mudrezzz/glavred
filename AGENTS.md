@@ -191,6 +191,11 @@ Before finishing:
 Use these skills when available:
 
 - `$architecture-design` for architecture design based on user input and root project files.
+- `$draft-run-pipeline-diagnostics` for diagnosing a concrete DraftRun/AiRun result,
+  explaining why a post was bad, generic, stuck, over-sourced, source-free, or
+  selected incorrectly, and deciding whether to add a repair slice.
+- `$draft-run-pipeline-evaluation` for launching a fresh DraftRun, waiting for queued
+  execution, and then running the standard pipeline diagnosis.
 - `$project-bootstrap` for initial project creation, repository structure, Git, GitHub, README, and baseline docs.
 - `$project-onboarding` when entering an existing project, starting a new chat, or continuing from `ROADMAP.md`.
 - `$roadmap-slice-planning` for turning requirements into iterations, slices, and actionable backlog items.

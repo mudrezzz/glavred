@@ -3848,9 +3848,59 @@ Status:
   - Deterministic relevance v1 is conservative; good citations with little lexical
     overlap can be rejected and should be improved with synthesis in later slices.
 
-### Slice 2.12.5: SourceLedger External Evidence Merge
+### Slice 2.12.4.3: Draft Candidate Fallback Selection Guard
 
 - Status: Ready
+- Goal: Prevent emergency deterministic fallback candidates from becoming the final
+  draft when at least one provider-generated candidate is available.
+- User value: A temporary provider failure in one branch no longer promotes a
+  technical placeholder into the editor as if it were a publication-quality post.
+- Scope:
+  - Add selection guard metadata for candidate publishability.
+  - Penalize or exclude `deterministicFallback` candidates when viable OpenRouter
+    candidates exist.
+  - Detect non-publishable candidate bodies containing raw artifact dumps, JSON/Python
+    object fragments, mojibake, or explicit "needs provider rewrite" weaknesses.
+  - Keep fallback candidates visible in `/ai-runs` as diagnostic artifacts, but mark
+    them as skipped or heavily penalized for final selection.
+  - Update scorecard trace to explain why a candidate was excluded or penalized.
+- Out of scope:
+  - SourceLedger external evidence merge.
+  - Relevance synthesis, validators, directed revision, or provider retry policy.
+  - New DraftRun steps or SQLite schema changes.
+- Implementation notes:
+  - This slice fixes the diagnosed run `096e4d74-7671-40ff-aedf-5d751678ffb2`,
+    where an OpenRouter branch failed, deterministic fallback emitted raw internal
+    evidence objects, and the selector still chose that fallback as the final draft.
+  - The selector should prefer a lower-scoring provider candidate over a fallback
+    placeholder unless all provider candidates are unavailable or invalid.
+  - If all candidates are non-publishable, the run should complete with a clear
+    blocked/failed drafting artifact rather than silently publishing a placeholder.
+- Architecture impact:
+  - Candidate quality gating belongs in role-owned candidate selection/application
+    modules, not in API, infrastructure, or DraftRun persistence.
+  - Domain DTOs remain provider-free; provider/fallback source is selection metadata.
+- Tests:
+  - Fallback candidate is not selected when a viable OpenRouter candidate exists.
+  - Candidate with raw artifact/object dump is marked non-publishable.
+  - Scorecard includes exclusion/penalty reasons.
+  - All-fallback/all-invalid case returns a clear non-publishable outcome.
+  - Existing successful all-provider candidate selection remains compatible.
+- Docs:
+  - Update SAO/developer docs if selection guard becomes an explicit pipeline rule.
+- Demo impact:
+  - `/ai-runs` should make the diagnosed failure mode understandable: fallback is
+    retained for debugging, not promoted to final content.
+- Acceptance criteria:
+  - A single failed candidate branch cannot make deterministic placeholder text the
+    selected final draft when other provider candidates exist.
+- Risks:
+  - Over-penalizing fallback could hide useful local drafts when provider output is
+    also poor; keep trace explicit and conservative.
+
+### Slice 2.12.5: SourceLedger External Evidence Merge
+
+- Status: Backlog
 - Goal: Merge public evidence into the source ledger and synthesize what it changes
   before feasibility, post contract, rule registry, and drafting.
 - User value: The runner can explain which external material supports, qualifies, or
@@ -4072,4 +4122,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.12.5: SourceLedger External Evidence Merge`.
+Continue the backend track with `Slice 2.12.4.3: Draft Candidate Fallback Selection Guard`.
