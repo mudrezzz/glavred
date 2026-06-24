@@ -110,6 +110,9 @@ research orchestration and evidence reconciliation. Domain DTOs remain provider-
   placeholders later.
 - Public research must not silently invent proof. Every usable public claim needs
   source provenance, confidence, allowed-use policy, and forbidden-inference handling.
+- Material planning must not silently ignore enriched evidence. If `SourceLedger`
+  contains usable claims, `MaterialPlan` must select them or record concrete rejection
+  reasons before fallback is allowed.
 
 ## Alternatives considered
 

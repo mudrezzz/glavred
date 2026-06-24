@@ -140,7 +140,9 @@ URLs and can execute OpenRouter `openrouter:web_search` for search/verification
 tasks when backend web tools are explicitly enabled. Disabled or unconfigured search
 remains visible as `notConfigured`; accepted public evidence is synthesized into
 `EvidenceSynthesis` and merged into the enriched `SourceLedger` before feasibility,
-contract, rules, planning, and draft candidates.
+contract, rules, planning, and draft candidates. `MaterialPlan` now has an
+accountability gate: it must select projected evidence or explain rejected claims;
+otherwise the runner retries and marks any emergency fallback explicitly in trace.
 
 ## Ограничения текущего demo
 

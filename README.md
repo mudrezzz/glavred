@@ -221,7 +221,11 @@ conservative relevance guard before they become `PublicEvidenceItem` candidates.
 worker now synthesizes accepted public evidence into `EvidenceSynthesis` and merges
 it into an enriched `SourceLedger` before feasibility, post contract, rule registry,
 planning, rhetorical plans, and candidate generation. Failed, skipped, or disabled
-search attempts stay as warnings and never become proof.
+search attempts stay as warnings and never become proof. The `MaterialPlan` step now
+receives a short `usableEvidenceCandidates` projection from the enriched ledger. It
+must either choose evidence or explain why projected claims were rejected; empty
+evidence without accountability triggers a repair retry and then the optional
+`OPENROUTER_BACKUP_MODEL` before emergency deterministic fallback is allowed.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

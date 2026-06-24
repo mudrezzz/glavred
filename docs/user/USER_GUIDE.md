@@ -402,6 +402,8 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   build a research plan, read exact URLs, and either execute OpenRouter web search or
   show disabled search tasks as `notConfigured`. Accepted public evidence is merged
   into the DraftRun SourceLedger before the post is evaluated and written.
+- The trace also shows whether `MaterialPlan` selected enriched evidence, rejected it
+  with reasons, retried with a primary/backup model, or used emergency fallback.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

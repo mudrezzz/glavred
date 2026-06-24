@@ -13,6 +13,7 @@ class DeterministicMaterialPlanStepService:
         *,
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
+        context_artifact: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._planning_service.create_material_plan(
             context_summary=context_summary,

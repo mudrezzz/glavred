@@ -72,6 +72,18 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Selected draft');
   });
 
+  it('shows material plan evidence accountability and retry attempts', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const materialPlan = viewModel.semanticSections.find((section) => section.id === 'materialPlan');
+
+    expect(materialPlan?.fields.find((field) => field.label === 'Attempts')?.value).toContain('primary: rejected');
+    expect(materialPlan?.fields.find((field) => field.label === 'Attempts')?.value).toContain('primary-repair: accepted');
+    expect(materialPlan?.fields.find((field) => field.label === 'Usable evidence candidates')?.value).toContain('external-claim-1');
+    expect(materialPlan?.fields.find((field) => field.label === 'Rejected evidence')?.value).toContain('weak-claim');
+    expect(materialPlan?.fields.find((field) => field.label === 'Claims requiring attribution')?.value).toContain('external-claim-1');
+    expect(materialPlan?.fields.find((field) => field.label === 'Accountability')?.value).toContain('valid: true');
+  });
+
   it('keeps a single AiRun trace compatible', () => {
     const viewModel = buildRunTraceViewModel({ kind: 'aiRun', aiRun: makeAiRun('ai-only', 'strategy') });
 
@@ -297,7 +309,49 @@ function makeDraftRunBundle(): RunTraceBundle {
           key: 'materialPlan',
           status: 'succeeded',
           title: 'Material Plan',
-          artifactPayload: { materialPlan: { availableEvidence: ['signal'] } },
+          artifactPayload: {
+            source: 'openrouter',
+            attempts: [
+              {
+                label: 'primary',
+                model: 'deepseek/deepseek-v3.2',
+                status: 'rejected',
+                aiRunId: 'ai-material-1',
+                validation: {
+                  valid: false,
+                  invalidReasons: ['materialPlan ignored usable evidence candidates without enough rejection reasons']
+                }
+              },
+              {
+                label: 'primary-repair',
+                model: 'deepseek/deepseek-v3.2',
+                status: 'accepted',
+                aiRunId: 'ai-material',
+                validation: { valid: true, invalidReasons: [] }
+              }
+            ],
+            usableEvidenceCandidates: [{
+              claimId: 'external-claim-1',
+              statement: 'Independent report qualifies AI trust and adoption claims.',
+              allowedUse: 'needsQualification',
+              sourceTitle: 'Independent report'
+            }],
+            evidenceAccountability: {
+              valid: true,
+              acceptedEvidence: ['external-claim-1'],
+              rejectedEvidence: ['weak-claim'],
+              rejectionReasons: ['weak-claim is only framing'],
+              claimsRequiringAttribution: ['external-claim-1'],
+              qualifiedClaims: ['external-claim-1']
+            },
+            materialPlan: {
+              availableEvidence: ['external-claim-1'],
+              rejectedEvidence: ['weak-claim'],
+              rejectionReasons: ['weak-claim is only framing'],
+              claimsRequiringAttribution: ['external-claim-1'],
+              qualifiedClaims: ['external-claim-1']
+            }
+          },
           error: null,
           startedAt: null,
           completedAt: null

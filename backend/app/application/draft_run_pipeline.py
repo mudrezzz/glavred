@@ -82,8 +82,8 @@ class DraftRunPipeline:
             rule_pack = self._rule_pack_compiler.compile(context_artifact).to_payload()
             progress.complete(DraftRunStepKey.RULE_PACK, rule_pack)
             progress.start(DraftRunStepKey.MATERIAL_PLAN)
-            material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack)
-            progress.add_ai_run_id(material_plan_result.ai_run_id)
+            material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_artifact)
+            progress.add_ai_run_ids(material_plan_result.ai_run_ids or ([material_plan_result.ai_run_id] if material_plan_result.ai_run_id else []))
             material_plan = _payload(material_plan_result.artifact_payload, "materialPlan")
             progress.succeed(DraftRunStepKey.MATERIAL_PLAN, material_plan_result.artifact_payload)
             progress.start(DraftRunStepKey.STRATEGY)
@@ -133,6 +133,7 @@ class DraftRunPipeline:
         if loaded is None:
             raise ValueError(f"DraftRun {run_id} disappeared")
         return loaded
+
 def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
     value = artifact.get(key)
     return value if isinstance(value, dict) else {}

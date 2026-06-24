@@ -21,8 +21,10 @@ class OpenRouterJsonAdapter:
         messages: list[dict[str, str]],
         expected_keys: set[str],
         temperature: float,
+        model: str | None = None,
     ) -> OpenRouterJsonResult:
         api_key = settings.openrouter_api_key.get_secret_value() if settings.openrouter_api_key else ""
+        selected_model = model or settings.openrouter_default_model
         response = httpx.post(
             f"{settings.openrouter_base_url.rstrip('/')}/chat/completions",
             headers={
@@ -32,7 +34,7 @@ class OpenRouterJsonAdapter:
                 "Content-Type": "application/json",
             },
             json={
-                "model": settings.openrouter_default_model,
+                "model": selected_model,
                 "messages": messages,
                 "temperature": temperature,
                 "response_format": {"type": "json_object"},

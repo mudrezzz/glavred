@@ -15,6 +15,8 @@ def build_planning_request_trace(
     context_summary: dict[str, Any],
     rule_pack: dict[str, Any],
     material_plan: dict[str, Any] | None = None,
+    usable_evidence_candidates: list[dict[str, Any]] | None = None,
+    attempt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "draftRunStep": step,
@@ -36,6 +38,10 @@ def build_planning_request_trace(
     }
     if material_plan is not None:
         payload["capabilityInput"]["materialPlan"] = material_plan
+    if usable_evidence_candidates is not None:
+        payload["capabilityInput"]["usableEvidenceCandidates"] = usable_evidence_candidates
+    if attempt is not None:
+        payload["attempt"] = attempt
     return payload
 
 

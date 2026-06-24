@@ -353,7 +353,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     if (sizeContract) sections.push(publicationSizeSection(sizeContract));
   }
   if (ruleRegistry) sections.push(ruleRegistrySection(ruleRegistry));
-  if (materialPlan) sections.push(materialPlanSection(materialPlan));
+  if (materialPlan) sections.push(materialPlanSection(materialPlan, payload));
   if (strategy) sections.push(strategySection(strategy));
   if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
@@ -653,12 +653,20 @@ function postContractSection(payload: Record<string, unknown>): TraceSemanticSec
   };
 }
 
-function materialPlanSection(payload: Record<string, unknown>): TraceSemanticSection {
+function materialPlanSection(payload: Record<string, unknown>, envelope: Record<string, unknown>): TraceSemanticSection {
+  const accountability = asRecord(envelope.evidenceAccountability) ?? asRecord(payload.evidenceAccountability);
   return {
     id: 'materialPlan',
     title: 'Material plan',
     fields: compactFields([
+      ['Attempts', asArray(envelope.attempts)?.map(materialPlanAttemptValue) ?? asArray(payload.attempts)?.map(materialPlanAttemptValue)],
+      ['Usable evidence candidates', asArray(envelope.usableEvidenceCandidates)?.map(materialPlanEvidenceCandidateValue) ?? asArray(payload.usableEvidenceCandidates)?.map(materialPlanEvidenceCandidateValue)],
       ['Available evidence', payload.availableEvidence],
+      ['Rejected evidence', payload.rejectedEvidence],
+      ['Rejection reasons', payload.rejectionReasons],
+      ['Claims requiring attribution', payload.claimsRequiringAttribution],
+      ['Qualified claims', payload.qualifiedClaims],
+      ['Accountability', accountability ? materialPlanAccountabilityValue(accountability) : null],
       ['Missing evidence', payload.missingEvidence],
       ['Risky claims', payload.riskyClaims],
       ['Grounding plan', payload.groundingPlan],
@@ -666,6 +674,29 @@ function materialPlanSection(payload: Record<string, unknown>): TraceSemanticSec
       ['Open questions', payload.openQuestions]
     ])
   };
+}
+
+function materialPlanAttemptValue(item: unknown): unknown {
+  const attempt = asRecord(item);
+  if (!attempt) return item;
+  const validation = asRecord(attempt.validation);
+  const invalidReasons = asArray(validation?.invalidReasons)?.join('; ');
+  return `${attempt.label}: ${attempt.status} · ${attempt.model}${attempt.backup ? ' · backup' : ''}${invalidReasons ? `\n${invalidReasons}` : ''}`;
+}
+
+function materialPlanEvidenceCandidateValue(item: unknown): unknown {
+  const candidate = asRecord(item);
+  if (!candidate) return item;
+  return `${candidate.claimId} · ${candidate.allowedUse} · ${candidate.sourceTitle || candidate.source}\n${candidate.statement}`;
+}
+
+function materialPlanAccountabilityValue(payload: Record<string, unknown>): string {
+  return [
+    `valid: ${payload.valid}`,
+    `accepted: ${displayValue(payload.acceptedEvidence)}`,
+    `rejected: ${displayValue(payload.rejectedEvidence)}`,
+    `invalid: ${displayValue(payload.invalidReasons)}`
+  ].filter((item) => !item.endsWith(': ')).join('\n');
 }
 
 function strategySection(payload: Record<string, unknown>): TraceSemanticSection {

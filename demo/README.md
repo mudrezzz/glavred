@@ -280,7 +280,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     through OpenRouter when backend web tools are enabled. Accepted evidence
     candidates are synthesized and merged into the DraftRun `SourceLedger`; skipped,
     failed, or rejected attempts remain warnings in the same trace before validators
-    or directed revision.
+    or directed revision. The `MaterialPlan` trace now shows selected evidence,
+    rejected evidence with reasons, repair attempts, backup-model use, and emergency
+    fallback if all LLM attempts ignore the enriched ledger.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

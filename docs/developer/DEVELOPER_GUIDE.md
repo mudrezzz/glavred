@@ -27,6 +27,8 @@ Required variables for the backend/AI track:
 - `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
+- `OPENROUTER_BACKUP_MODEL`: optional backup model used by accountability retries
+  when a material-planning LLM attempt ignores projected evidence.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `OPENROUTER_WEB_TOOLS_ENABLED`: opt-in flag for OpenRouter server-tool web search.
   Default is `false`; set `true` only when you want DraftRun public search tasks to
@@ -1189,6 +1191,11 @@ The next artifacts must make candidate validation meaningful:
   such as `external-evidence-<publicEvidenceItemId>`, and downstream feasibility,
   post contract, rule registry, planning, rhetorical plans, and draft candidates must
   consume that enriched ledger.
+- `MaterialPlan` must not silently ignore the enriched ledger. The material planner
+  receives `usableEvidenceCandidates` and must either select evidence or explain why
+  candidate claims were rejected. Empty evidence without accountability triggers a
+  primary repair retry, then optional `OPENROUTER_BACKUP_MODEL`, and only then an
+  explicitly marked deterministic emergency fallback.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1262,9 +1269,10 @@ The first backend implementation order is:
 16. OpenRouter web search adapter. Done.
 17. Public evidence query and relevance repair. Done.
 18. SourceLedger external evidence merge. Done.
-19. Deterministic linter and validator orchestrator. Next.
-20. Pairwise ranking and directed revision.
-21. Regression report and editor decision learning.
+19. MaterialPlan evidence accountability and retry. Done.
+20. Deterministic linter and validator orchestrator. Next.
+21. Pairwise ranking and directed revision.
+22. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

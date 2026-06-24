@@ -56,8 +56,10 @@ Check these failure classes explicitly:
   `SourceLedger`.
 - **Quality spine**: SourceLedger missing usable claims, feasibility incorrectly blocked
   or passed, PostContract too weak, RuleRegistry lacks enforceable rules.
-- **Planning**: material plan ignores public evidence, strategy is generic, rhetorical
-  plans do not differ meaningfully, size contract ignored.
+- **Planning**: material plan ignores public evidence, `usableEvidenceCandidates`
+  missing, `availableEvidence` empty without `rejectionReasons`, repair/backup attempts
+  absent, emergency fallback used too early, strategy is generic, rhetorical plans do
+  not differ meaningfully, size contract ignored.
 - **Drafting**: candidates are generic, technical artifacts leak into prose, raw JSON or
   Python object dumps appear, citations are stuffed in mechanically, source names are
   used without synthesized claims.
@@ -91,6 +93,8 @@ hide bad output behind polite abstractions.
   claims can support drafting.
 - When public evidence exists, check `EvidenceSynthesis` and enriched
   `SourceLedger`; raw snippets alone are not enough to prove downstream grounding.
+- When enriched ledger has usable claims, `MaterialPlan` must show selected evidence
+  or explicit rejection reasons, plus retry attempts before deterministic fallback.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

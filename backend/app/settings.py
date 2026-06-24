@@ -41,6 +41,10 @@ class BackendSettings(BaseSettings):
         default="",
         validation_alias="OPENROUTER_DEFAULT_MODEL",
     )
+    openrouter_backup_model: str = Field(
+        default="",
+        validation_alias="OPENROUTER_BACKUP_MODEL",
+    )
     openrouter_app_name: str = Field(default="Glavred", validation_alias="OPENROUTER_APP_NAME")
     openrouter_http_referer: str = Field(
         default="http://localhost:5173",
@@ -72,6 +76,11 @@ class BackendSettings(BaseSettings):
     @property
     def openrouter_web_search_model_or_default(self) -> str:
         return self.openrouter_web_search_model.strip() or self.openrouter_default_model
+
+    @property
+    def openrouter_backup_model_or_none(self) -> str | None:
+        value = self.openrouter_backup_model.strip()
+        return value or None
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -3948,6 +3948,42 @@ Status:
 - Risks:
   - Over-trusting external snippets; keep allowed-use conservative.
 
+### Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry
+
+- Status: Done (2026-06-24)
+- Goal: Prevent `materialPlan` from silently ignoring enriched SourceLedger evidence.
+- User value: DraftRun trace now explains whether the runner used public/internal
+  evidence, rejected it with reasons, retried the planner, or fell back only as an
+  emergency.
+- Scope:
+  - Add `OPENROUTER_BACKUP_MODEL` as an optional retry model. Done.
+  - Project usable internal/external claims into a short `usableEvidenceCandidates`
+    list for `materialPlan`. Done.
+  - Require MaterialPlan to select evidence or explain rejected evidence. Done.
+  - Retry primary model with stricter repair prompt, then optional backup model. Done.
+  - Use deterministic fallback only after all LLM attempts fail accountability. Done.
+  - Show attempts, accepted/rejected evidence, attribution, and fallback state in
+    `/ai-runs`. Done.
+- Out of scope:
+  - New DraftRun steps, SQLite migration, prose-quality validators, and directed
+    revision.
+- Architecture impact:
+  - Evidence projection, accountability, retry policy, and retry orchestration are
+    separate application modules.
+  - `DraftMaterialPlanService` remains a thin step service; provider calls stay behind
+    OpenRouter infrastructure.
+- Tests:
+  - Empty evidence without rejection reasons triggers retry. Done.
+  - Valid rejection/selection accountability is stored in the artifact. Done.
+  - Backup model retry is used when configured. Done.
+  - Emergency fallback is explicit and traceable. Done.
+- Acceptance criteria:
+  - A non-empty enriched ledger cannot be ignored by `materialPlan` without visible
+    accountability in trace.
+- Risks:
+  - Retry increases latency and model cost when the planner ignores evidence; this is
+    intentional until validators and directed revision exist.
+
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
 - Status: Ready
@@ -4116,6 +4152,8 @@ Status:
 - Slice 2.12.4.1: OpenRouter Web Search Adapter. Completed 2026-06-24.
 - Slice 2.12.4.2: Public Evidence Query and Relevance Repair. Completed 2026-06-24.
 - Slice 2.12.5: SourceLedger External Evidence Merge. Completed 2026-06-24.
+- Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry. Completed
+  2026-06-24.
 
 ## Blocked Items
 

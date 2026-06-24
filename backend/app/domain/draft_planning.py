@@ -5,6 +5,10 @@ from typing import Any
 @dataclass(frozen=True)
 class MaterialPlan:
     available_evidence: list[str] = field(default_factory=list)
+    rejected_evidence: list[str] = field(default_factory=list)
+    rejection_reasons: list[str] = field(default_factory=list)
+    claims_requiring_attribution: list[str] = field(default_factory=list)
+    qualified_claims: list[str] = field(default_factory=list)
     missing_evidence: list[str] = field(default_factory=list)
     risky_claims: list[str] = field(default_factory=list)
     grounding_plan: list[str] = field(default_factory=list)
@@ -14,6 +18,10 @@ class MaterialPlan:
     def to_payload(self) -> dict[str, Any]:
         return {
             "availableEvidence": self.available_evidence,
+            "rejectedEvidence": self.rejected_evidence,
+            "rejectionReasons": self.rejection_reasons,
+            "claimsRequiringAttribution": self.claims_requiring_attribution,
+            "qualifiedClaims": self.qualified_claims,
             "missingEvidence": self.missing_evidence,
             "riskyClaims": self.risky_claims,
             "groundingPlan": self.grounding_plan,
@@ -47,6 +55,10 @@ class DraftStrategy:
 def material_plan_from_payload(payload: dict[str, Any]) -> MaterialPlan:
     return MaterialPlan(
         available_evidence=_strings(payload.get("availableEvidence")),
+        rejected_evidence=_strings(payload.get("rejectedEvidence")),
+        rejection_reasons=_strings(payload.get("rejectionReasons")),
+        claims_requiring_attribution=_strings(payload.get("claimsRequiringAttribution")),
+        qualified_claims=_strings(payload.get("qualifiedClaims")),
         missing_evidence=_strings(payload.get("missingEvidence")),
         risky_claims=_strings(payload.get("riskyClaims")),
         grounding_plan=_strings(payload.get("groundingPlan")),

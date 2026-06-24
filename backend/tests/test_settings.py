@@ -18,6 +18,7 @@ def test_settings_defaults_without_env_file() -> None:
     assert settings.has_openrouter_default_model is False
     assert settings.openrouter_web_tools_enabled is False
     assert settings.openrouter_web_search_max_results == 5
+    assert settings.openrouter_backup_model_or_none is None
 
 
 def test_openrouter_config_is_unconfigured_without_token_or_model() -> None:
@@ -46,3 +47,14 @@ def test_openrouter_config_is_configured_with_token_and_model() -> None:
     assert status.configured is True
     assert status.default_model_configured is True
     assert settings.openrouter_web_search_model_or_default == "openrouter/test-model"
+
+
+def test_openrouter_backup_model_is_optional() -> None:
+    settings = BackendSettings(
+        _env_file=None,
+        OPENROUTER_API_KEY="test-token",
+        OPENROUTER_DEFAULT_MODEL="openrouter/test-model",
+        OPENROUTER_BACKUP_MODEL="openrouter/backup-model",
+    )
+
+    assert settings.openrouter_backup_model_or_none == "openrouter/backup-model"

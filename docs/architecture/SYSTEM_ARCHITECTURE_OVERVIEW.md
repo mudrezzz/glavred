@@ -501,13 +501,23 @@ notes, and open questions. The `strategy` step consumes context summary, `RulePa
 and material plan, then produces thesis angle, opening move, argument sequence,
 fabula usage, CTA plan, forbidden moves, and tone notes. Both steps create child
 `AiRun` audit records; missing provider configuration, provider errors, or invalid
-JSON use deterministic fallback and mark `fallbackUsed=true`.
+JSON use deterministic fallback and mark `fallbackUsed=true`. After Slice 2.12.5.1,
+`materialPlan` has a stricter rule: it receives `usableEvidenceCandidates` projected
+from the enriched `SourceLedger`, `PostContract`, and `RuleRegistry`; if it returns
+empty evidence without concrete rejection reasons, the backend retries with a repair
+prompt, then optional `OPENROUTER_BACKUP_MODEL`, and only then records deterministic
+emergency fallback.
 
 Planning ownership is split:
 
 - `backend/app/domain/draft_planning.py` defines provider-free planning DTOs.
 - `backend/app/application/draft_material_plan_service.py` owns material-plan step
   orchestration.
+- `backend/app/application/material_plan_evidence_projection.py`,
+  `backend/app/application/material_plan_accountability.py`,
+  `backend/app/application/material_plan_retry_policy.py`, and
+  `backend/app/application/material_plan_retry_orchestrator.py` own material-plan
+  evidence handoff, accountability, and retry behavior.
 - `backend/app/application/draft_strategy_service.py` owns draft-strategy step
   orchestration.
 - `backend/app/application/draft_planning_prompts.py` owns prompt messages.
