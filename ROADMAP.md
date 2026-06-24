@@ -3758,6 +3758,96 @@ Status:
 - Risks:
   - Placeholder retrieval must not pretend to be real proof; label source clearly.
 
+### Slice 2.12.4.1: OpenRouter Web Search Adapter
+
+- Status: Done
+- Goal: Execute general public search tasks through OpenRouter server-tool web search
+  before merging public evidence into the source ledger.
+- User value: Source-intent requests such as "find opinion leaders" no longer stop at
+  a `notConfigured` trace when backend web tools are explicitly enabled.
+- Scope:
+  - Add opt-in env settings for OpenRouter web tools:
+    `OPENROUTER_WEB_TOOLS_ENABLED`, `OPENROUTER_WEB_SEARCH_MODEL`, and
+    `OPENROUTER_WEB_SEARCH_MAX_RESULTS`.
+  - Add infrastructure adapter for OpenRouter `openrouter:web_search` server tool.
+  - Add application service that executes `findPublicSources` and `verifyClaim`
+    tasks, records child `AiRun` audit, and converts returned citations into
+    `PublicEvidenceItem` candidates.
+  - Keep exact URL reading on the existing URL reader.
+  - Keep disabled/missing-provider search as explicit `notConfigured` attempts.
+- Out of scope:
+  - SourceLedger merge.
+  - Search provider UI.
+  - Web crawling, browser automation, cache, retries, or cost controls beyond the
+    explicit opt-in flag and max results.
+- Architecture impact:
+  - Provider HTTP/citation parsing lives in `backend/app/infrastructure`.
+  - Search task orchestration and child `AiRun` creation live in
+    `backend/app/application`.
+  - Domain DTOs remain provider-free.
+- Tests:
+  - Disabled web tools produce `notConfigured` search attempts. Done.
+  - Configured OpenRouter search creates evidence items and child `AiRun`. Done.
+  - Provider errors create failed attempts and safe warnings. Done.
+  - `/ai-runs` semantic trace shows search provider/model/child AiRun ids. Done.
+- Docs:
+  - README, SAO, developer guide, user guide, wiki, ADR, and `.env.example` updated.
+    Done.
+- Acceptance criteria:
+  - With `OPENROUTER_WEB_TOOLS_ENABLED=true`, public search tasks create traceable
+    child `AiRun` records and evidence candidates. Done.
+- Completed:
+  - Completed 2026-06-24.
+- Risks:
+  - OpenRouter server tools are beta; keep raw trace and safe disabled fallback.
+  - Search citations are still evidence candidates, not merged ledger claims until
+    Slice 2.12.5.
+
+### Slice 2.12.4.2: Public Evidence Query and Relevance Repair
+
+- Status: Done
+- Goal: Repair public search query construction and reject irrelevant citations before
+  external evidence can enter the source-ledger merge slice.
+- User value: A source request such as "find opinion leaders" is searched as the real
+  research instruction, not as an internal `target-1` id, and trace explains rejected
+  search drift.
+- Scope:
+  - Add provider-free public evidence query builder.
+  - Use `verificationTask.instruction` as the primary search query and preserve
+    `target` as a technical link to source-target metadata.
+  - Add deterministic relevance guard for OpenRouter citations.
+  - Store `builtQuery`, original task, source target, exclusions, and rejected
+    citations in `publicEvidence` attempts and child `AiRun` trace.
+  - Update `/ai-runs` readable trace for accepted evidence and rejected citations.
+- Out of scope:
+  - SourceLedger merge, evidence synthesis, validators, and draft-scoring changes.
+  - New search provider selection, caching, retries, or SQLite schema changes.
+- Architecture impact:
+  - Query construction and relevance filtering are role-owned application modules.
+  - OpenRouter-specific provider calls remain in infrastructure/application adapter
+    wiring; domain stays provider-free.
+- Tests:
+  - Search with `target: target-1` and a real instruction uses the instruction query.
+  - Relevant citation creates a `PublicEvidenceItem`.
+  - Irrelevant citation is rejected with `search-result-drift` and warning
+    `search-no-relevant-evidence`.
+  - Trace view model shows built query and rejected citations.
+- Docs:
+  - Update drafting docs to state planned search tasks are not proof until accepted by
+    relevance filtering and later merged into `SourceLedger`.
+- Demo impact:
+  - `/ai-runs` can now demonstrate why a search result was accepted or rejected.
+- Acceptance criteria:
+  - OpenRouter web search no longer receives bare technical target ids as the query.
+  - Public evidence trace distinguishes accepted evidence from rejected citations.
+- Validation:
+  - Targeted backend and trace tests passed during implementation.
+- Completed:
+  - Completed 2026-06-24.
+- Risks:
+  - Deterministic relevance v1 is conservative; good citations with little lexical
+    overlap can be rejected and should be improved with synthesis in later slices.
+
 ### Slice 2.12.5: SourceLedger External Evidence Merge
 
 - Status: Ready
@@ -3960,6 +4050,8 @@ Status:
 - Slice 2.12.3: Source Intent and Research Plan. Completed 2026-06-23.
 - Slice 2.12.3.1: Fabula Research Strategy Defaults. Completed 2026-06-23.
 - Slice 2.12.4: Public Evidence Retrieval Foundation. Completed 2026-06-24.
+- Slice 2.12.4.1: OpenRouter Web Search Adapter. Completed 2026-06-24.
+- Slice 2.12.4.2: Public Evidence Query and Relevance Repair. Completed 2026-06-24.
 
 ## Blocked Items
 

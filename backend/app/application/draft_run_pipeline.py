@@ -63,7 +63,12 @@ class DraftRunPipeline:
             context_artifact = {**context_artifact, **source_result.artifact_payload}
             progress.complete(DraftRunStepKey.SOURCE_INTENT, source_result.artifact_payload)
             progress.start(DraftRunStepKey.PUBLIC_EVIDENCE)
-            public_evidence = self._public_evidence_service.retrieve(source_intent_artifact=source_result.artifact_payload).to_payload()
+            public_evidence_batch = self._public_evidence_service.retrieve(
+                source_intent_artifact=source_result.artifact_payload,
+                context_artifact=context_artifact,
+            )
+            progress.add_ai_run_ids(public_evidence_batch.ai_run_ids)
+            public_evidence = public_evidence_batch.to_payload()
             context_artifact = {**context_artifact, "publicEvidence": public_evidence}
             progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, public_evidence)
             quality_gate_result = self._quality_gate.evaluate(context_artifact)

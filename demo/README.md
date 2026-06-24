@@ -248,7 +248,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     the `Драфт` stage shows a queued/running `DraftRun`. Inspect
     `/api/draft-runs/{id}` to see the selected-post context snapshot, context step
     summary, `sourceLedger` in step 0, source intent and `ResearchPlan` in step 1,
-    public evidence URL reads and skipped search attempts in step 2, feasibility in
+    public evidence URL reads plus optional OpenRouter web-search attempts in step 2.
+    Public-search trace shows the built query, accepted evidence, and rejected
+    citations before feasibility in
     step 3, post contract in step 4, compiled rule pack plus
     `ruleRegistrySnapshot` in step 5, material plan in step 6, draft strategy in step 7,
     rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
@@ -272,9 +274,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     per-post override.
     `Фабула -> Источники` is now shown as source intent: URLs, source names, proof
     requests, exclusions, and human-language instructions become a local research plan.
-    Upcoming public-evidence slices execute that plan, extract external evidence, merge
-    it into `SourceLedger`, and show the synthesis in the same trace before validators
-    or directed revision.
+    The public-evidence step now reads exact URLs and can execute general search tasks
+    through OpenRouter when backend web tools are enabled. The next public-evidence
+    slice merges those evidence candidates into `SourceLedger` and shows synthesis in
+    the same trace before validators or directed revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

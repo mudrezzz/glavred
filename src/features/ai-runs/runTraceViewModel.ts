@@ -308,7 +308,15 @@ function buildDraftRunSemanticSections(draftRun: DraftRunTrace): TraceSemanticSe
 }
 
 function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
-  return sectionsFromPayload(stepKeyForAiRun(aiRun), aiRun.resultPayload ?? {});
+  const requestPayload = aiRun.requestPayload ?? {};
+  const resultPayload = aiRun.resultPayload ?? {};
+  if (stepKeyForAiRun(aiRun) === 'publicEvidence') {
+    return [
+      publicEvidenceSearchSection(requestPayload, resultPayload),
+      ...sectionsFromPayload('publicEvidence', resultPayload)
+    ];
+  }
+  return sectionsFromPayload(stepKeyForAiRun(aiRun), resultPayload);
 }
 
 function sectionsFromPayload(step: string, payload: Record<string, unknown>): TraceSemanticSection[] {
@@ -404,6 +412,7 @@ function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticS
   const attempts = asArray(payload.attempts) ?? [];
   const items = asArray(payload.items) ?? [];
   const warnings = asArray(payload.warnings) ?? [];
+  const rejected = attempts.flatMap((item) => asArray(asRecord(asRecord(item)?.metadata)?.rejectedCitations) ?? []);
   return {
     id: 'publicEvidence',
     title: 'Public evidence',
@@ -411,8 +420,11 @@ function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticS
       ['Evidence items', items.length],
       ['Attempts', attempts.map(publicEvidenceAttemptValue)],
       ['Extracted evidence', items.map(publicEvidenceItemValue)],
+      ['Rejected citations', rejected.map(publicEvidenceRejectedCitationValue)],
       ['Warnings', warnings.map(publicEvidenceWarningValue)],
-      ['Search provider', asRecord(payload.metadata)?.searchProvider]
+      ['Search provider', asRecord(payload.metadata)?.searchProvider],
+      ['Search model', asRecord(payload.metadata)?.model],
+      ['Search AiRun IDs', payload.aiRunIds]
     ])
   };
 }
@@ -420,7 +432,9 @@ function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticS
 function publicEvidenceAttemptValue(item: unknown): unknown {
   const attempt = asRecord(item);
   if (!attempt) return item;
-  return `${attempt.kind}: ${attempt.status} · ${attempt.target}`;
+  const metadata = asRecord(attempt.metadata);
+  const query = stringValue(metadata?.builtQuery);
+  return `${attempt.kind}: ${attempt.status} · target ${attempt.target}${query ? `\nquery: ${query}` : ''}`;
 }
 
 function publicEvidenceItemValue(item: unknown): unknown {
@@ -433,6 +447,41 @@ function publicEvidenceWarningValue(item: unknown): unknown {
   const warning = asRecord(item);
   if (!warning) return item;
   return `${warning.code}: ${warning.message}`;
+}
+
+function publicEvidenceRejectedCitationValue(item: unknown): unknown {
+  const citation = asRecord(item);
+  if (!citation) return item;
+  return `${citation.reason}: ${citation.title} · ${citation.url}`;
+}
+
+function publicEvidenceSearchSection(
+  requestPayload: Record<string, unknown>,
+  resultPayload: Record<string, unknown>
+): TraceSemanticSection {
+  const providerRequest = asRecord(requestPayload.providerRequest);
+  const originalTask = asRecord(requestPayload.originalTask);
+  return {
+    id: 'publicEvidenceSearch',
+    title: 'Public evidence search',
+    fields: compactFields([
+      ['Built query', requestPayload.builtQuery],
+      ['Task instruction', originalTask?.instruction],
+      ['Technical target', requestPayload.target],
+      ['Source target', requestPayload.sourceTarget],
+      ['Exclusions', requestPayload.exclusions],
+      ['Accepted citations', asArray(resultPayload.acceptedCitations)?.map(publicEvidenceCitationValue)],
+      ['Rejected citations', asArray(resultPayload.rejectedCitations)?.map(publicEvidenceRejectedCitationValue)],
+      ['Evidence items', asArray(resultPayload.evidenceItems)?.map(publicEvidenceItemValue)],
+      ['Provider model', providerRequest?.model]
+    ])
+  };
+}
+
+function publicEvidenceCitationValue(item: unknown): unknown {
+  const citation = asRecord(item);
+  if (!citation) return item;
+  return `${citation.title} · ${citation.url}`;
 }
 
 function rhetoricalPlanSections(payload: Record<string, unknown>): TraceSemanticSection[] {
@@ -641,6 +690,7 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
   const step = stringValue(requestPayload.draftRunStep) ?? stringValue(resultPayload.draftRunStep);
   if (step === 'draftCandidate') return 'draft';
   if (step === 'sourceIntentResearchPlan') return 'sourceIntent';
+  if (step === 'publicEvidenceSearch') return 'publicEvidence';
   return step ?? 'unknown';
 }
 
@@ -650,6 +700,7 @@ function stepLabel(step: string): string {
     sourceIntent: 'Source intent',
     sourceIntentResearchPlan: 'Source research plan',
     publicEvidence: 'Public evidence',
+    publicEvidenceSearch: 'Public evidence search',
     feasibility: 'Feasibility',
     postContract: 'Post contract',
     rulePack: 'Rule pack',

@@ -27,6 +27,7 @@ class PublicEvidenceAttempt:
     status: PublicEvidenceAttemptStatus
     notes: list[str] = field(default_factory=list)
     error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -38,6 +39,7 @@ class PublicEvidenceAttempt:
             "status": self.status.value,
             "notes": self.notes,
             "error": self.error,
+            "metadata": self.metadata,
         }
 
 
@@ -86,6 +88,7 @@ class PublicEvidenceBatch:
     items: list[PublicEvidenceItem]
     warnings: list[PublicEvidenceWarning] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    ai_run_ids: list[str] = field(default_factory=list)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -94,4 +97,5 @@ class PublicEvidenceBatch:
             "items": [item.to_payload() for item in self.items],
             "warnings": [warning.to_payload() for warning in self.warnings],
             "metadata": self.metadata,
+            "aiRunIds": self.ai_run_ids,
         }

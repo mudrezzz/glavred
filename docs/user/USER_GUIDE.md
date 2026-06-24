@@ -371,8 +371,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   inventing a weak draft. If only the candidate link is missing but source signal,
   brief evidence, topic, and fabula are present, Glavred proceeds with constraints
   instead of stopping the run. Source intent, research plan, rule registry, and
-  rhetorical plans are already visible in `/ai-runs`. Public evidence v1 now reads
-  exact URLs and records unconfigured search tasks in trace; the next backend quality layers
+  rhetorical plans are already visible in `/ai-runs`. Public evidence now reads
+  exact URLs and, when backend OpenRouter web tools are enabled, executes public
+  search tasks through `openrouter:web_search`; otherwise search tasks stay
+  `notConfigured` in trace. The trace also shows the built search query and rejected
+  citations when a provider result drifts away from the research task. The next backend quality layers
   are enriched SourceLedger, validators, ranking, directed
   revision, and regression. The rule registry is already visible in `/ai-runs` as stable rule ids,
   severity, criteria, and validator bindings. The PostContract also contains
@@ -388,8 +391,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   accepts URLs, source names, and plain instructions such as "нужно мнение лидеров
   мнений по этой теме", plus prefixes like `url:`, `найти:`, `проверить:`, and
   `не использовать:`. DraftRuns normalize those approved lines into source intent,
-  build a research plan, read exact URLs, and show skipped search tasks as
-  `notConfigured`. The next backend slice will merge public evidence into the SourceLedger.
+  build a research plan, read exact URLs, and either execute OpenRouter web search or
+  show disabled search tasks as `notConfigured`. The next backend slice will merge
+  public evidence into the SourceLedger.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

@@ -46,6 +46,18 @@ class BackendSettings(BaseSettings):
         default="http://localhost:5173",
         validation_alias="OPENROUTER_HTTP_REFERER",
     )
+    openrouter_web_tools_enabled: bool = Field(
+        default=False,
+        validation_alias="OPENROUTER_WEB_TOOLS_ENABLED",
+    )
+    openrouter_web_search_model: str = Field(
+        default="",
+        validation_alias="OPENROUTER_WEB_SEARCH_MODEL",
+    )
+    openrouter_web_search_max_results: int = Field(
+        default=5,
+        validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS",
+    )
 
     @property
     def has_openrouter_api_key(self) -> bool:
@@ -56,6 +68,10 @@ class BackendSettings(BaseSettings):
     @property
     def has_openrouter_default_model(self) -> bool:
         return bool(self.openrouter_default_model.strip())
+
+    @property
+    def openrouter_web_search_model_or_default(self) -> str:
+        return self.openrouter_web_search_model.strip() or self.openrouter_default_model
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -212,9 +212,13 @@ locked editorial invariants instead of forcing them to guess from final text.
 Rhetorical plans now define the routes candidates execute; candidates no longer invent
 their own directions. `Фабула -> Источники` is now source intent rather than raw prompt
 text: URLs, named sources, human-language research requests, proof needs, framing
-hints, and exclusions become a research plan before writing. Public evidence v1 reads
-explicit URLs and records search tasks as `notConfigured` until a search provider is
-selected. The next backend slice merges retrieved public evidence into the
+hints, and exclusions become a research plan before writing. Public evidence now reads
+explicit URLs; general search tasks call OpenRouter `openrouter:web_search` when
+`OPENROUTER_WEB_TOOLS_ENABLED=true`, otherwise they remain explicit `notConfigured`
+attempts. Search tasks are first converted into a readable `builtQuery` from the
+research instruction, not from internal target ids, and returned citations pass a
+conservative relevance guard before they become `PublicEvidenceItem` candidates. The
+next backend slice merges accepted public evidence into the
 `SourceLedger` and creates `EvidenceSynthesis`.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy

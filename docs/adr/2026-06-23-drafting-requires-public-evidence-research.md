@@ -78,8 +78,19 @@ Public evidence enters drafting through typed artifacts:
 
 Slice 2.12.4 implements the first retrieval foundation. Exact URLs are read through
 an infrastructure URL reader and become `PublicEvidenceItem` records in the
-`publicEvidence` DraftRun step. General search tasks are recorded as `notConfigured`
-attempts until a search provider is selected; they must not be treated as proof.
+`publicEvidence` DraftRun step. Slice 2.12.4.1 adds an opt-in OpenRouter web-search
+adapter: when `OPENROUTER_WEB_TOOLS_ENABLED=true`, general search and verification
+tasks call the `openrouter:web_search` server tool, create child `AiRun` audit
+records, and turn returned citations into `PublicEvidenceItem` candidates. Disabled,
+unconfigured, or failed search attempts remain explicit trace records and must not be
+treated as proof.
+
+Slice 2.12.4.2 adds the query and relevance repair required before ledger merge:
+search adapters receive a `builtQuery` created from the human research instruction and
+post context, not a technical source-target id. Returned citations pass a conservative
+deterministic relevance guard before they can become `PublicEvidenceItem` candidates.
+Rejected citations stay visible in trace as `search-result-drift` and must not be
+merged as proof.
 
 External web/retrieval adapters belong in infrastructure. Application services own the
 research orchestration and evidence reconciliation. Domain DTOs remain provider-free.

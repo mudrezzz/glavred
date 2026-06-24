@@ -1,6 +1,13 @@
-from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any
 
+from backend.app.application.disabled_public_search_adapter import DisabledPublicSearchAdapter
+from backend.app.application.public_evidence_ports import (
+    DisabledPublicUrlReader,
+    PublicSearchAdapter,
+    PublicUrlReadResult,
+    PublicUrlReader,
+)
+from backend.app.application.public_evidence_query_builder import build_public_evidence_search_task
 from backend.app.domain.draft_public_evidence import (
     PublicEvidenceAllowedUse,
     PublicEvidenceAttempt,
@@ -9,40 +16,6 @@ from backend.app.domain.draft_public_evidence import (
     PublicEvidenceItem,
     PublicEvidenceWarning,
 )
-
-
-@dataclass(frozen=True)
-class PublicUrlReadResult:
-    url: str
-    title: str
-    text: str
-    final_url: str | None = None
-
-
-class PublicUrlReader(Protocol):
-    def read(self, url: str) -> PublicUrlReadResult: ...
-
-
-class PublicSearchAdapter(Protocol):
-    def search(self, target: str, *, task_id: str | None, source_intent_item_id: str | None) -> PublicEvidenceAttempt: ...
-
-
-class DisabledPublicUrlReader:
-    def read(self, url: str) -> PublicUrlReadResult:
-        raise RuntimeError("Public URL reader is not configured")
-
-
-class DisabledPublicSearchAdapter:
-    def search(self, target: str, *, task_id: str | None, source_intent_item_id: str | None) -> PublicEvidenceAttempt:
-        return PublicEvidenceAttempt(
-            id=_attempt_id("search", task_id, source_intent_item_id),
-            task_id=task_id,
-            source_intent_item_id=source_intent_item_id,
-            kind="search",
-            target=target,
-            status=PublicEvidenceAttemptStatus.NOT_CONFIGURED,
-            notes=["Search provider is not configured; this planned task is not evidence."],
-        )
 
 
 class PublicEvidenceRetrievalService:
@@ -55,10 +28,17 @@ class PublicEvidenceRetrievalService:
         self._url_reader = url_reader or DisabledPublicUrlReader()
         self._search_adapter = search_adapter or DisabledPublicSearchAdapter()
 
-    def retrieve(self, *, source_intent_artifact: dict[str, Any]) -> PublicEvidenceBatch:
+    def retrieve(
+        self,
+        *,
+        source_intent_artifact: dict[str, Any],
+        context_artifact: dict[str, Any] | None = None,
+    ) -> PublicEvidenceBatch:
         attempts: list[PublicEvidenceAttempt] = []
         items: list[PublicEvidenceItem] = []
         warnings: list[PublicEvidenceWarning] = []
+        ai_run_ids: list[str] = []
+        metadata: dict[str, Any] = {"searchProvider": "notConfigured"}
         for task in _tasks(source_intent_artifact):
             kind = str(task.get("kind") or "")
             target = str(task.get("target") or task.get("instruction") or "").strip()
@@ -72,7 +52,17 @@ class PublicEvidenceRetrievalService:
                 if warning:
                     warnings.append(warning)
             elif kind in {"findPublicSources", "verifyClaim"}:
-                attempts.append(self._search_adapter.search(target, task_id=task_id, source_intent_item_id=item_id))
+                search_task = build_public_evidence_search_task(
+                    task,
+                    source_intent_artifact=source_intent_artifact,
+                    context_artifact=context_artifact,
+                )
+                search_result = self._search_adapter.search(search_task)
+                attempts.extend(search_result.attempts)
+                items.extend(search_result.items)
+                warnings.extend(search_result.warnings)
+                ai_run_ids.extend(run_id for run_id in search_result.ai_run_ids if run_id not in ai_run_ids)
+                metadata.update(search_result.metadata)
             elif kind:
                 attempts.append(PublicEvidenceAttempt(
                     id=_attempt_id("skip", task_id, item_id),
@@ -85,12 +75,14 @@ class PublicEvidenceRetrievalService:
                 ))
         if not attempts:
             warnings.append(PublicEvidenceWarning(code="no-public-retrieval-tasks", message="No URL or public search tasks were available."))
+        metadata.update({"itemCount": len(items), "attemptCount": len(attempts)})
         return PublicEvidenceBatch(
             source="publicEvidenceRetrievalV1",
             attempts=attempts,
             items=items,
             warnings=warnings,
-            metadata={"searchProvider": "notConfigured", "itemCount": len(items), "attemptCount": len(attempts)},
+            metadata=metadata,
+            ai_run_ids=ai_run_ids,
         )
 
     def _read_url(

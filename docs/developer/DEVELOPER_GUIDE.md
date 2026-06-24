@@ -28,6 +28,13 @@ Required variables for the backend/AI track:
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
+- `OPENROUTER_WEB_TOOLS_ENABLED`: opt-in flag for OpenRouter server-tool web search.
+  Default is `false`; set `true` only when you want DraftRun public search tasks to
+  call the provider.
+- `OPENROUTER_WEB_SEARCH_MODEL`: optional model override for `openrouter:web_search`;
+  falls back to `OPENROUTER_DEFAULT_MODEL`.
+- `OPENROUTER_WEB_SEARCH_MAX_RESULTS`: maximum search results requested from the
+  OpenRouter web search server tool.
 - `LANGGRAPH_DOCUMENT_AI_PLATFORM_MODE`,
   `LANGGRAPH_DOCUMENT_AI_PLATFORM_CONFIG`: future document/workflow adapter settings.
 
@@ -1118,9 +1125,16 @@ The next artifacts must make candidate validation meaningful:
   remains the runtime input; if an editor changes it in `Редактура`, that override is
   what the backend receives.
 - `ResearchPlan` decides what to read, search, verify, or avoid before writing.
-- `publicEvidence` executes the available research plan: v1 reads exact URL tasks
-  through infrastructure and records general search tasks as `notConfigured` until a
-  search provider is chosen. A planned search task is not proof.
+- `publicEvidence` executes the available research plan: exact URL tasks are read
+  through infrastructure. General `findPublicSources` and `verifyClaim` tasks call
+  OpenRouter `openrouter:web_search` only when `OPENROUTER_WEB_TOOLS_ENABLED=true`
+  and OpenRouter is configured; otherwise they remain explicit `notConfigured`
+  attempts. A planned or disabled search task is not proof.
+- Search tasks must be converted into a `builtQuery` from the human research
+  instruction and surrounding post context. Internal target ids such as `target-1`
+  are trace links, not search queries. OpenRouter citations must pass the
+  deterministic relevance guard before becoming `PublicEvidenceItem` candidates;
+  rejected citations stay in trace as `search-result-drift`.
 - Public evidence extraction creates `PublicEvidenceItem` records with provenance,
   confidence, allowed-use policy, and extraction notes.
 - `SourceLedger` comes before validators and stores internal claim ids now; public
@@ -1196,11 +1210,13 @@ The first backend implementation order is:
 12. Rule registry v2 and validator bindings. Done.
 13. Contract-based rhetorical plans. Done.
 14. Source intent and research plan. Done.
-15. Public evidence retrieval foundation. Next.
-16. SourceLedger external evidence merge.
-17. Deterministic linter and validator orchestrator.
-18. Pairwise ranking and directed revision.
-19. Regression report and editor decision learning.
+15. Public evidence retrieval foundation. Done.
+16. OpenRouter web search adapter. Done.
+17. Public evidence query and relevance repair. Done.
+18. SourceLedger external evidence merge. Next.
+19. Deterministic linter and validator orchestrator.
+20. Pairwise ranking and directed revision.
+20. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

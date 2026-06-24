@@ -479,10 +479,18 @@ model fabulas can use `auto` source discovery hints or manual instructions, whil
 context carries the fabula policy for diagnostics, but the `sourceIntent` step still
 uses only the approved `PostBrief.sources`.
 Slice 2.12.4 adds `publicEvidence` immediately after `sourceIntent`: exact URL tasks
-are read through an infrastructure URL reader, while general search tasks are traced
-as `notConfigured` until a search provider is selected. The retrieved items are
-visible in DraftRun trace but are not yet merged into `SourceLedger`; that merge and
-evidence synthesis remain the next slice before validators.
+are read through an infrastructure URL reader. Slice 2.12.4.1 adds an optional
+OpenRouter server-tool search path for general research tasks: when
+`OPENROUTER_WEB_TOOLS_ENABLED=true`, `findPublicSources` and `verifyClaim` tasks call
+`openrouter:web_search`, create child `AiRun` records, and turn returned citations
+into `PublicEvidenceItem` candidates. When the flag or provider config is missing,
+the same tasks remain explicit `notConfigured` attempts. Retrieved items are visible
+in DraftRun trace but are not yet merged into `SourceLedger`. Slice 2.12.4.2 repairs
+the query boundary: search uses the human task instruction plus post context, while
+technical target ids stay only as trace links. Returned citations pass a conservative
+relevance guard; rejected citations remain in trace and cannot become evidence
+candidates. SourceLedger merge and evidence synthesis remain the next slice before
+validators.
 
 Slice 2.7 implements the first OpenRouter-assisted planning steps inside the queued
 runner. The worker's `materialPlan` step consumes context summary plus `RulePack` and
@@ -505,6 +513,10 @@ Planning ownership is split:
   traces.
 - `backend/app/infrastructure/openrouter_json_adapter.py` owns generic provider JSON
   calls.
+- `backend/app/application/openrouter_public_search_service.py` owns public-evidence
+  search task orchestration and child `AiRun` audit.
+- `backend/app/infrastructure/openrouter_web_search_adapter.py` owns the OpenRouter
+  `openrouter:web_search` server-tool HTTP call and citation parsing.
 - `backend/app/infrastructure/draft_run_pipeline_factory.py` owns worker-time wiring.
 
 Slice 2.8 turns the worker's `draft` step into multi-candidate generation. The
@@ -643,8 +655,20 @@ The public-evidence research layer has its own ownership boundary:
   `PublicEvidenceBatch`, attempts, items, and warnings;
 - `backend/app/application/public_evidence_retrieval_service.py` executes the public
   evidence step through application ports and marks unconfigured search honestly;
+- `backend/app/application/public_evidence_query_builder.py` builds search queries
+  from human research instructions and post context instead of technical target ids;
+- `backend/app/application/public_evidence_relevance.py` applies deterministic
+  relevance filtering before citations become public evidence candidates;
+- `backend/app/application/public_evidence_ports.py` defines URL/search ports and
+  search result contracts for the public-evidence step;
+- `backend/app/application/disabled_public_search_adapter.py` owns the explicit
+  `notConfigured` fallback when search is disabled;
+- `backend/app/application/openrouter_public_search_service.py` executes configured
+  OpenRouter search tasks and records child `AiRun` audit;
 - `backend/app/infrastructure/public_url_reader.py` owns direct URL HTTP reads and
   lightweight text extraction;
+- `backend/app/infrastructure/openrouter_web_search_adapter.py` owns OpenRouter
+  `openrouter:web_search` HTTP calls and citation parsing;
 - `backend/app/application/source_intent_normalizer.py` owns deterministic
   line-by-line classification;
 - `backend/app/application/source_research_plan_service.py` owns the OpenRouter /

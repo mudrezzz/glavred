@@ -14,7 +14,7 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('4');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('5');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -97,8 +97,16 @@ describe('buildRunTraceViewModel', () => {
 
     expect(publicEvidence?.fields).toContainEqual({ label: 'Evidence items', value: '1' });
     expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('readUrl: succeeded');
-    expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('search: notConfigured');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('search: succeeded');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('query: Find public commentary about AI product trust');
     expect(publicEvidence?.fields.find((field) => field.label === 'Extracted evidence')?.value).toContain('Independent report');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Rejected citations')?.value).toContain('TARGET Services');
+    expect(publicEvidence?.fields.find((field) => field.label === 'Search AiRun IDs')?.value).toContain('search-run-1');
+    const publicEvidenceStep = viewModel.timeline.find((step) => step.key === 'publicEvidence');
+    expect(publicEvidenceStep?.childCalls.map((call) => call.id)).toContain('search-run-1');
+    const searchDetail = viewModel.details.find((detail) => detail.id === 'ai-detail-search-run-1');
+    expect(searchDetail?.sections[0].fields).toContainEqual({ label: 'Built query', value: 'Find public commentary about AI product trust' });
+    expect(searchDetail?.sections[0].fields.find((field) => field.label === 'Rejected citations')?.value).toContain('TARGET Services');
   });
 });
 
@@ -158,8 +166,16 @@ function makeDraftRunBundle(): RunTraceBundle {
               {
                 id: 'search-task-2',
                 kind: 'search',
-                target: 'Find public commentary',
-                status: 'notConfigured'
+                target: 'target-1',
+                status: 'succeeded',
+                metadata: {
+                  builtQuery: 'Find public commentary about AI product trust',
+                  rejectedCitations: [{
+                    title: 'TARGET Services',
+                    url: 'https://example.com/target',
+                    reason: 'search-result-drift'
+                  }]
+                }
               }
             ],
             items: [
@@ -172,7 +188,8 @@ function makeDraftRunBundle(): RunTraceBundle {
               }
             ],
             warnings: [],
-            metadata: { searchProvider: 'notConfigured' }
+            metadata: { searchProvider: 'openrouter:web_search', model: 'test-model' },
+            aiRunIds: ['search-run-1']
           },
           error: null,
           startedAt: null,
@@ -331,12 +348,13 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'ai-material', 'ai-plans', 'ai-candidate'],
+      aiRunIds: ['ai-source', 'search-run-1', 'ai-material', 'ai-plans', 'ai-candidate'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
     childAiRuns: [
       makeAiRun('ai-source', 'sourceIntentResearchPlan'),
+      makeAiRun('search-run-1', 'publicEvidenceSearch'),
       makeAiRun('ai-material', 'materialPlan'),
       makeAiRun('ai-plans', 'rhetoricalPlans'),
       makeAiRun('ai-candidate', 'draftCandidate')
@@ -346,13 +364,32 @@ function makeDraftRunBundle(): RunTraceBundle {
 }
 
 function makeAiRun(id: string, step: string) {
+  const publicEvidenceRequest = {
+    draftRunStep: step,
+    builtQuery: 'Find public commentary about AI product trust',
+    target: 'target-1',
+    originalTask: { instruction: 'Find public commentary about AI product trust', target: 'target-1' },
+    providerRequest: {
+      model: 'deepseek/deepseek-v3.2',
+      messages: [
+        { role: 'system', content: 'Return JSON' },
+        { role: 'user', content: 'Find public commentary about AI product trust' }
+      ]
+    }
+  };
+  const publicEvidenceResult = {
+    draftRunStep: step,
+    acceptedCitations: [{ title: 'AI product trust report', url: 'https://example.com/trust' }],
+    rejectedCitations: [{ title: 'TARGET Services', url: 'https://example.com/target', reason: 'search-result-drift' }],
+    evidenceItems: [{ sourceTitle: 'AI product trust report', sourceUrl: 'https://example.com/trust', snippet: 'AI trust depends on evals.' }]
+  };
   return {
     id,
     capability: 'draftGeneration',
     status: 'succeeded',
     provider: 'openrouter',
     model: 'deepseek/deepseek-v3.2',
-    requestPayload: {
+    requestPayload: step === 'publicEvidenceSearch' ? publicEvidenceRequest : {
       draftRunStep: step,
       providerRequest: {
         messages: [
@@ -361,7 +398,7 @@ function makeAiRun(id: string, step: string) {
         ]
       }
     },
-    resultPayload: { draftRunStep: step, result: { thesisAngle: 'angle' } },
+    resultPayload: step === 'publicEvidenceSearch' ? publicEvidenceResult : { draftRunStep: step, result: { thesisAngle: 'angle' } },
     error: null,
     fallbackUsed: false,
     createdAt: '2026-06-19T00:00:00+00:00',
