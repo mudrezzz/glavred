@@ -445,6 +445,13 @@ LLM report is `not-run` instead of fake fallback findings. If JSON is malformed,
 the validator follows the same primary, repair, optional backup-model retry
 discipline before marking the candidate validation unavailable.
 
+Slice 2.13.3.1 normalizes that report before ranking/revision uses it. Actionable
+LLM issues remain in `findings[]`; positive/pass notes such as `No repair needed`
+move to `observations[]` and do not increase warning counts. The `/ai-runs`
+workbench also reads enriched evidence from the `publicEvidence` artifact and nested
+selected/rejected evidence from `materialPlan`, so the trace reflects the actual
+handoff from retrieval to planning.
+
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
 `EditorialWorkItem` and sends it with `POST /api/draft-runs`. The snapshot includes
@@ -616,6 +623,8 @@ Validation ownership is split:
   `AiRun` traces for validator attempts.
 - `backend/app/application/draft_llm_validation_parser.py` normalizes provider JSON
   into standard validation findings.
+- `backend/app/application/draft_llm_validation_observations.py` owns positive/pass
+  observation detection so non-actionable LLM notes do not become warning findings.
 - `backend/app/application/draft_validation_step_service.py` composes deterministic
   and LLM reports into the existing `validation` step artifact.
 - `backend/app/application/draft_validation_step.py` remains a compatibility bridge

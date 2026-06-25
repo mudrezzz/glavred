@@ -4119,6 +4119,40 @@ Status:
   - `/ai-runs?runId=...` shows LLM validation status, attempts, and findings next to
     deterministic validation.
 
+### Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair
+
+- Status: Done
+- Completed: 2026-06-25
+- Goal: Normalize LLM validation reports and repair readable evidence trace before
+  ranking/revision consumes those artifacts.
+- User value:
+  - `/ai-runs?runId=...` no longer treats positive LLM pass notes as warnings, and
+    evidence handoff from public evidence to material planning is easier to inspect.
+- Scope:
+  - Split actionable LLM validation `findings` from positive/pass `observations`.
+  - Treat `pass`, `ok`, `positive`, `observation`, and `No repair needed` items as
+    observations unless they are critical actionable issues.
+  - Keep old `findings[]`-only provider responses compatible.
+  - Show LLM actionable findings and observations separately in trace.
+  - Show enriched public-evidence ledger counts, evidence synthesis counts, and nested
+    `materialPlan` selected/rejected evidence in readable trace.
+  - Update the DraftRun diagnostics helper to read `publicEvidence.enrichedSourceLedger`
+    and nested material-plan artifacts.
+- Out of scope:
+  - Changing final draft selection.
+  - Ranking, revision, or blocking based on validation.
+  - New DraftRun steps or SQLite schema changes.
+- Tests:
+  - Positive/no-repair LLM notes become observations and do not raise warning status.
+  - Actionable LLM warnings remain findings.
+  - Trace shows LLM findings/observations and nested evidence artifacts.
+- Result:
+  - `llmValidationReport.summary` now includes `observationCount`.
+  - Candidate reports keep `findings[]` for actionable issues and `observations[]` for
+    positive/pass notes.
+  - The trace workbench distinguishes selected/rejected evidence from public evidence
+    retrieval and synthesis.
+
 ### Slice 2.14: Pairwise Ranking and Directed Revision
 
 - Status: Ready
@@ -4282,6 +4316,8 @@ Status:
 - Slice 2.13.1: Attribution Validator Calibration. Completed 2026-06-24.
 - Slice 2.13.2: JSON Step Retry Discipline. Completed 2026-06-25.
 - Slice 2.13.3: LLM-Assisted Validator Reports. Completed 2026-06-25.
+- Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair.
+  Completed 2026-06-25.
 
 ## Blocked Items
 

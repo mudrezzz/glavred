@@ -61,7 +61,9 @@ def build_summary(run_id: str, draft_db: Path, ai_db: Path) -> dict[str, Any]:
     ai_runs = load_ai_runs(ai_db, ai_run_ids)
     final_draft = safe_json(run["final_draft"], None)
     draft_step = next((step for step in steps if step["key"] == "draft"), None)
+    material_plan_step = next((step for step in steps if step["key"] == "materialPlan"), None)
     public_evidence_step = next((step for step in steps if step["key"] == "publicEvidence"), None)
+    validation_step = next((step for step in steps if step["key"] == "validation"), None)
     source_intent_step = next((step for step in steps if step["key"] == "sourceIntent"), None)
     findings = build_findings(steps, ai_runs, draft_step, public_evidence_step, final_draft)
     return {
@@ -75,7 +77,9 @@ def build_summary(run_id: str, draft_db: Path, ai_db: Path) -> dict[str, Any]:
         "steps": steps,
         "sourceIntent": source_intent_summary(source_intent_step),
         "publicEvidence": public_evidence_summary(public_evidence_step),
+        "materialPlan": material_plan_summary(material_plan_step),
         "draft": draft_summary(draft_step),
+        "validation": validation_summary(validation_step),
         "aiRuns": ai_runs,
         "findings": findings,
     }
@@ -164,10 +168,18 @@ def public_evidence_summary(step: dict[str, Any] | None) -> dict[str, Any]:
     attempts = artifact.get("attempts") or []
     items = artifact.get("items") or []
     warnings = artifact.get("warnings") or []
+    enriched_ledger = artifact.get("enrichedSourceLedger") if isinstance(artifact.get("enrichedSourceLedger"), dict) else {}
+    ledger_metadata = enriched_ledger.get("metadata") if isinstance(enriched_ledger.get("metadata"), dict) else {}
+    synthesis = artifact.get("evidenceSynthesis") if isinstance(artifact.get("evidenceSynthesis"), dict) else {}
+    synthesis_metadata = synthesis.get("metadata") if isinstance(synthesis.get("metadata"), dict) else {}
     return {
         "attemptCount": len(attempts),
         "itemCount": len(items),
         "warningCount": len(warnings),
+        "internalClaimCount": ledger_metadata.get("internalClaimCount"),
+        "externalClaimCount": ledger_metadata.get("externalClaimCount"),
+        "synthesisExternalClaimCount": synthesis_metadata.get("externalClaimCount"),
+        "synthesisWarningCount": synthesis_metadata.get("warningCount"),
         "attempts": [
             {
                 "id": attempt.get("id"),
@@ -186,6 +198,39 @@ def public_evidence_summary(step: dict[str, Any] | None) -> dict[str, Any]:
             for item in items[:5]
             if isinstance(item, dict)
         ],
+    }
+
+
+def material_plan_summary(step: dict[str, Any] | None) -> dict[str, Any]:
+    artifact = (step or {}).get("artifact") or {}
+    plan = artifact.get("materialPlan") if isinstance(artifact.get("materialPlan"), dict) else artifact
+    accountability = artifact.get("evidenceAccountability") if isinstance(artifact.get("evidenceAccountability"), dict) else {}
+    return {
+        "attemptCount": len(artifact.get("attempts") or []),
+        "usableEvidenceCandidateCount": len(artifact.get("usableEvidenceCandidates") or []),
+        "availableEvidenceCount": len(plan.get("availableEvidence") or []),
+        "rejectedEvidenceCount": len(plan.get("rejectedEvidence") or []),
+        "claimsRequiringAttributionCount": len(plan.get("claimsRequiringAttribution") or []),
+        "qualifiedClaimCount": len(plan.get("qualifiedClaims") or []),
+        "accountabilityValid": accountability.get("valid"),
+        "accountabilityInvalidReasons": accountability.get("invalidReasons") or [],
+    }
+
+
+def validation_summary(step: dict[str, Any] | None) -> dict[str, Any]:
+    artifact = (step or {}).get("artifact") or {}
+    llm_report = artifact.get("llmValidationReport") if isinstance(artifact.get("llmValidationReport"), dict) else {}
+    summary = llm_report.get("summary") if isinstance(llm_report.get("summary"), dict) else {}
+    candidate_reports = llm_report.get("candidateReports") if isinstance(llm_report.get("candidateReports"), list) else []
+    return {
+        "status": artifact.get("status"),
+        "deterministicWarnings": (artifact.get("summary") or {}).get("warningCount") if isinstance(artifact.get("summary"), dict) else None,
+        "llmStatus": llm_report.get("status"),
+        "llmWarnings": summary.get("warningCount"),
+        "llmCritical": summary.get("criticalCount"),
+        "llmObservations": summary.get("observationCount") if summary.get("observationCount") is not None else sum(
+            len(report.get("observations") or []) for report in candidate_reports if isinstance(report, dict)
+        ),
     }
 
 
@@ -295,9 +340,26 @@ def print_markdown(summary: dict[str, Any]) -> None:
         print(f"- {step['key']}: {step['status']}" + (f" ({step['error']})" if step.get("error") else ""))
     print("\n## Public Evidence")
     pe = summary["publicEvidence"]
-    print(f"- attempts: {pe['attemptCount']}; items: {pe['itemCount']}; warnings: {pe['warningCount']}")
+    print(
+        f"- attempts: {pe['attemptCount']}; items: {pe['itemCount']}; warnings: {pe['warningCount']}; "
+        f"external ledger claims: {pe.get('externalClaimCount')}; synthesis claims: {pe.get('synthesisExternalClaimCount')}"
+    )
     for attempt in pe["attempts"]:
         print(f"- {attempt['id']}: {attempt['status']}; rejected={attempt['rejected']}; query={attempt['builtQuery']}")
+    print("\n## Material Plan")
+    mp = summary["materialPlan"]
+    print(
+        f"- usable candidates: {mp['usableEvidenceCandidateCount']}; available: {mp['availableEvidenceCount']}; "
+        f"rejected: {mp['rejectedEvidenceCount']}; attribution: {mp['claimsRequiringAttributionCount']}; "
+        f"accountability valid: {mp['accountabilityValid']}"
+    )
+    print("\n## Validation")
+    validation = summary["validation"]
+    print(
+        f"- status: {validation['status']}; deterministic warnings: {validation['deterministicWarnings']}; "
+        f"LLM warnings: {validation['llmWarnings']}; LLM critical: {validation['llmCritical']}; "
+        f"LLM observations: {validation['llmObservations']}"
+    )
     print("\n## Draft Selection")
     draft = summary["draft"]
     print(f"- selected: {draft.get('selectedCandidateId')}")

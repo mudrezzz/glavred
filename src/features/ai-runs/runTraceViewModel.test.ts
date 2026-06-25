@@ -85,7 +85,8 @@ describe('buildRunTraceViewModel', () => {
     expect(validation?.fields.find((field) => field.label === 'Source attribution findings')?.value).toContain('Source-backed public claim needs visible attribution');
     expect(validation?.fields.find((field) => field.label === 'Attribution markers')?.value).toContain('expected: external-claim-1: Tian Pan, tianpan.co');
     expect(validation?.fields.find((field) => field.label === 'LLM validation attempts')?.value).toContain('candidate-1 · primary: accepted');
-    expect(validation?.fields.find((field) => field.label === 'LLM validation findings')?.value).toContain('llm.audience-value');
+    expect(validation?.fields.find((field) => field.label === 'LLM actionable findings')?.value).toContain('llm.audience-value');
+    expect(validation?.fields.find((field) => field.label === 'LLM observations')?.value).toContain('llm.coherence');
   });
 
   it('shows rhetorical plan retry attempts in semantic trace', () => {
@@ -133,6 +134,8 @@ describe('buildRunTraceViewModel', () => {
     const publicEvidence = viewModel.semanticSections.find((section) => section.id === 'publicEvidence');
 
     expect(publicEvidence?.fields).toContainEqual({ label: 'Evidence items', value: '1' });
+    expect(publicEvidence?.fields).toContainEqual({ label: 'External ledger claims', value: '1' });
+    expect(publicEvidence?.fields).toContainEqual({ label: 'Synthesis external claims', value: '1' });
     expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('readUrl: succeeded');
     expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('search: succeeded');
     expect(publicEvidence?.fields.find((field) => field.label === 'Attempts')?.value).toContain('query: Find public commentary about AI product trust');
@@ -524,13 +527,14 @@ function makeDraftRunBundle(): RunTraceBundle {
             metadata: { version: 'draft-validation-v1', reportOnly: true },
             llmValidationReport: {
               status: 'warning',
-              summary: { candidateCount: 2, criticalCount: 0, warningCount: 1 },
+              summary: { candidateCount: 1, criticalCount: 0, warningCount: 1, observationCount: 1 },
               candidateReports: [
                 {
                   candidateId: 'candidate-1',
                   status: 'warning',
                   criticalCount: 0,
                   warningCount: 1,
+                  observationCount: 1,
                   attempts: [
                     {
                       label: 'primary',
@@ -551,6 +555,15 @@ function makeDraftRunBundle(): RunTraceBundle {
                       message: 'Audience value is too implicit.',
                       evidenceExcerpt: 'Selected body',
                       repairGuidance: 'Make the reader value explicit.',
+                      metadata: {}
+                    }
+                  ],
+                  observations: [
+                    {
+                      validatorId: 'llm.coherence',
+                      candidateId: 'candidate-1',
+                      message: 'The draft is coherent.',
+                      repairGuidance: 'No repair needed',
                       metadata: {}
                     }
                   ]

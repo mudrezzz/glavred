@@ -1227,6 +1227,11 @@ The next artifacts must make candidate validation meaningful:
   topic/fabula fit, coherence/compression, and audience value. If OpenRouter is not
   configured, the report is marked `not-run`; if JSON is invalid, the validator uses
   primary, repair, optional backup, then unavailable status without fake findings.
+- LLM validation reports distinguish actionable `findings[]` from positive/pass
+  `observations[]`. Positive notes such as `No repair needed` are visible in trace,
+  but they do not count as warnings. The `/ai-runs` readable trace also reads
+  enriched ledger data from `publicEvidence.enrichedSourceLedger` and selected or
+  rejected evidence from nested `materialPlan` payloads.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

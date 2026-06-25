@@ -417,8 +417,10 @@ function validationSection(payload: Record<string, unknown>): TraceSemanticSecti
       ['Publishability findings', validationFindings(reports, 'publishability.')],
       ['Rule findings', validationFindings(reports, 'rules.')],
       ['LLM validation status', llmReport?.status],
+      ['LLM validation observations', llmValidationObservationCount(llmReport)],
       ['LLM validation attempts', llmValidationAttempts(llmReport)],
-      ['LLM validation findings', llmValidationFindings(llmReport)]
+      ['LLM actionable findings', llmValidationFindings(llmReport)],
+      ['LLM observations', llmValidationObservations(llmReport)]
     ])
   };
 }
@@ -486,6 +488,31 @@ function llmValidationFindings(report: Record<string, unknown> | null | undefine
   });
 }
 
+function llmValidationObservations(report: Record<string, unknown> | null | undefined): unknown[] {
+  if (!report) return [];
+  return (asArray(report.candidateReports) ?? []).flatMap((item) => {
+    const candidateReport = asRecord(item);
+    const candidateId = stringValue(candidateReport?.candidateId) ?? 'candidate';
+    return (asArray(candidateReport?.observations) ?? []).map((observationItem) => {
+      const observation = asRecord(observationItem);
+      if (!observation) return observationItem;
+      const repair = observation.repairGuidance ? `\n${observation.repairGuidance}` : '';
+      return `${candidateId} - ${observation.validatorId}\n${observation.message}${repair}`;
+    });
+  });
+}
+
+function llmValidationObservationCount(report: Record<string, unknown> | null | undefined): string {
+  if (!report) return '';
+  const summary = asRecord(report.summary);
+  if (summary?.observationCount != null) return displayValue(summary.observationCount);
+  const count = (asArray(report.candidateReports) ?? []).reduce<number>((total, item) => {
+    const candidateReport = asRecord(item);
+    return total + (asArray(candidateReport?.observations)?.length ?? 0);
+  }, 0);
+  return count > 0 ? String(count) : '';
+}
+
 function sourceIntentSection(payload: Record<string, unknown>, sourcesOrigin?: string): TraceSemanticSection {
   const items = asArray(payload.items) ?? [];
   return {
@@ -531,11 +558,19 @@ function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticS
   const items = asArray(payload.items) ?? [];
   const warnings = asArray(payload.warnings) ?? [];
   const rejected = attempts.flatMap((item) => asArray(asRecord(asRecord(item)?.metadata)?.rejectedCitations) ?? []);
+  const enrichedLedger = asRecord(payload.enrichedSourceLedger);
+  const ledgerMetadata = asRecord(enrichedLedger?.metadata);
+  const synthesis = asRecord(payload.evidenceSynthesis);
+  const synthesisMetadata = asRecord(synthesis?.metadata);
   return {
     id: 'publicEvidence',
     title: 'Public evidence',
     fields: compactFields([
       ['Evidence items', items.length],
+      ['Internal ledger claims', ledgerMetadata?.internalClaimCount],
+      ['External ledger claims', ledgerMetadata?.externalClaimCount],
+      ['Synthesis external claims', synthesisMetadata?.externalClaimCount],
+      ['Synthesis warnings', synthesisMetadata?.warningCount],
       ['Attempts', attempts.map(publicEvidenceAttemptValue)],
       ['Extracted evidence', items.map(publicEvidenceItemValue)],
       ['Rejected citations', rejected.map(publicEvidenceRejectedCitationValue)],
@@ -785,23 +820,35 @@ function jsonStepAttemptValue(item: unknown): unknown {
 
 function materialPlanSection(payload: Record<string, unknown>, envelope: Record<string, unknown>): TraceSemanticSection {
   const accountability = asRecord(envelope.evidenceAccountability) ?? asRecord(payload.evidenceAccountability);
+  const source = {
+    availableEvidence: payload.availableEvidence ?? envelope.availableEvidence,
+    rejectedEvidence: payload.rejectedEvidence ?? envelope.rejectedEvidence,
+    rejectionReasons: payload.rejectionReasons ?? envelope.rejectionReasons,
+    claimsRequiringAttribution: payload.claimsRequiringAttribution ?? envelope.claimsRequiringAttribution,
+    qualifiedClaims: payload.qualifiedClaims ?? envelope.qualifiedClaims,
+    missingEvidence: payload.missingEvidence ?? envelope.missingEvidence,
+    riskyClaims: payload.riskyClaims ?? envelope.riskyClaims,
+    groundingPlan: payload.groundingPlan ?? envelope.groundingPlan,
+    sourceNotes: payload.sourceNotes ?? envelope.sourceNotes,
+    openQuestions: payload.openQuestions ?? envelope.openQuestions
+  };
   return {
     id: 'materialPlan',
     title: 'Material plan',
     fields: compactFields([
       ['Attempts', asArray(envelope.attempts)?.map(materialPlanAttemptValue) ?? asArray(payload.attempts)?.map(materialPlanAttemptValue)],
       ['Usable evidence candidates', asArray(envelope.usableEvidenceCandidates)?.map(materialPlanEvidenceCandidateValue) ?? asArray(payload.usableEvidenceCandidates)?.map(materialPlanEvidenceCandidateValue)],
-      ['Available evidence', payload.availableEvidence],
-      ['Rejected evidence', payload.rejectedEvidence],
-      ['Rejection reasons', payload.rejectionReasons],
-      ['Claims requiring attribution', payload.claimsRequiringAttribution],
-      ['Qualified claims', payload.qualifiedClaims],
+      ['Available evidence', source.availableEvidence],
+      ['Rejected evidence', source.rejectedEvidence],
+      ['Rejection reasons', source.rejectionReasons],
+      ['Claims requiring attribution', source.claimsRequiringAttribution],
+      ['Qualified claims', source.qualifiedClaims],
       ['Accountability', accountability ? materialPlanAccountabilityValue(accountability) : null],
-      ['Missing evidence', payload.missingEvidence],
-      ['Risky claims', payload.riskyClaims],
-      ['Grounding plan', payload.groundingPlan],
-      ['Source notes', payload.sourceNotes],
-      ['Open questions', payload.openQuestions]
+      ['Missing evidence', source.missingEvidence],
+      ['Risky claims', source.riskyClaims],
+      ['Grounding plan', source.groundingPlan],
+      ['Source notes', source.sourceNotes],
+      ['Open questions', source.openQuestions]
     ])
   };
 }

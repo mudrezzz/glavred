@@ -3,6 +3,28 @@ from typing import Any
 
 from backend.app.domain.draft_validation import DraftValidatorFinding, DraftValidatorStatus, validation_status_for
 
+@dataclass(frozen=True)
+class LlmValidatorObservation:
+    validator_id: str
+    candidate_id: str
+    message: str
+    evidence_excerpt: str = ""
+    repair_guidance: str = ""
+    rule_ids: list[str] = field(default_factory=list)
+    claim_ids: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "validatorId": self.validator_id,
+            "candidateId": self.candidate_id,
+            "message": self.message,
+            "evidenceExcerpt": self.evidence_excerpt,
+            "repairGuidance": self.repair_guidance,
+            "ruleIds": self.rule_ids,
+            "claimIds": self.claim_ids,
+            "metadata": self.metadata,
+        }
 
 @dataclass(frozen=True)
 class LlmValidatorAttempt:
@@ -33,6 +55,7 @@ class LlmCandidateValidationReport:
     candidate_id: str
     status: DraftValidatorStatus
     findings: list[DraftValidatorFinding] = field(default_factory=list)
+    observations: list[LlmValidatorObservation] = field(default_factory=list)
     attempts: list[LlmValidatorAttempt] = field(default_factory=list)
 
     def to_payload(self) -> dict[str, Any]:
@@ -41,7 +64,9 @@ class LlmCandidateValidationReport:
             "status": self.status.value,
             "criticalCount": sum(1 for finding in self.findings if finding.severity == DraftValidatorStatus.CRITICAL),
             "warningCount": sum(1 for finding in self.findings if finding.severity == DraftValidatorStatus.WARNING),
+            "observationCount": len(self.observations),
             "findings": [finding.to_payload() for finding in self.findings],
+            "observations": [observation.to_payload() for observation in self.observations],
             "attempts": [attempt.to_payload() for attempt in self.attempts],
         }
 
@@ -59,6 +84,7 @@ class LlmDraftValidationReport:
                 "candidateCount": len(self.candidate_reports),
                 "criticalCount": sum(report.to_payload()["criticalCount"] for report in self.candidate_reports),
                 "warningCount": sum(report.to_payload()["warningCount"] for report in self.candidate_reports),
+                "observationCount": sum(report.to_payload()["observationCount"] for report in self.candidate_reports),
             },
             "candidateReports": [report.to_payload() for report in self.candidate_reports],
             "metadata": {"version": "llm-draft-validation-v1", "reportOnly": True, **self.metadata},

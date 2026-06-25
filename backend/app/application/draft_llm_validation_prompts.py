@@ -23,6 +23,18 @@ def build_llm_validation_messages(
         "deterministicReport": deterministic_report,
         "requiredJson": {
             "summary": "short validator summary",
+            "observations": [
+                {
+                    "validatorId": "llm.source-grounding|llm.publisher-fit|llm.topic-fabula-fit|llm.coherence|llm.audience-value",
+                    "status": "pass|positive|observation",
+                    "ruleIds": ["rule ids when relevant"],
+                    "claimIds": ["claim ids when relevant"],
+                    "message": "positive or pass observation",
+                    "evidenceExcerpt": "draft excerpt or claim reference",
+                    "repairGuidance": "No repair needed",
+                    "metadata": {"dimension": "sourceGrounding|publisherFit|topicFabulaFit|coherence|audienceValue"},
+                }
+            ],
             "findings": [
                 {
                     "validatorId": "llm.source-grounding|llm.publisher-fit|llm.topic-fabula-fit|llm.coherence|llm.audience-value",
@@ -38,7 +50,8 @@ def build_llm_validation_messages(
         },
         "rules": [
             "Do not invent provenance. Reference only provided ruleIds and claimIds.",
-            "Return empty findings only when the candidate passes the LLM review.",
+            "Put only actionable issues in findings. Positive checks and pass notes go into observations.",
+            "Return empty findings when the candidate passes the LLM review, and record pass notes in observations.",
             "Findings are report-only. Do not rewrite the draft.",
         ],
     }

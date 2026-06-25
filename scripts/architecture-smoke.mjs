@@ -937,6 +937,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft LLM validation parser should stay payload normalization only.",
   },
   {
+    path: "backend/app/application/draft_llm_validation_observations.py",
+    limit: 80,
+    next: "Draft LLM validation observations should stay pass/positive normalization only.",
+  },
+  {
     path: "backend/app/application/draft_validation_step_service.py",
     limit: 80,
     next: "Draft validation step service should stay composition-only between deterministic and LLM reports.",
@@ -1270,6 +1275,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_llm_validation_service.py",
     limit: 130,
     next: "Draft LLM validation service tests should stay focused on provider success/retry/unavailable behavior.",
+  },
+  {
+    path: "backend/tests/test_draft_llm_validation_parser.py",
+    limit: 80,
+    next: "Draft LLM validation parser tests should stay focused on findings/observations normalization.",
   },
   {
     path: "backend/tests/test_draft_run_pipeline_validation_step.py",
@@ -1752,6 +1762,7 @@ if (fileExists("backend")) {
     "backend/app/application/draft_llm_validation_prompts.py",
     "backend/app/application/draft_llm_validation_audit.py",
     "backend/app/application/draft_llm_validation_parser.py",
+    "backend/app/application/draft_llm_validation_observations.py",
     "backend/app/application/draft_validation_step_service.py",
     "backend/app/application/draft_validation_step.py",
     "backend/app/application/draft_planning_prompts.py",
@@ -1817,6 +1828,7 @@ if (fileExists("backend")) {
     "backend/tests/test_draft_candidate_selection_guard.py",
     "backend/tests/test_draft_validation.py",
     "backend/tests/test_draft_llm_validation_service.py",
+    "backend/tests/test_draft_llm_validation_parser.py",
     "backend/tests/test_draft_rhetorical_plan_service.py",
     "backend/tests/test_draft_rhetorical_plan_retry.py",
     "backend/tests/test_draft_run_pipeline_validation_step.py",
@@ -2177,6 +2189,7 @@ const requiredSaoFragments = [
   "backend/app/application/draft_llm_validation_prompts.py",
   "backend/app/application/draft_llm_validation_audit.py",
   "backend/app/application/draft_llm_validation_parser.py",
+  "backend/app/application/draft_llm_validation_observations.py",
   "backend/app/application/draft_validation_step_service.py",
   "backend/app/application/draft_validation_step.py",
   "backend/app/application/draft_run_context_builder.py",

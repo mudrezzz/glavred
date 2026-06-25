@@ -412,7 +412,8 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - The same `validation` trace can also include `LLM validation`: report-only model
   feedback for source grounding, publisher/author fit, topic/fabula fit,
   coherence/compression, and audience value. It is visible in `/ai-runs?runId=...`
-  and does not change the selected draft yet.
+  and does not change the selected draft yet. Actionable LLM issues are shown
+  separately from positive observations, so pass notes do not inflate warning counts.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

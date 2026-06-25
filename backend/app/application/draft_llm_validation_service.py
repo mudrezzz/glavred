@@ -5,7 +5,7 @@ from backend.app.application.draft_llm_validation_audit import (
     build_llm_validation_request_trace,
     build_llm_validation_result_trace,
 )
-from backend.app.application.draft_llm_validation_parser import parse_llm_validation_findings
+from backend.app.application.draft_llm_validation_parser import parse_llm_validation_report
 from backend.app.application.draft_llm_validation_prompts import (
     LLM_VALIDATION_KEYS,
     LLM_VALIDATION_TEMPERATURE,
@@ -104,11 +104,12 @@ class DraftLlmValidationService:
             )
             attempts.append(result["attempt"])
             if result["accepted"]:
-                findings = parse_llm_validation_findings(candidate_id=candidate_id, payload=result["payload"])
+                findings, observations = parse_llm_validation_report(candidate_id=candidate_id, payload=result["payload"])
                 return LlmCandidateValidationReport(
                     candidate_id=candidate_id,
                     status=validation_status_for(findings),
                     findings=findings,
+                    observations=observations,
                     attempts=attempts,
                 )
             repair_context = {"previousAttempt": result["attempt"].to_payload(), "requiredShape": "object with summary and findings[]"}
