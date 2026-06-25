@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../../infrastructure/draftRunClient';
@@ -41,6 +41,7 @@ describe('Editorial workbench DraftRun status', () => {
 
     expect(await screen.findByText(/Генерируем драфт/i)).toBeInTheDocument();
     expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/ai-runs?runId=draft-run-pending')).toBe(true);
+    expect(screen.getAllByText(/Search public sources/i).length).toBeGreaterThan(0);
     expect((await screen.findAllByText((content) => content.includes('5') && content.includes('минут'))).length).toBeGreaterThan(0);
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(compatibilityFetch).not.toHaveBeenCalled();
@@ -55,10 +56,24 @@ function staleRunningRun() {
     id: 'draft-run-pending',
     status: 'running',
     steps: [{
-      key: 'rhetoricalPlans',
+      key: 'publicEvidence',
       status: 'running',
-      title: 'Риторические планы',
-      artifactPayload: null,
+      title: 'Public evidence',
+      artifactPayload: {
+        progress: {
+          status: 'running',
+          currentOperationId: 'search-task-1',
+          operations: [{
+            id: 'search-task-1',
+            kind: 'findPublicSources',
+            label: 'Search public sources: opinion leaders',
+            status: 'running',
+            startedAt: '2026-06-23T00:00:00.000Z',
+            completedAt: null,
+            target: 'opinion leaders'
+          }]
+        }
+      },
       error: null,
       startedAt: '2026-06-23T00:00:00.000Z',
       completedAt: null
@@ -72,7 +87,6 @@ function staleRunningRun() {
     updatedAt: '2026-06-23T00:00:00.000Z'
   };
 }
-
 function completedRun() {
   return {
     ...staleRunningRun(),

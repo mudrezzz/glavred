@@ -3,7 +3,7 @@ from backend.app.application.draft_quality_gate import DraftQualityGate
 from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompiler
 from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.application.draft_run_context_payloads import context_from_payload
-from backend.app.application.draft_run_payloads import draft_to_payload, request_from_payload
+from backend.app.application.draft_run_payloads import draft_to_payload, payload_section, request_from_payload
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.deterministic_draft_planning_step_services import DeterministicMaterialPlanStepService, DeterministicStrategyStepService
@@ -15,6 +15,7 @@ from backend.app.application.draft_run_draft_step_service import LegacyDraftStep
 from backend.app.application.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
+from backend.app.application.draft_run_step_progress import with_progress_payload
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, DraftRunStepKey
@@ -64,13 +65,15 @@ class DraftRunPipeline:
             context_artifact = {**context_artifact, **source_result.artifact_payload}
             progress.complete(DraftRunStepKey.SOURCE_INTENT, source_result.artifact_payload)
             progress.start(DraftRunStepKey.PUBLIC_EVIDENCE)
+            public_progress = progress.operation_sink(DraftRunStepKey.PUBLIC_EVIDENCE)
             public_evidence_result = self._public_evidence_step_service.run(
                 source_intent_artifact=source_result.artifact_payload,
                 context_artifact=context_artifact,
+                progress=public_progress,
             )
             progress.add_ai_run_ids(public_evidence_result.ai_run_ids)
             context_artifact = public_evidence_result.context_artifact
-            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, public_evidence_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, with_progress_payload(public_evidence_result.artifact_payload, public_progress))
             quality_gate_result = self._quality_gate.evaluate(context_artifact)
             progress.complete(DraftRunStepKey.FEASIBILITY, quality_gate_result.feasibility_report)
             progress.complete(DraftRunStepKey.POST_CONTRACT, quality_gate_result.post_contract)
@@ -84,13 +87,13 @@ class DraftRunPipeline:
             progress.start(DraftRunStepKey.MATERIAL_PLAN)
             material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_artifact)
             progress.add_ai_run_ids(material_plan_result.ai_run_ids or ([material_plan_result.ai_run_id] if material_plan_result.ai_run_id else []))
-            material_plan = _payload(material_plan_result.artifact_payload, "materialPlan")
+            material_plan = payload_section(material_plan_result.artifact_payload, "materialPlan")
             progress.succeed(DraftRunStepKey.MATERIAL_PLAN, material_plan_result.artifact_payload)
             progress.start(DraftRunStepKey.STRATEGY)
             strategy_result = self._strategy_service.create(context_summary=context_summary, rule_pack=rule_pack, material_plan=material_plan)
             progress.add_ai_run_id(strategy_result.ai_run_id)
             progress.succeed(DraftRunStepKey.STRATEGY, strategy_result.artifact_payload)
-            draft_strategy = _payload(strategy_result.artifact_payload, "draftStrategy")
+            draft_strategy = payload_section(strategy_result.artifact_payload, "draftStrategy")
             progress.start(DraftRunStepKey.RHETORICAL_PLANS)
             plan_result = self._rhetorical_plan_service.create(
                 context_summary=context_summary,
@@ -100,9 +103,10 @@ class DraftRunPipeline:
                 draft_strategy=draft_strategy,
             )
             progress.add_ai_run_ids(plan_result.ai_run_ids or ([plan_result.ai_run_id] if plan_result.ai_run_id else []))
-            rhetorical_plans = _payload(plan_result.artifact_payload, "rhetoricalPlanSet")
+            rhetorical_plans = payload_section(plan_result.artifact_payload, "rhetoricalPlanSet")
             progress.succeed(DraftRunStepKey.RHETORICAL_PLANS, plan_result.artifact_payload)
             progress.start(DraftRunStepKey.DRAFT)
+            draft_progress = progress.operation_sink(DraftRunStepKey.DRAFT)
             draft_result = self._draft_step_service.create(
                 request=request,
                 context_summary=context_summary,
@@ -110,19 +114,30 @@ class DraftRunPipeline:
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
                 rhetorical_plans=rhetorical_plans,
+                progress=draft_progress,
             )
             progress.add_ai_run_ids(draft_result.ai_run_ids)
-            progress.succeed(DraftRunStepKey.DRAFT, draft_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.DRAFT, with_progress_payload(draft_result.artifact_payload, draft_progress))
             if draft_result.final_draft is None:
                 progress.complete(DraftRunStepKey.VALIDATION, self._validation_step_service.not_run(reason="draft candidate selection blocked").artifact_payload)
                 progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
                 self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
                 return self._loaded(run_id)
-            validation_result = self._validation_step_service.validate(draft_artifact=draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan)
+            progress.start(DraftRunStepKey.VALIDATION)
+            validation_progress = progress.operation_sink(DraftRunStepKey.VALIDATION)
+            validation_result = self._validation_step_service.validate(
+                request=request,
+                draft_artifact=draft_result.artifact_payload,
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+                progress=validation_progress,
+            )
             progress.add_ai_run_ids(validation_result.ai_run_ids)
-            progress.complete(DraftRunStepKey.VALIDATION, validation_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.VALIDATION, with_progress_payload(validation_result.artifact_payload, validation_progress))
             progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
-            self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_to_payload(draft_result.final_draft), ai_run_ids=progress.ai_run_ids)
+            final_draft = validation_result.final_draft or draft_result.final_draft
+            self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_to_payload(final_draft) if final_draft else None, ai_run_ids=progress.ai_run_ids)
         except Exception as exc:
             safe_error = str(exc)[:500] or "Draft run failed"
             progress.fail_current(safe_error)
@@ -134,6 +149,3 @@ class DraftRunPipeline:
         if loaded is None:
             raise ValueError(f"DraftRun {run_id} disappeared")
         return loaded
-def _payload(artifact: dict[str, Any], key: str) -> dict[str, Any]:
-    value = artifact.get(key)
-    return value if isinstance(value, dict) else {}

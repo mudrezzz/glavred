@@ -22,8 +22,9 @@ export interface PublicationSizeProfile {
 }
 
 export const DEFAULT_PUBLICATION_SIZE_PROFILE_ID = 'telegram-post';
+export const PUBLICATION_SIZE_DEFAULTS_VERSION = 2;
 
-export const DEFAULT_PUBLICATION_SIZE_PROFILES: PublicationSizeProfile[] = [
+export const LEGACY_PUBLICATION_SIZE_PROFILES: PublicationSizeProfile[] = [
   {
     id: 'telegram-post',
     title: 'Telegram post',
@@ -65,18 +66,70 @@ export const DEFAULT_PUBLICATION_SIZE_PROFILES: PublicationSizeProfile[] = [
   }
 ];
 
+export const DEFAULT_PUBLICATION_SIZE_PROFILES: PublicationSizeProfile[] = [
+  {
+    id: 'telegram-post',
+    title: 'Telegram post',
+    platform: 'Telegram',
+    publicationKind: 'shortPost',
+    minChars: 4500,
+    targetChars: 7000,
+    maxChars: 9500,
+    hardMaxChars: 10240,
+    paragraphRange: { min: 8, max: 18 },
+    sectionRange: { min: 1, max: 3 },
+    density: 'normal'
+  },
+  {
+    id: 'linkedin-post',
+    title: 'LinkedIn post',
+    platform: 'LinkedIn',
+    publicationKind: 'longPost',
+    minChars: 3000,
+    targetChars: 5500,
+    maxChars: 7000,
+    hardMaxChars: 7500,
+    paragraphRange: { min: 7, max: 14 },
+    sectionRange: { min: 1, max: 3 },
+    density: 'compact'
+  },
+  {
+    id: 'linkedin-article',
+    title: 'LinkedIn article',
+    platform: 'LinkedIn',
+    publicationKind: 'article',
+    minChars: 12500,
+    targetChars: 17500,
+    maxChars: 22500,
+    hardMaxChars: 27500,
+    paragraphRange: { min: 18, max: 40 },
+    sectionRange: { min: 4, max: 10 },
+    density: 'deep'
+  }
+];
+
 const VALID_KINDS: PublicationKind[] = ['shortPost', 'longPost', 'article'];
 const VALID_DENSITIES: PublicationDensity[] = ['compact', 'normal', 'deep'];
 const VALID_SIZE_INTENTS: FabulaSizeIntent[] = ['compact', 'standard', 'deep'];
 
 export function normalizePublicationSizeProfiles(
   saved: PublicationSizeProfile[] | undefined,
-  fallback: PublicationSizeProfile[] = DEFAULT_PUBLICATION_SIZE_PROFILES
+  fallback: PublicationSizeProfile[] = DEFAULT_PUBLICATION_SIZE_PROFILES,
+  options: { savedDefaultsVersion?: number } = {}
 ): PublicationSizeProfile[] {
+  const savedDefaultsVersion = options.savedDefaultsVersion ?? 0;
+  if (saved && savedDefaultsVersion < PUBLICATION_SIZE_DEFAULTS_VERSION && matchesBuiltInProfiles(saved, LEGACY_PUBLICATION_SIZE_PROFILES)) {
+    return fallback.map((profile) => ({ ...profile }));
+  }
   const profiles = (saved ?? [])
     .map((profile, index) => normalizePublicationSizeProfile(profile, fallback[index] ?? fallback[0]))
     .filter((profile): profile is PublicationSizeProfile => profile !== null);
   return profiles.length > 0 ? profiles : fallback.map((profile) => ({ ...profile }));
+}
+
+function matchesBuiltInProfiles(saved: PublicationSizeProfile[], builtIn: PublicationSizeProfile[]): boolean {
+  if (saved.length !== builtIn.length) return false;
+  return saved.every((profile, index) => JSON.stringify(profile) === JSON.stringify(builtIn[index]));
 }
 
 export function normalizePublicationSizeProfileId(

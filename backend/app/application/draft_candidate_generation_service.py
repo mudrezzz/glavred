@@ -8,6 +8,7 @@ from backend.app.application.draft_candidate_direction_service import DraftCandi
 from backend.app.application.draft_candidate_prompts import CANDIDATE_KEYS, CANDIDATE_TEMPERATURE, build_draft_candidate_messages
 from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
 from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_candidates import DraftCandidate, DraftCandidateDirection, candidate_from_payload
@@ -45,6 +46,7 @@ class DraftCandidateGenerationService:
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
         rhetorical_plans: dict[str, Any] | None = None,
+        progress: DraftRunStepOperationSink | None = None,
     ) -> DraftCandidateGenerationResult:
         directions = self._direction_service.create_directions(
             context_summary=context_summary,
@@ -56,10 +58,21 @@ class DraftCandidateGenerationService:
         ai_run_ids: list[str] = []
         fallback_used = False
         for direction in directions:
+            operation_id = f"draft-candidate-{direction.id}"
+            if progress:
+                progress.start_operation(
+                    operation_id,
+                    kind="draftCandidate",
+                    label=f"Generate candidate: {direction.title}",
+                    target=direction.rhetorical_plan_id or direction.id,
+                )
             payload, ai_run_id = self._create_one(request, context_summary, rule_pack, material_plan, draft_strategy, direction)
             candidate_payloads.append(payload)
             if ai_run_id:
                 ai_run_ids.append(ai_run_id)
+            if progress:
+                notes = [f"source={payload.get('source')}", f"fallback={payload.get('fallbackUsed')}"]
+                progress.complete_operation(operation_id, ai_run_id=ai_run_id, notes=notes)
             fallback_used = fallback_used or bool(payload.get("fallbackUsed"))
         selection = self._selection_service.select(candidate_payloads).to_payload()
         selected_id = selection.get("selectedCandidateId")

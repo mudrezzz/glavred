@@ -1,6 +1,7 @@
 from typing import Any
 
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_run import DraftRunStatus
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
 
@@ -43,6 +44,19 @@ class DraftRunProgress:
     def add_ai_run_ids(self, ai_run_ids: list[str]) -> None:
         for ai_run_id in ai_run_ids:
             self.add_ai_run_id(ai_run_id)
+
+    def operation_sink(
+        self,
+        key: DraftRunStepKey,
+        *,
+        total_operations: int | None = None,
+    ) -> DraftRunStepOperationSink:
+        return DraftRunStepOperationSink(
+            self._repository,
+            self._run_id,
+            key,
+            total_operations=total_operations,
+        )
 
     def fail_current(self, error: str) -> None:
         if self._current_step is None:

@@ -357,7 +357,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   and choose a post from the searchable picker.
 - Review, edit if needed, and approve the prepared post brief through the second HITL
   gate. Glavred starts a backend `DraftRun`, shows queued/running progress in
-  `Драфт`, then applies the completed draft to the selected post. There is no separate
+  `Драфт`, then applies the completed draft to the selected post. During long runs the
+  same block shows the current operation, for example a public search, candidate
+  generation, LLM validation, ranking, or directed revision. There is no separate
   `Написать драфт` action.
 - The run is created with a read-only context snapshot of the selected post: plan
   slot, candidate when available, source signal, topic, fabula, publisher rules, and
@@ -407,13 +409,17 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - The trace now includes a `validation` report for every draft candidate. It shows
   size/shape issues, missing CTA or contract signals, missing attribution, rejected
   evidence used as proof, forbidden moves, raw artifact leakage, and publishability
-  consistency. In the current slice this is diagnostic only: the selected draft still
-  opens in `Драфт`, and ranking/revision will use these findings later.
+  consistency.
 - The same `validation` trace can also include `LLM validation`: report-only model
   feedback for source grounding, publisher/author fit, topic/fabula fit,
-  coherence/compression, and audience value. It is visible in `/ai-runs?runId=...`
-  and does not change the selected draft yet. Actionable LLM issues are shown
+  coherence/compression, and audience value. Actionable LLM issues are shown
   separately from positive observations, so pass notes do not inflate warning counts.
+- After validation, Glavred now pairwise-ranks candidates, builds one targeted repair
+  instruction, and may ask the model for a single directed revision. The revision is
+  accepted only if it does not make deterministic checks worse; otherwise the best
+  original candidate remains the draft. The main `Драфт` screen still shows one
+  editable result, while `/ai-runs?runId=...` shows the ranking matrix, revision
+  instruction, accepted/rejected revised candidate, and final decision.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

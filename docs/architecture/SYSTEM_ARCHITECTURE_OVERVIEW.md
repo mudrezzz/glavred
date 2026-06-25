@@ -452,6 +452,36 @@ workbench also reads enriched evidence from the `publicEvidence` artifact and ne
 selected/rejected evidence from `materialPlan`, so the trace reflects the actual
 handoff from retrieval to planning.
 
+Slice 2.14 makes validation actionable without adding new DraftRun steps or SQLite
+tables. The existing `validation` artifact gains `rankingRevision`: pairwise ranking,
+one directed revision instruction, the revised candidate when a provider returns one,
+a deterministic regression guard, and the final decision. The implementation is split
+across role-owned modules:
+
+- `backend/app/domain/draft_ranking_revision.py`: provider-free DTOs.
+- `backend/app/application/deterministic_pairwise_ranking.py`: local fallback ranking.
+- `backend/app/application/draft_pairwise_ranking_prompts.py` and
+  `backend/app/application/draft_pairwise_ranking_service.py`: OpenRouter JSON
+  pairwise ranking with retry discipline.
+- `backend/app/application/draft_directed_revision_prompts.py` and
+  `backend/app/application/draft_directed_revision_service.py`: one-shot directed
+  revision, without deterministic fake rewrites.
+- `backend/app/application/draft_revision_instruction_builder.py`: actionable
+  finding projection into repair goals.
+- `backend/app/application/draft_revision_regression.py`: deterministic regression
+  checks before accepting a revised candidate.
+- `backend/app/application/draft_ranking_revision_service.py`,
+  `backend/app/application/draft_ranking_revision_result.py`, and
+  `backend/app/application/draft_validation_ranking_bridge.py`: narrow orchestration
+  between validation, ranking, revision, and the final draft decision.
+- `backend/app/infrastructure/draft_run_pipeline_validation_services.py`: wiring for
+  validation, ranking, and directed revision dependencies.
+
+The pipeline sets `finalDraft` after `validation + rankingRevision`. If the revised
+candidate regresses on deterministic critical/warning counts, hard size limits, raw
+artifact leakage, or attribution markers, the original ranked winner remains the
+final draft and the rejected revision stays in trace.
+
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
 `EditorialWorkItem` and sends it with `POST /api/draft-runs`. The snapshot includes
@@ -665,6 +695,16 @@ not only at final run completion. `GET /api/draft-runs/{id}` computes
 fallback. Celery task time limits are allowed to mark a real timeout as `failed` with
 a safe error.
 
+Slice 2.14.1 extends that contract with artifact-level operation progress. Long
+steps can write `artifactPayload.progress` while they are still running:
+`currentOperationId`, `operations[]`, status, timestamps, target/query, safe error,
+notes, and child `AiRun ID` when available. `publicEvidence` records URL/search/
+skip/synthesis operations, `draft` records candidate-generation operations, and
+`validation` records deterministic lint, per-candidate LLM validation, pairwise
+ranking, directed revision, and regression guard operations. These writes reuse the
+existing step update path, move `draft_runs.updated_at`, and make the main workbench
+and `/ai-runs` show what is actually happening inside a long step.
+
 Validator scoring and revision loops remain later work; Slice 2.8 selection is a
 deterministic first-pass scorecard, Slice 2.9 adds internal provenance, and the next
 quality correction adds drafting-time public evidence before validators.
@@ -802,6 +842,7 @@ Concrete queued drafting files:
 - `backend/app/application/draft_run_service.py`
 - `backend/app/application/draft_run_pipeline.py`
 - `backend/app/application/draft_run_progress.py`
+- `backend/app/application/draft_run_step_progress.py`
 - `backend/app/application/draft_run_staleness.py`
 - `backend/app/application/draft_run_payloads.py`
 - `backend/app/application/draft_run_context_payloads.py`

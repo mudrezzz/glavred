@@ -1,0 +1,5 @@
+interface:
+  display_name: "DraftRun Pipeline Autofix"
+  short_description: "Run DraftRun diagnostics and apply bounded small fixes"
+  default_prompt: "Запусти DraftRun, сравни результат с roadmap, исправь мелкие дефекты и повтори до 5 циклов."
+

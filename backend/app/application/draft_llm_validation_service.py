@@ -12,6 +12,7 @@ from backend.app.application.draft_llm_validation_prompts import (
     build_llm_validation_messages,
 )
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_llm_validation import (
@@ -48,6 +49,7 @@ class DraftLlmValidationService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         deterministic_report: dict[str, Any],
+        progress: DraftRunStepOperationSink | None = None,
     ) -> DraftPlanningStepResult:
         candidates = [item for item in _list(draft_artifact.get("candidates")) if isinstance(item, dict)]
         status = self._openrouter_validator.evaluate(self._settings)
@@ -60,16 +62,26 @@ class DraftLlmValidationService:
                 ai_run_id=None,
                 ai_run_ids=[],
             )
-        reports = [
-            self._validate_candidate(
+        reports: list[LlmCandidateValidationReport] = []
+        for candidate in candidates:
+            candidate_id = str(candidate.get("id") or "unknown-candidate")
+            operation_id = f"llm-validation-{candidate_id}"
+            if progress:
+                progress.start_operation(operation_id, kind="llmValidation", label=f"LLM validation: {candidate_id}", target=candidate_id)
+            report = self._validate_candidate(
                 candidate=candidate,
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,
                 deterministic_report=_candidate_deterministic_report(deterministic_report, str(candidate.get("id") or "")),
             )
-            for candidate in candidates
-        ]
+            reports.append(report)
+            ai_run_id = next((attempt.ai_run_id for attempt in reversed(report.attempts) if attempt.ai_run_id), None)
+            if progress:
+                if report.status == DraftValidatorStatus.NOT_RUN and report.attempts:
+                    progress.fail_operation(operation_id, "LLM validation attempts did not produce a usable report.", ai_run_id=ai_run_id)
+                else:
+                    progress.complete_operation(operation_id, ai_run_id=ai_run_id, notes=[f"status={report.status}"])
         ai_run_ids = [attempt.ai_run_id for report in reports for attempt in report.attempts if attempt.ai_run_id]
         return DraftPlanningStepResult(
             artifact_payload=LlmDraftValidationReport(status=llm_report_status(reports), candidate_reports=reports).to_payload(),

@@ -8,12 +8,12 @@ DEFAULT_PROFILE = {
     "title": "Telegram post",
     "platform": "Telegram",
     "publicationKind": "shortPost",
-    "minChars": 1800,
-    "targetChars": 2800,
-    "maxChars": 3800,
-    "hardMaxChars": 4096,
-    "paragraphRange": {"min": 4, "max": 8},
-    "sectionRange": {"min": 1, "max": 1},
+    "minChars": 4500,
+    "targetChars": 7000,
+    "maxChars": 9500,
+    "hardMaxChars": 10240,
+    "paragraphRange": {"min": 8, "max": 18},
+    "sectionRange": {"min": 1, "max": 3},
     "density": "normal",
 }
 

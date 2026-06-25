@@ -285,14 +285,18 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     fallback if all LLM attempts ignore the enriched ledger.
     The `validation` trace step now contains deterministic per-candidate findings for
     size/shape, contract/CTA, attribution, rejected evidence, forbidden moves,
-    publishability, and raw artifact leakage. These findings are visible in
-    `/ai-runs?runId=...` but do not yet change the selected final draft.
+    publishability, and raw artifact leakage.
     The same step can also contain `LLM validation` findings for source grounding,
     publisher/author fit, topic/fabula fit, coherence/compression, and audience
-    value. These are report-only demo diagnostics until ranking/revision consumes
-    them. Positive/pass model observations are displayed separately from actionable
-    findings, and public-evidence/material-plan trace sections show the enriched
-    ledger and selected/rejected evidence handoff.
+    value. Positive/pass model observations are displayed separately from actionable
+    findings. The same `validation` artifact also stores pairwise ranking, one
+    directed revision instruction, revised-candidate regression checks, and the final
+    decision. Long-running `publicEvidence`, `draft`, and `validation` steps also
+    write nested operation progress, so the `Драфт` waiting state and
+    `/ai-runs?runId=...` show the current URL/search/candidate/validator/ranking/
+    revision operation instead of only a broad step name. The main demo still opens
+    one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
+    original winner or accepted revision.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

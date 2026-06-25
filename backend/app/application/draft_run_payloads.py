@@ -79,6 +79,11 @@ def draft_to_payload(draft: GeneratedDraft) -> dict[str, Any]:
     }
 
 
+def payload_section(artifact: dict[str, Any], key: str) -> dict[str, Any]:
+    value = artifact.get(key)
+    return value if isinstance(value, dict) else {}
+
+
 def input_summary_from_request(request: DraftGenerationRequest, draft_context: DraftRunContext | None = None) -> dict[str, Any]:
     summary = {
         "briefId": request.brief.id,

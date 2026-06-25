@@ -12,9 +12,7 @@ const VALID_POLICIES: SignalSelectionPolicy[] = ['hitl-only', 'automatic', 'auto
 const VALID_PERIODS: PlanningPeriod[] = ['week', 'month', 'quarter'];
 
 export const DEFAULT_CONTENT_PLAN_SETTINGS: ContentPlanSettings = {
-  period: 'month',
-  postsPerWeek: 3,
-  planningHorizonDays: PERIOD_DAYS.month,
+  period: 'month', postsPerWeek: 3, planningHorizonDays: PERIOD_DAYS.month,
   publishingDays: [1, 3, 5],
   publishingTimes: ['10:00'],
   publishSlots: [],
@@ -23,7 +21,8 @@ export const DEFAULT_CONTENT_PLAN_SETTINGS: ContentPlanSettings = {
   defaultPlatform: 'Telegram',
   signalSelectionPolicy: 'hitl-only',
   publicationSizeProfiles: DEFAULT_PUBLICATION_SIZE_PROFILES,
-  defaultPublicationSizeProfileId: DEFAULT_PUBLICATION_SIZE_PROFILE_ID
+  defaultPublicationSizeProfileId: DEFAULT_PUBLICATION_SIZE_PROFILE_ID,
+  publicationSizeDefaultsVersion: 2
 };
 
 export function getPlanningHorizonDays(period: PlanningPeriod): number {

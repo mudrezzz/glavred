@@ -243,6 +243,8 @@ Current backend files:
   named run steps.
 - `backend/app/application/draft_run_progress.py`: step start/success/failure helper
   that persists long-running step state and child `AiRun` ids incrementally.
+- `backend/app/application/draft_run_step_progress.py`: operation-level progress
+  sink for long-running step artifacts.
 - `backend/app/application/draft_run_staleness.py`: computed stale-state inspector for
   queued/running runs with no recent timestamp progress.
 - `backend/app/application/draft_run_payloads.py`: brief/model/draft payload mapping.
@@ -1052,6 +1054,11 @@ DraftRun fallback discipline:
   state with current step, elapsed time, DraftRun ID, and trace link instead.
 - `isStale=true` means the run has had no timestamp progress for five minutes. It is
   diagnostic state for `/ai-runs` and the draft screen, not a silent fallback trigger.
+- Long-running steps may write `artifactPayload.progress` while still running. Inspect
+  `progress.currentOperationId` and `progress.operations[]` for URL/search tasks,
+  candidate generation, deterministic lint, LLM validation, pairwise ranking,
+  directed revision, and regression guard progress. These writes update
+  `draft_runs.updated_at`.
 - `/api/drafts/generate` and frontend local fallback are allowed only when the run was
   not created, the backend is unreachable, or the run fails explicitly according to
   the existing error path.
@@ -1232,6 +1239,12 @@ The next artifacts must make candidate validation meaningful:
   but they do not count as warnings. The `/ai-runs` readable trace also reads
   enriched ledger data from `publicEvidence.enrichedSourceLedger` and selected or
   rejected evidence from nested `materialPlan` payloads.
+- `validation.rankingRevision` is the first actionable validation consumer. It
+  pairwise-ranks candidates, builds one repair instruction from actionable findings,
+  asks OpenRouter for a single directed revision, and accepts that revision only if
+  deterministic regression checks do not get worse. If provider calls fail or the
+  revision regresses, the final draft remains the best original candidate and the
+  reason is visible in `/ai-runs?runId=...`.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1310,8 +1323,9 @@ The first backend implementation order is:
 21. Attribution validator calibration. Done.
 22. JSON step retry discipline. Done.
 23. LLM-assisted validator reports. Done.
-24. Pairwise ranking and directed revision. Next.
-25. Regression report and editor decision learning.
+24. Pairwise ranking and directed revision. Done.
+25. DraftRun long-running step progress budget. Done.
+26. Regression report and editor decision learning. Next.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

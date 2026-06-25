@@ -9,6 +9,7 @@ import {
   startDraftRun,
   waitForDraftRun
 } from '../infrastructure/draftRunClient';
+import { draftRunStepDisplayLabel } from '../infrastructure/draftRunProgress';
 import {
   buildApproveBriefWithGeneratedDraftPatch,
   buildApproveBriefWithLocalFallbackDraftPatch
@@ -48,7 +49,7 @@ export function useDraftGenerationController({
           startedAt: run.createdAt,
           runId: run.id,
           step: step?.key ?? null,
-          stepLabel: step?.title ?? null,
+          stepLabel: draftRunStepDisplayLabel(step),
           isStale: Boolean(run.isStale),
           staleReason: run.staleReason ?? null,
           lastProgressAt: run.lastProgressAt ?? run.updatedAt

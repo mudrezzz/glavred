@@ -1,5 +1,6 @@
 import type { ContentPlanSettings } from './types';
 import {
+  PUBLICATION_SIZE_DEFAULTS_VERSION,
   normalizePublicationSizeProfileId,
   normalizePublicationSizeProfiles
 } from './publicationSize';
@@ -10,7 +11,8 @@ export function normalizePublicationSizeSettings(
 ) {
   const publicationSizeProfiles = normalizePublicationSizeProfiles(
     saved?.publicationSizeProfiles,
-    fallback.publicationSizeProfiles
+    fallback.publicationSizeProfiles,
+    { savedDefaultsVersion: saved?.publicationSizeDefaultsVersion }
   );
   return {
     publicationSizeProfiles,
@@ -18,6 +20,7 @@ export function normalizePublicationSizeSettings(
       saved?.defaultPublicationSizeProfileId,
       publicationSizeProfiles,
       fallback.defaultPublicationSizeProfileId
-    )
+    ),
+    publicationSizeDefaultsVersion: PUBLICATION_SIZE_DEFAULTS_VERSION
   };
 }

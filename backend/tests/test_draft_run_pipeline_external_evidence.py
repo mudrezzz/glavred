@@ -19,7 +19,13 @@ from backend.tests.test_draft_run_pipeline import make_request
 
 
 class FakePublicEvidenceService:
-    def retrieve(self, *, source_intent_artifact: dict[str, Any], context_artifact: dict[str, Any] | None = None) -> PublicEvidenceBatch:
+    def retrieve(
+        self,
+        *,
+        source_intent_artifact: dict[str, Any],
+        context_artifact: dict[str, Any] | None = None,
+        progress: Any | None = None,
+    ) -> PublicEvidenceBatch:
         return PublicEvidenceBatch(
             source="fake-public-evidence",
             attempts=[PublicEvidenceAttempt(

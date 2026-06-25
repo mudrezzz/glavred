@@ -9,6 +9,7 @@ import {
   type TraceMessage,
   type TraceScorecardModel,
   type TraceSemanticSection,
+  type TraceStepOperation,
   type TraceTimelineStep
 } from './runTraceViewModel';
 
@@ -82,6 +83,7 @@ function AiRunTimeline({
               <span className={`ai-run-status ${step.status}`}>{step.status}</span>
             </button>
             {step.error ? <p className="ai-run-step-error">{step.error}</p> : null}
+            {step.operations.length > 0 ? <AiRunOperations operations={step.operations} /> : null}
             {step.childCalls.length > 0 ? (
               <div className="ai-run-child-calls">
                 {step.childCalls.map((call) => (
@@ -120,6 +122,27 @@ function AiRunTimeline({
         ))}
       </div>
     </section>
+  );
+}
+
+function AiRunOperations({ operations }: { operations: TraceStepOperation[] }) {
+  return (
+    <div className="ai-run-operations" aria-label="Step operations">
+      {operations.map((operation) => (
+        <article className={`ai-run-operation ${operation.status}`} key={operation.id}>
+          <span className="ai-run-operation-dot" aria-hidden="true" />
+          <div>
+            <strong>{operation.label}</strong>
+            <p>
+              {operation.kind} · {operation.status}
+              {operation.aiRunId ? <> · <code>{operation.aiRunId}</code></> : null}
+            </p>
+            {operation.target ? <small>{operation.target}</small> : null}
+            {operation.error ? <small className="ai-run-step-error">{operation.error}</small> : null}
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 

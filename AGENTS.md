@@ -196,6 +196,9 @@ Use these skills when available:
   selected incorrectly, and deciding whether to add a repair slice.
 - `$draft-run-pipeline-evaluation` for launching a fresh DraftRun, waiting for queued
   execution, and then running the standard pipeline diagnosis.
+- `$draft-run-pipeline-autofix` for launching a fresh DraftRun, diagnosing it against
+  `ROADMAP.md`, applying bounded small non-architectural repairs, and repeating the
+  run/fix loop up to 5 cycles.
 - `$project-bootstrap` for initial project creation, repository structure, Git, GitHub, README, and baseline docs.
 - `$project-onboarding` when entering an existing project, starting a new chat, or continuing from `ROADMAP.md`.
 - `$roadmap-slice-planning` for turning requirements into iterations, slices, and actionable backlog items.

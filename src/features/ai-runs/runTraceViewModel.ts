@@ -64,6 +64,19 @@ export type TraceChildCall = {
   meta?: TraceField[];
 };
 
+export type TraceStepOperation = {
+  id: string;
+  kind: string;
+  label: string;
+  status: string;
+  startedAt: string;
+  completedAt: string;
+  aiRunId: string;
+  target: string;
+  error: string;
+  notes: string;
+};
+
 export type TraceTimelineStep = {
   id: string;
   key: string;
@@ -71,6 +84,7 @@ export type TraceTimelineStep = {
   status: string;
   error: string | null;
   detailId: string;
+  operations: TraceStepOperation[];
   childCalls: TraceChildCall[];
 };
 
@@ -149,6 +163,7 @@ function buildDraftRunViewModel(
       status: traceStepStatus(draftRun, step),
       error: step.error,
       detailId: stepDetail.id,
+      operations: progressOperations(step),
       childCalls: [...childCalls, ...draftCandidateTrace.childCalls]
     };
   });
@@ -239,6 +254,7 @@ function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
       status: aiRun.status,
       error: aiRun.error,
       detailId: detail.id,
+      operations: [],
       childCalls: [{
         id: aiRun.id,
         title,
@@ -256,6 +272,7 @@ function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
 }
 
 function buildStepDetail(step: DraftRunTraceStep): TraceDetail {
+  const progress = asRecord(step.artifactPayload?.progress);
   return {
     id: `step-detail-${step.key}`,
     title: step.title || stepLabel(step.key),
@@ -264,13 +281,35 @@ function buildStepDetail(step: DraftRunTraceStep): TraceDetail {
       { label: 'Step', value: step.key },
       { label: 'Status', value: step.status },
       { label: 'Started', value: step.startedAt ?? 'not started' },
-      { label: 'Completed', value: step.completedAt ?? 'not completed' }
+      { label: 'Completed', value: step.completedAt ?? 'not completed' },
+      { label: 'Current operation', value: stringValue(progress?.currentOperationId) ?? 'none' }
     ],
     sections: sectionsFromPayload(step.key, step.artifactPayload ?? {}),
     messages: [],
     jsonPayload: step.artifactPayload ?? {},
     rawPayload: step
   };
+}
+
+function progressOperations(step: DraftRunTraceStep): TraceStepOperation[] {
+  const progress = asRecord(step.artifactPayload?.progress);
+  const operations = asArray(progress?.operations) ?? [];
+  return operations.flatMap((item) => {
+    const operation = asRecord(item);
+    if (!operation) return [];
+    return [{
+      id: stringValue(operation.id) ?? 'operation',
+      kind: stringValue(operation.kind) ?? 'operation',
+      label: stringValue(operation.label) ?? stringValue(operation.id) ?? 'Operation',
+      status: stringValue(operation.status) ?? 'unknown',
+      startedAt: stringValue(operation.startedAt) ?? '',
+      completedAt: stringValue(operation.completedAt) ?? '',
+      aiRunId: stringValue(operation.aiRunId) ?? '',
+      target: stringValue(operation.target) ?? '',
+      error: stringValue(operation.error) ?? '',
+      notes: displayValue(operation.notes)
+    }];
+  });
 }
 
 function buildAiRunDetail(aiRun: AiRunTrace): TraceDetail {
@@ -346,6 +385,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
   const validation = step === 'validation' ? payload : asRecord(payload.validationReport);
+  const rankingRevision = asRecord(payload.rankingRevision);
 
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
@@ -366,6 +406,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
   if (validation) sections.push(validationSection(validation));
+  if (rankingRevision) sections.push(...rankingRevisionSections(rankingRevision));
   if (draft) {
     sections.push({
       id: 'draft',
@@ -382,6 +423,76 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
     sections.push({ id: `${step}-raw`, title: stepLabel(step), fields: objectToFields(payload) });
   }
   return sections;
+}
+
+function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanticSection[] {
+  const pairwise = asRecord(payload.pairwiseRanking);
+  const decision = asRecord(pairwise?.decision);
+  const instruction = asRecord(payload.revisionInstruction);
+  const revised = asRecord(payload.revisedCandidate);
+  const regression = asRecord(payload.revisionRegression);
+  const finalDecision = asRecord(payload.finalDecision);
+  return [
+    {
+      id: 'pairwise-ranking',
+      title: 'Pairwise ranking',
+      fields: compactFields([
+        ['Winner', decision?.winnerCandidateId],
+        ['Reason', decision?.reason],
+        ['Source', decision?.source],
+        ['Fallback', decision?.fallbackUsed],
+        ['Warnings', decision?.warnings],
+        ['Attempts', asArray(pairwise?.attempts)?.map(attemptValue)],
+        ['Comparisons', asArray(pairwise?.comparisons)?.map(pairwiseComparisonValue)]
+      ])
+    },
+    {
+      id: 'directed-revision',
+      title: 'Directed revision',
+      fields: compactFields([
+        ['Status', instruction?.status],
+        ['Candidate', instruction?.candidateId],
+        ['Reason', instruction?.reason],
+        ['Repair goals', instruction?.repairGoals],
+        ['Revision status', asRecord(payload.revision)?.status],
+        ['Revision reason', asRecord(payload.revision)?.reason],
+        ['Revision attempts', asArray(asRecord(payload.revision)?.attempts)?.map(attemptValue)]
+      ]),
+      body: revised ? stringValue(revised.body) ?? undefined : undefined
+    },
+    {
+      id: 'revision-regression',
+      title: 'Revision regression',
+      fields: compactFields([
+        ['Accepted', regression?.accepted],
+        ['Reasons', regression?.reasons],
+        ['Original counts', regression?.originalCounts],
+        ['Revised counts', regression?.revisedCounts]
+      ])
+    },
+    {
+      id: 'ranking-final-decision',
+      title: 'Final draft decision',
+      fields: compactFields([
+        ['Final candidate', finalDecision?.finalCandidateId],
+        ['Base candidate', finalDecision?.baseCandidateId],
+        ['Source', finalDecision?.source],
+        ['Reason', finalDecision?.reason]
+      ])
+    }
+  ];
+}
+
+function pairwiseComparisonValue(value: unknown): string {
+  const comparison = asRecord(value);
+  if (!comparison) return displayValue(value);
+  return `${comparison.leftCandidateId} vs ${comparison.rightCandidateId} -> ${comparison.winnerCandidateId}: ${comparison.reason}`;
+}
+
+function attemptValue(value: unknown): string {
+  const attempt = asRecord(value);
+  if (!attempt) return displayValue(value);
+  return `${attempt.label ?? 'attempt'} · ${attempt.status ?? 'unknown'} · ${attempt.model ?? ''}${attempt.backup ? ' · backup' : ''}${attempt.validation ? ` · ${attempt.validation}` : ''}`;
 }
 
 function validationSection(payload: Record<string, unknown>): TraceSemanticSection {

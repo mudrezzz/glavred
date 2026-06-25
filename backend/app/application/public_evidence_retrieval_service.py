@@ -8,6 +8,7 @@ from backend.app.application.public_evidence_ports import (
     PublicUrlReader,
 )
 from backend.app.application.public_evidence_query_builder import build_public_evidence_search_task
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_public_evidence import (
     PublicEvidenceAllowedUse,
     PublicEvidenceAttempt,
@@ -33,6 +34,7 @@ class PublicEvidenceRetrievalService:
         *,
         source_intent_artifact: dict[str, Any],
         context_artifact: dict[str, Any] | None = None,
+        progress: DraftRunStepOperationSink | None = None,
     ) -> PublicEvidenceBatch:
         attempts: list[PublicEvidenceAttempt] = []
         items: list[PublicEvidenceItem] = []
@@ -45,27 +47,47 @@ class PublicEvidenceRetrievalService:
             task_id = _optional_str(task.get("id"))
             item_id = _optional_str(task.get("sourceIntentItemId"))
             if kind == "readUrl":
+                operation_id = _attempt_id("url", task_id, item_id)
+                progress.start_operation(operation_id, kind="readUrl", label=f"Read URL: {target}", target=target) if progress else None
                 attempt, item, warning = self._read_url(target, task_id=task_id, source_intent_item_id=item_id)
                 attempts.append(attempt)
                 if item:
                     items.append(item)
                 if warning:
                     warnings.append(warning)
+                    progress.fail_operation(operation_id, warning.message) if progress else None
+                else:
+                    progress.complete_operation(operation_id) if progress else None
             elif kind in {"findPublicSources", "verifyClaim"}:
                 search_task = build_public_evidence_search_task(
                     task,
                     source_intent_artifact=source_intent_artifact,
                     context_artifact=context_artifact,
                 )
+                operation_id = _attempt_id("search", task_id, item_id)
+                progress.start_operation(
+                    operation_id,
+                    kind=kind,
+                    label=_search_label(kind, search_task.query),
+                    target=search_task.query,
+                ) if progress else None
                 search_result = self._search_adapter.search(search_task)
                 attempts.extend(search_result.attempts)
                 items.extend(search_result.items)
                 warnings.extend(search_result.warnings)
                 ai_run_ids.extend(run_id for run_id in search_result.ai_run_ids if run_id not in ai_run_ids)
                 metadata.update(search_result.metadata)
+                ai_run_id = search_result.ai_run_ids[-1] if search_result.ai_run_ids else None
+                if _has_failed_search(search_result.attempts):
+                    error = _first_attempt_error(search_result.attempts) or "Public search did not produce usable evidence."
+                    progress.fail_operation(operation_id, error, ai_run_id=ai_run_id) if progress else None
+                else:
+                    progress.complete_operation(operation_id, ai_run_id=ai_run_id) if progress else None
             elif kind:
+                operation_id = _attempt_id("skip", task_id, item_id)
+                progress.start_operation(operation_id, kind=kind, label=f"Skip retrieval: {kind}", target=target) if progress else None
                 attempts.append(PublicEvidenceAttempt(
-                    id=_attempt_id("skip", task_id, item_id),
+                    id=operation_id,
                     task_id=task_id,
                     source_intent_item_id=item_id,
                     kind=kind,
@@ -73,6 +95,7 @@ class PublicEvidenceRetrievalService:
                     status=PublicEvidenceAttemptStatus.SKIPPED,
                     notes=["Research task does not require public retrieval in v1."],
                 ))
+                progress.complete_operation(operation_id, notes=["Task does not require public retrieval in v1."]) if progress else None
         if not attempts:
             warnings.append(PublicEvidenceWarning(code="no-public-retrieval-tasks", message="No URL or public search tasks were available."))
         metadata.update({"itemCount": len(items), "attemptCount": len(attempts)})
@@ -154,3 +177,19 @@ def _truncate(value: str, limit: int) -> str:
 
 def _safe_error(error: Exception) -> str:
     return f"{error.__class__.__name__}: {str(error)[:180]}"
+
+
+def _search_label(kind: str, query: str) -> str:
+    prefix = "Search public sources" if kind == "findPublicSources" else "Verify claim"
+    return f"{prefix}: {query[:90]}"
+
+
+def _has_failed_search(attempts: list[PublicEvidenceAttempt]) -> bool:
+    return bool(attempts) and all(attempt.status == PublicEvidenceAttemptStatus.FAILED for attempt in attempts)
+
+
+def _first_attempt_error(attempts: list[PublicEvidenceAttempt]) -> str | None:
+    for attempt in attempts:
+        if attempt.error:
+            return attempt.error
+    return None

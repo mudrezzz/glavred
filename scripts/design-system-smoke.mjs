@@ -548,6 +548,20 @@ async function installAiRunTraceMocks(page) {
       step('materialPlan', { materialPlan: { availableEvidence: ['signal'], missingEvidence: ['benchmark'] }, aiRunId: 'ai-material' }),
       step('strategy', { draftStrategy: { thesisAngle: 'workflow before model', openingMove: 'pilot gap' }, aiRunId: 'ai-strategy' }),
       step('draft', {
+        progress: {
+          status: 'succeeded',
+          currentOperationId: null,
+          operations: [{
+            id: 'draft-candidate-research',
+            kind: 'draftCandidate',
+            label: 'Generate candidate: research',
+            status: 'succeeded',
+            startedAt: '2026-06-19T00:00:00+00:00',
+            completedAt: '2026-06-19T00:00:01+00:00',
+            aiRunId: 'ai-candidate',
+            target: 'research'
+          }]
+        },
         candidates: [{ id: 'candidate-1', title: 'Candidate', body: 'Body', aiRunId: 'ai-candidate' }],
         selection: { selectedCandidateId: 'candidate-1', rationale: 'Best score' }
       }),
@@ -652,6 +666,13 @@ async function assertAiRunTraceDesign(page) {
       }
       if (!button.querySelector('.ai-run-call-meta')) {
         result.push('AI run child call does not render compact metadata.');
+      }
+    });
+    document.querySelectorAll('.ai-run-operation').forEach((operation) => {
+      const rect = operation.getBoundingClientRect();
+      const parentRect = operation.closest('.ai-run-timeline-step')?.getBoundingClientRect();
+      if (parentRect && rect.right > parentRect.right + 1) {
+        result.push('AI run operation overflows its timeline step.');
       }
     });
     return result;

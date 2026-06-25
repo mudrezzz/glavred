@@ -4155,7 +4155,7 @@ Status:
 
 ### Slice 2.14: Pairwise Ranking and Directed Revision
 
-- Status: Ready
+- Status: Done
 - Goal: Choose the best candidate and perform one targeted repair without losing the
   post contract.
 - Scope:
@@ -4163,17 +4163,160 @@ Status:
   - Build one directed revision instruction from concrete lint/validator findings.
   - Preserve locked claims and forbidden moves during revision.
   - Keep the best previous candidate if revision regression is worse.
+- Result:
+  - Added provider-free ranking/revision DTOs and role-owned backend services for
+    pairwise ranking, directed revision, revision instruction building, and regression
+    guarding.
+  - `validation.rankingRevision` now stores pairwise comparison, repair instruction,
+    revised candidate, regression guard result, and final decision.
+  - `DraftRun.finalDraft` is resolved after validation/ranking/revision instead of
+    directly from the old draft scorecard.
+  - `/ai-runs?runId=...` shows ranking/revision semantic sections.
+  - Built-in publication size defaults were expanded for Telegram post, LinkedIn post,
+    and LinkedIn article, while user-edited profiles are preserved.
 
-### Slice 2.15: Regression Report and Editor Decision Learning
+### Slice 2.14.1: DraftRun Long-Running Step Progress Budget
+
+- Status: Done
+- Goal: Prevent long provider-heavy steps from looking stuck while preserving the
+  queued DraftRun as the source of truth.
+- Trigger:
+  - Control DraftRun `fe837b55-15d9-4e8a-b5b8-d10b30889947` succeeded and validated
+    Slice 2.14 ranking/revision, but took about 13 minutes.
+  - Control DraftRun `fe837b55-15d9-4e8a-b5b8-d10b30889947` spent long periods inside
+    `draft` / `validation` without intermediate progress.
+  - Control DraftRun `fe837b55-15d9-4e8a-b5b8-d10b30889947` reached
+    `validation.rankingRevision` successfully, but UI/trace would show little
+    information while multiple child provider calls are in flight.
+  - Control DraftRun `fe837b55-15d9-4e8a-b5b8-d10b30889947` also showed public search
+    warnings; prior control `b8963623-f92d-4d35-b57d-678ecb458af1` with broader public
+    evidence fan-out became stale during `publicEvidence`.
+- Scope:
+  - Add per-attempt progress updates for provider-heavy steps where possible:
+    `publicEvidence`, `draft`, `validation`, `pairwiseRanking`, and
+    `directedRevision`.
+  - Add explicit runtime budgets for web search task count and LLM validation calls in
+    local smoke/evaluation mode.
+  - Ensure Celery timeout/failure is reflected in DraftRun state, not only worker logs.
+  - Keep compatibility fallback discipline unchanged: a live DraftRun must not be
+    replaced by `/api/drafts/generate`.
+- Result:
+  - Added artifact-level `progress` payloads for long-running DraftRun steps without
+    adding SQL tables or new `DraftRunStepKey` values.
+  - `publicEvidence` now records URL/search/skip/synthesis operations; `draft` records
+    candidate-generation operations; `validation` records deterministic lint, per
+    candidate LLM validation, pairwise ranking, directed revision, and regression
+    guard operations.
+  - Operation updates reuse existing step artifact writes, so `draft_runs.updated_at`
+    moves during live work and stale detection does not fire while real progress is
+    being persisted.
+  - The main workbench shows the current operation label in the generating state, and
+    `/ai-runs?runId=...` renders nested operations under logical steps.
+  - Added `backend/app/application/draft_run_step_progress.py` and
+    `src/infrastructure/draftRunProgress.ts` as role-owned progress helpers.
+
+### Slice 2.15: Iterative Revision Loop and Improvement Gate
+
+- Status: Ready
+- Goal: Replace one-shot directed revision with a bounded improvement loop where each
+  revised draft must prove measurable improvement over the previous best draft.
+- User value:
+  - The author receives a draft that has been repeatedly repaired against concrete
+    findings instead of a single "not worse" revision.
+  - The trace explains what was improved, what stayed unresolved, and why the runner
+    stopped.
+- Trigger:
+  - Control DraftRun `26b3f82e-5ed2-452c-9d2b-113310c83f9c` proved that Slice 2.14
+    runs pairwise ranking and one directed revision, but the revision was accepted
+    because it did not worsen deterministic validation, while several original repair
+    goals remained unresolved.
+- Scope:
+  - Add backend setting `DRAFT_REVISION_MAX_ITERATIONS` with a documented default.
+  - Build a revision loop around the current selected candidate:
+    - validate current best draft;
+    - derive concrete repair goals from deterministic and LLM findings;
+    - call OpenRouter for a revised candidate;
+    - re-run deterministic validation on the revised candidate;
+    - compare previous best vs revised candidate through pairwise ranking;
+    - accept the revised candidate only when it improves measurable repair goals.
+  - Track each cycle in `validation.rankingRevision.revisionLoop`:
+    - cycle number;
+    - base candidate id;
+    - repair goals;
+    - revised candidate id;
+    - validation before/after;
+    - pairwise old-vs-new comparison;
+    - accepted/rejected decision;
+    - resolved and unresolved repair goals;
+    - added constraints for the next cycle.
+  - If a revised candidate is worse or fails to close targeted goals:
+    - keep the previous best draft;
+    - add explicit anti-regression constraints so the next attempt does not repeat the
+      same failed move;
+    - continue until the configured iteration limit or stop condition.
+  - Stop the loop when:
+    - all critical findings are closed and warnings are below the v1 threshold;
+    - no candidate improves over the current best;
+    - `DRAFT_REVISION_MAX_ITERATIONS` is reached;
+    - provider calls fail after the existing JSON retry discipline.
+  - Set `finalDraft` from the best accepted candidate after the loop, not immediately
+    after the first directed revision.
+- Out of scope:
+  - Human editor decision learning.
+  - Multi-model tournament beyond existing primary/repair/backup retry policy.
+  - New SQLite tables or new DraftRun steps.
+  - Full UI editor for manually choosing between revision cycles.
+- Implementation notes:
+  - Keep the loop in role-owned application modules; do not grow near-limit
+    `draft_run_pipeline.py`, `draft_ranking_revision_service.py`, or validation
+    services directly.
+  - Store loop artifacts inside the existing `validation` step under
+    `rankingRevision.revisionLoop`; no schema migration.
+  - Revision acceptance must be stronger than "not worse": it must show resolved
+    repair goals or a pairwise win with no new critical findings.
+  - Remaining unresolved goals must be visible in trace and passed into later cycles as
+    constraints.
+- Architecture impact:
+  - `PostContract`, `RuleRegistry`, `SourceLedger`, `MaterialPlan`, validators, and
+    pairwise ranking become the control loop for prose improvement.
+  - `finalDraft` becomes the output of a bounded revision loop rather than a direct
+    candidate-selection result.
+- Tests:
+  - Backend tests for max-iteration setting, accepted improvement, rejected regression,
+    unresolved-goal carryover, provider failure, and stop reasons.
+  - Trace tests for cycle list, resolved/unresolved goals, old-vs-new comparison, and
+    final best candidate.
+  - Regression: `npm run test:backend`, `npm run test:architecture`,
+    `npm test -- --run`, `npm run smoke`, `npm run test:design`,
+    `npm run test:visual`, `docker compose config --quiet`, `git diff --check`.
+- Docs:
+  - Update SAO/developer/user/demo docs: revision loop is the main quality-improvement
+    mechanism; human learning follows after the machine loop is traceable.
+- Demo impact:
+  - Demo trace should show at least one revision cycle with clear resolved and
+    unresolved goals.
+- Acceptance criteria:
+  - A revised draft is accepted only when it improves the previous best by explicit
+    repair-goal closure or pairwise win without regression.
+  - If a revision does not improve, the previous best remains final and the failed move
+    is recorded as a constraint.
+  - The number of improvement cycles is controlled by `DRAFT_REVISION_MAX_ITERATIONS`.
+  - `/ai-runs?runId=...` shows why the loop stopped and which draft became final.
+
+### Slice 2.16: Regression Report and Editor Decision Learning
 
 - Status: Backlog
-- Goal: Re-run checks after repair and capture the human editor's final decision.
+- Goal: Capture the human editor's final decision after the machine revision loop is
+  complete.
 - Scope:
-  - Store `RegressionReport` after directed revision.
+  - Store `RegressionReport` after the bounded revision loop.
   - Show compact editor-facing report: why selected, used claims, unresolved risks,
-    and validation status.
+    resolved repair goals, and validation status.
   - Save human edits, overrides, rejected machine moves, and rule-improvement signals
     for future learning.
+- Dependency:
+  - Requires Slice 2.15 so editor learning observes a real iterative improvement loop,
+    not only a single directed revision attempt.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -4318,6 +4461,7 @@ Status:
 - Slice 2.13.3: LLM-Assisted Validator Reports. Completed 2026-06-25.
 - Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair.
   Completed 2026-06-25.
+- Slice 2.14: Pairwise Ranking and Directed Revision. Completed 2026-06-25.
 
 ## Blocked Items
 
@@ -4338,4 +4482,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.14: Pairwise Ranking and Directed Revision`.
+Continue the backend track with `Slice 2.15: Iterative Revision Loop and Improvement Gate`.

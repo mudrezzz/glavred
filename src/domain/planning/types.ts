@@ -57,6 +57,7 @@ export interface ContentPlanSettings {
   signalSelectionPolicy: SignalSelectionPolicy;
   publicationSizeProfiles: PublicationSizeProfile[];
   defaultPublicationSizeProfileId: string;
+  publicationSizeDefaultsVersion: number;
 }
 
 export interface PlanWeightWarning {

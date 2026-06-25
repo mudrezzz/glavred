@@ -39,6 +39,8 @@ def test_publication_size_contract_falls_back_to_demo_default() -> None:
     assert contract.profile_id == "telegram-post"
     assert contract.platform == "Telegram"
     assert contract.source == "demoDefault"
+    assert contract.hard_max_chars == 10240
+    assert contract.target_chars == 7000
 
 
 def test_publication_size_rules_are_machine_readable() -> None:
