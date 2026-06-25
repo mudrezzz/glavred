@@ -431,8 +431,27 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
   const instruction = asRecord(payload.revisionInstruction);
   const revised = asRecord(payload.revisedCandidate);
   const regression = asRecord(payload.revisionRegression);
+  const loop = asRecord(payload.revisionLoop);
   const finalDecision = asRecord(payload.finalDecision);
+  const sections: TraceSemanticSection[] = [];
+  if (loop) {
+    sections.push({
+      id: 'revision-loop',
+      title: 'Revision loop',
+      fields: compactFields([
+        ['Status', loop.status],
+        ['Max iterations', loop.maxIterations],
+        ['Stop reason', loop.stopReason],
+        ['Final candidate', loop.finalCandidateId],
+        ['Final source', loop.finalSource],
+        ['Unresolved goals', loop.unresolvedGoals],
+        ['Constraints', loop.constraints],
+        ['Cycles', asArray(loop.cycles)?.map(revisionLoopCycleValue)]
+      ])
+    });
+  }
   return [
+    ...sections,
     {
       id: 'pairwise-ranking',
       title: 'Pairwise ranking',
@@ -481,6 +500,19 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
       ])
     }
   ];
+}
+
+function revisionLoopCycleValue(value: unknown): string {
+  const cycle = asRecord(value);
+  if (!cycle) return displayValue(value);
+  return [
+    `cycle ${cycle.cycleNumber}`,
+    `base ${cycle.baseCandidateId}`,
+    `accepted ${cycle.accepted}`,
+    `resolved ${displayValue(cycle.resolvedGoals).replace(/\n/g, '; ') || 'none'}`,
+    `unresolved ${displayValue(cycle.unresolvedGoals).replace(/\n/g, '; ') || 'none'}`,
+    `rejection ${displayValue(cycle.rejectionReasons).replace(/\n/g, '; ') || 'none'}`
+  ].join(' · ');
 }
 
 function pairwiseComparisonValue(value: unknown): string {

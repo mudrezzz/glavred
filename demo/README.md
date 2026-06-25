@@ -136,6 +136,12 @@ ready posts, publication attempts, external links, platform errors, and retry no
 The existing manual package/checklist/copy/Markdown surface is only a compatibility
 bridge until release-log slices replace it.
 
+The next demo evolution for drafting quality is an editorial-lab trace, not only more
+validator warnings. Future runs should expose role-specific model choices, an
+`ArticleDossier`, evidence interpretation, prosecutor/editor critique, alternative
+angles, and the final revision-loop decision. The demo should use this to explain why
+the selected draft became stronger, not merely why weaker attempts failed.
+
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product
@@ -289,14 +295,15 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     The same step can also contain `LLM validation` findings for source grounding,
     publisher/author fit, topic/fabula fit, coherence/compression, and audience
     value. Positive/pass model observations are displayed separately from actionable
-    findings. The same `validation` artifact also stores pairwise ranking, one
-    directed revision instruction, revised-candidate regression checks, and the final
-    decision. Long-running `publicEvidence`, `draft`, and `validation` steps also
+    findings. The same `validation` artifact also stores pairwise ranking and a
+    bounded revision loop: each cycle records repair goals, constraints, revised
+    candidate, regression checks, old-vs-new comparison, accepted/rejected decision,
+    and final stop reason. Long-running `publicEvidence`, `draft`, and `validation` steps also
     write nested operation progress, so the `Драфт` waiting state and
     `/ai-runs?runId=...` show the current URL/search/candidate/validator/ranking/
     revision operation instead of only a broad step name. The main demo still opens
     one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
-    original winner or accepted revision.
+    original winner or accepted revision-loop candidate.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

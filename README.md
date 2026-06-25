@@ -226,6 +226,22 @@ receives a short `usableEvidenceCandidates` projection from the enriched ledger.
 must either choose evidence or explain why projected claims were rejected; empty
 evidence without accountability triggers a repair retry and then the optional
 `OPENROUTER_BACKUP_MODEL` before emergency deterministic fallback is allowed.
+After validation, the worker pairwise-ranks candidates and runs a bounded
+`revisionLoop` inside `validation.rankingRevision`. The loop tries directed repairs,
+revalidates the revised candidate, compares it against the previous best, and accepts
+only measurable improvement without deterministic regression. The iteration count is
+controlled by `DRAFT_REVISION_MAX_ITERATIONS` (default `3`). The main editor still
+receives one final draft; `/ai-runs?runId=...` shows revision cycles, accepted or
+rejected attempts, unresolved goals, and the final stop reason.
+
+The next drafting-quality direction is an editorial lab around this spine, not a
+larger "bad draft" report. Future slices add role-specific model policy, a
+DraftRun-local `ArticleDossier`, task-specific `ContextPacks`, evidence
+interpretation, a prosecutor/editor critic role, and an alternative-angle route. The
+goal is to create better post ideas before and during writing: accumulated research,
+rejected moves, critique, and source implications should be curated into compact
+role-specific context instead of either being discarded or dumped into one huge
+prompt.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

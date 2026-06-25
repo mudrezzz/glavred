@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -79,6 +80,7 @@ def test_ranking_revision_accepts_non_regressing_revision(tmp_path) -> None:
     ranking_adapter = SequenceAdapter([
         {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
         {"title": "Revised", "body": "Revised body with CTA and source marker alanknox", "changeLog": ["Added attribution"]},
+        {"winnerCandidateId": "revised-candidate-1", "reason": "better", "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "revised-candidate-1", "reason": "resolved"}]},
     ])
     service = ranking_revision_service(tmp_path, ranking_adapter)
 
@@ -93,13 +95,15 @@ def test_ranking_revision_accepts_non_regressing_revision(tmp_path) -> None:
 
     assert result.final_draft is not None
     assert result.final_draft.title == "Revised"
-    assert result.artifact_payload["finalDecision"]["source"] == "revisedCandidate"
+    assert result.artifact_payload["finalDecision"]["source"] == "revisionLoop"
+    assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is True
 
 
 def test_ranking_revision_rejects_revision_that_breaks_hard_max(tmp_path) -> None:
     ranking_adapter = SequenceAdapter([
         {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
         {"title": "Too long", "body": "x" * 200, "changeLog": ["Expanded"]},
+        {"winnerCandidateId": "candidate-1", "reason": "old is safer", "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "candidate-1", "reason": "too long"}]},
     ])
     service = ranking_revision_service(tmp_path, ranking_adapter)
 
@@ -115,10 +119,39 @@ def test_ranking_revision_rejects_revision_that_breaks_hard_max(tmp_path) -> Non
     assert result.final_draft is not None
     assert result.final_draft.title == "Original"
     assert result.artifact_payload["finalDecision"]["source"] == "originalCandidate"
-    assert "revised-critical-count-increased" in result.artifact_payload["revisionRegression"]["reasons"]
+    assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is False
+    assert "revised-critical-count-increased" in result.artifact_payload["revisionLoop"]["cycles"][0]["rejectionReasons"]
 
 
-def ranking_revision_service(tmp_path, adapter: SequenceAdapter) -> DraftRankingRevisionService:
+def test_revision_loop_carries_rejection_constraints_to_next_cycle(tmp_path) -> None:
+    adapter = SequenceAdapter([
+        {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
+        {"title": "Too long", "body": "x" * 200, "changeLog": ["Expanded"]},
+        {"winnerCandidateId": "candidate-1", "reason": "old is safer", "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "candidate-1", "reason": "too long"}]},
+        {"title": "Revised", "body": "Revised body with CTA and source marker alanknox", "changeLog": ["Fixed"]},
+        {"winnerCandidateId": "revised-candidate-1", "reason": "better", "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "revised-candidate-1", "reason": "fixed"}]},
+    ])
+    service = ranking_revision_service(tmp_path, adapter, max_iterations=2)
+
+    result = service.run(
+        request=request(),
+        draft_artifact=draft_artifact(),
+        validation_report=validation_report(),
+        context_artifact=context_artifact(),
+        rule_pack={},
+        material_plan={},
+    )
+
+    assert result.final_draft is not None
+    assert result.final_draft.title == "Revised"
+    cycles = result.artifact_payload["revisionLoop"]["cycles"]
+    assert [cycle["accepted"] for cycle in cycles] == [False, True]
+    second_revision_call = _directed_revision_calls(adapter)[1]
+    instruction = json.loads(second_revision_call["messages"][1]["content"])["revisionInstruction"]
+    assert any("Do not repeat failed move" in item for item in instruction["constraints"])
+
+
+def ranking_revision_service(tmp_path, adapter: SequenceAdapter, max_iterations: int = 1) -> DraftRankingRevisionService:
     ai = ai_service(tmp_path)
     return DraftRankingRevisionService(
         ranking_service=DraftPairwiseRankingService(
@@ -133,6 +166,7 @@ def ranking_revision_service(tmp_path, adapter: SequenceAdapter) -> DraftRanking
             openrouter_validator=OpenRouterConfigValidator(),
             openrouter_adapter=adapter,
         ),
+        max_iterations=max_iterations,
     )
 
 
@@ -210,3 +244,11 @@ def settings(*, configured: bool) -> BackendSettings:
 
 def ai_service(tmp_path) -> AiRunService:
     return AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3"))
+
+
+def _directed_revision_calls(adapter: SequenceAdapter) -> list[dict[str, Any]]:
+    return [
+        call
+        for call in adapter.calls
+        if json.loads(call["messages"][1]["content"]).get("task") == "Revise the selected draft candidate once."
+    ]

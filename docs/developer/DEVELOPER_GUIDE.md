@@ -30,6 +30,8 @@ Required variables for the backend/AI track:
 - `OPENROUTER_BACKUP_MODEL`: optional backup model used by JSON repair retries,
   including material-planning evidence accountability and rhetorical-plan generation.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
+- `DRAFT_REVISION_MAX_ITERATIONS`: maximum directed-revision improvement cycles after
+  initial candidate selection. Default `3`; invalid or zero values normalize to `1`.
 - `OPENROUTER_WEB_TOOLS_ENABLED`: opt-in flag for OpenRouter server-tool web search.
   Default is `false`; set `true` only when you want DraftRun public search tasks to
   call the provider.
@@ -961,6 +963,32 @@ This order is a workflow rule. Do not implement the validator/revision loop befo
 the source ledger and post contract exist: validators need claim ids, allowed-use
 policy, forbidden inferences, and locked editorial invariants to judge generated text.
 
+After Slice 2.15 the quality direction shifts from defensive repair to an editorial
+lab that creates stronger post ideas. Keep the existing spine, but add these planned
+boundaries before expanding the loop further:
+
+- `ModelRoleConfig`: role-specific model choice for research, strategy, writer,
+  critic/prosecutor, review, another-angle, and technical backup. Backup remains a
+  fallback, not a creative role.
+- `ArticleDossier`: DraftRun-local article memory with evidence cards, claim cards,
+  tensions, angle options, critique, decisions, rejected moves, voice notes, and open
+  questions.
+- `ContextPackBuilder`: task-specific prompt context for each role. Model calls should
+  receive a compact pack for the current job, not raw DraftRun JSON and not only the
+  latest artifact.
+- `EvidenceInterpretation`: public evidence must become implications, limits,
+  tensions, and forbidden overclaims before it is used by prose prompts.
+- `EditorialCritic`: the prosecutor/editor role challenges idea strength, author
+  stance, reader value, forced references, and generic AI prose. This is not the same
+  as deterministic validation.
+- `AlternativeAngle`: intentional creative divergence through another model/role,
+  distinct from retry and fallback.
+
+This decision is recorded in ADR
+`docs/adr/2026-06-26-drafting-needs-editorial-lab-context-memory-and-model-roles.md`.
+Slice 2.16 editor-learning work is deferred until these 2.15.x drafting-intelligence
+slices make the machine process worth learning from.
+
 Conceptual interfaces for the next implementation slices:
 
 - `DraftRun`: durable orchestration record for one post-drafting attempt.
@@ -1240,10 +1268,12 @@ The next artifacts must make candidate validation meaningful:
   enriched ledger data from `publicEvidence.enrichedSourceLedger` and selected or
   rejected evidence from nested `materialPlan` payloads.
 - `validation.rankingRevision` is the first actionable validation consumer. It
-  pairwise-ranks candidates, builds one repair instruction from actionable findings,
-  asks OpenRouter for a single directed revision, and accepts that revision only if
-  deterministic regression checks do not get worse. If provider calls fail or the
-  revision regresses, the final draft remains the best original candidate and the
+  pairwise-ranks candidates, then runs a bounded `revisionLoop`. Each cycle builds
+  repair goals from actionable findings, asks OpenRouter for a directed revision,
+  re-runs deterministic validation, compares previous best vs revised candidate, and
+  accepts the revision only when it resolves goals or clearly wins pairwise without
+  regression. `DRAFT_REVISION_MAX_ITERATIONS` limits this loop. If provider calls fail
+  or a revision does not improve the draft, the previous best remains final and the
   reason is visible in `/ai-runs?runId=...`.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
@@ -1280,9 +1310,10 @@ Drafting steps should be narrow:
 13. Generate several candidates.
 14. Run deterministic lint checks.
 15. Validate candidates with report-only LLM validators.
-16. Rank candidates pairwise and select the strongest attempt.
-17. Apply one directed revision when findings are actionable.
-18. Re-run regression checks.
+16. Rank candidates pairwise and select the strongest initial attempt.
+17. Run a bounded directed-revision loop until quality threshold, no improvement,
+    provider failure, or `DRAFT_REVISION_MAX_ITERATIONS`.
+18. Preserve rejected revision attempts as constraints for later loop cycles.
 19. Surface the selected draft, unresolved warnings, claim provenance, and human
     decision data.
 
@@ -1325,7 +1356,8 @@ The first backend implementation order is:
 23. LLM-assisted validator reports. Done.
 24. Pairwise ranking and directed revision. Done.
 25. DraftRun long-running step progress budget. Done.
-26. Regression report and editor decision learning. Next.
+26. Iterative revision loop and improvement gate. Done.
+27. Regression report and editor decision learning. Next.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

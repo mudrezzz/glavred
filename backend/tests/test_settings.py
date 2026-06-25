@@ -1,3 +1,4 @@
+from backend.app.application.draft_revision_loop_config import revision_iteration_limit
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -19,6 +20,7 @@ def test_settings_defaults_without_env_file() -> None:
     assert settings.openrouter_web_tools_enabled is False
     assert settings.openrouter_web_search_max_results == 5
     assert settings.openrouter_backup_model_or_none is None
+    assert settings.draft_revision_max_iterations == 3
 
 
 def test_openrouter_config_is_unconfigured_without_token_or_model() -> None:
@@ -58,3 +60,14 @@ def test_openrouter_backup_model_is_optional() -> None:
     )
 
     assert settings.openrouter_backup_model_or_none == "openrouter/backup-model"
+
+
+def test_revision_iteration_limit_normalizes_zero() -> None:
+    settings = BackendSettings(
+        _env_file=None,
+        OPENROUTER_API_KEY="",
+        OPENROUTER_DEFAULT_MODEL="",
+        DRAFT_REVISION_MAX_ITERATIONS=0,
+    )
+
+    assert revision_iteration_limit(settings) == 1

@@ -414,12 +414,17 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   feedback for source grounding, publisher/author fit, topic/fabula fit,
   coherence/compression, and audience value. Actionable LLM issues are shown
   separately from positive observations, so pass notes do not inflate warning counts.
-- After validation, Glavred now pairwise-ranks candidates, builds one targeted repair
-  instruction, and may ask the model for a single directed revision. The revision is
-  accepted only if it does not make deterministic checks worse; otherwise the best
-  original candidate remains the draft. The main `Драфт` screen still shows one
-  editable result, while `/ai-runs?runId=...` shows the ranking matrix, revision
-  instruction, accepted/rejected revised candidate, and final decision.
+- After validation, Glavred pairwise-ranks candidates and runs a bounded revision
+  loop. Each cycle tries to repair concrete findings, validates the revised candidate,
+  compares it with the previous best, and accepts it only if it improves measurable
+  goals without regression. The main `Драфт` screen still shows one editable result,
+  while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
+  resolved/unresolved goals, final source, and stop reason.
+- The next planned quality layer is not another warning report. Glavred will build an
+  internal article dossier during the run: what the sources really change, where the
+  tension is, which moves were rejected, what the critic/prosecutor challenged, and
+  which alternative angle was tried. This remains trace/debug data first; the main
+  editor still receives one draft to edit.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

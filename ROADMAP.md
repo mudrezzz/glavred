@@ -4217,7 +4217,8 @@ Status:
 
 ### Slice 2.15: Iterative Revision Loop and Improvement Gate
 
-- Status: Ready
+- Status: Done
+- Completed: 2026-06-25
 - Goal: Replace one-shot directed revision with a bounded improvement loop where each
   revised draft must prove measurable improvement over the previous best draft.
 - User value:
@@ -4302,6 +4303,233 @@ Status:
     is recorded as a constraint.
   - The number of improvement cycles is controlled by `DRAFT_REVISION_MAX_ITERATIONS`.
   - `/ai-runs?runId=...` shows why the loop stopped and which draft became final.
+- Result:
+  - Added `DRAFT_REVISION_MAX_ITERATIONS` with default `3` and runtime-safe minimum
+    `1`.
+  - Added provider-free revision loop DTOs and role-owned application modules for loop
+    config, repair-goal evaluation, and bounded cycle orchestration.
+  - `validation.rankingRevision.revisionLoop` now records each revision cycle:
+    repair goals, constraints, revised candidate, deterministic validation before/after,
+    old-vs-new pairwise comparison, resolved/unresolved goals, acceptance decision, and
+    child `AiRun` ids.
+  - `DraftRun.finalDraft` is now selected from the final best candidate after the
+    bounded loop. Rejected revisions remain trace artifacts and feed anti-regression
+    constraints into the next cycle.
+  - `/ai-runs?runId=...` shows revision loop cycles, final source, and stop reason.
+
+### Strategic Correction: Deep Drafting Intelligence
+
+- Status: Accepted
+- Goal: Move the drafting track from defensive validation/reporting to an editorial
+  lab that can create stronger post ideas.
+- Trigger:
+  - Slice 2.15 proved that bounded revision works mechanically, but the result can
+    still be dry, generic, or formally improved without becoming editorially strong.
+  - The next quality problem is not "produce a better failure report"; it is "create
+    better intellectual conditions before and during writing."
+- Architecture rule:
+  - Preserve the existing quality spine:
+    `SourceLedger -> FeasibilityGate -> PostContract -> RuleRegistry -> MaterialPlan ->
+    RhetoricalPlans -> DraftCandidates -> Validators -> Ranking -> RevisionLoop`.
+  - Add a new editorial-lab layer around it:
+    `ArticleDossier + ContextPacks + Editorial Roles + Model Portfolio`.
+  - Future model calls must consume task-specific context packs, not raw DraftRun
+    blobs and not only the latest artifact.
+  - Evidence must become interpreted editorial implications before prose-generation
+    prompts can use it as support.
+  - Critique must be an explicit role in the pipeline, not only validation metadata.
+- ADR:
+  - `docs/adr/2026-06-26-drafting-needs-editorial-lab-context-memory-and-model-roles.md`.
+- Next slices:
+  - 2.15.1 role-specific model configuration.
+  - 2.15.2 ArticleDossier and context packs.
+  - 2.15.3 evidence interpretation.
+  - 2.15.4 prosecutor/editor critic role.
+  - 2.15.5 alternative-angle tournament.
+  - 2.15.6 deep revision loop v2.
+
+### Slice 2.15.1: Multi-Model Drafting Roles
+
+- Status: Ready
+- Goal: Replace `DEFAULT/BACKUP` thinking with role-specific model selection.
+- User value:
+  - The runner can deliberately ask different model families for research, strategy,
+    writing, critique, review, and alternative angles instead of repeating one model's
+    habits.
+- Scope:
+  - Add env/settings for role models:
+    `DRAFT_RESEARCH_MODEL`, `DRAFT_STRATEGY_MODEL`, `DRAFT_WRITER_MODEL`,
+    `DRAFT_CRITIC_MODEL`, `DRAFT_REVIEW_MODEL`, `DRAFT_ANOTHER_ANGLE_MODEL`,
+    while keeping `OPENROUTER_BACKUP_MODEL` as technical fallback.
+  - Add provider-free role enum/value objects and application-level resolver.
+  - Wire existing planning/writing/review calls through the resolver where practical,
+    without changing prompt semantics yet.
+  - Trace every role/model choice in DraftRun artifacts and child `AiRun` payloads.
+- Out of scope:
+  - New critique loop.
+  - ArticleDossier.
+  - UI model settings.
+  - Provider tournament logic.
+- Architecture impact:
+  - Model identity becomes role policy, not scattered per service.
+  - Backup remains fallback; another-angle/review/critic are creative/editorial roles.
+- Tests:
+  - Settings load role model env values and default sanely.
+  - Resolver chooses role model, then default, then backup only for retry/fallback.
+  - Child `AiRun` traces show role and chosen model without secrets.
+  - Existing provider calls remain compatible when role env values are empty.
+- Docs:
+  - Update `.env.example`, SAO, developer guide, and roadmap.
+- Acceptance criteria:
+  - A DraftRun trace can answer: which model played researcher, writer, critic, review,
+    and another-angle roles.
+
+### Slice 2.15.2: Article Dossier and Context Packs
+
+- Status: Backlog
+- Goal: Add DraftRun-local article memory and task-specific context selection.
+- User value:
+  - Later steps stop losing useful research/critique context and stop drowning models
+    in raw artifacts.
+- Scope:
+  - Add provider-free `ArticleDossier` with evidence cards, claim cards, tension cards,
+    angle cards, critique cards, decision cards, rejected moves, voice notes, and open
+    questions.
+  - Add `ContextPackBuilder` role-owned application modules for researcher,
+    strategist, writer, critic, reviewer, and another-angle prompts.
+  - Store dossier/context-pack snapshots in existing step artifacts; no SQLite schema
+    migration in v1.
+  - Trace what each role received and why.
+- Out of scope:
+  - Long-term vector store.
+  - Cross-DraftRun memory persistence.
+  - Changing final draft selection.
+- Architecture impact:
+  - Context engineering becomes explicit application logic.
+  - Raw DraftRun JSON must not be used as the normal prompt context for writing roles.
+- Tests:
+  - Dossier is built from SourceLedger, public evidence, material plan, validators,
+    ranking, and revision loop artifacts.
+  - Context packs include relevant cards and exclude unrelated bulk.
+  - Legacy runs without dossier remain readable.
+- Acceptance criteria:
+  - `/ai-runs?runId=...` can show the article memory and each role's context pack.
+
+### Slice 2.15.3: Evidence Interpretation, Not Citation Injection
+
+- Status: Backlog
+- Goal: Convert public evidence into editorial implications before writing.
+- User value:
+  - Sources stop appearing as forced reference name-drops and start shaping the post's
+    thought, conflict, and author position.
+- Scope:
+  - Add `EvidenceInterpretation` artifacts: source-backed implications, tensions,
+    angle opportunities, limits, forbidden overclaims, and usable examples.
+  - Use OpenRouter JSON call with deterministic fallback.
+  - Feed interpreted implications into ArticleDossier and writer/critic context packs.
+  - Preserve raw `PublicEvidenceItem` and merged ledger claims separately.
+- Out of scope:
+  - New web search provider.
+  - Final prose rewrite.
+  - Source citation UI.
+- Architecture impact:
+  - Public evidence cannot be injected directly into prose prompts as a flat list of
+    references; it must pass through interpretation first.
+- Tests:
+  - Accepted public evidence produces implications tied to claim/source ids.
+  - Weak/irrelevant evidence creates limits or rejected implications, not proof.
+  - Writer context pack receives implications, not raw citation dumps.
+- Acceptance criteria:
+  - Trace explains what each source changes in the editorial argument.
+
+### Slice 2.15.4: Prosecutor / Editor Critic Loop
+
+- Status: Backlog
+- Goal: Add a dedicated editorial critic role that challenges draft candidates before
+  revision.
+- User value:
+  - The system can identify boring, generic, over-sourced, under-argued, or
+    authorless drafts even when formal validators pass.
+- Scope:
+  - Add `EditorialCritiqueReport` with findings for blandness, weak tension, missing
+    author stance, forced references, generic AI prose, unsupported leap, and unclear
+    reader value.
+  - Use `DRAFT_CRITIC_MODEL` and role-specific context pack.
+  - Store critique in validation/ranking artifacts and ArticleDossier.
+  - Keep report-only for this slice; ranking/revision consumption is later.
+- Out of scope:
+  - Changing final draft selection.
+  - Human editor UI for critique acceptance.
+- Architecture impact:
+  - Critique is not the same as validation. Validators check contract; critic attacks
+    editorial quality and idea strength.
+- Tests:
+  - Critic report is stored and trace-visible.
+  - Positive observations are separated from actionable critique.
+  - Missing provider marks critic `not-run`, not fake findings.
+- Acceptance criteria:
+  - Trace can answer: why the critic thinks this post is weak or strong.
+
+### Slice 2.15.5: Alternative Angle Tournament
+
+- Status: Backlog
+- Goal: Generate and compare a genuinely different framing route using a dedicated
+  another-angle role/model.
+- User value:
+  - The system can escape a mediocre local optimum instead of endlessly polishing one
+    angle.
+- Scope:
+  - Use `DRAFT_ANOTHER_ANGLE_MODEL` to propose alternative rhetorical plans from
+    ArticleDossier and critique.
+  - Generate at least one candidate from the alternative angle.
+  - Compare original route vs alternative route by idea strength, source fit, author
+    stance, and reader value.
+  - Store tournament result in trace.
+- Out of scope:
+  - Full multi-agent autonomous planning.
+  - Manual UI for choosing angle.
+- Architecture impact:
+  - Alternative angle is not fallback and not retry. It is intentional creative
+    divergence.
+- Tests:
+  - Alternative angle receives a different prompt/context pack from ordinary writer.
+  - Trace distinguishes original route, alternative route, and chosen route.
+  - If another-angle provider fails, existing route remains usable.
+- Acceptance criteria:
+  - A DraftRun can show at least one non-identical route and why it was accepted or
+    rejected.
+
+### Slice 2.15.6: Deep Revision Loop v2
+
+- Status: Backlog
+- Goal: Make the revision loop optimize for editorial improvement, not only validator
+  cleanup.
+- User value:
+  - The final draft improves its idea, structure, source use, and author stance across
+    cycles.
+- Scope:
+  - Revision loop consumes ArticleDossier, EvidenceInterpretation, EditorialCritique,
+    rejected moves, and alternative-angle tournament results.
+  - Acceptance requires improvement across explicit editorial dimensions:
+    idea strength, tension, reader value, author stance, source integration, and
+    validator health.
+  - Rejected revisions become structured `rejectedMoves` in ArticleDossier.
+  - Stop reasons distinguish validator-clean, editorially-improved, no-fresh-angle,
+    provider-failed, and max-iterations.
+- Out of scope:
+  - Human learning capture; remains Slice 2.16.
+  - Infinite autonomous loops.
+- Architecture impact:
+  - Revision loop becomes editorial optimization over dossier state, not a local patch
+    over the latest draft.
+- Tests:
+  - A revision that lowers warnings but weakens idea strength is rejected.
+  - A revision that improves critique goals without validator regression can be
+    accepted.
+  - Rejected moves are carried into the next cycle context pack.
+- Acceptance criteria:
+  - Trace can explain not only that the draft improved, but what editorial dimension
+    improved and what moves were banned.
 
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
@@ -4315,8 +4543,8 @@ Status:
   - Save human edits, overrides, rejected machine moves, and rule-improvement signals
     for future learning.
 - Dependency:
-  - Requires Slice 2.15 so editor learning observes a real iterative improvement loop,
-    not only a single directed revision attempt.
+  - Requires the 2.15.x deep drafting intelligence slices so editor learning observes a
+    meaningful editorial-lab process, not only a formally bounded revision loop.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -4462,6 +4690,8 @@ Status:
 - Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair.
   Completed 2026-06-25.
 - Slice 2.14: Pairwise Ranking and Directed Revision. Completed 2026-06-25.
+- Slice 2.14.1: DraftRun Long-Running Step Progress Budget. Completed 2026-06-25.
+- Slice 2.15: Iterative Revision Loop and Improvement Gate. Completed 2026-06-25.
 
 ## Blocked Items
 
@@ -4482,4 +4712,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15: Iterative Revision Loop and Improvement Gate`.
+Continue the backend track with `Slice 2.15.1: Multi-Model Drafting Roles`.

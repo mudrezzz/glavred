@@ -21,7 +21,7 @@ describe('buildRunTraceViewModel', () => {
       status: 'succeeded',
       aiRunId: 'ai-candidate'
     }));
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('9');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('10');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -100,13 +100,16 @@ describe('buildRunTraceViewModel', () => {
     const titles = viewModel.semanticSections.map((section) => section.title);
 
     expect(titles).toContain('Pairwise ranking');
+    expect(titles).toContain('Revision loop');
     expect(titles).toContain('Directed revision');
     expect(titles).toContain('Revision regression');
     expect(titles).toContain('Final draft decision');
+    expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields).toContainEqual({ label: 'Stop reason', value: 'quality-threshold' });
+    expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Cycles')?.value).toContain('cycle 1');
     expect(viewModel.semanticSections.find((section) => section.id === 'pairwise-ranking')?.fields.find((field) => field.label === 'Comparisons')?.value).toContain('candidate-1 vs candidate-2 -> candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'directed-revision')?.fields.find((field) => field.label === 'Candidate')?.value).toBe('candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-regression')?.fields.find((field) => field.label === 'Accepted')?.value).toBe('true');
-    expect(viewModel.semanticSections.find((section) => section.id === 'ranking-final-decision')?.fields).toContainEqual({ label: 'Source', value: 'revisedCandidate' });
+    expect(viewModel.semanticSections.find((section) => section.id === 'ranking-final-decision')?.fields).toContainEqual({ label: 'Source', value: 'revisionLoop' });
   });
 
   it('shows rhetorical plan retry attempts in semantic trace', () => {
@@ -651,11 +654,48 @@ function makeDraftRunBundle(): RunTraceBundle {
                 original: { criticalCount: 0, warningCount: 1, missingAttributionCount: 1 },
                 revised: { criticalCount: 0, warningCount: 0, missingAttributionCount: 0 }
               },
+              revisionLoop: {
+                status: 'succeeded',
+                maxIterations: 3,
+                finalCandidateId: 'revised-candidate-1',
+                finalSource: 'revisionLoop',
+                stopReason: 'quality-threshold',
+                unresolvedGoals: [],
+                constraints: [],
+                cycles: [
+                  {
+                    cycleNumber: 1,
+                    baseCandidateId: 'candidate-1',
+                    repairGoals: ['Make the reader value explicit.'],
+                    constraints: [],
+                    revisedCandidate: {
+                      id: 'revised-candidate-1',
+                      baseCandidateId: 'candidate-1',
+                      title: 'Revised candidate',
+                      body: 'Revised body'
+                    },
+                    validationBefore: {},
+                    validationAfter: {},
+                    pairwiseComparison: {
+                      decision: {
+                        winnerCandidateId: 'revised-candidate-1',
+                        reason: 'Revision closes the targeted finding.'
+                      }
+                    },
+                    resolvedGoals: ['Make the reader value explicit.'],
+                    unresolvedGoals: [],
+                    accepted: true,
+                    rejectionReasons: [],
+                    aiRunIds: ['ai-revision-1', 'ai-ranking-2']
+                  }
+                ]
+              },
               finalDecision: {
                 finalCandidateId: 'revised-candidate-1',
                 baseCandidateId: 'candidate-1',
-                source: 'revisedCandidate',
-                reason: 'Accepted directed revision after regression guard.'
+                source: 'revisionLoop',
+                stopReason: 'quality-threshold',
+                reason: 'Accepted best candidate from revision loop. Stop reason: quality-threshold.'
               }
             }
           },
@@ -666,7 +706,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-ranking-1', 'ai-revision-1'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
@@ -679,7 +719,8 @@ function makeDraftRunBundle(): RunTraceBundle {
       makeAiRun('ai-candidate', 'draftCandidate'),
       makeAiRun('ai-validation-1', 'llmValidation'),
       makeAiRun('ai-ranking-1', 'pairwiseRanking'),
-      makeAiRun('ai-revision-1', 'directedRevision')
+      makeAiRun('ai-revision-1', 'directedRevision'),
+      makeAiRun('ai-ranking-2', 'pairwiseRanking')
     ],
     missingAiRunIds: []
   };

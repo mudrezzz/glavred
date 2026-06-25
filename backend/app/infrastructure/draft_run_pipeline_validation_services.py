@@ -3,6 +3,7 @@ from backend.app.application.draft_directed_revision_service import DraftDirecte
 from backend.app.application.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.application.draft_ranking_revision_service import DraftRankingRevisionService
+from backend.app.application.draft_revision_loop_config import revision_iteration_limit
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
@@ -36,5 +37,6 @@ def build_validation_step_service(
                 openrouter_validator=openrouter_validator,
                 openrouter_adapter=openrouter_adapter,
             ),
+            max_iterations=revision_iteration_limit(settings),
         ),
     )

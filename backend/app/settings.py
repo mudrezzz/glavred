@@ -27,6 +27,10 @@ class BackendSettings(BaseSettings):
         default=Path("var/glavred-draft-runs.sqlite3"),
         validation_alias="DRAFT_RUN_DB_PATH",
     )
+    draft_revision_max_iterations: int = Field(
+        default=3,
+        validation_alias="DRAFT_REVISION_MAX_ITERATIONS",
+    )
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
 
     openrouter_api_key: SecretStr | None = Field(

@@ -6,6 +6,7 @@ from backend.app.application.draft_directed_revision_service import DraftDirecte
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.application.draft_ranking_revision_result import DraftRankingRevisionResult
 from backend.app.application.draft_revision_instruction_builder import DraftRevisionInstructionBuilder
+from backend.app.application.draft_revision_loop_service import DraftRevisionLoopService
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 
@@ -18,11 +19,16 @@ class DraftRankingRevisionService:
         revision_service: DraftDirectedRevisionService,
         instruction_builder: DraftRevisionInstructionBuilder | None = None,
         regression_guard: DraftRevisionRegressionGuard | None = None,
+        max_iterations: int = 3,
     ) -> None:
         self._ranking = ranking_service
-        self._revision = revision_service
-        self._instruction_builder = instruction_builder or DraftRevisionInstructionBuilder()
-        self._regression = regression_guard or DraftRevisionRegressionGuard()
+        self._loop = DraftRevisionLoopService(
+            ranking_service=ranking_service,
+            revision_service=revision_service,
+            instruction_builder=instruction_builder or DraftRevisionInstructionBuilder(),
+            regression_guard=regression_guard or DraftRevisionRegressionGuard(),
+            max_iterations=max_iterations,
+        )
 
     def run(
         self,
@@ -48,50 +54,33 @@ class DraftRankingRevisionService:
             progress.complete_operation("pairwise-ranking", ai_run_id=_last(ranking.ai_run_ids))
         winner_id = ranking.decision.winner_candidate_id
         winner = _candidate_by_id(draft_artifact, winner_id)
-        instruction = self._instruction_builder.build(candidate_id=winner_id, validation_report=validation_report)
-        if progress:
-            progress.start_operation("directed-revision", kind="directedRevision", label="Revise ranked winner", target=str(winner_id or "none"))
-        revision = self._revision.revise(
-            candidate=winner,
-            instruction=instruction.to_payload(),
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-        )
-        revision_ai_ids = [str(item) for item in revision.get("aiRunIds", [])]
-        if progress:
-            progress.complete_operation("directed-revision", ai_run_id=_last(revision_ai_ids), notes=[f"status={revision.get('status')}"])
-        revised_candidate = revision.get("revisedCandidate") if isinstance(revision.get("revisedCandidate"), dict) else None
-        if progress:
-            progress.start_operation("revision-regression", kind="revisionRegression", label="Check revised candidate regression")
-        regression = self._regression.evaluate(
-            original_candidate_id=str(winner_id or ""),
-            revised_candidate=revised_candidate,
+        loop = self._loop.run(
+            winner=winner,
             validation_report=validation_report,
             context_artifact=context_artifact,
             rule_pack=rule_pack,
             material_plan=material_plan,
+            progress=progress,
         )
-        if progress:
-            progress.complete_operation("revision-regression", notes=[f"accepted={regression.accepted}"])
-        revision_accepted = regression.accepted and revised_candidate is not None
-        final_candidate = revised_candidate if revision_accepted else winner
-        final_source = "revisedCandidate" if revision_accepted else "originalCandidate"
+        final_candidate = loop.final_candidate
+        final_source = loop.report.final_source
         artifact = {
             "status": "succeeded" if final_candidate else "blocked",
             "pairwiseRanking": ranking.to_payload(),
-            "revisionInstruction": instruction.to_payload(),
-            "revisedCandidate": revision.get("revisedCandidate"),
-            "revision": revision,
-            "revisionRegression": regression.to_payload(),
+            "revisionInstruction": loop.first_instruction,
+            "revisedCandidate": _last_revised(loop.report.to_payload()),
+            "revision": loop.last_revision,
+            "revisionRegression": loop.last_regression,
+            "revisionLoop": loop.report.to_payload(),
             "finalDecision": {
                 "finalCandidateId": final_candidate.get("id") if final_candidate else None,
                 "baseCandidateId": winner_id,
                 "source": final_source if final_candidate else "none",
-                "reason": _final_reason(final_source, ranking.decision.reason, regression.reasons),
+                "stopReason": loop.report.stop_reason,
+                "reason": _final_reason(final_source, ranking.decision.reason, loop.report.stop_reason),
             },
         }
-        ai_run_ids = [*ranking.ai_run_ids, *revision_ai_ids]
+        ai_run_ids = [*ranking.ai_run_ids, *loop.ai_run_ids]
         return DraftRankingRevisionResult(
             artifact_payload=artifact,
             final_draft=_candidate_to_draft(request, final_candidate) if final_candidate else None,
@@ -118,10 +107,17 @@ def _candidate_to_draft(request: DraftGenerationRequest, candidate: dict[str, An
     )
 
 
-def _final_reason(source: str, ranking_reason: str, regression_reasons: list[str]) -> str:
-    if source == "revisedCandidate":
-        return "Accepted directed revision after regression guard."
-    return f"Kept original ranked candidate. Ranking: {ranking_reason}. Revision/regression: {'; '.join(regression_reasons)}"
+def _last_revised(loop_payload: dict[str, Any]) -> dict[str, Any] | None:
+    for cycle in reversed(loop_payload.get("cycles", [])):
+        if isinstance(cycle, dict) and isinstance(cycle.get("revisedCandidate"), dict):
+            return cycle["revisedCandidate"]
+    return None
+
+
+def _final_reason(source: str, ranking_reason: str, stop_reason: str) -> str:
+    if source == "revisionLoop":
+        return f"Accepted best candidate from revision loop. Stop reason: {stop_reason}."
+    return f"Kept original ranked candidate. Ranking: {ranking_reason}. Stop reason: {stop_reason}."
 
 
 def _last(values: list[str]) -> str | None:

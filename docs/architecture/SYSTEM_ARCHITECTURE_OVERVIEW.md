@@ -407,7 +407,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -481,6 +481,74 @@ The pipeline sets `finalDraft` after `validation + rankingRevision`. If the revi
 candidate regresses on deterministic critical/warning counts, hard size limits, raw
 artifact leakage, or attribution markers, the original ranked winner remains the
 final draft and the rejected revision stays in trace.
+
+Slice 2.15 turns the one-shot repair into a bounded improvement loop. The same
+`validation.rankingRevision` payload now contains `revisionLoop`, and no new DraftRun
+step or SQLite table is introduced. The loop limit is `DRAFT_REVISION_MAX_ITERATIONS`
+with default `3` and runtime-safe minimum `1`. Each cycle builds repair goals from
+deterministic and LLM findings, calls directed revision, re-runs deterministic
+validation on the revised candidate, compares previous-best vs revised candidate, and
+accepts the revision only when it closes explicit goals or clearly wins pairwise
+without deterministic regression. Rejected revisions remain in trace and their failure
+reasons become constraints for the next cycle. `finalDraft` is selected from the final
+best candidate after the loop, and `/ai-runs?runId=...` shows cycles, accepted/rejected
+attempts, unresolved goals, final source, and stop reason.
+
+Revision-loop ownership is intentionally split:
+
+- `backend/app/domain/draft_revision_loop.py`: provider-free trace DTOs for loop
+  cycles and final loop report.
+- `backend/app/application/draft_revision_loop_config.py`: settings normalization for
+  the bounded iteration limit.
+- `backend/app/application/draft_revision_goal_evaluator.py`: deterministic comparison
+  of repair goals against validation before/after.
+- `backend/app/application/draft_revision_loop_policy.py`: deterministic acceptance,
+  stop-reason, failed-cycle, and constraint helpers.
+- `backend/app/application/draft_revision_loop_service.py`: bounded orchestration
+  across instruction building, directed revision, deterministic regression, old-vs-new
+  pairwise comparison, and final best selection.
+
+Slice 2.15 exposed the next architectural correction: stronger drafts require an
+editorial lab, not only more validation and repair. Glavred must not treat a bad
+final draft as a reporting problem. The pipeline must create better conditions for a
+strong idea to emerge. ADR
+`2026-06-26-drafting-needs-editorial-lab-context-memory-and-model-roles` records this
+decision.
+
+The next drafting-quality layer is:
+
+`ArticleDossier + ContextPacks + Editorial Roles + Model Portfolio`
+
+This layer sits around the existing quality spine. It does not replace
+`SourceLedger`, `PostContract`, or `RuleRegistry`; it consumes them. Its purpose is to
+prevent two failure modes:
+
+- losing accumulated research/critique context by passing only the latest artifact;
+- flooding models with raw DraftRun JSON until they drift into generic prose.
+
+Planned ownership boundaries:
+
+- `ArticleDossier`: DraftRun-local memory of the article, including evidence cards,
+  interpreted implications, tensions, angle attempts, critique notes, rejected moves,
+  open questions, and decisions.
+- `ContextPackBuilder`: application-owned selectors that build task-specific context
+  for each role, such as researcher, strategist, writer, critic, reviewer, and
+  another-angle generator.
+- `ModelRoleConfig`: settings/application layer that maps role names to model ids.
+  `DEFAULT` and `BACKUP` remain technical fallback concepts, while writer, critic,
+  review, research, strategy, and another-angle roles can intentionally use different
+  providers or model families.
+- `EditorialCritic` / prosecutor role: a provider-backed critique service that attacks
+  blandness, forced sources, missing author stance, weak tension, generic AI prose,
+  and unearned claims.
+- `EvidenceInterpretation`: a synthesis step that turns public evidence into
+  editorial implications before writer prompts can cite or use it.
+- `AlternativeAngle`: a role that proposes genuinely different post routes instead of
+  retrying the same prompt with the same assumptions.
+
+Future slices must preserve this distinction: validators and revision loops judge and
+repair drafts, while the editorial lab creates and maintains the intellectual
+material from which better drafts are written.
 
 Slice 2.5 implements the first context builder without moving workspace persistence
 to the backend. React builds an immutable `draftContext` snapshot from the selected
