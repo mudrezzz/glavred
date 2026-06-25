@@ -10,9 +10,11 @@ from backend.app.application.draft_candidate_result import DraftCandidateGenerat
 from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
+from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_candidates import DraftCandidate, DraftCandidateDirection, candidate_from_payload
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -110,13 +112,15 @@ class DraftCandidateGenerationService:
         )
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
-        model = self._settings.openrouter_default_model if status.configured else None
+        selection = select_model_for_role(self._settings, DraftModelRole.WRITER) if status.configured else unconfigured_model_selection(DraftModelRole.WRITER)
+        model = selection.model
         request_payload = build_candidate_request_trace(
             provider=provider,
             model=model,
             messages=messages,
             context_summary=context_summary,
             direction=direction,
+            model_selection=selection.to_payload(),
         )
         if not status.configured:
             return self._fallback(request, direction, rule_pack, material_plan, request_payload, provider, model, "OpenRouter is not configured")
@@ -126,11 +130,12 @@ class DraftCandidateGenerationService:
                 messages=messages,
                 expected_keys=CANDIDATE_KEYS,
                 temperature=CANDIDATE_TEMPERATURE,
+                model=model,
             )
             candidate = candidate_from_payload(f"candidate-{direction.id}-{request.brief.id}", direction, result.payload)
             if not candidate.body.strip():
                 raise ValueError("OpenRouter draft candidate body is empty")
-            return self._complete_candidate(candidate, "openrouter", request_payload, result.raw_response, model, False, None)
+            return self._complete_candidate(candidate, "openrouter", request_payload, result.raw_response, model, False, None, model_selection=selection.to_payload())
         except Exception as exc:
             return self._fallback(request, direction, rule_pack, material_plan, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc))
 
@@ -151,7 +156,8 @@ class DraftCandidateGenerationService:
             rule_pack=rule_pack,
             material_plan=material_plan,
         )
-        return self._complete_candidate(candidate, "deterministicFallback", request_payload, None, model, True, error, provider=provider)
+        model_selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
+        return self._complete_candidate(candidate, "deterministicFallback", request_payload, None, model, True, error, provider=provider, model_selection=model_selection)
 
     def _complete_candidate(
         self,
@@ -164,8 +170,11 @@ class DraftCandidateGenerationService:
         error: str | None,
         *,
         provider: AiRunProvider = AiRunProvider.OPENROUTER,
+        model_selection: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], str]:
         payload = candidate.to_payload(source=source, ai_run_id=None, fallback_used=fallback_used)
+        if model_selection:
+            payload.update(model_selection)
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=provider,
@@ -179,7 +188,10 @@ class DraftCandidateGenerationService:
             fallback_used=fallback_used,
             error=error,
         )
-        return candidate.to_payload(source=source, ai_run_id=run.id, fallback_used=fallback_used), run.id
+        final_payload = candidate.to_payload(source=source, ai_run_id=run.id, fallback_used=fallback_used)
+        if model_selection:
+            final_payload.update(model_selection)
+        return final_payload, run.id
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)

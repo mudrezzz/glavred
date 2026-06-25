@@ -303,7 +303,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     `/ai-runs?runId=...` show the current URL/search/candidate/validator/ranking/
     revision operation instead of only a broad step name. The main demo still opens
     one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
-    original winner or accepted revision-loop candidate.
+    original winner or accepted revision-loop candidate. Child AI calls also show
+    `modelRole`, `selectedModel`, and `modelSelectionSource`, so the trace distinguishes
+    researcher, strategist, writer, review, future critic, future alternative-angle
+    policy, and technical backup retries.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

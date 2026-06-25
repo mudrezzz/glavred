@@ -3,6 +3,7 @@ from typing import Any
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.draft_rhetorical_plan_audit import (
     build_rhetorical_plan_request_trace,
     build_rhetorical_plan_result_trace,
@@ -14,6 +15,7 @@ from backend.app.application.draft_rhetorical_plan_prompts import (
 )
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_rhetorical_plan import rhetorical_plan_set_from_payload
 from backend.app.settings import BackendSettings
 
@@ -43,11 +45,12 @@ class DraftRhetoricalPlanRetryOrchestrator:
     ) -> DraftPlanningStepResult:
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
+        primary_selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY)
         for attempt in build_json_step_attempts(
-            primary_model=self._settings.openrouter_default_model,
+            primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, context_summary, rule_registry, post_contract, material_plan, draft_strategy, repair_context)
+            result = self._try_attempt(attempt, primary_selection, context_summary, rule_registry, post_contract, material_plan, draft_strategy, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
                 return DraftPlanningStepResult(
@@ -61,6 +64,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
     def _try_attempt(
         self,
         attempt: JsonStepAttempt,
+        primary_selection: Any,
         context_summary: dict[str, Any],
         rule_registry: dict[str, Any],
         post_contract: dict[str, Any],
@@ -68,7 +72,8 @@ class DraftRhetoricalPlanRetryOrchestrator:
         draft_strategy: dict[str, Any],
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup}
+        selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_rhetorical_plan_messages(
             context_summary=context_summary,
             rule_registry=rule_registry,
@@ -87,6 +92,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             material_plan=material_plan,
             draft_strategy=draft_strategy,
             attempt=attempt_payload,
+            model_selection=selection.to_payload(),
         )
         try:
             result = self._openrouter_adapter.complete_json(
@@ -107,7 +113,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
                 result_payload=build_rhetorical_plan_result_trace(result_payload=payload, provider_response=result.raw_response, attempt=attempt_payload),
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": payload, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "accepted")}
+            return {"accepted": True, "payload": payload, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
             return self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
 
@@ -120,12 +126,13 @@ class DraftRhetoricalPlanRetryOrchestrator:
             result_payload=build_rhetorical_plan_result_trace(
                 result_payload={"plans": []},
                 provider_response=None,
-                attempt={"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup},
+            attempt={key: request_payload[key] for key in ("attempt",) if key in request_payload}.get("attempt"),
             ),
             fallback_used=False,
             error=error,
         )
-        return {"accepted": False, "payload": {}, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "error", error)}
+        model_selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
+        return {"accepted": False, "payload": {}, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "error", model_selection, error)}
 
     def _fallback(
         self,
@@ -148,12 +155,12 @@ class DraftRhetoricalPlanRetryOrchestrator:
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=self._settings.openrouter_default_model,
-            request_payload={"draftRunStep": "rhetoricalPlans", "attempts": attempts},
+            request_payload={"draftRunStep": "rhetoricalPlans", "attempts": attempts, "modelRole": DraftModelRole.STRATEGY.value},
             result_payload=build_rhetorical_plan_result_trace(result_payload=payload, provider_response=None, fallback="deterministic"),
             fallback_used=True,
             error=error,
         )
-        fallback_attempt = {"label": "deterministic-fallback", "model": "deterministic", "status": "fallback", "aiRunId": run.id, "backup": False}
+        fallback_attempt = {"label": "deterministic-fallback", "model": "deterministic", "status": "fallback", "aiRunId": run.id, "backup": False, "modelRole": DraftModelRole.STRATEGY.value, "modelSelectionSource": "unconfigured", "selectedModel": None}
         return DraftPlanningStepResult(
             artifact_payload=self._artifact("deterministicFallback", payload, run.id, True, error=error, attempts=[*attempts, fallback_attempt]),
             ai_run_id=run.id,
@@ -166,8 +173,8 @@ class DraftRhetoricalPlanRetryOrchestrator:
             artifact["error"] = error
         return artifact
 
-    def _attempt_record(self, attempt: JsonStepAttempt, ai_run_id: str, status: str, validation: Any | None = None) -> dict[str, Any]:
-        record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup}
+    def _attempt_record(self, attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
+        record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
         if validation:
             record["validation"] = validation
         return record

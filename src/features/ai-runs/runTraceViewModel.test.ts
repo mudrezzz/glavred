@@ -13,6 +13,8 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'rhetoricalPlans')?.childCalls[0].id).toBe('ai-plans');
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
     expect(traceStep(viewModel, 'validation')?.childCalls[0].id).toBe('ai-validation-1');
+    expect(traceStep(viewModel, 'draft')?.childCalls[0].meta).toContainEqual({ label: 'Model role', value: 'writer' });
+    expect(traceStep(viewModel, 'validation')?.childCalls[0].meta).toContainEqual({ label: 'Selection source', value: 'role' });
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Выбор итогового драфта');
     expect(traceStep(viewModel, 'draft')?.operations[0]).toEqual(expect.objectContaining({
@@ -138,6 +140,7 @@ describe('buildRunTraceViewModel', () => {
 
     expect(viewModel.mode).toBe('aiRun');
     expect(viewModel.timeline[0].childCalls[0].id).toBe('ai-only');
+    expect(viewModel.summary).toContainEqual({ label: 'Model role', value: 'strategy' });
     expect(viewModel.details[0].messages).toHaveLength(2);
   });
 
@@ -767,6 +770,9 @@ function makeAiRun(id: string, step: string) {
     model: 'deepseek/deepseek-v3.2',
     requestPayload: step === 'publicEvidenceSearch' ? publicEvidenceRequest : {
       draftRunStep: step,
+      modelRole: step === 'draftCandidate' ? 'writer' : step === 'llmValidation' || step === 'pairwiseRanking' ? 'review' : 'strategy',
+      selectedModel: 'deepseek/deepseek-v3.2',
+      modelSelectionSource: 'role',
       providerRequest: {
         messages: [
           { role: 'system', content: 'Return JSON' },

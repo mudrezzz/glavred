@@ -11,8 +11,9 @@ def build_llm_validation_request_trace(
     candidate_id: str,
     attempt: dict[str, Any],
     deterministic_report: dict[str, Any],
+    model_selection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "draftRunStep": "llmValidation",
         "candidateId": candidate_id,
         "provider": provider.value,
@@ -22,6 +23,9 @@ def build_llm_validation_request_trace(
         "deterministicReport": deterministic_report,
         "requestSummary": "LLM-assisted report-only validation for one draft candidate.",
     }
+    if model_selection is not None:
+        payload.update(model_selection)
+    return payload
 
 
 def build_llm_validation_result_trace(

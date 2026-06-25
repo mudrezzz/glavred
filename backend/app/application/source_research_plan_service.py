@@ -11,8 +11,10 @@ from backend.app.application.source_research_audit import (
 )
 from backend.app.application.source_research_prompts import build_source_research_plan_messages
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_generation import DraftGenerationRequest
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_source_intent import research_plan_from_payload
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
@@ -51,7 +53,8 @@ class SourceResearchPlanService:
         messages = build_source_research_plan_messages(context_artifact=context_artifact, source_intent=source_intent_payload)
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
-        model = self._settings.openrouter_default_model if status.configured else None
+        selection = select_model_for_role(self._settings, DraftModelRole.RESEARCH) if status.configured else unconfigured_model_selection(DraftModelRole.RESEARCH)
+        model = selection.model
         request_payload = build_source_research_request_trace(
             provider=provider,
             model=model,
@@ -59,6 +62,7 @@ class SourceResearchPlanService:
             context_artifact=context_artifact,
             source_intent=source_intent_payload,
         )
+        request_payload.update(selection.to_payload())
         if not status.configured:
             return self._fallback(source_intent_payload, source_intent, request_payload, provider, model, "OpenRouter is not configured", source_origin)
         try:
@@ -67,12 +71,13 @@ class SourceResearchPlanService:
                 messages=messages,
                 expected_keys=RESEARCH_PLAN_KEYS,
                 temperature=SOURCE_RESEARCH_TEMPERATURE,
+                model=model,
             )
             plan_payload = research_plan_from_payload(result.payload).to_payload()
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
-                model=self._settings.openrouter_default_model,
+                model=model,
                 request_payload=request_payload,
                 result_payload=build_source_research_result_trace(
                     result_payload=plan_payload,
@@ -81,7 +86,7 @@ class SourceResearchPlanService:
                 fallback_used=False,
             )
             return DraftPlanningStepResult(
-                artifact_payload=self._artifact("openrouter", source_origin, source_intent_payload, plan_payload, run.id, fallback_used=False),
+                artifact_payload=self._artifact("openrouter", source_origin, source_intent_payload, plan_payload, run.id, selection.to_payload(), fallback_used=False),
                 ai_run_id=run.id,
             )
         except Exception as exc:
@@ -112,7 +117,7 @@ class SourceResearchPlanService:
             error=error,
         )
         return DraftPlanningStepResult(
-            artifact_payload=self._artifact("deterministicFallback", source_origin, source_intent_payload, plan_payload, run.id, fallback_used=True, error=error),
+            artifact_payload=self._artifact("deterministicFallback", source_origin, source_intent_payload, plan_payload, run.id, dict(request_payload), fallback_used=True, error=error),
             ai_run_id=run.id,
         )
 
@@ -123,11 +128,13 @@ class SourceResearchPlanService:
         source_intent: dict[str, Any],
         research_plan: dict[str, Any],
         ai_run_id: str,
+        model_selection: dict[str, Any],
         *,
         fallback_used: bool,
         error: str | None = None,
     ) -> dict[str, Any]:
         artifact = {"source": source, "sourcesOrigin": sources_origin, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "sourceIntent": source_intent, "researchPlan": research_plan}
+        artifact.update({key: model_selection[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in model_selection})
         if error:
             artifact["error"] = error
         return artifact

@@ -321,6 +321,14 @@ runtime contract is documented in `.env.example`; developer secrets live only in
 ignored `.env` files. Provider keys, provider SDKs, and provider-specific metadata must
 not leak into React components, domain objects, or API route logic.
 
+Slice 2.15.1 adds role-based model selection for DraftRun without changing prompt
+semantics. `backend/app/domain/draft_model_roles.py` defines provider-free role and
+selection DTOs. `backend/app/application/draft_model_role_resolver.py` maps
+`research`, `strategy`, `writer`, `review`, `critic`, and `anotherAngle` to configured
+environment models, falling back to `OPENROUTER_DEFAULT_MODEL` when a role is empty.
+Backup retries still use `OPENROUTER_BACKUP_MODEL`; public search still uses
+`OPENROUTER_WEB_SEARCH_MODEL`.
+
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
 OpenRouter.
@@ -474,6 +482,8 @@ across role-owned modules:
   `backend/app/application/draft_ranking_revision_result.py`, and
   `backend/app/application/draft_validation_ranking_bridge.py`: narrow orchestration
   between validation, ranking, revision, and the final draft decision.
+- `backend/app/application/draft_model_role_resolver.py`: role-based model selection
+  policy for research, strategy, writer, review, critic, and alternative-angle roles.
 - `backend/app/infrastructure/draft_run_pipeline_validation_services.py`: wiring for
   validation, ranking, and directed revision dependencies.
 
@@ -706,6 +716,8 @@ Validation ownership is split:
   candidate report, finding, and status DTOs.
 - `backend/app/domain/draft_llm_validation.py` defines provider-free LLM validation
   report, candidate report, and attempt DTOs.
+- `backend/app/domain/draft_model_roles.py` defines provider-free DraftRun model-role
+  and model-selection DTOs.
 - `backend/app/application/draft_validation_linter.py` owns deterministic local
   checks for size, contract signals, evidence, rules, and publishability.
 - `backend/app/application/draft_attribution_markers.py` owns deterministic
@@ -965,6 +977,8 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_candidates.py`
 - `backend/app/domain/draft_validation.py`
 - `backend/app/domain/draft_llm_validation.py`
+- `backend/app/domain/draft_model_roles.py`
+- `backend/app/application/draft_model_role_resolver.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

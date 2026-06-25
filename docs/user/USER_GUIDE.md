@@ -406,6 +406,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   into the DraftRun SourceLedger before the post is evaluated and written.
 - The trace also shows whether `MaterialPlan` selected enriched evidence, rejected it
   with reasons, retried with a primary/backup model, or used emergency fallback.
+- The trace also shows model roles for child AI calls. Source planning and evidence
+  synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
+  candidate writing and directed revisions use `writer`, and validation/ranking use
+  `review`. Backup is still only a technical retry, not a creative second opinion.
 - The trace now includes a `validation` report for every draft candidate. It shows
   size/shape issues, missing CTA or contract signals, missing attribution, rejected
   evidence used as proof, forbidden moves, raw artifact leakage, and publishability

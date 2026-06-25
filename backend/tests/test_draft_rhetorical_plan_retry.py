@@ -41,7 +41,7 @@ def test_rhetorical_plan_retries_after_malformed_primary(tmp_path) -> None:
 def test_rhetorical_plan_uses_backup_model_after_repair_failure(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
     adapter = SequentialRhetoricalAdapter([ValueError("not object"), ValueError("still not object"), rhetorical_payload()])
-    service = rhetorical_service(tmp_path, adapter, configured=True, backup_model="backup-model")
+    service = rhetorical_service(tmp_path, adapter, configured=True, backup_model="backup-model", strategy_model="strategy-model")
 
     result = service.create(
         context_summary=context_summary,
@@ -54,6 +54,8 @@ def test_rhetorical_plan_uses_backup_model_after_repair_failure(tmp_path) -> Non
     assert result.artifact_payload["source"] == "openrouter"
     assert [attempt["label"] for attempt in result.artifact_payload["attempts"]] == ["primary", "primary-repair", "backup"]
     assert result.artifact_payload["attempts"][2]["backup"] is True
+    assert result.artifact_payload["attempts"][0]["selectedModel"] == "strategy-model"
+    assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
     assert adapter.calls[2]["model"] == "backup-model"
 
 

@@ -6,8 +6,10 @@ from backend.app.application.draft_directed_revision_prompts import (
     DIRECTED_REVISION_TEMPERATURE,
     build_directed_revision_messages,
 )
+from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -44,11 +46,12 @@ class DraftDirectedRevisionService:
             return {"status": "not-run", "reason": "provider-unconfigured", "attempts": [], "aiRunIds": []}
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
+        primary_selection = select_model_for_role(self._settings, DraftModelRole.WRITER)
         for attempt in build_json_step_attempts(
-            primary_model=self._settings.openrouter_default_model,
+            primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, candidate, instruction, context_artifact, rule_pack, material_plan, repair_context)
+            result = self._try_attempt(attempt, primary_selection, candidate, instruction, context_artifact, rule_pack, material_plan, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
                 revised = {
@@ -69,6 +72,7 @@ class DraftDirectedRevisionService:
     def _try_attempt(
         self,
         attempt: JsonStepAttempt,
+        primary_selection: Any,
         candidate: dict[str, Any],
         instruction: dict[str, Any],
         context_artifact: dict[str, Any],
@@ -76,7 +80,8 @@ class DraftDirectedRevisionService:
         material_plan: dict[str, Any],
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup}
+        selection = selection_for_attempt(role=DraftModelRole.WRITER, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_directed_revision_messages(
             candidate=candidate,
             instruction=instruction,
@@ -85,7 +90,7 @@ class DraftDirectedRevisionService:
             material_plan=material_plan,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = {"draftRunStep": "directedRevision", "attempt": attempt_payload, "messages": messages}
+        request_payload = {"draftRunStep": "directedRevision", "attempt": attempt_payload, "messages": messages, **selection.to_payload()}
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
@@ -104,7 +109,7 @@ class DraftDirectedRevisionService:
                 result_payload={"draftRunStep": "directedRevision", "attempt": attempt_payload, "result": result.payload, "providerResponse": result.raw_response},
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted")}
+            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, self._safe_error(exc))
 
@@ -118,7 +123,8 @@ class DraftDirectedRevisionService:
             fallback_used=False,
             error=error,
         )
-        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", error)}
+        selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
+        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", selection, error)}
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)
@@ -129,8 +135,8 @@ class DraftDirectedRevisionService:
         return f"{error.__class__.__name__}: {message[:180]}"
 
 
-def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, validation: Any | None = None) -> dict[str, Any]:
-    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup}
+def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
+    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
     if validation:
         record["validation"] = validation
     return record

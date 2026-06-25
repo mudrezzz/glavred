@@ -4,8 +4,10 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_model_role_resolver import unconfigured_model_selection
 from backend.app.application.draft_rhetorical_plan_retry import DraftRhetoricalPlanRetryOrchestrator
 from backend.app.domain.ai_run import AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -65,6 +67,7 @@ class DraftRhetoricalPlanService:
                 "rhetoricalPlanSet": payload,
                 "error": "OpenRouter is not configured",
                 "provider": AiRunProvider.DETERMINISTIC.value,
+                **unconfigured_model_selection(DraftModelRole.STRATEGY).to_payload(),
             },
             ai_run_id=None,
             ai_run_ids=[],

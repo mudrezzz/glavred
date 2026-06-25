@@ -29,6 +29,14 @@ Required variables for the backend/AI track:
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
 - `OPENROUTER_BACKUP_MODEL`: optional backup model used by JSON repair retries,
   including material-planning evidence accountability and rhetorical-plan generation.
+- `DRAFT_RESEARCH_MODEL`: optional model for source-intent research planning and
+  external evidence synthesis.
+- `DRAFT_STRATEGY_MODEL`: optional model for material plan, draft strategy, and
+  rhetorical plan JSON steps.
+- `DRAFT_WRITER_MODEL`: optional model for draft candidates and directed revisions.
+- `DRAFT_REVIEW_MODEL`: optional model for LLM validation and pairwise ranking.
+- `DRAFT_CRITIC_MODEL`: configured now for the future prosecutor/editor critic role.
+- `DRAFT_ANOTHER_ANGLE_MODEL`: configured now for the future alternative-angle role.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `DRAFT_REVISION_MAX_ITERATIONS`: maximum directed-revision improvement cycles after
   initial candidate selection. Default `3`; invalid or zero values normalize to `1`.
@@ -964,12 +972,18 @@ the source ledger and post contract exist: validators need claim ids, allowed-us
 policy, forbidden inferences, and locked editorial invariants to judge generated text.
 
 After Slice 2.15 the quality direction shifts from defensive repair to an editorial
-lab that creates stronger post ideas. Keep the existing spine, but add these planned
-boundaries before expanding the loop further:
+lab that creates stronger post ideas. Slice 2.15.1 introduces the first boundary:
+`backend/app/domain/draft_model_roles.py` and
+`backend/app/application/draft_model_role_resolver.py` make model choice a role policy.
+Empty role settings fall back to `OPENROUTER_DEFAULT_MODEL`; backup retry attempts use
+`OPENROUTER_BACKUP_MODEL`; public search uses `OPENROUTER_WEB_SEARCH_MODEL`.
+Keep the existing spine, but add these planned boundaries before expanding the loop
+further:
 
 - `ModelRoleConfig`: role-specific model choice for research, strategy, writer,
-  critic/prosecutor, review, another-angle, and technical backup. Backup remains a
-  fallback, not a creative role.
+  critic/prosecutor, review, another-angle, and technical backup. Done for
+  configuration, resolver, service wiring, and trace metadata; prompt behavior changes
+  remain later slices. Backup remains a fallback, not a creative role.
 - `ArticleDossier`: DraftRun-local article memory with evidence cards, claim cards,
   tensions, angle options, critique, decisions, rejected moves, voice notes, and open
   questions.
@@ -1357,7 +1371,11 @@ The first backend implementation order is:
 24. Pairwise ranking and directed revision. Done.
 25. DraftRun long-running step progress budget. Done.
 26. Iterative revision loop and improvement gate. Done.
-27. Regression report and editor decision learning. Next.
+27. Multi-model drafting roles. Done.
+28. Article dossier and context packs. Next.
+29. Evidence interpretation, prosecutor critic, alternative-angle tournament, and deep
+    revision loop v2.
+30. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

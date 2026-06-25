@@ -7,8 +7,10 @@ from backend.app.application.draft_pairwise_ranking_prompts import (
     PAIRWISE_RANKING_TEMPERATURE,
     build_pairwise_ranking_messages,
 )
+from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_ranking_revision import PairwiseComparison, PairwiseRankingReport, RankingDecision
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
@@ -44,11 +46,12 @@ class DraftPairwiseRankingService:
             return self._fallback_report(draft_artifact, validation_report, [], "provider-unconfigured")
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
+        primary_selection = select_model_for_role(self._settings, DraftModelRole.REVIEW)
         for attempt in build_json_step_attempts(
-            primary_model=self._settings.openrouter_default_model,
+            primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, draft_artifact, validation_report, context_artifact, rule_pack, material_plan, repair_context)
+            result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, context_artifact, rule_pack, material_plan, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
                 report = _report_from_payload(result["payload"], draft_artifact, attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")])
@@ -60,6 +63,7 @@ class DraftPairwiseRankingService:
     def _try_attempt(
         self,
         attempt: JsonStepAttempt,
+        primary_selection: Any,
         draft_artifact: dict[str, Any],
         validation_report: dict[str, Any],
         context_artifact: dict[str, Any],
@@ -67,7 +71,8 @@ class DraftPairwiseRankingService:
         material_plan: dict[str, Any],
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
-        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup}
+        selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_pairwise_ranking_messages(
             draft_artifact=draft_artifact,
             validation_report=validation_report,
@@ -76,7 +81,7 @@ class DraftPairwiseRankingService:
             material_plan=material_plan,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = {"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "messages": messages}
+        request_payload = {"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "messages": messages, **selection.to_payload()}
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
@@ -94,7 +99,7 @@ class DraftPairwiseRankingService:
                 result_payload={"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "result": result.payload, "providerResponse": result.raw_response},
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted")}
+            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, self._safe_error(exc))
 
@@ -108,7 +113,8 @@ class DraftPairwiseRankingService:
             fallback_used=False,
             error=error,
         )
-        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", error)}
+        selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
+        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", selection, error)}
 
     def _fallback_report(self, draft_artifact: dict[str, Any], validation_report: dict[str, Any], attempts: list[dict[str, Any]], warning: str) -> PairwiseRankingReport:
         fallback = self._fallback.rank(draft_artifact=draft_artifact, validation_report=validation_report)
@@ -167,8 +173,8 @@ def _validate_payload(payload: dict[str, Any], draft_artifact: dict[str, Any]) -
         raise ValueError("Pairwise ranking comparisons is not a list")
 
 
-def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, validation: Any | None = None) -> dict[str, Any]:
-    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup}
+def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
+    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
     if validation:
         record["validation"] = validation
     return record

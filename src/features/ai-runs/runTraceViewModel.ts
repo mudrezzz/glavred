@@ -151,7 +151,8 @@ function buildDraftRunViewModel(
           model: run.model ?? 'none',
           status: run.status,
           fallback: run.fallbackUsed ? 'yes' : 'no',
-          detailId: detail.id
+          detailId: detail.id,
+          meta: modelSelectionFields(run)
         };
       });
     const draftCandidateTrace = buildDraftCandidateTraceArtifacts(step, childAiRuns);
@@ -245,6 +246,7 @@ function buildSingleAiRunViewModel(aiRun: AiRunTrace): RunTraceViewModel {
       { label: 'Status', value: aiRun.status },
       { label: 'Provider', value: aiRun.provider },
       { label: 'Model', value: aiRun.model ?? 'none' },
+      ...modelSelectionFields(aiRun),
       { label: 'Fallback', value: aiRun.fallbackUsed ? 'yes' : 'no' }
     ],
     timeline: [{
@@ -324,6 +326,7 @@ function buildAiRunDetail(aiRun: AiRunTrace): TraceDetail {
       { label: 'AiRun ID', value: aiRun.id },
       { label: 'Provider', value: aiRun.provider },
       { label: 'Model', value: aiRun.model ?? 'none' },
+      ...modelSelectionFields(aiRun),
       { label: 'Status', value: aiRun.status },
       { label: 'Fallback', value: aiRun.fallbackUsed ? 'yes' : 'no' },
       { label: 'Error', value: aiRun.error ?? 'none' }
@@ -365,6 +368,15 @@ function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
     ];
   }
   return sectionsFromPayload(stepKeyForAiRun(aiRun), resultPayload);
+}
+
+function modelSelectionFields(aiRun: AiRunTrace): TraceField[] {
+  const payload = { ...(aiRun.resultPayload ?? {}), ...(aiRun.requestPayload ?? {}) };
+  return compactFields([
+    ['Model role', payload.modelRole],
+    ['Selected model', payload.selectedModel],
+    ['Selection source', payload.modelSelectionSource]
+  ]);
 }
 
 function sectionsFromPayload(step: string, payload: Record<string, unknown>): TraceSemanticSection[] {

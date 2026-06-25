@@ -14,8 +14,9 @@ def build_rhetorical_plan_request_trace(
     material_plan: dict[str, Any],
     draft_strategy: dict[str, Any],
     attempt: dict[str, Any] | None = None,
+    model_selection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "draftRunStep": "rhetoricalPlans",
         "provider": provider.value,
         "model": model,
@@ -30,6 +31,9 @@ def build_rhetorical_plan_request_trace(
         },
         "attempt": attempt,
     }
+    if model_selection is not None:
+        payload.update(model_selection)
+    return payload
 
 
 def build_rhetorical_plan_result_trace(

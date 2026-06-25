@@ -21,7 +21,11 @@ class FakeOpenRouterResult:
 
 
 class SuccessfulCandidateAdapter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
     def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
+        self.calls.append(kwargs)
         return FakeOpenRouterResult(
             {
                 "title": "Provider draft candidate",
@@ -69,7 +73,8 @@ def test_direction_builder_uses_rhetorical_plans_when_available() -> None:
 
 def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
-    service = candidate_service(tmp_path, SuccessfulCandidateAdapter(), configured=True)
+    adapter = SuccessfulCandidateAdapter()
+    service = candidate_service(tmp_path, adapter, configured=True, writer_model="writer-model")
 
     result = service.create(
         request=make_request(),
@@ -89,6 +94,11 @@ def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> Non
     assert run is not None
     assert run.provider == AiRunProvider.OPENROUTER
     assert run.request_payload["draftRunStep"] == "draftCandidate"
+    assert run.request_payload["modelRole"] == "writer"
+    assert run.request_payload["selectedModel"] == "writer-model"
+    assert run.request_payload["modelSelectionSource"] == "role"
+    assert adapter.calls[0]["model"] == "writer-model"
+    assert result.artifact_payload["candidates"][0]["modelRole"] == "writer"
     assert result.final_draft.body.startswith("Provider body")
 
 
@@ -132,12 +142,13 @@ def test_candidate_provider_error_falls_back_without_secret(tmp_path) -> None:
     assert result.final_draft is None
 
 
-def candidate_service(tmp_path, adapter: object, *, configured: bool) -> DraftCandidateGenerationService:
+def candidate_service(tmp_path, adapter: object, *, configured: bool, writer_model: str = "") -> DraftCandidateGenerationService:
     return DraftCandidateGenerationService(
         settings=BackendSettings(
             _env_file=None,
             OPENROUTER_API_KEY="sk-test-secret" if configured else "",
             OPENROUTER_DEFAULT_MODEL="test-model" if configured else "",
+            DRAFT_WRITER_MODEL=writer_model,
         ),
         ai_run_service=ai_service(tmp_path),
         openrouter_validator=OpenRouterConfigValidator(),

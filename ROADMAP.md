@@ -4350,7 +4350,7 @@ Status:
 
 ### Slice 2.15.1: Multi-Model Drafting Roles
 
-- Status: Ready
+- Status: Done
 - Goal: Replace `DEFAULT/BACKUP` thinking with role-specific model selection.
 - User value:
   - The runner can deliberately ask different model families for research, strategy,
@@ -4383,10 +4383,26 @@ Status:
 - Acceptance criteria:
   - A DraftRun trace can answer: which model played researcher, writer, critic, review,
     and another-angle roles.
+- Result:
+  - Added provider-free `DraftModelRole` / `DraftModelSelection` DTOs and
+    `draft_model_role_resolver`.
+  - Added env/settings for research, strategy, writer, review, critic, and
+    another-angle models. `.env.example` now carries the balanced recommended preset:
+    default `deepseek/deepseek-v4-pro`, backup `qwen/qwen3.7-plus`, search
+    `perplexity/sonar-pro`, research `google/gemini-3.1-pro-preview`, strategy
+    `z-ai/glm-5.2`, writer `anthropic/claude-sonnet-4.6`, review
+    `openai/gpt-5.4-mini`, critic `openai/gpt-5.2`, another-angle `qwen/qwen3.7-max`.
+  - Wired research, strategy, writer, review, ranking, and revision services through
+    the resolver without changing prompt semantics.
+  - Child `AiRun` request payloads, step artifacts, retry attempts, candidates, and
+    `/ai-runs` readable trace now expose `modelRole`, `selectedModel`, and
+    `modelSelectionSource`.
+  - Backup retry still uses `OPENROUTER_BACKUP_MODEL`; public search still uses
+    `OPENROUTER_WEB_SEARCH_MODEL`.
 
 ### Slice 2.15.2: Article Dossier and Context Packs
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add DraftRun-local article memory and task-specific context selection.
 - User value:
   - Later steps stop losing useful research/critique context and stop drowning models
@@ -4712,4 +4728,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.1: Multi-Model Drafting Roles`.
+Continue the backend track with `Slice 2.15.2: Article Dossier and Context Packs`.

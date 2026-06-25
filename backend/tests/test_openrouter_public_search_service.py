@@ -61,6 +61,8 @@ def test_search_creates_evidence_item_and_child_ai_run(tmp_path) -> None:
     assert run.request_payload["draftRunStep"] == "publicEvidenceSearch"
     assert run.request_payload["builtQuery"] == "find opinion leaders about AI product trust"
     assert run.request_payload["originalTask"]["target"] == "target-1"
+    assert run.request_payload["modelRole"] == "research"
+    assert run.request_payload["modelSelectionSource"] == "webSearch"
     assert run.result_payload is not None
     assert run.result_payload["acceptedCitations"][0]["url"] == "https://example.com/trust"
     assert run.result_payload["citations"][0]["url"] == "https://example.com/trust"

@@ -27,28 +27,19 @@ class BackendSettings(BaseSettings):
         default=Path("var/glavred-draft-runs.sqlite3"),
         validation_alias="DRAFT_RUN_DB_PATH",
     )
-    draft_revision_max_iterations: int = Field(
-        default=3,
-        validation_alias="DRAFT_REVISION_MAX_ITERATIONS",
-    )
+    draft_revision_max_iterations: int = Field(default=3, validation_alias="DRAFT_REVISION_MAX_ITERATIONS")
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
 
-    openrouter_api_key: SecretStr | None = Field(
-        default=None,
-        validation_alias="OPENROUTER_API_KEY",
-    )
-    openrouter_base_url: str = Field(
-        default="https://openrouter.ai/api/v1",
-        validation_alias="OPENROUTER_BASE_URL",
-    )
-    openrouter_default_model: str = Field(
-        default="",
-        validation_alias="OPENROUTER_DEFAULT_MODEL",
-    )
-    openrouter_backup_model: str = Field(
-        default="",
-        validation_alias="OPENROUTER_BACKUP_MODEL",
-    )
+    openrouter_api_key: SecretStr | None = Field(default=None, validation_alias="OPENROUTER_API_KEY")
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", validation_alias="OPENROUTER_BASE_URL")
+    openrouter_default_model: str = Field(default="", validation_alias="OPENROUTER_DEFAULT_MODEL")
+    openrouter_backup_model: str = Field(default="", validation_alias="OPENROUTER_BACKUP_MODEL")
+    draft_research_model: str = Field(default="", validation_alias="DRAFT_RESEARCH_MODEL")
+    draft_strategy_model: str = Field(default="", validation_alias="DRAFT_STRATEGY_MODEL")
+    draft_writer_model: str = Field(default="", validation_alias="DRAFT_WRITER_MODEL")
+    draft_critic_model: str = Field(default="", validation_alias="DRAFT_CRITIC_MODEL")
+    draft_review_model: str = Field(default="", validation_alias="DRAFT_REVIEW_MODEL")
+    draft_another_angle_model: str = Field(default="", validation_alias="DRAFT_ANOTHER_ANGLE_MODEL")
     openrouter_app_name: str = Field(default="Glavred", validation_alias="OPENROUTER_APP_NAME")
     openrouter_http_referer: str = Field(
         default="http://localhost:5173",

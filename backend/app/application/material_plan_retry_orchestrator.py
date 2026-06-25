@@ -9,10 +9,12 @@ from backend.app.application.draft_planning_audit import (
 )
 from backend.app.application.draft_planning_prompts import build_material_plan_messages
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
 from backend.app.application.material_plan_accountability import evaluate_material_plan_accountability
 from backend.app.application.material_plan_evidence_projection import build_usable_evidence_candidates
 from backend.app.application.material_plan_retry_policy import MaterialPlanAttempt, build_material_plan_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_planning import material_plan_from_payload
 from backend.app.settings import BackendSettings
 
@@ -54,12 +56,14 @@ class MaterialPlanRetryOrchestrator:
         usable_candidates = build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack)
         attempt_records: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
+        primary_selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY)
         for attempt in build_material_plan_attempts(
-            primary_model=self._settings.openrouter_default_model,
+            primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
             result = self._try_attempt(
                 attempt=attempt,
+                primary_selection=primary_selection,
                 context_summary=context_summary,
                 rule_pack=rule_pack,
                 usable_candidates=usable_candidates,
@@ -91,7 +95,7 @@ class MaterialPlanRetryOrchestrator:
             usable_candidates=usable_candidates,
             attempts=attempt_records,
             provider=AiRunProvider.OPENROUTER,
-            model=self._settings.openrouter_default_model,
+            model=primary_selection.model,
             error="MaterialPlan evidence accountability failed after all LLM attempts",
         )
 
@@ -106,6 +110,7 @@ class MaterialPlanRetryOrchestrator:
         model: str | None,
         error: str,
     ) -> DraftPlanningStepResult:
+        selection = unconfigured_model_selection(DraftModelRole.STRATEGY) if model is None else select_model_for_role(self._settings, DraftModelRole.STRATEGY)
         payload = self._deterministic_planning_service.create_material_plan(
             context_summary=context_summary,
             rule_pack=rule_pack,
@@ -123,6 +128,7 @@ class MaterialPlanRetryOrchestrator:
             rule_pack=rule_pack,
             usable_evidence_candidates=usable_candidates,
             attempt={"label": "emergency-fallback", "model": model, "repair": False, "backup": False},
+            model_selection=selection.to_payload(),
         )
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
@@ -150,6 +156,7 @@ class MaterialPlanRetryOrchestrator:
             "aiRunId": run.id,
             "backup": False,
             "validation": accountability,
+            **selection.to_payload(),
         }
         return DraftPlanningStepResult(
             artifact_payload=self._artifact(
@@ -170,6 +177,7 @@ class MaterialPlanRetryOrchestrator:
         self,
         *,
         attempt: MaterialPlanAttempt,
+        primary_selection: Any,
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         usable_candidates: list[dict[str, Any]],
@@ -190,6 +198,7 @@ class MaterialPlanRetryOrchestrator:
             rule_pack=rule_pack,
             usable_evidence_candidates=usable_candidates,
             attempt={"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup},
+            model_selection=selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection).to_payload(),
         )
         try:
             return self._record_provider_attempt(attempt, request_payload, messages, usable_candidates)
@@ -260,6 +269,7 @@ class MaterialPlanRetryOrchestrator:
         }
 
     def _attempt_record(self, attempt: MaterialPlanAttempt, ai_run_id: str, status: str, validation: dict[str, Any]) -> dict[str, Any]:
+        source = "backup" if attempt.backup else ("role" if self._settings.draft_strategy_model.strip() else "default")
         return {
             "label": attempt.label,
             "model": attempt.model,
@@ -267,6 +277,9 @@ class MaterialPlanRetryOrchestrator:
             "aiRunId": ai_run_id,
             "backup": attempt.backup,
             "validation": validation,
+            "modelRole": DraftModelRole.STRATEGY.value,
+            "modelSelectionSource": source,
+            "selectedModel": attempt.model,
         }
 
     def _artifact(

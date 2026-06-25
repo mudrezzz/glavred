@@ -21,7 +21,11 @@ class FakeOpenRouterResult:
 
 
 class SuccessfulAdapter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
     def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
+        self.calls.append(kwargs)
         return FakeOpenRouterResult(material_payload(), {"id": "or-material", "model": kwargs.get("model")})
 
 
@@ -43,7 +47,8 @@ class SequenceAdapter:
 
 def test_material_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
-    service = material_service(tmp_path, SuccessfulAdapter(), configured=True)
+    adapter = SuccessfulAdapter()
+    service = material_service(tmp_path, adapter, configured=True, strategy_model="strategy-model")
 
     result = service.create(context_summary=context_summary, rule_pack=rule_pack)
 
@@ -51,6 +56,9 @@ def test_material_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     assert result.artifact_payload["fallbackUsed"] is False
     assert result.artifact_payload["materialPlan"]["availableEvidence"] == ["pilot usage data"]
     assert result.artifact_payload["evidenceAccountability"]["valid"] is True
+    assert adapter.calls[0]["model"] == "strategy-model"
+    assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
+    assert result.artifact_payload["attempts"][0]["selectedModel"] == "strategy-model"
     assert result.ai_run_id
 
 
@@ -149,9 +157,9 @@ def context_and_rule_pack_with_ledger() -> tuple[dict[str, Any], dict[str, Any]]
     return context_summary, DraftRulePackCompiler().compile(context_summary).to_payload()
 
 
-def material_service(tmp_path, adapter: object, *, configured: bool, backup_model: str = "") -> DraftMaterialPlanService:
+def material_service(tmp_path, adapter: object, *, configured: bool, backup_model: str = "", strategy_model: str = "") -> DraftMaterialPlanService:
     return DraftMaterialPlanService(
-        settings=settings(configured, backup_model=backup_model),
+        settings=settings(configured, backup_model=backup_model, strategy_model=strategy_model),
         ai_run_service=AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3")),
         openrouter_validator=OpenRouterConfigValidator(),
         openrouter_adapter=adapter,
@@ -159,12 +167,13 @@ def material_service(tmp_path, adapter: object, *, configured: bool, backup_mode
     )
 
 
-def settings(configured: bool, backup_model: str = "") -> BackendSettings:
+def settings(configured: bool, backup_model: str = "", strategy_model: str = "") -> BackendSettings:
     return BackendSettings(
         _env_file=None,
         OPENROUTER_API_KEY="sk-test-secret" if configured else "",
         OPENROUTER_DEFAULT_MODEL="test-model" if configured else "",
         OPENROUTER_BACKUP_MODEL=backup_model,
+        DRAFT_STRATEGY_MODEL=strategy_model,
     )
 
 

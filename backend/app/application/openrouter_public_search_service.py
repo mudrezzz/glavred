@@ -2,6 +2,7 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.public_evidence_ports import PublicEvidenceSearchResult, PublicEvidenceSearchTask
 from backend.app.application.public_evidence_relevance import filter_relevant_citations
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole, DraftModelSelectionSource
 from backend.app.domain.draft_public_evidence import (
     PublicEvidenceAllowedUse,
     PublicEvidenceAttempt,
@@ -177,6 +178,9 @@ def _request_trace(
             "messages": messages,
             "tools": [{"type": "openrouter:web_search", "parameters": {"max_results": max_results}}],
         },
+        "modelRole": DraftModelRole.RESEARCH.value,
+        "selectedModel": model,
+        "modelSelectionSource": DraftModelSelectionSource.WEB_SEARCH.value,
     }
 
 

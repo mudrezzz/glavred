@@ -56,7 +56,7 @@ def test_pairwise_ranking_retries_malformed_json_and_uses_repair(tmp_path) -> No
         {"winnerCandidateId": "b", "reason": "better validation", "comparisons": [{"leftCandidateId": "a", "rightCandidateId": "b", "winnerCandidateId": "b", "reason": "cleaner"}]},
     ])
     service = DraftPairwiseRankingService(
-        settings=settings(configured=True),
+        settings=settings(configured=True, review_model="review-model"),
         ai_run_service=ai_service(tmp_path),
         openrouter_validator=OpenRouterConfigValidator(),
         openrouter_adapter=adapter,
@@ -72,6 +72,8 @@ def test_pairwise_ranking_retries_malformed_json_and_uses_repair(tmp_path) -> No
 
     assert report.decision.winner_candidate_id == "b"
     assert [attempt["label"] for attempt in report.attempts] == ["primary", "primary-repair"]
+    assert adapter.calls[0]["model"] == "review-model"
+    assert report.attempts[0]["modelRole"] == "review"
     assert report.attempts[0]["status"] == "error"
     assert len(report.ai_run_ids) == 2
 
@@ -155,13 +157,13 @@ def ranking_revision_service(tmp_path, adapter: SequenceAdapter, max_iterations:
     ai = ai_service(tmp_path)
     return DraftRankingRevisionService(
         ranking_service=DraftPairwiseRankingService(
-            settings=settings(configured=True),
+            settings=settings(configured=True, review_model="review-model"),
             ai_run_service=ai,
             openrouter_validator=OpenRouterConfigValidator(),
             openrouter_adapter=adapter,
         ),
         revision_service=DraftDirectedRevisionService(
-            settings=settings(configured=True),
+            settings=settings(configured=True, writer_model="writer-model"),
             ai_run_service=ai,
             openrouter_validator=OpenRouterConfigValidator(),
             openrouter_adapter=adapter,
@@ -234,11 +236,13 @@ def request() -> DraftGenerationRequest:
     )
 
 
-def settings(*, configured: bool) -> BackendSettings:
+def settings(*, configured: bool, review_model: str = "", writer_model: str = "") -> BackendSettings:
     return BackendSettings(
         _env_file=None,
         OPENROUTER_API_KEY="sk-test-secret" if configured else "",
         OPENROUTER_DEFAULT_MODEL="primary-model" if configured else "",
+        DRAFT_REVIEW_MODEL=review_model,
+        DRAFT_WRITER_MODEL=writer_model,
     )
 
 

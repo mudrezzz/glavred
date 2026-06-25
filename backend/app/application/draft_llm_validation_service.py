@@ -11,10 +11,12 @@ from backend.app.application.draft_llm_validation_prompts import (
     LLM_VALIDATION_TEMPERATURE,
     build_llm_validation_messages,
 )
+from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_llm_validation import (
     LlmCandidateValidationReport,
     LlmDraftValidationReport,
@@ -101,12 +103,14 @@ class DraftLlmValidationService:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
         attempts: list[LlmValidatorAttempt] = []
         repair_context: dict[str, Any] | None = None
+        primary_selection = select_model_for_role(self._settings, DraftModelRole.REVIEW)
         for attempt in build_json_step_attempts(
-            primary_model=self._settings.openrouter_default_model,
+            primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
             result = self._try_candidate_attempt(
                 attempt=attempt,
+                primary_selection=primary_selection,
                 candidate=candidate,
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
@@ -135,6 +139,7 @@ class DraftLlmValidationService:
         self,
         *,
         attempt: JsonStepAttempt,
+        primary_selection: Any,
         candidate: dict[str, Any],
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
@@ -143,7 +148,8 @@ class DraftLlmValidationService:
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
-        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup}
+        selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_llm_validation_messages(
             candidate=candidate,
             context_artifact=context_artifact,
@@ -159,6 +165,7 @@ class DraftLlmValidationService:
             candidate_id=candidate_id,
             attempt=attempt_payload,
             deterministic_report=deterministic_report,
+            model_selection=selection.to_payload(),
         )
         try:
             result = self._openrouter_adapter.complete_json(
@@ -178,7 +185,7 @@ class DraftLlmValidationService:
                 result_payload=build_llm_validation_result_trace(result_payload=result.payload, provider_response=result.raw_response, attempt=attempt_payload),
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt(attempt, candidate_id, "accepted", run.id)}
+            return {"accepted": True, "payload": result.payload, "attempt": _attempt(attempt, candidate_id, "accepted", run.id, selection.to_payload())}
         except Exception as exc:
             return self._attempt_error(attempt, candidate_id, request_payload, self._safe_error(exc))
 
@@ -193,7 +200,8 @@ class DraftLlmValidationService:
             fallback_used=False,
             error=error,
         )
-        return {"accepted": False, "payload": {}, "attempt": _attempt(attempt, candidate_id, "error", run.id, error)}
+        selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
+        return {"accepted": False, "payload": {}, "attempt": _attempt(attempt, candidate_id, "error", run.id, selection, error)}
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)
@@ -211,7 +219,7 @@ def _candidate_deterministic_report(report: dict[str, Any], candidate_id: str) -
     return {}
 
 
-def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id: str | None, validation: str | None = None) -> LlmValidatorAttempt:
+def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id: str | None, model_selection: dict[str, Any], validation: str | None = None) -> LlmValidatorAttempt:
     return LlmValidatorAttempt(
         label=attempt.label,
         model=attempt.model,
@@ -220,6 +228,7 @@ def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id
         ai_run_id=ai_run_id,
         backup=attempt.backup,
         validation=validation,
+        metadata=model_selection,
     )
 
 

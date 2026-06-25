@@ -28,7 +28,7 @@ class SequentialValidationAdapter:
 
 def test_llm_validation_success_reports_all_candidates(tmp_path) -> None:
     adapter = SequentialValidationAdapter([valid_payload("source"), valid_payload("voice")])
-    result = service(tmp_path, adapter, configured=True).validate(
+    result = service(tmp_path, adapter, configured=True, review_model="review-model").validate(
         draft_artifact={"candidates": [{"id": "candidate-1"}, {"id": "candidate-2"}]},
         context_artifact={},
         rule_pack={},
@@ -39,6 +39,9 @@ def test_llm_validation_success_reports_all_candidates(tmp_path) -> None:
     assert result.artifact_payload["summary"]["candidateCount"] == 2
     assert result.artifact_payload["candidateReports"][0]["findings"][0]["validatorId"] == "llm.source"
     assert len(result.ai_run_ids or []) == 2
+    assert adapter.calls[0]["model"] == "review-model"
+    assert result.artifact_payload["candidateReports"][0]["attempts"][0]["modelRole"] == "review"
+    assert result.artifact_payload["candidateReports"][0]["attempts"][0]["modelSelectionSource"] == "role"
 
 
 def test_llm_validation_unconfigured_is_not_run_without_fake_findings(tmp_path) -> None:
@@ -73,13 +76,14 @@ def test_llm_validation_retries_and_uses_backup_model(tmp_path) -> None:
     assert "sk-test-secret" not in attempts[0]["validation"]
 
 
-def service(tmp_path, adapter: object, *, configured: bool, backup_model: str = "") -> DraftLlmValidationService:
+def service(tmp_path, adapter: object, *, configured: bool, backup_model: str = "", review_model: str = "") -> DraftLlmValidationService:
     return DraftLlmValidationService(
         settings=BackendSettings(
             _env_file=None,
             OPENROUTER_API_KEY="sk-test-secret" if configured else "",
             OPENROUTER_DEFAULT_MODEL="test-model" if configured else "",
             OPENROUTER_BACKUP_MODEL=backup_model,
+            DRAFT_REVIEW_MODEL=review_model,
         ),
         ai_run_service=AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3")),
         openrouter_validator=OpenRouterConfigValidator(),

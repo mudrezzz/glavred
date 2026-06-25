@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from backend.app.domain.draft_validation import DraftValidatorFinding, DraftValidatorStatus, validation_status_for
-
 @dataclass(frozen=True)
 class LlmValidatorObservation:
     validator_id: str
@@ -35,6 +34,7 @@ class LlmValidatorAttempt:
     ai_run_id: str | None = None
     backup: bool = False
     validation: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -45,10 +45,9 @@ class LlmValidatorAttempt:
             "aiRunId": self.ai_run_id,
             "backup": self.backup,
         }
-        if self.validation:
-            payload["validation"] = self.validation
+        if self.validation: payload["validation"] = self.validation
+        payload.update(self.metadata)
         return payload
-
 
 @dataclass(frozen=True)
 class LlmCandidateValidationReport:

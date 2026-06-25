@@ -6,10 +6,12 @@ from backend.app.application.deterministic_external_evidence_synthesis import (
 )
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
 from backend.app.application.external_evidence_synthesis_prompts import (
     build_external_evidence_synthesis_messages,
 )
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_evidence_synthesis import (
     EvidenceSynthesis,
     ExternalEvidenceClaim,
@@ -42,13 +44,15 @@ class ExternalEvidenceSynthesisService:
         messages = build_external_evidence_synthesis_messages(context_artifact=context_artifact, public_evidence=public_evidence)
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
-        model = self._settings.openrouter_default_model if status.configured else None
+        selection = select_model_for_role(self._settings, DraftModelRole.RESEARCH) if status.configured else unconfigured_model_selection(DraftModelRole.RESEARCH)
+        model = selection.model
         request_payload = {
             "draftRunStep": "externalEvidenceSynthesis",
             "provider": provider.value,
             "model": model,
             "promptMessages": messages,
             "publicEvidenceItemCount": len(_items(public_evidence)),
+            **selection.to_payload(),
         }
         if not status.configured:
             return self._fallback(public_evidence, request_payload, provider, model, "OpenRouter is not configured")
@@ -58,13 +62,14 @@ class ExternalEvidenceSynthesisService:
                 messages=messages,
                 expected_keys=SYNTHESIS_KEYS,
                 temperature=SYNTHESIS_TEMPERATURE,
+                model=model,
             )
             synthesis = _synthesis_from_payload(result.payload, public_evidence, source="openrouter")
             payload = synthesis.to_payload()
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
-                model=self._settings.openrouter_default_model,
+                model=model,
                 request_payload=request_payload,
                 result_payload={
                     "draftRunStep": "externalEvidenceSynthesis",
@@ -73,7 +78,7 @@ class ExternalEvidenceSynthesisService:
                 },
                 fallback_used=False,
             )
-            return DraftPlanningStepResult(artifact_payload={"evidenceSynthesis": payload, "aiRunId": run.id, "fallbackUsed": False}, ai_run_id=run.id)
+            return DraftPlanningStepResult(artifact_payload={"evidenceSynthesis": payload, "aiRunId": run.id, "fallbackUsed": False, **selection.to_payload()}, ai_run_id=run.id)
         except Exception as exc:
             return self._fallback(public_evidence, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc))
 
@@ -100,7 +105,7 @@ class ExternalEvidenceSynthesisService:
             error=error,
         )
         return DraftPlanningStepResult(
-            artifact_payload={"evidenceSynthesis": payload, "aiRunId": run.id, "fallbackUsed": True, "error": error},
+            artifact_payload={"evidenceSynthesis": payload, "aiRunId": run.id, "fallbackUsed": True, "error": error, **{key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}},
             ai_run_id=run.id,
         )
 
