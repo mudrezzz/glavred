@@ -16,8 +16,9 @@ def build_directed_revision_messages(
 ) -> list[dict[str, str]]:
     system = (
         "You are Glavred's directed revision editor. Return strict JSON only. "
-        "Repair only the listed findings. Preserve the post contract, allowed claims, "
-        "forbidden moves, rhetorical route, and source grounding."
+        "Improve only the listed validator and editorial goals. Preserve the post contract, "
+        "allowed claims, forbidden moves, rhetorical route, source grounding, and every "
+        "anti-regression constraint."
     )
     payload = {
         "task": "Revise the selected draft candidate once.",
@@ -30,6 +31,10 @@ def build_directed_revision_messages(
         "contextPack": context_pack or {},
         "sourceLedger": context_artifact.get("sourceLedger"),
         "repairContext": repair_context,
+        "editorialGoalContract": {
+            "dimensions": ["ideaStrength", "tension", "readerValue", "authorStance", "sourceIntegration", "structure", "validatorHealth"],
+            "rules": ["Make targeted editorial improvements only.", "Preserve working source markers.", "Do not repeat rejected moves.", "If unsafe, leave unchanged and explain in changeLog."],
+        },
     }
     return [{"role": "system", "content": system}, {"role": "user", "content": _json(payload)}]
 

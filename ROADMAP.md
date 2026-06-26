@@ -4581,7 +4581,7 @@ Status:
 
 ### Slice 2.15.6: Deep Revision Loop v2
 
-- Status: Ready
+- Status: Done
 - Goal: Make the revision loop optimize for editorial improvement, not only validator
   cleanup.
 - User value:
@@ -4610,6 +4610,69 @@ Status:
 - Acceptance criteria:
   - Trace can explain not only that the draft improved, but what editorial dimension
     improved and what moves were banned.
+- Result:
+  - Added provider-free revision-loop trace fields for editorial goals, dimension
+    scores, resolved/unresolved editorial goals, rejected moves, acceptance decision,
+    and per-cycle stop reason.
+  - Added role-owned backend modules for editorial goal projection, editorial
+    improvement evaluation, rejected-move constraints, and revision-cycle execution.
+  - Directed revision now receives validator goals, editorial goals, rejected moves,
+    anti-regression constraints, dossier/context pack, evidence interpretation, and
+    alternative-angle lessons.
+  - Pairwise ranking now asks for editorial dimension scores and stores them in
+    attempts for revision-loop policy and `/ai-runs` trace.
+  - Acceptance policy rejects revisions that improve validator health but regress key
+    editorial dimensions such as idea strength, reader value, source integration, or
+    author stance.
+  - `/ai-runs?runId=...` shows editorial goals, dimension scores, rejected moves, and
+    revision-loop stop reason.
+- Follow-up from live control run:
+  - DraftRun `692ab2f7-320a-4191-b5bf-eca7efddfa8c` confirmed that the updated
+    backend/worker reaches `validation`, executes alternative-angle tournament, accepts
+    revision cycle 1, and then can become stale inside `directed-revision-cycle-2`.
+    This is an orchestration reliability issue for a follow-up repair slice; it is not
+    part of the 2.15.6 editorial-loop policy itself.
+
+### Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair
+
+- Status: Ready
+- Goal: Prevent provider-heavy validation/revision operations from leaving a DraftRun
+  permanently `running/stale`.
+- User value:
+  - A long drafting run either finishes with the best available draft or fails/blocks
+    with a readable reason; it does not silently hang inside a revision cycle.
+- Scope:
+  - Add operation-level safe wrappers for validation sub-operations that call providers:
+    editorial critique, alternative-angle candidate generation, pairwise ranking, and
+    directed revision.
+  - If a provider or post-processing operation cannot produce a usable result, mark the
+    nested operation `failed`, persist the safe error, and let the pipeline continue or
+    stop with an explicit `provider-failed` / `operation-failed` reason.
+  - Ensure revision loop keeps the previous best candidate when a later revision cycle
+    fails.
+  - Persist validation child `AiRun` ids to the parent DraftRun incrementally or at the
+    end of the validation step so `/ai-runs?runId=...` can load the full trace.
+  - Store enough partial validation/ranking/revision state in the `validation` artifact
+    that stale/failure diagnostics can show completed sub-operations.
+- Out of scope:
+  - Changing prose prompts or editorial quality policy.
+  - Adding new DraftRun steps, SQL columns, or main-cabinet UI.
+  - Reworking the model portfolio.
+- Architecture impact:
+  - Validation becomes more fault-tolerant at sub-operation level while keeping the
+    existing `validation` step and `rankingRevision.revisionLoop` trace contract.
+- Tests:
+  - Directed revision cycle 2 provider/post-processing failure marks the operation
+    failed and finalizes with the previous best candidate.
+  - Alternative-angle candidate failure does not leave the run running forever.
+  - Parent `DraftRun.aiRunIds` includes validation child runs.
+  - Old DraftRuns without these partial artifacts remain readable.
+- Docs:
+  - Update the AS IS pipeline map and developer docs to explain operation-level
+    failure handling inside `validation`.
+- Acceptance criteria:
+  - Re-running the diagnosed scenario does not produce stale `directed-revision-cycle-2`;
+    the run finishes or records a safe explicit failure/blocked reason.
 
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
@@ -4772,6 +4835,13 @@ Status:
 - Slice 2.14: Pairwise Ranking and Directed Revision. Completed 2026-06-25.
 - Slice 2.14.1: DraftRun Long-Running Step Progress Budget. Completed 2026-06-25.
 - Slice 2.15: Iterative Revision Loop and Improvement Gate. Completed 2026-06-25.
+- Slice 2.15.1: Multi-Model Drafting Roles. Completed 2026-06-26.
+- Slice 2.15.2: Article Dossier and Context Packs. Completed 2026-06-26.
+- Slice 2.15.3: Evidence Interpretation, Not Citation Injection. Completed
+  2026-06-26.
+- Slice 2.15.4: Prosecutor / Editor Critic Loop. Completed 2026-06-26.
+- Slice 2.15.5: Alternative Angle Tournament. Completed 2026-06-27.
+- Slice 2.15.6: Deep Revision Loop v2. Completed 2026-06-27.
 
 ## Blocked Items
 
@@ -4792,4 +4862,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.6: Deep Revision Loop v2`.
+Continue the backend track with `Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair`.

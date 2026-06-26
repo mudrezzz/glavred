@@ -414,6 +414,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
   candidate writing and directed revisions use `writer`, and validation/ranking use
   `review`. Backup is still only a technical retry, not a creative second opinion.
+- The revision loop is now editorial, not only mechanical. In `/ai-runs?runId=...`,
+  each revision cycle shows which goals it tried to improve: idea strength, tension,
+  reader value, author stance, source integration, structure, or validator health.
+  The same trace shows old-vs-new dimension scores, accepted/rejected decision,
+  rejected moves, and the stop reason. The main editor still receives one final draft.
 - The trace now also shows `ArticleDossier` and `ContextPacks`. The dossier is local
   memory for one DraftRun: accepted evidence, usable claims, locked decisions, risks,
   rejected moves, and open questions as compact cards. Context packs show which of

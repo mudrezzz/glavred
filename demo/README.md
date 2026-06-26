@@ -309,9 +309,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     findings. `Editorial critique` is shown separately from validation and attacks
     idea strength, tension, author stance, source integration, generic AI prose, and
     reader value. The same `validation` artifact also stores pairwise ranking and a
-    bounded revision loop: each cycle records repair goals, constraints, revised
-    candidate, regression checks, old-vs-new comparison, accepted/rejected decision,
-    and final stop reason. Long-running `publicEvidence`, `draft`, and `validation` steps also
+    bounded editorial revision loop: each cycle records validator repair goals,
+    editorial goals, constraints, revised candidate, regression checks, old-vs-new
+    comparison, dimension scores, accepted/rejected decision, rejected moves, and
+    final stop reason. Long-running `publicEvidence`, `draft`, and `validation` steps also
     write nested operation progress, so the `Драфт` waiting state and
     `/ai-runs?runId=...` show the current URL/search/candidate/validator/ranking/
     revision operation instead of only a broad step name. The main demo still opens

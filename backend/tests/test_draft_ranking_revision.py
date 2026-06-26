@@ -153,6 +153,110 @@ def test_revision_loop_carries_rejection_constraints_to_next_cycle(tmp_path) -> 
     assert any("Do not repeat failed move" in item for item in instruction["constraints"])
 
 
+def test_revision_loop_rejects_validator_fix_that_weakens_idea_strength(tmp_path) -> None:
+    adapter = SequenceAdapter([
+        {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
+        {"title": "Revised", "body": "Revised body with CTA and source marker alanknox", "changeLog": ["Added attribution"]},
+        {
+            "winnerCandidateId": "revised-candidate-1",
+            "reason": "Cleaner validation but weaker idea.",
+            "editorialDimensionScores": [
+                {"dimension": "ideaStrength", "winnerCandidateId": "candidate-1", "reason": "Original has the sharper central tension."},
+                {"dimension": "validatorHealth", "winnerCandidateId": "revised-candidate-1", "reason": "Revision fixes attribution."},
+            ],
+            "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "revised-candidate-1", "reason": "fixed"}],
+        },
+    ])
+    service = ranking_revision_service(tmp_path, adapter)
+
+    result = service.run(
+        request=request(),
+        draft_artifact=draft_artifact(),
+        validation_report=validation_report(),
+        context_artifact=context_artifact(),
+        rule_pack={},
+        material_plan={},
+    )
+
+    cycle = result.artifact_payload["revisionLoop"]["cycles"][0]
+    assert result.final_draft is not None
+    assert result.final_draft.title == "Original"
+    assert cycle["accepted"] is False
+    assert "editorial-ideaStrength-regressed" in cycle["rejectionReasons"]
+    assert cycle["editorialDimensionScores"][0]["dimension"] == "ideaStrength"
+    assert cycle["newRejectedMoves"]
+
+
+def test_revision_loop_accepts_editorial_goal_without_validator_finding(tmp_path) -> None:
+    adapter = SequenceAdapter([
+        {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
+        {"title": "Revised", "body": "Revised body with CTA and stronger trade-off", "changeLog": ["Opened with the trade-off"]},
+        {
+            "winnerCandidateId": "revised-candidate-1",
+            "reason": "Stronger tension.",
+            "editorialDimensionScores": [
+                {"dimension": "ideaStrength", "winnerCandidateId": "revised-candidate-1", "reason": "Revision makes the central idea sharper."},
+                {"dimension": "tension", "winnerCandidateId": "revised-candidate-1", "reason": "Revision names the uncomfortable trade-off."}
+            ],
+            "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "revised-candidate-1", "reason": "better tension"}],
+        },
+    ])
+    service = ranking_revision_service(tmp_path, adapter)
+
+    report = {
+        "candidateReports": [{"candidateId": "candidate-1", "criticalCount": 0, "warningCount": 0, "findings": []}],
+        "editorialCritiqueReport": {
+            "candidateReports": [
+                {
+                    "candidateId": "candidate-1",
+                    "editorialRisk": "high",
+                    "weakestMove": "The opening avoids the real product trade-off.",
+                    "recommendedEditorialMove": "Name the uncomfortable product trade-off earlier.",
+                    "findings": [],
+                }
+            ]
+        },
+    }
+    result = service.run(
+        request=request(),
+        draft_artifact=draft_artifact(),
+        validation_report=report,
+        context_artifact=context_artifact(),
+        rule_pack={},
+        material_plan={},
+    )
+
+    cycle = result.artifact_payload["revisionLoop"]["cycles"][0]
+    assert result.final_draft is not None
+    assert result.final_draft.title == "Revised"
+    assert cycle["accepted"] is True
+    assert cycle["resolvedEditorialGoals"]
+    assert result.artifact_payload["revisionLoop"]["stopReason"] == "editorially-improved"
+
+
+def test_revision_loop_uses_alternative_angle_as_editorial_goal(tmp_path) -> None:
+    adapter = SequenceAdapter([
+        {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
+        {"title": "Revised", "body": "Revised body with CTA and alternative angle", "changeLog": ["Borrowed alternative route"]},
+        {
+            "winnerCandidateId": "revised-candidate-1",
+            "reason": "Better idea.",
+            "editorialDimensionScores": [
+                {"dimension": "ideaStrength", "winnerCandidateId": "revised-candidate-1", "reason": "Revision uses the challenger lesson."}
+            ],
+            "comparisons": [{"leftCandidateId": "candidate-1", "rightCandidateId": "revised-candidate-1", "winnerCandidateId": "revised-candidate-1", "reason": "better"}],
+        },
+    ])
+    service = ranking_revision_service(tmp_path, adapter)
+    report = {"candidateReports": [{"candidateId": "candidate-1", "criticalCount": 0, "warningCount": 0, "findings": []}], "alternativeAngleTournament": {"status": "succeeded", "route": {"angle": "Argue from the buyer's hidden fear", "whyDifferent": "Escapes the generic feature-summary opening."}}}
+
+    result = service.run(request=request(), draft_artifact=draft_artifact(), validation_report=report, context_artifact=context_artifact(), rule_pack={}, material_plan={})
+
+    goals = result.artifact_payload["revisionLoop"]["cycles"][0]["editorialGoals"]
+    assert any(goal["source"] == "alternativeAngleTournament" for goal in goals)
+    assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is True
+
+
 def ranking_revision_service(tmp_path, adapter: SequenceAdapter, max_iterations: int = 1) -> DraftRankingRevisionService:
     ai = ai_service(tmp_path)
     return DraftRankingRevisionService(

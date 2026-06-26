@@ -503,17 +503,23 @@ candidate regresses on deterministic critical/warning counts, hard size limits, 
 artifact leakage, or attribution markers, the original ranked winner remains the
 final draft and the rejected revision stays in trace.
 
-Slice 2.15 turns the one-shot repair into a bounded improvement loop. The same
+Slice 2.15 turns the one-shot repair into a bounded improvement loop. Slice 2.15.6
+deepens that loop from validator cleanup into editorial optimization. The same
 `validation.rankingRevision` payload now contains `revisionLoop`, and no new DraftRun
 step or SQLite table is introduced. The loop limit is `DRAFT_REVISION_MAX_ITERATIONS`
-with default `3` and runtime-safe minimum `1`. Each cycle builds repair goals from
-deterministic and LLM findings, calls directed revision, re-runs deterministic
-validation on the revised candidate, compares previous-best vs revised candidate, and
-accepts the revision only when it closes explicit goals or clearly wins pairwise
-without deterministic regression. Rejected revisions remain in trace and their failure
-reasons become constraints for the next cycle. `finalDraft` is selected from the final
-best candidate after the loop, and `/ai-runs?runId=...` shows cycles, accepted/rejected
-attempts, unresolved goals, final source, and stop reason.
+with default `3` and runtime-safe minimum `1`. Each cycle builds validator repair
+goals plus editorial goals from `EditorialCritiqueReport`, `EvidenceInterpretation`,
+`alternativeAngleTournament`, material-plan gaps, and prior rejected moves. Directed
+revision receives those goals, anti-regression constraints, context packs, and rejected
+moves. The review model then compares previous-best vs revised candidate across
+explicit dimensions: idea strength, tension, reader value, author stance, source
+integration, structure, and validator health. The loop accepts a revision only when it
+resolves a targeted validator/editorial goal or clearly wins on editorial dimensions
+without deterministic or attribution regression. Rejected revisions remain in trace as
+structured `rejectedMoves`, and their constraints feed the next cycle. `finalDraft` is
+selected from the final best candidate after the loop, and `/ai-runs?runId=...` shows
+cycles, editorial goals, dimension scores, accepted/rejected attempts, unresolved goals,
+rejected moves, final source, and stop reason.
 
 Revision-loop ownership is intentionally split:
 
@@ -523,11 +529,24 @@ Revision-loop ownership is intentionally split:
   the bounded iteration limit.
 - `backend/app/application/draft_revision_goal_evaluator.py`: deterministic comparison
   of repair goals against validation before/after.
+- `backend/app/application/draft_pairwise_ranking_payloads.py`: provider-response
+  normalization for pairwise ranking decisions, attempts, and editorial dimension
+  scores.
+- `backend/app/application/draft_editorial_revision_goals.py`: deterministic projection
+  of critique, evidence interpretation, alternative-angle lessons, and rejected moves
+  into editorial improvement goals.
+- `backend/app/application/draft_editorial_revision_evaluator.py`: deterministic read
+  of pairwise editorial-dimension decisions into resolved/unresolved/regressed goals.
+- `backend/app/application/draft_revision_rejected_moves.py`: structured rejected-move
+  and anti-regression constraint projection for the next cycle.
 - `backend/app/application/draft_revision_loop_policy.py`: deterministic acceptance,
   stop-reason, failed-cycle, and constraint helpers.
+- `backend/app/application/draft_revision_loop_cycle_runner.py`: thin executor for one
+  revision, deterministic regression, and old-vs-new pairwise comparison operation.
 - `backend/app/application/draft_revision_loop_service.py`: bounded orchestration
   across instruction building, directed revision, deterministic regression, old-vs-new
-  pairwise comparison, and final best selection.
+  pairwise comparison, editorial goal evaluation, rejected moves, and final best
+  selection.
 
 Slice 2.15.3 adds `EvidenceInterpretation` inside the existing `rulePack` artifact,
 without a new DraftRun step or SQLite table. Accepted public evidence still becomes

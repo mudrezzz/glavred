@@ -7,12 +7,13 @@ from backend.app.application.draft_pairwise_ranking_prompts import (
     PAIRWISE_RANKING_TEMPERATURE,
     build_pairwise_ranking_messages,
 )
+from backend.app.application.draft_pairwise_ranking_payloads import attempt_record, dimension_scores, report_from_payload, validate_pairwise_payload
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
-from backend.app.domain.draft_ranking_revision import PairwiseComparison, PairwiseRankingReport, RankingDecision
+from backend.app.domain.draft_ranking_revision import PairwiseRankingReport, RankingDecision
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -55,7 +56,7 @@ class DraftPairwiseRankingService:
             result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, context_artifact, rule_pack, material_plan, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
-                report = _report_from_payload(result["payload"], draft_artifact, attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")])
+                report = report_from_payload(result["payload"], attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")])
                 if report.decision.winner_candidate_id:
                     return report
             repair_context = {"previousAttempt": result["attempt"], "requiredShape": "winnerCandidateId, reason, comparisons[]"}
@@ -93,7 +94,7 @@ class DraftPairwiseRankingService:
                 temperature=PAIRWISE_RANKING_TEMPERATURE,
                 model=attempt.model,
             )
-            _validate_payload(result.payload, draft_artifact)
+            validate_pairwise_payload(result.payload, draft_artifact)
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
@@ -102,7 +103,17 @@ class DraftPairwiseRankingService:
                 result_payload={"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "result": result.payload, "providerResponse": result.raw_response},
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
+            return {
+                "accepted": True,
+                "payload": result.payload,
+                    "attempt": attempt_record(
+                    attempt,
+                    run.id,
+                    "accepted",
+                    selection.to_payload(),
+                    editorial_dimension_scores=dimension_scores(result.payload),
+                ),
+            }
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, self._safe_error(exc))
 
@@ -117,7 +128,7 @@ class DraftPairwiseRankingService:
             error=error,
         )
         selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", selection, error)}
+        return {"accepted": False, "payload": {}, "attempt": attempt_record(attempt, run.id, "error", selection, error)}
 
     def _fallback_report(self, draft_artifact: dict[str, Any], validation_report: dict[str, Any], attempts: list[dict[str, Any]], warning: str) -> PairwiseRankingReport:
         fallback = self._fallback.rank(draft_artifact=draft_artifact, validation_report=validation_report)
@@ -142,42 +153,3 @@ class DraftPairwiseRankingService:
             if token:
                 message = message.replace(token, "[redacted]")
         return f"{error.__class__.__name__}: {message[:180]}"
-
-
-def _report_from_payload(payload: dict[str, Any], draft_artifact: dict[str, Any], attempts: list[dict[str, Any]], ai_run_ids: list[str]) -> PairwiseRankingReport:
-    return PairwiseRankingReport(
-        decision=RankingDecision(
-            winner_candidate_id=str(payload.get("winnerCandidateId") or ""),
-            reason=str(payload.get("reason") or "Selected by provider pairwise ranking."),
-            source="openrouter",
-        ),
-        comparisons=[
-            PairwiseComparison(
-                left_candidate_id=str(item.get("leftCandidateId") or ""),
-                right_candidate_id=str(item.get("rightCandidateId") or ""),
-                winner_candidate_id=str(item.get("winnerCandidateId") or ""),
-                reason=str(item.get("reason") or ""),
-                decisive_factors=[str(value) for value in item.get("decisiveFactors", []) if str(value).strip()] if isinstance(item.get("decisiveFactors"), list) else [],
-            )
-            for item in payload.get("comparisons", [])
-            if isinstance(item, dict)
-        ],
-        attempts=attempts,
-        ai_run_ids=ai_run_ids,
-    )
-
-
-def _validate_payload(payload: dict[str, Any], draft_artifact: dict[str, Any]) -> None:
-    candidate_ids = {str(candidate.get("id")) for candidate in draft_artifact.get("candidates", []) if isinstance(candidate, dict)}
-    winner = str(payload.get("winnerCandidateId") or "")
-    if winner not in candidate_ids:
-        raise ValueError("Pairwise ranking winnerCandidateId is not a known candidate")
-    if not isinstance(payload.get("comparisons"), list):
-        raise ValueError("Pairwise ranking comparisons is not a list")
-
-
-def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
-    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
-    if validation:
-        record["validation"] = validation
-    return record

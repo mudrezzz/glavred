@@ -1327,12 +1327,16 @@ The next artifacts must make candidate validation meaningful:
   then candidate-level unavailable status without fake critique findings.
 - `validation.rankingRevision` is the first actionable validation consumer. It
   pairwise-ranks candidates, then runs a bounded `revisionLoop`. Each cycle builds
-  repair goals from actionable findings, asks OpenRouter for a directed revision,
-  re-runs deterministic validation, compares previous best vs revised candidate, and
-  accepts the revision only when it resolves goals or clearly wins pairwise without
-  regression. `DRAFT_REVISION_MAX_ITERATIONS` limits this loop. If provider calls fail
-  or a revision does not improve the draft, the previous best remains final and the
-  reason is visible in `/ai-runs?runId=...`.
+  validator repair goals plus editorial goals from EvidenceInterpretation,
+  EditorialCritique, alternative-angle tournament lessons, material gaps, and prior
+  rejected moves. The writer receives those goals and anti-regression constraints.
+  The review model then compares previous best vs revised candidate across explicit
+  dimensions: idea strength, tension, reader value, author stance, source integration,
+  structure, and validator health. The revision is accepted only when it resolves a
+  targeted goal or clearly wins on those dimensions without deterministic or
+  attribution regression. `DRAFT_REVISION_MAX_ITERATIONS` limits this loop. If provider
+  calls fail or a revision does not improve the draft, the previous best remains final
+  and the reason plus rejected moves are visible in `/ai-runs?runId=...`.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1369,9 +1373,10 @@ Drafting steps should be narrow:
 14. Run deterministic lint checks.
 15. Validate candidates with report-only LLM validators.
 16. Rank candidates pairwise and select the strongest initial attempt.
-17. Run a bounded directed-revision loop until quality threshold, no improvement,
+17. Run a bounded editorial revision loop until validator-clean, editorially-improved,
     provider failure, or `DRAFT_REVISION_MAX_ITERATIONS`.
-18. Preserve rejected revision attempts as constraints for later loop cycles.
+18. Preserve rejected revision attempts as structured `rejectedMoves` and constraints
+    for later loop cycles.
 19. Surface the selected draft, unresolved warnings, claim provenance, and human
     decision data.
 

@@ -134,6 +134,9 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Final draft decision');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields).toContainEqual({ label: 'Stop reason', value: 'quality-threshold' });
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Cycles')?.value).toContain('cycle 1');
+    expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Editorial goals')?.value).toContain('readerValue');
+    expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Editorial dimension scores')?.value).toContain('revised-candidate-1');
+    expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Rejected moves')?.value).toContain('Do not shorten below previous best');
     expect(viewModel.semanticSections.find((section) => section.id === 'pairwise-ranking')?.fields.find((field) => field.label === 'Comparisons')?.value).toContain('candidate-1 vs candidate-2 -> candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'directed-revision')?.fields.find((field) => field.label === 'Candidate')?.value).toBe('candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-regression')?.fields.find((field) => field.label === 'Accepted')?.value).toBe('true');
@@ -824,6 +827,39 @@ function makeDraftRunBundle(): RunTraceBundle {
                     },
                     resolvedGoals: ['Make the reader value explicit.'],
                     unresolvedGoals: [],
+                    editorialGoals: [
+                      {
+                        id: 'critique-recommended-candidate-1',
+                        dimension: 'readerValue',
+                        source: 'editorialCritique',
+                        message: 'Make reader value explicit.'
+                      }
+                    ],
+                    editorialDimensionScores: [
+                      {
+                        dimension: 'readerValue',
+                        winnerCandidateId: 'revised-candidate-1',
+                        reason: 'Revision gives the reader a clearer payoff.'
+                      }
+                    ],
+                    resolvedEditorialGoals: [
+                      {
+                        id: 'critique-recommended-candidate-1',
+                        dimension: 'readerValue',
+                        source: 'editorialCritique',
+                        message: 'Make reader value explicit.'
+                      }
+                    ],
+                    unresolvedEditorialGoals: [],
+                    newRejectedMoves: [
+                      {
+                        id: 'rejected-cycle-1-1',
+                        reason: 'Do not shorten below previous best',
+                        constraint: 'Do not shorten below previous best'
+                      }
+                    ],
+                    acceptanceDecision: { accepted: true, reasons: [] },
+                    stopReason: 'editorially-improved',
                     accepted: true,
                     rejectionReasons: [],
                     aiRunIds: ['ai-revision-1', 'ai-ranking-2']

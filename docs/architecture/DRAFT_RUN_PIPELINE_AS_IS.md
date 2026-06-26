@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.15.5: Alternative Angle Tournament.
+Current as of Slice 2.15.6: Deep Revision Loop v2.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -31,6 +31,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `ContextPack` | Role-specific subset of ArticleDossier passed to LLM calls. | step artifacts and child `AiRun.requestPayload` |
 | `EditorialCritiqueReport` | Report-only prosecutor/editor critique of candidate idea strength, tension, author stance, source integration, and reader value. | `validation.editorialCritiqueReport`, child `AiRun` trace |
 | `AlternativeAngleTournament` | Critic-driven challenger route and candidate used to escape a weak local optimum. | `validation.alternativeAngleTournament`, child `AiRun` trace |
+| `RevisionLoop` | Bounded editorial optimization loop: validator repair goals plus editorial goals, old-vs-new dimension scoring, accepted/rejected revisions, and rejected moves. | `validation.rankingRevision.revisionLoop` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, and revision loop. | parent DraftRun |
 
 ## 2. Runtime topology
@@ -531,8 +532,9 @@ Processing:
 4. alternative-angle tournament may add one critic-driven challenger candidate;
 5. final validation report is rebuilt when a challenger enters the pool;
 6. pairwise ranking chooses the best candidate from the merged candidate pool;
-7. bounded revision loop builds repair goals, revises, re-runs deterministic validation,
-   compares previous best vs revised, and accepts only real improvement.
+7. deep revision loop builds validator and editorial goals, revises, re-runs
+   deterministic validation, compares previous best vs revised across editorial
+   dimensions, and accepts only targeted improvement without regression.
 
 Output:
 
@@ -541,7 +543,8 @@ Output:
 - `editorialCritiqueReport`;
 - `alternativeAngleTournament`;
 - `rankingRevision`;
-- `revisionLoop`;
+- `revisionLoop` with editorial goals, dimension scores, rejected moves, and stop
+  reason;
 - final draft candidate decision;
 - updated `ArticleDossier` and `ContextPack`s.
 
@@ -560,9 +563,13 @@ Role/model handoff:
 - `anotherAngle` receives the initial validation, editorial critique, dossier cards,
   and another-angle `ContextPack`, then returns one different contract-safe route;
 - `writer` executes the alternative route into one challenger candidate;
-- `writer` receives the current best candidate plus repair goals and constraints,
-  then returns revised prose;
-- regression guard decides whether the revised prose replaces the current best;
+- `writer` receives the current best candidate plus validator repair goals,
+  editorial goals, rejected moves, dossier/context pack, and constraints, then returns
+  revised prose;
+- regression guard checks deterministic health, and `review` compares old-vs-new by
+  idea strength, tension, reader value, author stance, source integration, structure,
+  and validator health;
+- acceptance policy decides whether the revised prose replaces the current best;
 - `complete` receives only the final decision, not the whole model conversation.
 
 Trace:

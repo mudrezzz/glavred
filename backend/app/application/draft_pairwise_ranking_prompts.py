@@ -17,22 +17,16 @@ def build_pairwise_ranking_messages(
     system = (
         "You are Glavred's pairwise draft ranker. Return strict JSON only. "
         "Choose the candidate that best preserves the post contract, source grounding, "
-        "publisher rules, and validation feedback. Do not rewrite text."
+        "publisher rules, validation feedback, and explicit editorial improvement dimensions. "
+        "Do not rewrite text."
     )
     payload = {
         "task": "Rank all draft candidates pairwise and select one winner.",
         "requiredJson": {
             "winnerCandidateId": "candidate id",
             "reason": "short explanation",
-            "comparisons": [
-                {
-                    "leftCandidateId": "candidate id",
-                    "rightCandidateId": "candidate id",
-                    "winnerCandidateId": "candidate id",
-                    "reason": "why this candidate wins",
-                    "decisiveFactors": ["source grounding", "contract fit"],
-                }
-            ],
+            "comparisons": "array of pairwise decisions with decisiveFactors and optional editorialDimensionScores",
+            "editorialDimensionScores": "array: dimension, winnerCandidateId, reason",
         },
         "candidates": draft_artifact.get("candidates"),
         "legacySelection": draft_artifact.get("selection"),
@@ -42,6 +36,7 @@ def build_pairwise_ranking_messages(
         "contextPack": context_pack or {},
         "materialPlan": material_plan,
         "repairContext": repair_context,
+        "editorialDimensions": ["ideaStrength", "tension", "readerValue", "authorStance", "sourceIntegration", "structure", "validatorHealth"],
     }
     return [{"role": "system", "content": system}, {"role": "user", "content": _json(payload)}]
 

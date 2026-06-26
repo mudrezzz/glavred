@@ -14,6 +14,13 @@ class RevisionLoopCycle:
     pairwise_comparison: dict[str, Any] | None
     resolved_goals: list[str] = field(default_factory=list)
     unresolved_goals: list[str] = field(default_factory=list)
+    editorial_goals: list[dict[str, Any]] = field(default_factory=list)
+    editorial_dimension_scores: list[dict[str, Any]] = field(default_factory=list)
+    resolved_editorial_goals: list[dict[str, Any]] = field(default_factory=list)
+    unresolved_editorial_goals: list[dict[str, Any]] = field(default_factory=list)
+    new_rejected_moves: list[dict[str, Any]] = field(default_factory=list)
+    acceptance_decision: dict[str, Any] = field(default_factory=dict)
+    stop_reason: str | None = None
     accepted: bool = False
     rejection_reasons: list[str] = field(default_factory=list)
     ai_run_ids: list[str] = field(default_factory=list)
@@ -30,6 +37,13 @@ class RevisionLoopCycle:
             "pairwiseComparison": self.pairwise_comparison,
             "resolvedGoals": self.resolved_goals,
             "unresolvedGoals": self.unresolved_goals,
+            "editorialGoals": self.editorial_goals,
+            "editorialDimensionScores": self.editorial_dimension_scores,
+            "resolvedEditorialGoals": self.resolved_editorial_goals,
+            "unresolvedEditorialGoals": self.unresolved_editorial_goals,
+            "newRejectedMoves": self.new_rejected_moves,
+            "acceptanceDecision": self.acceptance_decision,
+            "stopReason": self.stop_reason,
             "accepted": self.accepted,
             "rejectionReasons": self.rejection_reasons,
             "aiRunIds": self.ai_run_ids,

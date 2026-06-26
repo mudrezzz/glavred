@@ -227,11 +227,15 @@ must either choose evidence or explain why projected claims were rejected; empty
 evidence without accountability triggers a repair retry and then the optional
 `OPENROUTER_BACKUP_MODEL` before emergency deterministic fallback is allowed.
 After validation, the worker pairwise-ranks candidates and runs a bounded
-`revisionLoop` inside `validation.rankingRevision`. The loop tries directed repairs,
-revalidates the revised candidate, compares it against the previous best, and accepts
-only measurable improvement without deterministic regression. The iteration count is
-controlled by `DRAFT_REVISION_MAX_ITERATIONS` (default `3`). The main editor still
-receives one final draft; `/ai-runs?runId=...` shows revision cycles, accepted or
+`revisionLoop` inside `validation.rankingRevision`. The loop now optimizes explicit
+editorial dimensions, not only validator findings: idea strength, tension, reader
+value, author stance, source integration, structure, and validator health. It builds
+goals from validation, EvidenceInterpretation, EditorialCritique, the alternative-angle
+tournament, material gaps, and prior rejected moves, then accepts a revision only when
+it resolves targeted goals or clearly wins pairwise without deterministic/attribution
+regression. The iteration count is controlled by `DRAFT_REVISION_MAX_ITERATIONS`
+(default `3`). The main editor still receives one final draft; `/ai-runs?runId=...`
+shows revision cycles, editorial goals, dimension scores, rejected moves, accepted or
 rejected attempts, unresolved goals, and the final stop reason.
 
 The next drafting-quality direction is an editorial lab around this spine, not a

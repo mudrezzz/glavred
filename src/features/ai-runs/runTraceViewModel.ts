@@ -474,6 +474,9 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
         ['Final source', loop.finalSource],
         ['Unresolved goals', loop.unresolvedGoals],
         ['Constraints', loop.constraints],
+        ['Editorial goals', asArray(loop.cycles)?.flatMap(revisionLoopEditorialGoals).map(editorialGoalValue)],
+        ['Editorial dimension scores', asArray(loop.cycles)?.flatMap(revisionLoopDimensionScores).map(editorialDimensionScoreValue)],
+        ['Rejected moves', asArray(loop.cycles)?.flatMap(revisionLoopRejectedMoves).map(rejectedMoveValue)],
         ['Cycles', asArray(loop.cycles)?.map(revisionLoopCycleValue)]
       ])
     });
@@ -541,6 +544,36 @@ function revisionLoopCycleValue(value: unknown): string {
     `unresolved ${displayValue(cycle.unresolvedGoals).replace(/\n/g, '; ') || 'none'}`,
     `rejection ${displayValue(cycle.rejectionReasons).replace(/\n/g, '; ') || 'none'}`
   ].join(' · ');
+}
+
+function revisionLoopEditorialGoals(value: unknown): unknown[] {
+  return asArray(asRecord(value)?.editorialGoals) ?? [];
+}
+
+function revisionLoopDimensionScores(value: unknown): unknown[] {
+  return asArray(asRecord(value)?.editorialDimensionScores) ?? [];
+}
+
+function revisionLoopRejectedMoves(value: unknown): unknown[] {
+  return asArray(asRecord(value)?.newRejectedMoves) ?? [];
+}
+
+function editorialGoalValue(value: unknown): string {
+  const goal = asRecord(value);
+  if (!goal) return displayValue(value);
+  return `${goal.dimension ?? 'editorial'} В· ${goal.source ?? 'unknown'} В· ${goal.message ?? goal.id ?? ''}`;
+}
+
+function editorialDimensionScoreValue(value: unknown): string {
+  const score = asRecord(value);
+  if (!score) return displayValue(value);
+  return `${score.dimension ?? 'dimension'} -> ${score.winnerCandidateId ?? 'unknown'}: ${score.reason ?? ''}`;
+}
+
+function rejectedMoveValue(value: unknown): string {
+  const move = asRecord(value);
+  if (!move) return displayValue(value);
+  return `${move.id ?? 'rejected'} В· ${move.reason ?? ''}${move.constraint ? ` В· ${move.constraint}` : ''}`;
 }
 
 function pairwiseComparisonValue(value: unknown): string {
