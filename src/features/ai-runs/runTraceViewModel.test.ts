@@ -187,6 +187,19 @@ describe('buildRunTraceViewModel', () => {
     expect(ledger?.fields).toContainEqual({ label: 'External claims', value: '1' });
     expect(ledger?.fields.find((field) => field.label === 'External claim list')?.value).toContain('Independent report');
   });
+
+  it('shows article dossier and role context packs in DraftRun and child AiRun traces', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const dossier = viewModel.semanticSections.find((section) => section.id === 'article-dossier');
+    const packs = viewModel.semanticSections.find((section) => section.id === 'context-packs');
+    const candidateDetail = viewModel.details.find((detail) => detail.id === 'ai-detail-ai-candidate');
+
+    expect(dossier?.fields).toContainEqual({ label: 'Cards', value: '2' });
+    expect(dossier?.fields.find((field) => field.label === 'Key cards')?.value).toContain('Signal claim');
+    expect(packs?.fields.find((field) => field.label === 'Roles')?.value).toContain('writer: 2 items');
+    expect(candidateDetail?.sections.find((section) => section.id === 'context-packs')?.fields.find((field) => field.label === 'Roles')?.value).toContain('writer: 2 items');
+    expect(viewModel.details.find((detail) => detail.id === 'ai-detail-ai-material')?.sections.find((section) => section.id === 'context-packs')?.fields.find((field) => field.label === 'Roles')?.value).toContain('strategy: 1 items');
+  });
 });
 
 function makeDraftRunBundle(): RunTraceBundle {
@@ -269,6 +282,8 @@ function makeDraftRunBundle(): RunTraceBundle {
             warnings: [],
             metadata: { searchProvider: 'openrouter:web_search', model: 'test-model' },
             aiRunIds: ['search-run-1'],
+            articleDossier: articleDossierFixture(),
+            contextPacks: contextPacksFixture(),
             evidenceSynthesis: {
               source: 'openrouter',
               externalClaims: [{
@@ -773,6 +788,8 @@ function makeAiRun(id: string, step: string) {
       modelRole: step === 'draftCandidate' ? 'writer' : step === 'llmValidation' || step === 'pairwiseRanking' ? 'review' : 'strategy',
       selectedModel: 'deepseek/deepseek-v3.2',
       modelSelectionSource: 'role',
+      capabilityInput: step === 'materialPlan' ? { contextPack: contextPacksFixture().strategy } : undefined,
+      contextPack: step === 'draftCandidate' ? contextPacksFixture().writer : undefined,
       providerRequest: {
         messages: [
           { role: 'system', content: 'Return JSON' },
@@ -789,6 +806,47 @@ function makeAiRun(id: string, step: string) {
     fallbackUsed: false,
     createdAt: '2026-06-19T00:00:00+00:00',
     updatedAt: '2026-06-19T00:00:01+00:00'
+  };
+}
+
+function articleDossierFixture() {
+  return {
+    version: 'article-dossier-v1',
+    metadata: { cardCount: 2, byType: { claim: 1, evidence: 1 } },
+    cards: [
+      { id: 'claim-signal', type: 'claim', title: 'Signal claim', summary: 'Demo adoption needs workflow proof.', source: 'sourceLedger', relatedIds: ['signal-summary'], priority: 'high', metadata: {} },
+      { id: 'public-report', type: 'evidence', title: 'Independent report', summary: 'Adoption depends on workflow integration.', source: 'publicEvidence', relatedIds: ['public-evidence-url-task-1'], priority: 'high', metadata: {} }
+    ]
+  };
+}
+
+function contextPacksFixture() {
+  return {
+    writer: {
+      version: 'context-pack-v1',
+      role: 'writer',
+      metadata: { itemCount: 2 },
+      items: [
+        { cardId: 'claim-signal', title: 'Signal claim', summary: 'Demo adoption needs workflow proof.', reason: 'Keep usable claims explicit.', source: 'sourceLedger', priority: 'high', metadata: { type: 'claim' } },
+        { cardId: 'public-report', title: 'Independent report', summary: 'Adoption depends on workflow integration.', reason: 'Ground the step in accepted evidence.', source: 'publicEvidence', priority: 'high', metadata: { type: 'evidence' } }
+      ]
+    },
+    review: {
+      version: 'context-pack-v1',
+      role: 'review',
+      metadata: { itemCount: 1 },
+      items: [
+        { cardId: 'claim-signal', title: 'Signal claim', summary: 'Demo adoption needs workflow proof.', reason: 'Keep usable claims explicit.', source: 'sourceLedger', priority: 'high', metadata: { type: 'claim' } }
+      ]
+    },
+    strategy: {
+      version: 'context-pack-v1',
+      role: 'strategy',
+      metadata: { itemCount: 1 },
+      items: [
+        { cardId: 'claim-signal', title: 'Signal claim', summary: 'Demo adoption needs workflow proof.', reason: 'Keep usable claims explicit.', source: 'sourceLedger', priority: 'high', metadata: { type: 'claim' } }
+      ]
+    }
   };
 }
 

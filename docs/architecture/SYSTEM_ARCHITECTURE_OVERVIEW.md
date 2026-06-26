@@ -536,14 +536,19 @@ prevent two failure modes:
 - losing accumulated research/critique context by passing only the latest artifact;
 - flooding models with raw DraftRun JSON until they drift into generic prose.
 
-Planned ownership boundaries:
+Current ownership boundaries:
 
 - `ArticleDossier`: DraftRun-local memory of the article, including evidence cards,
   interpreted implications, tensions, angle attempts, critique notes, rejected moves,
-  open questions, and decisions.
+  open questions, and decisions. Slice 2.15.2 implements provider-free DTOs in
+  `backend/app/domain/draft_article_memory.py` and deterministic extraction in
+  `backend/app/application/draft_article_dossier_builder.py`.
 - `ContextPackBuilder`: application-owned selectors that build task-specific context
   for each role, such as researcher, strategist, writer, critic, reviewer, and
-  another-angle generator.
+  another-angle generator. Slice 2.15.2 implements this in
+  `backend/app/application/draft_context_pack_builder.py`, with
+  `backend/app/application/draft_article_memory_service.py` as the thin pipeline
+  wrapper.
 - `ModelRoleConfig`: settings/application layer that maps role names to model ids.
   `DEFAULT` and `BACKUP` remain technical fallback concepts, while writer, critic,
   review, research, strategy, and another-angle roles can intentionally use different
@@ -555,6 +560,12 @@ Planned ownership boundaries:
   editorial implications before writer prompts can cite or use it.
 - `AlternativeAngle`: a role that proposes genuinely different post routes instead of
   retrying the same prompt with the same assumptions.
+
+`ArticleDossier` and `ContextPack` are not workspace persistence, not long-term RAG,
+and not a vector store. They live inside existing DraftRun JSON artifacts and child
+`AiRun.requestPayload` traces. Existing services may consume the role-specific pack
+as compact structured input, but they must not reconstruct provenance from raw trace
+blobs.
 
 Future slices must preserve this distinction: validators and revision loops judge and
 repair drafts, while the editorial lab creates and maintains the intellectual

@@ -6,6 +6,7 @@ def build_material_plan_messages(
     context_summary: dict[str, Any],
     rule_pack: dict[str, Any],
     usable_evidence_candidates: list[dict[str, Any]] | None = None,
+    context_pack: dict[str, Any] | None = None,
     repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     repair_instruction = ""
@@ -32,6 +33,7 @@ def build_material_plan_messages(
             "content": (
                 f"Context summary:\n{context_summary}\n\n"
                 f"RulePack:\n{rule_pack}\n\n"
+                f"Context pack:\n{context_pack or {}}\n\n"
                 f"Usable evidence candidates:\n{usable_evidence_candidates or []}"
                 f"{repair_instruction}"
             ),
@@ -44,6 +46,7 @@ def build_draft_strategy_messages(
     context_summary: dict[str, Any],
     rule_pack: dict[str, Any],
     material_plan: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     return [
         {
@@ -56,6 +59,6 @@ def build_draft_strategy_messages(
         },
         {
             "role": "user",
-            "content": f"Context summary:\n{context_summary}\n\nRulePack:\n{rule_pack}\n\nMaterial plan:\n{material_plan}",
+            "content": f"Context summary:\n{context_summary}\n\nRulePack:\n{rule_pack}\n\nContext pack:\n{context_pack or {}}\n\nMaterial plan:\n{material_plan}",
         },
     ]

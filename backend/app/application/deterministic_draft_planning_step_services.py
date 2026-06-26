@@ -35,6 +35,7 @@ class DeterministicStrategyStepService:
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._planning_service.create_strategy(
             context_summary=context_summary,

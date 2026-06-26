@@ -14,6 +14,7 @@ def build_draft_candidate_messages(
     material_plan: dict[str, Any],
     draft_strategy: dict[str, Any],
     direction: DraftCandidateDirection,
+    context_pack: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     return [
         {
@@ -33,6 +34,7 @@ def build_draft_candidate_messages(
                     "rulePack": rule_pack,
                     "materialPlan": material_plan,
                     "draftStrategy": draft_strategy,
+                    "contextPack": context_pack or {},
                     "outputLanguage": "ru",
                 },
                 ensure_ascii=False,

@@ -10,6 +10,7 @@ from backend.app.application.draft_planning_audit import (
 from backend.app.application.draft_planning_prompts import build_material_plan_messages
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
+from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.material_plan_accountability import evaluate_material_plan_accountability
 from backend.app.application.material_plan_evidence_projection import build_usable_evidence_candidates
 from backend.app.application.material_plan_retry_policy import MaterialPlanAttempt, build_material_plan_attempts
@@ -54,6 +55,7 @@ class MaterialPlanRetryOrchestrator:
         context_artifact: dict[str, Any] | None,
     ) -> DraftPlanningStepResult:
         usable_candidates = build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack)
+        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY)
         attempt_records: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY)
@@ -67,6 +69,7 @@ class MaterialPlanRetryOrchestrator:
                 context_summary=context_summary,
                 rule_pack=rule_pack,
                 usable_candidates=usable_candidates,
+                context_pack=context_pack,
                 repair_context=repair_context,
             )
             attempt_records.append(result["attempt"])
@@ -93,6 +96,7 @@ class MaterialPlanRetryOrchestrator:
             context_summary=context_summary,
             rule_pack=rule_pack,
             usable_candidates=usable_candidates,
+            context_pack=context_pack,
             attempts=attempt_records,
             provider=AiRunProvider.OPENROUTER,
             model=primary_selection.model,
@@ -109,6 +113,7 @@ class MaterialPlanRetryOrchestrator:
         provider: AiRunProvider,
         model: str | None,
         error: str,
+        context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         selection = unconfigured_model_selection(DraftModelRole.STRATEGY) if model is None else select_model_for_role(self._settings, DraftModelRole.STRATEGY)
         payload = self._deterministic_planning_service.create_material_plan(
@@ -127,6 +132,7 @@ class MaterialPlanRetryOrchestrator:
             context_summary=context_summary,
             rule_pack=rule_pack,
             usable_evidence_candidates=usable_candidates,
+            context_pack=context_pack,
             attempt={"label": "emergency-fallback", "model": model, "repair": False, "backup": False},
             model_selection=selection.to_payload(),
         )
@@ -181,12 +187,14 @@ class MaterialPlanRetryOrchestrator:
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         usable_candidates: list[dict[str, Any]],
+        context_pack: dict[str, Any] | None,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         messages = build_material_plan_messages(
             context_summary=context_summary,
             rule_pack=rule_pack,
             usable_evidence_candidates=usable_candidates,
+            context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
         request_payload = build_planning_request_trace(
@@ -197,6 +205,7 @@ class MaterialPlanRetryOrchestrator:
             context_summary=context_summary,
             rule_pack=rule_pack,
             usable_evidence_candidates=usable_candidates,
+            context_pack=context_pack,
             attempt={"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup},
             model_selection=selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection).to_payload(),
         )

@@ -11,6 +11,7 @@ def build_llm_validation_messages(
     rule_pack: dict[str, Any],
     material_plan: dict[str, Any],
     deterministic_report: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
     repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     payload = {
@@ -19,6 +20,7 @@ def build_llm_validation_messages(
         "sourceLedger": context_artifact.get("sourceLedger"),
         "postContract": context_artifact.get("postContract"),
         "ruleRegistrySnapshot": rule_pack.get("ruleRegistrySnapshot"),
+        "contextPack": context_pack or {},
         "materialPlan": material_plan,
         "deterministicReport": deterministic_report,
         "requiredJson": {

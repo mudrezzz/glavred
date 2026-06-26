@@ -8,6 +8,7 @@ from backend.app.application.draft_pairwise_ranking_prompts import (
     build_pairwise_ranking_messages,
 )
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -72,6 +73,7 @@ class DraftPairwiseRankingService:
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_pairwise_ranking_messages(
             draft_artifact=draft_artifact,
@@ -79,9 +81,10 @@ class DraftPairwiseRankingService:
             context_artifact=context_artifact,
             rule_pack=rule_pack,
             material_plan=material_plan,
+            context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = {"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "messages": messages, **selection.to_payload()}
+        request_payload = {"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "contextPack": context_pack, "messages": messages, **selection.to_payload()}
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,

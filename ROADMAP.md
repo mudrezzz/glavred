@@ -4402,7 +4402,7 @@ Status:
 
 ### Slice 2.15.2: Article Dossier and Context Packs
 
-- Status: Ready
+- Status: Done
 - Goal: Add DraftRun-local article memory and task-specific context selection.
 - User value:
   - Later steps stop losing useful research/critique context and stop drowning models
@@ -4430,10 +4430,23 @@ Status:
   - Legacy runs without dossier remain readable.
 - Acceptance criteria:
   - `/ai-runs?runId=...` can show the article memory and each role's context pack.
+- Result:
+  - Added provider-free `ArticleDossier`, `DossierCard`, `ContextPack`, and
+    `ContextPackItem` DTOs.
+  - Added deterministic article-memory builders that create DraftRun-local cards from
+    ledger, public evidence, contract/rules, material planning, candidates,
+    validation, ranking, and revision artifacts.
+  - Existing `publicEvidence`, `rulePack`, `materialPlan`, `strategy`,
+    `rhetoricalPlans`, `draft`, and `validation` artifacts can now carry
+    `articleDossier` and `contextPacks` snapshots without new steps or SQLite schema.
+  - Strategy/writer/review child `AiRun` request traces include the role-specific
+    `contextPack` they received.
+  - `/ai-runs?runId=...` renders Article Dossier and Context Packs as semantic trace
+    sections, while old runs without these fields remain readable.
 
 ### Slice 2.15.3: Evidence Interpretation, Not Citation Injection
 
-- Status: Backlog
+- Status: Ready
 - Goal: Convert public evidence into editorial implications before writing.
 - User value:
   - Sources stop appearing as forced reference name-drops and start shaping the post's
@@ -4728,4 +4741,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.2: Article Dossier and Context Packs`.
+Continue the backend track with `Slice 2.15.3: Evidence Interpretation, Not Citation Injection`.

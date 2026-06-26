@@ -13,6 +13,7 @@ def build_rhetorical_plan_request_trace(
     rule_registry: dict[str, Any],
     material_plan: dict[str, Any],
     draft_strategy: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
     attempt: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -31,6 +32,8 @@ def build_rhetorical_plan_request_trace(
         },
         "attempt": attempt,
     }
+    if context_pack is not None:
+        payload["contextPack"] = context_pack
     if model_selection is not None:
         payload.update(model_selection)
     return payload

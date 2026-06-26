@@ -977,8 +977,7 @@ lab that creates stronger post ideas. Slice 2.15.1 introduces the first boundary
 `backend/app/application/draft_model_role_resolver.py` make model choice a role policy.
 Empty role settings fall back to `OPENROUTER_DEFAULT_MODEL`; backup retry attempts use
 `OPENROUTER_BACKUP_MODEL`; public search uses `OPENROUTER_WEB_SEARCH_MODEL`.
-Keep the existing spine, but add these planned boundaries before expanding the loop
-further:
+Keep the existing spine, but use these boundaries before expanding the loop further:
 
 - `ModelRoleConfig`: role-specific model choice for research, strategy, writer,
   critic/prosecutor, review, another-angle, and technical backup. Done for
@@ -986,10 +985,14 @@ further:
   remain later slices. Backup remains a fallback, not a creative role.
 - `ArticleDossier`: DraftRun-local article memory with evidence cards, claim cards,
   tensions, angle options, critique, decisions, rejected moves, voice notes, and open
-  questions.
+  questions. Implemented in Slice 2.15.2 with
+  `backend/app/domain/draft_article_memory.py` and
+  `backend/app/application/draft_article_dossier_builder.py`.
 - `ContextPackBuilder`: task-specific prompt context for each role. Model calls should
   receive a compact pack for the current job, not raw DraftRun JSON and not only the
-  latest artifact.
+  latest artifact. Implemented in Slice 2.15.2 with
+  `backend/app/application/draft_context_pack_builder.py` and the thin
+  `draft_article_memory_service.py` pipeline wrapper.
 - `EvidenceInterpretation`: public evidence must become implications, limits,
   tensions, and forbidden overclaims before it is used by prose prompts.
 - `EditorialCritic`: the prosecutor/editor role challenges idea strength, author
@@ -1002,6 +1005,12 @@ This decision is recorded in ADR
 `docs/adr/2026-06-26-drafting-needs-editorial-lab-context-memory-and-model-roles.md`.
 Slice 2.16 editor-learning work is deferred until these 2.15.x drafting-intelligence
 slices make the machine process worth learning from.
+
+`ArticleDossier` and `ContextPack` are stored inside existing DraftRun step artifact
+JSON and child `AiRun.requestPayload` records. They are DraftRun-local memory, not a
+workspace database, not long-term RAG, and not a vector store. The trace workbench
+renders them as semantic sections so developers can verify which cards a strategy,
+writer, or review call received.
 
 Conceptual interfaces for the next implementation slices:
 

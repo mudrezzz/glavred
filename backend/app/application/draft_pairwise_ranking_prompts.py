@@ -11,6 +11,7 @@ def build_pairwise_ranking_messages(
     context_artifact: dict[str, Any],
     rule_pack: dict[str, Any],
     material_plan: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
     repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     system = (
@@ -38,6 +39,7 @@ def build_pairwise_ranking_messages(
         "validationReport": validation_report,
         "postContract": context_artifact.get("postContract"),
         "ruleRegistry": rule_pack.get("ruleRegistrySnapshot"),
+        "contextPack": context_pack or {},
         "materialPlan": material_plan,
         "repairContext": repair_context,
     }

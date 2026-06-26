@@ -42,6 +42,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
         post_contract: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
@@ -50,7 +51,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, primary_selection, context_summary, rule_registry, post_contract, material_plan, draft_strategy, repair_context)
+            result = self._try_attempt(attempt, primary_selection, context_summary, rule_registry, post_contract, material_plan, draft_strategy, context_pack, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
                 return DraftPlanningStepResult(
@@ -59,7 +60,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
                     ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
                 )
             repair_context = {"previousAttempt": result["attempt"], "requiredShape": "object with plans[2..3]"}
-        return self._fallback(context_summary, rule_registry, post_contract, material_plan, draft_strategy, attempts)
+        return self._fallback(context_summary, rule_registry, post_contract, material_plan, draft_strategy, attempts, context_pack)
 
     def _try_attempt(
         self,
@@ -70,6 +71,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
         post_contract: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        context_pack: dict[str, Any] | None,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
@@ -80,6 +82,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             post_contract=post_contract,
             material_plan=material_plan,
             draft_strategy=draft_strategy,
+            context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
         request_payload = build_rhetorical_plan_request_trace(
@@ -91,6 +94,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             rule_registry=rule_registry,
             material_plan=material_plan,
             draft_strategy=draft_strategy,
+            context_pack=context_pack,
             attempt=attempt_payload,
             model_selection=selection.to_payload(),
         )
@@ -142,6 +146,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
         attempts: list[dict[str, Any]],
+        context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._deterministic_plan_service.create_plans(
             context_summary=context_summary,
@@ -155,7 +160,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=self._settings.openrouter_default_model,
-            request_payload={"draftRunStep": "rhetoricalPlans", "attempts": attempts, "modelRole": DraftModelRole.STRATEGY.value},
+            request_payload={"draftRunStep": "rhetoricalPlans", "attempts": attempts, "contextPack": context_pack, "modelRole": DraftModelRole.STRATEGY.value},
             result_payload=build_rhetorical_plan_result_trace(result_payload=payload, provider_response=None, fallback="deterministic"),
             fallback_used=True,
             error=error,

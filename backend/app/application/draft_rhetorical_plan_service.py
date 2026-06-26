@@ -5,6 +5,7 @@ from backend.app.application.deterministic_rhetorical_plan_service import Determ
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_model_role_resolver import unconfigured_model_selection
+from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_rhetorical_plan_retry import DraftRhetoricalPlanRetryOrchestrator
 from backend.app.domain.ai_run import AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -43,6 +44,7 @@ class DraftRhetoricalPlanService:
     ) -> DraftPlanningStepResult:
         post_contract = _record(context_artifact.get("postContract"))
         rule_registry = _record(rule_pack.get("ruleRegistrySnapshot"))
+        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY)
         status = self._openrouter_validator.evaluate(self._settings)
         if status.configured:
             return self._retry.create_with_retry(
@@ -51,6 +53,7 @@ class DraftRhetoricalPlanService:
                 post_contract=post_contract,
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
+                context_pack=context_pack,
             )
         payload = self._deterministic_plan_service.create_plans(
             context_summary=context_summary,

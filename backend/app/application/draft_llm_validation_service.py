@@ -12,6 +12,7 @@ from backend.app.application.draft_llm_validation_prompts import (
     build_llm_validation_messages,
 )
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -149,6 +150,7 @@ class DraftLlmValidationService:
     ) -> dict[str, Any]:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_llm_validation_messages(
             candidate=candidate,
@@ -156,6 +158,7 @@ class DraftLlmValidationService:
             rule_pack=rule_pack,
             material_plan=material_plan,
             deterministic_report=deterministic_report,
+            context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
         request_payload = build_llm_validation_request_trace(
@@ -165,6 +168,7 @@ class DraftLlmValidationService:
             candidate_id=candidate_id,
             attempt=attempt_payload,
             deterministic_report=deterministic_report,
+            context_pack=context_pack,
             model_selection=selection.to_payload(),
         )
         try:

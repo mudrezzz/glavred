@@ -136,11 +136,14 @@ ready posts, publication attempts, external links, platform errors, and retry no
 The existing manual package/checklist/copy/Markdown surface is only a compatibility
 bridge until release-log slices replace it.
 
-The next demo evolution for drafting quality is an editorial-lab trace, not only more
-validator warnings. Future runs should expose role-specific model choices, an
-`ArticleDossier`, evidence interpretation, prosecutor/editor critique, alternative
-angles, and the final revision-loop decision. The demo should use this to explain why
-the selected draft became stronger, not merely why weaker attempts failed.
+The current drafting-quality demo trace now includes role-specific model choices,
+`ArticleDossier`, `ContextPacks`, validation, ranking, and the final revision-loop
+decision. The dossier shows the run-local cards Glavred kept in memory: evidence,
+claims, decisions, risks, rejected moves, and open questions. Context packs show which
+cards were sent to strategy, writer, and review calls. The next demo evolution is
+evidence interpretation, prosecutor/editor critique, and alternative angles so the
+demo can explain why the selected draft became stronger, not merely why weaker
+attempts failed.
 
 ## External Sources Scenario
 

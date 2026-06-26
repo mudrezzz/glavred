@@ -12,6 +12,7 @@ def build_candidate_request_trace(
     messages: list[dict[str, str]],
     context_summary: dict[str, Any],
     direction: DraftCandidateDirection,
+    context_pack: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
@@ -31,6 +32,8 @@ def build_candidate_request_trace(
             "responseFormat": {"type": "json_object"},
         },
     }
+    if context_pack is not None:
+        payload["contextPack"] = context_pack
     if model_selection is not None:
         payload.update(model_selection)
     return payload

@@ -50,11 +50,13 @@ class DraftStrategyService:
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         messages = build_draft_strategy_messages(
             context_summary=context_summary,
             rule_pack=rule_pack,
             material_plan=material_plan,
+            context_pack=context_pack,
         )
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
@@ -68,6 +70,7 @@ class DraftStrategyService:
             context_summary=context_summary,
             rule_pack=rule_pack,
             material_plan=material_plan,
+            context_pack=context_pack,
             model_selection=selection.to_payload(),
         )
         if not status.configured:

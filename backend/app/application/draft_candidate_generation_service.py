@@ -48,6 +48,7 @@ class DraftCandidateGenerationService:
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
         rhetorical_plans: dict[str, Any] | None = None,
+        context_pack: dict[str, Any] | None = None,
         progress: DraftRunStepOperationSink | None = None,
     ) -> DraftCandidateGenerationResult:
         directions = self._direction_service.create_directions(
@@ -68,7 +69,7 @@ class DraftCandidateGenerationService:
                     label=f"Generate candidate: {direction.title}",
                     target=direction.rhetorical_plan_id or direction.id,
                 )
-            payload, ai_run_id = self._create_one(request, context_summary, rule_pack, material_plan, draft_strategy, direction)
+            payload, ai_run_id = self._create_one(request, context_summary, rule_pack, material_plan, draft_strategy, direction, context_pack)
             candidate_payloads.append(payload)
             if ai_run_id:
                 ai_run_ids.append(ai_run_id)
@@ -102,6 +103,7 @@ class DraftCandidateGenerationService:
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
         direction: DraftCandidateDirection,
+        context_pack: dict[str, Any] | None,
     ) -> tuple[dict[str, Any], str | None]:
         messages = build_draft_candidate_messages(
             context_summary=context_summary,
@@ -109,6 +111,7 @@ class DraftCandidateGenerationService:
             material_plan=material_plan,
             draft_strategy=draft_strategy,
             direction=direction,
+            context_pack=context_pack,
         )
         status = self._openrouter_validator.evaluate(self._settings)
         provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
@@ -120,6 +123,7 @@ class DraftCandidateGenerationService:
             messages=messages,
             context_summary=context_summary,
             direction=direction,
+            context_pack=context_pack,
             model_selection=selection.to_payload(),
         )
         if not status.configured:

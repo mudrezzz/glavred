@@ -39,6 +39,7 @@ def test_strategy_service_returns_openrouter_artifact_and_uses_material_plan(tmp
         context_summary=context_summary,
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
+        context_pack={"role": "strategy", "items": [{"cardId": "claim-1", "summary": "usable claim"}]},
     )
 
     assert result.artifact_payload["source"] == "openrouter"
@@ -46,6 +47,7 @@ def test_strategy_service_returns_openrouter_artifact_and_uses_material_plan(tmp
     run = ai_service(tmp_path).get_run(result.ai_run_id or "")
     assert run is not None
     assert run.request_payload["capabilityInput"]["materialPlan"]["availableEvidence"] == ["pilot usage data"]
+    assert run.request_payload["capabilityInput"]["contextPack"]["role"] == "strategy"
 
 
 def context_and_rule_pack() -> tuple[dict[str, Any], dict[str, Any]]:

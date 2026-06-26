@@ -18,7 +18,9 @@ from backend.app.application.draft_run_progress import DraftRunProgress
 from backend.app.application.draft_run_step_progress import with_progress_payload
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
+from backend.app.application.draft_article_memory_service import DraftArticleMemoryService, context_pack_from_payload
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, DraftRunStepKey
+from backend.app.domain.draft_model_roles import DraftModelRole
 
 class DraftRunPipeline:
     def __init__(
@@ -35,6 +37,7 @@ class DraftRunPipeline:
         source_ledger_builder: SourceLedgerBuilder | None = None,
         quality_gate: DraftQualityGate | None = None,
         validation_step_service: DraftValidationStepService | None = None,
+        article_memory_service: DraftArticleMemoryService | None = None,
     ) -> None:
         self._repository = repository
         self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
@@ -48,6 +51,7 @@ class DraftRunPipeline:
         self._rhetorical_plan_service = rhetorical_plan_service or DeterministicRhetoricalPlanStepService()
         self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
         self._validation_step_service = validation_step_service or DraftValidationStepService()
+        self._article_memory = article_memory_service or DraftArticleMemoryService()
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
         if run is None:
@@ -72,8 +76,8 @@ class DraftRunPipeline:
                 progress=public_progress,
             )
             progress.add_ai_run_ids(public_evidence_result.ai_run_ids)
-            context_artifact = public_evidence_result.context_artifact
-            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, with_progress_payload(public_evidence_result.artifact_payload, public_progress))
+            context_artifact = self._article_memory.attach(public_evidence_result.context_artifact, context_artifact=public_evidence_result.context_artifact)
+            progress.succeed(DraftRunStepKey.PUBLIC_EVIDENCE, with_progress_payload(self._article_memory.attach(public_evidence_result.artifact_payload, context_artifact=context_artifact), public_progress))
             quality_gate_result = self._quality_gate.evaluate(context_artifact)
             progress.complete(DraftRunStepKey.FEASIBILITY, quality_gate_result.feasibility_report)
             progress.complete(DraftRunStepKey.POST_CONTRACT, quality_gate_result.post_contract)
@@ -83,16 +87,16 @@ class DraftRunPipeline:
                 return self._loaded(run_id)
             context_artifact = quality_gate_result.context_artifact
             rule_pack = self._rule_pack_compiler.compile(context_artifact).to_payload()
-            progress.complete(DraftRunStepKey.RULE_PACK, rule_pack)
+            progress.complete(DraftRunStepKey.RULE_PACK, self._article_memory.attach(rule_pack, context_artifact=context_artifact, rule_pack=rule_pack))
             progress.start(DraftRunStepKey.MATERIAL_PLAN)
             material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_artifact)
             progress.add_ai_run_ids(material_plan_result.ai_run_ids or ([material_plan_result.ai_run_id] if material_plan_result.ai_run_id else []))
             material_plan = payload_section(material_plan_result.artifact_payload, "materialPlan")
-            progress.succeed(DraftRunStepKey.MATERIAL_PLAN, material_plan_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.MATERIAL_PLAN, self._article_memory.attach(material_plan_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan))
             progress.start(DraftRunStepKey.STRATEGY)
-            strategy_result = self._strategy_service.create(context_summary=context_summary, rule_pack=rule_pack, material_plan=material_plan)
+            strategy_result = self._strategy_service.create(context_summary=context_summary, rule_pack=rule_pack, material_plan=material_plan, context_pack=context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY))
             progress.add_ai_run_id(strategy_result.ai_run_id)
-            progress.succeed(DraftRunStepKey.STRATEGY, strategy_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.STRATEGY, self._article_memory.attach(strategy_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=payload_section(strategy_result.artifact_payload, "draftStrategy")))
             draft_strategy = payload_section(strategy_result.artifact_payload, "draftStrategy")
             progress.start(DraftRunStepKey.RHETORICAL_PLANS)
             plan_result = self._rhetorical_plan_service.create(
@@ -104,7 +108,7 @@ class DraftRunPipeline:
             )
             progress.add_ai_run_ids(plan_result.ai_run_ids or ([plan_result.ai_run_id] if plan_result.ai_run_id else []))
             rhetorical_plans = payload_section(plan_result.artifact_payload, "rhetoricalPlanSet")
-            progress.succeed(DraftRunStepKey.RHETORICAL_PLANS, plan_result.artifact_payload)
+            progress.succeed(DraftRunStepKey.RHETORICAL_PLANS, self._article_memory.attach(plan_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, rhetorical_plans=rhetorical_plans))
             progress.start(DraftRunStepKey.DRAFT)
             draft_progress = progress.operation_sink(DraftRunStepKey.DRAFT)
             draft_result = self._draft_step_service.create(
@@ -114,10 +118,11 @@ class DraftRunPipeline:
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
                 rhetorical_plans=rhetorical_plans,
+                context_pack=context_pack_from_payload(context_artifact, DraftModelRole.WRITER),
                 progress=draft_progress,
             )
             progress.add_ai_run_ids(draft_result.ai_run_ids)
-            progress.succeed(DraftRunStepKey.DRAFT, with_progress_payload(draft_result.artifact_payload, draft_progress))
+            progress.succeed(DraftRunStepKey.DRAFT, with_progress_payload(self._article_memory.attach(draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, rhetorical_plans=rhetorical_plans, draft_artifact=draft_result.artifact_payload), draft_progress))
             if draft_result.final_draft is None:
                 progress.complete(DraftRunStepKey.VALIDATION, self._validation_step_service.not_run(reason="draft candidate selection blocked").artifact_payload)
                 progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
@@ -134,7 +139,7 @@ class DraftRunPipeline:
                 progress=validation_progress,
             )
             progress.add_ai_run_ids(validation_result.ai_run_ids)
-            progress.succeed(DraftRunStepKey.VALIDATION, with_progress_payload(validation_result.artifact_payload, validation_progress))
+            progress.succeed(DraftRunStepKey.VALIDATION, with_progress_payload(self._article_memory.attach(validation_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, rhetorical_plans=rhetorical_plans, draft_artifact=draft_result.artifact_payload, validation_artifact=validation_result.artifact_payload), validation_progress))
             progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
             final_draft = validation_result.final_draft or draft_result.final_draft
             self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_to_payload(final_draft) if final_draft else None, ai_run_ids=progress.ai_run_ids)

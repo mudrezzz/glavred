@@ -410,6 +410,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
   candidate writing and directed revisions use `writer`, and validation/ranking use
   `review`. Backup is still only a technical retry, not a creative second opinion.
+- The trace now also shows `ArticleDossier` and `ContextPacks`. The dossier is local
+  memory for one DraftRun: accepted evidence, usable claims, locked decisions, risks,
+  rejected moves, and open questions as compact cards. Context packs show which of
+  those cards were passed to strategy, writer, review, critic, and another-angle
+  roles. This is debug/trace data, not a new main editor screen.
 - The trace now includes a `validation` report for every draft candidate. It shows
   size/shape issues, missing CTA or contract signals, missing attribution, rejected
   evidence used as proof, forbidden moves, raw artifact leakage, and publishability
@@ -424,11 +429,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   goals without regression. The main `Драфт` screen still shows one editable result,
   while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
   resolved/unresolved goals, final source, and stop reason.
-- The next planned quality layer is not another warning report. Glavred will build an
-  internal article dossier during the run: what the sources really change, where the
-  tension is, which moves were rejected, what the critic/prosecutor challenged, and
-  which alternative angle was tried. This remains trace/debug data first; the main
-  editor still receives one draft to edit.
+- The next planned quality layer is not another warning report. Glavred will interpret
+  public evidence into editorial implications, then use critic/prosecutor and
+  alternative-angle roles over the existing dossier. The main editor still receives
+  one draft to edit.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

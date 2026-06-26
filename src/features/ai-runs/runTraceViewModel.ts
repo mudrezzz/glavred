@@ -361,13 +361,19 @@ function buildDraftRunSemanticSections(draftRun: DraftRunTrace): TraceSemanticSe
 function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
   const requestPayload = aiRun.requestPayload ?? {};
   const resultPayload = aiRun.resultPayload ?? {};
+  const capabilityInput = asRecord(requestPayload.capabilityInput);
+  const contextPack = asRecord(requestPayload.contextPack) ?? asRecord(capabilityInput?.contextPack);
   if (rawStepKeyForAiRun(aiRun) === 'publicEvidenceSearch') {
     return [
+      ...(contextPack ? [contextPacksSection({ [stringValue(contextPack.role) ?? 'role']: contextPack })] : []),
       publicEvidenceSearchSection(requestPayload, resultPayload),
       ...sectionsFromPayload('publicEvidence', resultPayload)
     ];
   }
-  return sectionsFromPayload(stepKeyForAiRun(aiRun), resultPayload);
+  return [
+    ...(contextPack ? [contextPacksSection({ [stringValue(contextPack.role) ?? 'role']: contextPack })] : []),
+    ...sectionsFromPayload(stepKeyForAiRun(aiRun), resultPayload)
+  ];
 }
 
 function modelSelectionFields(aiRun: AiRunTrace): TraceField[] {
@@ -398,7 +404,11 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const draft = asRecord(payload.draft);
   const validation = step === 'validation' ? payload : asRecord(payload.validationReport);
   const rankingRevision = asRecord(payload.rankingRevision);
+  const articleDossier = asRecord(payload.articleDossier);
+  const contextPacks = asRecord(payload.contextPacks);
 
+  if (articleDossier) sections.push(articleDossierSection(articleDossier));
+  if (contextPacks) sections.push(contextPacksSection(contextPacks));
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
   if (publicEvidence) sections.push(publicEvidenceSection(publicEvidence));
@@ -666,6 +676,52 @@ function llmValidationObservationCount(report: Record<string, unknown> | null | 
     return total + (asArray(candidateReport?.observations)?.length ?? 0);
   }, 0);
   return count > 0 ? String(count) : '';
+}
+
+function articleDossierSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const cards = asArray(payload.cards) ?? [];
+  const metadata = asRecord(payload.metadata);
+  const byType = asRecord(metadata?.byType);
+  const cardValues = cards.flatMap((item) => {
+    const card = asRecord(item);
+    if (!card) return [];
+    return `${stringValue(card.type) ?? 'card'} - ${stringValue(card.title) ?? stringValue(card.id) ?? 'untitled'}: ${shortValue(card.summary)}`;
+  });
+  return {
+    id: 'article-dossier',
+    title: 'Article dossier',
+    fields: compactFields([
+      ['Cards', metadata?.cardCount ?? cards.length],
+      ['By type', byType],
+      ['Key cards', cardValues.slice(0, 10)],
+      ['Unresolved risks/questions', cardValues.filter((value) => value.includes('risk') || value.includes('openQuestion')).slice(0, 6)]
+    ])
+  };
+}
+
+function contextPacksSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const roleValues = Object.entries(payload).flatMap(([role, value]) => {
+    const pack = asRecord(value);
+    if (!pack) return [];
+    const items = asArray(pack.items) ?? [];
+    return `${role}: ${items.length} items`;
+  });
+  const itemValues = Object.entries(payload).flatMap(([role, value]) => {
+    const pack = asRecord(value);
+    return (asArray(pack?.items) ?? []).slice(0, 6).flatMap((item) => {
+      const record = asRecord(item);
+      if (!record) return [];
+      return `${role} - ${stringValue(record.cardId) ?? 'card'}: ${shortValue(record.reason)} / ${shortValue(record.title)}`;
+    });
+  });
+  return {
+    id: 'context-packs',
+    title: 'Context packs',
+    fields: compactFields([
+      ['Roles', roleValues],
+      ['Included cards', itemValues.slice(0, 18)]
+    ])
+  };
 }
 
 function sourceIntentSection(payload: Record<string, unknown>, sourcesOrigin?: string): TraceSemanticSection {
@@ -1173,6 +1229,11 @@ function displayValue(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) return value.map((item) => displayValue(item)).filter(Boolean).join('\n');
   return JSON.stringify(value, null, 2);
+}
+
+function shortValue(value: unknown, limit = 140): string {
+  const text = displayValue(value).replace(/\s+/g, ' ').trim();
+  return text.length > limit ? `${text.slice(0, limit)}...` : text;
 }
 
 function createPreview(content: string): string {

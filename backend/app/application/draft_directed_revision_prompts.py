@@ -11,6 +11,7 @@ def build_directed_revision_messages(
     context_artifact: dict[str, Any],
     rule_pack: dict[str, Any],
     material_plan: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
     repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     system = (
@@ -26,6 +27,7 @@ def build_directed_revision_messages(
         "postContract": context_artifact.get("postContract"),
         "ruleRegistry": rule_pack.get("ruleRegistrySnapshot"),
         "materialPlan": material_plan,
+        "contextPack": context_pack or {},
         "sourceLedger": context_artifact.get("sourceLedger"),
         "repairContext": repair_context,
     }

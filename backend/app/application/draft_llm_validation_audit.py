@@ -11,6 +11,7 @@ def build_llm_validation_request_trace(
     candidate_id: str,
     attempt: dict[str, Any],
     deterministic_report: dict[str, Any],
+    context_pack: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
@@ -23,6 +24,8 @@ def build_llm_validation_request_trace(
         "deterministicReport": deterministic_report,
         "requestSummary": "LLM-assisted report-only validation for one draft candidate.",
     }
+    if context_pack is not None:
+        payload["contextPack"] = context_pack
     if model_selection is not None:
         payload.update(model_selection)
     return payload

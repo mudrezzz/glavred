@@ -239,12 +239,15 @@ larger "bad draft" report. DraftRun now has role-specific model policy: research
 strategy, writer, review, critic, and another-angle roles can use different OpenRouter
 models, while backup remains only a technical retry/fallback model and web search uses
 its own search model. Child `AiRun` traces record `modelRole`, `selectedModel`, and
-`modelSelectionSource`. Future slices add a DraftRun-local `ArticleDossier`,
-task-specific `ContextPacks`, evidence interpretation, a prosecutor/editor critic
-role, and an alternative-angle route. The goal is to create better post ideas before
-and during writing: accumulated research, rejected moves, critique, and source
-implications should be curated into compact role-specific context instead of either
-being discarded or dumped into one huge prompt.
+`modelSelectionSource`.
+
+DraftRun also has local article memory: `ArticleDossier` turns evidence, claims,
+decisions, risks, rejected moves, and open questions from the current run into compact
+cards, and `ContextPacks` select the relevant cards for each role. This is not
+workspace persistence and not a vector store; it is deterministic context engineering
+inside one queued run. `/ai-runs?runId=...` shows the dossier, role packs, and the
+pack passed into child model calls. Future slices add evidence interpretation, a
+prosecutor/editor critic role, and an alternative-angle route.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create
