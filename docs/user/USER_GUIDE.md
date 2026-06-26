@@ -427,16 +427,21 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   feedback for source grounding, publisher/author fit, topic/fabula fit,
   coherence/compression, and audience value. Actionable LLM issues are shown
   separately from positive observations, so pass notes do not inflate warning counts.
+- The same trace can include `Editorial critique`: the prosecutor/editor critic looks
+  at whether candidates are boring, generic, over-sourced, missing author stance,
+  weak on tension, or unclear for the reader. In this slice the critique is
+  diagnostic only. It explains why a post is weak or strong, but it does not yet
+  override the final draft selection.
 - After validation, Glavred pairwise-ranks candidates and runs a bounded revision
   loop. Each cycle tries to repair concrete findings, validates the revised candidate,
   compares it with the previous best, and accepts it only if it improves measurable
   goals without regression. The main `Драфт` screen still shows one editable result,
   while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
   resolved/unresolved goals, final source, and stop reason.
-  - The next planned quality layer is not another warning report. Glavred now interprets
-    public evidence into editorial implications, then will use critic/prosecutor and
-    alternative-angle roles over the existing dossier. The main editor still receives
-    one draft to edit.
+  - The next planned quality layer is not another warning report. Glavred now
+    interprets public evidence into editorial implications and records critic
+    feedback over the existing dossier. The next layer is an alternative-angle route.
+    The main editor still receives one draft to edit.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

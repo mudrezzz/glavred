@@ -218,7 +218,7 @@ function buildDraftRunViewModel(
 
 function parentStepForAiRun(run: AiRunTrace): string | undefined {
   const step = stepKeyForAiRun(run);
-  return step === 'llmValidation' ? 'validation' : step;
+  return step === 'llmValidation' || step === 'editorialCritique' ? 'validation' : step;
 }
 
 function traceStepStatus(draftRun: DraftRunTrace, step: DraftRunTraceStep): string {
@@ -404,6 +404,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const selection = asRecord(payload.selection);
   const draft = asRecord(payload.draft);
   const validation = step === 'validation' ? payload : asRecord(payload.validationReport);
+  const editorialCritique = asRecord(payload.editorialCritiqueReport);
   const rankingRevision = asRecord(payload.rankingRevision);
   const articleDossier = asRecord(payload.articleDossier);
   const contextPacks = asRecord(payload.contextPacks);
@@ -430,6 +431,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
   if (validation) sections.push(validationSection(validation));
+  if (editorialCritique) sections.push(editorialCritiqueSection(editorialCritique));
   if (rankingRevision) sections.push(...rankingRevisionSections(rankingRevision));
   if (draft) {
     sections.push({
@@ -678,6 +680,70 @@ function llmValidationObservationCount(report: Record<string, unknown> | null | 
     return total + (asArray(candidateReport?.observations)?.length ?? 0);
   }, 0);
   return count > 0 ? String(count) : '';
+}
+
+function editorialCritiqueSection(report: Record<string, unknown>): TraceSemanticSection {
+  const summary = asRecord(report.summary);
+  const candidateReports = asArray(report.candidateReports) ?? [];
+  return {
+    id: 'editorial-critique',
+    title: 'Editorial critique',
+    fields: compactFields([
+      ['Status', report.status],
+      ['Candidates', summary?.candidateCount ?? candidateReports.length],
+      ['Findings', summary?.findingCount],
+      ['Observations', summary?.observationCount],
+      ['High-risk candidates', summary?.highRiskCandidateCount],
+      ['Candidate risks', candidateReports.map(editorialCritiqueCandidateValue)],
+      ['Actionable critique', editorialCritiqueFindings(candidateReports)],
+      ['Editorial observations', editorialCritiqueObservations(candidateReports)],
+      ['Attempts', editorialCritiqueAttempts(candidateReports)]
+    ])
+  };
+}
+
+function editorialCritiqueCandidateValue(item: unknown): unknown {
+  const report = asRecord(item);
+  if (!report) return item;
+  return `${report.candidateId}: ${report.status} - risk ${report.editorialRisk ?? 'unknown'} - weakest ${shortValue(report.weakestMove) || 'none'} - move ${shortValue(report.recommendedEditorialMove) || 'none'}`;
+}
+
+function editorialCritiqueFindings(reports: unknown[]): unknown[] {
+  return reports.flatMap((item) => {
+    const report = asRecord(item);
+    const candidateId = stringValue(report?.candidateId) ?? 'candidate';
+    return (asArray(report?.findings) ?? []).map((findingItem) => {
+      const finding = asRecord(findingItem);
+      if (!finding) return findingItem;
+      const id = stringValue(finding.validatorId) ?? stringValue(finding.criticId) ?? 'critic';
+      return `${candidateId} - ${finding.severity ?? 'warning'}: ${id}\n${finding.message ?? ''}\n${finding.repairGuidance ?? ''}`;
+    });
+  });
+}
+
+function editorialCritiqueObservations(reports: unknown[]): unknown[] {
+  return reports.flatMap((item) => {
+    const report = asRecord(item);
+    const candidateId = stringValue(report?.candidateId) ?? 'candidate';
+    return (asArray(report?.observations) ?? []).map((observationItem) => {
+      const observation = asRecord(observationItem);
+      if (!observation) return observationItem;
+      const id = stringValue(observation.criticId) ?? 'critic';
+      return `${candidateId} - ${id}\n${observation.message ?? ''}`;
+    });
+  });
+}
+
+function editorialCritiqueAttempts(reports: unknown[]): unknown[] {
+  return reports.flatMap((item) => {
+    const report = asRecord(item);
+    const candidateId = stringValue(report?.candidateId) ?? 'candidate';
+    return (asArray(report?.attempts) ?? []).map((attemptItem) => {
+      const attempt = asRecord(attemptItem);
+      if (!attempt) return attemptItem;
+      return `${candidateId} - ${attempt.label ?? 'attempt'}: ${attempt.status ?? 'unknown'} - ${attempt.model ?? 'no model'}${attempt.backup ? ' - backup' : ''}`;
+    });
+  });
 }
 
 function articleDossierSection(payload: Record<string, unknown>): TraceSemanticSection {
@@ -1203,6 +1269,7 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
   if (step === 'publicEvidenceSearch') return 'publicEvidence';
   if (step === 'externalEvidenceSynthesis') return 'publicEvidence';
   if (step === 'evidenceInterpretation') return 'rulePack';
+  if (step === 'editorialCritique') return 'validation';
   return step ?? 'unknown';
 }
 
@@ -1234,6 +1301,7 @@ function stepLabel(step: string): string {
     draft: 'Draft candidates',
     draftCandidate: 'Draft candidate',
     validation: 'Validation',
+    editorialCritique: 'Editorial critique',
     complete: 'Complete',
     draftGeneration: 'Draft generation',
     unknown: 'Unknown step'

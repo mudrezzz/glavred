@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.15.3: Evidence Interpretation, Not Citation Injection.
+Current as of Slice 2.15.4: Prosecutor / Editor Critic Loop.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -29,6 +29,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `RuleRegistrySnapshot` | Machine-readable rules and validator bindings derived from contract, ledger, topic, fabula, and publisher rules. | `rulePack.ruleRegistrySnapshot` |
 | `ArticleDossier` | DraftRun-local article memory built from artifacts. It is not workspace persistence and not vector storage. | selected step artifacts |
 | `ContextPack` | Role-specific subset of ArticleDossier passed to LLM calls. | step artifacts and child `AiRun.requestPayload` |
+| `EditorialCritiqueReport` | Report-only prosecutor/editor critique of candidate idea strength, tension, author stance, source integration, and reader value. | `validation.editorialCritiqueReport`, child `AiRun` trace |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, and revision loop. | parent DraftRun |
 
 ## 2. Runtime topology
@@ -108,6 +109,7 @@ Role-aware execution map:
 | `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default | writer `ContextPack`, one rhetorical plan, material evidence, contract | validation and ranking |
 | `validation` lint | none | no model | candidates, contract, registry, ledger | LLM validation and ranking |
 | `validation` LLM review | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | review `ContextPack`, candidates, deterministic findings | pairwise ranking |
+| `validation` editorial critique | `critic` | `DRAFT_CRITIC_MODEL`, then default, repair, backup | critic `ContextPack`, candidates, evidence interpretation, validation findings | trace, dossier, future critique-aware ranking |
 | `validation` ranking | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | candidates, old scorecard, deterministic and LLM findings | revision loop |
 | `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default | current best candidate, repair goals, anti-regression constraints, writer `ContextPack` | regression guard and final draft |
 | `complete` | none | no model | final DraftRun state | frontend |
@@ -522,14 +524,17 @@ Processing:
 
 1. deterministic lint checks all candidates;
 2. LLM validation checks all candidates and separates actionable findings from observations;
-3. pairwise ranking chooses the best candidate;
-4. bounded revision loop builds repair goals, revises, re-runs deterministic validation,
+3. editorial critique challenges all candidates for idea strength, tension, author
+   stance, source integration, generic prose, and reader value;
+4. pairwise ranking chooses the best candidate;
+5. bounded revision loop builds repair goals, revises, re-runs deterministic validation,
    compares previous best vs revised, and accepts only real improvement.
 
 Output:
 
 - deterministic validation report;
 - `llmValidationReport`;
+- `editorialCritiqueReport`;
 - `rankingRevision`;
 - `revisionLoop`;
 - final draft candidate decision;
@@ -538,11 +543,14 @@ Output:
 Role/model handoff:
 
 - `review` for LLM validation and pairwise ranking;
+- `critic` for report-only editorial critique;
 - `writer` for directed revision.
 - deterministic lint runs first without a model;
 - `review` receives candidates, review `ContextPack`, deterministic findings,
   rules, ledger, and contract, then returns report-only findings and pairwise
   ranking;
+- `critic` receives candidates, critic `ContextPack`, evidence interpretation, and
+  validation context, then returns report-only critique findings and observations;
 - `writer` receives the current best candidate plus repair goals and constraints,
   then returns revised prose;
 - regression guard decides whether the revised prose replaces the current best;
@@ -552,6 +560,7 @@ Trace:
 
 - `validation` step;
 - child `AiRun.requestPayload.draftRunStep = llmValidation`;
+- child `AiRun.requestPayload.draftRunStep = editorialCritique`;
 - child `AiRun.requestPayload.draftRunStep = pairwiseRanking`;
 - child `AiRun.requestPayload.draftRunStep = directedRevision`.
 
@@ -581,10 +590,12 @@ role-specific context pack, then writes a new artifact for the next role.
 flowchart TD
   A[research creates SourceIntent, ResearchPlan, EvidenceSynthesis] --> B[strategy interprets evidence and creates MaterialPlan, DraftStrategy, RhetoricalPlans]
   B --> C[writer generates draft candidates from rhetorical plans and interpreted evidence]
-  C --> D[review validates and ranks all candidates]
-  D --> E[writer revises the current best candidate]
-  E --> F[deterministic regression guard accepts or rejects revision]
-  F --> G[complete stores finalDraft or blocked result]
+  C --> D[review validates all candidates]
+  D --> E[critic challenges editorial quality]
+  E --> F[review ranks all candidates]
+  F --> G[writer revises the current best candidate]
+  G --> H[deterministic regression guard accepts or rejects revision]
+  H --> I[complete stores finalDraft or blocked result]
 ```
 
 Role summary:
@@ -595,7 +606,7 @@ Role summary:
 | `strategy` | evidence interpretation, material plan, draft strategy, rhetorical plans | strategy context pack, rules, contract, material, evidence synthesis | change post thesis or bypass contract |
 | `writer` | draft candidates and directed revisions | writer context pack, evidence interpretation, material plan, rhetorical plan, repair goals | create new claims or violate forbidden moves |
 | `review` | LLM validation and pairwise ranking | review context pack, candidates, rules, ledger, validation reports | rewrite prose directly |
-| `critic` | configured but not active yet | future critic context pack | not used in AS IS pipeline |
+| `critic` | report-only editorial critique | critic context pack, evidence interpretation, candidates, validation context | rewrite prose or change final selection |
 | `anotherAngle` | configured but not active yet | future alternative-angle pack | not used in AS IS pipeline |
 
 ## 6. Context flow
@@ -642,6 +653,7 @@ Important AS IS rules:
 | `DraftCandidate` | draft | validation, ranking, revision | `draft.candidates[]` |
 | `ValidationReport` | validation | ranking/revision, trace | `validation.candidateReports` |
 | `LlmValidationReport` | validation | ranking/revision, trace | `validation.llmValidationReport` |
+| `EditorialCritiqueReport` | validation | trace, dossier, future critique-aware ranking | `validation.editorialCritiqueReport` |
 | `RankingRevision` | validation | final draft selection, trace | `validation.rankingRevision` |
 | `ArticleDossier` | article memory service | context pack builder, trace | selected step artifacts |
 | `ContextPack` | article memory service | child LLM services | step artifacts and child `AiRun.requestPayload` |
@@ -655,6 +667,8 @@ Important AS IS rules:
 | public search disabled | attempt is `notConfigured`; it is not proof |
 | malformed JSON planning | repair retry, optional backup model, then deterministic fallback |
 | malformed or empty evidence interpretation | repair retry, optional backup model, then deterministic interpretation fallback |
+| editorial critique provider missing | `editorialCritiqueReport.status=not-run`; no fake critique |
+| malformed editorial critique JSON | repair retry, optional backup model, then `not-run` for that candidate |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
@@ -680,15 +694,15 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 10. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
 11. `draft`: compare candidates, source/fallback status, publishability, scorecard.
 12. `validation`: inspect deterministic warnings, LLM findings, observations.
-13. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
-14. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
+13. `editorialCritiqueReport`: inspect idea strength, tension, author stance, source
+    integration, generic-prose risks, and recommended editorial moves.
+14. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
+15. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
 
 ## 10. Known AS IS limitations
 
-- Evidence interpretation is implemented as a first controlled interpretation pass, but
-  it is not yet an editorial debate. The critic and alternative-angle roles are the
-  next layers for challenging weak or boring interpretations.
-- `critic` is configured but not yet active.
+- Editorial critique is active but report-only. It diagnoses weak or boring drafts,
+  but ranking/revision does not yet have to consume critique findings.
 - `anotherAngle` is configured but not yet active.
 - `ArticleDossier` is a local compact memory artifact, not a vector store or
   cross-run RAG system.

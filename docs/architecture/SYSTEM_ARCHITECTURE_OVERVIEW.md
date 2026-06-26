@@ -426,7 +426,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> EditorialCritique -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -539,6 +539,16 @@ writer prompts consume this interpretation first, while raw snippets remain avai
 only as provenance/debug data. The trace workbench shows the interpretation artifact,
 provider attempts, model role, fallback status, and the resulting dossier/context-pack
 cards.
+
+Slice 2.15.4 activates the prosecutor/editor critic role inside the existing
+`validation` artifact, still without a new DraftRun step or SQLite table. The critic
+uses `DRAFT_CRITIC_MODEL` and the `critic` ContextPack to review every draft
+candidate for idea strength, tension, author stance, source integration, generic AI
+prose, unsupported leaps, and reader value. The resulting
+`validation.editorialCritiqueReport` is report-only in this slice: it is stored in
+trace and ArticleDossier, but it does not yet change pairwise ranking, revision, or
+`finalDraft`. This keeps the architecture boundary explicit: validators check
+contract compliance; critic attacks editorial quality.
 
 Slice 2.15 exposed the next architectural correction: stronger drafts require an
 editorial lab, not only more validation and repair. Glavred must not treat a bad
@@ -749,6 +759,8 @@ Validation ownership is split:
   candidate report, finding, and status DTOs.
 - `backend/app/domain/draft_llm_validation.py` defines provider-free LLM validation
   report, candidate report, and attempt DTOs.
+- `backend/app/domain/draft_editorial_critique.py` defines provider-free editorial
+  critique report, candidate critique, observation, and attempt DTOs.
 - `backend/app/domain/draft_model_roles.py` defines provider-free DraftRun model-role
   and model-selection DTOs.
 - `backend/app/application/draft_validation_linter.py` owns deterministic local
@@ -768,8 +780,15 @@ Validation ownership is split:
   into standard validation findings.
 - `backend/app/application/draft_llm_validation_observations.py` owns positive/pass
   observation detection so non-actionable LLM notes do not become warning findings.
+- `backend/app/application/draft_editorial_critique_service.py` owns report-only
+  provider-backed prosecutor/editor critique orchestration.
+- `backend/app/application/draft_editorial_critique_prompts.py`,
+  `draft_editorial_critique_parser.py`, and `draft_editorial_critique_audit.py` own
+  critic prompt shape, provider JSON normalization, and sanitized child `AiRun`
+  traces.
 - `backend/app/application/draft_validation_step_service.py` composes deterministic
-  and LLM reports into the existing `validation` step artifact.
+  validation, LLM validation, editorial critique, and ranking/revision into the
+  existing `validation` step artifact.
 - `backend/app/application/draft_validation_step.py` remains a compatibility bridge
   for older deterministic-only validation call sites.
 

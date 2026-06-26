@@ -13,6 +13,7 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'rhetoricalPlans')?.childCalls[0].id).toBe('ai-plans');
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
     expect(traceStep(viewModel, 'validation')?.childCalls[0].id).toBe('ai-validation-1');
+    expect(traceStep(viewModel, 'validation')?.childCalls.map((call) => call.id)).toContain('ai-critic-1');
     expect(traceStep(viewModel, 'draft')?.childCalls[0].meta).toContainEqual({ label: 'Model role', value: 'writer' });
     expect(traceStep(viewModel, 'validation')?.childCalls[0].meta).toContainEqual({ label: 'Selection source', value: 'role' });
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
@@ -23,7 +24,7 @@ describe('buildRunTraceViewModel', () => {
       status: 'succeeded',
       aiRunId: 'ai-candidate'
     }));
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('11');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('12');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -79,6 +80,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Кандидат 1: Candidate · выбран');
     expect(titles).toContain('Draft scorecard');
     expect(titles).toContain('Validation report');
+    expect(titles).toContain('Editorial critique');
     expect(titles).toContain('Selected draft candidate');
     expect(titles).toContain('Selected draft');
   });
@@ -95,6 +97,17 @@ describe('buildRunTraceViewModel', () => {
     expect(validation?.fields.find((field) => field.label === 'LLM validation attempts')?.value).toContain('candidate-1 · primary: accepted');
     expect(validation?.fields.find((field) => field.label === 'LLM actionable findings')?.value).toContain('llm.audience-value');
     expect(validation?.fields.find((field) => field.label === 'LLM observations')?.value).toContain('llm.coherence');
+  });
+
+  it('shows editorial critique separately from validation findings', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const critique = viewModel.semanticSections.find((section) => section.id === 'editorial-critique');
+
+    expect(critique?.fields).toContainEqual({ label: 'Status', value: 'warning' });
+    expect(critique?.fields.find((field) => field.label === 'Candidate risks')?.value).toContain('risk high');
+    expect(critique?.fields.find((field) => field.label === 'Actionable critique')?.value).toContain('critic.genericAiProse');
+    expect(critique?.fields.find((field) => field.label === 'Editorial observations')?.value).toContain('critic.tension');
+    expect(critique?.fields.find((field) => field.label === 'Attempts')?.value).toContain('candidate-1 - primary: accepted');
   });
 
   it('shows pairwise ranking and directed revision as validation semantic trace', () => {
@@ -642,6 +655,53 @@ function makeDraftRunBundle(): RunTraceBundle {
               ],
               metadata: { version: 'llm-draft-validation-v1', reportOnly: true }
             },
+            editorialCritiqueReport: {
+              status: 'warning',
+              summary: { candidateCount: 1, findingCount: 1, observationCount: 1, highRiskCandidateCount: 1 },
+              candidateReports: [
+                {
+                  candidateId: 'candidate-1',
+                  status: 'warning',
+                  editorialRisk: 'high',
+                  overallJudgment: 'Safe but generic.',
+                  strongestMove: 'Workflow framing.',
+                  weakestMove: 'Sounds like generic AI prose.',
+                  recommendedEditorialMove: 'Open with the uncomfortable product trade-off.',
+                  attempts: [
+                    {
+                      label: 'primary',
+                      model: 'critic-model',
+                      status: 'accepted',
+                      candidateId: 'candidate-1',
+                      aiRunId: 'ai-critic-1',
+                      backup: false
+                    }
+                  ],
+                  findings: [
+                    {
+                      validatorId: 'critic.genericAiProse',
+                      severity: 'warning',
+                      candidateId: 'candidate-1',
+                      message: 'The draft can be swapped with many generic AI posts.',
+                      evidenceExcerpt: 'Selected body',
+                      repairGuidance: 'Add a sharper author stance.',
+                      metadata: { editorialDimension: 'genericAiProse' }
+                    }
+                  ],
+                  observations: [
+                    {
+                      criticId: 'critic.tension',
+                      candidateId: 'candidate-1',
+                      message: 'There is a usable workflow tension.',
+                      evidenceExcerpt: 'workflow',
+                      editorialDimension: 'tension',
+                      metadata: {}
+                    }
+                  ]
+                }
+              ],
+              metadata: { version: 'editorial-critique-v1', reportOnly: true }
+            },
             rankingRevision: {
               status: 'succeeded',
               pairwiseRanking: {
@@ -740,7 +800,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-interpretation', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-interpretation', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-critic-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
@@ -753,6 +813,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       makeAiRun('ai-plans', 'rhetoricalPlans'),
       makeAiRun('ai-candidate', 'draftCandidate'),
       makeAiRun('ai-validation-1', 'llmValidation'),
+      makeAiRun('ai-critic-1', 'editorialCritique'),
       makeAiRun('ai-ranking-1', 'pairwiseRanking'),
       makeAiRun('ai-revision-1', 'directedRevision'),
       makeAiRun('ai-ranking-2', 'pairwiseRanking')

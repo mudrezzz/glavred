@@ -140,12 +140,14 @@ The current drafting-quality demo trace now includes role-specific model choices
 `ArticleDossier`, `ContextPacks`, `EvidenceInterpretation`, validation, ranking, and
 the final revision-loop decision. The dossier shows the run-local cards Glavred kept
 in memory: evidence, claims, decisions, risks, rejected moves, and open questions.
-Context packs show which cards were sent to strategy, writer, and review calls.
+Context packs show which cards were sent to strategy, writer, review, and critic calls.
 Evidence interpretation shows how accepted sources became implications, limits,
 usable examples, reader-value hooks, and forbidden overclaims before the writer saw
-them. The next demo evolution is prosecutor/editor critique and alternative angles so
-the demo can explain why the selected draft became stronger, not merely why weaker
-attempts failed.
+them. The prosecutor/editor critique now appears inside the `validation` trace as a
+report-only layer: it explains whether candidates are boring, generic, under-argued,
+missing author stance, or using sources mechanically. The next demo evolution is
+alternative angles, so the demo can explain why the selected draft became stronger,
+not merely why weaker attempts failed.
 
 ## External Sources Scenario
 
@@ -303,7 +305,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     The same step can also contain `LLM validation` findings for source grounding,
     publisher/author fit, topic/fabula fit, coherence/compression, and audience
     value. Positive/pass model observations are displayed separately from actionable
-    findings. The same `validation` artifact also stores pairwise ranking and a
+    findings. `Editorial critique` is shown separately from validation and attacks
+    idea strength, tension, author stance, source integration, generic AI prose, and
+    reader value. The same `validation` artifact also stores pairwise ranking and a
     bounded revision loop: each cycle records repair goals, constraints, revised
     candidate, regression checks, old-vs-new comparison, accepted/rejected decision,
     and final stop reason. Long-running `publicEvidence`, `draft`, and `validation` steps also
@@ -313,8 +317,8 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
     original winner or accepted revision-loop candidate. Child AI calls also show
     `modelRole`, `selectedModel`, and `modelSelectionSource`, so the trace distinguishes
-    researcher, strategist, writer, review, future critic, future alternative-angle
-    policy, and technical backup retries.
+    researcher, strategist, writer, review, critic, future alternative-angle policy,
+    and technical backup retries.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,

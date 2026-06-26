@@ -248,8 +248,12 @@ workspace persistence and not a vector store; it is deterministic context engine
 inside one queued run. `/ai-runs?runId=...` shows the dossier, role packs, and the
 pack passed into child model calls. Evidence interpretation now turns accepted sources
 into implications, examples, limits, and forbidden overclaims before material planning
-and writing. Future slices add a prosecutor/editor critic role and an alternative-angle
-route.
+and writing. The prosecutor/editor critic role now writes a report-only
+`editorialCritiqueReport` inside the existing `validation` step: it attacks blandness,
+weak tension, missing author stance, forced source use, generic AI prose, unsupported
+leaps, and unclear reader value. It is visible in trace and feeds ArticleDossier, but
+does not yet change final draft selection. Future slices add the alternative-angle
+route and critique-aware revision.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

@@ -4496,7 +4496,7 @@ Status:
 
 ### Slice 2.15.4: Prosecutor / Editor Critic Loop
 
-- Status: Ready
+- Status: Done
 - Goal: Add a dedicated editorial critic role that challenges draft candidates before
   revision.
 - User value:
@@ -4521,10 +4521,24 @@ Status:
   - Missing provider marks critic `not-run`, not fake findings.
 - Acceptance criteria:
   - Trace can answer: why the critic thinks this post is weak or strong.
+- Result:
+  - Added provider-free `EditorialCritiqueReport`, candidate critique, observation,
+    and attempt DTOs.
+  - Added `DraftEditorialCritiqueService` using `DRAFT_CRITIC_MODEL`, critic
+    `ContextPack`, OpenRouter JSON retry discipline, sanitized child `AiRun` records,
+    and `not-run` behavior when provider config is missing.
+  - Stored `validation.editorialCritiqueReport` inside the existing `validation`
+    artifact without new DraftRun steps or SQLite schema changes.
+  - Kept the report explicitly non-actionable for final selection in this slice:
+    pairwise ranking, revision loop, and `finalDraft` behavior remain unchanged.
+  - Added critic cards to ArticleDossier so future alternative-angle and deep revision
+    slices can consume weak moves, risks, and voice/tension observations.
+  - `/ai-runs?runId=...` now renders `Editorial critique` separately from
+    deterministic validation and LLM validation.
 
 ### Slice 2.15.5: Alternative Angle Tournament
 
-- Status: Backlog
+- Status: Ready
 - Goal: Generate and compare a genuinely different framing route using a dedicated
   another-angle role/model.
 - User value:
@@ -4764,4 +4778,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.4: Prosecutor / Editor Critic Loop`.
+Continue the backend track with `Slice 2.15.5: Alternative Angle Tournament`.

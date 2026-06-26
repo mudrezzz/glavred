@@ -140,6 +140,21 @@ def _validation_cards(validation_artifact: dict[str, Any]) -> list[DossierCard]:
         for finding in _records(report.get("findings"))[:8]:
             finding_id = _str(finding.get("validatorId"), "finding")
             cards.append(DossierCard(f"validation-{candidate_id}-{finding_id}", DossierCardType.RISK, _str(finding.get("message"), finding_id), _str(finding.get("repairGuidance") or finding.get("evidenceExcerpt"), ""), "validation", (candidate_id,), _severity_priority(finding)))
+    critique = _record(validation_artifact.get("editorialCritiqueReport"))
+    for report in _records(critique.get("candidateReports"))[:8]:
+        candidate_id = _str(report.get("candidateId"), "candidate")
+        risk = _str(report.get("editorialRisk"), "unknown")
+        if report.get("weakestMove"):
+            cards.append(DossierCard(f"critique-weakest-{candidate_id}", DossierCardType.RISK, "Editorial critic weakness", _str(report.get("weakestMove"), ""), "editorialCritique", (candidate_id,), "high" if risk == "high" else "medium"))
+        if report.get("recommendedEditorialMove"):
+            cards.append(DossierCard(f"critique-move-{candidate_id}", DossierCardType.OPEN_QUESTION, "Recommended editorial move", _str(report.get("recommendedEditorialMove"), ""), "editorialCritique", (candidate_id,), "high"))
+        for finding in _records(report.get("findings"))[:6]:
+            finding_id = _str(finding.get("validatorId") or finding.get("criticId"), "finding")
+            card_type = DossierCardType.REJECTED_MOVE if "sourceIntegration" in finding_id or "genericAiProse" in finding_id else DossierCardType.RISK
+            cards.append(DossierCard(f"critique-{candidate_id}-{finding_id}", card_type, _str(finding.get("message"), finding_id), _str(finding.get("repairGuidance") or finding.get("evidenceExcerpt"), ""), "editorialCritique", (candidate_id,), _severity_priority(finding)))
+        for observation in _records(report.get("observations"))[:3]:
+            observation_id = _str(observation.get("criticId"), "observation")
+            cards.append(DossierCard(f"critique-observation-{candidate_id}-{observation_id}", DossierCardType.VOICE_NOTE, _str(observation.get("message"), observation_id), _str(observation.get("evidenceExcerpt"), ""), "editorialCritique", (candidate_id,), "medium"))
     loop = _record(_record(validation_artifact.get("rankingRevision")).get("revisionLoop"))
     for cycle in _records(loop.get("cycles"))[:5]:
         if cycle.get("accepted") is False:

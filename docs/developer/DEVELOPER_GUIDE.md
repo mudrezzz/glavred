@@ -35,7 +35,7 @@ Required variables for the backend/AI track:
   rhetorical plan JSON steps.
 - `DRAFT_WRITER_MODEL`: optional model for draft candidates and directed revisions.
 - `DRAFT_REVIEW_MODEL`: optional model for LLM validation and pairwise ranking.
-- `DRAFT_CRITIC_MODEL`: configured now for the future prosecutor/editor critic role.
+- `DRAFT_CRITIC_MODEL`: optional model for the report-only prosecutor/editor critic.
 - `DRAFT_ANOTHER_ANGLE_MODEL`: configured now for the future alternative-angle role.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `DRAFT_REVISION_MAX_ITERATIONS`: maximum directed-revision improvement cycles after
@@ -977,7 +977,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> EditorialCritique -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -1314,6 +1314,14 @@ The next artifacts must make candidate validation meaningful:
   but they do not count as warnings. The `/ai-runs` readable trace also reads
   enriched ledger data from `publicEvidence.enrichedSourceLedger` and selected or
   rejected evidence from nested `materialPlan` payloads.
+- `editorialCritiqueReport` is another sibling field inside the same `validation`
+  artifact. It uses the `critic` role and `DRAFT_CRITIC_MODEL` to challenge every
+  candidate for idea strength, tension, author stance, source integration, generic AI
+  prose, unsupported leaps, and reader value. It is report-only in Slice 2.15.4: the
+  report is visible in `/ai-runs?runId=...` and feeds ArticleDossier, but pairwise
+  ranking and revision do not yet have to consume it. If OpenRouter is not configured,
+  the report is marked `not-run`; invalid JSON uses primary, repair, optional backup,
+  then candidate-level unavailable status without fake critique findings.
 - `validation.rankingRevision` is the first actionable validation consumer. It
   pairwise-ranks candidates, then runs a bounded `revisionLoop`. Each cycle builds
   repair goals from actionable findings, asks OpenRouter for a directed revision,

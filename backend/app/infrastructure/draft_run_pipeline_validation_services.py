@@ -1,5 +1,6 @@
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.draft_directed_revision_service import DraftDirectedRevisionService
+from backend.app.application.draft_editorial_critique_service import DraftEditorialCritiqueService
 from backend.app.application.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.application.draft_ranking_revision_service import DraftRankingRevisionService
@@ -19,6 +20,12 @@ def build_validation_step_service(
 ) -> DraftValidationStepService:
     return DraftValidationStepService(
         llm_validator=DraftLlmValidationService(
+            settings=settings,
+            ai_run_service=ai_run_service,
+            openrouter_validator=openrouter_validator,
+            openrouter_adapter=openrouter_adapter,
+        ),
+        editorial_critic=DraftEditorialCritiqueService(
             settings=settings,
             ai_run_service=ai_run_service,
             openrouter_validator=openrouter_validator,
