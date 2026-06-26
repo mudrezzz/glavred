@@ -23,6 +23,11 @@ Keep documentation accurate, useful, and GitHub-ready.
 - `README.md`: product overview, quick start, links to docs.
 - `ROADMAP.md`: backlog, iterations, slices, statuses.
 - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`: architecture and component responsibilities.
+- `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`: current DraftRun pipeline map.
+  If DraftRun steps, artifacts, role model usage, retry/fallback behavior, validation,
+  ranking, revision, trace semantics, or context flow change, update this file and
+  regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` with
+  `python scripts/generate-draft-run-pipeline-pdf.py`.
 - `docs/adr/`: architectural decisions.
 - `docs/contributor/CONTRIBUTING.md`: contribution workflow.
 - `docs/developer/DEVELOPER_GUIDE.md`: local development, commands, internals.

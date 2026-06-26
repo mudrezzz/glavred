@@ -49,8 +49,8 @@ For existing ids, use `$draft-run-pipeline-diagnostics` directly.
    - Run the diagnostics helper:
      `python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py <DraftRun ID>`
    - Then follow `$draft-run-pipeline-diagnostics` for the full analysis: inspect
-     implicated code, compare with `ROADMAP.md`, and decide if the plan continues or
-     needs a repair slice.
+     implicated code, compare with `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`
+     and `ROADMAP.md`, and decide if the plan continues or needs a repair slice.
 
 ## What to Report
 

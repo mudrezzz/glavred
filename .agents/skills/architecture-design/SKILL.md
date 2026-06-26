@@ -26,6 +26,8 @@ Use the following sources, in this order:
    - files containing "requirements", "spec", "prd", "task", "тз", or "задание".
 4. `ROADMAP.md`.
 5. Existing architecture docs.
+   - For Glavred DraftRun/drafting architecture, include
+     `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`.
 6. Existing code structure.
 
 ## Process
@@ -62,6 +64,8 @@ Use the following sources, in this order:
 Update or create:
 
 - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`
+- `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` for DraftRun pipeline changes,
+  plus regenerated `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`
 - relevant ADR files under `docs/adr/`
 - `ROADMAP.md` if architecture affects iterations or slices
 - smoke-check or workflow-checklist coverage for each new architecture rule

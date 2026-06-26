@@ -27,19 +27,22 @@ Do not diagnose from screenshots alone when a run id is available.
 1. Inspect repo state:
    - `git status --short --branch`
    - note whether there are uncommitted pipeline changes that may affect the run.
-2. Extract run trace with the helper script:
+2. Read `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` to establish the current
+   expected pipeline shape before judging the trace.
+3. Extract run trace with the helper script:
    - `python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py <DraftRun ID>`
-3. If the helper reports missing or ambiguous data, query SQLite directly:
+4. If the helper reports missing or ambiguous data, query SQLite directly:
    - parent DB: `var/glavred-draft-runs.sqlite3`
    - child AI DB: `var/glavred-ai-runs.sqlite3`
-4. Inspect current code only for the components implicated by the trace:
+5. Inspect current code only for the components implicated by the trace:
    - source intent / public evidence;
    - source ledger / feasibility / post contract;
    - rule registry / material plan / strategy / rhetorical plans;
    - draft candidates / scoring / selection;
    - fallback behavior.
-5. Compare actual trace to expected slice behavior in `ROADMAP.md`.
-6. Decide one of:
+6. Compare actual trace to `DRAFT_RUN_PIPELINE_AS_IS.md` first, then to expected
+   slice behavior in `ROADMAP.md`.
+7. Decide one of:
    - behavior is acceptable for current slice, continue plan;
    - bugfix slice is needed before continuing;
    - roadmap slice should be amended because the architecture assumption was wrong.

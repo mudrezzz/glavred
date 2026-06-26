@@ -39,6 +39,7 @@ Before the first run, inspect:
 
 - `git status --short --branch`;
 - `ROADMAP.md`;
+- `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`;
 - current backend health;
 - whether frontend/backend/worker/Redis are reachable.
 
@@ -90,7 +91,10 @@ Use this decision table:
   branch:
   - update code;
   - add/update tests;
-  - update `ROADMAP.md`, SAO, developer/user/demo docs as needed;
+  - update `ROADMAP.md`, SAO, `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`,
+    developer/user/demo docs as needed;
+  - regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` when that Markdown
+    changes;
   - run targeted and relevant regression checks;
   - start the next cycle.
 - If defects imply an architecture shift, do not patch. Write a concise report with:

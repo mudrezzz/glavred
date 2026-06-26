@@ -24,6 +24,17 @@ The external source and import-review concept is documented in
 The revised signal and broadcast planning concept is documented in
 `docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md`.
 
+The current queued drafting pipeline is documented as a maintained AS IS technical map
+in `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, with a generated quick-view PDF at
+`docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`. DraftRun planning, implementation,
+diagnostics, and roadmap work should use that document as the current pipeline source
+before changing or judging drafting behavior.
+
+Slice-level target designs can add a separate TO BE map before implementation. The
+target for Slice 2.15.3 is documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.md`, with a generated PDF at
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.pdf`.
+
 ## Strategic Product Model
 
 The durable model is:

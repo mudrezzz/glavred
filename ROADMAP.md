@@ -4448,6 +4448,14 @@ Status:
 
 - Status: Ready
 - Goal: Convert public evidence into editorial implications before writing.
+- Current pipeline reference:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` is the maintained AS IS map of the
+    generation pipeline and must be updated together with its PDF when this slice
+    changes DraftRun behavior.
+- Target design:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.md` and
+    `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.pdf` define the proposed
+    evidence-interpretation handoff for this slice.
 - User value:
   - Sources stop appearing as forced reference name-drops and start shaping the post's
     thought, conflict, and author position.

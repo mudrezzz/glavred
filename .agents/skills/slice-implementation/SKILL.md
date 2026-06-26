@@ -63,6 +63,11 @@ Implement one small, complete, tested, documented product increment.
   editing. Do not jump from draft candidates directly to a validator/revision loop:
   source ledger, feasibility gate, and post contract must exist first unless
   `ROADMAP.md` explicitly records a safe exception.
+- For DraftRun pipeline slices, also read
+  `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` before implementation. If behavior
+  changes, update that Markdown file and regenerate
+  `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` with
+  `python scripts/generate-draft-run-pipeline-pdf.py` before completing the slice.
 
 ## Completion checklist
 

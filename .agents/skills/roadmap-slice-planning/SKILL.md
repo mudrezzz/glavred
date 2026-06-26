@@ -58,6 +58,11 @@ Use this format in `ROADMAP.md`:
 - For Glavred drafting/backend roadmap work, preserve the documented drafting quality
   order: source ledger and post contract come before validator/revision loops. If a
   slice skips ahead, record the reason and architecture impact explicitly.
+- For any DraftRun or drafting-pipeline slice, read
+  `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` before planning. If the planned
+  slice changes step order, artifacts, roles, context packs, validation, ranking,
+  revision, fallback, or trace semantics, include updating that Markdown file and
+  regenerating `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` in the slice scope.
 
 ## Completion checklist
 

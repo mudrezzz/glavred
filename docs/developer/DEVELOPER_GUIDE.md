@@ -149,20 +149,24 @@ npm run docs:wiki:publish
 Before implementing a product, refactor, domain, application, app, or frontend slice:
 
 1. Read the active `ROADMAP.md` slice and confirm it has `Architecture impact`.
-2. Check the planned files against the current large-file limits in
+2. For DraftRun, drafting, LLM role, trace, validation, ranking, or revision work,
+   read `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` before changing code. If the
+   slice changes the pipeline, update that Markdown file and regenerate
+   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` in the same slice.
+3. Check the planned files against the current large-file limits in
    `scripts/architecture-smoke.mjs`.
-3. Treat files reported as near-limit by `npm run test:architecture` as closed for new
+4. Treat files reported as near-limit by `npm run test:architecture` as closed for new
    behavior unless the same slice includes a refactor step into a role-owned module.
-4. Confirm module ownership before editing:
+5. Confirm module ownership before editing:
    - app shell and high-level wiring stay in `src/app/`;
    - feature UI stays under its own `src/features/<feature>/` folder;
    - shared visual primitives go to `src/shared/ui`;
    - shared business behavior goes to `src/application` or `src/domain`.
-5. For frontend work, check existing design-system primitives before adding a new UI
+6. For frontend work, check existing design-system primitives before adding a new UI
    pattern.
-6. Run `npm run test:architecture` before completing the slice. For visible frontend
+7. Run `npm run test:architecture` before completing the slice. For visible frontend
    changes, also run `npm run test:design` and `npm run test:visual`.
-7. For backend slices, confirm the slice adds only the modules required by the current
+8. For backend slices, confirm the slice adds only the modules required by the current
    use case. Avoid empty package scaffolding, unused base classes, and "future"
    abstractions without tests.
 
@@ -302,6 +306,11 @@ Draft generation API:
 
 Draft generation observability:
 
+- The maintained current-state map of the queued drafting pipeline is
+  `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`; a quick-view PDF is generated at
+  `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
+- Regenerate the PDF after updating the Markdown:
+  `python scripts/generate-draft-run-pipeline-pdf.py`.
 - Backend draft runs store full local sanitized trace in `AiRun.requestPayload` and
   `AiRun.resultPayload`: prompt messages, provider request summary, generated draft
   body, provider metadata, fallback flag, and safe error context.
@@ -369,6 +378,9 @@ How to read draft generation source:
 Use the repo skill `$draft-run-pipeline-diagnostics` whenever a concrete run produces
 a bad, generic, stuck, over-sourced, source-free, or wrongly selected post. The skill
 standardizes the analysis so run reviews do not depend on ad hoc SQLite queries.
+Before diagnosing expected behavior, compare the trace to
+`docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` and then to the active `ROADMAP.md`
+slice.
 
 Fast local extraction:
 

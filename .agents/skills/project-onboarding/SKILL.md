@@ -17,6 +17,9 @@ Quickly understand the project state and select the next appropriate action from
 4. Read the source requirements document if identifiable.
 5. Inspect:
    - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`
+   - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` when backend DraftRun,
+     drafting quality, LLM role, validation, ranking, revision, or trace work is
+     active or next in `ROADMAP.md`
    - latest ADRs
    - latest architecture ADRs and active architecture guardrails
    - developer docs
