@@ -4446,7 +4446,7 @@ Status:
 
 ### Slice 2.15.3: Evidence Interpretation, Not Citation Injection
 
-- Status: Ready
+- Status: Done
 - Goal: Convert public evidence into editorial implications before writing.
 - Current pipeline reference:
   - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` is the maintained AS IS map of the
@@ -4478,10 +4478,25 @@ Status:
   - Writer context pack receives implications, not raw citation dumps.
 - Acceptance criteria:
   - Trace explains what each source changes in the editorial argument.
+- Result:
+  - Added provider-free `EvidenceInterpretation` DTOs for implications, tensions,
+    usable examples, limits, forbidden overclaims, reader-value hooks, and rejected
+    evidence uses.
+  - Added provider-backed `EvidenceInterpretationService` with strategy-role model
+    selection, primary/repair/optional-backup JSON attempts, child `AiRun` audit, and
+    deterministic fallback.
+  - Integrated interpretation inside the existing `rulePack` artifact without new
+    DraftRun steps or SQLite schema changes.
+  - ArticleDossier and role ContextPacks now receive interpretation cards, so later
+    strategy/writer/review calls can use source meaning instead of raw citation dumps.
+  - MaterialPlan and draft-candidate prompts now prefer interpretation artifacts over
+    raw snippets.
+  - `/ai-runs?runId=...` renders `EvidenceInterpretation` as a readable semantic
+    section and maps child `evidenceInterpretation` AiRuns under the `rulePack` step.
 
 ### Slice 2.15.4: Prosecutor / Editor Critic Loop
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add a dedicated editorial critic role that challenges draft candidates before
   revision.
 - User value:
@@ -4749,4 +4764,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.3: Evidence Interpretation, Not Citation Injection`.
+Continue the backend track with `Slice 2.15.4: Prosecutor / Editor Critic Loop`.

@@ -22,7 +22,9 @@ def build_draft_candidate_messages(
             "content": (
                 "You are Glavred's draft-writing agent. Return only valid JSON with keys: "
                 "title, body, rationale, usedEvidence, ruleCoverage, risks, weaknesses. "
-                "The draft must obey hard constraints and stay grounded in evidence."
+                "The draft must obey hard constraints and stay grounded in evidence. "
+                "Use evidenceInterpretation implications, examples, limits, and forbidden overclaims "
+                "when present; do not paste raw citations as decoration."
             ),
         },
         {

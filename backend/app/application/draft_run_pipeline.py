@@ -7,6 +7,7 @@ from backend.app.application.draft_run_payloads import draft_to_payload, payload
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.deterministic_draft_planning_step_services import DeterministicMaterialPlanStepService, DeterministicStrategyStepService
+from backend.app.application.deterministic_evidence_interpretation_step_service import DeterministicEvidenceInterpretationStepService
 from backend.app.application.deterministic_rhetorical_plan_step_service import DeterministicRhetoricalPlanStepService
 from backend.app.application.deterministic_source_research_step_service import DeterministicSourceResearchStepService
 from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
@@ -21,23 +22,15 @@ from backend.app.application.draft_source_ledger_builder import SourceLedgerBuil
 from backend.app.application.draft_article_memory_service import DraftArticleMemoryService, context_pack_from_payload
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus, DraftRunStepKey
 from backend.app.domain.draft_model_roles import DraftModelRole
-
 class DraftRunPipeline:
     def __init__(
         self,
         repository: DraftRunPipelineRepository,
         deterministic_draft_service: DeterministicDraftService,
-        rule_pack_compiler: DraftRulePackCompiler | None = None,
-        material_plan_service: Any = None,
-        strategy_service: Any = None,
-        source_research_plan_service: Any = None,
-        public_evidence_step_service: PublicEvidenceStepService | None = None,
-        rhetorical_plan_service: Any = None,
-        candidate_generation_service: DraftCandidateGenerationService | None = None,
-        source_ledger_builder: SourceLedgerBuilder | None = None,
-        quality_gate: DraftQualityGate | None = None,
-        validation_step_service: DraftValidationStepService | None = None,
-        article_memory_service: DraftArticleMemoryService | None = None,
+        rule_pack_compiler: DraftRulePackCompiler | None = None, material_plan_service: Any = None, strategy_service: Any = None,
+        source_research_plan_service: Any = None, public_evidence_step_service: PublicEvidenceStepService | None = None, rhetorical_plan_service: Any = None,
+        candidate_generation_service: DraftCandidateGenerationService | None = None, source_ledger_builder: SourceLedgerBuilder | None = None, quality_gate: DraftQualityGate | None = None,
+        validation_step_service: DraftValidationStepService | None = None, article_memory_service: DraftArticleMemoryService | None = None, evidence_interpretation_service: Any = None,
     ) -> None:
         self._repository = repository
         self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
@@ -52,6 +45,8 @@ class DraftRunPipeline:
         self._draft_step_service = candidate_generation_service or LegacyDraftStepService(deterministic_draft_service)
         self._validation_step_service = validation_step_service or DraftValidationStepService()
         self._article_memory = article_memory_service or DraftArticleMemoryService()
+        self._evidence_interpretation_service = evidence_interpretation_service or DeterministicEvidenceInterpretationStepService()
+
     def execute(self, run_id: str) -> DraftRun:
         run = self._repository.get(run_id)
         if run is None:
@@ -87,7 +82,13 @@ class DraftRunPipeline:
                 return self._loaded(run_id)
             context_artifact = quality_gate_result.context_artifact
             rule_pack = self._rule_pack_compiler.compile(context_artifact).to_payload()
-            progress.complete(DraftRunStepKey.RULE_PACK, self._article_memory.attach(rule_pack, context_artifact=context_artifact, rule_pack=rule_pack))
+            interpretation_result = self._evidence_interpretation_service.create(context_summary=context_summary, context_artifact=context_artifact, rule_pack=rule_pack, context_pack=context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY))
+            progress.add_ai_run_ids(interpretation_result.ai_run_ids or ([interpretation_result.ai_run_id] if interpretation_result.ai_run_id else []))
+            rule_pack = {**rule_pack, **interpretation_result.artifact_payload}
+            context_artifact = {**context_artifact, **interpretation_result.artifact_payload}
+            rule_pack_artifact = self._article_memory.attach(rule_pack, context_artifact=context_artifact, rule_pack=rule_pack)
+            context_artifact = {**context_artifact, "articleDossier": rule_pack_artifact["articleDossier"], "contextPacks": rule_pack_artifact["contextPacks"]}
+            progress.complete(DraftRunStepKey.RULE_PACK, rule_pack_artifact)
             progress.start(DraftRunStepKey.MATERIAL_PLAN)
             material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_artifact)
             progress.add_ai_run_ids(material_plan_result.ai_run_ids or ([material_plan_result.ai_run_id] if material_plan_result.ai_run_id else []))

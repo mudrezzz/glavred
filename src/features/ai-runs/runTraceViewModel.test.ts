@@ -23,7 +23,7 @@ describe('buildRunTraceViewModel', () => {
       status: 'succeeded',
       aiRunId: 'ai-candidate'
     }));
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('10');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('11');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -188,6 +188,17 @@ describe('buildRunTraceViewModel', () => {
     expect(ledger?.fields.find((field) => field.label === 'External claim list')?.value).toContain('Independent report');
   });
 
+  it('shows evidence interpretation as readable semantic trace', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const interpretation = viewModel.semanticSections.find((section) => section.id === 'evidenceInterpretation');
+    const childDetail = viewModel.details.find((detail) => detail.id === 'ai-detail-ai-interpretation');
+
+    expect(interpretation?.fields.find((field) => field.label === 'Implications')?.value).toContain('Workflow proof');
+    expect(interpretation?.fields.find((field) => field.label === 'Limits')?.value).toContain('Do not overclaim');
+    expect(interpretation?.fields.find((field) => field.label === 'Forbidden overclaims')?.value).toContain('No universal claim');
+    expect(childDetail?.sections.find((section) => section.id === 'evidenceInterpretation')?.fields.find((field) => field.label === 'Implications')?.value).toContain('Workflow proof');
+  });
+
   it('shows article dossier and role context packs in DraftRun and child AiRun traces', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
     const dossier = viewModel.semanticSections.find((section) => section.id === 'article-dossier');
@@ -344,6 +355,10 @@ function makeDraftRunBundle(): RunTraceBundle {
           status: 'succeeded',
           title: 'Rule Pack',
           artifactPayload: {
+            source: 'openrouter',
+            aiRunId: 'ai-interpretation',
+            fallbackUsed: false,
+            attempts: [{ label: 'primary', model: 'deepseek/deepseek-v3.2', status: 'accepted', aiRunId: 'ai-interpretation' }],
             ruleRegistrySnapshot: {
               version: 'rule-registry-v2',
               metadata: {
@@ -368,7 +383,8 @@ function makeDraftRunBundle(): RunTraceBundle {
                   binding: { validatorType: 'llm' }
                 }
               ]
-            }
+            },
+            evidenceInterpretation: evidenceInterpretationFixture()
           },
           error: null,
           startedAt: null,
@@ -724,7 +740,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-interpretation', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
@@ -732,6 +748,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       makeAiRun('ai-source', 'sourceIntentResearchPlan'),
       makeAiRun('search-run-1', 'publicEvidenceSearch'),
       makeAiRun('synthesis-run-1', 'externalEvidenceSynthesis'),
+      makeAiRun('ai-interpretation', 'evidenceInterpretation'),
       makeAiRun('ai-material', 'materialPlan'),
       makeAiRun('ai-plans', 'rhetoricalPlans'),
       makeAiRun('ai-candidate', 'draftCandidate'),
@@ -777,6 +794,10 @@ function makeAiRun(id: string, step: string) {
       metadata: { externalClaimCount: 1 }
     }
   };
+  const interpretationResult = {
+    draftRunStep: step,
+    result: evidenceInterpretationFixture()
+  };
   return {
     id,
     capability: 'draftGeneration',
@@ -801,11 +822,62 @@ function makeAiRun(id: string, step: string) {
       ? publicEvidenceResult
       : step === 'externalEvidenceSynthesis'
         ? synthesisResult
+        : step === 'evidenceInterpretation'
+          ? interpretationResult
         : { draftRunStep: step, result: { thesisAngle: 'angle' } },
     error: null,
     fallbackUsed: false,
     createdAt: '2026-06-19T00:00:00+00:00',
     updatedAt: '2026-06-19T00:00:01+00:00'
+  };
+}
+
+function evidenceInterpretationFixture() {
+  return {
+    version: 'evidence-interpretation-v1',
+    implications: [{
+      id: 'implication-1',
+      title: 'Workflow proof',
+      summary: 'Use source to sharpen the workflow adoption argument.',
+      publicEvidenceItemIds: ['public-evidence-url-task-1'],
+      claimIds: ['external-evidence-public-evidence-url-task-1'],
+      ruleIds: ['rule-grounding'],
+      confidence: 'medium',
+      allowedUse: 'needsQualification',
+      reason: 'Accepted source claim'
+    }],
+    tensions: [],
+    usableExamples: [{
+      id: 'example-1',
+      title: 'Independent report example',
+      summary: 'Adoption depends on workflow integration.',
+      publicEvidenceItemIds: ['public-evidence-url-task-1'],
+      claimIds: ['external-evidence-public-evidence-url-task-1'],
+      confidence: 'medium',
+      allowedUse: 'canUseAsFraming'
+    }],
+    limits: [{
+      id: 'limit-1',
+      title: 'Do not overclaim',
+      summary: 'This source qualifies the claim but does not prove every AI rollout fails.',
+      claimIds: ['external-evidence-public-evidence-url-task-1'],
+      confidence: 'medium',
+      allowedUse: 'needsQualification'
+    }],
+    forbiddenOverclaims: [{
+      id: 'overclaim-1',
+      title: 'No universal claim',
+      summary: 'Do not say every AI rollout fails.',
+      claimIds: ['external-evidence-public-evidence-url-task-1'],
+      confidence: 'medium',
+      allowedUse: 'doNotState'
+    }],
+    authorPositionLinks: [],
+    readerValueHooks: [],
+    recommendedUseByPlan: [],
+    rejectedEvidenceUses: [],
+    warnings: [],
+    metadata: { implicationCount: 1, usableExampleCount: 1, limitCount: 1, warningCount: 0 }
   };
 }
 

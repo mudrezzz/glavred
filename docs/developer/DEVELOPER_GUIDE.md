@@ -977,7 +977,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -1005,8 +1005,11 @@ Keep the existing spine, but use these boundaries before expanding the loop furt
   latest artifact. Implemented in Slice 2.15.2 with
   `backend/app/application/draft_context_pack_builder.py` and the thin
   `draft_article_memory_service.py` pipeline wrapper.
-- `EvidenceInterpretation`: public evidence must become implications, limits,
-  tensions, and forbidden overclaims before it is used by prose prompts.
+- `EvidenceInterpretation`: public evidence becomes implications, limits, tensions,
+  usable examples, reader-value hooks, and forbidden overclaims before it is used by
+  material-planning or prose prompts. Implemented in Slice 2.15.3 under the existing
+  `rulePack` artifact with child `AiRun.requestPayload.draftRunStep =
+  evidenceInterpretation`.
 - `EditorialCritic`: the prosecutor/editor role challenges idea strength, author
   stance, reader value, forced references, and generic AI prose. This is not the same
   as deterministic validation.
@@ -1042,6 +1045,9 @@ Conceptual interfaces for the next implementation slices:
   extraction notes.
 - `EvidenceSynthesis`: reconciliation of public evidence with signal, fabula, and
   author position.
+- `EvidenceInterpretation`: strategy-role interpretation of accepted evidence into
+  implications, examples, limits, tensions, forbidden overclaims, reader-value hooks,
+  and rejected uses before material planning and writing.
 - `FeasibilityReport`: pre-writing gate that may return feasible, feasible with
   constraints, needs research, needs human decision, or infeasible.
 - `PostContract`: locked thesis, audience value, CTA, allowed claims, forbidden moves,
@@ -1278,6 +1284,12 @@ The next artifacts must make candidate validation meaningful:
   such as `external-evidence-<publicEvidenceItemId>`, and downstream feasibility,
   post contract, rule registry, planning, rhetorical plans, and draft candidates must
   consume that enriched ledger.
+- `EvidenceInterpretation` runs after `RuleRegistrySnapshot` and before
+  `MaterialPlan`. It uses the strategy role model and JSON retry discipline to convert
+  accepted evidence into implications, tensions, usable examples, limits, forbidden
+  overclaims, reader-value hooks, and rejected evidence uses. If provider attempts fail,
+  deterministic interpretation fallback is explicit in trace. Prompt layers should use
+  this artifact before raw public snippets.
 - `MaterialPlan` must not silently ignore the enriched ledger. The material planner
   receives `usableEvidenceCandidates` and must either select evidence or explain why
   candidate claims were rejected. Empty evidence without accountability triggers a
@@ -1393,10 +1405,10 @@ The first backend implementation order is:
 25. DraftRun long-running step progress budget. Done.
 26. Iterative revision loop and improvement gate. Done.
 27. Multi-model drafting roles. Done.
-28. Article dossier and context packs. Next.
-29. Evidence interpretation, prosecutor critic, alternative-angle tournament, and deep
-    revision loop v2.
-30. Regression report and editor decision learning.
+28. Article dossier and context packs. Done.
+29. Evidence interpretation. Done.
+30. Prosecutor critic, alternative-angle tournament, and deep revision loop v2.
+31. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

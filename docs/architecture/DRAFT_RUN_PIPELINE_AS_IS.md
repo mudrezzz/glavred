@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.15.2: Article Dossier and Context Packs.
+Current as of Slice 2.15.3: Evidence Interpretation, Not Citation Injection.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -24,6 +24,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `DraftRunStep` | One logical pipeline stage: context, source intent, public evidence, feasibility, contract, rules, planning, candidates, validation, complete. | `draft_run_steps.artifact_payload` |
 | `AiRun` | One model/provider call or audited fallback inside a DraftRun. | `var/glavred-ai-runs.sqlite3` |
 | `SourceLedger` | Claim/provenance inventory with allowed use, confidence, warnings, risks, and forbidden inferences. | `context` and enriched `publicEvidence` artifacts |
+| `EvidenceInterpretation` | Editorial interpretation of accepted evidence: implications, tensions, usable examples, limits, forbidden overclaims, reader-value hooks, and rejected uses. | `rulePack.evidenceInterpretation`, child `AiRun` trace |
 | `PostContract` | Locked editorial intent: thesis, audience, CTA, allowed claims, forbidden moves, size contract, topic/fabula obligations. | `postContract` artifact |
 | `RuleRegistrySnapshot` | Machine-readable rules and validator bindings derived from contract, ledger, topic, fabula, and publisher rules. | `rulePack.ruleRegistrySnapshot` |
 | `ArticleDossier` | DraftRun-local article memory built from artifacts. It is not workspace persistence and not vector storage. | selected step artifacts |
@@ -67,7 +68,8 @@ flowchart TD
   E --> F[feasibility]
   F --> G[postContract]
   G --> H[rulePack]
-  H --> I[materialPlan]
+  H --> H2[evidenceInterpretation inside rulePack]
+  H2 --> I[materialPlan]
   I --> J[strategy]
   J --> K[rhetoricalPlans]
   K --> L[draft]
@@ -98,8 +100,9 @@ Role-aware execution map:
 | `publicEvidence` synthesis | `research` | `DRAFT_RESEARCH_MODEL`, then default | accepted public evidence, initial ledger, context | enriched ledger, dossier |
 | `feasibility` | none | no model | enriched ledger and warnings | contract or blocked completion |
 | `postContract` | none | no model | brief, ledger, feasibility, size settings | rules, planning, validation |
-| `rulePack` | none | no model | contract, ledger, publisher/topic/fabula rules | strategy, validation, revision |
-| `materialPlan` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy `ContextPack`, usable evidence candidates, contract, registry | draft strategy |
+| `rulePack` | none | no model | contract, ledger, publisher/topic/fabula rules | evidence interpretation, validation, revision |
+| `evidenceInterpretation` inside `rulePack` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | enriched ledger, evidence synthesis, public evidence, contract, registry, strategy `ContextPack` | material plan, dossier, context packs |
+| `materialPlan` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy `ContextPack`, usable evidence candidates, evidence interpretation, contract, registry | draft strategy |
 | `strategy` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default | material plan, rules, contract, strategy `ContextPack` | rhetorical plans |
 | `rhetoricalPlans` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy, material plan, claim/rule ids | writer candidates |
 | `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default | writer `ContextPack`, one rhetorical plan, material evidence, contract | validation and ranking |
@@ -224,8 +227,9 @@ Trace:
 
 AS IS limitation:
 
-- public evidence is already merged into the ledger, but it is not yet converted into
-  editorial implications. That is the purpose of Slice 2.15.3.
+- public evidence retrieval and synthesis do not write prose directly. Accepted
+  evidence is merged into the ledger here, then interpreted inside `rulePack` before
+  material planning and writing.
 
 ### 4.4 `feasibility`
 
@@ -302,22 +306,37 @@ Input:
 Processing:
 
 - `RuleRegistrySnapshot` is compiled first;
-- compatibility `RulePack` is derived from the registry.
+- compatibility `RulePack` is derived from the registry;
+- `EvidenceInterpretationService` converts accepted internal/external evidence into
+  editorial implications, tensions, examples, limits, forbidden overclaims, reader
+  value hooks, and rejected evidence uses before material planning.
 
 Output:
 
 - `ruleRegistrySnapshot`;
 - compatibility rule-pack fields;
+- `evidenceInterpretation`;
+- `attempts[]` for the interpretation provider/repair/backup path;
 - updated `ArticleDossier` and `ContextPack`s.
 
 Role/model handoff:
 
-- no LLM role is used;
-- this step translates editorial obligations into machine-readable rule ids;
+- rule compilation itself uses no LLM role;
+- evidence interpretation uses the `strategy` role through `DRAFT_STRATEGY_MODEL`,
+  then default, repair, optional backup, and finally deterministic fallback;
+- this step translates editorial obligations into machine-readable rule ids and then
+  translates evidence into usable editorial meaning;
 - later role prompts receive rule ids and validator bindings so they do not work
-  from anonymous prose constraints only.
+  from anonymous prose constraints only;
+- material planning and writing receive interpretation artifacts instead of raw
+  citation snippets as their main source context.
 
-Trace: `rulePack` step.
+Trace:
+
+- `rulePack` step;
+- child `AiRun.requestPayload.draftRunStep = evidenceInterpretation` when provider
+  interpretation runs;
+- `rulePack.evidenceInterpretation` readable section in `/ai-runs?runId=...`.
 
 ### 4.7 `materialPlan`
 
@@ -327,6 +346,7 @@ Input:
 
 - context summary;
 - RulePack and RuleRegistry;
+- EvidenceInterpretation;
 - enriched SourceLedger;
 - PostContract;
 - strategy `ContextPack`.
@@ -334,6 +354,8 @@ Input:
 Processing:
 
 - material planner receives `usableEvidenceCandidates`;
+- material planner receives `evidenceInterpretation` and should prefer implications,
+  usable examples, limits, and forbidden overclaims over raw public snippets;
 - it must either choose usable evidence or explain rejection reasons;
 - accountability guard rejects empty/unexplained evidence selection;
 - retry sequence: primary -> repair -> optional backup model -> emergency deterministic fallback.
@@ -445,6 +467,7 @@ Input:
 - MaterialPlan;
 - DraftStrategy;
 - RhetoricalPlanSet;
+- EvidenceInterpretation;
 - writer `ContextPack`.
 
 Processing:
@@ -467,7 +490,8 @@ Role/model handoff:
 - active role: `writer`;
 - model resolver chooses `DRAFT_WRITER_MODEL` or default;
 - each candidate call receives one rhetorical plan, writer `ContextPack`, material
-  evidence, allowed claim ids, forbidden moves, and size contract;
+  evidence, evidence interpretation, allowed claim ids, forbidden moves, and size
+  contract;
 - candidates write prose, but selection still remains downstream responsibility;
 - `review` receives all candidates plus validation context.
 
@@ -476,11 +500,11 @@ Trace:
 - `draft` step;
 - child `AiRun.requestPayload.draftRunStep = draftCandidate`.
 
-AS IS limitation:
+AS IS behavior:
 
-- candidates receive context packs, but public evidence can still appear as a
-  mechanical citation block because there is no dedicated evidence-interpretation
-  layer yet.
+- writer prompts now receive interpreted implications, examples, limits, and forbidden
+  overclaims, so public evidence should shape the argument instead of being pasted as
+  a decorative citation block.
 
 ### 4.11 `validation`
 
@@ -555,8 +579,8 @@ role-specific context pack, then writes a new artifact for the next role.
 
 ```mermaid
 flowchart TD
-  A[research creates SourceIntent, ResearchPlan, EvidenceSynthesis] --> B[strategy creates MaterialPlan, DraftStrategy, RhetoricalPlans]
-  B --> C[writer generates draft candidates from rhetorical plans]
+  A[research creates SourceIntent, ResearchPlan, EvidenceSynthesis] --> B[strategy interprets evidence and creates MaterialPlan, DraftStrategy, RhetoricalPlans]
+  B --> C[writer generates draft candidates from rhetorical plans and interpreted evidence]
   C --> D[review validates and ranks all candidates]
   D --> E[writer revises the current best candidate]
   E --> F[deterministic regression guard accepts or rejects revision]
@@ -568,8 +592,8 @@ Role summary:
 | Role | Used now | Receives | Must not do |
 | --- | --- | --- | --- |
 | `research` | source research planning and evidence synthesis | source intent, public evidence, context | invent facts or strengthen weak evidence |
-| `strategy` | material plan, draft strategy, rhetorical plans | strategy context pack, rules, contract, material | change post thesis or bypass contract |
-| `writer` | draft candidates and directed revisions | writer context pack, material plan, rhetorical plan, repair goals | create new claims or violate forbidden moves |
+| `strategy` | evidence interpretation, material plan, draft strategy, rhetorical plans | strategy context pack, rules, contract, material, evidence synthesis | change post thesis or bypass contract |
+| `writer` | draft candidates and directed revisions | writer context pack, evidence interpretation, material plan, rhetorical plan, repair goals | create new claims or violate forbidden moves |
 | `review` | LLM validation and pairwise ranking | review context pack, candidates, rules, ledger, validation reports | rewrite prose directly |
 | `critic` | configured but not active yet | future critic context pack | not used in AS IS pipeline |
 | `anotherAngle` | configured but not active yet | future alternative-angle pack | not used in AS IS pipeline |
@@ -580,6 +604,7 @@ Role summary:
 flowchart LR
   A[SourceLedger] --> D[ArticleDossier]
   B[PublicEvidence + EvidenceSynthesis] --> D
+  B2[EvidenceInterpretation] --> D
   C[PostContract + RuleRegistry] --> D
   E[MaterialPlan + Strategy + Plans] --> D
   F[Candidates + Validation + Revision] --> D
@@ -608,6 +633,7 @@ Important AS IS rules:
 | `ResearchPlan` | sourceIntent | publicEvidence | `sourceIntent.researchPlan` |
 | `PublicEvidenceBatch` | publicEvidence | evidence synthesis, trace | `publicEvidence.items`, `publicEvidence.attempts` |
 | `EvidenceSynthesis` | publicEvidence | ledger merger, material planning, trace | `publicEvidence.evidenceSynthesis` |
+| `EvidenceInterpretation` | rulePack | material plan, writer, dossier, trace | `rulePack.evidenceInterpretation` |
 | `PostContract` | postContract | rules, planning, validation, revision | `postContract` step |
 | `RuleRegistrySnapshot` | rulePack | material plan, validation, revision | `rulePack.ruleRegistrySnapshot` |
 | `MaterialPlan` | materialPlan | strategy, writer, validation, ranking | `materialPlan.materialPlan` |
@@ -628,6 +654,7 @@ Important AS IS rules:
 | stale DraftRun | diagnostic state after no timestamp progress; not automatic fallback |
 | public search disabled | attempt is `notConfigured`; it is not proof |
 | malformed JSON planning | repair retry, optional backup model, then deterministic fallback |
+| malformed or empty evidence interpretation | repair retry, optional backup model, then deterministic interpretation fallback |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
@@ -646,18 +673,21 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 4. `feasibility`: confirm run was allowed or blocked for quality reasons.
 5. `postContract`: confirm thesis, CTA, size, allowed claims, and forbidden moves.
 6. `rulePack`: confirm rule registry exists and size/evidence rules are present.
-7. `materialPlan`: confirm selected evidence and explicit rejection reasons.
-8. `strategy`: confirm the strategy does not change the contract.
-9. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
-10. `draft`: compare candidates, source/fallback status, publishability, scorecard.
-11. `validation`: inspect deterministic warnings, LLM findings, observations.
-12. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
-13. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
+7. `evidenceInterpretation`: inside `rulePack`, confirm implications, examples,
+   limits, forbidden overclaims, rejected evidence uses, and attempts.
+8. `materialPlan`: confirm selected evidence and explicit rejection reasons.
+9. `strategy`: confirm the strategy does not change the contract.
+10. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
+11. `draft`: compare candidates, source/fallback status, publishability, scorecard.
+12. `validation`: inspect deterministic warnings, LLM findings, observations.
+13. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
+14. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
 
 ## 10. Known AS IS limitations
 
-- Public evidence can still be injected into prose as a citation block instead of
-  shaping the argument. Slice 2.15.3 exists to add `EvidenceInterpretation`.
+- Evidence interpretation is implemented as a first controlled interpretation pass, but
+  it is not yet an editorial debate. The critic and alternative-angle roles are the
+  next layers for challenging weak or boring interpretations.
 - `critic` is configured but not yet active.
 - `anotherAngle` is configured but not yet active.
 - `ArticleDossier` is a local compact memory artifact, not a vector store or

@@ -1,5 +1,6 @@
 from typing import Any
 
+from backend.app.application.evidence_interpretation_context_cards import evidence_interpretation_cards
 from backend.app.domain.draft_article_memory import ArticleDossier, DossierCard, DossierCardType
 
 MAX_DOSSIER_CARDS = 48
@@ -23,6 +24,7 @@ class ArticleDossierBuilder:
         cards.extend(_public_evidence_cards(_record(context.get("publicEvidence")) or context))
         cards.extend(_contract_cards(_record(context.get("postContract"))))
         cards.extend(_rule_cards(rule_pack or {}))
+        cards.extend(evidence_interpretation_cards(_record((rule_pack or {}).get("evidenceInterpretation")) or _record(context.get("evidenceInterpretation"))))
         cards.extend(_material_cards(material_plan or {}))
         cards.extend(_strategy_cards(draft_strategy or {}))
         cards.extend(_rhetorical_cards(rhetorical_plans or {}))

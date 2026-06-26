@@ -426,7 +426,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -528,6 +528,17 @@ Revision-loop ownership is intentionally split:
 - `backend/app/application/draft_revision_loop_service.py`: bounded orchestration
   across instruction building, directed revision, deterministic regression, old-vs-new
   pairwise comparison, and final best selection.
+
+Slice 2.15.3 adds `EvidenceInterpretation` inside the existing `rulePack` artifact,
+without a new DraftRun step or SQLite table. Accepted public evidence still becomes
+external ledger claims through `EvidenceSynthesis`, but writing and material planning
+no longer receive those claims as a flat citation list. The strategy role now turns
+evidence into structured implications, tensions, usable examples, limits, forbidden
+overclaims, reader-value hooks, and rejected evidence uses. Material planning and
+writer prompts consume this interpretation first, while raw snippets remain available
+only as provenance/debug data. The trace workbench shows the interpretation artifact,
+provider attempts, model role, fallback status, and the resulting dossier/context-pack
+cards.
 
 Slice 2.15 exposed the next architectural correction: stronger drafts require an
 editorial lab, not only more validation and repair. Glavred must not treat a bad
@@ -939,6 +950,7 @@ Concrete queued drafting files:
 - `backend/app/domain/publication_size.py`
 - `backend/app/domain/draft_rule_registry.py`
 - `backend/app/domain/draft_evidence_synthesis.py`
+- `backend/app/domain/draft_evidence_interpretation.py`
 - `backend/app/api/draft_runs.py`
 - `backend/app/api/draft_generation_contracts.py`
 - `backend/app/application/draft_run_service.py`
@@ -957,6 +969,12 @@ Concrete queued drafting files:
 - `backend/app/application/external_evidence_synthesis_prompts.py`
 - `backend/app/application/external_evidence_synthesis_service.py`
 - `backend/app/application/source_ledger_external_evidence_merger.py`
+- `backend/app/application/evidence_interpretation_service.py`
+- `backend/app/application/evidence_interpretation_prompts.py`
+- `backend/app/application/evidence_interpretation_audit.py`
+- `backend/app/application/deterministic_evidence_interpretation.py`
+- `backend/app/application/deterministic_evidence_interpretation_step_service.py`
+- `backend/app/application/evidence_interpretation_context_cards.py`
 - `backend/app/infrastructure/draft_run_pipeline_provider_services.py`
 - `backend/app/application/draft_feasibility_gate.py`
 - `backend/app/application/draft_feasibility_policy.py`
@@ -1471,6 +1489,9 @@ multi-step run rather than a single provider request:
   provenance, confidence, allowed use, and extraction notes.
 - `EvidenceSynthesis`: reconciliation of public evidence with signal, fabula, and
   author position before feasibility and contract decisions.
+- `EvidenceInterpretation`: editorial meaning extracted from accepted evidence:
+  implications, tensions, examples, limits, forbidden overclaims, reader-value hooks,
+  and rejected evidence uses for material planning and writing.
 - `FeasibilityReport`: pre-writing decision that can stop a run before unsafe prose is
   generated.
 - `PostContract`: locked editorial intent and constraints that later strategy,

@@ -378,8 +378,12 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   search tasks through `openrouter:web_search`; otherwise search tasks stay
   `notConfigured` in trace. The trace also shows the built search query and rejected
   citations when a provider result drifts away from the research task. Accepted public
-  evidence is then synthesized and merged into an enriched SourceLedger before
-  feasibility, post contract, rule registry, planning, and draft candidates. Planned,
+   evidence is then synthesized and merged into an enriched SourceLedger before
+    feasibility, post contract, rule registry, planning, and draft candidates. After the
+    rule registry, Glavred also builds `EvidenceInterpretation`: what each accepted
+    source changes in the argument, which examples are usable, where the evidence is
+    weak, and which overclaims are forbidden. This helps sources shape the thought
+    instead of appearing as forced name-drops. Planned,
   failed, disabled, or rejected source attempts stay as warnings and are not treated
   as proof. Draft candidate
   selection also has a publishability guard: emergency deterministic fallback drafts
@@ -429,10 +433,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   goals without regression. The main `Драфт` screen still shows one editable result,
   while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
   resolved/unresolved goals, final source, and stop reason.
-- The next planned quality layer is not another warning report. Glavred will interpret
-  public evidence into editorial implications, then use critic/prosecutor and
-  alternative-angle roles over the existing dossier. The main editor still receives
-  one draft to edit.
+  - The next planned quality layer is not another warning report. Glavred now interprets
+    public evidence into editorial implications, then will use critic/prosecutor and
+    alternative-angle roles over the existing dossier. The main editor still receives
+    one draft to edit.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

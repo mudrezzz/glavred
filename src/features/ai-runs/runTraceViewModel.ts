@@ -372,7 +372,7 @@ function buildAiRunSemanticSections(aiRun: AiRunTrace): TraceSemanticSection[] {
   }
   return [
     ...(contextPack ? [contextPacksSection({ [stringValue(contextPack.role) ?? 'role']: contextPack })] : []),
-    ...sectionsFromPayload(stepKeyForAiRun(aiRun), resultPayload)
+    ...sectionsFromPayload(rawStepKeyForAiRun(aiRun) ?? stepKeyForAiRun(aiRun), resultPayload)
   ];
 }
 
@@ -392,6 +392,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const researchPlan = asRecord(payload.researchPlan);
   const publicEvidence = asRecord(payload.publicEvidence) ?? (step === 'publicEvidence' ? payload : null);
   const evidenceSynthesis = asRecord(payload.evidenceSynthesis);
+  const evidenceInterpretation = asRecord(payload.evidenceInterpretation) ?? (step === 'evidenceInterpretation' ? asRecord(payload.result) : null);
   const sourceLedger = asRecord(payload.enrichedSourceLedger) ?? asRecord(payload.sourceLedger);
   const feasibility = asRecord(payload.feasibilityReport) ?? (step === 'feasibility' ? payload : null);
   const postContract = asRecord(payload.postContract) ?? (step === 'postContract' ? payload : null);
@@ -413,6 +414,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (researchPlan) sections.push(researchPlanSection(researchPlan));
   if (publicEvidence) sections.push(publicEvidenceSection(publicEvidence));
   if (evidenceSynthesis) sections.push(evidenceSynthesisSection(evidenceSynthesis));
+  if (evidenceInterpretation) sections.push(evidenceInterpretationSection(evidenceInterpretation, payload));
   if (sourceLedger) sections.push(sourceLedgerSection(sourceLedger));
   if (feasibility) sections.push(feasibilitySection(feasibility));
   if (postContract) {
@@ -859,6 +861,42 @@ function evidenceSynthesisSection(payload: Record<string, unknown>): TraceSemant
   };
 }
 
+function evidenceInterpretationSection(payload: Record<string, unknown>, envelope: Record<string, unknown>): TraceSemanticSection {
+  const metadata = asRecord(payload.metadata);
+  return {
+    id: 'evidenceInterpretation',
+    title: 'Evidence interpretation',
+    fields: compactFields([
+      ['Source', envelope.source],
+      ['Fallback', envelope.fallbackUsed === true ? 'yes' : 'no'],
+      ['Attempts', asArray(envelope.attempts)?.map(jsonStepAttemptValue)],
+      ['Implications', asArray(payload.implications)?.map(evidenceInterpretationItemValue)],
+      ['Tensions', asArray(payload.tensions)?.map(evidenceInterpretationItemValue)],
+      ['Usable examples', asArray(payload.usableExamples)?.map(evidenceInterpretationItemValue)],
+      ['Limits', asArray(payload.limits)?.map(evidenceInterpretationItemValue)],
+      ['Forbidden overclaims', asArray(payload.forbiddenOverclaims)?.map(evidenceInterpretationItemValue)],
+      ['Reader value hooks', asArray(payload.readerValueHooks)?.map(evidenceInterpretationItemValue)],
+      ['Rejected evidence uses', asArray(payload.rejectedEvidenceUses)?.map(evidenceInterpretationItemValue)],
+      ['Warnings', asArray(payload.warnings)?.map(publicEvidenceWarningValue)],
+      ['Counts', metadata ? `implications ${metadata.implicationCount ?? 0}; examples ${metadata.usableExampleCount ?? 0}; limits ${metadata.limitCount ?? 0}; warnings ${metadata.warningCount ?? 0}` : null]
+    ])
+  };
+}
+
+function evidenceInterpretationItemValue(item: unknown): unknown {
+  const record = asRecord(item);
+  if (!record) return item;
+  return [
+    `${record.id} - ${record.allowedUse} - ${record.confidence}`,
+    record.title,
+    record.summary,
+    asArray(record.claimIds)?.length ? `claims: ${formatList(asArray(record.claimIds) ?? [])}` : '',
+    asArray(record.publicEvidenceItemIds)?.length ? `evidence: ${formatList(asArray(record.publicEvidenceItemIds) ?? [])}` : '',
+    asArray(record.ruleIds)?.length ? `rules: ${formatList(asArray(record.ruleIds) ?? [])}` : '',
+    record.reason ? `reason: ${record.reason}` : ''
+  ].filter(Boolean).join('\n');
+}
+
 function sourceLedgerSection(payload: Record<string, unknown>): TraceSemanticSection {
   const metadata = asRecord(payload.metadata);
   const claims = asArray(payload.claims) ?? [];
@@ -1164,6 +1202,7 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
   if (step === 'sourceIntentResearchPlan') return 'sourceIntent';
   if (step === 'publicEvidenceSearch') return 'publicEvidence';
   if (step === 'externalEvidenceSynthesis') return 'publicEvidence';
+  if (step === 'evidenceInterpretation') return 'rulePack';
   return step ?? 'unknown';
 }
 
@@ -1185,6 +1224,7 @@ function stepLabel(step: string): string {
     publicEvidence: 'Public evidence',
     publicEvidenceSearch: 'Public evidence search',
     externalEvidenceSynthesis: 'External evidence synthesis',
+    evidenceInterpretation: 'Evidence interpretation',
     feasibility: 'Feasibility',
     postContract: 'Post contract',
     rulePack: 'Rule pack',

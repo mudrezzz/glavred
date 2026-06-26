@@ -25,7 +25,9 @@ def build_material_plan_messages(
                 "availableEvidence, rejectedEvidence, rejectionReasons, claimsRequiringAttribution, "
                 "qualifiedClaims, missingEvidence, riskyClaims, groundingPlan, sourceNotes, openQuestions. "
                 "Use availableEvidence for source-ledger claims that can support the post. If you reject "
-                "all projected evidence, explain concrete reasons in rejectedEvidence and rejectionReasons."
+                "all projected evidence, explain concrete reasons in rejectedEvidence and rejectionReasons. "
+                "Prefer evidenceInterpretation implications, usable examples, limits, and forbidden overclaims "
+                "over raw citation snippets when they are present."
             ),
         },
         {
@@ -34,6 +36,7 @@ def build_material_plan_messages(
                 f"Context summary:\n{context_summary}\n\n"
                 f"RulePack:\n{rule_pack}\n\n"
                 f"Context pack:\n{context_pack or {}}\n\n"
+                f"Evidence interpretation:\n{rule_pack.get('evidenceInterpretation') or {}}\n\n"
                 f"Usable evidence candidates:\n{usable_evidence_candidates or []}"
                 f"{repair_instruction}"
             ),

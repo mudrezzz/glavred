@@ -25,5 +25,7 @@ def test_draft_run_pipeline_writes_article_dossier_and_context_packs(tmp_path) -
 
     assert public_evidence["articleDossier"]["version"] == "article-dossier-v1"
     assert public_evidence["contextPacks"]["writer"]["version"] == "context-pack-v1"
+    assert "evidenceInterpretation" in rule_pack
     assert rule_pack["contextPacks"]["strategy"]["metadata"]["itemCount"] >= 1
+    assert any(card["source"] == "evidenceInterpretation" for card in rule_pack["articleDossier"]["cards"])
     assert validation["articleDossier"]["metadata"]["cardCount"] >= public_evidence["articleDossier"]["metadata"]["cardCount"]

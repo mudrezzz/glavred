@@ -246,8 +246,10 @@ decisions, risks, rejected moves, and open questions from the current run into c
 cards, and `ContextPacks` select the relevant cards for each role. This is not
 workspace persistence and not a vector store; it is deterministic context engineering
 inside one queued run. `/ai-runs?runId=...` shows the dossier, role packs, and the
-pack passed into child model calls. Future slices add evidence interpretation, a
-prosecutor/editor critic role, and an alternative-angle route.
+pack passed into child model calls. Evidence interpretation now turns accepted sources
+into implications, examples, limits, and forbidden overclaims before material planning
+and writing. Future slices add a prosecutor/editor critic role and an alternative-angle
+route.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create

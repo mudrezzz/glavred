@@ -137,12 +137,14 @@ The existing manual package/checklist/copy/Markdown surface is only a compatibil
 bridge until release-log slices replace it.
 
 The current drafting-quality demo trace now includes role-specific model choices,
-`ArticleDossier`, `ContextPacks`, validation, ranking, and the final revision-loop
-decision. The dossier shows the run-local cards Glavred kept in memory: evidence,
-claims, decisions, risks, rejected moves, and open questions. Context packs show which
-cards were sent to strategy, writer, and review calls. The next demo evolution is
-evidence interpretation, prosecutor/editor critique, and alternative angles so the
-demo can explain why the selected draft became stronger, not merely why weaker
+`ArticleDossier`, `ContextPacks`, `EvidenceInterpretation`, validation, ranking, and
+the final revision-loop decision. The dossier shows the run-local cards Glavred kept
+in memory: evidence, claims, decisions, risks, rejected moves, and open questions.
+Context packs show which cards were sent to strategy, writer, and review calls.
+Evidence interpretation shows how accepted sources became implications, limits,
+usable examples, reader-value hooks, and forbidden overclaims before the writer saw
+them. The next demo evolution is prosecutor/editor critique and alternative angles so
+the demo can explain why the selected draft became stronger, not merely why weaker
 attempts failed.
 
 ## External Sources Scenario
@@ -261,7 +263,7 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     Public-search trace shows the built query, accepted evidence, and rejected
     citations before feasibility in
     step 3, post contract in step 4, compiled rule pack plus
-    `ruleRegistrySnapshot` in step 5, material plan in step 6, draft strategy in step 7,
+    `ruleRegistrySnapshot` and `EvidenceInterpretation` in step 5, material plan in step 6, draft strategy in step 7,
     rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
     and errors. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
@@ -289,9 +291,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     through OpenRouter when backend web tools are enabled. Accepted evidence
     candidates are synthesized and merged into the DraftRun `SourceLedger`; skipped,
     failed, or rejected attempts remain warnings in the same trace before validators
-    or directed revision. The `MaterialPlan` trace now shows selected evidence,
-    rejected evidence with reasons, repair attempts, backup-model use, and emergency
-    fallback if all LLM attempts ignore the enriched ledger.
+    or directed revision. The `EvidenceInterpretation` trace shows implications,
+    tensions, usable examples, limits, forbidden overclaims, rejected evidence uses,
+    and the provider/fallback attempts that produced them. The `MaterialPlan` trace now
+    shows selected evidence, rejected evidence with reasons, repair attempts,
+    backup-model use, and emergency fallback if all LLM attempts ignore the enriched
+    ledger.
     The `validation` trace step now contains deterministic per-candidate findings for
     size/shape, contract/CTA, attribution, rejected evidence, forbidden moves,
     publishability, and raw artifact leakage.
