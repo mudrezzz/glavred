@@ -30,7 +30,8 @@ def test_pipeline_marks_candidate_selection_blocked_without_final_draft(tmp_path
     assert complete_step.artifact_payload["status"] == "blocked"
     assert complete_step.artifact_payload["blockedBy"] == "draftCandidateSelection"
     assert complete_step.artifact_payload["candidateIds"] == ["candidate-1"]
-    assert validation_step.artifact_payload["status"] == "not-run"
+    assert validation_step.artifact_payload["status"] == "critical"
+    assert validation_step.artifact_payload["candidateReports"][0]["candidateId"] == "candidate-1"
 
 
 class BlockedCandidateGenerationService:

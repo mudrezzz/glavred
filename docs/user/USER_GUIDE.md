@@ -429,19 +429,18 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   separately from positive observations, so pass notes do not inflate warning counts.
 - The same trace can include `Editorial critique`: the prosecutor/editor critic looks
   at whether candidates are boring, generic, over-sourced, missing author stance,
-  weak on tension, or unclear for the reader. In this slice the critique is
-  diagnostic only. It explains why a post is weak or strong, but it does not yet
-  override the final draft selection.
+  weak on tension, or unclear for the reader. The trace can then show `Alternative
+  angle tournament`: Glavred asks another model role for one different route based on
+  the critique and asks the writer to draft one challenger. Final validation and
+  ranking compare the original candidates with that challenger.
 - After validation, Glavred pairwise-ranks candidates and runs a bounded revision
   loop. Each cycle tries to repair concrete findings, validates the revised candidate,
   compares it with the previous best, and accepts it only if it improves measurable
   goals without regression. The main `Драфт` screen still shows one editable result,
   while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
   resolved/unresolved goals, final source, and stop reason.
-  - The next planned quality layer is not another warning report. Glavred now
-    interprets public evidence into editorial implications and records critic
-    feedback over the existing dossier. The next layer is an alternative-angle route.
-    The main editor still receives one draft to edit.
+  - The main editor still receives one draft to edit. Alternative routes and the
+    reason they won or lost stay in `/ai-runs?runId=...`.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.
 - Read editor notes, edit the draft manually, and approve the text from `Драфт`.
 - After text approval, open `Визуал`. Choose `Сгенерировать`, `Найти мем`,

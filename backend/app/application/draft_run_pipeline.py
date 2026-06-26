@@ -124,25 +124,26 @@ class DraftRunPipeline:
             )
             progress.add_ai_run_ids(draft_result.ai_run_ids)
             progress.succeed(DraftRunStepKey.DRAFT, with_progress_payload(self._article_memory.attach(draft_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, rhetorical_plans=rhetorical_plans, draft_artifact=draft_result.artifact_payload), draft_progress))
-            if draft_result.final_draft is None:
-                progress.complete(DraftRunStepKey.VALIDATION, self._validation_step_service.not_run(reason="draft candidate selection blocked").artifact_payload)
-                progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
-                self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
-                return self._loaded(run_id)
             progress.start(DraftRunStepKey.VALIDATION)
             validation_progress = progress.operation_sink(DraftRunStepKey.VALIDATION)
             validation_result = self._validation_step_service.validate(
                 request=request,
+                context_summary=context_summary,
                 draft_artifact=draft_result.artifact_payload,
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,
+                draft_strategy=draft_strategy,
                 progress=validation_progress,
             )
             progress.add_ai_run_ids(validation_result.ai_run_ids)
             progress.succeed(DraftRunStepKey.VALIDATION, with_progress_payload(self._article_memory.attach(validation_result.artifact_payload, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, rhetorical_plans=rhetorical_plans, draft_artifact=draft_result.artifact_payload, validation_artifact=validation_result.artifact_payload), validation_progress))
-            progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
             final_draft = validation_result.final_draft or draft_result.final_draft
+            if final_draft is None:
+                progress.complete(DraftRunStepKey.COMPLETE, candidate_selection_blocked_payload(draft_result.artifact_payload))
+                self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=progress.ai_run_ids)
+                return self._loaded(run_id)
+            progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
             self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, final_draft=draft_to_payload(final_draft) if final_draft else None, ai_run_ids=progress.ai_run_ids)
         except Exception as exc:
             safe_error = str(exc)[:500] or "Draft run failed"

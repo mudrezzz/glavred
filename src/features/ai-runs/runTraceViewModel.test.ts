@@ -14,6 +14,8 @@ describe('buildRunTraceViewModel', () => {
     expect(traceStep(viewModel, 'draft')?.childCalls[0].id).toBe('ai-candidate');
     expect(traceStep(viewModel, 'validation')?.childCalls[0].id).toBe('ai-validation-1');
     expect(traceStep(viewModel, 'validation')?.childCalls.map((call) => call.id)).toContain('ai-critic-1');
+    expect(traceStep(viewModel, 'validation')?.childCalls.map((call) => call.id)).toContain('ai-alt-route');
+    expect(traceStep(viewModel, 'validation')?.childCalls.map((call) => call.id)).toContain('ai-alt-candidate');
     expect(traceStep(viewModel, 'draft')?.childCalls[0].meta).toContainEqual({ label: 'Model role', value: 'writer' });
     expect(traceStep(viewModel, 'validation')?.childCalls[0].meta).toContainEqual({ label: 'Selection source', value: 'role' });
     expect(traceStep(viewModel, 'draft')!.childCalls.map((call) => call.title)).toContain('Скоринг кандидатов');
@@ -24,7 +26,7 @@ describe('buildRunTraceViewModel', () => {
       status: 'succeeded',
       aiRunId: 'ai-candidate'
     }));
-    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('12');
+    expect(viewModel.summary.find((field) => field.label === 'LLM calls')?.value).toBe('14');
   });
 
   it('expands draft candidates, scoring and selection as readable trace nodes', () => {
@@ -81,6 +83,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Draft scorecard');
     expect(titles).toContain('Validation report');
     expect(titles).toContain('Editorial critique');
+    expect(titles).toContain('Alternative angle tournament');
     expect(titles).toContain('Selected draft candidate');
     expect(titles).toContain('Selected draft');
   });
@@ -108,6 +111,16 @@ describe('buildRunTraceViewModel', () => {
     expect(critique?.fields.find((field) => field.label === 'Actionable critique')?.value).toContain('critic.genericAiProse');
     expect(critique?.fields.find((field) => field.label === 'Editorial observations')?.value).toContain('critic.tension');
     expect(critique?.fields.find((field) => field.label === 'Attempts')?.value).toContain('candidate-1 - primary: accepted');
+  });
+
+  it('shows alternative angle tournament as readable semantic trace', () => {
+    const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
+    const tournament = viewModel.semanticSections.find((section) => section.id === 'alternative-angle-tournament');
+
+    expect(tournament?.fields).toContainEqual({ label: 'Status', value: 'succeeded' });
+    expect(tournament?.fields.find((field) => field.label === 'Why different')?.value).toContain('attacks the generic opening');
+    expect(tournament?.fields.find((field) => field.label === 'Candidate')?.value).toBe('alternative-angle-1-brief-demo');
+    expect(tournament?.fields.find((field) => field.label === 'Attempts')?.value).toContain('primary');
   });
 
   it('shows pairwise ranking and directed revision as validation semantic trace', () => {
@@ -702,6 +715,39 @@ function makeDraftRunBundle(): RunTraceBundle {
               ],
               metadata: { version: 'editorial-critique-v1', reportOnly: true }
             },
+            alternativeAngleTournament: {
+              status: 'succeeded',
+              route: {
+                id: 'challenger',
+                title: 'Author stance challenger',
+                angle: 'Open from the author stance instead of a source recap.',
+                openingMove: 'Start with the uncomfortable trade-off.',
+                whyDifferent: 'It attacks the generic opening instead of polishing the same route.',
+                critiqueInputs: ['critic.genericAiProse'],
+                claimsToUse: ['external-claim-1'],
+                claimsToAvoid: [],
+                rulesToStress: ['rule-audience'],
+                risks: ['May overcorrect the tone']
+              },
+              inputCritiqueSummary: {
+                status: 'warning',
+                highRiskCandidates: ['candidate-1'],
+                weakestMoves: ['Sounds like generic AI prose.'],
+                recommendedMoves: ['Open with the uncomfortable product trade-off.']
+              },
+              candidate: {
+                id: 'alternative-angle-1-brief-demo',
+                title: 'Alternative challenger',
+                body: 'Alternative challenger body.',
+                source: 'openrouter',
+                routeType: 'alternativeAngle',
+                aiRunId: 'ai-alt-candidate'
+              },
+              attempts: [
+                { label: 'primary', model: 'qwen/qwen3.7-max', status: 'accepted', aiRunId: 'ai-alt-route', backup: false }
+              ],
+              aiRunIds: ['ai-alt-route', 'ai-alt-candidate']
+            },
             rankingRevision: {
               status: 'succeeded',
               pairwiseRanking: {
@@ -800,7 +846,7 @@ function makeDraftRunBundle(): RunTraceBundle {
       ],
       finalDraft: { title: 'Selected', body: 'Selected body' },
       error: null,
-      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-interpretation', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-critic-1', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
+      aiRunIds: ['ai-source', 'search-run-1', 'synthesis-run-1', 'ai-interpretation', 'ai-material', 'ai-plans', 'ai-candidate', 'ai-validation-1', 'ai-critic-1', 'ai-alt-route', 'ai-alt-candidate', 'ai-ranking-1', 'ai-revision-1', 'ai-ranking-2'],
       createdAt: '2026-06-19T00:00:00+00:00',
       updatedAt: '2026-06-19T00:00:01+00:00'
     },
@@ -814,6 +860,8 @@ function makeDraftRunBundle(): RunTraceBundle {
       makeAiRun('ai-candidate', 'draftCandidate'),
       makeAiRun('ai-validation-1', 'llmValidation'),
       makeAiRun('ai-critic-1', 'editorialCritique'),
+      makeAiRun('ai-alt-route', 'alternativeAngleRoute'),
+      makeAiRun('ai-alt-candidate', 'alternativeAngleCandidate'),
       makeAiRun('ai-ranking-1', 'pairwiseRanking'),
       makeAiRun('ai-revision-1', 'directedRevision'),
       makeAiRun('ai-ranking-2', 'pairwiseRanking')

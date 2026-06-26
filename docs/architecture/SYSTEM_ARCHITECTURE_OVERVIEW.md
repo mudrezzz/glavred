@@ -426,7 +426,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> EditorialCritique -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -591,7 +591,9 @@ Current ownership boundaries:
 - `EvidenceInterpretation`: a synthesis step that turns public evidence into
   editorial implications before writer prompts can cite or use it.
 - `AlternativeAngle`: a role that proposes genuinely different post routes instead of
-  retrying the same prompt with the same assumptions.
+  retrying the same prompt with the same assumptions. It is active in the validation
+  phase as a one-challenger tournament: critique plus dossier produce an alternative
+  route, the writer executes it, and final validation/ranking compare the merged pool.
 
 `ArticleDossier` and `ContextPack` are not workspace persistence, not long-term RAG,
 and not a vector store. They live inside existing DraftRun JSON artifacts and child

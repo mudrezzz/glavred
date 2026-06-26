@@ -36,7 +36,8 @@ Required variables for the backend/AI track:
 - `DRAFT_WRITER_MODEL`: optional model for draft candidates and directed revisions.
 - `DRAFT_REVIEW_MODEL`: optional model for LLM validation and pairwise ranking.
 - `DRAFT_CRITIC_MODEL`: optional model for the report-only prosecutor/editor critic.
-- `DRAFT_ANOTHER_ANGLE_MODEL`: configured now for the future alternative-angle role.
+- `DRAFT_ANOTHER_ANGLE_MODEL`: optional model for the alternative-angle challenger
+  route.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `DRAFT_REVISION_MAX_ITERATIONS`: maximum directed-revision improvement cycles after
   initial candidate selection. Default `3`; invalid or zero values normalize to `1`.
@@ -977,7 +978,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> DeterministicLinter -> ValidatorReports -> EditorialCritique -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -1014,7 +1015,9 @@ Keep the existing spine, but use these boundaries before expanding the loop furt
   stance, reader value, forced references, and generic AI prose. This is not the same
   as deterministic validation.
 - `AlternativeAngle`: intentional creative divergence through another model/role,
-  distinct from retry and fallback.
+  distinct from retry and fallback. It consumes critique, dossier, context pack, and
+  rejected/weak route signals to produce one challenger route before final
+  validation/ranking.
 
 This decision is recorded in ADR
 `docs/adr/2026-06-26-drafting-needs-editorial-lab-context-memory-and-model-roles.md`.

@@ -6,6 +6,7 @@ from backend.app.application.draft_pairwise_ranking_service import DraftPairwise
 from backend.app.application.draft_ranking_revision_service import DraftRankingRevisionService
 from backend.app.application.draft_revision_loop_config import revision_iteration_limit
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
+from backend.app.infrastructure.draft_run_pipeline_alternative_services import build_alternative_angle_tournament_service
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
 from backend.app.settings import BackendSettings
@@ -18,32 +19,19 @@ def build_validation_step_service(
     openrouter_validator: OpenRouterConfigValidator,
     openrouter_adapter: OpenRouterJsonAdapter,
 ) -> DraftValidationStepService:
+    provider_kwargs = {
+        "settings": settings,
+        "ai_run_service": ai_run_service,
+        "openrouter_validator": openrouter_validator,
+        "openrouter_adapter": openrouter_adapter,
+    }
     return DraftValidationStepService(
-        llm_validator=DraftLlmValidationService(
-            settings=settings,
-            ai_run_service=ai_run_service,
-            openrouter_validator=openrouter_validator,
-            openrouter_adapter=openrouter_adapter,
-        ),
-        editorial_critic=DraftEditorialCritiqueService(
-            settings=settings,
-            ai_run_service=ai_run_service,
-            openrouter_validator=openrouter_validator,
-            openrouter_adapter=openrouter_adapter,
-        ),
+        llm_validator=DraftLlmValidationService(**provider_kwargs),
+        editorial_critic=DraftEditorialCritiqueService(**provider_kwargs),
+        alternative_tournament=build_alternative_angle_tournament_service(**provider_kwargs),
         ranking_revision_service=DraftRankingRevisionService(
-            ranking_service=DraftPairwiseRankingService(
-                settings=settings,
-                ai_run_service=ai_run_service,
-                openrouter_validator=openrouter_validator,
-                openrouter_adapter=openrouter_adapter,
-            ),
-            revision_service=DraftDirectedRevisionService(
-                settings=settings,
-                ai_run_service=ai_run_service,
-                openrouter_validator=openrouter_validator,
-                openrouter_adapter=openrouter_adapter,
-            ),
+            ranking_service=DraftPairwiseRankingService(**provider_kwargs),
+            revision_service=DraftDirectedRevisionService(**provider_kwargs),
             max_iterations=revision_iteration_limit(settings),
         ),
     )

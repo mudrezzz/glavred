@@ -144,10 +144,11 @@ Context packs show which cards were sent to strategy, writer, review, and critic
 Evidence interpretation shows how accepted sources became implications, limits,
 usable examples, reader-value hooks, and forbidden overclaims before the writer saw
 them. The prosecutor/editor critique now appears inside the `validation` trace as a
-report-only layer: it explains whether candidates are boring, generic, under-argued,
-missing author stance, or using sources mechanically. The next demo evolution is
-alternative angles, so the demo can explain why the selected draft became stronger,
-not merely why weaker attempts failed.
+quality challenge: it explains whether candidates are boring, generic, under-argued,
+missing author stance, or using sources mechanically. The alternative-angle
+tournament then asks another model role for one different route, asks the writer to
+draft the challenger, and lets final validation/ranking decide whether it beats the
+original pool.
 
 ## External Sources Scenario
 
@@ -317,7 +318,7 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
     original winner or accepted revision-loop candidate. Child AI calls also show
     `modelRole`, `selectedModel`, and `modelSelectionSource`, so the trace distinguishes
-    researcher, strategist, writer, review, critic, future alternative-angle policy,
+    researcher, strategist, writer, review, critic, active alternative-angle policy,
     and technical backup retries.
 29. Edit the draft text.
 30. Click `Утвердить текст` in `Драфт`.

@@ -405,6 +405,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const draft = asRecord(payload.draft);
   const validation = step === 'validation' ? payload : asRecord(payload.validationReport);
   const editorialCritique = asRecord(payload.editorialCritiqueReport);
+  const alternativeAngleTournament = asRecord(payload.alternativeAngleTournament);
   const rankingRevision = asRecord(payload.rankingRevision);
   const articleDossier = asRecord(payload.articleDossier);
   const contextPacks = asRecord(payload.contextPacks);
@@ -430,6 +431,7 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   if (rhetoricalPlanSet) sections.push(...rhetoricalPlanSections(rhetoricalPlanSet));
   if (candidate) sections.push(candidateSection(candidate, 'Draft candidate'));
   if (candidates || selection) sections.push(...buildDraftCandidateSemanticSections(payload));
+  if (alternativeAngleTournament) sections.push(alternativeAngleTournamentSection(alternativeAngleTournament));
   if (validation) sections.push(validationSection(validation));
   if (editorialCritique) sections.push(editorialCritiqueSection(editorialCritique));
   if (rankingRevision) sections.push(...rankingRevisionSections(rankingRevision));
@@ -598,6 +600,31 @@ function validationCandidateValue(item: unknown): unknown {
   const report = asRecord(item);
   if (!report) return item;
   return `${report.selected ? 'selected · ' : ''}${report.candidateId}: ${report.status} · critical ${report.criticalCount ?? 0} · warnings ${report.warningCount ?? 0}`;
+}
+
+function alternativeAngleTournamentSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const route = asRecord(payload.route);
+  const candidate = asRecord(payload.candidate);
+  const critique = asRecord(payload.inputCritiqueSummary);
+  return {
+    id: 'alternative-angle-tournament',
+    title: 'Alternative angle tournament',
+    fields: compactFields([
+      ['Status', payload.status],
+      ['Reason', payload.reason],
+      ['Route', route ? `${route.id ?? 'route'} - ${route.title ?? ''}` : null],
+      ['Why different', route?.whyDifferent],
+      ['Critique inputs', route?.critiqueInputs],
+      ['Weakest moves', critique?.weakestMoves],
+      ['Recommended moves', critique?.recommendedMoves],
+      ['Candidate', candidate?.id],
+      ['Candidate title', candidate?.title],
+      ['Candidate source', candidate?.source],
+      ['Attempts', asArray(payload.attempts)?.map(attemptValue)],
+      ['AiRun IDs', payload.aiRunIds]
+    ]),
+    body: stringValue(candidate?.body) ?? undefined
+  };
 }
 
 function validationFindings(reports: unknown[], prefix: string): unknown[] {
@@ -1270,6 +1297,8 @@ function stepKeyForAiRun(aiRun: AiRunTrace): string {
   if (step === 'externalEvidenceSynthesis') return 'publicEvidence';
   if (step === 'evidenceInterpretation') return 'rulePack';
   if (step === 'editorialCritique') return 'validation';
+  if (step === 'alternativeAngleRoute') return 'validation';
+  if (step === 'alternativeAngleCandidate') return 'validation';
   return step ?? 'unknown';
 }
 
@@ -1302,6 +1331,8 @@ function stepLabel(step: string): string {
     draftCandidate: 'Draft candidate',
     validation: 'Validation',
     editorialCritique: 'Editorial critique',
+    alternativeAngleRoute: 'Alternative angle route',
+    alternativeAngleCandidate: 'Alternative angle candidate',
     complete: 'Complete',
     draftGeneration: 'Draft generation',
     unknown: 'Unknown step'

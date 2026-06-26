@@ -4538,7 +4538,7 @@ Status:
 
 ### Slice 2.15.5: Alternative Angle Tournament
 
-- Status: Ready
+- Status: Done
 - Goal: Generate and compare a genuinely different framing route using a dedicated
   another-angle role/model.
 - User value:
@@ -4564,10 +4564,24 @@ Status:
 - Acceptance criteria:
   - A DraftRun can show at least one non-identical route and why it was accepted or
     rejected.
+- Result:
+  - Added provider-free `AlternativeAngleRoute` and `AlternativeAngleTournament`
+    artifacts.
+  - Added a critic-driven tournament inside the existing `validation` step: initial
+    validation/critic runs first, then `DRAFT_ANOTHER_ANGLE_MODEL` proposes one
+    challenger route, `DRAFT_WRITER_MODEL` writes one challenger candidate, and final
+    validation/ranking/revision runs on the merged candidate pool.
+  - Kept `anotherAngle` explicitly separate from fallback/retry: provider unavailable
+    or malformed route responses produce `not-run`/`failed` tournament trace and the
+    original candidate pool continues unchanged.
+  - Added child `AiRun` traces for `alternativeAngleRoute` and
+    `alternativeAngleCandidate`, including model-role metadata.
+  - `/ai-runs?runId=...` now renders `Alternative angle tournament` as a semantic
+    trace section.
 
 ### Slice 2.15.6: Deep Revision Loop v2
 
-- Status: Backlog
+- Status: Ready
 - Goal: Make the revision loop optimize for editorial improvement, not only validator
   cleanup.
 - User value:
@@ -4778,4 +4792,4 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.5: Alternative Angle Tournament`.
+Continue the backend track with `Slice 2.15.6: Deep Revision Loop v2`.

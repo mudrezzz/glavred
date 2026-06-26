@@ -251,9 +251,12 @@ into implications, examples, limits, and forbidden overclaims before material pl
 and writing. The prosecutor/editor critic role now writes a report-only
 `editorialCritiqueReport` inside the existing `validation` step: it attacks blandness,
 weak tension, missing author stance, forced source use, generic AI prose, unsupported
-leaps, and unclear reader value. It is visible in trace and feeds ArticleDossier, but
-does not yet change final draft selection. Future slices add the alternative-angle
-route and critique-aware revision.
+leaps, and unclear reader value. It is visible in trace and feeds ArticleDossier.
+The alternative-angle tournament now uses that critique to ask the `anotherAngle`
+role for one deliberately different route, then asks the `writer` role to produce a
+challenger candidate. Final validation, ranking, and revision run over the merged
+candidate pool. If the alternative route or challenger fails, the original candidates
+continue and the failure is explicit in trace.
 
 Source strategy defaults now live in `Fabula.researchStrategy`: manual fabulas copy
 configured research instructions into new work briefs, while auto fabulas create
