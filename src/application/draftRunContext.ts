@@ -291,6 +291,7 @@ function compactFabula(fabula: Fabula) {
     rules: fabula.rules,
     weightRange: fabula.weightRange,
     sizeIntent: fabula.sizeIntent,
+    researchDepth: fabula.researchDepth,
     researchStrategy: fabula.researchStrategy,
     status: fabula.status
   };

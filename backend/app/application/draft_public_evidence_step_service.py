@@ -6,6 +6,7 @@ from backend.app.application.deterministic_external_evidence_synthesis_step_serv
 )
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.public_evidence_retrieval_service import PublicEvidenceRetrievalService
+from backend.app.application.source_ledger_budgeting import apply_external_claim_budget
 from backend.app.application.source_ledger_external_evidence_merger import SourceLedgerExternalEvidenceMerger
 
 
@@ -63,10 +64,12 @@ class PublicEvidenceStepService:
             public_evidence=public_evidence,
             evidence_synthesis=evidence_synthesis,
         )
+        enriched_ledger = apply_external_claim_budget(source_ledger=enriched_ledger, context_artifact=context_artifact)
         artifact_payload = {
             **public_evidence,
             **synthesis_result.artifact_payload,
             "enrichedSourceLedger": enriched_ledger,
+            "draftRunBudget": context_artifact.get("draftRunBudget"),
         }
         return PublicEvidenceStepResult(
             artifact_payload=artifact_payload,

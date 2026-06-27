@@ -8,6 +8,7 @@ from backend.app.application.draft_candidate_direction_service import DraftCandi
 from backend.app.application.draft_candidate_prompts import CANDIDATE_KEYS, CANDIDATE_TEMPERATURE, build_draft_candidate_messages
 from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
 from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
+from backend.app.application.draft_run_budget_resolver import budget_from_context
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
@@ -57,6 +58,9 @@ class DraftCandidateGenerationService:
             draft_strategy=draft_strategy,
             rhetorical_plans=rhetorical_plans,
         )
+        budget = budget_from_context(context_summary)
+        if len(directions) > budget.caps.max_draft_candidates:
+            directions = directions[:budget.caps.max_draft_candidates]
         candidate_payloads: list[dict[str, Any]] = []
         ai_run_ids: list[str] = []
         fallback_used = False
@@ -85,6 +89,7 @@ class DraftCandidateGenerationService:
             "fallbackUsed": fallback_used,
             "aiRunIds": ai_run_ids,
             "rhetoricalPlanSet": rhetorical_plans,
+            "draftRunBudget": budget.to_payload(),
             "directions": [direction.to_payload() for direction in directions],
             "candidates": candidate_payloads,
             "selection": selection,

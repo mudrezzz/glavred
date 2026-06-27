@@ -1308,6 +1308,12 @@ The next artifacts must make candidate validation meaningful:
   overclaims, reader-value hooks, and rejected evidence uses. If provider attempts fail,
   deterministic interpretation fallback is explicit in trace. Prompt layers should use
   this artifact before raw public snippets.
+- `DraftRunBudget` is resolved from `Fabula.researchDepth` plus
+  `DRAFT_RUN_EXECUTION_MODE`. It lives in the `context` artifact and is consumed by
+  `sourceIntent`, `publicEvidence`, external evidence merge, `materialPlan`, `draft`,
+  and smoke revision limits. Budgeted-out retrieval tasks must be stored as skipped
+  attempts, and trimmed evidence or external claims must remain visible in trace
+  metadata. Smoke mode lowers caps but must not skip logical DraftRun steps.
 - `MaterialPlan` must not silently ignore the enriched ledger. The material planner
   receives `usableEvidenceCandidates` and must either select evidence or explain why
   candidate claims were rejected. Empty evidence without accountability triggers a

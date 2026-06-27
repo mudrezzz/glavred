@@ -4694,7 +4694,7 @@ Status:
 
 ### Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes
 
-- Status: Ready
+- Status: Done
 - Goal: Make public-evidence depth and execution cost explicit instead of hardcoding
   one source/search volume for every fabula.
 - User value:
@@ -4743,10 +4743,29 @@ Status:
 - Risks:
   - If depth budgets are too low, deep articles will still look thin; if too high, test
     runs stay expensive. Start conservative and make caps visible in trace.
+- Delivered:
+  - Added `Fabula.researchDepth` with frontend editing, compact chips, demo depths,
+    DraftRun context propagation, and legacy workspace normalization.
+  - Added `DraftRunBudget` and resolver with `light`, `standard`, `deep`,
+    `marketResearch`, and `smoke` caps.
+  - Added `DRAFT_RUN_EXECUTION_MODE`, budget override env keys, capped source
+    research tasks, public retrieval, search result count, external claims, usable
+    material evidence, draft candidates, and smoke revision iterations.
+  - `/ai-runs?runId=...` now shows DraftRun budget, caps, used counts, skipped tasks,
+    and trimmed evidence/claims in semantic trace.
+  - Updated docs and regenerated the AS IS pipeline PDF.
+- Control run note:
+  - Smoke DraftRun `37678736-364d-4310-b76f-aca76dbf0fd5` confirmed research/public
+    evidence budget caps and trace visibility, but also showed that provider-heavy
+    validation/critic/alternative-angle calls can still make smoke runs long. This is
+    not fixed by 2.15.6.2 because the slice only caps research/evidence/candidates and
+    revision iterations; a later execution-budget slice should add per-role provider
+    call caps or a dedicated cheap smoke validation profile.
+- Completed: 2026-06-27
 
 ### Slice 2.15.6.3: Universal JSON Retry Policy for LLM Steps
 
-- Status: Backlog
+- Status: Ready
 - Goal: Make malformed/invalid JSON from any LLM JSON step follow the same retry
   discipline before fallback or failure.
 - User value:
@@ -5011,6 +5030,8 @@ Status:
 - Slice 2.15.6: Deep Revision Loop v2. Completed 2026-06-27.
 - Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair. Completed
   2026-06-27.
+- Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes. Completed
+  2026-06-27.
 
 ## Blocked Items
 
@@ -5032,4 +5053,4 @@ Status:
 ## Next Recommended Task
 
 Continue the backend track with
-`Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes`.
+`Slice 2.15.6.3: Universal JSON Retry Policy for LLM Steps`.

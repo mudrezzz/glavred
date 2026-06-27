@@ -9,6 +9,7 @@ from backend.app.application.source_research_audit import (
     build_source_research_request_trace,
     build_source_research_result_trace,
 )
+from backend.app.application.source_research_budgeting import apply_source_research_budget
 from backend.app.application.source_research_prompts import build_source_research_plan_messages
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
@@ -64,7 +65,7 @@ class SourceResearchPlanService:
         )
         request_payload.update(selection.to_payload())
         if not status.configured:
-            return self._fallback(source_intent_payload, source_intent, request_payload, provider, model, "OpenRouter is not configured", source_origin)
+            return self._fallback(source_intent_payload, source_intent, request_payload, provider, model, "OpenRouter is not configured", source_origin, context_artifact)
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
@@ -86,11 +87,11 @@ class SourceResearchPlanService:
                 fallback_used=False,
             )
             return DraftPlanningStepResult(
-                artifact_payload=self._artifact("openrouter", source_origin, source_intent_payload, plan_payload, run.id, selection.to_payload(), fallback_used=False),
+                artifact_payload=apply_source_research_budget(artifact_payload=self._artifact("openrouter", source_origin, source_intent_payload, plan_payload, run.id, selection.to_payload(), fallback_used=False), context_artifact=context_artifact),
                 ai_run_id=run.id,
             )
         except Exception as exc:
-            return self._fallback(source_intent_payload, source_intent, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc), source_origin)
+            return self._fallback(source_intent_payload, source_intent, request_payload, AiRunProvider.OPENROUTER, model, self._safe_error(exc), source_origin, context_artifact)
 
     def _fallback(
         self,
@@ -101,6 +102,7 @@ class SourceResearchPlanService:
         model: str | None,
         error: str,
         source_origin: str,
+        context_artifact: dict[str, Any],
     ) -> DraftPlanningStepResult:
         plan_payload = self._deterministic_plan_service.create(source_intent).to_payload()
         run = self._ai_run_service.create_completed_run(
@@ -117,7 +119,7 @@ class SourceResearchPlanService:
             error=error,
         )
         return DraftPlanningStepResult(
-            artifact_payload=self._artifact("deterministicFallback", source_origin, source_intent_payload, plan_payload, run.id, dict(request_payload), fallback_used=True, error=error),
+            artifact_payload=apply_source_research_budget(artifact_payload=self._artifact("deterministicFallback", source_origin, source_intent_payload, plan_payload, run.id, dict(request_payload), fallback_used=True, error=error), context_artifact=context_artifact),
             ai_run_id=run.id,
         )
 

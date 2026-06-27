@@ -12,4 +12,13 @@ describe('local workspace fabula research strategy normalization', () => {
     expect(normalized.fabulas.every((fabula) => fabula.researchStrategy.mode === 'auto')).toBe(true);
     expect(normalized.fabulas.every((fabula) => Array.isArray(fabula.researchStrategy.instructions))).toBe(true);
   });
+
+  it('adds standard research depth to legacy fabulas', () => {
+    const workspace = createDemoWorkspace();
+    const legacyFabulas = workspace.fabulas.map(({ researchDepth: _researchDepth, ...fabula }) => fabula);
+
+    const normalized = normalizeWorkspace({ ...workspace, fabulas: legacyFabulas as typeof workspace.fabulas });
+
+    expect(normalized.fabulas.every((fabula) => fabula.researchDepth === 'standard')).toBe(true);
+  });
 });

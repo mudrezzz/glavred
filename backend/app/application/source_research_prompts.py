@@ -40,6 +40,7 @@ def build_source_research_plan_messages(
                     "candidate": context_artifact.get("candidate"),
                     "topic": context_artifact.get("topic"),
                     "fabula": context_artifact.get("fabula"),
+                    "draftRunBudget": context_artifact.get("draftRunBudget"),
                 },
                 "sourceIntent": source_intent,
                 "verificationTaskShape": {

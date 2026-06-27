@@ -267,6 +267,13 @@ configured research instructions into new work briefs, while auto fabulas create
 readable prompts from the post context. `PostBrief.sources` remains the approved
 per-post override and is the only source input consumed by the DraftRun `sourceIntent`
 step.
+`Fabula.researchDepth` now adds a separate depth policy: `light`, `standard`, `deep`,
+or `marketResearch`. Backend `DRAFT_RUN_EXECUTION_MODE=smoke|standard|full` combines
+with that depth into a trace-visible `DraftRunBudget` that caps research tasks, URL
+reads, web-search results, accepted evidence, external ledger claims, usable material
+evidence, draft candidates, and smoke revision iterations. Budget-skipped tasks and
+trimmed evidence stay visible in `/ai-runs?runId=...`; they are never treated as
+evaluated proof.
 
 Run tests:
 

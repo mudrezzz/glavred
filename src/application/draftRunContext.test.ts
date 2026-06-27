@@ -15,6 +15,7 @@ describe('buildDraftRunContext', () => {
     expect(context.sourceSignal?.id).toBe(workspace.sourceSignals[0].id);
     expect(context.topic?.id).toBe(workspace.topics[0].id);
     expect(context.fabula?.id).toBe(workspace.fabulas[0].id);
+    expect(context.fabula?.researchDepth).toBe(workspace.fabulas[0].researchDepth);
     expect(context.fabula?.researchStrategy).toEqual(workspace.fabulas[0].researchStrategy);
     expect(context.sourceIntentDefaults.sourcesOrigin).toBe('userOverride');
     expect(context.publisherRules.length).toBeGreaterThan(0);

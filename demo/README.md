@@ -141,6 +141,9 @@ The current drafting-quality demo trace now includes role-specific model choices
 the final revision-loop decision. The dossier shows the run-local cards Glavred kept
 in memory: evidence, claims, decisions, risks, rejected moves, and open questions.
 Context packs show which cards were sent to strategy, writer, review, and critic calls.
+Demo fabulas now use mixed research depths (`light`, `standard`, `deep`,
+`marketResearch`). A DraftRun trace shows the resolved `DraftRunBudget`, including
+execution mode, caps, skipped retrieval tasks, and trimmed evidence/claims.
 Evidence interpretation shows how accepted sources became implications, limits,
 usable examples, reader-value hooks, and forbidden overclaims before the writer saw
 them. The prosecutor/editor critique now appears inside the `validation` trace as a

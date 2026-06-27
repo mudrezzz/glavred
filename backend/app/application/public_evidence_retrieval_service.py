@@ -8,6 +8,7 @@ from backend.app.application.public_evidence_ports import (
     PublicUrlReader,
 )
 from backend.app.application.public_evidence_query_builder import build_public_evidence_search_task
+from backend.app.application.public_evidence_budgeting import budget_public_evidence_tasks, trim_public_evidence_items
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_public_evidence import (
     PublicEvidenceAllowedUse,
@@ -41,7 +42,11 @@ class PublicEvidenceRetrievalService:
         warnings: list[PublicEvidenceWarning] = []
         ai_run_ids: list[str] = []
         metadata: dict[str, Any] = {"searchProvider": "notConfigured"}
-        for task in _tasks(source_intent_artifact):
+        tasks, skipped_attempts, skipped_warnings, budget_trace = budget_public_evidence_tasks(_tasks(source_intent_artifact), context_artifact)
+        attempts.extend(skipped_attempts)
+        warnings.extend(skipped_warnings)
+        metadata["budgetTrace"] = budget_trace
+        for task in tasks:
             kind = str(task.get("kind") or "")
             target = str(task.get("target") or task.get("instruction") or "").strip()
             task_id = _optional_str(task.get("id"))
@@ -96,6 +101,9 @@ class PublicEvidenceRetrievalService:
                     notes=["Research task does not require public retrieval in v1."],
                 ))
                 progress.complete_operation(operation_id, notes=["Task does not require public retrieval in v1."]) if progress else None
+        items, trim_warnings, trim_metadata = trim_public_evidence_items(items, context_artifact)
+        warnings.extend(trim_warnings)
+        metadata.update(trim_metadata)
         if not attempts:
             warnings.append(PublicEvidenceWarning(code="no-public-retrieval-tasks", message="No URL or public search tasks were available."))
         metadata.update({"itemCount": len(items), "attemptCount": len(attempts)})

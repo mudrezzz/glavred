@@ -1,5 +1,6 @@
 from typing import Any
 
+from backend.app.application.public_evidence_budgeting import max_search_results_per_task
 from backend.app.application.public_evidence_ports import PublicEvidenceSearchTask
 
 
@@ -30,6 +31,7 @@ def build_public_evidence_search_task(
         source_target=source_target,
         exclusions=exclusions,
         original_task=dict(task),
+        max_results=max_search_results_per_task(context_artifact),
     )
 
 

@@ -40,11 +40,11 @@ class OpenRouterPublicSearchService:
         request_payload = _request_trace(
             task=task,
             model=self._settings.openrouter_web_search_model_or_default,
-            max_results=self._settings.openrouter_web_search_max_results,
+            max_results=_max_results(task, self._settings),
             messages=messages,
         )
         try:
-            result = self._web_search_adapter.search(settings=self._settings, query=task.query, messages=messages)
+            result = self._web_search_adapter.search(settings=self._settings, query=task.query, messages=messages, max_results=_max_results(task, self._settings))
             relevance = filter_relevant_citations(result.citations, task=task)
             items = [
                 PublicEvidenceItem(
@@ -195,7 +195,12 @@ def _task_metadata(task: PublicEvidenceSearchTask) -> dict:
         "originalTask": task.original_task,
         "sourceTarget": task.source_target,
         "exclusions": task.exclusions,
+        "maxResults": task.max_results,
     }
+
+
+def _max_results(task: PublicEvidenceSearchTask, settings: BackendSettings) -> int:
+    return max(1, int(task.max_results or settings.openrouter_web_search_max_results or 1))
 
 
 def _truncate(value: str, limit: int) -> str:

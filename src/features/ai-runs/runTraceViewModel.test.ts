@@ -187,7 +187,10 @@ describe('buildRunTraceViewModel', () => {
   it('shows public evidence attempts and skipped search tasks', () => {
     const viewModel = buildRunTraceViewModel(makeDraftRunBundle());
     const publicEvidence = viewModel.semanticSections.find((section) => section.id === 'publicEvidence');
+    const budget = viewModel.semanticSections.find((section) => section.id === 'draftRunBudget');
 
+    expect(budget?.fields).toContainEqual({ label: 'Research depth', value: 'marketResearch' });
+    expect(budget?.fields.find((field) => field.label === 'Caps')?.value).toContain('maxSearchTasks: 8');
     expect(publicEvidence?.fields).toContainEqual({ label: 'Evidence items', value: '1' });
     expect(publicEvidence?.fields).toContainEqual({ label: 'External ledger claims', value: '1' });
     expect(publicEvidence?.fields).toContainEqual({ label: 'Synthesis external claims', value: '1' });
@@ -254,7 +257,7 @@ function makeDraftRunBundle(): RunTraceBundle {
           key: 'context',
           status: 'succeeded',
           title: 'Context',
-          artifactPayload: { workItem: { title: 'Post' } },
+          artifactPayload: { workItem: { title: 'Post' }, draftRunBudget: draftRunBudgetFixture() },
           error: null,
           startedAt: null,
           completedAt: null
@@ -320,7 +323,7 @@ function makeDraftRunBundle(): RunTraceBundle {
               }
             ],
             warnings: [],
-            metadata: { searchProvider: 'openrouter:web_search', model: 'test-model' },
+            metadata: { searchProvider: 'openrouter:web_search', model: 'test-model', budgetTrace: { draftRunBudget: draftRunBudgetFixture(), budgetSkipped: [], usedCounts: { searchTasks: 1 }, capHits: { searchTasks: false } } },
             aiRunIds: ['search-run-1'],
             articleDossier: articleDossierFixture(),
             contextPacks: contextPacksFixture(),
@@ -974,6 +977,25 @@ function makeAiRun(id: string, step: string) {
     fallbackUsed: false,
     createdAt: '2026-06-19T00:00:00+00:00',
     updatedAt: '2026-06-19T00:00:01+00:00'
+  };
+}
+
+function draftRunBudgetFixture() {
+  return {
+    researchDepth: 'marketResearch',
+    executionMode: 'standard',
+    caps: {
+      maxResearchTasks: 12,
+      maxSearchTasks: 8,
+      maxUrlReads: 6,
+      maxSearchResultsPerTask: 8,
+      maxAcceptedEvidenceItems: 40,
+      maxExternalClaims: 60,
+      maxUsableEvidenceCandidates: 24,
+      maxDraftCandidates: 3,
+      maxRevisionIterations: 3
+    },
+    source: 'fabula+executionMode'
   };
 }
 

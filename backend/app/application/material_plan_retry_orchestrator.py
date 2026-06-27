@@ -13,6 +13,7 @@ from backend.app.application.draft_model_role_resolver import select_model_for_r
 from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.material_plan_accountability import evaluate_material_plan_accountability
 from backend.app.application.material_plan_evidence_projection import build_usable_evidence_candidates
+from backend.app.application.draft_run_budget_resolver import budget_from_context
 from backend.app.application.material_plan_retry_policy import MaterialPlanAttempt, build_material_plan_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -54,7 +55,8 @@ class MaterialPlanRetryOrchestrator:
         rule_pack: dict[str, Any],
         context_artifact: dict[str, Any] | None,
     ) -> DraftPlanningStepResult:
-        usable_candidates = build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack)
+        budget = budget_from_context(context_artifact)
+        usable_candidates = build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack, limit=budget.caps.max_usable_evidence_candidates)
         context_pack = context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY)
         attempt_records: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None

@@ -410,6 +410,11 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   into the DraftRun SourceLedger before the post is evaluated and written.
 - The trace also shows whether `MaterialPlan` selected enriched evidence, rejected it
   with reasons, retried with a primary/backup model, or used emergency fallback.
+- Fabulas have a research depth: light, standard, deep, or market research. This does
+  not force a platform or post format; it tells the DraftRun how much research work is
+  appropriate for that story type. Backend execution mode can also be `smoke`,
+  `standard`, or `full`. In trace, `DraftRun budget` explains the effective caps, used
+  counts, budget-skipped search/read tasks, and trimmed evidence.
 - The trace also shows model roles for child AI calls. Source planning and evidence
   synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
   candidate writing and directed revisions use `writer`, and validation/ranking use

@@ -4,6 +4,7 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.material_plan_evidence_projection import build_usable_evidence_candidates
+from backend.app.application.draft_run_budget_resolver import budget_from_context
 from backend.app.application.material_plan_retry_orchestrator import MaterialPlanRetryOrchestrator
 from backend.app.domain.ai_run import AiRunProvider
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -59,7 +60,7 @@ class DraftMaterialPlanService:
         return self._orchestrator.fallback(
             context_summary=context_summary,
             rule_pack=rule_pack,
-            usable_candidates=build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack),
+            usable_candidates=build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack, limit=budget_from_context(context_artifact).caps.max_usable_evidence_candidates),
             attempts=[],
             provider=AiRunProvider.DETERMINISTIC,
             model=None,

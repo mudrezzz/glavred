@@ -32,6 +32,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `EditorialCritiqueReport` | Report-only prosecutor/editor critique of candidate idea strength, tension, author stance, source integration, and reader value. | `validation.editorialCritiqueReport`, child `AiRun` trace |
 | `AlternativeAngleTournament` | Critic-driven challenger route and candidate used to escape a weak local optimum. | `validation.alternativeAngleTournament`, child `AiRun` trace |
 | `RevisionLoop` | Bounded editorial optimization loop: validator repair goals plus editorial goals, old-vs-new dimension scoring, accepted/rejected revisions, and rejected moves. | `validation.rankingRevision.revisionLoop` |
+| `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, and revision loop. | parent DraftRun |
 
 ## 2. Runtime topology
@@ -97,9 +98,9 @@ Role-aware execution map:
 
 | Step | Active role | Model selection | Context passed to the role | Output consumed by |
 | --- | --- | --- | --- | --- |
-| `context` | none | no model | frontend snapshot only | source intent, ledger, feasibility |
-| `sourceIntent` | `research` | `DRAFT_RESEARCH_MODEL`, then default | brief sources, context summary, initial ledger | public evidence |
-| `publicEvidence` search | web search | `OPENROUTER_WEB_SEARCH_MODEL` | research plan tasks and built search query | evidence synthesis |
+| `context` | none | no model | frontend snapshot only | source intent, ledger, feasibility, DraftRun budget |
+| `sourceIntent` | `research` | `DRAFT_RESEARCH_MODEL`, then default | brief sources, context summary, initial ledger, DraftRun budget | public evidence |
+| `publicEvidence` search | web search | `OPENROUTER_WEB_SEARCH_MODEL` | budget-capped research tasks and built search query | evidence synthesis |
 | `publicEvidence` synthesis | `research` | `DRAFT_RESEARCH_MODEL`, then default | accepted public evidence, initial ledger, context | enriched ledger, dossier |
 | `feasibility` | none | no model | enriched ledger and warnings | contract or blocked completion |
 | `postContract` | none | no model | brief, ledger, feasibility, size settings | rules, planning, validation |
@@ -137,11 +138,14 @@ Processing:
 
 - `build_draft_run_context_summary(...)` normalizes the frontend snapshot;
 - `SourceLedgerBuilder` builds the initial internal claim ledger.
+- `DraftRunBudgetResolver` combines `fabula.researchDepth` with
+  `DRAFT_RUN_EXECUTION_MODE`.
 
 Output:
 
 - `contextSummary`;
 - initial `sourceLedger`;
+- `draftRunBudget`;
 - `missingContext` and compatibility metadata when links are absent.
 
 Role/model handoff:
@@ -168,12 +172,15 @@ Processing:
 - `SourceIntentNormalizer` classifies URLs, named sources, human-language requests,
   proof needs, framing hints, exclusions, and unknown lines;
 - `ResearchPlanService` may call OpenRouter through the `research` role;
-- deterministic fallback preserves original wording when provider planning fails.
+- deterministic fallback preserves original wording when provider planning fails;
+- `source_research_budgeting` caps executable verification tasks and records
+  `budgetTrace.budgetSkipped` instead of silently dropping them.
 
 Output:
 
 - normalized `sourceIntent`;
 - `researchPlan`;
+- `draftRunBudget` and `budgetTrace`;
 - child `AiRun` when OpenRouter is used.
 
 Role/model handoff:
@@ -202,10 +209,13 @@ Processing:
 
 - exact URL tasks are read by the URL reader;
 - public search tasks call OpenRouter web search only when web tools are enabled;
+- retrieval tasks, URL reads, and search result counts are capped by `DraftRunBudget`;
 - disabled or unavailable search tasks remain explicit attempts, not proof;
 - relevance guard rejects search-result drift;
 - `EvidenceSynthesis` reconciles accepted public evidence into external claims;
 - `SourceLedgerExternalEvidenceMerger` merges accepted external claims into the ledger;
+- accepted evidence items and external ledger claims are trimmed by budget before
+  downstream planning;
 - operation progress is persisted during URL/search/synthesis work.
 
 Output:
@@ -213,6 +223,7 @@ Output:
 - `PublicEvidenceBatch`: attempts, accepted evidence items, warnings;
 - `EvidenceSynthesis`: external claims, decisions, warnings;
 - enriched `SourceLedger`;
+- budget metadata: used counts, cap hits, skipped tasks, trimmed evidence/claims;
 - initial `ArticleDossier` and all role `ContextPack`s.
 
 Role/model handoff:
@@ -359,6 +370,7 @@ Input:
 Processing:
 
 - material planner receives `usableEvidenceCandidates`;
+- the candidate list is capped by `DraftRunBudget.maxUsableEvidenceCandidates`;
 - material planner receives `evidenceInterpretation` and should prefer implications,
   usable examples, limits, and forbidden overclaims over raw public snippets;
 - it must either choose usable evidence or explain rejection reasons;
@@ -478,6 +490,8 @@ Input:
 Processing:
 
 - one candidate is generated per rhetorical plan;
+- the executed candidate count is capped by `DraftRunBudget.maxDraftCandidates`
+  before provider calls are attempted;
 - each provider failure falls back per candidate, not for the whole step;
 - candidate publishability guard marks candidates eligible, penalized, or excluded;
 - deterministic v1 selection creates an initial scorecard.
@@ -669,6 +683,7 @@ Important AS IS rules:
 | `ResearchPlan` | sourceIntent | publicEvidence | `sourceIntent.researchPlan` |
 | `PublicEvidenceBatch` | publicEvidence | evidence synthesis, trace | `publicEvidence.items`, `publicEvidence.attempts` |
 | `EvidenceSynthesis` | publicEvidence | ledger merger, material planning, trace | `publicEvidence.evidenceSynthesis` |
+| `DraftRunBudget` | context | sourceIntent, publicEvidence, material plan, draft, validation | `context.draftRunBudget`, step budget metadata |
 | `EvidenceInterpretation` | rulePack | material plan, writer, dossier, trace | `rulePack.evidenceInterpretation` |
 | `PostContract` | postContract | rules, planning, validation, revision | `postContract` step |
 | `RuleRegistrySnapshot` | rulePack | material plan, validation, revision | `rulePack.ruleRegistrySnapshot` |
@@ -711,27 +726,29 @@ Important AS IS rules:
 Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 
 1. `context`: confirm source signal, candidate, topic, fabula, rules are present.
-2. `sourceIntent`: confirm research requests were normalized correctly.
-3. `publicEvidence`: confirm URL/search attempts, accepted evidence, rejected drift,
+2. `DraftRun budget`: confirm research depth, execution mode, effective caps, used
+   counts, cap hits, skipped tasks, and trimmed evidence/claims.
+3. `sourceIntent`: confirm research requests were normalized correctly.
+4. `publicEvidence`: confirm URL/search attempts, accepted evidence, rejected drift,
    evidence synthesis, and enriched ledger.
-4. `feasibility`: confirm run was allowed or blocked for quality reasons.
-5. `postContract`: confirm thesis, CTA, size, allowed claims, and forbidden moves.
-6. `rulePack`: confirm rule registry exists and size/evidence rules are present.
-7. `evidenceInterpretation`: inside `rulePack`, confirm implications, examples,
+5. `feasibility`: confirm run was allowed or blocked for quality reasons.
+6. `postContract`: confirm thesis, CTA, size, allowed claims, and forbidden moves.
+7. `rulePack`: confirm rule registry exists and size/evidence rules are present.
+8. `evidenceInterpretation`: inside `rulePack`, confirm implications, examples,
    limits, forbidden overclaims, rejected evidence uses, and attempts.
-8. `materialPlan`: confirm selected evidence and explicit rejection reasons.
-9. `strategy`: confirm the strategy does not change the contract.
-10. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
-11. `draft`: compare candidates, source/fallback status, publishability, scorecard.
-12. `validation`: inspect deterministic warnings, LLM findings, observations.
-13. `editorialCritiqueReport`: inspect idea strength, tension, author stance, source
+9. `materialPlan`: confirm selected evidence and explicit rejection reasons.
+10. `strategy`: confirm the strategy does not change the contract.
+11. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
+12. `draft`: compare candidates, source/fallback status, publishability, scorecard.
+13. `validation`: inspect deterministic warnings, LLM findings, observations.
+14. `editorialCritiqueReport`: inspect idea strength, tension, author stance, source
     integration, generic-prose risks, and recommended editorial moves.
-14. `alternativeAngleTournament`: inspect challenger route, candidate, model attempts,
+15. `alternativeAngleTournament`: inspect challenger route, candidate, model attempts,
     and why it entered or failed to enter final ranking.
-15. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
-16. `validation.progress`: inspect nested operations; failed late operations should show
+16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
+17. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
-17. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
+18. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
 
 ## 10. Known AS IS limitations
 

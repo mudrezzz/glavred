@@ -409,7 +409,9 @@ function sectionsFromPayload(step: string, payload: Record<string, unknown>): Tr
   const rankingRevision = asRecord(payload.rankingRevision);
   const articleDossier = asRecord(payload.articleDossier);
   const contextPacks = asRecord(payload.contextPacks);
+  const draftRunBudget = asRecord(payload.draftRunBudget) ?? asRecord(asRecord(payload.metadata)?.draftRunBudget);
 
+  if (draftRunBudget) sections.push(draftRunBudgetSection(draftRunBudget, payload));
   if (articleDossier) sections.push(articleDossierSection(articleDossier));
   if (contextPacks) sections.push(contextPacksSection(contextPacks));
   if (sourceIntent) sections.push(sourceIntentSection(sourceIntent, stringValue(payload.sourcesOrigin) ?? undefined));
@@ -869,6 +871,25 @@ function sourceIntentSection(payload: Record<string, unknown>, sourcesOrigin?: s
   };
 }
 
+function draftRunBudgetSection(payload: Record<string, unknown>, envelope: Record<string, unknown>): TraceSemanticSection {
+  const caps = asRecord(payload.caps);
+  const budgetTrace = asRecord(envelope.budgetTrace) ?? asRecord(asRecord(envelope.metadata)?.budgetTrace);
+  return {
+    id: 'draftRunBudget',
+    title: 'DraftRun budget',
+    fields: compactFields([
+      ['Research depth', payload.researchDepth],
+      ['Execution mode', payload.executionMode],
+      ['Caps', caps ? Object.entries(caps).map(([key, value]) => `${key}: ${value}`) : null],
+      ['Used counts', asRecord(budgetTrace?.usedCounts) ? Object.entries(asRecord(budgetTrace?.usedCounts) ?? {}).map(([key, value]) => `${key}: ${value}`) : null],
+      ['Cap hits', asRecord(budgetTrace?.capHits) ? Object.entries(asRecord(budgetTrace?.capHits) ?? {}).map(([key, value]) => `${key}: ${value}`) : null],
+      ['Budget skipped', asArray(budgetTrace?.budgetSkipped)?.map(publicEvidenceAttemptValue)],
+      ['Trimmed evidence', asArray(asRecord(envelope.metadata)?.trimmedEvidenceItems)?.map(publicEvidenceItemValue)],
+      ['Trimmed external claims', asArray(envelope.budgetTrimmedExternalClaims)?.map(sourceLedgerExternalClaimValue)]
+    ])
+  };
+}
+
 function sourceIntentValue(item: unknown): unknown {
   const record = asRecord(item);
   return record?.instruction ?? record?.value ?? record?.raw;
@@ -914,6 +935,8 @@ function publicEvidenceSection(payload: Record<string, unknown>): TraceSemanticS
       ['Extracted evidence', items.map(publicEvidenceItemValue)],
       ['Rejected citations', rejected.map(publicEvidenceRejectedCitationValue)],
       ['Warnings', warnings.map(publicEvidenceWarningValue)],
+      ['Budget skipped', asArray(asRecord(asRecord(payload.metadata)?.budgetTrace)?.budgetSkipped)?.map(publicEvidenceAttemptValue)],
+      ['Trimmed evidence', asArray(asRecord(payload.metadata)?.trimmedEvidenceItems)?.map(publicEvidenceItemValue)],
       ['Search provider', asRecord(payload.metadata)?.searchProvider],
       ['Search model', asRecord(payload.metadata)?.model],
       ['Search AiRun IDs', payload.aiRunIds]

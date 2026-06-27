@@ -646,6 +646,16 @@ and not a vector store. They live inside existing DraftRun JSON artifacts and ch
 as compact structured input, but they must not reconstruct provenance from raw trace
 blobs.
 
+Slice 2.15.6.2 adds a DraftRun budget contract. `Fabula.researchDepth`
+(`light`, `standard`, `deep`, `marketResearch`) expresses editorial research depth,
+while backend `DRAFT_RUN_EXECUTION_MODE` (`smoke`, `standard`, `full`) expresses the
+execution profile. `backend/app/domain/draft_run_budget.py` and
+`backend/app/application/draft_run_budget_resolver.py` resolve an effective
+`DraftRunBudget` and store it in the `context` artifact. Downstream source planning,
+public evidence retrieval, external-ledger merge, material-plan projection, draft
+candidate generation, and smoke revision limits consume that budget. Skipped or
+trimmed tasks remain trace-visible as budget decisions and never become proof.
+
 Future slices must preserve this distinction: validators and revision loops judge and
 repair drafts, while the editorial lab creates and maintains the intellectual
 material from which better drafts are written.

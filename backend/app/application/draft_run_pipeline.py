@@ -4,6 +4,7 @@ from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompil
 from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.application.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_payloads import draft_to_payload, payload_section, request_from_payload
+from backend.app.application.draft_run_budget_resolver import resolve_draft_run_budget
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
 from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.application.deterministic_draft_planning_step_services import DeterministicMaterialPlanStepService, DeterministicStrategyStepService
@@ -32,8 +33,7 @@ class DraftRunPipeline:
         candidate_generation_service: DraftCandidateGenerationService | None = None, source_ledger_builder: SourceLedgerBuilder | None = None, quality_gate: DraftQualityGate | None = None,
         validation_step_service: DraftValidationStepService | None = None, article_memory_service: DraftArticleMemoryService | None = None, evidence_interpretation_service: Any = None,
     ) -> None:
-        self._repository = repository
-        self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
+        self._repository = repository; self._rule_pack_compiler = rule_pack_compiler or DraftRulePackCompiler()
         self._source_ledger_builder = source_ledger_builder or SourceLedgerBuilder()
         self._quality_gate = quality_gate or DraftQualityGate()
         fallback = DeterministicDraftPlanningService()
@@ -57,7 +57,8 @@ class DraftRunPipeline:
             request = request_from_payload(run.request_payload)
             context_summary = build_draft_run_context_summary(request, context_from_payload(run.request_payload))
             source_ledger = self._source_ledger_builder.build(context_summary, request).to_payload()
-            context_artifact = {**context_summary, "sourceLedger": source_ledger}
+            context_artifact = {**context_summary, "sourceLedger": source_ledger, "draftRunBudget": resolve_draft_run_budget({**context_summary, "sourceLedger": source_ledger}).to_payload()}
+            context_summary = {**context_summary, "draftRunBudget": context_artifact["draftRunBudget"]}
             progress.complete(DraftRunStepKey.CONTEXT, context_artifact)
             source_result = self._source_research_plan_service.create(request=request, context_artifact=context_artifact)
             progress.add_ai_run_id(source_result.ai_run_id)

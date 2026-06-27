@@ -21,7 +21,7 @@ class OpenRouterWebSearchResult:
 
 
 class OpenRouterWebSearchAdapter:
-    def search(self, *, settings: BackendSettings, query: str, messages: list[dict[str, str]]) -> OpenRouterWebSearchResult:
+    def search(self, *, settings: BackendSettings, query: str, messages: list[dict[str, str]], max_results: int | None = None) -> OpenRouterWebSearchResult:
         api_key = settings.openrouter_api_key.get_secret_value() if settings.openrouter_api_key else ""
         response = httpx.post(
             f"{settings.openrouter_base_url.rstrip('/')}/chat/completions",
@@ -34,7 +34,7 @@ class OpenRouterWebSearchAdapter:
             json={
                 "model": settings.openrouter_web_search_model_or_default,
                 "messages": messages,
-                "tools": [{"type": "openrouter:web_search", "parameters": {"max_results": settings.openrouter_web_search_max_results}}],
+                "tools": [{"type": "openrouter:web_search", "parameters": {"max_results": max_results or settings.openrouter_web_search_max_results}}],
                 "tool_choice": "auto",
             },
             timeout=60,

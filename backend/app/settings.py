@@ -28,6 +28,9 @@ class BackendSettings(BaseSettings):
         validation_alias="DRAFT_RUN_DB_PATH",
     )
     draft_revision_max_iterations: int = Field(default=3, validation_alias="DRAFT_REVISION_MAX_ITERATIONS")
+    draft_run_execution_mode: str = Field(default="standard", validation_alias="DRAFT_RUN_EXECUTION_MODE")
+    draft_research_budget_overrides: str = Field(default="", validation_alias="DRAFT_RESEARCH_BUDGET_OVERRIDES")
+    draft_run_smoke_budget_overrides: str = Field(default="", validation_alias="DRAFT_RUN_SMOKE_BUDGET_OVERRIDES")
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
 
     openrouter_api_key: SecretStr | None = Field(default=None, validation_alias="OPENROUTER_API_KEY")

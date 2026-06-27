@@ -24,6 +24,7 @@ import {
 } from '../../domain/editorialWorkspace';
 import { WeightRangeEditor } from '../../shared/ui/WeightRangeEditor';
 import { FabulaSizeIntentSelect, fabulaSizeIntentLabel } from './FabulaSizeIntentSelect';
+import { FabulaResearchDepthSelect, fabulaResearchDepthLabel } from './FabulaResearchDepthSelect';
 import { FabulaResearchStrategyEditor } from './FabulaResearchStrategyEditor';
 import { EditorialValidationPanel, ValidationBadge } from './ValidationPanel';
 import {
@@ -143,6 +144,7 @@ export function FabulaListView({
             <div className="entity-row-meta">
               <span className="entity-meta-chip">{draft.weightRange.min}-{draft.weightRange.max}%</span>
               <span className="entity-meta-chip">{fabulaSizeIntentLabel(draft.sizeIntent)}</span>
+              <span className="entity-meta-chip">{fabulaResearchDepthLabel(draft.researchDepth)}</span>
               <span className={`status-chip ${draft.status}`}>{draft.status === 'active' ? 'активно' : 'пауза'}</span>
               <span className="entity-meta-chip">{draft.rules.length} правил</span>
               <span className="entity-meta-chip">{draft.proofRequirements.length} proof</span>
@@ -179,6 +181,7 @@ export function FabulaListView({
               <div className="entity-row-meta">
                 <span className="entity-meta-chip">{fabula.weightRange.min}-{fabula.weightRange.max}%</span>
                 <span className="entity-meta-chip">{fabulaSizeIntentLabel(fabula.sizeIntent)}</span>
+                <span className="entity-meta-chip">{fabulaResearchDepthLabel(fabula.researchDepth)}</span>
                 <span className={`status-chip ${fabula.status}`}>{fabula.status === 'active' ? 'активно' : 'пауза'}</span>
                 <span className="entity-meta-chip">{fabula.rules.length} правил</span>
                 <span className="entity-meta-chip">{fabula.proofRequirements.length} proof</span>
@@ -212,6 +215,8 @@ export function FabulaListView({
                       <dd>{fabula.rules.join('; ')}</dd>
                       <dt>Масштаб</dt>
                       <dd>{fabulaSizeIntentLabel(fabula.sizeIntent)}</dd>
+                      <dt>Глубина исследования</dt>
+                      <dd>{fabulaResearchDepthLabel(fabula.researchDepth)}</dd>
                       <dt>Источники</dt>
                       <dd>{fabula.researchStrategy.mode === 'auto' ? 'Автоопределение' : `${fabula.researchStrategy.instructions.length} поруч.`}</dd>
                       <dt>Применимые темы</dt>
@@ -264,6 +269,7 @@ function FabulaEditor({
         </label>
         <WeightRangeEditor value={fabula.weightRange} onChange={(weightRange) => onChange({ ...fabula, weightRange })} />
         <FabulaSizeIntentSelect fabula={fabula} onChange={onChange} />
+        <FabulaResearchDepthSelect fabula={fabula} onChange={onChange} />
         <FabulaResearchStrategyEditor fabula={fabula} onChange={onChange} />
         <label>
           Структура

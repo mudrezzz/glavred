@@ -36,6 +36,7 @@ class PublicEvidenceSearchTask:
     source_target: dict[str, Any] | None = None
     exclusions: list[str] = field(default_factory=list)
     original_task: dict[str, Any] = field(default_factory=dict)
+    max_results: int | None = None
 
 
 class PublicSearchAdapter(Protocol):
