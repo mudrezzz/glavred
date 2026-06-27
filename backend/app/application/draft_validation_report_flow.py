@@ -47,6 +47,8 @@ class DraftValidationReportFlow:
             progress.complete_operation("deterministic-lint")
 
         artifact_payload = deterministic_report
+        if progress:
+            progress.merge_artifact(artifact_payload)
         ai_run_ids: list[str] = []
         llm_validation_report: dict[str, Any] = {}
         if self._llm_validator:
@@ -61,6 +63,8 @@ class DraftValidationReportFlow:
             llm_validation_report = llm_result.artifact_payload
             artifact_payload = {**artifact_payload, "llmValidationReport": llm_validation_report}
             ai_run_ids = llm_result.ai_run_ids or []
+            if progress:
+                progress.merge_artifact(artifact_payload)
 
         critique_result = append_editorial_critique(
             self._editorial_critic,
@@ -74,6 +78,8 @@ class DraftValidationReportFlow:
             llm_validation_report=llm_validation_report,
             progress=progress,
         )
+        if progress:
+            progress.merge_artifact(critique_result.artifact_payload)
         return DraftValidationReportFlowResult(critique_result.artifact_payload, critique_result.ai_run_ids)
 
     def not_run(self, *, reason: str) -> DraftValidationReportFlowResult:

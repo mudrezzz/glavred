@@ -4,6 +4,7 @@ from backend.app.application.draft_alternative_angle_candidate_service import Dr
 from backend.app.application.draft_alternative_angle_route_service import DraftAlternativeAngleRouteService
 from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
+from backend.app.application.draft_validation_operation_safety import safe_call
 from backend.app.domain.draft_alternative_angle import AlternativeAngleTournament
 from backend.app.domain.draft_generation import DraftGenerationRequest
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -34,12 +35,17 @@ class DraftAlternativeAngleTournamentService:
     ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
         if progress:
             progress.start_operation("alternative-angle-route", kind="alternativeAngle", label="Build alternative angle route")
-        route, attempts, route_ai_run_ids, route_error = self._route_service.create(
-            draft_artifact=draft_artifact,
-            validation_report=validation_report,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
+        route, attempts, route_ai_run_ids, route_error = safe_call(
+            progress=progress,
+            operation_id="alternative-angle-route",
+            fallback=lambda error: (None, [], [], error),
+            call=lambda: self._route_service.create(
+                draft_artifact=draft_artifact,
+                validation_report=validation_report,
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+            ),
         )
         if not route:
             if progress:
@@ -51,14 +57,19 @@ class DraftAlternativeAngleTournamentService:
 
         if progress:
             progress.start_operation("alternative-angle-candidate", kind="alternativeAngleCandidate", label="Generate alternative angle candidate", target=route.id)
-        candidate, candidate_ai_run_id, candidate_error = self._candidate_service.create(
-            request=request,
-            route=route,
-            context_summary=context_summary,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-            draft_strategy=draft_strategy,
-            context_pack=context_pack_from_payload(context_artifact, DraftModelRole.WRITER),
+        candidate, candidate_ai_run_id, candidate_error = safe_call(
+            progress=progress,
+            operation_id="alternative-angle-candidate",
+            fallback=lambda error: (None, None, error),
+            call=lambda: self._candidate_service.create(
+                request=request,
+                route=route,
+                context_summary=context_summary,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+                draft_strategy=draft_strategy,
+                context_pack=context_pack_from_payload(context_artifact, DraftModelRole.WRITER),
+            ),
         )
         ai_run_ids = [*route_ai_run_ids, *([candidate_ai_run_id] if candidate_ai_run_id else [])]
         if not candidate:

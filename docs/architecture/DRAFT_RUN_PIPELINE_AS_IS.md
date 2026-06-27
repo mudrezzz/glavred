@@ -535,6 +535,9 @@ Processing:
 7. deep revision loop builds validator and editorial goals, revises, re-runs
    deterministic validation, compares previous best vs revised across editorial
    dimensions, and accepts only targeted improvement without regression.
+8. provider-heavy validation sub-operations persist progress as they run; if a late
+   operation fails, the operation is marked `failed`, safe error details are saved,
+   and the previous best candidate is kept when one exists.
 
 Output:
 
@@ -545,6 +548,8 @@ Output:
 - `rankingRevision`;
 - `revisionLoop` with editorial goals, dimension scores, rejected moves, and stop
   reason;
+- `progress` with nested validation operations, child `AiRun` ids, failed-operation
+  status, and safe error details when a provider-heavy sub-operation fails;
 - final draft candidate decision;
 - updated `ArticleDossier` and `ContextPack`s.
 
@@ -693,6 +698,7 @@ Important AS IS rules:
 | alternative-angle provider missing | `alternativeAngleTournament.status=not-run`; original candidates continue |
 | malformed alternative-angle route JSON | repair retry, optional backup model, then tournament `failed`; no deterministic fake angle |
 | alternative-angle candidate provider failure | tournament `failed`; original candidates continue |
+| validation sub-operation failure | mark nested operation failed, preserve partial artifact, keep previous best if available |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
@@ -723,18 +729,21 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 14. `alternativeAngleTournament`: inspect challenger route, candidate, model attempts,
     and why it entered or failed to enter final ranking.
 15. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
-16. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
+16. `validation.progress`: inspect nested operations; failed late operations should show
+    safe errors and the final previous-best decision when available.
+17. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
 
 ## 10. Known AS IS limitations
 
-- Editorial critique is active and feeds one alternative-angle challenger, but the
-  deeper revision loop does not yet optimize directly against all critique findings.
+- Editorial critique is active and feeds one alternative-angle challenger plus revision
+  goals, but it is not yet an autonomous multi-agent debate loop.
 - `anotherAngle` is active as one challenger route only, not as an autonomous debate
   loop or general fallback.
 - `ArticleDossier` is a local compact memory artifact, not a vector store or
   cross-run RAG system.
-- Revision loop improves against validator findings, but it does not yet run a deeper
-  editorial debate about idea strength.
+- Failed late provider operations are safely finalized when the Python call returns or
+  raises; a separate infrastructure watchdog is still needed for externally stuck
+  Celery tasks that never return control to the worker.
 - The pipeline has detailed traceability, but the main editor UI still receives only
   one final draft and a compact status.
 

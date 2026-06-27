@@ -51,6 +51,8 @@ class DraftValidationStepService:
             material_plan=material_plan,
             progress=progress,
         )
+        if progress:
+            progress.merge_artifact(initial.artifact_payload)
         active_draft, artifact_payload, ai_run_ids = self._alternative.apply(
             request=request,
             context_summary=context_summary,
@@ -63,6 +65,8 @@ class DraftValidationStepService:
             draft_strategy=draft_strategy,
             progress=progress,
         )
+        if progress:
+            progress.merge_artifact(artifact_payload)
         result = self._ranking.apply(
             request=request,
             artifact_payload=artifact_payload,
@@ -73,6 +77,8 @@ class DraftValidationStepService:
             material_plan=material_plan,
             progress=progress,
         )
+        if progress:
+            progress.merge_artifact(result.artifact_payload)
         return DraftValidationStepResult(result.artifact_payload, result.ai_run_ids, result.final_draft)
 
     def not_run(self, *, reason: str) -> DraftValidationStepResult:

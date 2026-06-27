@@ -5,7 +5,7 @@ from backend.app.application.draft_pairwise_ranking_service import DraftPairwise
 from backend.app.application.draft_revision_loop_policy import candidate_id, combined_validation, last_value, string_list
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
-
+from backend.app.application.draft_validation_operation_safety import failed_pairwise_result, failed_revision_result, safe_call
 
 class DraftRevisionLoopCycleRunner:
     def __init__(
@@ -33,9 +33,17 @@ class DraftRevisionLoopCycleRunner:
         operation_id = f"directed-revision-cycle-{cycle_number}"
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=candidate_id(candidate) or "none")
-        revision = self._revision.revise(candidate=candidate, instruction=instruction, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan)
+        revision = safe_call(
+            progress=progress,
+            operation_id=operation_id,
+            fallback=failed_revision_result,
+            call=lambda: self._revision.revise(candidate=candidate, instruction=instruction, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan),
+        )
         if progress:
-            progress.complete_operation(operation_id, ai_run_id=last_value(string_list(revision.get("aiRunIds"))), notes=[f"status={revision.get('status')}"])
+            if revision.get("status") == "failed":
+                progress.fail_operation(operation_id, str(revision.get("error") or revision.get("reason") or "revision failed"), ai_run_id=last_value(string_list(revision.get("aiRunIds"))))
+            else:
+                progress.complete_operation(operation_id, ai_run_id=last_value(string_list(revision.get("aiRunIds"))), notes=[f"status={revision.get('status')}"])
         return revision
 
     def regress(
@@ -81,13 +89,21 @@ class DraftRevisionLoopCycleRunner:
         operation_id = f"revision-pairwise-cycle-{cycle_number}"
         if progress:
             progress.start_operation(operation_id, kind="pairwiseRanking", label=f"Compare revision cycle {cycle_number}")
-        report = self._ranking.rank(
-            draft_artifact={"candidates": [item for item in [current, revised] if item], "selection": {"scorecard": []}},
-            validation_report=combined_validation(current_validation, revised_validation),
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
+        report = safe_call(
+            progress=progress,
+            operation_id=operation_id,
+            fallback=failed_pairwise_result,
+            call=lambda: self._ranking.rank(
+                draft_artifact={"candidates": [item for item in [current, revised] if item], "selection": {"scorecard": []}},
+                validation_report=combined_validation(current_validation, revised_validation),
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+            ).to_payload(),
         )
         if progress:
-            progress.complete_operation(operation_id, ai_run_id=last_value(report.ai_run_ids), notes=[f"winner={report.decision.winner_candidate_id}"])
-        return report.to_payload()
+            if report.get("status") == "failed":
+                progress.fail_operation(operation_id, str(report.get("error") or "pairwise failed"), ai_run_id=last_value(string_list(report.get("aiRunIds"))))
+            else:
+                progress.complete_operation(operation_id, ai_run_id=last_value(string_list(report.get("aiRunIds"))), notes=[f"winner={report.get('decision', {}).get('winnerCandidateId')}"])
+        return report

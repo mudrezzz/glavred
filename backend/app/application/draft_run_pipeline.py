@@ -16,7 +16,7 @@ from backend.app.application.draft_run_draft_step_service import LegacyDraftStep
 from backend.app.application.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
-from backend.app.application.draft_run_step_progress import with_progress_payload
+from backend.app.application.draft_run_step_progress_payload import with_progress_payload
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
 from backend.app.application.draft_source_ledger_builder import SourceLedgerBuilder
 from backend.app.application.draft_article_memory_service import DraftArticleMemoryService, context_pack_from_payload

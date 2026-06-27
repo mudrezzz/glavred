@@ -4347,6 +4347,9 @@ Status:
   - 2.15.4 prosecutor/editor critic role.
   - 2.15.5 alternative-angle tournament.
   - 2.15.6 deep revision loop v2.
+  - 2.15.6.2 research-depth profiles and DraftRun budget modes.
+  - 2.15.6.3 universal JSON retry policy for LLM steps.
+  - 2.15.6.4 final draft quality snapshot.
 
 ### Slice 2.15.1: Multi-Model Drafting Roles
 
@@ -4635,7 +4638,7 @@ Status:
 
 ### Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Prevent provider-heavy validation/revision operations from leaving a DraftRun
   permanently `running/stale`.
 - User value:
@@ -4673,6 +4676,170 @@ Status:
 - Acceptance criteria:
   - Re-running the diagnosed scenario does not produce stale `directed-revision-cycle-2`;
     the run finishes or records a safe explicit failure/blocked reason.
+- Result:
+  - Added artifact merge helpers so validation operation progress preserves partial
+    deterministic/LLM/critic/tournament/ranking/revision artifacts instead of replacing
+    them with progress-only payloads.
+  - Validation operation progress now appends child `AiRun` ids to the parent DraftRun
+    as operations complete.
+  - Added safe operation wrappers for provider-heavy validation paths and wired them
+    into alternative-angle route/candidate generation and revision-loop revision/
+    pairwise operations.
+  - If a later revision cycle fails after a usable best draft exists, the loop keeps the
+    previous best candidate, marks the nested operation failed, records a safe stop
+    reason, and finalizes instead of staying stale.
+  - Added regression coverage for cycle-2 directed-revision failure and progress merge
+    behavior.
+- Completed: 2026-06-27
+
+### Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes
+
+- Status: Ready
+- Goal: Make public-evidence depth and execution cost explicit instead of hardcoding
+  one source/search volume for every fabula.
+- User value:
+  - A compact Telegram opinion post, a standard LinkedIn post, and a deep LinkedIn
+    market-research article can use different research depth without changing the
+    whole pipeline by hand.
+  - Developers can run a fast but complete smoke DraftRun without pretending that the
+    production pipeline is shorter than it really is.
+- Scope:
+  - Add `Fabula.researchDepth` values such as `light`, `standard`, `deep`, and
+    `marketResearch`.
+  - Add backend/frontend normalization so old fabulas default to `standard`.
+  - Add config-driven budget profiles per research depth: search task cap, accepted
+    public-evidence cap, external ledger claim cap, URL/read cap, and revision/search
+    cycle caps where relevant.
+  - Add `DRAFT_RUN_EXECUTION_MODE=smoke|standard|full` and mode-specific budget
+    overrides. Smoke mode must still execute the real step sequence; it only lowers
+    counts/time budgets.
+  - Add a `DraftRunBudget` / budget resolver artifact to trace: requested depth,
+    execution mode, effective caps, and which caps were hit.
+  - Apply budgets to `sourceIntent`, `publicEvidence`, evidence merge, material-plan
+    projection, candidate count where safe, and revision loop limit without changing
+    DraftRun step order or SQLite schema.
+- Out of scope:
+  - New search provider behavior.
+  - Changing prose prompts for quality.
+  - UI comparison for source depth effectiveness.
+- Architecture impact:
+  - Research volume becomes a controlled contract derived from fabula policy and
+    execution mode, not a global magic number.
+  - Smoke mode becomes an official DraftRun execution profile, not an ad hoc local
+    shortcut.
+- Tests:
+  - Old fabulas normalize to `researchDepth=standard`.
+  - Budget resolver combines fabula depth and execution mode deterministically.
+  - Smoke mode runs the full step sequence with lower caps.
+  - Deep/market-research fabulas allow larger evidence/source budgets than light
+    fabulas.
+  - Trace shows effective budgets and cap hits.
+- Docs:
+  - Update SAO, developer guide, user guide, demo docs, `.env.example`, and AS IS
+    pipeline map/PDF if runtime trace semantics change.
+- Acceptance criteria:
+  - A DraftRun trace can explain why it searched/read N sources and whether that was
+    caused by fabula research depth, smoke mode, or provider limits.
+- Risks:
+  - If depth budgets are too low, deep articles will still look thin; if too high, test
+    runs stay expensive. Start conservative and make caps visible in trace.
+
+### Slice 2.15.6.3: Universal JSON Retry Policy for LLM Steps
+
+- Status: Backlog
+- Goal: Make malformed/invalid JSON from any LLM JSON step follow the same retry
+  discipline before fallback or failure.
+- User value:
+  - A single malformed provider response no longer silently disables critic,
+    alternative-angle, planning, or validation work.
+  - Trace clearly shows whether the pipeline tried primary, repair prompt, and backup
+    model before giving up.
+- Scope:
+  - Promote JSON retry discipline from partial service-level usage into a project-wide
+    architecture rule backed by ADR
+    `docs/adr/2026-06-27-llm-json-steps-use-universal-retry-policy.md`.
+  - Inventory every JSON-producing LLM step: source research plan, evidence synthesis,
+    evidence interpretation, material plan, strategy, rhetorical plans, draft
+    candidates, LLM validation, editorial critic, alternative-angle route/candidate,
+    pairwise ranking, directed revision, and future JSON provider calls.
+  - Route all JSON-producing provider calls through a shared application-level policy:
+    `primary -> primary-repair -> optional OPENROUTER_BACKUP_MODEL -> explicit
+    fallback/not-run/failed outcome`.
+  - Ensure repair prompts include the previous validation/parse error and required JSON
+    shape.
+  - Ensure every attempt creates or updates child `AiRun` audit with label, model,
+    model role, backup flag, status, parse/validation error, and safe provider
+    metadata.
+  - Keep deterministic fallback only for steps where a domain-safe deterministic result
+    exists; otherwise return explicit `not-run` or `failed` without fake findings.
+- Out of scope:
+  - Changing search/source budgets; owned by 2.15.6.2.
+  - Changing final draft quality scoring; owned by 2.15.6.4 and later.
+  - Adding new provider models beyond existing role/backup configuration.
+- Architecture impact:
+  - Any future LLM JSON step must use the universal retry policy; direct
+    single-call-then-fallback JSON parsing is no longer allowed in application code.
+  - The architecture smoke suite should detect new JSON LLM services that bypass the
+    shared policy where practical; otherwise the developer checklist must require it.
+- Tests:
+  - Malformed primary response triggers repair prompt for each migrated service group.
+  - Malformed repair response triggers backup model when configured and distinct from
+    primary.
+  - All failed attempts produce explicit fallback/not-run/failed trace with safe errors.
+  - Critic and alternative-angle candidate JSON errors no longer skip immediately to
+    failure without retry.
+  - Existing material/rhetorical validation behavior remains compatible.
+- Docs:
+  - Update SAO, developer guide, ADR index/links, diagnostics checklist, and AS IS
+    pipeline map/PDF after implementation.
+- Acceptance criteria:
+  - Given any child `AiRun` for a JSON-producing step, `/ai-runs?runId=...` can show
+    all JSON attempts and why the final JSON result was accepted, repaired, backed up,
+    or abandoned.
+- Risks:
+  - A universal policy can become too generic for role-specific prompts. Keep the
+    retry engine shared, but let each service own its required schema and repair prompt
+    details.
+
+### Slice 2.15.6.4: Final Draft Quality Snapshot
+
+- Status: Backlog
+- Goal: Separate final draft quality from candidate-pool noise after ranking and
+  revision.
+- User value:
+  - The author and developer can see whether the delivered final draft is actually
+    acceptable, not just that some excluded fallback candidate had critical findings.
+- Scope:
+  - Add a final `qualitySnapshot` inside the existing `validation.rankingRevision`
+    artifact after the revision loop.
+  - Split statuses into `poolStatus`, `selectedCandidateStatus`, and
+    `finalDraftStatus`.
+  - Excluded/fallback candidates remain visible in trace but do not make the final
+    draft look critical unless their issues apply to the final selected text.
+  - Summarize final unresolved critical/warning findings, attribution coverage,
+    source-integration quality, size/CTA compliance, critic objections, and revision
+    stop reason.
+  - Show the snapshot in `/ai-runs?runId=...` and the main draft summary where compact.
+- Out of scope:
+  - Blocking final draft based on the snapshot.
+  - Human decision learning; remains Slice 2.16.
+  - New revision attempts.
+- Architecture impact:
+  - Validation artifacts can describe the whole candidate pool and the selected final
+    text separately.
+- Tests:
+  - Excluded invalid fallback does not make `finalDraftStatus=critical` when final text
+    is clean.
+  - Selected/final candidate critical finding does make `finalDraftStatus=critical`.
+  - Old validation artifacts without snapshot remain readable.
+- Docs:
+  - Update SAO, developer guide, user guide, demo docs, and trace documentation.
+- Acceptance criteria:
+  - A DraftRun diagnostic can answer in one place: "Is the final delivered draft good
+    enough, and which issues still apply specifically to it?"
+- Risks:
+  - Snapshot can hide useful pool problems if over-summarized. Keep candidate-pool
+    details available in trace.
 
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
@@ -4686,8 +4853,8 @@ Status:
   - Save human edits, overrides, rejected machine moves, and rule-improvement signals
     for future learning.
 - Dependency:
-  - Requires the 2.15.x deep drafting intelligence slices so editor learning observes a
-    meaningful editorial-lab process, not only a formally bounded revision loop.
+  - Requires 2.15.6.2-2.15.6.4 so editor learning observes controlled research depth,
+    universal JSON retry behavior, and a reliable final-draft quality snapshot.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -4842,6 +5009,8 @@ Status:
 - Slice 2.15.4: Prosecutor / Editor Critic Loop. Completed 2026-06-26.
 - Slice 2.15.5: Alternative Angle Tournament. Completed 2026-06-27.
 - Slice 2.15.6: Deep Revision Loop v2. Completed 2026-06-27.
+- Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair. Completed
+  2026-06-27.
 
 ## Blocked Items
 
@@ -4862,4 +5031,5 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with `Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair`.
+Continue the backend track with
+`Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes`.

@@ -35,3 +35,25 @@ def test_operation_progress_persists_artifact_and_updates_run_progress_time(tmp_
     assert progress["operations"][0]["kind"] == "readUrl"
     assert progress["operations"][0]["status"] == "succeeded"
     assert progress["budget"]["staleAfterSeconds"] == 300
+
+def test_operation_progress_merges_existing_artifact_and_records_child_ai_run(tmp_path) -> None:
+    repository = SqliteDraftRunRepository(tmp_path / "draft-runs.sqlite3")
+    request = make_request()
+    run = create_queued_draft_run(
+        request_payload=request_to_payload(request, context_from_payload({"draftContext": make_context()})),
+        input_summary={"title": request.brief.title},
+    )
+    repository.save(run)
+    progress = DraftRunProgress(repository, run.id)
+    sink = progress.operation_sink(DraftRunStepKey.VALIDATION)
+
+    sink.merge_artifact({"status": "partial", "candidateReports": [{"candidateId": "candidate-1"}]})
+    sink.start_operation("llm-validation-candidate-1", kind="llmValidation", label="LLM validation")
+    sink.complete_operation("llm-validation-candidate-1", ai_run_id="ai-run-1")
+
+    loaded = repository.get(run.id)
+    step = next(item for item in loaded.steps if item.key == DraftRunStepKey.VALIDATION)
+    assert step.artifact_payload["status"] == "partial"
+    assert step.artifact_payload["candidateReports"] == [{"candidateId": "candidate-1"}]
+    assert step.artifact_payload["progress"]["operations"][0]["aiRunId"] == "ai-run-1"
+    assert loaded.ai_run_ids == ["ai-run-1"]

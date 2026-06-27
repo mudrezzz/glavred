@@ -315,9 +315,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     final stop reason. Long-running `publicEvidence`, `draft`, and `validation` steps also
     write nested operation progress, so the `Драфт` waiting state and
     `/ai-runs?runId=...` show the current URL/search/candidate/validator/ranking/
-    revision operation instead of only a broad step name. The main demo still opens
-    one editable draft; `/ai-runs?runId=...` shows whether that draft came from the
-    original winner or accepted revision-loop candidate. Child AI calls also show
+    revision operation instead of only a broad step name. If a late validation/revision
+    provider operation fails after a usable best draft exists, the trace shows the
+    failed nested operation and the demo keeps the previous best instead of staying
+    stale forever. The main demo still opens one editable draft; `/ai-runs?runId=...`
+    shows whether that draft came from the original winner or accepted revision-loop
+    candidate. Child AI calls also show
     `modelRole`, `selectedModel`, and `modelSelectionSource`, so the trace distinguishes
     researcher, strategist, writer, review, critic, active alternative-angle policy,
     and technical backup retries.

@@ -27,8 +27,10 @@ Required variables for the backend/AI track:
 - `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
-- `OPENROUTER_BACKUP_MODEL`: optional backup model used by JSON repair retries,
-  including material-planning evidence accountability and rhetorical-plan generation.
+- `OPENROUTER_BACKUP_MODEL`: optional backup model used by JSON repair retries.
+  ADR `2026-06-27-llm-json-steps-use-universal-retry-policy` requires every
+  JSON-producing LLM step to try primary, primary-repair, optional backup, and only
+  then an explicit fallback/not-run/failed outcome.
 - `DRAFT_RESEARCH_MODEL`: optional model for source-intent research planning and
   external evidence synthesis.
 - `DRAFT_STRATEGY_MODEL`: optional model for material plan, draft strategy, and
@@ -54,6 +56,14 @@ Required variables for the backend/AI track:
 OpenRouter configuration belongs to backend infrastructure adapters only. React,
 domain modules, API route handlers, and tests must not hardcode provider keys or call
 provider SDKs directly.
+
+Structured JSON provider calls must not be implemented as one raw OpenRouter call plus
+ad hoc `json.loads`. The owning application service defines the schema and repair
+prompt, but execution must follow the universal JSON retry policy: primary role model,
+repair prompt on the same model, optional `OPENROUTER_BACKUP_MODEL`, then a traceable
+domain-safe fallback or explicit unavailable/failed result. Each attempt should be
+visible in child `AiRun` audit payloads with model role, selected model, status, and
+safe parse/validation error.
 
 `AI_RUN_AUDIT_DB_PATH` is local development state. The default `var/` directory is
 ignored by Git. Audit records may contain editorial request payloads, but provider
@@ -1131,6 +1141,11 @@ DraftRun fallback discipline:
   candidate generation, deterministic lint, LLM validation, pairwise ranking,
   directed revision, and regression guard progress. These writes update
   `draft_runs.updated_at`.
+- Validation progress writes must merge into the existing partial validation artifact.
+  They must not replace deterministic/LLM/critic/tournament/ranking/revision payloads
+  with a progress-only object. Provider-heavy validation sub-operations mark nested
+  operations `failed` with safe errors and keep the best available candidate when a
+  previous best exists.
 - `/api/drafts/generate` and frontend local fallback are allowed only when the run was
   not created, the backend is unreachable, or the run fails explicitly according to
   the existing error path.
@@ -1337,6 +1352,9 @@ The next artifacts must make candidate validation meaningful:
   attribution regression. `DRAFT_REVISION_MAX_ITERATIONS` limits this loop. If provider
   calls fail or a revision does not improve the draft, the previous best remains final
   and the reason plus rejected moves are visible in `/ai-runs?runId=...`.
+  Late operation failures inside the loop must finalize with that previous best rather
+  than leave the DraftRun `running/stale`; the trace should show the failed nested
+  operation, safe error, and final stop reason.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

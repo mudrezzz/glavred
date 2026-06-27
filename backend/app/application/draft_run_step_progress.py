@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Callable
 
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
+from backend.app.application.draft_run_step_progress_payload import step_artifact, with_progress
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
 
 
@@ -13,6 +14,7 @@ class DraftRunStepOperationSink:
         step_key: DraftRunStepKey,
         *,
         total_operations: int | None = None,
+        on_ai_run_id: Callable[[str | None], None] | None = None,
     ) -> None:
         self._repository = repository
         self._run_id = run_id
@@ -20,6 +22,7 @@ class DraftRunStepOperationSink:
         self._current_operation_id: str | None = None
         self._operations: list[dict[str, Any]] = []
         self._total_operations = total_operations
+        self._on_ai_run_id = on_ai_run_id
 
     def start_operation(
         self,
@@ -55,6 +58,7 @@ class DraftRunStepOperationSink:
         })
         if ai_run_id:
             operation["aiRunId"] = ai_run_id
+            self._record_ai_run_id(ai_run_id)
         if notes:
             operation["notes"] = notes
         if self._current_operation_id == operation_id:
@@ -77,6 +81,7 @@ class DraftRunStepOperationSink:
         })
         if ai_run_id:
             operation["aiRunId"] = ai_run_id
+            self._record_ai_run_id(ai_run_id)
         if notes:
             operation["notes"] = notes
         if self._current_operation_id == operation_id:
@@ -97,6 +102,9 @@ class DraftRunStepOperationSink:
             },
         }
 
+    def merge_artifact(self, artifact_payload: dict[str, Any]) -> None:
+        self._persist("running", artifact_payload)
+
     def _find_or_create(self, operation_id: str, *, kind: str, label: str, target: str | None = None) -> dict[str, Any]:
         for operation in self._operations:
             if operation["id"] == operation_id:
@@ -114,19 +122,20 @@ class DraftRunStepOperationSink:
         self._operations.append(operation)
         return operation
 
-    def _persist(self, status: str) -> None:
+    def _persist(self, status: str, artifact_payload: dict[str, Any] | None = None) -> None:
+        base = step_artifact(self._repository.get(self._run_id), self._step_key)
+        if artifact_payload:
+            base.update(artifact_payload)
         self._repository.set_step_status(
             self._run_id,
             self._step_key,
             DraftRunStepStatus.RUNNING,
-            artifact_payload={"progress": self.payload(status)},
+            artifact_payload=with_progress(base, self.payload(status)),
         )
 
-
-def with_progress_payload(artifact_payload: dict[str, Any], progress: DraftRunStepOperationSink | None) -> dict[str, Any]:
-    if progress is None:
-        return artifact_payload
-    return {**artifact_payload, "progress": progress.payload("succeeded")}
+    def _record_ai_run_id(self, ai_run_id: str | None) -> None:
+        if self._on_ai_run_id:
+            self._on_ai_run_id(ai_run_id)
 
 
 def _aggregate_status(operations: list[dict[str, Any]]) -> str:

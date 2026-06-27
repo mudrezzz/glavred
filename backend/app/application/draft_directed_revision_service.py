@@ -68,7 +68,7 @@ class DraftDirectedRevisionService:
                 }
                 return {"status": "succeeded", "revisedCandidate": revised, "attempts": attempts, "aiRunIds": _ai_run_ids(attempts)}
             repair_context = {"previousAttempt": result["attempt"], "requiredShape": "title, body, changeLog[]"}
-        return {"status": "failed", "reason": "directed-revision-provider-failed", "attempts": attempts, "aiRunIds": _ai_run_ids(attempts)}
+        return {"status": "failed", "reason": "directed-revision-provider-failed", "error": _last_error(attempts), "attempts": attempts, "aiRunIds": _ai_run_ids(attempts)}
 
     def _try_attempt(
         self,
@@ -147,6 +147,10 @@ def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model
 
 def _ai_run_ids(attempts: list[dict[str, Any]]) -> list[str]:
     return [str(attempt["aiRunId"]) for attempt in attempts if attempt.get("aiRunId")]
+
+
+def _last_error(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
 
 
 def _strings(value: Any) -> list[str]:

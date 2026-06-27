@@ -56,6 +56,7 @@ class DraftRunProgress:
             self._run_id,
             key,
             total_operations=total_operations,
+            on_ai_run_id=self.add_ai_run_id,
         )
 
     def fail_current(self, error: str) -> None:

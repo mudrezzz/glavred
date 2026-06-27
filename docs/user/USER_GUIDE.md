@@ -444,6 +444,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   goals without regression. The main `Драфт` screen still shows one editable result,
   while `/ai-runs?runId=...` shows revision cycles, accepted/rejected attempts,
   resolved/unresolved goals, final source, and stop reason.
+  If a late provider operation fails after Glavred already has a usable best draft,
+  the trace shows that nested operation as failed and keeps the previous best instead
+  of leaving generation stuck forever.
   - The main editor still receives one draft to edit. Alternative routes and the
     reason they won or lost stay in `/ai-runs?runId=...`.
 - Review the four checks: `Стиль`, `Анти-AI`, `Фактчек`, and `Политика`.

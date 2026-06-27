@@ -340,6 +340,16 @@ environment models, falling back to `OPENROUTER_DEFAULT_MODEL` when a role is em
 Backup retries still use `OPENROUTER_BACKUP_MODEL`; public search still uses
 `OPENROUTER_WEB_SEARCH_MODEL`.
 
+ADR `docs/adr/2026-06-27-llm-json-steps-use-universal-retry-policy.md` makes JSON
+retry discipline a project-wide architecture rule, not a DraftRun-only convention.
+Every LLM step that requires structured JSON must use the bounded attempt sequence
+`primary -> primary-repair -> optional backup -> fallback | not-run | failed`.
+The shared retry engine belongs in application code; each owning service still owns
+its schema, parser, validation criteria, and repair prompt. New LLM JSON workflows in
+DraftRun, author memory, document import, release, analytics, or future pipelines must
+not do direct single-call-then-fallback parsing. Slice 2.15.6.3 tracks the migration
+of remaining DraftRun JSON steps that still only partially follow this rule.
+
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
 OpenRouter.
@@ -521,6 +531,18 @@ selected from the final best candidate after the loop, and `/ai-runs?runId=...` 
 cycles, editorial goals, dimension scores, accepted/rejected attempts, unresolved goals,
 rejected moves, final source, and stop reason.
 
+Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
+Validation progress writes now merge `artifactPayload.progress` into the existing
+partial validation artifact instead of replacing it with a progress-only object.
+Validation child `AiRun` ids are appended to the parent `DraftRun` while operations
+complete, so a partially completed trace remains inspectable before final completion.
+Provider-heavy validation operations such as editorial critique, alternative-angle
+candidate generation, pairwise ranking, and directed revision are wrapped by safe
+operation helpers. If a late revision cycle fails after a previous best candidate
+exists, the operation is marked `failed`, the loop records `provider-failed` or
+`operation-failed`, and the run finalizes with the previous best draft instead of
+remaining `running/stale`.
+
 Revision-loop ownership is intentionally split:
 
 - `backend/app/domain/draft_revision_loop.py`: provider-free trace DTOs for loop
@@ -547,6 +569,10 @@ Revision-loop ownership is intentionally split:
   across instruction building, directed revision, deterministic regression, old-vs-new
   pairwise comparison, editorial goal evaluation, rejected moves, and final best
   selection.
+- `backend/app/application/draft_validation_operation_safety.py`: safe mapping of
+  provider-heavy validation operation exceptions into failed operation trace results.
+- `backend/app/application/draft_run_step_progress_payload.py`: tiny artifact merge
+  helpers used by progress writes that must preserve partial validation payloads.
 
 Slice 2.15.3 adds `EvidenceInterpretation` inside the existing `rulePack` artifact,
 without a new DraftRun step or SQLite table. Accepted public evidence still becomes
@@ -858,6 +884,11 @@ ranking, directed revision, and regression guard operations. These writes reuse 
 existing step update path, move `draft_runs.updated_at`, and make the main workbench
 and `/ai-runs` show what is actually happening inside a long step.
 
+Slice 2.15.6.1 refines progress writes for validation specifically: running operation
+updates must preserve already-built deterministic/LLM/critic/tournament/ranking
+artifacts, and a failed late operation must be visible as a nested failed operation
+with the previous best final decision when such a candidate exists.
+
 Validator scoring and revision loops remain later work; Slice 2.8 selection is a
 deterministic first-pass scorecard, Slice 2.9 adds internal provenance, and the next
 quality correction adds drafting-time public evidence before validators.
@@ -997,6 +1028,7 @@ Concrete queued drafting files:
 - `backend/app/application/draft_run_pipeline.py`
 - `backend/app/application/draft_run_progress.py`
 - `backend/app/application/draft_run_step_progress.py`
+- `backend/app/application/draft_run_step_progress_payload.py`
 - `backend/app/application/draft_run_staleness.py`
 - `backend/app/application/draft_run_payloads.py`
 - `backend/app/application/draft_run_context_payloads.py`
@@ -1047,6 +1079,7 @@ Concrete queued drafting files:
 - `backend/app/application/draft_llm_validation_audit.py`
 - `backend/app/application/draft_llm_validation_parser.py`
 - `backend/app/application/draft_validation_step_service.py`
+- `backend/app/application/draft_validation_operation_safety.py`
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_source_ledger.py`

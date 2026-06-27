@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
+from backend.app.application.deterministic_pairwise_ranking import DeterministicPairwiseRanker
 from backend.app.application.draft_directed_revision_service import DraftDirectedRevisionService
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.application.draft_ranking_revision_result import DraftRankingRevisionResult
@@ -43,13 +44,18 @@ class DraftRankingRevisionService:
     ) -> DraftRankingRevisionResult:
         if progress:
             progress.start_operation("pairwise-ranking", kind="pairwiseRanking", label="Rank draft candidates")
-        ranking = self._ranking.rank(
-            draft_artifact=draft_artifact,
-            validation_report=validation_report,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-        )
+        try:
+            ranking = self._ranking.rank(
+                draft_artifact=draft_artifact,
+                validation_report=validation_report,
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+            )
+        except Exception as exc:
+            if progress:
+                progress.fail_operation("pairwise-ranking", _safe_error(exc))
+            ranking = DeterministicPairwiseRanker().rank(draft_artifact=draft_artifact, validation_report=validation_report)
         if progress:
             progress.complete_operation("pairwise-ranking", ai_run_id=_last(ranking.ai_run_ids))
         winner_id = ranking.decision.winner_candidate_id
@@ -122,3 +128,7 @@ def _final_reason(source: str, ranking_reason: str, stop_reason: str) -> str:
 
 def _last(values: list[str]) -> str | None:
     return values[-1] if values else None
+
+
+def _safe_error(error: Exception) -> str:
+    return f"{error.__class__.__name__}: {' '.join(str(error).split())[:240]}"
