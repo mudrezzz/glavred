@@ -57,10 +57,10 @@ class DraftAlternativeAngleTournamentService:
 
         if progress:
             progress.start_operation("alternative-angle-candidate", kind="alternativeAngleCandidate", label="Generate alternative angle candidate", target=route.id)
-        candidate, candidate_ai_run_id, candidate_error = safe_call(
+        candidate, candidate_ai_run_ids, candidate_error, candidate_attempts = safe_call(
             progress=progress,
             operation_id="alternative-angle-candidate",
-            fallback=lambda error: (None, None, error),
+            fallback=lambda error: (None, [], error, []),
             call=lambda: self._candidate_service.create(
                 request=request,
                 route=route,
@@ -71,17 +71,17 @@ class DraftAlternativeAngleTournamentService:
                 context_pack=context_pack_from_payload(context_artifact, DraftModelRole.WRITER),
             ),
         )
-        ai_run_ids = [*route_ai_run_ids, *([candidate_ai_run_id] if candidate_ai_run_id else [])]
+        ai_run_ids = [*route_ai_run_ids, *candidate_ai_run_ids]
         if not candidate:
             if progress:
-                progress.fail_operation("alternative-angle-candidate", candidate_error or "alternative angle candidate was not created", ai_run_id=candidate_ai_run_id)
-            tournament = AlternativeAngleTournament(status="failed", route=route, attempts=attempts, ai_run_ids=ai_run_ids, reason=candidate_error)
+                progress.fail_operation("alternative-angle-candidate", candidate_error or "alternative angle candidate was not created", ai_run_id=_last(candidate_ai_run_ids))
+            tournament = AlternativeAngleTournament(status="failed", route=route, attempts=[*attempts, *candidate_attempts], ai_run_ids=ai_run_ids, reason=candidate_error)
             return draft_artifact, {**tournament.to_payload(), "inputCritiqueSummary": _critique_summary(validation_report)}, ai_run_ids
         if progress:
-            progress.complete_operation("alternative-angle-candidate", ai_run_id=candidate_ai_run_id, notes=[f"candidate={candidate.get('id')}"])
+            progress.complete_operation("alternative-angle-candidate", ai_run_id=_last(candidate_ai_run_ids), notes=[f"candidate={candidate.get('id')}"])
 
         merged = _append_candidate(draft_artifact, candidate)
-        tournament = AlternativeAngleTournament(status="succeeded", route=route, candidate=candidate, attempts=attempts, ai_run_ids=ai_run_ids)
+        tournament = AlternativeAngleTournament(status="succeeded", route=route, candidate=candidate, attempts=[*attempts, *candidate_attempts], ai_run_ids=ai_run_ids)
         return merged, {**tournament.to_payload(), "inputCritiqueSummary": _critique_summary(validation_report)}, ai_run_ids
 
 

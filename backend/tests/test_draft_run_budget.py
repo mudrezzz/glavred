@@ -1,9 +1,12 @@
 from backend.app.application.draft_revision_loop_config import revision_iteration_limit
+from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.application.draft_run_budget_resolver import budget_from_context, resolve_draft_run_budget
 from backend.app.application.public_evidence_budgeting import budget_public_evidence_tasks, trim_public_evidence_items
 from backend.app.application.source_research_budgeting import apply_source_research_budget
 from backend.app.domain.draft_public_evidence import PublicEvidenceAllowedUse, PublicEvidenceItem
 from backend.app.settings import BackendSettings
+from backend.app.domain.draft_run_context import DraftRunContext
+from backend.tests.test_draft_run_pipeline import make_request
 
 
 def test_budget_resolver_uses_fabula_depth_and_standard_mode() -> None:
@@ -97,3 +100,15 @@ def test_budget_from_context_reads_artifact_payload() -> None:
     assert budget.research_depth.value == "deep"
     assert budget.execution_mode.value == "smoke"
     assert budget.caps.max_draft_candidates == 2
+
+
+def test_context_summary_preserves_fabula_research_depth_for_budget() -> None:
+    summary = build_draft_run_context_summary(
+        make_request(),
+        DraftRunContext(fabula={"id": "fabula-1", "title": "Market research", "researchDepth": "marketResearch"}),
+    )
+
+    budget = resolve_draft_run_budget(summary, BackendSettings())
+
+    assert summary["fabula"]["researchDepth"] == "marketResearch"
+    assert budget.research_depth.value == "marketResearch"

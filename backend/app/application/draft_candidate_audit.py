@@ -14,6 +14,7 @@ def build_candidate_request_trace(
     direction: DraftCandidateDirection,
     context_pack: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
+    attempt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload = {
         "draftRunStep": "draftCandidate",
@@ -36,6 +37,8 @@ def build_candidate_request_trace(
         payload["contextPack"] = context_pack
     if model_selection is not None:
         payload.update(model_selection)
+    if attempt is not None:
+        payload["attempt"] = attempt
     return payload
 
 

@@ -347,8 +347,15 @@ Every LLM step that requires structured JSON must use the bounded attempt sequen
 The shared retry engine belongs in application code; each owning service still owns
 its schema, parser, validation criteria, and repair prompt. New LLM JSON workflows in
 DraftRun, author memory, document import, release, analytics, or future pipelines must
-not do direct single-call-then-fallback parsing. Slice 2.15.6.3 tracks the migration
-of remaining DraftRun JSON steps that still only partially follow this rule.
+not do direct single-call-then-fallback parsing. Slice 2.15.6.3 completed the DraftRun
+migration for the remaining writer candidate and alternative-angle challenger prose
+paths; new JSON provider calls must start from this policy.
+
+Current recommended DraftRun role defaults are operational presets, not product
+requirements: writer `anthropic/claude-haiku-4.5`, critic `openai/gpt-4.1`, and
+another-angle `qwen/qwen3.7-max`. Writer owns public prose, critic owns strict
+editorial challenge, and another-angle remains creative divergence rather than
+technical backup or another writer alias.
 
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
@@ -751,6 +758,10 @@ Slice 2.13.2 applies the same fallback discipline to `rhetoricalPlans`: malforme
 JSON, wrong shape, or too few plans trigger a primary repair retry, then optional
 backup-model retry, and only then deterministic fallback. Each provider attempt is a
 child `AiRun`, and the `rhetoricalPlans` artifact stores an `attempts[]` trace.
+After Slice 2.15.6.3, the same universal JSON attempt contract also covers writer
+draft candidates and alternative-angle challenger prose. Directed revision,
+editorial critique, LLM validation, pairwise ranking, material planning, and evidence
+interpretation already use the same shared attempt policy.
 
 Planning ownership is split:
 

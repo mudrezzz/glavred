@@ -64,8 +64,9 @@ schema, parser/normalizer, validation criteria, and repair prompt details.
 ## Consequences
 
 - Direct single-call-then-fallback JSON parsing is not allowed for new LLM JSON steps.
-- Existing partial retry implementations must converge on the shared policy in the
-  dedicated repair slice `2.15.6.3: Universal JSON Retry Policy for LLM Steps`.
+- Existing partial retry implementations converged on the shared policy in the
+  dedicated repair slice `2.15.6.3: Model Stabilization and Universal JSON Retry
+  Repair`; new structured-provider steps must not reintroduce one-call JSON parsing.
 - Architecture smoke should check for bypasses where practical. When static detection
   is brittle, the developer checklist must explicitly require the retry policy for new
   JSON-producing LLM services.

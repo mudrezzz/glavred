@@ -15,6 +15,7 @@ def build_draft_candidate_messages(
     draft_strategy: dict[str, Any],
     direction: DraftCandidateDirection,
     context_pack: dict[str, Any] | None = None,
+    repair_context: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     return [
         {
@@ -24,7 +25,10 @@ def build_draft_candidate_messages(
                 "title, body, rationale, usedEvidence, ruleCoverage, risks, weaknesses. "
                 "The draft must obey hard constraints and stay grounded in evidence. "
                 "Use evidenceInterpretation implications, examples, limits, and forbidden overclaims "
-                "when present; do not paste raw citations as decoration."
+                "when present; do not paste raw citations as decoration. "
+                "Do not mechanically expose internal pipeline artifact names as dev-jargon, such as SourceLedger, "
+                "publicEvidence, validators, RuleRegistry, or PostContract in public prose. "
+                "Use them only if you intentionally frame and explain them as reader-facing concepts."
             ),
         },
         {
@@ -37,6 +41,7 @@ def build_draft_candidate_messages(
                     "materialPlan": material_plan,
                     "draftStrategy": draft_strategy,
                     "contextPack": context_pack or {},
+                    "repairContext": repair_context,
                     "outputLanguage": "ru",
                 },
                 ensure_ascii=False,

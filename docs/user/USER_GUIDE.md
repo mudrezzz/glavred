@@ -419,6 +419,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
   candidate writing and directed revisions use `writer`, and validation/ranking use
   `review`. Backup is still only a technical retry, not a creative second opinion.
+  When a role asks the model for JSON, trace should show the bounded attempt chain:
+  primary model, repair prompt, optional backup model, and only then fallback,
+  `not-run`, or `failed`. The writer should not leak internal pipeline names into the
+  public post unless they are deliberately explained as reader-facing concepts.
 - The revision loop is now editorial, not only mechanical. In `/ai-runs?runId=...`,
   each revision cycle shows which goals it tried to improve: idea strength, tension,
   reader value, author stance, source integration, structure, or validator health.

@@ -5,10 +5,11 @@ from backend.app.application.draft_directed_revision_service import DraftDirecte
 from backend.app.application.draft_editorial_revision_evaluator import DraftEditorialRevisionEvaluator
 from backend.app.application.draft_editorial_revision_goals import DraftEditorialRevisionGoalBuilder
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
+from backend.app.application.draft_revision_acceptance_policy import acceptance_decision
 from backend.app.application.draft_revision_goal_evaluator import DraftRevisionGoalEvaluator
 from backend.app.application.draft_revision_instruction_builder import DraftRevisionInstructionBuilder
 from backend.app.application.draft_revision_loop_cycle_runner import DraftRevisionLoopCycleRunner
-from backend.app.application.draft_revision_loop_policy import acceptance_decision, candidate_id, constraints_from_rejection, constraints_from_unresolved, dict_or_empty, failed_cycle, pairwise_winner, string_list
+from backend.app.application.draft_revision_loop_policy import candidate_id, constraints_from_rejection, constraints_from_unresolved, dict_or_empty, failed_cycle, pairwise_winner, string_list
 from backend.app.application.draft_revision_rejected_moves import constraints_from_editorial_goals, constraints_from_rejected_moves, cycle_stop_reason, goal_messages, rejected_moves_from_cycle
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
@@ -22,7 +23,6 @@ class DraftRevisionLoopResult:
     last_revision: dict[str, Any] | None
     last_regression: dict[str, Any] | None
     ai_run_ids: list[str]
-
 class DraftRevisionLoopService:
     def __init__(
         self,
@@ -151,7 +151,7 @@ class DraftRevisionLoopService:
                 current_id=current_id,
                 revised_id=candidate_id(revised),
             )
-            accepted, reasons = acceptance_decision(
+            accepted, decision_reasons = acceptance_decision(
                 current_id=current_id,
                 revised_id=candidate_id(revised),
                 regression_reasons=regression.reasons,
@@ -163,7 +163,7 @@ class DraftRevisionLoopService:
             new_rejected_moves = [] if accepted else rejected_moves_from_cycle(
                 cycle_number=cycle_number,
                 revised_candidate=revised,
-                rejection_reasons=reasons,
+                rejection_reasons=decision_reasons,
                 unresolved_editorial_goals=editorial_result["unresolvedEditorialGoals"],
             )
             cycles.append(RevisionLoopCycle(
@@ -182,10 +182,10 @@ class DraftRevisionLoopService:
                 resolved_editorial_goals=editorial_result["resolvedEditorialGoals"],
                 unresolved_editorial_goals=editorial_result["unresolvedEditorialGoals"],
                 new_rejected_moves=new_rejected_moves,
-                acceptance_decision={"accepted": accepted, "reasons": reasons},
+                acceptance_decision={"accepted": accepted, "reasons": decision_reasons},
                 stop_reason=cycle_stop_reason(accepted, goal_result["unresolved"], editorial_result["unresolvedEditorialGoals"]),
                 accepted=accepted,
-                rejection_reasons=reasons,
+                rejection_reasons=[] if accepted else decision_reasons,
                 ai_run_ids=[*revision_ids, *compare_ids],
             ))
             if accepted:
@@ -200,7 +200,7 @@ class DraftRevisionLoopService:
                     break
                 continue
             rejected_moves.extend(new_rejected_moves)
-            constraints.extend([*constraints_from_rejection(reasons, goal_result["unresolved"]), *constraints_from_rejected_moves(new_rejected_moves)])
+            constraints.extend([*constraints_from_rejection(decision_reasons, goal_result["unresolved"]), *constraints_from_rejected_moves(new_rejected_moves)])
             stop_reason = "no-fresh-angle"
 
         if cycles and len(cycles) >= self._max_iterations and stop_reason not in {"provider-failed", "no-fresh-angle"} and constraints:

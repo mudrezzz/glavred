@@ -109,13 +109,13 @@ Role-aware execution map:
 | `materialPlan` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy `ContextPack`, usable evidence candidates, evidence interpretation, contract, registry | draft strategy |
 | `strategy` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default | material plan, rules, contract, strategy `ContextPack` | rhetorical plans |
 | `rhetoricalPlans` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy, material plan, claim/rule ids | writer candidates |
-| `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default | writer `ContextPack`, one rhetorical plan, material evidence, contract | validation and ranking |
+| `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, domain-safe fallback | writer `ContextPack`, one rhetorical plan, material evidence, contract | validation and ranking |
 | `validation` lint | none | no model | candidates, contract, registry, ledger | LLM validation and ranking |
 | `validation` LLM review | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | review `ContextPack`, candidates, deterministic findings | pairwise ranking |
 | `validation` editorial critique | `critic` | `DRAFT_CRITIC_MODEL`, then default, repair, backup | critic `ContextPack`, candidates, evidence interpretation, validation findings | trace, dossier, future critique-aware ranking |
-| `validation` alternative angle | `anotherAngle` then `writer` | `DRAFT_ANOTHER_ANGLE_MODEL` for route, `DRAFT_WRITER_MODEL` for challenger prose | initial validation, editorial critique, another-angle `ContextPack`, writer `ContextPack` | final validation and ranking |
+| `validation` alternative angle | `anotherAngle` then `writer` | `DRAFT_ANOTHER_ANGLE_MODEL` for route, `DRAFT_WRITER_MODEL` for challenger prose, repair, backup, no fake challenger fallback | initial validation, editorial critique, another-angle `ContextPack`, writer `ContextPack` | final validation and ranking |
 | `validation` ranking | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | merged candidates, old scorecard, deterministic and LLM findings | revision loop |
-| `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default | current best candidate, repair goals, anti-regression constraints, writer `ContextPack` | regression guard and final draft |
+| `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed/not-run if no usable JSON | current best candidate, repair goals, anti-regression constraints, writer `ContextPack` | regression guard and final draft |
 | `complete` | none | no model | final DraftRun state | frontend |
 
 Practical reading rule: when a step says `Role/model handoff: strategy`, it does
@@ -511,6 +511,12 @@ Role/model handoff:
 - each candidate call receives one rhetorical plan, writer `ContextPack`, material
   evidence, evidence interpretation, allowed claim ids, forbidden moves, and size
   contract;
+- each JSON candidate attempt follows the universal retry sequence: primary writer
+  model, repair prompt, optional backup model, then domain-safe deterministic fallback
+  only if provider attempts are exhausted;
+- writer prompts forbid leaking internal artifact names such as `SourceLedger`,
+  `publicEvidence`, `validators`, `RuleRegistry`, or `PostContract` as unexplained
+  public dev-jargon;
 - candidates write prose, but selection still remains downstream responsibility;
 - `review` receives all candidates plus validation context.
 
@@ -523,7 +529,9 @@ AS IS behavior:
 
 - writer prompts now receive interpreted implications, examples, limits, and forbidden
   overclaims, so public evidence should shape the argument instead of being pasted as
-  a decorative citation block.
+  a decorative citation block;
+- each provider attempt is visible through child `AiRun` audit with model role,
+  selected model, attempt label, repair/backup marker, and safe validation error.
 
 ### 4.11 `validation`
 
@@ -543,12 +551,16 @@ Processing:
 2. LLM validation checks all candidates and separates actionable findings from observations;
 3. editorial critique challenges all candidates for idea strength, tension, author
    stance, source integration, generic prose, and reader value;
-4. alternative-angle tournament may add one critic-driven challenger candidate;
+4. alternative-angle tournament may add one critic-driven challenger candidate; both
+   route JSON and challenger-prose JSON use primary/repair/backup attempts, and no
+   fake deterministic challenger is invented when all attempts fail;
 5. final validation report is rebuilt when a challenger enters the pool;
 6. pairwise ranking chooses the best candidate from the merged candidate pool;
 7. deep revision loop builds validator and editorial goals, revises, re-runs
    deterministic validation, compares previous best vs revised across editorial
-   dimensions, and accepts only targeted improvement without regression.
+   dimensions, and accepts only targeted improvement without regression. Accepted
+   cycles record concrete reasons such as resolved goals, clear pairwise win, and no
+   deterministic regression;
 8. provider-heavy validation sub-operations persist progress as they run; if a late
    operation fails, the operation is marked `failed`, safe error details are saved,
    and the previous best candidate is kept when one exists.

@@ -105,6 +105,7 @@ def build_draft_run_context_summary(
             "rules",
             "weightRange",
             "researchStrategy",
+            "researchDepth",
         ),
         publisher_rules=_group_rules(context.publisher_rules),
         author_position_evidence={

@@ -52,7 +52,9 @@ Do not diagnose from screenshots alone when a run id is available.
 Check these failure classes explicitly:
 
 - **Execution**: run missing, failed, stale, pending steps, missing child `AiRun`.
-- **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch failure.
+- **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch
+  failure. For JSON-producing LLM steps, verify `primary`, `primary-repair`, and
+  optional `backup` attempts before accepting fallback/not-run/failed as expected.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched
@@ -98,6 +100,13 @@ hide bad output behind polite abstractions.
   `SourceLedger`; raw snippets alone are not enough to prove downstream grounding.
 - When enriched ledger has usable claims, `MaterialPlan` must show selected evidence
   or explicit rejection reasons, plus retry attempts before deterministic fallback.
+- Any JSON-producing provider step must follow ADR
+  `2026-06-27-llm-json-steps-use-universal-retry-policy`: primary role model,
+  repair prompt, optional backup model, then explicit domain-safe fallback/not-run/
+  failed. A single malformed JSON response is not enough to declare a branch failed.
+- If public prose contains internal names like `SourceLedger`, `publicEvidence`,
+  `RuleRegistry`, `PostContract`, or `validators`, treat it as a writer/revision bug
+  unless the text explicitly reframes the term for the reader.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

@@ -4348,7 +4348,7 @@ Status:
   - 2.15.5 alternative-angle tournament.
   - 2.15.6 deep revision loop v2.
   - 2.15.6.2 research-depth profiles and DraftRun budget modes.
-  - 2.15.6.3 universal JSON retry policy for LLM steps.
+  - 2.15.6.3 model stabilization and universal JSON retry repair.
   - 2.15.6.4 final draft quality snapshot.
 
 ### Slice 2.15.1: Multi-Model Drafting Roles
@@ -4763,17 +4763,25 @@ Status:
     call caps or a dedicated cheap smoke validation profile.
 - Completed: 2026-06-27
 
-### Slice 2.15.6.3: Universal JSON Retry Policy for LLM Steps
+### Slice 2.15.6.3: Model Stabilization and Universal JSON Retry Repair
 
-- Status: Ready
-- Goal: Make malformed/invalid JSON from any LLM JSON step follow the same retry
-  discipline before fallback or failure.
+- Status: Done
+- Goal: Stabilize provider-heavy DraftRun execution before judging prose quality again.
 - User value:
+  - The writer/critic roles use less exotic recommended models while another-angle
+    remains a distinct model family.
   - A single malformed provider response no longer silently disables critic,
-    alternative-angle, planning, or validation work.
+    alternative-angle, planning, validation, candidate generation, or revision work.
   - Trace clearly shows whether the pipeline tried primary, repair prompt, and backup
     model before giving up.
 - Scope:
+  - Recommended defaults:
+    - `DRAFT_WRITER_MODEL=anthropic/claude-haiku-4.5`
+    - `DRAFT_CRITIC_MODEL=openai/gpt-4.1`
+    - `DRAFT_ANOTHER_ANGLE_MODEL=qwen/qwen3.7-max` remains separate from writer.
+  - Fix propagation of `fabula.researchDepth` into backend context summary so
+    `DraftRunBudget` resolves `light/deep/marketResearch` instead of silently falling
+    back to `standard`.
   - Promote JSON retry discipline from partial service-level usage into a project-wide
     architecture rule backed by ADR
     `docs/adr/2026-06-27-llm-json-steps-use-universal-retry-policy.md`.
@@ -4791,22 +4799,33 @@ Status:
     metadata.
   - Keep deterministic fallback only for steps where a domain-safe deterministic result
     exists; otherwise return explicit `not-run` or `failed` without fake findings.
+  - Add a public-prose guard to writer/revision prompts: internal artifacts such as
+    `SourceLedger`, `publicEvidence`, `validators`, `RuleRegistry`, and `PostContract`
+    must not leak as unexplained dev-jargon.
+  - Strengthen revision-loop trace so accepted cycles record a concrete reason:
+    resolved validator/editorial goals, a clear pairwise win, and no deterministic
+    regression.
 - Out of scope:
   - Changing search/source budgets; owned by 2.15.6.2.
   - Changing final draft quality scoring; owned by 2.15.6.4 and later.
-  - Adding new provider models beyond existing role/backup configuration.
+  - Redesigning ranking, source retrieval, or final scoring.
 - Architecture impact:
   - Any future LLM JSON step must use the universal retry policy; direct
     single-call-then-fallback JSON parsing is no longer allowed in application code.
   - The architecture smoke suite should detect new JSON LLM services that bypass the
     shared policy where practical; otherwise the developer checklist must require it.
 - Tests:
+  - `fabula.researchDepth=marketResearch` produces `DraftRunBudget` depth
+    `marketResearch`.
   - Malformed primary response triggers repair prompt for each migrated service group.
   - Malformed repair response triggers backup model when configured and distinct from
     primary.
   - All failed attempts produce explicit fallback/not-run/failed trace with safe errors.
   - Critic and alternative-angle candidate JSON errors no longer skip immediately to
     failure without retry.
+  - Writer prompts include the public-prose/internal-jargon constraint.
+  - Accepted revision cycles without resolved goals must include an explicit pairwise
+    acceptance reason.
   - Existing material/rhetorical validation behavior remains compatible.
 - Docs:
   - Update SAO, developer guide, ADR index/links, diagnostics checklist, and AS IS
@@ -4819,15 +4838,116 @@ Status:
   - A universal policy can become too generic for role-specific prompts. Keep the
     retry engine shared, but let each service own its required schema and repair prompt
     details.
+- Delivered:
+  - Updated recommended writer/critic defaults in `.env.example` and documentation.
+  - Added backend context propagation for `fabula.researchDepth`.
+  - Added universal JSON retry to draft candidate generation and alternative-angle
+    challenger prose generation; directed revision, editorial critique, validation,
+    pairwise, rhetorical, material, and evidence interpretation already use the shared
+    retry policy.
+  - Writer/revision prompts now forbid leaking internal pipeline artifacts as
+    unexplained public prose.
+  - Revision-loop accepted cycles now store concrete acceptance reasons rather than
+    empty success.
+- Control run notes:
+  - DraftRun `fcac701c-19e2-4aa0-bf30-95b8f8c6fe08` showed that
+    `anthropic/claude-haiku-4.5` is unsuitable as current JSON writer: every writer
+    JSON attempt failed and the run was saved by backup model attempts.
+  - DraftRun `861500e3-f4b6-4a44-9767-edf86653af13` showed that
+    `openai/gpt-4.1-mini` is reliable for writer JSON primary attempts, but the final
+    prose is too report-like for a primary writer role. It should be treated as a
+    technical backup or cheap baseline, not as the final recommended writer.
+- Completed: 2026-06-27
 
-### Slice 2.15.6.4: Final Draft Quality Snapshot
+### Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params
 
-- Status: Backlog
+- Status: Ready
+- Goal: Make the writer role strong enough for public prose while keeping a stable
+  technical JSON backup path.
+- User value:
+  - Generated drafts should stop looking like cautious research summaries produced by
+    a cheap backup model.
+  - The team can evaluate writer quality without confusing primary writer behavior
+    with emergency backup behavior.
+- Scope:
+  - Replace recommended writer default with a stronger primary model:
+    `DRAFT_WRITER_MODEL=openai/gpt-4.1`.
+  - Keep `OPENROUTER_BACKUP_MODEL=openai/gpt-4.1-mini` as a technical JSON backup in
+    recommended local config and docs.
+  - Keep `DRAFT_CRITIC_MODEL=openai/gpt-4.1` only if writer/critic prompts and trace
+    still make role boundaries clear; otherwise document an explicit alternative
+    critic candidate before changing it.
+  - Add role/step generation parameter settings:
+    - `DRAFT_WRITER_TEMPERATURE`
+    - `DRAFT_WRITER_TOP_P`
+    - `DRAFT_REVISION_TEMPERATURE`
+    - `DRAFT_REVISION_TOP_P`
+    - `DRAFT_JSON_REPAIR_TEMPERATURE`
+    - `DRAFT_ANOTHER_ANGLE_TEMPERATURE`
+  - Defaults:
+    - writer candidates: temperature `0.65`, top-p `0.9`;
+    - directed revision: temperature `0.35`, top-p `0.85`;
+    - JSON repair: temperature `0.15`;
+    - another-angle route: temperature `0.8`.
+  - Thread the effective params into OpenRouter request payloads and child `AiRun`
+    trace metadata.
+  - Ensure backup retries use backup params appropriate for JSON discipline, not the
+    creative writer temperature.
+  - Capture a sanitized raw response excerpt in child `AiRun` metadata when JSON parse
+    fails, so diagnostics can distinguish empty output, markdown fences, prose instead
+    of JSON, and malformed JSON.
+  - Add a diagnostics checklist item: primary writer JSON success rate must be visible
+    before judging prose quality.
+- Out of scope:
+  - Changing ranking, retrieval, evidence interpretation, or revision-loop acceptance
+    policy.
+  - A full A/B experiment harness; this slice only makes controlled A/B runs possible.
+  - Premium Sonnet/Grok writer adoption; they remain experimental candidates after the
+    OpenAI baseline is stable.
+- Implementation notes:
+  - Keep `openai/gpt-4.1-mini` as observed-good backup from DraftRun
+    `861500e3-f4b6-4a44-9767-edf86653af13`.
+  - Do not keep writer and backup equal in recommended configuration.
+  - Parameter settings belong to backend config and provider request construction, not
+    hard-coded prompt text.
+- Architecture impact:
+  - `DraftModelSelection` remains the source of model identity; generation params are
+    a sibling selection artifact, not a new model role.
+  - Trace must show both model role and generation params for provider calls whose
+    output quality depends on them.
+- Tests:
+  - Settings load and normalize new writer/revision/repair/another-angle params.
+  - Writer calls pass writer params.
+  - Directed revision calls pass revision params.
+  - JSON repair attempts pass low repair temperature.
+  - Backup retries use backup model and repair-safe params.
+  - JSON parse failures store a sanitized raw excerpt without secrets.
+  - Old AiRun traces without params remain readable.
+- Docs:
+  - Update `.env.example`, README, SAO, developer guide, user guide, demo docs,
+    diagnostics checklist, and AS IS pipeline map/PDF.
+- Demo impact:
+  - Demo DraftRun can be re-run with the stronger writer baseline and compared against
+    the previous `gpt-4.1-mini` run.
+- Acceptance criteria:
+  - A fresh DraftRun can show `DRAFT_WRITER_MODEL=openai/gpt-4.1` as primary writer,
+    `OPENROUTER_BACKUP_MODEL=openai/gpt-4.1-mini` as backup, effective params in trace,
+    and no hidden writer/backup conflation.
+- Risks:
+  - Stronger writer may still produce report-like prose if prompts/context packs push
+    it toward citation-heavy summaries. That is addressed by 2.15.6.4.
+
+### Slice 2.15.6.4: Final Draft Quality Snapshot and Public Prose Guard
+
+- Status: Ready
 - Goal: Separate final draft quality from candidate-pool noise after ranking and
-  revision.
+  revision, and verify that the delivered text reads as public author prose rather
+  than an internal evidence report.
 - User value:
   - The author and developer can see whether the delivered final draft is actually
     acceptable, not just that some excluded fallback candidate had critical findings.
+  - Final text should not leak internal provenance labels or mechanically dump source
+    summaries into the post.
 - Scope:
   - Add a final `qualitySnapshot` inside the existing `validation.rankingRevision`
     artifact after the revision loop.
@@ -4838,24 +4958,51 @@ Status:
   - Summarize final unresolved critical/warning findings, attribution coverage,
     source-integration quality, size/CTA compliance, critic objections, and revision
     stop reason.
+  - Add final public-prose checks:
+    - internal provenance labels such as `source signal`, `raw note`, `internal
+      observation`, `SourceLedger`, `publicEvidence`, `PostContract`, `RuleRegistry`,
+      and `validators` must not appear as unexplained public copy;
+    - visible attribution should support claims without turning the post into a source
+      inventory;
+    - external evidence should be interpreted into author stance, tension, and reader
+      value, not listed as disconnected citations;
+    - source density should be judged relative to `Fabula.researchDepth` and
+      publication kind, not by a global fixed source count.
+  - Add final draft readability/status fields:
+    - `publicProseStatus`;
+    - `sourceIntegrationStatus`;
+    - `internalJargonLeaks`;
+    - `sourceDumpRisk`;
+    - `authorVoiceStrength`;
+    - `readerValueClarity`.
   - Show the snapshot in `/ai-runs?runId=...` and the main draft summary where compact.
 - Out of scope:
   - Blocking final draft based on the snapshot.
   - Human decision learning; remains Slice 2.16.
   - New revision attempts.
+  - Model portfolio tuning and generation params; owned by 2.15.6.3.1.
 - Architecture impact:
   - Validation artifacts can describe the whole candidate pool and the selected final
     text separately.
+  - The quality snapshot becomes the single diagnostic surface for deciding whether
+    final prose is good enough to continue the roadmap or needs a focused repair.
 - Tests:
   - Excluded invalid fallback does not make `finalDraftStatus=critical` when final text
     is clean.
   - Selected/final candidate critical finding does make `finalDraftStatus=critical`.
+  - Final text containing unexplained internal provenance labels produces
+    `publicProseStatus=warning|critical`.
+  - A text with many sources but clear synthesis can pass source integration for
+    `marketResearch`; a text that merely lists sources produces `sourceDumpRisk`.
+  - Snapshot distinguishes final selected text findings from candidate pool findings.
   - Old validation artifacts without snapshot remain readable.
 - Docs:
   - Update SAO, developer guide, user guide, demo docs, and trace documentation.
 - Acceptance criteria:
   - A DraftRun diagnostic can answer in one place: "Is the final delivered draft good
     enough, and which issues still apply specifically to it?"
+  - The diagnostic can also answer: "Is the final text public author prose, or did it
+    mechanically expose internal pipeline/source bookkeeping?"
 - Risks:
   - Snapshot can hide useful pool problems if over-summarized. Keep candidate-pool
     details available in trace.
@@ -5053,4 +5200,4 @@ Status:
 ## Next Recommended Task
 
 Continue the backend track with
-`Slice 2.15.6.3: Universal JSON Retry Policy for LLM Steps`.
+`Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params`.

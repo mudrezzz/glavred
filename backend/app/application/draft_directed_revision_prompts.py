@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 DIRECTED_REVISION_KEYS = {"title", "body", "changeLog"}
@@ -16,9 +17,11 @@ def build_directed_revision_messages(
 ) -> list[dict[str, str]]:
     system = (
         "You are Glavred's directed revision editor. Return strict JSON only. "
-        "Improve only the listed validator and editorial goals. Preserve the post contract, "
-        "allowed claims, forbidden moves, rhetorical route, source grounding, and every "
-        "anti-regression constraint."
+        "Improve only the listed validator/editorial goals. Preserve contract, claims, "
+        "forbidden moves, route, grounding, and anti-regression constraints. "
+        "Do not mechanically expose internal pipeline artifact names as dev-jargon, "
+        "such as SourceLedger, publicEvidence, validators, RuleRegistry, or PostContract in public prose. "
+        "Use them only if you intentionally frame and explain them as reader-facing concepts."
     )
     payload = {
         "task": "Revise the selected draft candidate once.",
@@ -33,13 +36,13 @@ def build_directed_revision_messages(
         "repairContext": repair_context,
         "editorialGoalContract": {
             "dimensions": ["ideaStrength", "tension", "readerValue", "authorStance", "sourceIntegration", "structure", "validatorHealth"],
-            "rules": ["Make targeted editorial improvements only.", "Preserve working source markers.", "Do not repeat rejected moves.", "If unsafe, leave unchanged and explain in changeLog."],
+            "rules": [
+                "Make targeted editorial improvements only.",
+                "Preserve working source markers.",
+                "Do not repeat rejected moves.",
+                "Avoid internal pipeline jargon unless it is explicitly explained as a public concept.",
+                "If unsafe, leave unchanged and explain in changeLog.",
+            ],
         },
     }
-    return [{"role": "system", "content": system}, {"role": "user", "content": _json(payload)}]
-
-
-def _json(value: Any) -> str:
-    import json
-
-    return json.dumps(value, ensure_ascii=False)
+    return [{"role": "system", "content": system}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]

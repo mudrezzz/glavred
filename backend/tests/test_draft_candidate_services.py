@@ -134,10 +134,14 @@ def test_candidate_provider_error_falls_back_without_secret(tmp_path) -> None:
         draft_strategy={"thesisAngle": "workflow before model"},
     )
 
-    run = ai_service(tmp_path).get_run(result.ai_run_ids[0])
+    run = ai_service(tmp_path).get_run(result.ai_run_ids[-1])
     assert run is not None
     assert run.fallback_used is True
     assert "sk-test-secret" not in (run.error or "")
+    first_attempt = ai_service(tmp_path).get_run(result.ai_run_ids[0])
+    assert first_attempt is not None
+    assert first_attempt.fallback_used is False
+    assert first_attempt.request_payload["attempt"]["label"] == "primary"
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.final_draft is None
 

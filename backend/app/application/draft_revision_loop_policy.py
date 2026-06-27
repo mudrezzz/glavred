@@ -2,31 +2,6 @@ from typing import Any
 
 from backend.app.domain.draft_revision_loop import RevisionLoopCycle
 
-def acceptance_decision(
-    *,
-    current_id: str | None,
-    revised_id: str | None,
-    regression_reasons: list[str],
-    resolved_goals: list[str],
-    resolved_editorial_goals: list[dict[str, Any]] | None = None,
-    regressed_editorial_dimensions: list[dict[str, Any]] | None = None,
-    pairwise_winner: str | None,
-) -> tuple[bool, list[str]]:
-    reasons: list[str] = []
-    if regression_reasons and regression_reasons != ["revision-preserves-or-improves-deterministic-validation"]:
-        reasons.extend(regression_reasons)
-    for regression in regressed_editorial_dimensions or []:
-        dimension = str(regression.get("dimension") or "editorial")
-        if dimension in {"ideaStrength", "readerValue", "sourceIntegration", "authorStance"}:
-            reasons.append(f"editorial-{dimension}-regressed")
-    pairwise_wins = revised_id is not None and pairwise_winner == revised_id
-    editorial_resolved = bool(resolved_editorial_goals)
-    if not resolved_goals and not editorial_resolved and not pairwise_wins:
-        reasons.append("revision-did-not-prove-improvement")
-    if current_id and pairwise_winner == current_id and not resolved_goals and not editorial_resolved:
-        reasons.append("previous-best-won-pairwise")
-    return len(reasons) == 0, reasons
-
 def combined_validation(current: dict[str, Any], revised: dict[str, Any]) -> dict[str, Any]:
     return {
         "candidateReports": [*_list(current.get("candidateReports")), *_list(revised.get("candidateReports"))],
