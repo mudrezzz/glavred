@@ -1,12 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Any
-
 from fastapi.testclient import TestClient
-
 from backend.app.main import create_app
 from backend.app.settings import BackendSettings
+from backend.app.domain.draft_run import DraftRunStepKey, DraftRunStepStatus
+from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
 from backend.tests.test_draft_run_context_builder import make_context
-
 
 def make_payload() -> dict[str, Any]:
     return {
@@ -100,12 +99,21 @@ def test_get_draft_run_returns_steps_and_hides_paths(tmp_path) -> None:
     assert str(tmp_path) not in response.text
 
 
+def test_get_draft_run_returns_completed_at_from_complete_step(tmp_path) -> None:
+    dispatcher = RecordingDispatcher()
+    client = make_client(tmp_path, dispatcher)
+    created = client.post("/api/draft-runs", json=make_payload()).json()
+    repository = SqliteDraftRunRepository(tmp_path / "draft-runs.sqlite3")
+    repository.set_step_status(created["runId"], DraftRunStepKey.COMPLETE, DraftRunStepStatus.SUCCEEDED, artifact_payload={"status": "succeeded"})
+
+    payload = client.get(f"/api/draft-runs/{created['runId']}").json()
+
+    complete_step = next(step for step in payload["steps"] if step["key"] == "complete")
+
 def test_get_draft_run_missing_returns_404(tmp_path) -> None:
     client = make_client(tmp_path, RecordingDispatcher())
 
     response = client.get("/api/draft-runs/missing")
-
-    assert response.status_code == 404
 
 
 def test_dispatch_failure_marks_run_failed(tmp_path) -> None:

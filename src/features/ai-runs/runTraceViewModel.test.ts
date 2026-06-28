@@ -145,6 +145,8 @@ describe('buildRunTraceViewModel', () => {
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Contract')?.value).toContain('depth deep');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Independent review status')?.value).toBe('warning');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Independent attempts')?.value).toContain('primary');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Attribution review')?.value).toContain('diagnostic closed');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Diagnostic attribution noise')?.value).toContain('empty-attribution-markers');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Repair goals')?.value).toContain('reader-facing prose');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Repair cycles')?.value).toContain('cycle 1');
     expect(viewModel.semanticSections.find((section) => section.id === 'ranking-final-decision')?.fields).toContainEqual({ label: 'Source', value: 'revisionLoop' });
@@ -895,6 +897,20 @@ function makeDraftRunBundle(): RunTraceBundle {
                 finalDraftStatus: 'passed',
                 publicProseStatus: 'warning',
                 sourceIntegrationStatus: 'passed',
+                attributionReview: {
+                  actionableCount: 0,
+                  diagnosticCount: 1,
+                  independentSourceIntegrationStatus: 'passed',
+                  independentClosedDiagnosticNoise: true
+                },
+                actionableAttributionFindings: [],
+                diagnosticAttributionNoise: [
+                  {
+                    severity: 'not-run',
+                    message: 'Attribution requirement could not be resolved.',
+                    metadata: { suppressedReason: 'empty-attribution-markers' }
+                  }
+                ],
                 internalJargonLeaks: [{ term: 'SourceLedger', excerpt: 'SourceLedger appears in public prose.' }],
                 sourceDumpRisk: { status: 'passed', sourceSentenceCount: 2, interpretationSentenceCount: 2 },
                 authorVoiceStrength: 'passed',

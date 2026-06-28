@@ -5138,6 +5138,60 @@ Status:
   - `/ai-runs` trace shows final quality contract, independent review attempts,
     repair cycles, and final decision.
 
+### Slice 2.15.6.4.2: Final Gate Attribution Handoff Repair
+
+- Status: Done
+- Goal: repair false final-gate attribution warnings caused by free-text
+  `claimsRequiringAttribution` values that cannot be resolved to source-backed claim
+  provenance.
+- User value:
+  - The final gate no longer starts needless final repair when the public prose
+    visibly names sources and the independent final-gate review passes source
+    integration.
+  - `/ai-runs?runId=...` distinguishes real missing attribution from diagnostic
+    material-plan handoff noise.
+- Scope delivered:
+  - Added deterministic attribution requirement normalization for material-plan
+    attribution requirements.
+  - Free-text requirements such as `95% ... attribute to B2BNotes` now map to
+    external ledger claims by source title, URL/domain, source label, and provenance
+    markers.
+  - Unresolvable attribution requirements are recorded as diagnostic metadata and
+    `evidence.attribution.diagnostic`, not as actionable warning findings.
+  - Final quality gate now separates `actionableAttributionFindings` from
+    `diagnosticAttributionNoise` and records `attributionReview`.
+  - `FinalQualityContract` records resolved attribution claim ids plus unresolved
+    attribution requirements and requirement matches.
+  - `/ai-runs` final gate trace shows attribution review, actionable findings, and
+    diagnostic attribution noise.
+  - `GET /api/draft-runs/{id}` now returns top-level `completedAt` computed from the
+    completed `complete` step when the parent table has no separate completion column.
+- Out of scope:
+  - New DraftRun steps, SQLite migration, source retrieval changes, ranking changes,
+    and prose-generation changes.
+- Tests:
+  - Free-text attribution maps to external claim ids by source marker.
+  - Unresolved free-text attribution is diagnostic and does not create warning status.
+  - Final gate does not run repair solely for non-actionable attribution noise when
+    independent source integration passes.
+  - Completed DraftRun API response exposes `completedAt`.
+- Autofix note:
+  - Control DraftRun `2fd74512-78b8-4146-989a-d446d255f273` exposed that the
+    alternative-angle challenger path re-ran expensive LLM validation and editorial
+    critique for already validated original candidates. This produced stale-looking
+    validation progress and unnecessary provider churn. The repair keeps the pipeline
+    shape but validates only the challenger after merge, then combines challenger
+    reports with the initial validation reports.
+  - Follow-up control DraftRun `73efa020-c39e-4328-b604-5c78b1161121` exposed that
+    evidence interpretation inside `rulePack` could make the run look stale on the
+    previous `postContract` step while JSON retries were still happening. The repair
+    marks `rulePack` as running before evidence interpretation and records nested
+    `evidenceInterpretation` operations for primary/repair/backup attempts.
+- Docs:
+  - Updated AS IS pipeline map, developer guide, diagnostics skill, and regenerated
+    PDF.
+- Completed: 2026-06-28
+
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
 - Status: Ready
@@ -5150,8 +5204,9 @@ Status:
   - Save human edits, overrides, rejected machine moves, and rule-improvement signals
     for future learning.
 - Dependency:
-  - Requires 2.15.6.2-2.15.6.4.1 so editor learning observes controlled research
-    depth, universal JSON retry behavior, and contract-based final draft acceptance.
+  - Requires 2.15.6.2-2.15.6.4.2 so editor learning observes controlled research
+    depth, universal JSON retry behavior, contract-based final draft acceptance, and
+    calibrated final-gate attribution handoff.
 
 ### Deferred: Document AI Platform Import Adapter
 

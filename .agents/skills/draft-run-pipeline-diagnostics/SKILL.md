@@ -115,6 +115,14 @@ hide bad output behind polite abstractions.
   goals, bounded repair cycles, accepted/rejected decisions, and final source. It
   shows whether the delivered final draft passed public-prose checks, whether a final
   repair ran, and why that repair was accepted or rejected.
+- For attribution issues, distinguish actionable missing-source findings from
+  diagnostic handoff noise. Inspect `finalQualityGate.attributionReview`,
+  `actionableAttributionFindings`, `diagnosticAttributionNoise`, and finding metadata
+  such as `expectedAttributionMarkers`, `matchedAttributionMarkers`,
+  `resolvedClaimIds`, `unresolvedAttributionRequirements`, and `suppressedReason`.
+  Empty expected markers or `evidence.attribution.diagnostic` are not prose-quality
+  failures by themselves; they mean a material-plan attribution requirement could not
+  be mapped to concrete claim provenance.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

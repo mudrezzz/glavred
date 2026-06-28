@@ -512,6 +512,9 @@ across role-owned modules:
   checks before accepting a revised candidate.
 - `backend/app/application/draft_final_quality_assessment.py`: deterministic public
   prose heuristics for final-draft acceptance.
+- `backend/app/application/draft_final_quality_attribution.py`: deterministic split
+  between actionable final-gate attribution findings and diagnostic attribution
+  handoff noise.
 - `backend/app/application/draft_final_quality_gate.py`: final public-prose
   acceptance and one-shot repair handoff after the revision loop.
 - `backend/app/application/draft_ranking_revision_mapping.py`: small conversion and
@@ -884,6 +887,12 @@ Validation ownership is split:
 - `backend/app/application/draft_attribution_markers.py` owns deterministic
   source-marker extraction and per-claim attribution matching for external ledger
   claims.
+- `backend/app/application/draft_attribution_requirements.py` owns deterministic
+  normalization of material-plan attribution requirements into source-backed claim
+  ids and unresolved diagnostic handoff metadata.
+- `backend/app/application/draft_validation_evidence.py` owns deterministic
+  evidence-use and attribution findings, keeping attribution handoff logic out of
+  the main linter.
 - `backend/app/application/draft_validator_orchestrator.py` owns candidate iteration
   and report assembly.
 - `backend/app/application/draft_llm_validation_service.py` owns report-only
@@ -1132,6 +1141,9 @@ Concrete queued drafting files:
 - `backend/app/application/draft_candidate_selection_service.py`
 - `backend/app/application/draft_candidate_publishability.py`
 - `backend/app/application/draft_validation_linter.py`
+- `backend/app/application/draft_attribution_markers.py`
+- `backend/app/application/draft_attribution_requirements.py`
+- `backend/app/application/draft_validation_evidence.py`
 - `backend/app/application/draft_validator_orchestrator.py`
 - `backend/app/application/draft_validation_step.py`
 - `backend/app/application/draft_planning_prompts.py`
@@ -1148,7 +1160,18 @@ Concrete queued drafting files:
 - `backend/app/application/draft_llm_validation_audit.py`
 - `backend/app/application/draft_llm_validation_parser.py`
 - `backend/app/application/draft_validation_step_service.py`
+- `backend/app/application/draft_validation_alternative_flow.py`
 - `backend/app/application/draft_validation_operation_safety.py`
+- `backend/app/application/draft_final_quality_assessment.py`
+- `backend/app/application/draft_final_quality_attribution.py`
+- `backend/app/application/draft_final_quality_contract.py`
+- `backend/app/application/draft_final_quality_gate.py`
+- `backend/app/application/draft_final_quality_gate_evaluator.py`
+- `backend/app/application/draft_final_quality_gate_payloads.py`
+- `backend/app/application/draft_final_quality_repair_loop.py`
+- `backend/app/application/draft_final_quality_review_parser.py`
+- `backend/app/application/draft_final_quality_review_prompts.py`
+- `backend/app/application/draft_final_quality_review_service.py`
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_source_ledger.py`

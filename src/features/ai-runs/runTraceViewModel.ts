@@ -542,6 +542,7 @@ function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanti
   const repairDecision = asRecord(payload.finalDecision);
   const contract = asRecord(payload.finalQualityContract);
   const independent = asRecord(payload.independentReview);
+  const attributionReview = asRecord(payload.attributionReview);
   return {
     id: 'final-quality-gate',
     title: 'Final quality gate',
@@ -556,6 +557,9 @@ function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanti
       ['Final draft status', payload.finalDraftStatus],
       ['Public prose', payload.publicProseStatus],
       ['Source integration', payload.sourceIntegrationStatus],
+      ['Attribution review', attributionReviewValue(attributionReview)],
+      ['Actionable attribution findings', asArray(payload.actionableAttributionFindings)?.map(finalQualityFindingValue)],
+      ['Diagnostic attribution noise', asArray(payload.diagnosticAttributionNoise)?.map(finalQualityFindingValue)],
       ['Internal jargon leaks', asArray(payload.internalJargonLeaks)?.map(finalQualityLeakValue)],
       ['Source dump risk', payload.sourceDumpRisk],
       ['Author voice', payload.authorVoiceStrength],
@@ -573,6 +577,16 @@ function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanti
   };
 }
 
+function attributionReviewValue(value: Record<string, unknown> | null): string | undefined {
+  if (!value) return undefined;
+  return [
+    `actionable ${value.actionableCount ?? 0}`,
+    `diagnostic ${value.diagnosticCount ?? 0}`,
+    `independent source ${value.independentSourceIntegrationStatus ?? 'unknown'}`,
+    value.independentClosedDiagnosticNoise ? 'diagnostic closed' : null
+  ].filter(Boolean).join(' В· ');
+}
+
 function finalQualityContractValue(contract: Record<string, unknown> | null): string | undefined {
   if (!contract) return undefined;
   return [
@@ -586,7 +600,8 @@ function finalQualityContractValue(contract: Record<string, unknown> | null): st
 function finalQualityFindingValue(value: unknown): string {
   const finding = asRecord(value);
   if (!finding) return displayValue(value);
-  return `${finding.severity ?? finding.status ?? 'info'} В· ${finding.message ?? finding.summary ?? finding.id ?? ''}${finding.repairGuidance ? ` В· ${finding.repairGuidance}` : ''}`;
+  const metadata = asRecord(finding.metadata);
+  return `${finding.severity ?? finding.status ?? 'info'} В· ${finding.message ?? finding.summary ?? finding.id ?? ''}${finding.repairGuidance ? ` В· ${finding.repairGuidance}` : ''}${metadata?.suppressedReason ? ` В· ${metadata.suppressedReason}` : ''}`;
 }
 
 function finalQualityRepairCycleValue(value: unknown): string {

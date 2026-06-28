@@ -54,6 +54,7 @@ class FinalQualityGateEvaluator:
         combined["finalQualityContract"] = contract
         combined["independentReview"] = independent
         combined["modelIndependence"] = independent.get("modelIndependence", "unknown")
+        combined["attributionReview"] = self._attribution_review(deterministic, independent)
         combined["status"] = worst_status(deterministic.get("status"), independent.get("status"))
         combined["publicProseStatus"] = worst_status(deterministic.get("publicProseStatus"), independent.get("publicProseStatus"))
         combined["sourceIntegrationStatus"] = worst_status(deterministic.get("sourceIntegrationStatus"), independent.get("sourceIntegrationStatus"))
@@ -85,3 +86,14 @@ class FinalQualityGateEvaluator:
             if guidance:
                 goals.append(str(guidance))
         return dedupe(goals)[:10]
+
+    def _attribution_review(self, deterministic: dict[str, Any], independent: dict[str, Any]) -> dict[str, Any]:
+        actionable = list_value(deterministic.get("actionableAttributionFindings"))
+        diagnostic = list_value(deterministic.get("diagnosticAttributionNoise"))
+        independent_source_status = str(independent.get("sourceIntegrationStatus") or independent.get("status") or "unknown")
+        return {
+            "actionableCount": len(actionable),
+            "diagnosticCount": len(diagnostic),
+            "independentSourceIntegrationStatus": independent_source_status,
+            "independentClosedDiagnosticNoise": bool(diagnostic and not actionable and independent_source_status in {"passed", "clean"}),
+        }

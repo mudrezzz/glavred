@@ -932,6 +932,16 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Draft attribution marker extraction should stay deterministic and provider-free.",
   },
   {
+    path: "backend/app/application/draft_attribution_requirements.py",
+    limit: 120,
+    next: "Draft attribution requirement normalization should stay provider-free and validator-owned.",
+  },
+  {
+    path: "backend/app/application/draft_validation_evidence.py",
+    limit: 120,
+    next: "Draft validation evidence checks should stay deterministic and attribution-focused.",
+  },
+  {
     path: "backend/app/application/draft_validator_orchestrator.py",
     limit: 110,
     next: "Draft validator orchestrator should stay report assembly only; split validator routing if it grows.",
@@ -965,6 +975,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/application/draft_validation_step_service.py",
     limit: 90,
     next: "Draft validation step service should stay composition-only between deterministic and LLM reports.",
+  },
+  {
+    path: "backend/app/application/draft_validation_alternative_flow.py",
+    limit: 110,
+    next: "Draft validation alternative flow should stay focused on challenger merge and validation reuse.",
   },
   {
     path: "backend/app/application/draft_validation_step.py",
@@ -1020,6 +1035,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/application/draft_final_quality_assessment.py",
     limit: 150,
     next: "Final quality assessment should stay deterministic public-prose heuristics only.",
+  },
+  {
+    path: "backend/app/application/draft_final_quality_attribution.py",
+    limit: 80,
+    next: "Final quality attribution split should stay deterministic and handoff-focused.",
   },
   {
     path: "backend/app/application/draft_final_quality_contract.py",
@@ -1537,6 +1557,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "DraftRun validation pipeline tests should stay focused on validation step wiring.",
   },
   {
+    path: "backend/tests/test_draft_validation_alternative_flow.py",
+    limit: 70,
+    next: "Draft validation alternative flow tests should stay focused on challenger-only final validation.",
+  },
+  {
     path: "backend/tests/test_draft_run_pipeline_candidates.py",
     limit: 80,
     next: "DraftRun candidate pipeline tests should stay separate from context/rule/planning tests.",
@@ -2020,6 +2045,8 @@ if (fileExists("backend")) {
     "backend/app/application/draft_run_draft_step_service.py",
     "backend/app/application/draft_validation_linter.py",
     "backend/app/application/draft_attribution_markers.py",
+    "backend/app/application/draft_attribution_requirements.py",
+    "backend/app/application/draft_validation_evidence.py",
     "backend/app/application/draft_validator_orchestrator.py",
     "backend/app/application/draft_llm_validation_service.py",
     "backend/app/application/draft_llm_validation_prompts.py",
@@ -2038,6 +2065,7 @@ if (fileExists("backend")) {
     "backend/app/application/draft_revision_instruction_builder.py",
     "backend/app/application/draft_revision_regression.py",
     "backend/app/application/draft_final_quality_assessment.py",
+    "backend/app/application/draft_final_quality_attribution.py",
     "backend/app/application/draft_final_quality_contract.py",
     "backend/app/application/draft_final_quality_gate.py",
     "backend/app/application/draft_final_quality_gate_evaluator.py",
@@ -2493,6 +2521,8 @@ const requiredSaoFragments = [
   "backend/app/application/draft_run_pipeline.py",
   "backend/app/application/draft_validation_linter.py",
   "backend/app/application/draft_attribution_markers.py",
+  "backend/app/application/draft_attribution_requirements.py",
+  "backend/app/application/draft_validation_evidence.py",
   "backend/app/application/draft_validator_orchestrator.py",
   "backend/app/application/draft_llm_validation_service.py",
   "backend/app/application/draft_llm_validation_prompts.py",
@@ -2510,6 +2540,7 @@ const requiredSaoFragments = [
   "backend/app/application/draft_revision_instruction_builder.py",
   "backend/app/application/draft_revision_regression.py",
   "backend/app/application/draft_final_quality_assessment.py",
+  "backend/app/application/draft_final_quality_attribution.py",
   "backend/app/application/draft_final_quality_contract.py",
   "backend/app/application/draft_final_quality_gate.py",
   "backend/app/application/draft_final_quality_gate_evaluator.py",

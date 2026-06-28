@@ -138,6 +138,45 @@ def test_final_quality_gate_uses_independent_review_contract_and_runs_second_rep
     assert result.ai_run_ids == ["ai-gate-1", "ai-final-repair", "ai-gate-2"]
 
 
+def test_final_quality_gate_does_not_repair_non_actionable_attribution_noise() -> None:
+    revision = FakeRevisionService(candidate("revised-final-1", "Should not be used"))
+    review = FakeReviewService([
+        {
+            "status": "passed",
+            "publicProseStatus": "passed",
+            "sourceIntegrationStatus": "passed",
+            "authorVoiceStrength": "passed",
+            "readerValueClarity": "passed",
+            "findings": [],
+            "repairGoals": [],
+            "attempts": [{"aiRunId": "ai-gate-1"}],
+            "aiRunIds": ["ai-gate-1"],
+            "modelIndependence": "independent",
+        }
+    ])
+
+    result = DraftFinalQualityGateService(
+        revision_service=revision,  # type: ignore[arg-type]
+        review_service=review,  # type: ignore[arg-type]
+        max_repair_iterations=2,
+    ).run(
+        final_candidate=candidate("final-1", "Мой тезис: это важно. Поэтому если вы отвечаете за продукт, проверьте доверие к AI через один понятный сценарий."),
+        final_source="revisionLoop",
+        validation_report={"candidateReports": []},
+        context_artifact=context(),
+        rule_pack={},
+        material_plan={"claimsRequiringAttribution": ["95% - attribute to Unknown Source"]},
+        revision_loop_stop_reason="max-iterations",
+    )
+
+    assert result.final_candidate["id"] == "final-1"
+    assert result.artifact_payload["status"] == "passed"
+    assert result.artifact_payload["repair"]["status"] == "not-run"
+    assert result.artifact_payload["attributionReview"]["independentClosedDiagnosticNoise"] is True
+    assert result.artifact_payload["diagnosticAttributionNoise"][0]["metadata"]["suppressedReason"] == "unresolved-attribution-requirement"
+    assert revision.calls == []
+
+
 def service(revision: FakeRevisionService) -> DraftFinalQualityGateService:
     return DraftFinalQualityGateService(revision_service=revision)  # type: ignore[arg-type]
 

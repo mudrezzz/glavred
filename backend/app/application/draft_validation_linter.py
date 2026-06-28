@@ -1,12 +1,11 @@
 import re
 from typing import Any
 
-from backend.app.application.draft_attribution_markers import DraftAttributionMarkerMatcher
+from backend.app.application.draft_validation_evidence import evidence_findings
 from backend.app.domain.draft_validation import DraftValidatorFinding, DraftValidatorStatus
 
 
 RAW_ARTIFACT_PATTERNS = ("{'id':", '{"id":', '"id":', "'type':", '"type":', "[{", "}]")
-NUMBER_PATTERN = re.compile(r"(\d+[%\w]*|[0-9]+[.,][0-9]+)")
 
 
 class DeterministicDraftLinter:
@@ -26,7 +25,7 @@ class DeterministicDraftLinter:
         findings.extend(self._shape_findings(candidate_id, title, body))
         findings.extend(self._size_findings(candidate_id, body, context_artifact))
         findings.extend(self._contract_findings(candidate_id, body, context_artifact))
-        findings.extend(self._evidence_findings(candidate_id, body, candidate, context_artifact, material_plan))
+        findings.extend(evidence_findings(candidate_id=candidate_id, body=body, candidate=candidate, context_artifact=context_artifact, material_plan=material_plan, finding_factory=_finding))
         findings.extend(self._rule_findings(candidate_id, body, rule_pack))
         findings.extend(self._publishability_findings(candidate_id, candidate, score_row))
         return findings
@@ -84,40 +83,6 @@ class DeterministicDraftLinter:
             value = str(contract.get(field) or "")
             if value and not _has_token_overlap(body_lower, value):
                 findings.append(_finding(validator_id, DraftValidatorStatus.WARNING, candidate_id, message, value, "Revise the draft to preserve the post contract.", rule_ids=[f"contract:{field}"]))
-        return findings
-
-    def _evidence_findings(
-        self,
-        candidate_id: str,
-        body: str,
-        candidate: dict[str, Any],
-        context_artifact: dict[str, Any],
-        material_plan: dict[str, Any],
-    ) -> list[DraftValidatorFinding]:
-        findings: list[DraftValidatorFinding] = []
-        rejected = _strings(material_plan.get("rejectedEvidence"))
-        requiring_attribution = _strings(material_plan.get("claimsRequiringAttribution"))
-        used_evidence = _strings(candidate.get("usedEvidence"))
-        for evidence_id in rejected:
-            if evidence_id in used_evidence or evidence_id.lower() in body.lower():
-                findings.append(_finding("evidence.rejected-proof", DraftValidatorStatus.CRITICAL, candidate_id, "Candidate uses rejected or planned evidence as proof.", evidence_id, "Remove the claim or replace it with accepted ledger evidence.", claim_ids=[evidence_id]))
-        external_claims = _external_claims(context_artifact)
-        external_claim_ids = [str(claim.get("id")) for claim in external_claims if claim.get("id")]
-        attribution_claims = sorted(set(requiring_attribution + [claim_id for claim_id in external_claim_ids if claim_id in used_evidence]))
-        if attribution_claims and _looks_like_public_claim(body):
-            attribution = DraftAttributionMarkerMatcher().evaluate(body=body, claims=external_claims, claim_ids=attribution_claims)
-            missing_claims = _strings(attribution.get("missingClaimIds"))
-            if missing_claims:
-                findings.append(_finding(
-                    "evidence.attribution",
-                    DraftValidatorStatus.WARNING,
-                    candidate_id,
-                    "Source-backed public claim needs visible attribution.",
-                    ", ".join(missing_claims),
-                    "Name the source, source title, author, organization, or qualify the claim.",
-                    claim_ids=missing_claims,
-                    metadata=attribution,
-                ))
         return findings
 
     def _rule_findings(self, candidate_id: str, body: str, rule_pack: dict[str, Any]) -> list[DraftValidatorFinding]:
@@ -205,16 +170,6 @@ def _has_forbidden_phrase(body_lower: str, statement: str) -> bool:
         return True
     tokens = [token for token in re.findall(r"[\wА-Яа-яЁё]{7,}", statement_lower) if token not in {"should", "must", "нельзя"}]
     return len(tokens) >= 2 and all(token in body_lower for token in tokens[:2])
-
-
-def _looks_like_public_claim(body: str) -> bool:
-    return bool(NUMBER_PATTERN.search(body)) or any(marker in body.lower() for marker in ("исслед", "report", "survey", "статист", "данн"))
-
-
-def _external_claims(context_artifact: dict[str, Any]) -> list[dict[str, Any]]:
-    ledger = _dict(context_artifact.get("sourceLedger"))
-    claims = _list(ledger.get("claims"))
-    return [claim for claim in (_dict(item) for item in claims) if claim.get("type") == "externalEvidenceClaim"]
 
 
 def _excerpt(body: str, needle: str) -> str:

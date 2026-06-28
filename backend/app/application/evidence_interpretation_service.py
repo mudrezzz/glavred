@@ -14,6 +14,7 @@ from backend.app.application.evidence_interpretation_prompts import (
     EVIDENCE_INTERPRETATION_TEMPERATURE,
     build_evidence_interpretation_messages,
 )
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_evidence_interpretation import evidence_interpretation_from_payload
@@ -45,6 +46,7 @@ class EvidenceInterpretationService:
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         context_pack: dict[str, Any] | None = None,
+        progress: DraftRunStepOperationSink | None = None,
     ) -> DraftPlanningStepResult:
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
@@ -74,6 +76,7 @@ class EvidenceInterpretationService:
                 rule_pack=rule_pack,
                 context_pack=context_pack,
                 repair_context=repair_context,
+                progress=progress,
             )
             attempts.append(result["attempt"])
             if result["accepted"]:
@@ -105,6 +108,7 @@ class EvidenceInterpretationService:
         rule_pack: dict[str, Any],
         context_pack: dict[str, Any] | None,
         repair_context: dict[str, Any] | None,
+        progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
@@ -126,6 +130,15 @@ class EvidenceInterpretationService:
             attempt=attempt_payload,
             model_selection=selection.to_payload(),
         )
+        operation_id = f"evidence-interpretation-{attempt.label}"
+        if progress:
+            progress.start_operation(
+                operation_id,
+                kind="evidenceInterpretation",
+                label=f"Evidence interpretation {attempt.label}",
+                target=attempt.model,
+                notes=["Interpreting accepted public/internal evidence before material planning."],
+            )
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
@@ -149,9 +162,14 @@ class EvidenceInterpretationService:
                 ),
                 fallback_used=False,
             )
+            if progress:
+                progress.complete_operation(operation_id, ai_run_id=run.id, notes=["Evidence interpretation accepted."])
             return {"accepted": True, "payload": payload, "aiRunId": run.id, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
-            return self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
+            result = self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
+            if progress:
+                progress.fail_operation(operation_id, result["attempt"].get("error") or "Evidence interpretation attempt failed.", ai_run_id=result["aiRunId"])
+            return result
 
     def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
         run = self._ai_run_service.create_completed_run(

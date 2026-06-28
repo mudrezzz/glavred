@@ -81,15 +81,15 @@ class DraftRunPipeline:
                 progress.complete(DraftRunStepKey.COMPLETE, quality_gate_result.complete_payload or {"status": "blocked"})
                 self._repository.set_run_status(run_id, DraftRunStatus.SUCCEEDED, ai_run_ids=[])
                 return self._loaded(run_id)
-            context_artifact = quality_gate_result.context_artifact
+            context_artifact = quality_gate_result.context_artifact; progress.start(DraftRunStepKey.RULE_PACK); rule_progress = progress.operation_sink(DraftRunStepKey.RULE_PACK)
             rule_pack = self._rule_pack_compiler.compile(context_artifact).to_payload()
-            interpretation_result = self._evidence_interpretation_service.create(context_summary=context_summary, context_artifact=context_artifact, rule_pack=rule_pack, context_pack=context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY))
+            interpretation_result = self._evidence_interpretation_service.create(context_summary=context_summary, context_artifact=context_artifact, rule_pack=rule_pack, context_pack=context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY), progress=rule_progress)
             progress.add_ai_run_ids(interpretation_result.ai_run_ids or ([interpretation_result.ai_run_id] if interpretation_result.ai_run_id else []))
             rule_pack = {**rule_pack, **interpretation_result.artifact_payload}
             context_artifact = {**context_artifact, **interpretation_result.artifact_payload}
             rule_pack_artifact = self._article_memory.attach(rule_pack, context_artifact=context_artifact, rule_pack=rule_pack)
             context_artifact = {**context_artifact, "articleDossier": rule_pack_artifact["articleDossier"], "contextPacks": rule_pack_artifact["contextPacks"]}
-            progress.complete(DraftRunStepKey.RULE_PACK, rule_pack_artifact)
+            progress.succeed(DraftRunStepKey.RULE_PACK, with_progress_payload(rule_pack_artifact, rule_progress))
             progress.start(DraftRunStepKey.MATERIAL_PLAN)
             material_plan_result = self._material_plan_service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_artifact)
             progress.add_ai_run_ids(material_plan_result.ai_run_ids or ([material_plan_result.ai_run_id] if material_plan_result.ai_run_id else []))

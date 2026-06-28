@@ -1108,8 +1108,12 @@ Conceptual interfaces for the next implementation slices:
 - `DraftValidationReport`: per-candidate findings with validator id, severity,
   rule ids, claim ids, evidence excerpt, repair guidance, and optional diagnostic
   metadata. Attribution findings use deterministic per-claim provenance markers such
-  as source title, domain, author/person name, organization, or source label. Slice
-  2.13 writes this to the existing `validation` step but does not change `finalDraft`.
+  as source title, domain, author/person name, organization, or source label. Free-text
+  material-plan attribution requirements are normalized to source-backed claim ids
+  before validation. If a requirement cannot be mapped to a claim or useful expected
+  markers, it is stored as diagnostic handoff metadata (`evidence.attribution.diagnostic`)
+  and must not count as an actionable warning. Slice 2.13 writes this to the existing
+  `validation` step but does not change `finalDraft`.
 - `ValidatorResult`: future provider-backed score/findings for one rule family.
 - `PairwiseRanking`: comparison and scorecard across candidates.
 - `RevisionAttempt`: targeted correction input and candidate output.
@@ -1335,6 +1339,10 @@ The next artifacts must make candidate validation meaningful:
   overclaims, reader-value hooks, and rejected evidence uses. If provider attempts fail,
   deterministic interpretation fallback is explicit in trace. Prompt layers should use
   this artifact before raw public snippets.
+- Because `EvidenceInterpretation` lives inside the `rulePack` step, the runner must
+  mark `rulePack` as running before provider attempts and write nested progress
+  operations for primary/repair/backup attempts. A long interpretation retry must not
+  appear as stale `postContract`.
 - `DraftRunBudget` is resolved from `Fabula.researchDepth` plus
   `DRAFT_RUN_EXECUTION_MODE`. It lives in the `context` artifact and is consumed by
   `sourceIntent`, `publicEvidence`, external evidence merge, `materialPlan`, `draft`,
@@ -1373,6 +1381,10 @@ The next artifacts must make candidate validation meaningful:
   ranking and revision do not yet have to consume it. If OpenRouter is not configured,
   the report is marked `not-run`; invalid JSON uses primary, repair, optional backup,
   then candidate-level unavailable status without fake critique findings.
+- After `alternativeAngleTournament` creates a challenger, validation must reuse
+  initial reports for original candidates and run provider-heavy LLM validation plus
+  editorial critique only for the challenger. Do not rerun critic/review calls for
+  already validated candidates during the merge step.
 - `validation.rankingRevision` is the first actionable validation consumer. It
   pairwise-ranks candidates, then runs a bounded `revisionLoop`. Each cycle builds
   validator repair goals plus editorial goals from EvidenceInterpretation,
@@ -1398,9 +1410,12 @@ The next artifacts must make candidate validation meaningful:
   through the existing directed revision service; the count is controlled by
   `DRAFT_FINAL_REPAIR_MAX_ITERATIONS`. A repair replaces `finalDraft` only if
   deterministic regression and public-prose checks improve; otherwise the previous
-  best remains final and the rejected repair stays in trace. Keep deterministic
-  heuristics in `draft_final_quality_assessment.py`; keep contract/review/provider
-  handoff in `draft_final_quality_gate.py` and final-quality review modules.
+  best remains final and the rejected repair stays in trace. The gate separates
+  `actionableAttributionFindings` from `diagnosticAttributionNoise`: independent
+  final-gate review may close only non-actionable attribution handoff noise, never a
+  concrete missing source marker. Keep deterministic heuristics in
+  `draft_final_quality_assessment.py`; keep contract/review/provider handoff in
+  `draft_final_quality_gate.py` and final-quality review modules.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.
@@ -1487,8 +1502,9 @@ The first backend implementation order is:
 27. Multi-model drafting roles. Done.
 28. Article dossier and context packs. Done.
 29. Evidence interpretation. Done.
-30. Prosecutor critic, alternative-angle tournament, and deep revision loop v2.
-31. Regression report and editor decision learning.
+30. Prosecutor critic, alternative-angle tournament, and deep revision loop v2. Done.
+31. Final quality contract/gate repairs and attribution handoff calibration. Done.
+32. Regression report and editor decision learning.
 
 `langgraph-document-ai-platform` import remains important, but it should wait until
 the queued-run pattern is stable enough to reuse for document workflows.

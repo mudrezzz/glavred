@@ -16,8 +16,13 @@ class DeterministicEvidenceInterpretationStepService:
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         context_pack: dict[str, Any] | None = None,
+        progress: Any | None = None,
     ) -> DraftPlanningStepResult:
+        if progress:
+            progress.start_operation("evidence-interpretation-deterministic", kind="evidenceInterpretation", label="Evidence interpretation deterministic fallback")
         payload = self._service.interpret(context_artifact=context_artifact, rule_pack=rule_pack).to_payload()
+        if progress:
+            progress.complete_operation("evidence-interpretation-deterministic", notes=["Deterministic evidence interpretation completed."])
         return DraftPlanningStepResult(
             artifact_payload={
                 "source": "deterministicFallback",

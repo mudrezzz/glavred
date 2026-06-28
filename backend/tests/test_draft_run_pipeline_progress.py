@@ -43,6 +43,9 @@ class AssertingMaterialPlanService:
 
     def create(self, **_: Any) -> DraftPlanningStepResult:
         assert _step_status(self._repository, self._run_id, "materialPlan") == DraftRunStepStatus.RUNNING
+        rule_pack_step = _step(self._repository, self._run_id, "rulePack")
+        assert rule_pack_step and rule_pack_step.status == DraftRunStepStatus.SUCCEEDED
+        assert rule_pack_step.artifact_payload["progress"]["operations"]
         return DraftPlanningStepResult(
             artifact_payload={"source": "test", "aiRunId": "ai-material", "fallbackUsed": False, "materialPlan": {}},
             ai_run_id="ai-material",
@@ -104,6 +107,11 @@ class AssertingDraftService:
 
 
 def _step_status(repository: SqliteDraftRunRepository, run_id: str, key: str) -> DraftRunStepStatus | None:
+    step = _step(repository, run_id, key)
+    return step.status if step else None
+
+
+def _step(repository: SqliteDraftRunRepository, run_id: str, key: str) -> Any | None:
     run = repository.get(run_id)
     step = next((item for item in run.steps if item.key.value == key), None) if run else None
-    return step.status if step else None
+    return step

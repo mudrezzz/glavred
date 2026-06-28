@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.15.6: Deep Revision Loop v2.
+Current as of Slice 2.15.6.4.2: Final Gate Attribution Handoff Repair.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -32,7 +32,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `EditorialCritiqueReport` | Report-only prosecutor/editor critique of candidate idea strength, tension, author stance, source integration, and reader value. | `validation.editorialCritiqueReport`, child `AiRun` trace |
 | `AlternativeAngleTournament` | Critic-driven challenger route and candidate used to escape a weak local optimum. | `validation.alternativeAngleTournament`, child `AiRun` trace |
 | `RevisionLoop` | Bounded editorial optimization loop: validator repair goals plus editorial goals, old-vs-new dimension scoring, accepted/rejected revisions, and rejected moves. | `validation.rankingRevision.revisionLoop` |
-| `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if gate findings require it. | `validation.rankingRevision.finalQualityGate` |
+| `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 
@@ -323,6 +323,8 @@ Input:
 
 Processing:
 
+- `rulePack` is marked `running` before provider-backed evidence interpretation, so a
+  long JSON retry path is visible as `rulePack`, not as stale `postContract`;
 - `RuleRegistrySnapshot` is compiled first;
 - compatibility `RulePack` is derived from the registry;
 - `EvidenceInterpretationService` converts accepted internal/external evidence into
@@ -354,6 +356,8 @@ Trace:
 - `rulePack` step;
 - child `AiRun.requestPayload.draftRunStep = evidenceInterpretation` when provider
   interpretation runs;
+- `artifactPayload.progress.operations[]` contains `evidenceInterpretation`
+  primary/repair/backup attempts while the step is running;
 - `rulePack.evidenceInterpretation` readable section in `/ai-runs?runId=...`.
 
 ### 4.7 `materialPlan`
@@ -560,7 +564,9 @@ Processing:
 4. alternative-angle tournament may add one critic-driven challenger candidate; both
    route JSON and challenger-prose JSON use primary/repair/backup attempts, and no
    fake deterministic challenger is invented when all attempts fail;
-5. final validation report is rebuilt when a challenger enters the pool;
+5. final validation report is extended when a challenger enters the pool: initial
+   candidate reports are reused, provider-heavy validation runs only for the new
+   challenger, and the reports are merged into one final candidate-pool report;
 6. pairwise ranking chooses the best candidate from the merged candidate pool;
 7. deep revision loop builds validator and editorial goals, revises, re-runs
    deterministic validation, compares previous best vs revised across editorial
@@ -575,7 +581,11 @@ Processing:
    gate creates bounded final repair instructions for the writer. The number of final
    repair cycles is controlled by `DRAFT_FINAL_REPAIR_MAX_ITERATIONS` (default `2`).
    A repaired draft is accepted only when deterministic regression and gate findings
-   improve;
+   improve. Attribution warnings are actionable only when they resolve to source-backed
+   claim ids with expected markers that are missing from the final body. Free-text
+   attribution requirements that cannot be resolved become diagnostic handoff noise;
+   if the independent final-gate review passes source integration, that diagnostic
+   noise does not launch final repair;
 9. provider-heavy validation sub-operations persist progress as they run; if a late
    operation fails, the operation is marked `failed`, safe error details are saved,
    and the previous best candidate is kept when one exists.
@@ -590,8 +600,9 @@ Output:
 - `revisionLoop` with editorial goals, dimension scores, rejected moves, and stop
   reason;
 - `finalQualityGate` with final quality contract, independent review attempts,
-  final-draft status, public-prose status, source-dump risk, final repair goals,
-  repair cycles, repair result, and gate-level final decision;
+  final-draft status, public-prose status, source-dump risk, actionable attribution
+  findings, diagnostic attribution noise, attribution review closure, final repair
+  goals, repair cycles, repair result, and gate-level final decision;
 - `progress` with nested validation operations, child `AiRun` ids, failed-operation
   status, and safe error details when a provider-heavy sub-operation fails;
 - final draft candidate decision;
@@ -615,8 +626,8 @@ Role/model handoff:
 - `writer` executes the alternative route into one challenger candidate;
 - `finalGate` receives the delivered final candidate, `FinalQualityContract`,
   deterministic gate findings, validation context, evidence interpretation, ledger,
-  rule registry, and material plan, then returns independent findings, observations,
-  and final repair goals;
+  rule registry, material plan, and attribution requirement resolution, then returns
+  independent findings, observations, and final repair goals;
 - `writer` may execute bounded final public-prose repair cycles after the revision
   loop if `finalQualityGate` returns `warning` or `critical`;
 - `writer` receives the current best candidate plus validator repair goals,
@@ -756,6 +767,7 @@ Important AS IS rules:
 | alternative-angle candidate provider failure | repair retry, optional backup model, then tournament `failed`; original candidates continue |
 | validation sub-operation failure | mark nested operation failed, preserve partial artifact, keep previous best if available |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
+| unresolved attribution requirement | record diagnostic metadata; not a repair goal unless it resolves to expected source markers that are missing from the final body |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
 | feasibility blocked | run succeeds with `finalDraft = null`; no local fallback |
@@ -788,8 +800,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     and why it entered or failed to enter final ranking.
 16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
 17. `finalQualityGate`: inspect the final quality contract, independent review
-    attempts/model, final public-prose status, repair goals, accepted or rejected
-    repair cycles, and final draft source.
+    attempts/model, final public-prose status, `attributionReview`,
+    `actionableAttributionFindings`, `diagnosticAttributionNoise`, repair goals,
+    accepted or rejected repair cycles, and final draft source.
 18. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
 19. child `AiRun` detail: inspect prompt messages, role model, generation params,

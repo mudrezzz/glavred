@@ -116,6 +116,88 @@ def test_validator_accepts_author_or_organization_attribution_markers() -> None:
     assert "evidence.attribution" not in {finding["validatorId"] for finding in findings}
 
 
+def test_validator_resolves_free_text_attribution_requirements_to_claim_markers() -> None:
+    report = DraftValidatorOrchestrator().validate(
+        draft_artifact={
+            "candidates": [
+                {
+                    "id": "candidate-1",
+                    "title": "Sourced",
+                    "body": "B2BNotes estimates that 95% of pilots fail to scale, while RAND Corporation points to workflow misfit.",
+                    "usedEvidence": [],
+                }
+            ],
+            "selection": {"selectedCandidateId": "candidate-1", "scorecard": []},
+        },
+        context_artifact={
+            "postContract": {},
+            "sourceLedger": {
+                "claims": [
+                    {
+                        "id": "external-evidence-b2bnotes",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "B2BNotes AI production gap", "sourceUrl": "https://b2bnotes.com/ai-production-gap"},
+                    },
+                    {
+                        "id": "external-evidence-rand",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "RAND Corporation AI project failure report", "sourceUrl": "https://rand.org/ai-failure"},
+                    },
+                ]
+            },
+        },
+        rule_pack={},
+        material_plan={
+            "claimsRequiringAttribution": [
+                "95% of enterprise B2B AI pilots fail to scale - attribute to B2BNotes",
+                "RAND five root causes including workflow misfit - attribute to RAND Corporation",
+            ]
+        },
+    )
+
+    findings = report.to_payload()["candidateReports"][0]["findings"]
+    assert "evidence.attribution" not in {finding["validatorId"] for finding in findings}
+
+
+def test_validator_keeps_unresolved_free_text_attribution_as_diagnostic() -> None:
+    report = DraftValidatorOrchestrator().validate(
+        draft_artifact={
+            "candidates": [
+                {
+                    "id": "candidate-1",
+                    "title": "Sourced",
+                    "body": "42% adoption growth according to a public report.",
+                    "usedEvidence": [],
+                }
+            ],
+            "selection": {"selectedCandidateId": "candidate-1", "scorecard": []},
+        },
+        context_artifact={
+            "postContract": {},
+            "sourceLedger": {
+                "claims": [
+                    {
+                        "id": "external-evidence-known",
+                        "type": "externalEvidenceClaim",
+                        "source": "publicEvidence",
+                        "provenance": {"sourceTitle": "Known Source report", "sourceUrl": "https://known.example/report"},
+                    }
+                ]
+            },
+        },
+        rule_pack={},
+        material_plan={"claimsRequiringAttribution": ["42% adoption growth - attribute to Unknown Source"]},
+    )
+
+    payload = report.to_payload()["candidateReports"][0]
+    validator_ids = {finding["validatorId"] for finding in payload["findings"]}
+    assert "evidence.attribution" not in validator_ids
+    assert "evidence.attribution.diagnostic" in validator_ids
+    assert payload["status"] == "passed"
+
+
 def test_validator_matches_attribution_per_claim() -> None:
     report = DraftValidatorOrchestrator().validate(
         draft_artifact={

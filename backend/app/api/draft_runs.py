@@ -9,7 +9,6 @@ from backend.app.application.draft_run_context_payloads import context_from_payl
 from backend.app.application.draft_run_service import DraftRunService
 from backend.app.application.draft_run_staleness import inspect_draft_run_staleness
 from backend.app.domain.draft_run import DraftRun, DraftRunStep
-
 router = APIRouter(prefix="/api/draft-runs")
 
 
@@ -18,7 +17,6 @@ class DraftRunCreateResponse(BaseModel):
     status: str
 
     model_config = {"populate_by_name": True}
-
 
 class DraftRunCreateRequest(DraftGenerateRequest):
     draft_context: dict[str, Any] | None = Field(default=None, alias="draftContext")
@@ -49,6 +47,7 @@ class DraftRunResponse(BaseModel):
     last_progress_at: str = Field(serialization_alias="lastProgressAt")
     created_at: str = Field(serialization_alias="createdAt")
     updated_at: str = Field(serialization_alias="updatedAt")
+    completed_at: str | None = Field(serialization_alias="completedAt")
 
     model_config = {"populate_by_name": True}
 
@@ -63,7 +62,6 @@ def create_draft_run(
         context_from_payload({"draftContext": request.draft_context}),
     )
     return DraftRunCreateResponse(run_id=run.id, status=run.status.value)
-
 
 @router.get("/{run_id}", response_model=DraftRunResponse, response_model_by_alias=True)
 def get_draft_run(
@@ -83,7 +81,6 @@ def get_draft_run_events(
 ) -> DraftRunResponse:
     return get_draft_run(run_id=run_id, service=service)
 
-
 def serialize_run(run: DraftRun) -> DraftRunResponse:
     staleness = inspect_draft_run_staleness(run)
     return DraftRunResponse(
@@ -99,8 +96,8 @@ def serialize_run(run: DraftRun) -> DraftRunResponse:
         last_progress_at=staleness.last_progress_at.isoformat(),
         created_at=run.created_at.isoformat(),
         updated_at=run.updated_at.isoformat(),
+        completed_at=completed_at_for(run),
     )
-
 
 def serialize_step(step: DraftRunStep) -> DraftRunStepResponse:
     return DraftRunStepResponse(
@@ -112,3 +109,11 @@ def serialize_step(step: DraftRunStep) -> DraftRunStepResponse:
         started_at=step.started_at.isoformat() if step.started_at else None,
         completed_at=step.completed_at.isoformat() if step.completed_at else None,
     )
+
+
+def completed_at_for(run: DraftRun) -> str | None:
+    complete_step = next((step for step in run.steps if step.key.value == "complete" and step.completed_at), None)
+    if complete_step:
+        return complete_step.completed_at.isoformat()
+    completed_steps = [step.completed_at for step in run.steps if step.completed_at]
+    return max(completed_steps).isoformat() if completed_steps else None

@@ -1,6 +1,8 @@
 import re
 from typing import Any
 
+from backend.app.application.draft_final_quality_attribution import attribution_finding_split, effective_finding_counts, is_actionable_finding
+
 
 INTERNAL_TERMS = ("SourceLedger", "publicEvidence", "validators", "PostContract", "RuleRegistry")
 SOURCE_MARKERS = ("по данным", "исслед", "отчет", "report", "survey", "http", ".com", ".org", "gartner", "mckinsey", "bcg")
@@ -11,13 +13,15 @@ VALUE_MARKERS = ("если вы", "проверь", "начните", "стои�
 def gate_payload(candidate: dict[str, Any] | None, validation_report: dict[str, Any], context_artifact: dict[str, Any], stop_reason: str) -> dict[str, Any]:
     body = str((candidate or {}).get("body") or "")
     report = candidate_report(validation_report, str((candidate or {}).get("id") or ""))
+    effective = effective_finding_counts(report)
+    attribution = attribution_finding_split(report)
     leaks = internal_jargon_leaks(body)
     source_dump = source_dump_risk(body, context_artifact)
     voice = "passed" if _has_any(body.lower(), ("я ", "мы ", "мой тезис", "я считаю", "важно", "ошибка", "не ", "а ")) else "warning"
     value = "passed" if _has_any(body.lower(), VALUE_MARKERS) else "warning"
-    deterministic = "critical" if _int(report.get("criticalCount")) > 0 else "warning" if _int(report.get("warningCount")) > 0 else "passed"
+    deterministic = "critical" if effective["criticalCount"] > 0 else "warning" if effective["warningCount"] > 0 else "passed"
     public_prose = "critical" if leaks else "warning" if source_dump["status"] != "passed" else "passed"
-    source_status = "warning" if _has_attribution_finding(report) or source_dump["status"] != "passed" else "passed"
+    source_status = "warning" if attribution["actionableAttributionFindings"] or source_dump["status"] != "passed" else "passed"
     status = worst([deterministic, public_prose, source_status, voice, value])
     return {
         "status": status,
@@ -29,6 +33,8 @@ def gate_payload(candidate: dict[str, Any] | None, validation_report: dict[str, 
         "authorVoiceStrength": voice,
         "readerValueClarity": value,
         "finalRepairGoals": repair_goals(leaks, source_dump, voice, value, report),
+        "actionableAttributionFindings": attribution["actionableAttributionFindings"],
+        "diagnosticAttributionNoise": attribution["diagnosticAttributionNoise"],
         "revisionLoopStopReason": stop_reason,
         "candidateId": (candidate or {}).get("id"),
     }
@@ -75,7 +81,7 @@ def repair_goals(leaks: list[dict[str, Any]], source_dump: dict[str, Any], voice
         goals.append("Strengthen author stance without inventing unsupported claims.")
     if value != "passed":
         goals.append("Make reader value and practical takeaway explicit.")
-    goals.extend(str(item.get("repairGuidance")) for item in _list(report.get("findings"))[:4] if isinstance(item, dict) and item.get("repairGuidance"))
+    goals.extend(str(item.get("repairGuidance")) for item in _list(report.get("findings"))[:4] if isinstance(item, dict) and item.get("repairGuidance") and is_actionable_finding(item))
     return goals[:8]
 
 
@@ -104,10 +110,6 @@ def worst(statuses: list[Any]) -> str:
 
 def severity(status: Any) -> int:
     return {"passed": 0, "clean": 0, "warning": 1, "critical": 2}.get(str(status or "passed"), 0)
-
-
-def _has_attribution_finding(report: dict[str, Any]) -> bool:
-    return any(_dict(item).get("validatorId") == "evidence.attribution" for item in _list(report.get("findings")))
 
 
 def _has_any(value: str, markers: tuple[str, ...]) -> bool:

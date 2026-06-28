@@ -1,5 +1,7 @@
 from typing import Any
 
+from backend.app.application.draft_attribution_requirements import normalize_attribution_requirements
+
 
 def build_final_quality_contract(
     *,
@@ -15,6 +17,7 @@ def build_final_quality_contract(
     publication_kind = str(size_contract.get("publicationKind") or _dict(context_artifact.get("publicationSizeProfile")).get("publicationKind") or "post")
     research_depth = str(fabula.get("researchDepth") or "standard")
     source_policy = _source_policy(research_depth, publication_kind)
+    attribution = _attribution_requirements(context_artifact, material_plan)
     return {
         "version": "final-quality-contract-v1",
         "researchDepth": research_depth,
@@ -27,7 +30,9 @@ def build_final_quality_contract(
         "authorVoicePolicy": _author_voice_policy(fabula, post_contract),
         "examplePolicy": _example_policy(research_depth),
         "forbiddenPublicTerms": ["SourceLedger", "publicEvidence", "validators", "PostContract", "RuleRegistry"],
-        "sourceAttributionRequired": _claim_ids(material_plan, "claimsRequiringAttribution"),
+        "sourceAttributionRequired": attribution["resolvedClaimIds"],
+        "unresolvedAttributionRequirements": attribution["unresolvedAttributionRequirements"],
+        "attributionRequirementMatches": attribution["requirementMatches"],
         "qualifiedClaimIds": _claim_ids(material_plan, "qualifiedClaims"),
         "hardRuleIds": _hard_rule_ids(rule_pack),
         "acceptanceCriteria": [
@@ -84,6 +89,18 @@ def _claim_ids(payload: dict[str, Any], key: str) -> list[str]:
         elif isinstance(item, str) and "claimId" in item:
             ids.append(item[:180])
     return ids[:20]
+
+
+def _attribution_requirements(context_artifact: dict[str, Any], material_plan: dict[str, Any]) -> dict[str, Any]:
+    material = _dict(material_plan.get("materialPlan"))
+    values = material.get("claimsRequiringAttribution") or material_plan.get("claimsRequiringAttribution") or []
+    return normalize_attribution_requirements(_list(values), _external_claims(context_artifact))
+
+
+def _external_claims(context_artifact: dict[str, Any]) -> list[dict[str, Any]]:
+    ledger = _dict(context_artifact.get("sourceLedger"))
+    claims = _list(ledger.get("claims"))
+    return [claim for claim in (_dict(item) for item in claims) if claim.get("type") == "externalEvidenceClaim"]
 
 
 def _hard_rule_ids(rule_pack: dict[str, Any]) -> list[str]:
