@@ -419,6 +419,9 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   synthesis use `research`, material/strategy/rhetorical planning use `strategy`,
   candidate writing and directed revisions use `writer`, and validation/ranking use
   `review`. Backup is still only a technical retry, not a creative second opinion.
+  Writer, directed revision, JSON repair, and another-angle calls also show effective
+  generation params, including temperature and top-p when applicable. This helps
+  separate model quality from technical repair settings.
   When a role asks the model for JSON, trace should show the bounded attempt chain:
   primary model, repair prompt, optional backup model, and only then fallback,
   `not-run`, or `failed`. The writer should not leak internal pipeline names into the

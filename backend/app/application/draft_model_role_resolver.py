@@ -5,13 +5,13 @@ from backend.app.settings import BackendSettings
 
 RECOMMENDED_MODEL_PORTFOLIO = {
     "OPENROUTER_DEFAULT_MODEL": "deepseek/deepseek-v4-pro",
-    "OPENROUTER_BACKUP_MODEL": "qwen/qwen3.7-plus",
+    "OPENROUTER_BACKUP_MODEL": "openai/gpt-4.1-mini",
     "OPENROUTER_WEB_SEARCH_MODEL": "perplexity/sonar-pro",
     "DRAFT_RESEARCH_MODEL": "google/gemini-3.1-pro-preview",
     "DRAFT_STRATEGY_MODEL": "z-ai/glm-5.2",
-    "DRAFT_WRITER_MODEL": "anthropic/claude-sonnet-4.6",
+    "DRAFT_WRITER_MODEL": "openai/gpt-4.1",
     "DRAFT_REVIEW_MODEL": "openai/gpt-5.4-mini",
-    "DRAFT_CRITIC_MODEL": "openai/gpt-5.2",
+    "DRAFT_CRITIC_MODEL": "openai/gpt-4.1",
     "DRAFT_ANOTHER_ANGLE_MODEL": "qwen/qwen3.7-max",
 }
 

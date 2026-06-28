@@ -4861,7 +4861,7 @@ Status:
 
 ### Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params
 
-- Status: Ready
+- Status: Done
 - Goal: Make the writer role strong enough for public prose while keeping a stable
   technical JSON backup path.
 - User value:
@@ -4874,9 +4874,9 @@ Status:
     `DRAFT_WRITER_MODEL=openai/gpt-4.1`.
   - Keep `OPENROUTER_BACKUP_MODEL=openai/gpt-4.1-mini` as a technical JSON backup in
     recommended local config and docs.
-  - Keep `DRAFT_CRITIC_MODEL=openai/gpt-4.1` only if writer/critic prompts and trace
-    still make role boundaries clear; otherwise document an explicit alternative
-    critic candidate before changing it.
+  - Keep `DRAFT_CRITIC_MODEL=openai/gpt-4.1` as a separate strict-review role, not
+    another writer alias.
+  - Keep `DRAFT_ANOTHER_ANGLE_MODEL=qwen/qwen3.7-max` as creative divergence.
   - Add role/step generation parameter settings:
     - `DRAFT_WRITER_TEMPERATURE`
     - `DRAFT_WRITER_TOP_P`
@@ -4902,11 +4902,15 @@ Status:
   - Changing ranking, retrieval, evidence interpretation, or revision-loop acceptance
     policy.
   - A full A/B experiment harness; this slice only makes controlled A/B runs possible.
-  - Premium Sonnet/Grok writer adoption; they remain experimental candidates after the
-    OpenAI baseline is stable.
+  - Full model A/B harness; Sonnet is recorded as an experimental prose candidate, not
+    the current stable JSON writer default.
 - Implementation notes:
   - Keep `openai/gpt-4.1-mini` as observed-good backup from DraftRun
     `861500e3-f4b6-4a44-9767-edf86653af13`.
+  - Control DraftRun `c1a93b24-e3f0-407d-9186-db92aa2914e9` showed that
+    `anthropic/claude-sonnet-4.5` still failed primary/repair writer JSON attempts
+    and left the draft step long-running; therefore the stable writer default for this
+    slice is `openai/gpt-4.1`.
   - Do not keep writer and backup equal in recommended configuration.
   - Parameter settings belong to backend config and provider request construction, not
     hard-coded prompt text.
@@ -4936,6 +4940,28 @@ Status:
 - Risks:
   - Stronger writer may still produce report-like prose if prompts/context packs push
     it toward citation-heavy summaries. That is addressed by 2.15.6.4.
+- Delivered:
+  - Added role/attempt generation params for writer, directed revision, JSON repair,
+    and another-angle calls.
+  - OpenRouter JSON calls now support optional `top_p`.
+  - Child `AiRun` request payloads record `generationParams`; JSON parse failures can
+    carry sanitized raw response excerpts for diagnostics.
+  - Recommended stable local portfolio is now writer `openai/gpt-4.1`, technical JSON
+    backup `openai/gpt-4.1-mini`, critic `openai/gpt-4.1`, another-angle
+    `qwen/qwen3.7-max`.
+  - Sonnet `anthropic/claude-sonnet-4.5` was tested in DraftRun
+    `c1a93b24-e3f0-407d-9186-db92aa2914e9`; it failed writer primary/repair JSON
+    reliability and is not the current stable default.
+- Control run:
+  - DraftRun `d3197fda-2b71-4d43-b30f-2149555782be` completed successfully with
+    `finalDraft`.
+  - Writer primary `openai/gpt-4.1` succeeded for 3 draft candidates, 1 alternative
+    candidate, and 3 directed revisions.
+  - Effective params were visible in trace: writer `temperature=0.65/topP=0.9`,
+    revision `temperature=0.35/topP=0.85`.
+  - Remaining quality issues are not this slice: validation still reports warnings and
+    public-source density/prose quality remains owned by 2.15.6.4.
+- Completed: 2026-06-28
 
 ### Slice 2.15.6.4: Final Draft Quality Snapshot and Public Prose Guard
 

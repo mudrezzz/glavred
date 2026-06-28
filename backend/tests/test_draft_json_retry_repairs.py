@@ -34,9 +34,13 @@ class SequentialAdapter:
         return FakeOpenRouterResult(outcome, {"id": f"or-{len(self.calls)}", "model": kwargs.get("model")})
 
 
+class JsonFailure(ValueError):
+    raw_response_excerpt = "```json not-json ```"
+
+
 def test_writer_candidate_retries_primary_repair_and_backup_before_success(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
-    adapter = SequentialAdapter([ValueError("bad json"), ValueError("still bad"), candidate_payload()])
+    adapter = SequentialAdapter([JsonFailure("bad json"), ValueError("still bad"), candidate_payload()])
     service = _candidate_service(tmp_path, adapter)
 
     result = service.create(
@@ -49,12 +53,19 @@ def test_writer_candidate_retries_primary_repair_and_backup_before_success(tmp_p
     )
 
     assert [call["model"] for call in adapter.calls] == ["writer-model", "writer-model", "backup-model"]
+    assert [call["temperature"] for call in adapter.calls] == [0.65, 0.15, 0.15]
+    assert [call.get("top_p") for call in adapter.calls] == [0.9, None, None]
     assert len(result.ai_run_ids) == 3
     assert result.artifact_payload["source"] == "openrouter"
+    first_run = _ai_service(tmp_path).get_run(result.ai_run_ids[0])
+    assert first_run is not None
+    assert first_run.result_payload["rawResponseExcerpt"] == "```json not-json ```"
     backup_run = _ai_service(tmp_path).get_run(result.ai_run_ids[-1])
     assert backup_run is not None
     assert backup_run.request_payload["attempt"]["label"] == "backup"
     assert backup_run.request_payload["attempt"]["backup"] is True
+    assert backup_run.request_payload["generationParams"]["generationParamProfile"] == "jsonRepair"
+    assert backup_run.request_payload["generationParams"]["temperature"] == 0.15
 
 
 def test_alternative_angle_candidate_retries_before_returning_challenger(tmp_path) -> None:
@@ -86,6 +97,7 @@ def test_alternative_angle_candidate_retries_before_returning_challenger(tmp_pat
     assert error == ""
     assert candidate is not None
     assert [call["model"] for call in adapter.calls] == ["writer-model", "writer-model"]
+    assert [call["temperature"] for call in adapter.calls] == [0.65, 0.15]
     assert [attempt["label"] for attempt in attempts] == ["primary", "primary-repair"]
     assert len(ai_run_ids) == 2
 

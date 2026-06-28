@@ -1,6 +1,5 @@
 from typing import Any
 
-from backend.app.application.draft_alternative_angle_prompts import ALTERNATIVE_ANGLE_TEMPERATURE
 from backend.app.domain.ai_run import AiRunProvider
 
 
@@ -12,7 +11,9 @@ def build_alternative_angle_request_trace(
     context_pack: dict[str, Any] | None,
     attempt: dict[str, Any],
     model_selection: dict[str, Any],
+    generation_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    params = generation_params or {"temperature": 0.45}
     return {
         "draftRunStep": "alternativeAngleRoute",
         "attempt": attempt,
@@ -21,9 +22,10 @@ def build_alternative_angle_request_trace(
             "provider": provider.value,
             "model": model,
             "messages": messages,
-            "temperature": ALTERNATIVE_ANGLE_TEMPERATURE,
+            "temperature": params.get("temperature"),
             "responseFormat": {"type": "json_object"},
         },
+        "generationParams": generation_params,
         **model_selection,
     }
 

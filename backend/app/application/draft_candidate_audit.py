@@ -1,6 +1,5 @@
 from typing import Any
 
-from backend.app.application.draft_candidate_prompts import CANDIDATE_TEMPERATURE
 from backend.app.domain.ai_run import AiRunProvider
 from backend.app.domain.draft_candidates import DraftCandidateDirection
 
@@ -15,7 +14,9 @@ def build_candidate_request_trace(
     context_pack: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
     attempt: dict[str, Any] | None = None,
+    generation_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    params = generation_params or {"temperature": 0.55}
     payload = {
         "draftRunStep": "draftCandidate",
         "direction": direction.to_payload(),
@@ -29,10 +30,14 @@ def build_candidate_request_trace(
             "provider": provider.value,
             "model": model,
             "messages": messages,
-            "temperature": CANDIDATE_TEMPERATURE,
+            "temperature": params.get("temperature"),
             "responseFormat": {"type": "json_object"},
         },
     }
+    if params.get("topP") is not None:
+        payload["providerRequest"]["topP"] = params.get("topP")
+    if generation_params is not None:
+        payload["generationParams"] = generation_params
     if context_pack is not None:
         payload["contextPack"] = context_pack
     if model_selection is not None:

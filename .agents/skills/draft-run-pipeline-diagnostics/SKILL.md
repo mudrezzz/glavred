@@ -55,6 +55,8 @@ Check these failure classes explicitly:
 - **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch
   failure. For JSON-producing LLM steps, verify `primary`, `primary-repair`, and
   optional `backup` attempts before accepting fallback/not-run/failed as expected.
+  Inspect `generationParams` (`generationParamProfile`, `temperature`, `topP`) for
+  writer, revision, JSON repair, and another-angle calls before judging model quality.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched

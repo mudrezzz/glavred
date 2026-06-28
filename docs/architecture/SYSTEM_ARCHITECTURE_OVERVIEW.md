@@ -352,10 +352,13 @@ migration for the remaining writer candidate and alternative-angle challenger pr
 paths; new JSON provider calls must start from this policy.
 
 Current recommended DraftRun role defaults are operational presets, not product
-requirements: writer `anthropic/claude-haiku-4.5`, critic `openai/gpt-4.1`, and
-another-angle `qwen/qwen3.7-max`. Writer owns public prose, critic owns strict
-editorial challenge, and another-angle remains creative divergence rather than
-technical backup or another writer alias.
+requirements: writer `openai/gpt-4.1`, technical JSON backup
+`openai/gpt-4.1-mini`, critic `openai/gpt-4.1`, and another-angle
+`qwen/qwen3.7-max`. Writer owns public prose, backup owns low-temperature JSON repair,
+critic owns strict editorial challenge, and another-angle remains creative divergence
+rather than technical backup or another writer alias. Writer, revision, JSON repair,
+and another-angle calls also carry role-specific generation params in child `AiRun`
+audit payloads so diagnostics can separate model choice from temperature/top-p policy.
 
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
@@ -512,6 +515,10 @@ across role-owned modules:
   between validation, ranking, revision, and the final draft decision.
 - `backend/app/application/draft_model_role_resolver.py`: role-based model selection
   policy for research, strategy, writer, review, critic, and alternative-angle roles.
+- `backend/app/application/draft_generation_params.py`: role/attempt generation
+  parameter normalization for writer, revision, JSON repair, and another-angle calls.
+- `backend/app/application/draft_provider_error_utils.py`: safe provider error and
+  raw response excerpt extraction for child `AiRun` audit records.
 - `backend/app/infrastructure/draft_run_pipeline_validation_services.py`: wiring for
   validation, ranking, and directed revision dependencies.
 
@@ -1113,6 +1120,8 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_llm_validation.py`
 - `backend/app/domain/draft_model_roles.py`
 - `backend/app/application/draft_model_role_resolver.py`
+- `backend/app/application/draft_generation_params.py`
+- `backend/app/application/draft_provider_error_utils.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

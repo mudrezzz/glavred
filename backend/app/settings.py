@@ -43,6 +43,12 @@ class BackendSettings(BaseSettings):
     draft_critic_model: str = Field(default="", validation_alias="DRAFT_CRITIC_MODEL")
     draft_review_model: str = Field(default="", validation_alias="DRAFT_REVIEW_MODEL")
     draft_another_angle_model: str = Field(default="", validation_alias="DRAFT_ANOTHER_ANGLE_MODEL")
+    draft_writer_temperature: str = Field(default="0.65", validation_alias="DRAFT_WRITER_TEMPERATURE")
+    draft_writer_top_p: str = Field(default="0.9", validation_alias="DRAFT_WRITER_TOP_P")
+    draft_revision_temperature: str = Field(default="0.35", validation_alias="DRAFT_REVISION_TEMPERATURE")
+    draft_revision_top_p: str = Field(default="0.85", validation_alias="DRAFT_REVISION_TOP_P")
+    draft_json_repair_temperature: str = Field(default="0.15", validation_alias="DRAFT_JSON_REPAIR_TEMPERATURE")
+    draft_another_angle_temperature: str = Field(default="0.8", validation_alias="DRAFT_ANOTHER_ANGLE_TEMPERATURE")
     openrouter_app_name: str = Field(default="Glavred", validation_alias="OPENROUTER_APP_NAME")
     openrouter_http_referer: str = Field(
         default="http://localhost:5173",

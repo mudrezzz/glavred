@@ -227,10 +227,13 @@ must either choose evidence or explain why projected claims were rejected; empty
 evidence without accountability triggers a repair retry and then the optional
 `OPENROUTER_BACKUP_MODEL` before emergency deterministic fallback is allowed.
 Recommended role-model defaults for local DraftRun experiments are writer
-`anthropic/claude-haiku-4.5`, critic `openai/gpt-4.1`, and another-angle
-`qwen/qwen3.7-max`. Writer is responsible for public prose, critic for strict
-editorial challenge, and another-angle for creative divergence; another-angle is not
-a technical backup and should not simply duplicate the writer model.
+`openai/gpt-4.1`, technical JSON backup `openai/gpt-4.1-mini`,
+critic `openai/gpt-4.1`, and another-angle `qwen/qwen3.7-max`. Writer is
+responsible for public prose, critic for strict editorial challenge, and
+another-angle for creative divergence; backup is technical JSON recovery only and
+should not be treated as a second creative opinion. Writer, revision, JSON repair,
+and another-angle calls also carry role-specific generation params in child `AiRun`
+trace.
 After validation, the worker pairwise-ranks candidates and runs a bounded
 `revisionLoop` inside `validation.rankingRevision`. The loop now optimizes explicit
 editorial dimensions, not only validator findings: idea strength, tension, reader

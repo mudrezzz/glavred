@@ -7,10 +7,10 @@ from backend.app.application.draft_alternative_angle_audit import (
 )
 from backend.app.application.draft_alternative_angle_prompts import (
     ALTERNATIVE_ANGLE_KEYS,
-    ALTERNATIVE_ANGLE_TEMPERATURE,
     build_alternative_angle_messages,
 )
 from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -73,6 +73,7 @@ class DraftAlternativeAngleRouteService:
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.ANOTHER_ANGLE, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.ANOTHER_ANGLE, attempt=attempt)
         context_pack = context_pack_from_payload(context_artifact, DraftModelRole.ANOTHER_ANGLE)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = build_alternative_angle_messages(
@@ -91,13 +92,15 @@ class DraftAlternativeAngleRouteService:
             context_pack=context_pack,
             attempt=attempt_payload,
             model_selection=selection.to_payload(),
+            generation_params=generation_params.to_payload(),
         )
         try:
             result = self._openrouter_adapter.complete_json(
                 settings=self._settings,
                 messages=messages,
                 expected_keys=ALTERNATIVE_ANGLE_KEYS,
-                temperature=ALTERNATIVE_ANGLE_TEMPERATURE,
+                temperature=generation_params.temperature,
+                top_p=generation_params.top_p,
                 model=attempt.model,
             )
             route = alternative_route_from_payload(result.payload)
@@ -112,15 +115,18 @@ class DraftAlternativeAngleRouteService:
             )
             return {"route": route, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
-            return self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
+            return self._record_attempt_error(attempt, request_payload, self._safe_error(exc), _raw_excerpt(exc))
 
-    def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
+    def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str, raw_response_excerpt: str | None = None) -> dict[str, Any]:
+        result_payload = build_alternative_angle_result_trace(result_payload={}, provider_response=None, attempt=request_payload.get("attempt"))
+        if raw_response_excerpt:
+            result_payload["rawResponseExcerpt"] = raw_response_excerpt
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             request_payload=request_payload,
-            result_payload=build_alternative_angle_result_trace(result_payload={}, provider_response=None, attempt=request_payload.get("attempt")),
+            result_payload=result_payload,
             fallback_used=False,
             error=error,
         )
@@ -146,3 +152,8 @@ def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model
     if validation:
         record["validation"] = validation
     return record
+
+
+def _raw_excerpt(error: Exception) -> str | None:
+    value = getattr(error, "raw_response_excerpt", None)
+    return str(value) if value else None

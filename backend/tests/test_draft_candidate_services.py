@@ -98,6 +98,13 @@ def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> Non
     assert run.request_payload["selectedModel"] == "writer-model"
     assert run.request_payload["modelSelectionSource"] == "role"
     assert adapter.calls[0]["model"] == "writer-model"
+    assert adapter.calls[0]["temperature"] == 0.65
+    assert adapter.calls[0]["top_p"] == 0.9
+    assert run.request_payload["generationParams"] == {
+        "generationParamProfile": "writer",
+        "temperature": 0.65,
+        "topP": 0.9,
+    }
     assert result.artifact_payload["candidates"][0]["modelRole"] == "writer"
     assert result.final_draft.body.startswith("Provider body")
 

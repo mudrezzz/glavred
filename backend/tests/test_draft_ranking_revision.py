@@ -99,6 +99,9 @@ def test_ranking_revision_accepts_non_regressing_revision(tmp_path) -> None:
     assert result.final_draft.title == "Revised"
     assert result.artifact_payload["finalDecision"]["source"] == "revisionLoop"
     assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is True
+    revision_call = _directed_revision_calls(ranking_adapter)[0]
+    assert revision_call["temperature"] == 0.35
+    assert revision_call["top_p"] == 0.85
 
 
 def test_ranking_revision_rejects_revision_that_breaks_hard_max(tmp_path) -> None:

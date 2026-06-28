@@ -3,7 +3,8 @@ from typing import Any
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.deterministic_draft_candidate_service import DeterministicDraftCandidateService
 from backend.app.application.draft_candidate_audit import build_candidate_request_trace, build_candidate_result_trace
-from backend.app.application.draft_candidate_prompts import CANDIDATE_KEYS, CANDIDATE_TEMPERATURE, build_draft_candidate_messages
+from backend.app.application.draft_candidate_prompts import CANDIDATE_KEYS, build_draft_candidate_messages
+from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -89,6 +90,7 @@ class DraftCandidateProviderService:
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.WRITER, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
+        generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.WRITER, attempt=attempt)
         messages = build_draft_candidate_messages(
             context_summary=context_summary,
             rule_pack=rule_pack,
@@ -107,28 +109,39 @@ class DraftCandidateProviderService:
             context_pack=context_pack,
             model_selection=selection.to_payload(),
             attempt={"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup},
+            generation_params=generation_params.to_payload(),
         )
         try:
-            result = self._openrouter_adapter.complete_json(settings=self._settings, messages=messages, expected_keys=CANDIDATE_KEYS, temperature=CANDIDATE_TEMPERATURE, model=attempt.model)
+            result = self._openrouter_adapter.complete_json(
+                settings=self._settings,
+                messages=messages,
+                expected_keys=CANDIDATE_KEYS,
+                temperature=generation_params.temperature,
+                top_p=generation_params.top_p,
+                model=attempt.model,
+            )
             candidate = candidate_from_payload(f"candidate-{direction.id}-{request.brief.id}", direction, result.payload)
             if not candidate.body.strip():
                 raise ValueError("OpenRouter draft candidate body is empty")
             payload, ai_run_id = self._complete_candidate(candidate, "openrouter", request_payload, result.raw_response, attempt.model, False, None, model_selection=selection.to_payload())
             return {"accepted": True, "candidate": payload, "attempt": _attempt_record(attempt, ai_run_id, "accepted", selection.to_payload())}
         except Exception as exc:
-            return self._attempt_error(attempt, request_payload, self._safe_error(exc))
+            return self._attempt_error(attempt, request_payload, self._safe_error(exc), _raw_excerpt(exc))
 
     def _request_payload(self, provider: AiRunProvider, model: str | None, context_summary: dict[str, Any], rule_pack: dict[str, Any], material_plan: dict[str, Any], draft_strategy: dict[str, Any], direction: DraftCandidateDirection, context_pack: dict[str, Any] | None, model_selection: dict[str, Any]) -> dict[str, Any]:
         messages = build_draft_candidate_messages(context_summary=context_summary, rule_pack=rule_pack, material_plan=material_plan, draft_strategy=draft_strategy, direction=direction, context_pack=context_pack)
         return build_candidate_request_trace(provider=provider, model=model, messages=messages, context_summary=context_summary, direction=direction, context_pack=context_pack, model_selection=model_selection)
 
-    def _attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
+    def _attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str, raw_response_excerpt: str | None = None) -> dict[str, Any]:
+        result_payload = build_candidate_result_trace(candidate_payload={}, provider_response=None, fallback=None)
+        if raw_response_excerpt:
+            result_payload["rawResponseExcerpt"] = raw_response_excerpt
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             request_payload=request_payload,
-            result_payload=build_candidate_result_trace(candidate_payload={}, provider_response=None, fallback=None),
+            result_payload=result_payload,
             fallback_used=False,
             error=error,
         )
@@ -192,3 +205,8 @@ def _ai_run_ids(attempts: list[dict[str, Any]]) -> list[str]:
 
 def _last_error(attempts: list[dict[str, Any]]) -> str | None:
     return next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
+
+
+def _raw_excerpt(error: Exception) -> str | None:
+    value = getattr(error, "raw_response_excerpt", None)
+    return str(value) if value else None

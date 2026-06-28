@@ -41,12 +41,21 @@ Required variables for the backend/AI track:
 - `DRAFT_ANOTHER_ANGLE_MODEL`: optional model for the alternative-angle challenger
   route.
 - Recommended DraftRun role preset for local experiments:
-  - writer: `anthropic/claude-haiku-4.5`;
+  - writer: `openai/gpt-4.1`;
+  - technical JSON backup: `openai/gpt-4.1-mini`;
   - critic: `openai/gpt-4.1`;
   - another-angle: `qwen/qwen3.7-max`.
   Writer and critic should not be the same family by default: writer creates public
   prose, critic attacks quality and weak reasoning, and another-angle is creative
   divergence rather than a backup writer.
+- `DRAFT_WRITER_TEMPERATURE`, `DRAFT_WRITER_TOP_P`: generation params for draft
+  candidate prose JSON calls. Defaults: `0.65`, `0.9`.
+- `DRAFT_REVISION_TEMPERATURE`, `DRAFT_REVISION_TOP_P`: generation params for
+  directed revision JSON calls. Defaults: `0.35`, `0.85`.
+- `DRAFT_JSON_REPAIR_TEMPERATURE`: low-temperature JSON repair/backup attempts.
+  Default: `0.15`.
+- `DRAFT_ANOTHER_ANGLE_TEMPERATURE`: creative route-generation temperature for the
+  another-angle role. Default: `0.8`.
 - `OPENROUTER_APP_NAME`, `OPENROUTER_HTTP_REFERER`: OpenRouter attribution headers.
 - `DRAFT_REVISION_MAX_ITERATIONS`: maximum directed-revision improvement cycles after
   initial candidate selection. Default `3`; invalid or zero values normalize to `1`.
@@ -70,7 +79,9 @@ prompt, but execution must follow the universal JSON retry policy: primary role 
 repair prompt on the same model, optional `OPENROUTER_BACKUP_MODEL`, then a traceable
 domain-safe fallback or explicit unavailable/failed result. Each attempt should be
 visible in child `AiRun` audit payloads with model role, selected model, status, and
-safe parse/validation error.
+safe parse/validation error. JSON parse failures should also store a sanitized raw
+response excerpt when available, so diagnostics can identify prose, markdown fences,
+empty output, or malformed JSON without exposing headers or secrets.
 
 Draft writer prompts must also keep public prose separate from orchestration jargon:
 internal artifact names such as `SourceLedger`, `publicEvidence`, `validators`,

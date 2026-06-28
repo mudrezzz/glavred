@@ -109,13 +109,13 @@ Role-aware execution map:
 | `materialPlan` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy `ContextPack`, usable evidence candidates, evidence interpretation, contract, registry | draft strategy |
 | `strategy` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default | material plan, rules, contract, strategy `ContextPack` | rhetorical plans |
 | `rhetoricalPlans` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy, material plan, claim/rule ids | writer candidates |
-| `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, domain-safe fallback | writer `ContextPack`, one rhetorical plan, material evidence, contract | validation and ranking |
+| `draft` | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, domain-safe fallback | writer `ContextPack`, one rhetorical plan, material evidence, contract, writer generation params | validation and ranking |
 | `validation` lint | none | no model | candidates, contract, registry, ledger | LLM validation and ranking |
 | `validation` LLM review | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | review `ContextPack`, candidates, deterministic findings | pairwise ranking |
 | `validation` editorial critique | `critic` | `DRAFT_CRITIC_MODEL`, then default, repair, backup | critic `ContextPack`, candidates, evidence interpretation, validation findings | trace, dossier, future critique-aware ranking |
-| `validation` alternative angle | `anotherAngle` then `writer` | `DRAFT_ANOTHER_ANGLE_MODEL` for route, `DRAFT_WRITER_MODEL` for challenger prose, repair, backup, no fake challenger fallback | initial validation, editorial critique, another-angle `ContextPack`, writer `ContextPack` | final validation and ranking |
+| `validation` alternative angle | `anotherAngle` then `writer` | `DRAFT_ANOTHER_ANGLE_MODEL` for route, `DRAFT_WRITER_MODEL` for challenger prose, repair, backup, no fake challenger fallback | initial validation, editorial critique, another-angle `ContextPack`, writer `ContextPack`, another-angle/writer generation params | final validation and ranking |
 | `validation` ranking | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | merged candidates, old scorecard, deterministic and LLM findings | revision loop |
-| `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed/not-run if no usable JSON | current best candidate, repair goals, anti-regression constraints, writer `ContextPack` | regression guard and final draft |
+| `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed/not-run if no usable JSON | current best candidate, repair goals, anti-regression constraints, writer `ContextPack`, revision generation params | regression guard and final draft |
 | `complete` | none | no model | final DraftRun state | frontend |
 
 Practical reading rule: when a step says `Role/model handoff: strategy`, it does
@@ -514,6 +514,9 @@ Role/model handoff:
 - each JSON candidate attempt follows the universal retry sequence: primary writer
   model, repair prompt, optional backup model, then domain-safe deterministic fallback
   only if provider attempts are exhausted;
+- primary writer attempts use `DRAFT_WRITER_TEMPERATURE` and `DRAFT_WRITER_TOP_P`;
+- repair and backup attempts use `DRAFT_JSON_REPAIR_TEMPERATURE`, not the creative
+  writer temperature;
 - writer prompts forbid leaking internal artifact names such as `SourceLedger`,
   `publicEvidence`, `validators`, `RuleRegistry`, or `PostContract` as unexplained
   public dev-jargon;
@@ -531,7 +534,8 @@ AS IS behavior:
   overclaims, so public evidence should shape the argument instead of being pasted as
   a decorative citation block;
 - each provider attempt is visible through child `AiRun` audit with model role,
-  selected model, attempt label, repair/backup marker, and safe validation error.
+  selected model, attempt label, repair/backup marker, generation params, and safe
+  validation error.
 
 ### 4.11 `validation`
 
@@ -597,6 +601,9 @@ Role/model handoff:
 - `writer` receives the current best candidate plus validator repair goals,
   editorial goals, rejected moves, dossier/context pack, and constraints, then returns
   revised prose;
+- directed revision attempts use `DRAFT_REVISION_TEMPERATURE` and
+  `DRAFT_REVISION_TOP_P`; malformed-JSON repair and backup attempts use the JSON
+  repair temperature;
 - regression guard checks deterministic health, and `review` compares old-vs-new by
   idea strength, tension, reader value, author stance, source integration, structure,
   and validator health;
@@ -724,7 +731,7 @@ Important AS IS rules:
 | malformed editorial critique JSON | repair retry, optional backup model, then `not-run` for that candidate |
 | alternative-angle provider missing | `alternativeAngleTournament.status=not-run`; original candidates continue |
 | malformed alternative-angle route JSON | repair retry, optional backup model, then tournament `failed`; no deterministic fake angle |
-| alternative-angle candidate provider failure | tournament `failed`; original candidates continue |
+| alternative-angle candidate provider failure | repair retry, optional backup model, then tournament `failed`; original candidates continue |
 | validation sub-operation failure | mark nested operation failed, preserve partial artifact, keep previous best if available |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | candidate provider failure | fallback only for that candidate direction |
@@ -760,7 +767,8 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
 17. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
-18. child `AiRun` detail: inspect prompt messages, role model, context pack, provider result.
+18. child `AiRun` detail: inspect prompt messages, role model, generation params,
+    context pack, provider result, and sanitized raw response excerpt on JSON failures.
 
 ## 10. Known AS IS limitations
 

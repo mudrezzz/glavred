@@ -19,6 +19,7 @@ class OpenRouterJsonStepAdapter(Protocol):
         messages: list[dict[str, str]],
         expected_keys: set[str],
         temperature: float,
+        top_p: float | None = None,
         model: str | None = None,
     ) -> Any: ...
 

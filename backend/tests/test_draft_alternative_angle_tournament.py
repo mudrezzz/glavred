@@ -57,10 +57,15 @@ def test_alternative_angle_tournament_adds_challenger_candidate(tmp_path) -> Non
     assert len(ai_run_ids) == 2
     assert adapter.calls[0]["model"] == "another-angle-model"
     assert adapter.calls[1]["model"] == "writer-model"
+    assert adapter.calls[0]["temperature"] == 0.8
+    assert adapter.calls[0].get("top_p") is None
+    assert adapter.calls[1]["temperature"] == 0.65
+    assert adapter.calls[1]["top_p"] == 0.9
     route_run = ai_service(tmp_path).get_run(ai_run_ids[0])
     assert route_run is not None
     assert route_run.request_payload["draftRunStep"] == "alternativeAngleRoute"
     assert route_run.request_payload["modelRole"] == "anotherAngle"
+    assert route_run.request_payload["generationParams"]["generationParamProfile"] == "anotherAngle"
 
 
 def test_alternative_angle_tournament_is_not_run_without_provider(tmp_path) -> None:

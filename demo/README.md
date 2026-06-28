@@ -141,9 +141,11 @@ The current drafting-quality demo trace now includes role-specific model choices
 the final revision-loop decision. The dossier shows the run-local cards Glavred kept
 in memory: evidence, claims, decisions, risks, rejected moves, and open questions.
 Context packs show which cards were sent to strategy, writer, review, and critic calls.
-The recommended local role preset uses writer `anthropic/claude-haiku-4.5`, critic
-`openai/gpt-4.1`, and another-angle `qwen/qwen3.7-max`; another-angle is creative
-divergence, not a writer duplicate or technical backup.
+The recommended local role preset uses writer `openai/gpt-4.1`,
+technical JSON backup `openai/gpt-4.1-mini`, critic `openai/gpt-4.1`, and
+another-angle `qwen/qwen3.7-max`; another-angle is creative divergence, not a writer
+duplicate or technical backup. Writer/revision/repair/another-angle calls also record
+their effective temperature/top-p profile in trace.
 Demo fabulas now use mixed research depths (`light`, `standard`, `deep`,
 `marketResearch`). A DraftRun trace shows the resolved `DraftRunBudget`, including
 execution mode, caps, skipped retrieval tasks, and trimmed evidence/claims.
