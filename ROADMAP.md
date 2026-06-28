@@ -4350,6 +4350,7 @@ Status:
   - 2.15.6.2 research-depth profiles and DraftRun budget modes.
   - 2.15.6.3 model stabilization and universal JSON retry repair.
   - 2.15.6.4 final draft quality snapshot.
+  - 2.15.6.4.1 final quality contract and independent gate review.
 
 ### Slice 2.15.1: Multi-Model Drafting Roles
 
@@ -5009,9 +5010,106 @@ Status:
     final draft decision.
 - Completed: 2026-06-28
 
-### Slice 2.16: Regression Report and Editor Decision Learning
+### Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review
 
 - Status: Ready
+- Goal: make final draft acceptance contract-based and model-independent instead of
+  relying only on deterministic heuristics plus writer self-repair.
+- User value:
+  - The returned draft is judged against the selected editorial model, fabula,
+    research depth, publication kind, and post contract, not against hardcoded taste.
+  - Research-heavy posts can remain source-heavy when the fabula asks for research,
+    while ordinary author posts are protected from becoming source inventories.
+  - The trace explains who accepted the final prose, by which criteria, and whether
+    post-repair quality actually improved.
+- Scope:
+  - Add `FinalQualityContract` under existing
+    `validation.rankingRevision.finalQualityGate`.
+  - Build the contract from `PostContract`, `RuleRegistrySnapshot`,
+    `Fabula.researchDepth`, `Fabula.sizeIntent`, publication kind, source/evidence
+    obligations, and available editorial model/fabula settings.
+  - Add config:
+    - `DRAFT_FINAL_GATE_MODEL=`
+    - `DRAFT_FINAL_REPAIR_MAX_ITERATIONS=2`
+  - Add a final-gate model resolver:
+    - use `DRAFT_FINAL_GATE_MODEL` when configured;
+    - otherwise use `DRAFT_CRITIC_MODEL` if it differs from `DRAFT_WRITER_MODEL`;
+    - otherwise use `DRAFT_REVIEW_MODEL`;
+    - record `modelIndependence=weak` when final gate and writer use the same model.
+  - Replace the current critic recommendation
+    `DRAFT_CRITIC_MODEL=openai/gpt-4.1` with a non-writer, non-Anthropic default.
+    Recommended candidate for the slice: `DRAFT_CRITIC_MODEL=google/gemini-2.5-pro`
+    if available through OpenRouter; otherwise use the strongest stable non-writer
+    model already configured locally. Do not switch critic to Anthropic until JSON
+    reliability is proven.
+  - Final gate performs an independent JSON review of the delivered final draft
+    using the final quality contract and the universal JSON retry policy.
+  - Final repair becomes a bounded loop:
+    gate review -> repair goals -> writer repair -> gate recheck, up to
+    `DRAFT_FINAL_REPAIR_MAX_ITERATIONS`.
+  - Acceptance compares pre/post gate reports and accepts repair only when contract
+    findings improve without deterministic regression.
+  - Add specific contract-aware checks:
+    - source density is evaluated relative to `researchDepth` and publication kind;
+    - source mentions must feed author interpretation rather than become inventory;
+    - author voice is judged against explicit editorial/fabula settings when present;
+    - invented examples must be source-backed or clearly marked as hypothetical;
+    - internal pipeline jargon remains forbidden in public prose.
+  - Fix source task normalization found in DraftRun
+    `8b30bc91-1f78-4c24-9ed0-7c5b517eb4b6`: `namedSource` values without an HTTP
+    URL must not become `readUrl`; they should become search/named-source lookup
+    tasks or explicit skipped diagnostics.
+- Out of scope:
+  - Adding new DraftRun steps or SQL schema.
+  - Human editor decision learning; remains Slice 2.16.
+  - A new candidate tournament.
+  - Hardcoding one global definition of "good prose" independent of editorial model
+    and fabula.
+- Implementation notes:
+  - Keep `draft_final_quality_gate.py` as the orchestration owner, but move final
+    contract construction and final-gate LLM parsing into role-owned modules.
+  - The independent gate is review/critic work, not writer work; writer only performs
+    repair instructions after the gate produces actionable findings.
+  - Use ADR `2026-06-27-llm-json-steps-use-universal-retry-policy`; final-gate JSON
+    must run primary -> repair -> optional backup -> explicit failed/not-run.
+- Architecture impact:
+  - Final draft acceptance becomes a contract layer over the delivered prose.
+  - Model independence becomes trace-visible for final acceptance.
+  - Final repair loop remains inside `validation.rankingRevision.finalQualityGate`;
+    no new `DraftRunStepKey`.
+- Tests:
+  - Contract builder reflects research depth, publication kind, fabula scale, and
+    source integration expectations.
+  - Gate review uses configured `DRAFT_FINAL_GATE_MODEL` and falls back through the
+    documented resolver.
+  - Writer and final gate using the same model records `modelIndependence=weak`.
+  - `DRAFT_FINAL_REPAIR_MAX_ITERATIONS=2` allows at most two final repair cycles.
+  - Research-heavy contract tolerates more source references than light/standard
+    author posts, but still requires interpretation.
+  - Unmarked invented example creates a gate finding; marked hypothetical example can
+    pass when the contract allows it.
+  - `namedSource` without URL no longer triggers URL fetch failure.
+  - Old runs without `FinalQualityContract` remain readable.
+- Docs:
+  - Update `.env.example`, README, SAO, developer guide, user guide, demo docs,
+    diagnostics skill, AS IS pipeline map, and regenerated PDF.
+- Demo impact:
+  - Demo should show final gate contract/review/repair cycles in `/ai-runs` trace.
+- Acceptance criteria:
+  - A fresh DraftRun shows final gate model role, selected model, independence status,
+    final quality contract, pre/post repair reports, and clear final decision.
+  - If final text remains warning after repair limit, trace explains why the previous
+    best draft was returned and what unresolved findings remain.
+- Risks:
+  - `google/gemini-2.5-pro` OpenRouter slug/availability may differ locally; keep the
+    env value overrideable and verify during the slice.
+  - A stronger gate can over-constrain creative prose if contract construction ignores
+    fabula/editorial settings; tests must cover research-heavy and author-opinion
+    variants.
+
+### Slice 2.16: Regression Report and Editor Decision Learning
+
+- Status: Backlog
 - Goal: Capture the human editor's final decision after the machine revision loop is
   complete.
 - Scope:
@@ -5021,8 +5119,8 @@ Status:
   - Save human edits, overrides, rejected machine moves, and rule-improvement signals
     for future learning.
 - Dependency:
-  - Requires 2.15.6.2-2.15.6.4 so editor learning observes controlled research depth,
-    universal JSON retry behavior, and a reliable final-draft quality snapshot.
+  - Requires 2.15.6.2-2.15.6.4.1 so editor learning observes controlled research
+    depth, universal JSON retry behavior, and contract-based final draft acceptance.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -5202,4 +5300,4 @@ Status:
 ## Next Recommended Task
 
 Continue the backend track with
-`Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params`.
+`Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review`.
