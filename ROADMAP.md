@@ -4963,79 +4963,55 @@ Status:
     public-source density/prose quality remains owned by 2.15.6.4.
 - Completed: 2026-06-28
 
-### Slice 2.15.6.4: Final Draft Quality Snapshot and Public Prose Guard
+### Slice 2.15.6.4: Final Draft Quality Gate and Public Prose Repair
 
-- Status: Ready
-- Goal: Separate final draft quality from candidate-pool noise after ranking and
-  revision, and verify that the delivered text reads as public author prose rather
-  than an internal evidence report.
+- Status: Done
+- Goal: run a final machine acceptance check on the delivered `finalDraft` after
+  `rankingRevision.revisionLoop`, then optionally make one targeted public-prose
+  repair before returning the post to the editor.
 - User value:
-  - The author and developer can see whether the delivered final draft is actually
-    acceptable, not just that some excluded fallback candidate had critical findings.
-  - Final text should not leak internal provenance labels or mechanically dump source
-    summaries into the post.
-- Scope:
-  - Add a final `qualitySnapshot` inside the existing `validation.rankingRevision`
-    artifact after the revision loop.
-  - Split statuses into `poolStatus`, `selectedCandidateStatus`, and
-    `finalDraftStatus`.
-  - Excluded/fallback candidates remain visible in trace but do not make the final
-    draft look critical unless their issues apply to the final selected text.
-  - Summarize final unresolved critical/warning findings, attribution coverage,
-    source-integration quality, size/CTA compliance, critic objections, and revision
-    stop reason.
-  - Add final public-prose checks:
-    - internal provenance labels such as `source signal`, `raw note`, `internal
-      observation`, `SourceLedger`, `publicEvidence`, `PostContract`, `RuleRegistry`,
-      and `validators` must not appear as unexplained public copy;
-    - visible attribution should support claims without turning the post into a source
-      inventory;
-    - external evidence should be interpreted into author stance, tension, and reader
-      value, not listed as disconnected citations;
-    - source density should be judged relative to `Fabula.researchDepth` and
-      publication kind, not by a global fixed source count.
-  - Add final draft readability/status fields:
-    - `publicProseStatus`;
-    - `sourceIntegrationStatus`;
-    - `internalJargonLeaks`;
-    - `sourceDumpRisk`;
-    - `authorVoiceStrength`;
-    - `readerValueClarity`.
-  - Show the snapshot in `/ai-runs?runId=...` and the main draft summary where compact.
+  - The author receives a final post, not an internal evidence report disguised as a
+    post.
+  - The trace explains whether final prose was accepted as-is, repaired, or kept
+    unchanged because the repair regressed.
+- Scope delivered:
+  - Added `validation.rankingRevision.finalQualityGate`.
+  - Gate computes `finalDraftStatus`, `publicProseStatus`,
+    `sourceIntegrationStatus`, `internalJargonLeaks`, `sourceDumpRisk`,
+    `authorVoiceStrength`, `readerValueClarity`, `finalRepairGoals`,
+    `acceptedRepair`, and a gate-level `finalDecision`.
+  - Gate detects unexplained internal terms such as `SourceLedger`,
+    `publicEvidence`, `validators`, `PostContract`, and `RuleRegistry`.
+  - Gate detects source-dump risk relative to `Fabula.researchDepth` instead of a
+    global source-count rule.
+  - If status is `warning` or `critical`, gate builds one final repair instruction and
+    calls the existing writer directed-revision service.
+  - Final repair is accepted only after deterministic regression guard and public
+    prose improvement checks pass; otherwise the previous best draft remains the
+    delivered `finalDraft`.
+  - `/ai-runs?runId=...` shows a separate `Final quality gate` semantic section with
+    status, repair goals, repair decision, and final source.
 - Out of scope:
-  - Blocking final draft based on the snapshot.
-  - Human decision learning; remains Slice 2.16.
-  - New revision attempts.
-  - Model portfolio tuning and generation params; owned by 2.15.6.3.1.
+  - A second candidate tournament.
+  - Full LLM validation rerun after final repair.
+  - Human editor decision learning; remains Slice 2.16.
 - Architecture impact:
-  - Validation artifacts can describe the whole candidate pool and the selected final
-    text separately.
-  - The quality snapshot becomes the single diagnostic surface for deciding whether
-    final prose is good enough to continue the roadmap or needs a focused repair.
+  - `backend/app/application/draft_final_quality_gate.py` owns the final public-prose
+    acceptance and one-shot repair handoff.
+  - `draft_ranking_revision_service.py` remains the thin integration point that
+    chooses the final candidate after the gate.
 - Tests:
-  - Excluded invalid fallback does not make `finalDraftStatus=critical` when final text
-    is clean.
-  - Selected/final candidate critical finding does make `finalDraftStatus=critical`.
-  - Final text containing unexplained internal provenance labels produces
-    `publicProseStatus=warning|critical`.
-  - A text with many sources but clear synthesis can pass source integration for
-    `marketResearch`; a text that merely lists sources produces `sourceDumpRisk`.
-  - Snapshot distinguishes final selected text findings from candidate pool findings.
-  - Old validation artifacts without snapshot remain readable.
-- Docs:
-  - Update SAO, developer guide, user guide, demo docs, and trace documentation.
-- Acceptance criteria:
-  - A DraftRun diagnostic can answer in one place: "Is the final delivered draft good
-    enough, and which issues still apply specifically to it?"
-  - The diagnostic can also answer: "Is the final text public author prose, or did it
-    mechanically expose internal pipeline/source bookkeeping?"
-- Risks:
-  - Snapshot can hide useful pool problems if over-summarized. Keep candidate-pool
-    details available in trace.
+  - Clean final draft passes without repair.
+  - Internal jargon leak creates final repair goals.
+  - Accepted final repair becomes the delivered final draft.
+  - Rejected final repair remains visible in trace but does not replace final draft.
+  - Trace renders `Final quality gate` separately from validation, revision loop, and
+    final draft decision.
+- Completed: 2026-06-28
 
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
-- Status: Backlog
+- Status: Ready
 - Goal: Capture the human editor's final decision after the machine revision loop is
   complete.
 - Scope:

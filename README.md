@@ -245,6 +245,12 @@ regression. The iteration count is controlled by `DRAFT_REVISION_MAX_ITERATIONS`
 (default `3`). The main editor still receives one final draft; `/ai-runs?runId=...`
 shows revision cycles, editorial goals, dimension scores, rejected moves, accepted or
 rejected attempts, unresolved goals, and the final stop reason.
+After the revision loop, `validation.rankingRevision.finalQualityGate` checks the
+delivered final draft as public prose. If the text leaks internal terms like
+`SourceLedger` or `publicEvidence`, reads like a source dump, or loses reader value,
+the worker runs one final targeted writer repair and accepts it only if deterministic
+regression checks pass. Otherwise the previous best draft remains final and the trace
+shows why the repair was rejected.
 
 The next drafting-quality direction is an editorial lab around this spine, not a
 larger "bad draft" report. DraftRun now has role-specific model policy: research,

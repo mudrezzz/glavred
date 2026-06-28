@@ -280,7 +280,9 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     step 3, post contract in step 4, compiled rule pack plus
     `ruleRegistrySnapshot` and `EvidenceInterpretation` in step 5, material plan in step 6, draft strategy in step 7,
     rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
-    and errors. If feasibility
+    final quality gate, and errors. The final quality gate shows whether the delivered
+    draft was accepted as public prose, repaired once, or kept unchanged because the
+    repair regressed. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
     local fallback draft is created. If candidate selection blocks the post, the trace
     scorecard shows `eligible / penalized / excluded`, penalty, and reasons, and no

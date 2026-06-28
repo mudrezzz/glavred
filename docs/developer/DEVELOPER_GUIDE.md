@@ -1011,7 +1011,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> DirectedRevision -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> RevisionLoop -> FinalQualityGate -> SelectedDraft -> HumanDecision`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -1384,6 +1384,16 @@ The next artifacts must make candidate validation meaningful:
   Late operation failures inside the loop must finalize with that previous best rather
   than leave the DraftRun `running/stale`; the trace should show the failed nested
   operation, safe error, and final stop reason.
+- `validation.rankingRevision.finalQualityGate` is the last machine acceptance layer
+  before the final draft returns to the editor. It checks the delivered candidate,
+  not candidate-pool noise, for public-prose quality, internal pipeline jargon,
+  source-dump risk, source integration, author voice, and reader value. If the gate
+  is `warning` or `critical`, it may run one final writer repair through the existing
+  directed revision service. The repair replaces `finalDraft` only if deterministic
+  regression and public-prose checks improve; otherwise the previous best remains
+  final and the rejected repair stays in trace. Keep deterministic heuristics in
+  `draft_final_quality_assessment.py`; keep provider handoff in
+  `draft_final_quality_gate.py`.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

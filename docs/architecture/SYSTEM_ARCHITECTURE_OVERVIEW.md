@@ -446,7 +446,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> RegressionReport -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> FinalQualityGate -> SelectedDraft -> HumanDecision`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -509,10 +509,17 @@ across role-owned modules:
   finding projection into repair goals.
 - `backend/app/application/draft_revision_regression.py`: deterministic regression
   checks before accepting a revised candidate.
+- `backend/app/application/draft_final_quality_assessment.py`: deterministic public
+  prose heuristics for final-draft acceptance.
+- `backend/app/application/draft_final_quality_gate.py`: final public-prose
+  acceptance and one-shot repair handoff after the revision loop.
+- `backend/app/application/draft_ranking_revision_mapping.py`: small conversion and
+  final-decision formatting helpers.
 - `backend/app/application/draft_ranking_revision_service.py`,
   `backend/app/application/draft_ranking_revision_result.py`, and
   `backend/app/application/draft_validation_ranking_bridge.py`: narrow orchestration
-  between validation, ranking, revision, and the final draft decision.
+  between validation, ranking, revision, final quality gate, and the final draft
+  decision.
 - `backend/app/application/draft_model_role_resolver.py`: role-based model selection
   policy for research, strategy, writer, review, critic, and alternative-angle roles.
 - `backend/app/application/draft_generation_params.py`: role/attempt generation
@@ -544,6 +551,16 @@ structured `rejectedMoves`, and their constraints feed the next cycle. `finalDra
 selected from the final best candidate after the loop, and `/ai-runs?runId=...` shows
 cycles, editorial goals, dimension scores, accepted/rejected attempts, unresolved goals,
 rejected moves, final source, and stop reason.
+
+Slice 2.15.6.4 adds the last machine acceptance layer before the draft returns to
+the editor. `validation.rankingRevision.finalQualityGate` evaluates the delivered
+final candidate, not the whole candidate pool, for public-prose quality, internal
+pipeline jargon, source-dump risk, source integration, author voice, and reader value.
+If the gate returns `warning` or `critical`, it builds one final writer repair
+instruction and calls the existing directed-revision service. The repair becomes the
+new `finalDraft` only when deterministic regression checks pass and the gate findings
+improve; otherwise the previous best draft remains final and the rejected repair stays
+visible in trace.
 
 Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
 Validation progress writes now merge `artifactPayload.progress` into the existing

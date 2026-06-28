@@ -462,6 +462,7 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
   const revised = asRecord(payload.revisedCandidate);
   const regression = asRecord(payload.revisionRegression);
   const loop = asRecord(payload.revisionLoop);
+  const finalQualityGate = asRecord(payload.finalQualityGate);
   const finalDecision = asRecord(payload.finalDecision);
   const sections: TraceSemanticSection[] = [];
   if (loop) {
@@ -522,6 +523,7 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
         ['Revised counts', regression?.revisedCounts]
       ])
     },
+    ...(finalQualityGate ? [finalQualityGateSection(finalQualityGate)] : []),
     {
       id: 'ranking-final-decision',
       title: 'Final draft decision',
@@ -533,6 +535,38 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
       ])
     }
   ];
+}
+
+function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanticSection {
+  const repair = asRecord(payload.repair);
+  const repairDecision = asRecord(payload.finalDecision);
+  return {
+    id: 'final-quality-gate',
+    title: 'Final quality gate',
+    fields: compactFields([
+      ['Status', payload.status],
+      ['Final draft status', payload.finalDraftStatus],
+      ['Public prose', payload.publicProseStatus],
+      ['Source integration', payload.sourceIntegrationStatus],
+      ['Internal jargon leaks', asArray(payload.internalJargonLeaks)?.map(finalQualityLeakValue)],
+      ['Source dump risk', payload.sourceDumpRisk],
+      ['Author voice', payload.authorVoiceStrength],
+      ['Reader value', payload.readerValueClarity],
+      ['Repair goals', payload.finalRepairGoals],
+      ['Repair status', repair?.status],
+      ['Repair decision', repair?.decisionStatus],
+      ['Accepted repair', payload.acceptedRepair],
+      ['Repair rejection reasons', repair?.rejectionReasons],
+      ['Final source', repairDecision?.source],
+      ['Final reason', repairDecision?.reason]
+    ])
+  };
+}
+
+function finalQualityLeakValue(value: unknown): string {
+  const leak = asRecord(value);
+  if (!leak) return displayValue(value);
+  return `${leak.term ?? 'term'}${leak.excerpt ? ` · ${leak.excerpt}` : ''}`;
 }
 
 function revisionLoopCycleValue(value: unknown): string {

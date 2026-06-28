@@ -131,6 +131,7 @@ describe('buildRunTraceViewModel', () => {
     expect(titles).toContain('Revision loop');
     expect(titles).toContain('Directed revision');
     expect(titles).toContain('Revision regression');
+    expect(titles).toContain('Final quality gate');
     expect(titles).toContain('Final draft decision');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields).toContainEqual({ label: 'Stop reason', value: 'quality-threshold' });
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-loop')?.fields.find((field) => field.label === 'Cycles')?.value).toContain('cycle 1');
@@ -140,6 +141,8 @@ describe('buildRunTraceViewModel', () => {
     expect(viewModel.semanticSections.find((section) => section.id === 'pairwise-ranking')?.fields.find((field) => field.label === 'Comparisons')?.value).toContain('candidate-1 vs candidate-2 -> candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'directed-revision')?.fields.find((field) => field.label === 'Candidate')?.value).toBe('candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-regression')?.fields.find((field) => field.label === 'Accepted')?.value).toBe('true');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Public prose')?.value).toBe('warning');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Repair goals')?.value).toContain('reader-facing prose');
     expect(viewModel.semanticSections.find((section) => section.id === 'ranking-final-decision')?.fields).toContainEqual({ label: 'Source', value: 'revisionLoop' });
   });
 
@@ -868,6 +871,28 @@ function makeDraftRunBundle(): RunTraceBundle {
                     aiRunIds: ['ai-revision-1', 'ai-ranking-2']
                   }
                 ]
+              },
+              finalQualityGate: {
+                status: 'warning',
+                finalDraftStatus: 'passed',
+                publicProseStatus: 'warning',
+                sourceIntegrationStatus: 'passed',
+                internalJargonLeaks: [{ term: 'SourceLedger', excerpt: 'SourceLedger appears in public prose.' }],
+                sourceDumpRisk: { status: 'passed', sourceSentenceCount: 2, interpretationSentenceCount: 2 },
+                authorVoiceStrength: 'passed',
+                readerValueClarity: 'warning',
+                finalRepairGoals: ['Remove or translate internal pipeline jargon into reader-facing prose.'],
+                acceptedRepair: false,
+                repair: {
+                  status: 'rejected',
+                  decisionStatus: 'rejected',
+                  rejectionReasons: ['internal-jargon-not-improved']
+                },
+                finalDecision: {
+                  finalCandidateId: 'revised-candidate-1',
+                  source: 'revisionLoop',
+                  reason: 'internal-jargon-not-improved'
+                }
               },
               finalDecision: {
                 finalCandidateId: 'revised-candidate-1',
