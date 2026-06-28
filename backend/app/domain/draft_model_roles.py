@@ -9,6 +9,7 @@ class DraftModelRole(StrEnum):
     REVIEW = "review"
     CRITIC = "critic"
     ANOTHER_ANGLE = "anotherAngle"
+    FINAL_GATE = "finalGate"
 
 
 class DraftModelSelectionSource(StrEnum):

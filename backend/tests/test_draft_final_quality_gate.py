@@ -15,6 +15,18 @@ class FakeRevisionService:
         return {"status": "succeeded", "revisedCandidate": self.revised, "attempts": [{"aiRunId": "ai-final-repair"}], "aiRunIds": ["ai-final-repair"]}
 
 
+class FakeReviewService:
+    def __init__(self, responses: list[dict[str, Any]]) -> None:
+        self.responses = responses
+        self.calls: list[dict[str, Any]] = []
+
+    def review(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(kwargs)
+        if self.responses:
+            return self.responses.pop(0)
+        return {"status": "passed", "findings": [], "observations": [], "repairGoals": [], "attempts": [], "aiRunIds": []}
+
+
 def test_final_quality_gate_passes_clean_public_draft_without_repair() -> None:
     revision = FakeRevisionService(None)
     result = service(revision).run(
@@ -73,6 +85,57 @@ def test_final_quality_gate_rejects_repair_that_keeps_jargon() -> None:
     assert result.artifact_payload["repair"]["decisionStatus"] == "rejected"
     assert "internal-jargon-not-improved" in result.artifact_payload["repair"]["rejectionReasons"]
     assert result.artifact_payload["finalDecision"]["source"] == "revisionLoop"
+
+
+def test_final_quality_gate_uses_independent_review_contract_and_runs_second_repair_cycle() -> None:
+    revision = FakeRevisionService(candidate("revised-final-1", "My thesis is clearer. The source marker stays visible, and the reader gets a concrete next step."))
+    review = FakeReviewService([
+        {
+            "status": "warning",
+            "publicProseStatus": "warning",
+            "sourceIntegrationStatus": "passed",
+            "authorVoiceStrength": "warning",
+            "readerValueClarity": "warning",
+            "findings": [{"message": "Voice is still generic.", "repairGuidance": "Make the author stance sharper."}],
+            "repairGoals": ["Make the author stance sharper."],
+            "attempts": [{"aiRunId": "ai-gate-1"}],
+            "aiRunIds": ["ai-gate-1"],
+            "modelIndependence": "independent",
+        },
+        {
+            "status": "passed",
+            "publicProseStatus": "passed",
+            "sourceIntegrationStatus": "passed",
+            "authorVoiceStrength": "passed",
+            "readerValueClarity": "passed",
+            "findings": [],
+            "repairGoals": [],
+            "attempts": [{"aiRunId": "ai-gate-2"}],
+            "aiRunIds": ["ai-gate-2"],
+            "modelIndependence": "independent",
+        },
+    ])
+
+    result = DraftFinalQualityGateService(
+        revision_service=revision,  # type: ignore[arg-type]
+        review_service=review,  # type: ignore[arg-type]
+        max_repair_iterations=2,
+    ).run(
+        final_candidate=candidate("final-1", "The post is valid but too generic for the configured editorial contract."),
+        final_source="revisionLoop",
+        validation_report={"candidateReports": []},
+        context_artifact=context(),
+        rule_pack={},
+        material_plan={},
+        revision_loop_stop_reason="max-iterations",
+    )
+
+    assert result.final_candidate["id"] == "revised-final-1"
+    assert result.artifact_payload["finalQualityContract"]["version"] == "final-quality-contract-v1"
+    assert result.artifact_payload["independentReview"]["status"] == "warning"
+    assert result.artifact_payload["repairGate"]["independentReview"]["status"] == "passed"
+    assert result.artifact_payload["maxRepairIterations"] == 2
+    assert result.ai_run_ids == ["ai-gate-1", "ai-final-repair", "ai-gate-2"]
 
 
 def service(revision: FakeRevisionService) -> DraftFinalQualityGateService:

@@ -227,13 +227,13 @@ must either choose evidence or explain why projected claims were rejected; empty
 evidence without accountability triggers a repair retry and then the optional
 `OPENROUTER_BACKUP_MODEL` before emergency deterministic fallback is allowed.
 Recommended role-model defaults for local DraftRun experiments are writer
-`openai/gpt-4.1`, technical JSON backup `openai/gpt-4.1-mini`,
-critic `openai/gpt-4.1`, and another-angle `qwen/qwen3.7-max`. Writer is
-responsible for public prose, critic for strict editorial challenge, and
-another-angle for creative divergence; backup is technical JSON recovery only and
-should not be treated as a second creative opinion. Writer, revision, JSON repair,
-and another-angle calls also carry role-specific generation params in child `AiRun`
-trace.
+`openai/gpt-5.1`, technical JSON backup `openai/gpt-4.1-mini`, critic/final gate
+`google/gemini-2.5-pro`, and another-angle `qwen/qwen3.7-max`. Writer is
+responsible for public prose, critic for strict editorial challenge, final gate for
+independent acceptance of the delivered post, and another-angle for creative
+divergence; backup is technical JSON recovery only and should not be treated as a
+second creative opinion. Writer, revision, JSON repair, final gate, and another-angle
+calls also carry role-specific generation params in child `AiRun` trace.
 After validation, the worker pairwise-ranks candidates and runs a bounded
 `revisionLoop` inside `validation.rankingRevision`. The loop now optimizes explicit
 editorial dimensions, not only validator findings: idea strength, tension, reader
@@ -248,9 +248,11 @@ rejected attempts, unresolved goals, and the final stop reason.
 After the revision loop, `validation.rankingRevision.finalQualityGate` checks the
 delivered final draft as public prose. If the text leaks internal terms like
 `SourceLedger` or `publicEvidence`, reads like a source dump, or loses reader value,
-the worker runs one final targeted writer repair and accepts it only if deterministic
-regression checks pass. Otherwise the previous best draft remains final and the trace
-shows why the repair was rejected.
+the worker builds a final quality contract, asks an independent final-gate model for
+public-prose review, then can run bounded targeted writer repair cycles. Repairs are
+accepted only if deterministic regression checks pass and the gate findings improve.
+Otherwise the previous best draft remains final and the trace shows why the repair was
+rejected.
 
 The next drafting-quality direction is an editorial lab around this spine, not a
 larger "bad draft" report. DraftRun now has role-specific model policy: research,

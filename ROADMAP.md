@@ -5012,7 +5012,7 @@ Status:
 
 ### Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review
 
-- Status: Ready
+- Status: Done
 - Goal: make final draft acceptance contract-based and model-independent instead of
   relying only on deterministic heuristics plus writer self-repair.
 - User value:
@@ -5031,6 +5031,15 @@ Status:
   - Add config:
     - `DRAFT_FINAL_GATE_MODEL=`
     - `DRAFT_FINAL_REPAIR_MAX_ITERATIONS=2`
+  - Replace the current writer recommendation
+    `DRAFT_WRITER_MODEL=openai/gpt-4.1` with a stronger primary writer model.
+    Recommended candidate for the slice: `DRAFT_WRITER_MODEL=openai/gpt-5.1`.
+    Rationale: `gpt-4.1` was stable for JSON, but it is no longer strong enough to
+    be the main prose/revision engine for this pipeline. `openai/gpt-5.1` is available
+    on OpenRouter, has a larger context window, and is positioned for stronger
+    instruction following and more natural long-form output. Keep
+    `OPENROUTER_BACKUP_MODEL=openai/gpt-4.1-mini` as technical JSON backup, not as
+    creative writer.
   - Add a final-gate model resolver:
     - use `DRAFT_FINAL_GATE_MODEL` when configured;
     - otherwise use `DRAFT_CRITIC_MODEL` if it differs from `DRAFT_WRITER_MODEL`;
@@ -5082,6 +5091,10 @@ Status:
     source integration expectations.
   - Gate review uses configured `DRAFT_FINAL_GATE_MODEL` and falls back through the
     documented resolver.
+  - Writer calls use the new recommended `DRAFT_WRITER_MODEL=openai/gpt-5.1` and
+    still follow universal JSON retry; if `gpt-5.1` cannot reliably return writer
+    JSON in the control run, the slice must record the failure and choose the next
+    strongest stable writer candidate before being marked Done.
   - Writer and final gate using the same model records `modelIndependence=weak`.
   - `DRAFT_FINAL_REPAIR_MAX_ITERATIONS=2` allows at most two final repair cycles.
   - Research-heavy contract tolerates more source references than light/standard
@@ -5098,18 +5111,36 @@ Status:
 - Acceptance criteria:
   - A fresh DraftRun shows final gate model role, selected model, independence status,
     final quality contract, pre/post repair reports, and clear final decision.
+  - The same run shows writer primary attempts using a stronger non-`gpt-4.1` model
+    with valid JSON and no immediate fallback to the technical backup.
   - If final text remains warning after repair limit, trace explains why the previous
     best draft was returned and what unresolved findings remain.
 - Risks:
   - `google/gemini-2.5-pro` OpenRouter slug/availability may differ locally; keep the
     env value overrideable and verify during the slice.
+  - `openai/gpt-5.1` may require prompt/parameter tuning for strict writer JSON even
+    if prose quality improves; the slice must judge both JSON reliability and prose
+    direction before changing the stable default.
   - A stronger gate can over-constrain creative prose if contract construction ignores
     fabula/editorial settings; tests must cover research-heavy and author-opinion
     variants.
+- Completed: 2026-06-28
+- Delivered:
+  - Added `FinalQualityContract` and independent `finalGate` model review under
+    `validation.rankingRevision.finalQualityGate`.
+  - Added `DRAFT_FINAL_GATE_MODEL` and `DRAFT_FINAL_REPAIR_MAX_ITERATIONS=2`.
+  - Updated recommended model defaults: writer `openai/gpt-5.1`,
+    critic/final gate `google/gemini-2.5-pro`, backup `openai/gpt-4.1-mini`.
+  - Final quality repair now supports bounded cycles and accepts repairs only when
+    gate findings improve without deterministic regression.
+  - Named sources without HTTP URLs are sanitized away from `readUrl` into searchable
+    source tasks.
+  - `/ai-runs` trace shows final quality contract, independent review attempts,
+    repair cycles, and final decision.
 
 ### Slice 2.16: Regression Report and Editor Decision Learning
 
-- Status: Backlog
+- Status: Ready
 - Goal: Capture the human editor's final decision after the machine revision loop is
   complete.
 - Scope:
@@ -5300,4 +5331,4 @@ Status:
 ## Next Recommended Task
 
 Continue the backend track with
-`Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review`.
+`Slice 2.16: Regression Report and Editor Decision Learning`.

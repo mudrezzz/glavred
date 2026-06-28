@@ -11,6 +11,7 @@ ROLE_CARD_TYPES: dict[DraftModelRole, tuple[DossierCardType, ...]] = {
     DraftModelRole.WRITER: (DossierCardType.CLAIM, DossierCardType.EVIDENCE, DossierCardType.ANGLE, DossierCardType.DECISION, DossierCardType.VOICE_NOTE, DossierCardType.RISK),
     DraftModelRole.REVIEW: (DossierCardType.CLAIM, DossierCardType.EVIDENCE, DossierCardType.DECISION, DossierCardType.RISK, DossierCardType.REJECTED_MOVE),
     DraftModelRole.CRITIC: (DossierCardType.TENSION, DossierCardType.RISK, DossierCardType.REJECTED_MOVE, DossierCardType.CLAIM, DossierCardType.OPEN_QUESTION),
+    DraftModelRole.FINAL_GATE: (DossierCardType.CLAIM, DossierCardType.EVIDENCE, DossierCardType.DECISION, DossierCardType.RISK, DossierCardType.REJECTED_MOVE, DossierCardType.VOICE_NOTE),
     DraftModelRole.ANOTHER_ANGLE: (DossierCardType.TENSION, DossierCardType.ANGLE, DossierCardType.REJECTED_MOVE, DossierCardType.OPEN_QUESTION, DossierCardType.DECISION),
 }
 

@@ -1,6 +1,8 @@
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.draft_directed_revision_service import DraftDirectedRevisionService
 from backend.app.application.draft_editorial_critique_service import DraftEditorialCritiqueService
+from backend.app.application.draft_final_quality_gate import DraftFinalQualityGateService
+from backend.app.application.draft_final_quality_review_service import DraftFinalQualityReviewService
 from backend.app.application.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.application.draft_ranking_revision_service import DraftRankingRevisionService
@@ -32,6 +34,11 @@ def build_validation_step_service(
         ranking_revision_service=DraftRankingRevisionService(
             ranking_service=DraftPairwiseRankingService(**provider_kwargs),
             revision_service=DraftDirectedRevisionService(**provider_kwargs),
+            final_quality_gate=DraftFinalQualityGateService(
+                revision_service=DraftDirectedRevisionService(**provider_kwargs),
+                review_service=DraftFinalQualityReviewService(**provider_kwargs),
+                max_repair_iterations=max(1, int(settings.draft_final_repair_max_iterations or 1)),
+            ),
             max_iterations=revision_iteration_limit(settings),
         ),
     )

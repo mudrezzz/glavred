@@ -432,10 +432,12 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   The same trace shows old-vs-new dimension scores, accepted/rejected decision,
   rejected moves, and the stop reason. The main editor still receives one final draft.
 - After the revision loop, the trace shows a `Final quality gate`. This gate checks
-  the delivered final draft as public prose: whether it leaks internal pipeline terms,
-  reads like a source list, keeps source markers, preserves author stance, and gives
-  the reader a clear takeaway. If needed, Glavred runs one final targeted repair and
-  accepts it only when it improves without regression.
+  the delivered final draft as public prose against an explicit final quality
+  contract: whether it leaks internal pipeline terms, reads like a source list, keeps
+  source markers, preserves author stance from the editorial model/fabula, and gives
+  the reader a clear takeaway. The gate combines deterministic checks with an
+  independent final-gate model review. If needed, Glavred runs bounded targeted final
+  repair cycles and accepts a repair only when it improves without regression.
 - The trace now also shows `ArticleDossier` and `ContextPacks`. The dossier is local
   memory for one DraftRun: accepted evidence, usable claims, locked decisions, risks,
   rejected moves, and open questions as compact cards. Context packs show which of

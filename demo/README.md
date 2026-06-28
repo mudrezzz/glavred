@@ -141,11 +141,12 @@ The current drafting-quality demo trace now includes role-specific model choices
 the final revision-loop decision. The dossier shows the run-local cards Glavred kept
 in memory: evidence, claims, decisions, risks, rejected moves, and open questions.
 Context packs show which cards were sent to strategy, writer, review, and critic calls.
-The recommended local role preset uses writer `openai/gpt-4.1`,
-technical JSON backup `openai/gpt-4.1-mini`, critic `openai/gpt-4.1`, and
-another-angle `qwen/qwen3.7-max`; another-angle is creative divergence, not a writer
-duplicate or technical backup. Writer/revision/repair/another-angle calls also record
-their effective temperature/top-p profile in trace.
+The recommended local role preset uses writer `openai/gpt-5.1`,
+technical JSON backup `openai/gpt-4.1-mini`, critic/final gate
+`google/gemini-2.5-pro`, and another-angle `qwen/qwen3.7-max`; another-angle is
+creative divergence, not a writer duplicate or technical backup. Writer/revision/
+repair/final-gate/another-angle calls also record their effective temperature/top-p
+profile in trace.
 Demo fabulas now use mixed research depths (`light`, `standard`, `deep`,
 `marketResearch`). A DraftRun trace shows the resolved `DraftRunBudget`, including
 execution mode, caps, skipped retrieval tasks, and trimmed evidence/claims.
@@ -280,9 +281,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     step 3, post contract in step 4, compiled rule pack plus
     `ruleRegistrySnapshot` and `EvidenceInterpretation` in step 5, material plan in step 6, draft strategy in step 7,
     rhetorical plans in step 8, draft candidates and selection in step 9, final draft,
-    final quality gate, and errors. The final quality gate shows whether the delivered
-    draft was accepted as public prose, repaired once, or kept unchanged because the
-    repair regressed. If feasibility
+    final quality gate, and errors. The final quality gate shows the explicit final
+    quality contract, independent review model attempts, whether the delivered draft
+    was accepted as public prose, repaired through bounded final repair cycles, or
+    kept unchanged because the repair regressed. If feasibility
     blocks the post, the demo shows a readable stopped-before-generation state and no
     local fallback draft is created. If candidate selection blocks the post, the trace
     scorecard shows `eligible / penalized / excluded`, penalty, and reasons, and no

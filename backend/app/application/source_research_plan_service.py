@@ -10,6 +10,7 @@ from backend.app.application.source_research_audit import (
     build_source_research_result_trace,
 )
 from backend.app.application.source_research_budgeting import apply_source_research_budget
+from backend.app.application.source_research_plan_sanitizer import sanitize_research_plan_for_source_intent
 from backend.app.application.source_research_prompts import build_source_research_plan_messages
 from backend.app.application.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_model_role_resolver import select_model_for_role, unconfigured_model_selection
@@ -20,13 +21,7 @@ from backend.app.domain.draft_source_intent import research_plan_from_payload
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
-RESEARCH_PLAN_KEYS = {
-    "researchQuestions",
-    "sourceTargets",
-    "verificationTasks",
-    "queryCandidates",
-    "exclusions",
-}
+RESEARCH_PLAN_KEYS = {"researchQuestions", "sourceTargets", "verificationTasks", "queryCandidates", "exclusions"}
 
 
 class SourceResearchPlanService:
@@ -74,7 +69,10 @@ class SourceResearchPlanService:
                 temperature=SOURCE_RESEARCH_TEMPERATURE,
                 model=model,
             )
-            plan_payload = research_plan_from_payload(result.payload).to_payload()
+            plan_payload = sanitize_research_plan_for_source_intent(
+                plan_payload=research_plan_from_payload(result.payload).to_payload(),
+                source_intent_payload=source_intent_payload,
+            )
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
@@ -104,7 +102,10 @@ class SourceResearchPlanService:
         source_origin: str,
         context_artifact: dict[str, Any],
     ) -> DraftPlanningStepResult:
-        plan_payload = self._deterministic_plan_service.create(source_intent).to_payload()
+        plan_payload = sanitize_research_plan_for_source_intent(
+            plan_payload=self._deterministic_plan_service.create(source_intent).to_payload(),
+            source_intent_payload=source_intent_payload,
+        )
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=provider,

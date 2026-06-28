@@ -142,7 +142,11 @@ describe('buildRunTraceViewModel', () => {
     expect(viewModel.semanticSections.find((section) => section.id === 'directed-revision')?.fields.find((field) => field.label === 'Candidate')?.value).toBe('candidate-1');
     expect(viewModel.semanticSections.find((section) => section.id === 'revision-regression')?.fields.find((field) => field.label === 'Accepted')?.value).toBe('true');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Public prose')?.value).toBe('warning');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Contract')?.value).toContain('depth deep');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Independent review status')?.value).toBe('warning');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Independent attempts')?.value).toContain('primary');
     expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Repair goals')?.value).toContain('reader-facing prose');
+    expect(viewModel.semanticSections.find((section) => section.id === 'final-quality-gate')?.fields.find((field) => field.label === 'Repair cycles')?.value).toContain('cycle 1');
     expect(viewModel.semanticSections.find((section) => section.id === 'ranking-final-decision')?.fields).toContainEqual({ label: 'Source', value: 'revisionLoop' });
   });
 
@@ -874,6 +878,20 @@ function makeDraftRunBundle(): RunTraceBundle {
               },
               finalQualityGate: {
                 status: 'warning',
+                finalQualityContract: {
+                  version: 'final-quality-contract-v1',
+                  researchDepth: 'deep',
+                  publicationKind: 'linkedin-post',
+                  sourceIntegrationPolicy: 'interpret-public-evidence',
+                  authorVoicePolicy: 'explicit-author-position'
+                },
+                modelIndependence: 'independent',
+                independentReview: {
+                  status: 'warning',
+                  findings: [{ severity: 'warning', message: 'Still sounds like an internal report.', repairGuidance: 'Translate evidence into a public argument.' }],
+                  observations: [{ status: 'info', summary: 'Thesis is visible.' }],
+                  attempts: [{ label: 'primary', status: 'accepted', model: 'gate-model' }]
+                },
                 finalDraftStatus: 'passed',
                 publicProseStatus: 'warning',
                 sourceIntegrationStatus: 'passed',
@@ -882,6 +900,15 @@ function makeDraftRunBundle(): RunTraceBundle {
                 authorVoiceStrength: 'passed',
                 readerValueClarity: 'warning',
                 finalRepairGoals: ['Remove or translate internal pipeline jargon into reader-facing prose.'],
+                maxRepairIterations: 2,
+                repairCycles: [
+                  {
+                    cycleNumber: 1,
+                    status: 'rejected',
+                    accepted: false,
+                    rejectionReasons: ['internal-jargon-not-improved']
+                  }
+                ],
                 acceptedRepair: false,
                 repair: {
                   status: 'rejected',

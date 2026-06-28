@@ -540,11 +540,19 @@ function rankingRevisionSections(payload: Record<string, unknown>): TraceSemanti
 function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanticSection {
   const repair = asRecord(payload.repair);
   const repairDecision = asRecord(payload.finalDecision);
+  const contract = asRecord(payload.finalQualityContract);
+  const independent = asRecord(payload.independentReview);
   return {
     id: 'final-quality-gate',
     title: 'Final quality gate',
     fields: compactFields([
       ['Status', payload.status],
+      ['Contract', finalQualityContractValue(contract)],
+      ['Model independence', payload.modelIndependence],
+      ['Independent review status', independent?.status],
+      ['Independent findings', asArray(independent?.findings)?.map(finalQualityFindingValue)],
+      ['Independent observations', asArray(independent?.observations)?.map(finalQualityFindingValue)],
+      ['Independent attempts', asArray(independent?.attempts)?.map(attemptValue)],
       ['Final draft status', payload.finalDraftStatus],
       ['Public prose', payload.publicProseStatus],
       ['Source integration', payload.sourceIntegrationStatus],
@@ -553,6 +561,8 @@ function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanti
       ['Author voice', payload.authorVoiceStrength],
       ['Reader value', payload.readerValueClarity],
       ['Repair goals', payload.finalRepairGoals],
+      ['Max repair iterations', payload.maxRepairIterations],
+      ['Repair cycles', asArray(payload.repairCycles)?.map(finalQualityRepairCycleValue)],
       ['Repair status', repair?.status],
       ['Repair decision', repair?.decisionStatus],
       ['Accepted repair', payload.acceptedRepair],
@@ -561,6 +571,33 @@ function finalQualityGateSection(payload: Record<string, unknown>): TraceSemanti
       ['Final reason', repairDecision?.reason]
     ])
   };
+}
+
+function finalQualityContractValue(contract: Record<string, unknown> | null): string | undefined {
+  if (!contract) return undefined;
+  return [
+    `depth ${contract.researchDepth ?? 'unknown'}`,
+    `kind ${contract.publicationKind ?? 'unknown'}`,
+    `source ${contract.sourceIntegrationPolicy ?? 'unknown'}`,
+    `voice ${contract.authorVoicePolicy ?? 'unknown'}`
+  ].join(' В· ');
+}
+
+function finalQualityFindingValue(value: unknown): string {
+  const finding = asRecord(value);
+  if (!finding) return displayValue(value);
+  return `${finding.severity ?? finding.status ?? 'info'} В· ${finding.message ?? finding.summary ?? finding.id ?? ''}${finding.repairGuidance ? ` В· ${finding.repairGuidance}` : ''}`;
+}
+
+function finalQualityRepairCycleValue(value: unknown): string {
+  const cycle = asRecord(value);
+  if (!cycle) return displayValue(value);
+  return [
+    `cycle ${cycle.cycleNumber ?? '?'}`,
+    `status ${cycle.status ?? cycle.decisionStatus ?? 'unknown'}`,
+    `accepted ${cycle.accepted}`,
+    `reasons ${displayValue(cycle.rejectionReasons).replace(/\n/g, '; ') || 'none'}`
+  ].join(' В· ');
 }
 
 function finalQualityLeakValue(value: unknown): string {

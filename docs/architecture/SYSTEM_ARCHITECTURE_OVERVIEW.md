@@ -352,13 +352,14 @@ migration for the remaining writer candidate and alternative-angle challenger pr
 paths; new JSON provider calls must start from this policy.
 
 Current recommended DraftRun role defaults are operational presets, not product
-requirements: writer `openai/gpt-4.1`, technical JSON backup
-`openai/gpt-4.1-mini`, critic `openai/gpt-4.1`, and another-angle
+requirements: writer `openai/gpt-5.1`, technical JSON backup
+`openai/gpt-4.1-mini`, critic/final gate `google/gemini-2.5-pro`, and another-angle
 `qwen/qwen3.7-max`. Writer owns public prose, backup owns low-temperature JSON repair,
-critic owns strict editorial challenge, and another-angle remains creative divergence
-rather than technical backup or another writer alias. Writer, revision, JSON repair,
-and another-angle calls also carry role-specific generation params in child `AiRun`
-audit payloads so diagnostics can separate model choice from temperature/top-p policy.
+critic owns strict editorial challenge, final gate owns independent acceptance of the
+delivered post, and another-angle remains creative divergence rather than technical
+backup or another writer alias. Writer, revision, JSON repair, final gate, and
+another-angle calls also carry role-specific generation params in child `AiRun` audit
+payloads so diagnostics can separate model choice from temperature/top-p policy.
 
 The Slice 2.1 health surface is intentionally configuration-only. `/api/health`
 reports whether OpenRouter is locally configured and never returns API keys or calls
@@ -552,15 +553,38 @@ selected from the final best candidate after the loop, and `/ai-runs?runId=...` 
 cycles, editorial goals, dimension scores, accepted/rejected attempts, unresolved goals,
 rejected moves, final source, and stop reason.
 
-Slice 2.15.6.4 adds the last machine acceptance layer before the draft returns to
-the editor. `validation.rankingRevision.finalQualityGate` evaluates the delivered
-final candidate, not the whole candidate pool, for public-prose quality, internal
-pipeline jargon, source-dump risk, source integration, author voice, and reader value.
-If the gate returns `warning` or `critical`, it builds one final writer repair
-instruction and calls the existing directed-revision service. The repair becomes the
-new `finalDraft` only when deterministic regression checks pass and the gate findings
-improve; otherwise the previous best draft remains final and the rejected repair stays
-visible in trace.
+Slice 2.15.6.4.1 makes the last machine acceptance layer contract-driven and
+independent before the draft returns to the editor. `validation.rankingRevision.finalQualityGate`
+evaluates the delivered final candidate, not the whole candidate pool, for public-prose
+quality, internal pipeline jargon, source-dump risk, source integration, author voice,
+and reader value. It builds a `FinalQualityContract` from editorial/fabula/post
+constraints and runs an independent `finalGate` model review. If the gate returns
+`warning` or `critical`, it can run bounded writer repair cycles through the existing
+directed-revision service; the count is controlled by `DRAFT_FINAL_REPAIR_MAX_ITERATIONS`.
+A repair becomes the new `finalDraft` only when deterministic regression checks pass
+and the gate findings improve; otherwise the previous best draft remains final and the
+rejected repair stays visible in trace.
+
+Final quality ownership is intentionally split:
+
+- `backend/app/application/draft_final_quality_contract.py`: provider-free
+  `FinalQualityContract` assembly from editorial/fabula/post constraints.
+- `backend/app/application/draft_final_quality_gate.py`: thin final-gate composition
+  boundary between contract, evaluator, and repair loop.
+- `backend/app/application/draft_final_quality_gate_evaluator.py`: deterministic plus
+  independent final-gate report assembly.
+- `backend/app/application/draft_final_quality_gate_payloads.py`: status, decision,
+  and payload helper functions.
+- `backend/app/application/draft_final_quality_repair_loop.py`: bounded final repair
+  cycle orchestration.
+- `backend/app/application/draft_final_quality_review_prompts.py`: final-gate JSON
+  prompt shape.
+- `backend/app/application/draft_final_quality_review_parser.py`: final-gate JSON
+  response normalization.
+- `backend/app/application/draft_final_quality_review_service.py`: provider-backed
+  independent final-gate review with universal JSON retry policy.
+- `backend/app/application/source_research_plan_sanitizer.py`: deterministic cleanup
+  that prevents non-URL named sources from becoming URL-read tasks.
 
 Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
 Validation progress writes now merge `artifactPayload.progress` into the existing

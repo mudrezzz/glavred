@@ -111,8 +111,10 @@ hide bad output behind polite abstractions.
   unless the text explicitly reframes the term for the reader.
 - When diagnosing final quality, inspect
   `validation.rankingRevision.finalQualityGate` before judging the whole candidate
-  pool. It shows whether the delivered final draft passed public-prose checks, whether
-  a final repair ran, and why that repair was accepted or rejected.
+  pool. Check its `finalQualityContract`, independent model review attempts, repair
+  goals, bounded repair cycles, accepted/rejected decisions, and final source. It
+  shows whether the delivered final draft passed public-prose checks, whether a final
+  repair ran, and why that repair was accepted or rejected.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

@@ -32,7 +32,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `EditorialCritiqueReport` | Report-only prosecutor/editor critique of candidate idea strength, tension, author stance, source integration, and reader value. | `validation.editorialCritiqueReport`, child `AiRun` trace |
 | `AlternativeAngleTournament` | Critic-driven challenger route and candidate used to escape a weak local optimum. | `validation.alternativeAngleTournament`, child `AiRun` trace |
 | `RevisionLoop` | Bounded editorial optimization loop: validator repair goals plus editorial goals, old-vs-new dimension scoring, accepted/rejected revisions, and rejected moves. | `validation.rankingRevision.revisionLoop` |
-| `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; may run one final writer repair if gate findings require it. | `validation.rankingRevision.finalQualityGate` |
+| `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if gate findings require it. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 
@@ -117,7 +117,7 @@ Role-aware execution map:
 | `validation` alternative angle | `anotherAngle` then `writer` | `DRAFT_ANOTHER_ANGLE_MODEL` for route, `DRAFT_WRITER_MODEL` for challenger prose, repair, backup, no fake challenger fallback | initial validation, editorial critique, another-angle `ContextPack`, writer `ContextPack`, another-angle/writer generation params | final validation and ranking |
 | `validation` ranking | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup | merged candidates, old scorecard, deterministic and LLM findings | revision loop |
 | `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed/not-run if no usable JSON | current best candidate, repair goals, anti-regression constraints, writer `ContextPack`, revision generation params | regression guard and final draft |
-| `validation` final quality gate | none, then optional `writer` | no model for gate; `DRAFT_WRITER_MODEL` for one final repair when needed | delivered final candidate, validation reports, critique, evidence interpretation, ledger, contract, rule registry, material plan | accepted public draft or rejected repair trace |
+| `validation` final quality gate | `finalGate`, then optional `writer` | `DRAFT_FINAL_GATE_MODEL`, or independent critic/review/default fallback; `DRAFT_WRITER_MODEL` for bounded final repair cycles | delivered final candidate, `FinalQualityContract`, validation reports, critique, evidence interpretation, ledger, contract, rule registry, material plan | accepted public draft or rejected repair trace |
 | `complete` | none | no model | final DraftRun state | frontend |
 
 Practical reading rule: when a step says `Role/model handoff: strategy`, it does
@@ -567,10 +567,14 @@ Processing:
    dimensions, and accepts only targeted improvement without regression. Accepted
    cycles record concrete reasons such as resolved goals, clear pairwise win, and no
    deterministic regression;
-8. final quality gate checks the delivered candidate as public prose. If it leaks
-   internal pipeline names, reads like a source dump, loses author stance, or misses
-   reader value, the gate creates one final repair instruction for the writer. The
-   repaired draft is accepted only when deterministic regression and gate findings
+8. final quality gate builds a `FinalQualityContract` from Fabula research depth,
+   publication kind, post contract, rule registry, and material plan. It checks the
+   delivered candidate with deterministic public-prose rules and an independent
+   `finalGate` model review. If it leaks internal pipeline names, reads like a source
+   dump, loses author stance relative to the contract, or misses reader value, the
+   gate creates bounded final repair instructions for the writer. The number of final
+   repair cycles is controlled by `DRAFT_FINAL_REPAIR_MAX_ITERATIONS` (default `2`).
+   A repaired draft is accepted only when deterministic regression and gate findings
    improve;
 9. provider-heavy validation sub-operations persist progress as they run; if a late
    operation fails, the operation is marked `failed`, safe error details are saved,
@@ -585,8 +589,9 @@ Output:
 - `rankingRevision`;
 - `revisionLoop` with editorial goals, dimension scores, rejected moves, and stop
   reason;
-- `finalQualityGate` with final-draft status, public-prose status, source-dump risk,
-  final repair goals, repair result, and gate-level final decision;
+- `finalQualityGate` with final quality contract, independent review attempts,
+  final-draft status, public-prose status, source-dump risk, final repair goals,
+  repair cycles, repair result, and gate-level final decision;
 - `progress` with nested validation operations, child `AiRun` ids, failed-operation
   status, and safe error details when a provider-heavy sub-operation fails;
 - final draft candidate decision;
@@ -597,7 +602,8 @@ Role/model handoff:
 - `review` for LLM validation and pairwise ranking;
 - `critic` for report-only editorial critique;
 - `anotherAngle` for challenger route generation;
-- `writer` for directed revision.
+- `finalGate` for independent final public-prose acceptance;
+- `writer` for directed revision and final public-prose repair.
 - deterministic lint runs first without a model;
 - `review` receives candidates, review `ContextPack`, deterministic findings,
   rules, ledger, and contract, then returns report-only findings and pairwise
@@ -607,8 +613,12 @@ Role/model handoff:
 - `anotherAngle` receives the initial validation, editorial critique, dossier cards,
   and another-angle `ContextPack`, then returns one different contract-safe route;
 - `writer` executes the alternative route into one challenger candidate;
-- `writer` may execute one final public-prose repair after the revision loop if
-  `finalQualityGate` returns `warning` or `critical`;
+- `finalGate` receives the delivered final candidate, `FinalQualityContract`,
+  deterministic gate findings, validation context, evidence interpretation, ledger,
+  rule registry, and material plan, then returns independent findings, observations,
+  and final repair goals;
+- `writer` may execute bounded final public-prose repair cycles after the revision
+  loop if `finalQualityGate` returns `warning` or `critical`;
 - `writer` receives the current best candidate plus validator repair goals,
   editorial goals, rejected moves, dossier/context pack, and constraints, then returns
   revised prose;
@@ -777,8 +787,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 15. `alternativeAngleTournament`: inspect challenger route, candidate, model attempts,
     and why it entered or failed to enter final ranking.
 16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
-17. `finalQualityGate`: inspect final public-prose status, repair goals, accepted or
-    rejected final repair, and final draft source.
+17. `finalQualityGate`: inspect the final quality contract, independent review
+    attempts/model, final public-prose status, repair goals, accepted or rejected
+    repair cycles, and final draft source.
 18. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
 19. child `AiRun` detail: inspect prompt messages, role model, generation params,

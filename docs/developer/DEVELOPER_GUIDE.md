@@ -38,16 +38,20 @@ Required variables for the backend/AI track:
 - `DRAFT_WRITER_MODEL`: optional model for draft candidates and directed revisions.
 - `DRAFT_REVIEW_MODEL`: optional model for LLM validation and pairwise ranking.
 - `DRAFT_CRITIC_MODEL`: optional model for the report-only prosecutor/editor critic.
+- `DRAFT_FINAL_GATE_MODEL`: optional model for the independent final public-prose
+  acceptance review. If empty, the backend prefers a non-writer critic model, then
+  review, then default.
 - `DRAFT_ANOTHER_ANGLE_MODEL`: optional model for the alternative-angle challenger
   route.
 - Recommended DraftRun role preset for local experiments:
-  - writer: `openai/gpt-4.1`;
+  - writer: `openai/gpt-5.1`;
   - technical JSON backup: `openai/gpt-4.1-mini`;
-  - critic: `openai/gpt-4.1`;
+  - critic/final gate: `google/gemini-2.5-pro`;
   - another-angle: `qwen/qwen3.7-max`.
-  Writer and critic should not be the same family by default: writer creates public
-  prose, critic attacks quality and weak reasoning, and another-angle is creative
-  divergence rather than a backup writer.
+  Writer and critic/final gate should not be the same family by default: writer
+  creates public prose, critic attacks quality and weak reasoning, final gate accepts
+  the delivered post against the explicit quality contract, and another-angle is
+  creative divergence rather than a backup writer.
 - `DRAFT_WRITER_TEMPERATURE`, `DRAFT_WRITER_TOP_P`: generation params for draft
   candidate prose JSON calls. Defaults: `0.65`, `0.9`.
 - `DRAFT_REVISION_TEMPERATURE`, `DRAFT_REVISION_TOP_P`: generation params for
@@ -1387,13 +1391,16 @@ The next artifacts must make candidate validation meaningful:
 - `validation.rankingRevision.finalQualityGate` is the last machine acceptance layer
   before the final draft returns to the editor. It checks the delivered candidate,
   not candidate-pool noise, for public-prose quality, internal pipeline jargon,
-  source-dump risk, source integration, author voice, and reader value. If the gate
-  is `warning` or `critical`, it may run one final writer repair through the existing
-  directed revision service. The repair replaces `finalDraft` only if deterministic
-  regression and public-prose checks improve; otherwise the previous best remains
-  final and the rejected repair stays in trace. Keep deterministic heuristics in
-  `draft_final_quality_assessment.py`; keep provider handoff in
-  `draft_final_quality_gate.py`.
+  source-dump risk, source integration, author voice, and reader value. The gate
+  builds a `FinalQualityContract` from configured editorial/fabula/post constraints
+  and runs an independent `finalGate` model review before deciding repair goals. If
+  the gate is `warning` or `critical`, it may run bounded writer repair cycles
+  through the existing directed revision service; the count is controlled by
+  `DRAFT_FINAL_REPAIR_MAX_ITERATIONS`. A repair replaces `finalDraft` only if
+  deterministic regression and public-prose checks improve; otherwise the previous
+  best remains final and the rejected repair stays in trace. Keep deterministic
+  heuristics in `draft_final_quality_assessment.py`; keep contract/review/provider
+  handoff in `draft_final_quality_gate.py` and final-quality review modules.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

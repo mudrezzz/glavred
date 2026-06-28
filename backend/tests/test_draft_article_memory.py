@@ -57,4 +57,5 @@ def test_context_pack_builder_selects_role_relevant_cards() -> None:
 
     assert packs[DraftModelRole.WRITER.value]["metadata"]["itemCount"] >= 2
     assert packs[DraftModelRole.REVIEW.value]["items"][0]["cardId"]
+    assert packs[DraftModelRole.FINAL_GATE.value]["metadata"]["itemCount"] >= 2
     assert all("summary" in item for item in packs[DraftModelRole.STRATEGY.value]["items"])

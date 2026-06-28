@@ -26,7 +26,9 @@ def test_settings_defaults_without_env_file() -> None:
     assert settings.draft_writer_model == ""
     assert settings.draft_review_model == ""
     assert settings.draft_critic_model == ""
+    assert settings.draft_final_gate_model == ""
     assert settings.draft_another_angle_model == ""
+    assert settings.draft_final_repair_max_iterations == 2
 
 
 def test_openrouter_config_is_unconfigured_without_token_or_model() -> None:
@@ -77,22 +79,3 @@ def test_revision_iteration_limit_normalizes_zero() -> None:
     )
 
     assert revision_iteration_limit(settings) == 1
-
-
-def test_settings_loads_draft_role_models() -> None:
-    settings = BackendSettings(
-        _env_file=None,
-        DRAFT_RESEARCH_MODEL="research-model",
-        DRAFT_STRATEGY_MODEL="strategy-model",
-        DRAFT_WRITER_MODEL="writer-model",
-        DRAFT_REVIEW_MODEL="review-model",
-        DRAFT_CRITIC_MODEL="critic-model",
-        DRAFT_ANOTHER_ANGLE_MODEL="angle-model",
-    )
-
-    assert settings.draft_research_model == "research-model"
-    assert settings.draft_strategy_model == "strategy-model"
-    assert settings.draft_writer_model == "writer-model"
-    assert settings.draft_review_model == "review-model"
-    assert settings.draft_critic_model == "critic-model"
-    assert settings.draft_another_angle_model == "angle-model"

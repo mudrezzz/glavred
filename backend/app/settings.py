@@ -43,6 +43,8 @@ class BackendSettings(BaseSettings):
     draft_critic_model: str = Field(default="", validation_alias="DRAFT_CRITIC_MODEL")
     draft_review_model: str = Field(default="", validation_alias="DRAFT_REVIEW_MODEL")
     draft_another_angle_model: str = Field(default="", validation_alias="DRAFT_ANOTHER_ANGLE_MODEL")
+    draft_final_gate_model: str = Field(default="", validation_alias="DRAFT_FINAL_GATE_MODEL")
+    draft_final_repair_max_iterations: int = Field(default=2, validation_alias="DRAFT_FINAL_REPAIR_MAX_ITERATIONS")
     draft_writer_temperature: str = Field(default="0.65", validation_alias="DRAFT_WRITER_TEMPERATURE")
     draft_writer_top_p: str = Field(default="0.9", validation_alias="DRAFT_WRITER_TOP_P")
     draft_revision_temperature: str = Field(default="0.35", validation_alias="DRAFT_REVISION_TEMPERATURE")
