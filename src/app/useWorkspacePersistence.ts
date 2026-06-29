@@ -1,5 +1,14 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import {
+  getAccessibleProjects,
+  getActiveProject,
+  getActiveUser,
+  getActiveWorkspace,
+  selectPortfolioProject,
+  selectPortfolioUser,
+  updateActiveProjectWorkspace
+} from '../application/portfolioService';
+import {
   createAuthorMemoryEvent,
   inferAuthorPositionAssertions
 } from '../application/editorialServices';
@@ -8,20 +17,24 @@ import {
   type AuthorNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
-import { LocalWorkspaceStore } from '../infrastructure/localWorkspaceStore';
+import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
 
-const store = new LocalWorkspaceStore();
+const store = new LocalPortfolioStore();
 
 export type WorkspacePatch = (patch: Partial<WorkspaceState>, message?: string) => void;
 export type WorkspaceSetter = Dispatch<SetStateAction<WorkspaceState>>;
 
 export function useWorkspacePersistence() {
-  const [workspace, setWorkspace] = useState<WorkspaceState>(() => store.load());
+  const [portfolio, setPortfolio] = useState(() => store.load());
   const [toast, setToast] = useState('');
+  const activeUser = getActiveUser(portfolio);
+  const activeProject = getActiveProject(portfolio);
+  const accessibleProjects = getAccessibleProjects(portfolio);
+  const workspace = getActiveWorkspace(portfolio);
 
   useEffect(() => {
-    store.save({ ...workspace, updatedAt: new Date().toISOString() });
-  }, [workspace]);
+    store.save(portfolio);
+  }, [portfolio]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -29,6 +42,15 @@ export function useWorkspacePersistence() {
     const timeoutId = window.setTimeout(() => setToast(''), 2800);
     return () => window.clearTimeout(timeoutId);
   }, [toast]);
+
+  const setWorkspace: WorkspaceSetter = (next) => {
+    setPortfolio((current) =>
+      updateActiveProjectWorkspace(current, (currentWorkspace) => {
+        const nextWorkspace = typeof next === 'function' ? next(currentWorkspace) : next;
+        return { ...nextWorkspace, updatedAt: nextWorkspace.updatedAt ?? new Date().toISOString() };
+      })
+    );
+  };
 
   function patchWorkspace(patch: Partial<WorkspaceState>, message?: string) {
     setWorkspace((current) => ({ ...current, ...patch, updatedAt: new Date().toISOString() }));
@@ -64,16 +86,32 @@ export function useWorkspacePersistence() {
   }
 
   function resetWorkspace() {
-    setWorkspace(store.reset());
-    setToast('Демо-сценарий восстановлен');
+    setPortfolio(store.reset());
+    setToast('Демо-портфель восстановлен');
+  }
+
+  function selectUser(userId: string) {
+    setPortfolio((current) => selectPortfolioUser(current, userId));
+    setToast('Пользователь выбран');
+  }
+
+  function selectProject(projectId: string) {
+    setPortfolio((current) => selectPortfolioProject(current, projectId));
+    setToast('Блог выбран');
   }
 
   return {
+    accessibleProjects,
+    activeProject,
+    activeUser,
     changeAuthorNotes,
     patchEditorialSetup,
     patchWorkspace,
+    portfolio,
     resetWorkspace,
     runEditorialValidation,
+    selectProject,
+    selectUser,
     setToast,
     setWorkspace,
     toast,

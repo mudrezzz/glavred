@@ -8,6 +8,7 @@ import { BriefView } from './features/briefing/BriefView';
 import { EditorialModelView } from './features/editorial-model/EditorialModelView';
 import { EditView } from './features/editing/EditView';
 import { PlanView } from './features/plan/PlanView';
+import { PortfolioSwitcher } from './features/portfolio/PortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
 import { SignalsView } from './features/signals/SignalsView';
 
@@ -23,6 +24,9 @@ function CabinetApp() {
   const controller = useWorkspaceController();
   const {
     active,
+    accessibleProjects,
+    activeProject,
+    activeUser,
     contextChatIntent,
     contextChatMessages,
     contextChatOpen,
@@ -30,6 +34,7 @@ function CabinetApp() {
     contextChatTab,
     editorialModelTab,
     memoryTab,
+    portfolio,
     toast,
     visibleContextChatSuggestions,
     workspace
@@ -39,6 +44,16 @@ function CabinetApp() {
     <AppShell
       active={active}
       chatOpen={contextChatOpen}
+      portfolioSwitcher={
+        <PortfolioSwitcher
+          accessibleProjects={accessibleProjects}
+          activeProject={activeProject}
+          activeUser={activeUser}
+          portfolio={portfolio}
+          onProjectChange={controller.selectProject}
+          onUserChange={controller.selectUser}
+        />
+      }
       suggestionCount={visibleContextChatSuggestions.length}
       toast={toast}
       workspace={workspace}

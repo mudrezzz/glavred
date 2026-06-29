@@ -9,6 +9,7 @@ export function AppShell({
   chatOpen,
   children,
   overlay,
+  portfolioSwitcher,
   suggestionCount,
   toast,
   workspace,
@@ -20,6 +21,7 @@ export function AppShell({
   chatOpen: boolean;
   children: ReactNode;
   overlay?: ReactNode;
+  portfolioSwitcher?: ReactNode;
   suggestionCount: number;
   toast: string;
   workspace: WorkspaceState;
@@ -31,6 +33,7 @@ export function AppShell({
     <div className="app">
       <Sidebar active={active} onNav={onNav} workspace={workspace} />
       <main className="main">
+        {portfolioSwitcher}
         <Topbar
           active={active}
           chatOpen={chatOpen}

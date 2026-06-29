@@ -22,9 +22,19 @@ learning notes are project-scoped unless a later slice explicitly marks data as
 user-scoped. Do not add new singleton workspace assumptions when implementing auth,
 project switching, publication channels, or benchmark fixtures.
 
+Slice 2.17.1 implements the local shell for that boundary. Frontend runtime now loads
+`PortfolioState` through `LocalPortfolioStore`, then hydrates the existing app from
+the active project's `WorkspaceState`. Legacy `glavred.workspace.v1` storage is
+migrated into one default project; fresh reset seeds two users and three project
+containers. Keep future portfolio logic in role-owned modules such as
+`src/domain/portfolio`, `src/application/portfolioService.ts`, and
+`src/infrastructure/localPortfolioStore.ts` instead of expanding near-limit
+workspace or demo fixture files.
+
 Important architecture rules for upcoming slices:
 
-- local multi-account/project switching comes before full backend auth;
+- local multi-account/project switching comes before full backend auth and is now
+  implemented as a local-first shell;
 - backend auth and persistence attach to `UserAccount`, `BlogProject`, and
   `ProjectMembership`;
 - publication channels are modeled before platform adapters/autoposting;

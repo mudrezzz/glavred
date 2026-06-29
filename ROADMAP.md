@@ -5496,7 +5496,7 @@ Status:
 
 ### Slice 2.17.1: Local Multi-Account and Blog Project Switcher
 
-- Status: Ready
+- Status: Done
 - Goal: Add a local-first SaaS shell with demo users and project switching while
   keeping the current editorial workspace intact inside one selected project.
 - User value:
@@ -5517,26 +5517,36 @@ Status:
 - Implementation notes:
   - This is a local SaaS simulation, not an auth guarantee.
   - Keep old workspace normalization compatible.
+  - Keep portfolio/project logic in role-owned modules; do not expand near-limit
+    workspace, demo fixture, or DraftRun context files.
 - Architecture impact:
-  - `LocalWorkspaceStore` becomes a portfolio store while preserving
-    project-scoped `WorkspaceState`.
+  - Added a local portfolio store around project-scoped `WorkspaceState` without
+    changing backend persistence or DraftRun contracts.
+  - Existing singleton workspace storage is migrated into a default project when
+    present.
 - Tests:
-  - Storage migration tests.
-  - UI app-flow tests for switching users/projects.
-  - Regression: `npm test -- --run`, `npm run smoke`, `npm run test:architecture`.
+  - Storage migration tests. Done.
+  - UI app-flow tests for switching users/projects. Done.
+  - Regression: `npm test -- --run`, `npm run smoke`, `npm run test:architecture`,
+    `npm run test:design`, `npm run test:visual`, `docker compose config --quiet`,
+    and `git diff --check`.
 - Docs:
   - README, user guide, developer guide, demo docs, roadmap.
 - Demo impact:
   - Demo opens with user/project choices instead of one implicit workspace.
+  - Slice 2.17.1 seeds the local shell with two users and three project containers;
+    Slice 2.17.2 adds realistic per-blog memory/editorial/benchmark content.
 - Acceptance criteria:
   - Switching projects does not leak notes, drafts, learning notes, or plan state.
-  - Existing single-workspace reset remains backward compatible.
+    Done.
+  - Existing single-workspace reset remains backward compatible. Done.
 - Risks:
   - Project shell can become heavy; keep it a thin wrapper around existing workspace.
+- Completed: 2026-06-29
 
 ### Slice 2.17.2: Three-Blog Benchmark Demo Portfolio
 
-- Status: Backlog
+- Status: Ready
 - Goal: Seed two users and three realistic blog projects as demo and benchmark data.
 - User value:
   - The app demonstrates real variation: different author memory, editorial models,
@@ -5948,6 +5958,7 @@ Status:
 - Slice 2.16.1: Editorial Learning Notes in Author Memory. Completed 2026-06-29.
 - Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios. Completed 2026-06-29.
 - Slice 2.17.0: SaaS Blog Portfolio Architecture. Completed 2026-06-29.
+- Slice 2.17.1: Local Multi-Account and Blog Project Switcher. Completed 2026-06-29.
 
 ## Blocked Items
 
@@ -5974,5 +5985,5 @@ Status:
 
 ## Next Recommended Task
 
-Implement the local SaaS/blog portfolio shell:
-`Slice 2.17.1: Local Multi-Account and Blog Project Switcher`.
+Implement realistic seeded benchmark content for the local portfolio:
+`Slice 2.17.2: Three-Blog Benchmark Demo Portfolio`.

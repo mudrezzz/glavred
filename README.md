@@ -98,15 +98,17 @@ The durable product loop is now:
 
 `Author Memory -> Author Position Model -> Editorial System -> Content Production -> Release -> Learning`
 
-The next product loop extends the local workspace into a SaaS-ready portfolio:
+The current product loop wraps the local workspace in a SaaS-ready portfolio shell:
 
 `UserAccount -> BlogProject -> PublicationChannels -> Project-scoped Editorial System -> Platform Variants -> Learning`
 
 `BlogProject` is the key boundary: one independent blog or media system with its own
 author memory, editorial model, sources, plan, DraftRuns, final decisions, and learning
-notes. Authentication, project switching, multi-platform generation, and publication
-adapters should grow around this boundary rather than around the current singleton
-workspace. This direction is captured in ADR
+notes. Project switching is available locally through a `PortfolioState` with demo
+users, memberships, projects, and one isolated workspace per selected blog.
+Authentication, backend project persistence, multi-platform generation, and
+publication adapters should grow around this boundary rather than around the old
+singleton workspace. This direction is captured in ADR
 `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and detailed in
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
@@ -149,7 +151,8 @@ experience building AI-B2B products. The demo starts with author notes about wor
 risk, evals, trust, adoption, and confidence boundaries, then routes the same example
 through the existing production flow.
 
-Planned demo/benchmark portfolio: two users and three independent blogs:
+Local demo portfolio shell: two users and three independent blog containers. Slice
+2.17.2 will replace placeholder per-project content with realistic benchmark fixtures:
 
 - `AI Design Patterns`: technical/research blog about AI design patterns and durable
   best practices, likely LinkedIn-first and English-capable.

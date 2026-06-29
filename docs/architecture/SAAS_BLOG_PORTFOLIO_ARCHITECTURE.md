@@ -1,11 +1,13 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.0: SaaS Blog Portfolio Architecture.
+Current as of Slice 2.17.1: Local Multi-Account and Blog Project Switcher.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
-target architecture document for upcoming slices. It does not describe current runtime
-behavior yet.
+architecture document for the 2.17.x portfolio track. The local portfolio shell from
+Slice 2.17.1 is now runtime behavior; backend auth, real project persistence,
+publication channels, platform variants, and realistic benchmark fixtures remain later
+slices.
 
 Related decision: `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
 
@@ -225,11 +227,13 @@ Variant-scoped data:
 
 ### Current state
 
-Current runtime has one `WorkspaceState` persisted through `LocalWorkspaceStore`.
+Current runtime stores a local `PortfolioState` through `LocalPortfolioStore`.
+Each selected `BlogProject` owns one project-scoped `WorkspaceState`, and the existing
+application shell hydrates from the active project workspace.
 
-### Slice 2.17.1 target
+### Slice 2.17.1 implemented
 
-Wrap the current workspace in a local portfolio store:
+The current workspace is wrapped in a local portfolio store:
 
 ```ts
 interface PortfolioState {
@@ -242,12 +246,18 @@ interface PortfolioState {
 }
 ```
 
-Migration rule:
+Implemented migration rule:
 
-- if old storage contains one `WorkspaceState`, wrap it into one `BlogProject`;
-- keep old normalization as fallback;
+- if old storage contains one `WorkspaceState`, wrap it into one default
+  `BlogProject`;
+- keep old workspace normalization as fallback;
 - selected project hydrates the existing app shell;
-- switching project swaps the workspace object and saves under the project id.
+- switching project swaps the workspace object and saves under the project id;
+- reset seeds a local shell with two demo users and three project containers.
+
+The 2.17.1 seed project containers are intentionally light. Realistic author memory,
+editorial model, channel, plan, and benchmark content for the three blogs belongs to
+Slice 2.17.2.
 
 ### Slice 2.17.3 target
 
@@ -274,12 +284,15 @@ Top-level app flow:
 2. choose blog project;
 3. enter the existing editorial cabinet for that project.
 
-The first implementation should be restrained:
+The first implementation is restrained:
 
-- topbar project switcher;
-- project dashboard when no project is selected;
-- visible project chips/cards;
-- no complex organization/admin surface.
+- a compact switcher above the current app shell;
+- user and blog project selectors;
+- no complex organization/admin surface;
+- no backend auth guarantee.
+
+The local switcher is a development/demo shell. It proves product isolation before
+real authentication and backend persistence are added.
 
 ### Project dashboard
 

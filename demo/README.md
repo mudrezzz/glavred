@@ -44,11 +44,15 @@ log area, analytics prep area, and the new author memory workspace.
 - Expected output: an approved Telegram research note with a completed visual decision,
   ready for release logging and followed by captured editorial learning.
 
-## Planned Portfolio Benchmark Demo
+## Local Portfolio Shell and Planned Benchmark Demo
 
-The next demo evolution is a SaaS-style portfolio with two users and three independent
-blogs. This is planned work, not current runtime behavior. The architecture contract
-for the portfolio is `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
+The demo now includes a SaaS-style local portfolio shell with two users and three
+independent blog project containers. The architecture contract for the portfolio is
+`docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
+
+Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 will replace
+the placeholder per-project workspace content with realistic benchmark memories,
+editorial models, channels, source examples, and production scenarios.
 
 Target portfolio:
 

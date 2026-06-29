@@ -10,11 +10,17 @@ import { useWorkspacePersistence } from './useWorkspacePersistence';
 
 export function useWorkspaceController() {
   const {
+    accessibleProjects,
+    activeProject,
+    activeUser,
     changeAuthorNotes,
     patchEditorialSetup,
     patchWorkspace,
+    portfolio,
     resetWorkspace,
     runEditorialValidation,
+    selectProject,
+    selectUser,
     setToast,
     setWorkspace,
     toast,
@@ -49,9 +55,13 @@ export function useWorkspaceController() {
   }
 
   return {
+    accessibleProjects,
     active,
+    activeProject,
+    activeUser,
     editorialModelTab,
     memoryTab,
+    portfolio,
     toast,
     workspace,
     ...contextChatController,
@@ -64,6 +74,8 @@ export function useWorkspaceController() {
     patchWorkspace,
     resetDemo,
     runEditorialValidation,
+    selectProject,
+    selectUser,
     setEditorialModelTab,
     setMemoryTab
   };

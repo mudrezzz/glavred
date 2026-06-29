@@ -1843,10 +1843,14 @@ research experience building AI-B2B products:
    Until platform integrations exist, any manual export package remains compatibility
    behavior rather than the conceptual release model.
 
-## Planned Blog Portfolio Benchmark
+## Local Blog Portfolio Shell and Planned Benchmark
 
-The next demo evolution should replace the single implicit workspace with a two-user,
-three-blog portfolio:
+Slice 2.17.1 replaces the single implicit local workspace with a local portfolio
+shell. The app now keeps a `PortfolioState` with active user, active project,
+memberships, and one isolated `WorkspaceState` per blog project. The current editor
+cabinet still runs unchanged inside the selected project.
+
+The local shell seeds two users and three project containers:
 
 - User A owns two independent blogs:
   - `AI Design Patterns`: an English-capable technical/research blog about durable AI
@@ -1860,7 +1864,9 @@ three-blog portfolio:
     methods, and explanations of why Glavred's AI-native editorial approach matters.
     It is the first good candidate for Telegram + Dzen multi-platform adaptation.
 
-The portfolio is not only demo decoration. It should become a benchmark suite:
+Slice 2.17.2 will fill those project containers with realistic author memory,
+editorial models, channels, scenarios, and benchmark expectations. The portfolio is
+not only demo decoration. It should become a benchmark suite:
 
 - project isolation: no memory, learning notes, rules, or drafts leak between blogs;
 - channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen
@@ -1875,7 +1881,8 @@ The portfolio is not only demo decoration. It should become a benchmark suite:
 
 - The current singleton workspace can be wrapped by a local portfolio store:
   `activeUserId`, `activeProjectId`, and `workspacesByProjectId`. That transition
-  should come before real backend auth so project isolation is visible and testable.
+  is implemented locally by `LocalPortfolioStore`; real backend auth should attach to
+  the same boundary instead of reintroducing singleton workspace assumptions.
 - Backend auth and persistence should attach to `UserAccount`, `BlogProject`, and
   `ProjectMembership`, not directly to the old singleton workspace.
 - Publication channels should be modeled before publication adapters. Autoposting

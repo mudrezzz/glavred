@@ -83,8 +83,9 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
-Planned next demo layer: a SaaS-style portfolio where a user can switch between
-independent blogs. The target demo portfolio is:
+Current demo shell: a SaaS-style local portfolio where a user can switch between
+independent blog projects before entering the editorial cabinet. The app currently
+seeds two demo users and three project containers:
 
 - `AI Design Patterns`: a technical/research blog about durable AI design patterns
   and best practices, likely LinkedIn-first and English-capable.
@@ -93,9 +94,11 @@ independent blogs. The target demo portfolio is:
 - `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
   Telegram + Dzen multi-platform adaptation benchmark.
 
-When this layer is implemented, each blog will have its own author memory, editorial
-model, channels, plan, drafts, final decisions, and learning notes. Switching projects
-must not mix memory or learning between blogs.
+Each selected project has its own local workspace state: author memory, editorial
+model, plan, drafts, final decisions, and learning notes are isolated by project.
+The realistic per-blog memories, editorial models, channels, and benchmark scenarios
+will be filled in Slice 2.17.2; Slice 2.17.1 focuses on the local switching shell and
+project isolation.
 
 ## External Sources Local Shell
 
