@@ -83,6 +83,20 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
+Planned next demo layer: a SaaS-style portfolio where a user can switch between
+independent blogs. The target demo portfolio is:
+
+- `AI Design Patterns`: a technical/research blog about durable AI design patterns
+  and best practices, likely LinkedIn-first and English-capable.
+- `Каша из топора`: a Telegram RevOps/Product Marketing blog with strong author
+  stance and irony.
+- `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
+  Telegram + Dzen multi-platform adaptation benchmark.
+
+When this layer is implemented, each blog will have its own author memory, editorial
+model, channels, plan, drafts, final decisions, and learning notes. Switching projects
+must not mix memory or learning between blogs.
+
 ## External Sources Local Shell
 
 External source import is now available as a local-first UI shell inside

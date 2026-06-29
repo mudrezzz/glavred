@@ -41,6 +41,22 @@ The durable model is:
 
 `AuthorMemory -> AuthorPositionModel -> EditorialSystem -> Signals -> ContentProduction -> Release -> Learning`
 
+The next SaaS-ready model wraps that loop in a portfolio boundary:
+
+`UserAccount -> BlogProject -> PublicationChannels -> Project-scoped EditorialSystem -> PlatformVariants -> Learning`
+
+- `UserAccount`: the future authenticated principal. It may own or access several
+  independent blog projects.
+- `BlogProject`: one blog/media system with its own author memory, editorial model,
+  channels, signals, plan, DraftRuns, final decisions, and learning notes. It is the
+  product boundary above the current local `WorkspaceState`.
+- `PublicationChannels`: project-owned publishing destinations such as a Telegram
+  channel, LinkedIn profile/newsletter, Dzen channel, or future blog/site. Channels
+  carry audience, language, role, default size profile, and publishing mode.
+- `PlatformVariants`: per-channel versions of one shared editorial idea. A variant
+  owns its draft, version history, final approval, and publication readiness while
+  preserving the shared source/fabula/thesis context.
+
 - `AuthorMemory`: a lightweight internal feed of thoughts, reactions, links,
   corrections, small local attachments, archive notes, and post-release learning. It
   must allow loose stream-of-consciousness input.
@@ -56,6 +72,10 @@ The durable model is:
 
 The main product risk is generic AI compilation. Glavred avoids it by making the
 author's own position explicit, editable, evidence-backed, and continuously validated.
+
+The next product risk is singleton leakage: memory, learning, channels, and generated
+texts from one blog accidentally influencing another blog. Future SaaS work must treat
+project isolation as a domain invariant, not only as UI filtering.
 
 ## Current Implemented Perimeter
 
@@ -142,8 +162,25 @@ approves editorial artifacts automatically.
 - `AuthorPositionModel`: aggregates memory into transparent rules and assertions about
   persona, style, audience, goals, topics, fabulas, platforms, and formats. Every
   assertion should have evidence.
+- `UserAccount`: future authenticated user identity for SaaS mode. In the local-first
+  transition it can be represented by demo users, but its domain purpose is to own or
+  access blog projects.
+- `BlogProject`: the SaaS/product boundary for one independent blog or media system.
+  It owns a project-scoped workspace: author memory, editorial model, channels,
+  signals, plan, drafts, final decisions, learning notes, and benchmark scenarios.
+- `ProjectMembership`: future link between users and blog projects with owner/member
+  semantics. Team roles can grow here later without polluting project content.
 - `ProjectProfile`: names the virtual publishing project and carries setup status and
   top-level context for the editorial cabinet.
+- `PublicationChannel`: project-owned destination such as Telegram, LinkedIn, Dzen,
+  or future site/blog. A channel is not the same as platform: one project can have
+  several channels on the same platform, and one editorial idea can target several
+  channels.
+- `PublicationGroup`: future wrapper for one shared editorial idea that produces
+  several platform/channel variants.
+- `PlatformVariant`: per-channel draft/final/readiness state for a publication group.
+  It lets Telegram and Dzen versions share a brief and evidence base while carrying
+  separate drafts, version history, size contracts, validation, and release status.
 - `EditorialRules`: stores atomic rules for author, audience, positioning, style,
   anti-AI patterns, goals, and forbidden topics. These are the validator-ready
   successor to large editorial settings textareas.
@@ -1800,8 +1837,49 @@ research experience building AI-B2B products:
    Until platform integrations exist, any manual export package remains compatibility
    behavior rather than the conceptual release model.
 
+## Planned Blog Portfolio Benchmark
+
+The next demo evolution should replace the single implicit workspace with a two-user,
+three-blog portfolio:
+
+- User A owns two independent blogs:
+  - `AI Design Patterns`: an English-capable technical/research blog about durable AI
+    design patterns, best practices, engineering/product lessons, and anti-hype
+    synthesis. Likely primary channel: LinkedIn newsletter/articles, with possible
+    Telegram companion notes.
+  - `Каша из топора`: a Russian Telegram blog with an author's RevOps/Product
+    Marketing philosophy, irony, strong stance, and practical field observations.
+- User B owns one independent blog:
+  - `Блог Главреда`: product philosophy, build-in-public lessons, practical editorial
+    methods, and explanations of why Glavred's AI-native editorial approach matters.
+    It is the first good candidate for Telegram + Dzen multi-platform adaptation.
+
+The portfolio is not only demo decoration. It should become a benchmark suite:
+
+- project isolation: no memory, learning notes, rules, or drafts leak between blogs;
+- channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen
+  variants;
+- author voice: `Каша из топора` should not sound like `AI Design Patterns`;
+- research depth: the technical blog can require deeper evidence than a quick
+  Telegram opinion post;
+- product narrative: `Блог Главреда` should explain the product without sounding like
+  a generic marketing brochure.
+
 ## Extension Points
 
+- The current singleton workspace can be wrapped by a local portfolio store:
+  `activeUserId`, `activeProjectId`, and `workspacesByProjectId`. That transition
+  should come before real backend auth so project isolation is visible and testable.
+- Backend auth and persistence should attach to `UserAccount`, `BlogProject`, and
+  `ProjectMembership`, not directly to the old singleton workspace.
+- Publication channels should be modeled before publication adapters. Autoposting
+  adapters write publication-log entries; they should not define editorial strategy
+  or mutate drafts.
+- Multi-platform generation should start as linked platform-specific variants from
+  one shared editorial idea. In v1, separate DraftRuns per channel are preferable to a
+  hidden monolithic group-run because they keep contracts and traces readable.
+- The demo portfolio can become a benchmark harness: each blog supplies seed memory,
+  editorial model, channels, scenarios, and expected quality criteria.
 - Author memory can ingest notes, links, archive posts, corrections, and analytics
   learning before production artifacts are created.
 - External source import can add candidates to a review queue, but unreviewed material
@@ -1883,6 +1961,14 @@ For backend slices, add:
 
 ## Known Trade-offs
 
+- Local-first project switching can simulate SaaS workflows, but it is not security.
+  Real auth and backend project persistence still need their own slices.
+- Seeding three blogs gives much better benchmark coverage than one demo, but large
+  fixtures can become noisy. Public fixtures should stay concise and sanitized; real
+  private inputs should live in gitignored benchmark packs.
+- Multi-platform variants add real product value, but they increase DraftRun cost and
+  trace volume. The first implementation should keep a shared brief/evidence base and
+  transparent per-channel runs rather than hiding all variants inside one opaque call.
 - The current `EditorialModel` is too coarse for the revised concept. It should be
   migrated carefully into smaller entities without breaking the existing demo flow.
 - Author memory must stay loose enough for stream-of-consciousness input, while the
@@ -1900,6 +1986,13 @@ For backend slices, add:
 
 ## Open Questions
 
+- Which authentication path should be chosen after the local portfolio shell:
+  built-in dev/password auth, managed auth provider, or an adapter boundary that can
+  switch later?
+- Should `AI Design Patterns` start as a LinkedIn newsletter/articles project, a
+  standalone site/blog, or a LinkedIn-first project with Telegram companion notes?
+- Should `Блог Главреда` use Telegram + Dzen as the first multi-platform benchmark,
+  or should LinkedIn be introduced earlier for product/B2B reach?
 - Which author memory event types should be implemented first: raw thoughts,
   link-reactions, radar corrections, archive annotations, or release learning?
 - Should topic/fabula/platform weights initially be advisory only, or should they

@@ -98,6 +98,17 @@ The durable product loop is now:
 
 `Author Memory -> Author Position Model -> Editorial System -> Content Production -> Release -> Learning`
 
+The next product loop extends the local workspace into a SaaS-ready portfolio:
+
+`UserAccount -> BlogProject -> PublicationChannels -> Project-scoped Editorial System -> Platform Variants -> Learning`
+
+`BlogProject` is the key boundary: one independent blog or media system with its own
+author memory, editorial model, sources, plan, DraftRuns, final decisions, and learning
+notes. Authentication, project switching, multi-platform generation, and publication
+adapters should grow around this boundary rather than around the current singleton
+workspace. This direction is captured in ADR
+`docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+
 The existing source-signal workflow remains useful, but it is a production layer, not
 the product center. Source signals, radar findings, archive imports, analytics notes,
 and manual corrections all become material for the author memory.
@@ -136,6 +147,15 @@ Permanent demo example: a Telegram blog by an AI Product Manager who shares rese
 experience building AI-B2B products. The demo starts with author notes about workflow
 risk, evals, trust, adoption, and confidence boundaries, then routes the same example
 through the existing production flow.
+
+Planned demo/benchmark portfolio: two users and three independent blogs:
+
+- `AI Design Patterns`: technical/research blog about AI design patterns and durable
+  best practices, likely LinkedIn-first and English-capable.
+- `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with strong
+  stance, irony, and field observations.
+- `Блог Главреда`: product philosophy and practical editorial methods, with the first
+  planned Telegram + Dzen multi-platform adaptation benchmark.
 
 ## Quick Start
 

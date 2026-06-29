@@ -10,6 +10,31 @@
   boundaries.
 - Default LLM provider target for backend execution: OpenRouter.
 
+## Product Architecture Direction
+
+The next product boundary is a SaaS-ready blog portfolio:
+
+`UserAccount -> BlogProject -> PublicationChannels -> Project-scoped Workspace -> PlatformVariants`
+
+`BlogProject` is the unit of isolation. Author memory, editorial rules, topics,
+fabulas, sources, plans, drafts, final decisions, DraftRun links, and editorial
+learning notes are project-scoped unless a later slice explicitly marks data as
+user-scoped. Do not add new singleton workspace assumptions when implementing auth,
+project switching, publication channels, or benchmark fixtures.
+
+Important architecture rules for upcoming slices:
+
+- local multi-account/project switching comes before full backend auth;
+- backend auth and persistence attach to `UserAccount`, `BlogProject`, and
+  `ProjectMembership`;
+- publication channels are modeled before platform adapters/autoposting;
+- topic/fabula concepts remain reusable, while platform/channel constraints resolve
+  later through plan items, post contracts, and platform variants;
+- the three-blog demo portfolio is also a benchmark surface, so seeded data must stay
+  realistic, isolated, and maintainable.
+
+See ADR `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+
 ## Environment
 
 Copy `.env.example` to `.env` for local development and fill secrets locally. `.env`

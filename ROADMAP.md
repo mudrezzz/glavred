@@ -15,6 +15,15 @@ The durable product loop is:
 
 `Author Memory -> Author Position Model -> Editorial System -> Content Production -> Release -> Learning`
 
+The next product layer turns this loop from a single local workspace into a SaaS-ready
+portfolio:
+
+`UserAccount -> BlogProject -> PublicationChannels -> Project-scoped Editorial System -> Platform Variants -> Learning`
+
+`BlogProject` means one independent blog or media system, not just a technical
+workspace. Author memory, editorial rules, topics, fabulas, sources, plan, drafts,
+final decisions, and learning notes are project-scoped by default.
+
 The already implemented production loop remains valuable as a compatibility layer:
 
 `SourceSignal -> InsightCard -> ContentPlanItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
@@ -51,12 +60,16 @@ Current status:
 
 ## Current Iteration
 
-### Iteration 2: Author Position Operating System
+### Iteration 3: SaaS Blog Portfolio and Multi-Platform Publishing
 
 Goal:
 
-- Re-center Glavred around author memory, author position, structured editorial
-  entities, validators, and context chat before adding real AI drafting.
+- Add the product layer above the current workspace: authorized users, several
+  independent blog projects per user, publication channels, multi-platform variants,
+  and a three-blog benchmark portfolio.
+- Preserve Glavred's core frame as an AI-native editorial office: the system manages
+  author memory, editorial discipline, planning, drafting, validation, release, and
+  learning per blog, not one generic post generator account.
 
 Status:
 
@@ -5429,6 +5442,318 @@ Status:
     the UI.
 - Completed: 2026-06-29
 
+### Slice 2.17.0: SaaS Blog Portfolio Architecture
+
+- Status: Ready
+- Goal: Define the SaaS-ready product boundary around users, independent blog
+  projects, publication channels, and benchmark portfolios before changing runtime
+  state.
+- User value:
+  - The product direction becomes clear: one author can operate several independent
+    media systems without memory, learning, channels, or drafting traces leaking
+    between them.
+  - The three real blog ideas become first-class benchmark targets instead of loose
+    examples.
+- Scope:
+  - Document `UserAccount`, `BlogProject`, `ProjectMembership`,
+    `PublicationChannel`, `PublicationGroup`, and `PlatformVariant` boundaries.
+  - Define which data is user-scoped, project-scoped, and channel-scoped.
+  - Define the target hierarchy:
+    `UserAccount -> BlogProject -> Author Memory / Editorial Model / Publication Channels -> Content Production -> Platform Variants -> Learning`.
+  - Capture the decision in ADR
+    `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+  - Update SAO, README, user/developer/demo docs, and roadmap.
+- Out of scope:
+  - Runtime auth UI.
+  - Backend auth/session implementation.
+  - New storage migration.
+  - Multi-platform DraftRun execution.
+- Implementation notes:
+  - `BlogProject` represents one independent blog/media system, not a platform.
+  - Existing `WorkspaceState` should become project-scoped in later slices.
+  - Do not couple fabulas directly to Telegram, LinkedIn, Dzen, or any other platform;
+    platform constraints resolve in channel/contract layers.
+- Architecture impact:
+  - Establishes the next product boundary above the current local workspace.
+  - Keeps DraftRun pipeline intact while preparing project/channel context.
+- Tests:
+  - Documentation-only slice: run `git diff --check`.
+- Docs:
+  - ROADMAP, SAO, README, developer guide, user guide, demo docs, ADR.
+- Demo impact:
+  - Defines the upcoming two-user / three-blog demo benchmark portfolio.
+- Acceptance criteria:
+  - Docs explain why SaaS starts with `BlogProject`, not autoposting.
+  - Next implementation slice is clearly `2.17.1`.
+  - Three target blogs and benchmark use are recorded.
+- Risks:
+  - If this layer is skipped, later auth and platform work may hard-code singleton
+    workspace assumptions.
+
+### Slice 2.17.1: Local Multi-Account and Blog Project Switcher
+
+- Status: Backlog
+- Goal: Add a local-first SaaS shell with demo users and project switching while
+  keeping the current editorial workspace intact inside one selected project.
+- User value:
+  - The app starts to feel like SaaS: the user selects an account and then a blog
+    project.
+  - One user can have two independent blogs, and another user can have one blog.
+- Scope:
+  - Add local `UserAccount`, `BlogProject`, and `ProjectMembership` domain contracts.
+  - Add `activeUserId`, `activeProjectId`, and `workspacesByProjectId` storage shape.
+  - Migrate the current singleton workspace into the first selected project.
+  - Add project switcher UI above the current app shell.
+  - Keep all existing sections project-scoped by selected project.
+- Out of scope:
+  - Real authentication/security.
+  - Backend persistence.
+  - Team roles beyond demo owner/member metadata.
+  - Multi-platform variants.
+- Implementation notes:
+  - This is a local SaaS simulation, not an auth guarantee.
+  - Keep old workspace normalization compatible.
+- Architecture impact:
+  - `LocalWorkspaceStore` becomes a portfolio store while preserving
+    project-scoped `WorkspaceState`.
+- Tests:
+  - Storage migration tests.
+  - UI app-flow tests for switching users/projects.
+  - Regression: `npm test -- --run`, `npm run smoke`, `npm run test:architecture`.
+- Docs:
+  - README, user guide, developer guide, demo docs, roadmap.
+- Demo impact:
+  - Demo opens with user/project choices instead of one implicit workspace.
+- Acceptance criteria:
+  - Switching projects does not leak notes, drafts, learning notes, or plan state.
+  - Existing single-workspace reset remains backward compatible.
+- Risks:
+  - Project shell can become heavy; keep it a thin wrapper around existing workspace.
+
+### Slice 2.17.2: Three-Blog Benchmark Demo Portfolio
+
+- Status: Backlog
+- Goal: Seed two users and three realistic blog projects as demo and benchmark data.
+- User value:
+  - The app demonstrates real variation: different author memory, editorial models,
+    platforms, languages, research depth, and quality criteria.
+  - The same pipeline can be judged against more than one content style.
+- Scope:
+  - Add demo user A with two independent blogs:
+    - `AI Design Patterns`;
+    - `Каша из топора`.
+  - Add demo user B with one blog:
+    - `Блог Главреда`.
+  - Seed each blog with project profile, author memory, editorial rules, topics,
+    fabulas, publication channels, source/radar examples, plan slots, and at least one
+    benchmark scenario.
+  - Define per-blog benchmark expectations:
+    - `AI Design Patterns`: research-heavy, English-capable, pattern catalog,
+      anti-hype, external evidence.
+    - `Каша из топора`: Telegram-native author voice, RevOps/Product Marketing,
+      irony, strong stance, not consulting memo.
+    - `Блог Главреда`: product philosophy, practical cases, build-in-public,
+      multi-platform Telegram/Dzen adaptation.
+- Out of scope:
+  - Live ingestion from real channels.
+  - Private user materials committed to Git.
+  - Automated benchmark runner.
+- Implementation notes:
+  - Public repository fixtures must stay sanitized.
+  - Real private inputs can later live in a gitignored benchmark pack.
+- Architecture impact:
+  - Turns demo data into benchmarkable portfolio fixtures.
+- Tests:
+  - Demo fixture tests for project isolation and seeded data completeness.
+  - UI smoke for project switcher and per-blog landing context.
+- Docs:
+  - Demo README, user guide, roadmap.
+- Demo impact:
+  - The old AI Product Manager demo becomes one benchmark-like project or is migrated
+    into the new portfolio.
+- Acceptance criteria:
+  - After reset, all three blogs are visible and distinct.
+  - Each blog has enough memory/editorial data to run the existing production flow.
+- Risks:
+  - Demo data can become too large; keep each blog representative, not exhaustive.
+
+### Slice 2.17.3: Backend Auth and Project Persistence Boundary
+
+- Status: Backlog
+- Goal: Introduce the first real backend boundary for users, sessions, projects, and
+  project-scoped workspace persistence.
+- User value:
+  - The SaaS shell stops being only local demo state and can evolve toward real
+    accounts.
+- Scope:
+  - Add backend contracts for users, sessions, projects, memberships, and workspace
+    snapshots.
+  - Add thin FastAPI routes and application services.
+  - Add dev-safe auth mode suitable for local testing.
+  - Keep frontend local-first fallback until backend persistence is explicitly enabled.
+- Out of scope:
+  - Full production auth provider selection.
+  - Billing, organizations, invites, SSO.
+  - DraftRun schema changes unless required to link runs to projects.
+- Implementation notes:
+  - Backend routes remain thin; project persistence is an application service.
+  - Do not persist secrets or `.env` values.
+- Architecture impact:
+  - Starts moving project state behind backend without rewriting DraftRun.
+- Tests:
+  - Backend API tests, frontend integration tests, architecture smoke.
+- Docs:
+  - Developer setup, env docs, SAO, ADR if auth provider is chosen.
+- Demo impact:
+  - Demo can run in local-only or backend-backed project mode.
+- Acceptance criteria:
+  - A project can be loaded/saved through backend in dev mode.
+  - Project isolation survives backend round-trip.
+- Risks:
+  - Auth can sprawl; keep v1 deliberately narrow.
+
+### Slice 2.17.4: Publication Channels and Platform Profiles
+
+- Status: Backlog
+- Goal: Model actual publishing destinations as project-owned channels before
+  generating or publishing multi-platform variants.
+- User value:
+  - A blog can explicitly say where it publishes and why: Telegram, LinkedIn, Dzen,
+    or another platform.
+- Scope:
+  - Add `PublicationChannel` domain contract with platform, title, URL/handle,
+    language, audience, role, publishing mode, and default size profile.
+  - Move content plan platform choices toward channel ids.
+  - Add channel settings UI in the project/editorial model area.
+  - Keep manual/export behavior; no platform API integration yet.
+- Out of scope:
+  - Autoposting.
+  - OAuth/API credentials.
+  - Multi-target DraftRun.
+- Implementation notes:
+  - Channel is not the same as platform: one project can have multiple channels on one
+    platform.
+- Architecture impact:
+  - Separates channel setup from plan slots and DraftRun contracts.
+- Tests:
+  - Domain normalization, UI channel CRUD, planning compatibility.
+- Docs:
+  - User/developer/demo docs.
+- Demo impact:
+  - Seed AI Design Patterns with LinkedIn-oriented channel candidates; seed
+    `Каша из топора` with Telegram; seed `Блог Главреда` with Telegram + Dzen.
+- Acceptance criteria:
+  - Plan slots can reference project channels without breaking legacy platform fields.
+- Risks:
+  - Channel settings can duplicate publication-size settings; keep size contract
+    resolver as the downstream owner.
+
+### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+
+- Status: Backlog
+- Goal: Let one editorial idea target multiple publication channels while keeping a
+  shared fabula/brief and separate platform variants.
+- User value:
+  - The author can plan one post for Telegram + Dzen, or LinkedIn article + Telegram
+    companion, without duplicating the whole work item manually.
+- Scope:
+  - Add `targetChannelIds` or equivalent target group on plan/work items.
+  - Add `PublicationGroup` for one shared editorial idea.
+  - Add per-channel `PlatformVariant` state under the selected work item.
+  - Update workbench UX with tabs/segmented controls:
+    `Общий замысел`, then one tab per channel variant.
+- Out of scope:
+  - Running multi-platform DraftRun.
+  - Real publication adapters.
+  - Cross-platform analytics.
+- Implementation notes:
+  - Shared brief remains the source of intent; platform variants own their draft,
+    version history, final approval, and readiness.
+- Architecture impact:
+  - Adds platform-variant state without changing author memory or topic/fabula reuse.
+- Tests:
+  - Domain tests for target groups and variant isolation.
+  - UI tests for channel tabs and final selection per variant.
+- Docs:
+  - User guide, SAO, roadmap.
+- Demo impact:
+  - `Блог Главреда` can show a Telegram + Dzen work item.
+- Acceptance criteria:
+  - One work item can hold at least two channel variants without overwriting drafts.
+- Risks:
+  - UI complexity; keep v1 focused on one selected work item.
+
+### Slice 2.17.6: Multi-Platform DraftRun Contract v1
+
+- Status: Backlog
+- Goal: Generate platform-specific variants from one shared editorial idea using
+  explicit contracts rather than one generic text.
+- User value:
+  - A Telegram post and a Dzen article can share evidence/thesis but differ in length,
+    structure, voice density, CTA, and examples.
+- Scope:
+  - Build shared context/evidence once where practical.
+  - Resolve separate `PostContract` and publication-size contract per target channel.
+  - Run one DraftRun per platform variant in v1, linked by `PublicationGroupId`.
+  - Show trace links per variant.
+- Out of scope:
+  - A monolithic group-run orchestrator.
+  - Autoposting.
+  - Platform API credentials.
+- Implementation notes:
+  - Prefer transparent separate runs first; optimize shared orchestration later.
+  - Keep planned source/evidence work reusable across variant contracts.
+- Architecture impact:
+  - Extends DraftRun context with project/channel/variant identity while preserving
+    current step order.
+- Tests:
+  - Backend/frontend contract tests for variant-specific context.
+  - Smoke run for two variants from one shared work item.
+- Docs:
+  - DraftRun AS IS map and PDF must be updated when implemented.
+- Demo impact:
+  - `Блог Главреда` becomes the first multi-platform benchmark.
+- Acceptance criteria:
+  - Two channel variants can be generated, traced, approved, and learned from
+    independently.
+- Risks:
+  - Cost and runtime increase; use budget modes and smoke mode for diagnostics.
+
+### Slice 2.17.7: Blog Portfolio Benchmark Runner
+
+- Status: Backlog
+- Goal: Turn the three-blog demo portfolio into a repeatable benchmark for pipeline
+  quality and regression diagnosis.
+- User value:
+  - Changes to models, prompts, retrieval, validation, revision, and platform
+    adaptation can be judged against multiple real editorial systems.
+- Scope:
+  - Add benchmark scenario definitions per blog.
+  - Add a runner that can execute selected scenarios in smoke/standard/full mode.
+  - Produce a report covering project isolation, channel adaptation, author voice,
+    source use, final quality gate status, HITL readiness, and learning-note output.
+  - Keep private benchmark inputs gitignored.
+- Out of scope:
+  - Automatic approval of quality.
+  - Full analytics ingestion.
+  - Publishing to platforms.
+- Implementation notes:
+  - The benchmark should say "good enough to continue" vs "repair slice needed" using
+    roadmap-aware diagnostics.
+- Architecture impact:
+  - Converts demo portfolio into a product-quality test harness.
+- Tests:
+  - Runner unit tests, smoke benchmark tests, docs for private fixtures.
+- Docs:
+  - Developer guide, demo README, diagnostics skill notes.
+- Demo impact:
+  - Demo portfolio becomes both visible product sample and repeatable quality suite.
+- Acceptance criteria:
+  - At least one scenario per blog can be run and summarized.
+  - Reports distinguish expected future gaps from unexpected regressions.
+- Risks:
+  - Benchmark can become expensive; v1 must support smoke mode.
+
 ### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
 
 - Status: Backlog
@@ -5635,8 +5960,14 @@ Status:
 - What is the minimum useful archive import for uniqueness, source signals, and
   author-position evidence?
 - Which hosted deployment target should be used after local-first development?
+- Should the first production auth implementation use a built-in dev/password mode,
+  a managed provider, or a staged adapter boundary with local SaaS shell first?
+- Which platform should be primary for `AI Design Patterns`: LinkedIn newsletter,
+  LinkedIn articles, a standalone blog, or a Telegram companion channel?
+- For `Блог Главреда`, should Telegram + Dzen be the first multi-platform benchmark,
+  or should LinkedIn be added earlier for B2B/product-market reach?
 
 ## Next Recommended Task
 
-Continue with the future rule-promotion backlog:
-`Future Slice: Rule Promotion from Accepted Editorial Learning Notes`.
+Start the SaaS/blog portfolio foundation:
+`Slice 2.17.0: SaaS Blog Portfolio Architecture`.

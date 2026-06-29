@@ -44,6 +44,38 @@ log area, analytics prep area, and the new author memory workspace.
 - Expected output: an approved Telegram research note with a completed visual decision,
   ready for release logging and followed by captured editorial learning.
 
+## Planned Portfolio Benchmark Demo
+
+The next demo evolution is a SaaS-style portfolio with two users and three independent
+blogs. This is planned work, not current runtime behavior.
+
+Target portfolio:
+
+- User A:
+  - `AI Design Patterns`: technical/research blog about durable AI design patterns,
+    best practices, engineering/product lessons, and anti-hype synthesis. It should
+    be English-capable and likely LinkedIn-first, with possible Telegram companion
+    notes.
+  - `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with
+    strong stance, irony, and practical field observations.
+- User B:
+  - `Блог Главреда`: product philosophy, build-in-public notes, practical editorial
+    methods, and explanations of the product's AI-native editorial approach. This is
+    the planned first Telegram + Dzen multi-platform benchmark.
+
+The portfolio should become both visible demo data and a quality benchmark:
+
+- project isolation: one blog's author memory and learning notes must not affect
+  another blog;
+- channel adaptation: one editorial idea can produce different Telegram, LinkedIn,
+  or Dzen variants;
+- voice preservation: the RevOps blog should not sound like the technical AI patterns
+  blog;
+- research depth: the technical blog can require more public evidence than a quick
+  Telegram opinion post;
+- product narrative: the Glavred blog should explain product philosophy without
+  sounding like a generic marketing brochure.
+
 ## Seeded Author Memory
 
 The demo starts with six notes:
@@ -399,9 +431,15 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-Validator indicators for topics, fabulas, author position, and production artifacts are
-the next product layer after the structured editorial model.
+The next demo step is the SaaS-style blog portfolio benchmark:
 
-Real provider-backed drafts now exist through the local backend/OpenRouter path.
-Platform metrics, publication automation, backend workspace sync, real attachment
-parsing, and broader AI analysis remain later steps.
+1. Add a local user/project switcher.
+2. Seed two users and three independent blogs.
+3. Give each blog its own author memory, editorial model, publication channels, and
+   benchmark scenarios.
+4. Use the portfolio to test project isolation, author voice preservation, research
+   depth, and multi-platform adaptation.
+
+Real provider-backed drafts already exist through the local backend/OpenRouter path.
+Backend auth, publication automation, platform metrics, real attachment parsing, and
+broader AI analysis remain later steps.
