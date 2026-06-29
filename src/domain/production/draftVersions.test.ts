@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PostDraft } from './types';
+import type { HumanCommentRevisionQualityCheck, PostDraft } from './types';
 import {
   addHumanCommentRevisionVersion,
   approveFinalText,
@@ -31,7 +31,8 @@ describe('draft version transitions', () => {
       body: 'Human body',
       editorComment: 'Make it sharper',
       revisionSummary: 'Strengthened the opening.',
-      aiRunId: 'ai-human-1'
+      aiRunId: 'ai-human-1',
+      qualityCheck: makeQualityCheck('warning')
     });
     const edited = reviseDraft(draft, 'Manual body');
 
@@ -44,7 +45,8 @@ describe('draft version transitions', () => {
     expect(edited.versions?.[1]).toMatchObject({
       baseVersionId: 'draft-1-v1',
       editorComment: 'Make it sharper',
-      aiRunId: 'ai-human-1'
+      aiRunId: 'ai-human-1',
+      qualityCheck: expect.objectContaining({ status: 'warning' })
     });
     expect(edited.body).toBe('Manual body');
   });
@@ -109,5 +111,20 @@ function makeDraft(): PostDraft {
       fallbackUsed: false,
       createdAt: '2026-06-28T00:00:00.000Z'
     }
+  };
+}
+
+function makeQualityCheck(status: 'passed' | 'warning' | 'critical' | 'notRun'): HumanCommentRevisionQualityCheck {
+  return {
+    status,
+    commentComplianceStatus: status,
+    sourceIntegrityStatus: 'passed',
+    publicProseStatus: 'passed',
+    internalJargonLeaks: [],
+    regressionWarnings: [],
+    matchedCommentIntents: ['author stance'],
+    missedCommentIntents: [],
+    summary: 'Quality check summary.',
+    attempts: []
   };
 }

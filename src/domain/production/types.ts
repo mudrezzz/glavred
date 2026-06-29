@@ -12,6 +12,7 @@ export type VisualMode = 'generate' | 'memeSearch' | 'memeRemix' | 'noVisual';
 export type DraftGenerationSource = 'draftRun' | 'openrouter' | 'backendFallback' | 'localFallback';
 export type DraftVersionSource = 'machineFinal' | 'humanCommentRevision' | 'manualEdit';
 export type EditorDecisionTraceStatus = 'available' | 'unavailable';
+export type HumanCommentRevisionQualityStatus = 'passed' | 'warning' | 'critical' | 'notRun';
 
 export interface DraftGenerationTrace {
   source: DraftGenerationSource;
@@ -92,7 +93,21 @@ export interface DraftVersion {
   revisionSummary?: string;
   draftRunId?: string | null;
   aiRunId?: string | null;
+  qualityCheck?: HumanCommentRevisionQualityCheck;
   createdAt: string;
+}
+
+export interface HumanCommentRevisionQualityCheck {
+  status: HumanCommentRevisionQualityStatus;
+  commentComplianceStatus: HumanCommentRevisionQualityStatus;
+  sourceIntegrityStatus: HumanCommentRevisionQualityStatus;
+  publicProseStatus: HumanCommentRevisionQualityStatus;
+  internalJargonLeaks: string[];
+  regressionWarnings: string[];
+  matchedCommentIntents: string[];
+  missedCommentIntents: string[];
+  summary: string;
+  attempts: Array<Record<string, unknown>>;
 }
 
 export interface EditorDecisionMachineTraceSummary {

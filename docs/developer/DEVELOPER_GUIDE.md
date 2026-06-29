@@ -290,6 +290,9 @@ Current backend files:
 - `backend/app/application/draft_human_comment_revision_service.py`: post-run
   writer-role revision from active draft version plus editor comment and compact
   machine trace context.
+- `backend/app/application/draft_human_comment_quality_service.py`: post-run
+  review-role diagnostic check for comment compliance, source-marker preservation,
+  public-prose regression, internal jargon leaks, and attempt trace.
 - `backend/app/application/deterministic_draft_service.py`: deterministic backend
   fallback draft generation.
 - `backend/app/application/draft_run_service.py`: durable run creation and dispatch
@@ -1428,9 +1431,14 @@ The next artifacts must make candidate validation meaningful:
   `source=machineFinal`). Human comment revisions are post-run editor actions through
   `POST /api/drafts/revise-with-comment`, not new DraftRuns and not new
   `DraftRunStepKey`s. The endpoint uses the writer role and existing JSON retry
-  discipline with compact machine trace context from the parent DraftRun. Manual edits
-  and successful comment revisions create new immutable `DraftVersion` records; old
-  versions must not be mutated. Approving final text creates
+  discipline with compact machine trace context from the parent DraftRun. After a
+  successful writer revision, the endpoint runs a review-role
+  `HumanCommentRevisionQualityCheck` through the same JSON retry discipline. This
+  check is diagnostic: it records comment compliance, missed intents, source-marker
+  regressions, public-prose status, internal jargon leaks, and attempts, but it never
+  cancels a successfully created version. Manual edits and successful comment
+  revisions create new immutable `DraftVersion` records; old versions must not be
+  mutated. Approving final text creates
   `FinalText.editorDecisionSnapshot` with selected version, human comments/manual
   edit counts, machine trace availability, final-gate/revision/alternative-angle
   summaries, validation summary, and unresolved risks. Learning signals from those

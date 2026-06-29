@@ -45,6 +45,7 @@ class DraftCommentRevisionResponse(BaseModel):
     ai_run_id: str | None = Field(serialization_alias="aiRunId")
     selected_model: str | None = Field(serialization_alias="selectedModel")
     attempts: list[dict[str, Any]]
+    quality_check: dict[str, Any] = Field(serialization_alias="qualityCheck")
 
     model_config = {"populate_by_name": True}
 
@@ -83,4 +84,5 @@ def revise_with_comment(
         ai_run_id=result.ai_run_id,
         selected_model=result.selected_model,
         attempts=result.attempts,
+        quality_check=result.quality_check,
     )

@@ -5287,6 +5287,45 @@ Status:
     acceptance, and calibrated final-gate attribution handoff.
 - Completed: 2026-06-28
 
+### Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace
+
+- Status: Done
+- Goal: Add a diagnostic quality layer for every human-comment revision created
+  after the machine `finalDraft`.
+- User value:
+  - The editor can see whether a new `v2/v3/...` actually followed the comment.
+  - The editor can see risks such as lost source markers, internal pipeline jargon,
+    public-prose regression, or missed comment intent before choosing a version as
+    final.
+  - A warning does not block the HITL loop; it makes the trade-off visible.
+- Scope:
+  - Extend `POST /api/drafts/revise-with-comment` so a successful writer revision is
+    followed by a lightweight review-role quality check.
+  - Use existing JSON retry discipline for the check: primary, repair, optional backup,
+    then `notRun` if no usable result is available.
+  - Add `HumanCommentRevisionQualityCheck` with status, comment compliance, source
+    integrity, public prose status, internal jargon leaks, regression warnings,
+    matched/missed comment intents, summary, and attempts.
+  - Store `qualityCheck` on `DraftVersion` for `source=humanCommentRevision`.
+  - Show compact version quality status in the draft version list and readable
+    quality summary for the active version.
+  - Keep quality check diagnostic only: failed/unavailable review does not cancel a
+    successfully created version, and warning/critical versions can still be selected
+    as final.
+- Out of scope:
+  - Learning-signal aggregation and rule-improvement queue; remains 2.16.1.
+  - Blocking human revisions or automatically choosing the best human version.
+  - New DraftRun steps, SQLite migration, or turning human revisions into DraftRuns.
+- Tests:
+  - Backend endpoint returns `qualityCheck` on successful human revision.
+  - Malformed/unavailable review returns a created revision with `qualityCheck.notRun`.
+  - Regression overlay detects missed source markers and internal jargon leaks.
+  - Frontend stores quality metadata on versions and renders warning/pass/unavailable
+    status without blocking final selection.
+- Docs:
+  - Updated README, developer guide, user guide, demo docs, AS IS pipeline map, and PDF.
+- Completed: 2026-06-29
+
 ### Slice 2.16.1: Editor Learning Signals and Rule Improvement Queue
 
 - Status: Ready

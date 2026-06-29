@@ -4,6 +4,7 @@ from typing import Any, Protocol
 
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
+from backend.app.application.draft_human_comment_quality_service import DraftHumanCommentQualityService
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -41,6 +42,7 @@ class HumanCommentRevisionResult:
     ai_run_id: str | None
     selected_model: str | None
     attempts: list[dict[str, Any]]
+    quality_check: dict[str, Any]
 
 
 class HumanCommentRevisionUnavailable(RuntimeError):
@@ -58,12 +60,14 @@ class DraftHumanCommentRevisionService:
         openrouter_validator: OpenRouterConfigValidator,
         openrouter_adapter: OpenRouterJsonStepAdapter,
         draft_run_repository: DraftRunLookup,
+        quality_service: DraftHumanCommentQualityService,
     ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._draft_run_repository = draft_run_repository
+        self._quality_service = quality_service
 
     def revise(
         self,
@@ -100,13 +104,26 @@ class DraftHumanCommentRevisionService:
             attempts.append(result["attempt"])
             if result["accepted"]:
                 payload = result["payload"]
+                revised_version = {
+                    "id": current_version.get("id"),
+                    "versionNumber": current_version.get("versionNumber"),
+                    "title": str(payload.get("title") or "").strip(),
+                    "body": str(payload.get("body") or "").strip(),
+                }
+                quality_check = self._quality_service.check(
+                    base_version=current_version,
+                    revised_version=revised_version,
+                    editor_comment=comment,
+                    trace_context=trace_context,
+                )
                 return HumanCommentRevisionResult(
-                    title=str(payload.get("title") or "").strip(),
-                    body=str(payload.get("body") or "").strip(),
+                    title=revised_version["title"],
+                    body=revised_version["body"],
                     revision_summary=str(payload.get("revisionSummary") or "").strip(),
                     ai_run_id=result["attempt"].get("aiRunId"),
                     selected_model=result["attempt"].get("selectedModel"),
                     attempts=attempts,
+                    quality_check=quality_check.to_payload(),
                 )
             repair_context = {
                 "previousAttempt": result["attempt"],

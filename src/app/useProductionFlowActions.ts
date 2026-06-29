@@ -110,7 +110,8 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
           body: revision.body,
           editorComment,
           revisionSummary: revision.revisionSummary,
-          aiRunId: revision.aiRunId
+          aiRunId: revision.aiRunId,
+          qualityCheck: revision.qualityCheck
         }),
         'Новая версия создана по комментарию редактора'
       );

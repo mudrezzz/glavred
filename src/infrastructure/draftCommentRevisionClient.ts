@@ -1,4 +1,4 @@
-import type { PostDraft } from '../domain/editorialWorkspace';
+import type { HumanCommentRevisionQualityCheck, PostDraft } from '../domain/editorialWorkspace';
 
 export type DraftCommentRevisionResponse = {
   title: string;
@@ -7,6 +7,7 @@ export type DraftCommentRevisionResponse = {
   aiRunId: string | null;
   selectedModel: string | null;
   attempts: Array<Record<string, unknown>>;
+  qualityCheck: HumanCommentRevisionQualityCheck;
 };
 
 type FetchRevision = typeof fetch;

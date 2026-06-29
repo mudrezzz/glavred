@@ -3871,6 +3871,58 @@ select:focus {
   font: var(--mono-sm);
 }
 
+.draft-version-quality {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-700);
+}
+
+.draft-version-quality.ok {
+  border-color: var(--ok-tint);
+}
+
+.draft-version-quality.warning {
+  border-color: var(--warn-tint);
+}
+
+.draft-version-quality.muted {
+  color: var(--ink-500);
+}
+
+.draft-version-quality b {
+  color: var(--ink-900);
+  font: var(--ui-sm);
+}
+
+.draft-version-quality span,
+.draft-version-quality li {
+  font: var(--ui-sm);
+}
+
+.draft-version-quality-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.draft-version-quality-grid span {
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-sunk);
+  color: var(--ink-600);
+  font: var(--mono-sm);
+}
+
+.draft-version-quality ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
 .draft-editor .k {
   color: var(--ink-500);
   font: var(--mono-sm);

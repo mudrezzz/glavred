@@ -22,6 +22,7 @@ import {
   upsertEditorialWorkItem,
   type ContentPlanItem,
   type EditorDecisionMachineTraceSummary,
+  type HumanCommentRevisionQualityCheck,
   type PostBriefEditPatch,
   type PostVisualEditPatch,
   type PostCandidate,
@@ -271,6 +272,7 @@ export function buildAddHumanCommentRevisionPatch(
     editorComment: string;
     revisionSummary?: string;
     aiRunId?: string | null;
+    qualityCheck?: HumanCommentRevisionQualityCheck;
   }
 ): Partial<WorkspaceState> {
   if (!workspace.postDraft || !workspace.postBrief) return {};

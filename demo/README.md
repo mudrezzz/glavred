@@ -343,7 +343,10 @@ repository. Create the first temporary Wiki page in the web UI once, then run
 29. In `Драфт`, inspect the version list. The machine draft is `v1`. To test the
     human loop, add a comment such as `Сделай вывод жестче и убери лишнюю
     канцелярщину`, then click `Улучшить по комментарию`; a successful writer-role
-    revision creates `v2` without mutating `v1`. Manual textarea edits must be saved
+    revision creates `v2` without mutating `v1`. The version card shows the diagnostic
+    quality-check status for the comment revision; open the active version summary to
+    inspect matched or missed comment intent, source-marker regression, public-prose
+    risks, and any internal jargon leaks. Manual textarea edits must be saved
     with `Сохранить как новую версию`, which creates a separate `manualEdit` version.
 30. Select the version you want to approve, including `v1` if it is still better than
     later revisions, then click `Сделать финальной` in `Драфт`. The final text stores

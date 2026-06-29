@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot.
+Current as of Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -36,6 +36,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
+| `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
 | `EditorDecisionSnapshot` | Human final-selection record linking the chosen version to machine trace summaries, unresolved risks, comments, and manual edit counts. | local workspace `finalText.editorDecisionSnapshot` |
 
 ## 2. Runtime topology
@@ -61,7 +62,8 @@ sequenceDiagram
   UI->>UI: store finalDraft as local v1
   UI->>API: optional POST /api/drafts/revise-with-comment
   API->>OR: writer-role human-comment revision JSON call
-  API-->>UI: revised title/body + child AiRun id
+  API->>OR: review-role comment-compliance quality check
+  API-->>UI: revised title/body + child AiRun id + qualityCheck
   UI->>UI: store v2/v3/... and final version decision
 ```
 
@@ -128,6 +130,7 @@ Role-aware execution map:
 | `validation` final quality gate | `finalGate`, then optional `writer` | `DRAFT_FINAL_GATE_MODEL`, or independent critic/review/default fallback; `DRAFT_WRITER_MODEL` for bounded final repair cycles | delivered final candidate, `FinalQualityContract`, validation reports, critique, evidence interpretation, ledger, contract, rule registry, material plan | accepted public draft or rejected repair trace |
 | `complete` | none | no model | final DraftRun state | frontend |
 | post-run human comment revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed if no usable JSON | selected `DraftVersion`, editor comment, compact machine trace context from final quality gate, revision loop, alternative angle, validation, contract/material evidence | new local `DraftVersion`; not a new DraftRun |
+| post-run human revision quality check | `review` | `DRAFT_REVIEW_MODEL`, then default, repair, backup, `notRun` if no usable JSON | base version, revised version, editor comment, compact machine trace context, source markers and public-prose constraints | `DraftVersion.qualityCheck`; child `AiRun`, not a DraftRun step |
 
 Practical reading rule: when a step says `Role/model handoff: strategy`, it does
 not mean that the strategy model talks directly to the writer model. It means the
@@ -701,6 +704,12 @@ Behavior:
   `POST /api/drafts/revise-with-comment`;
 - that endpoint is not a new DraftRun. It is a post-run writer-role JSON call with
   child `AiRun` audit and existing JSON retry discipline;
+- after a successful writer revision, the endpoint runs a lightweight `review` role
+  quality check. It evaluates whether the revised version followed the editor
+  comment, preserved visible source markers from the base version, avoided internal
+  pipeline jargon, and did not regress as public prose;
+- quality check failure or provider unavailability does not cancel the created
+  version. The version receives `qualityCheck.status = notRun` with attempt metadata;
 - provider failure does not create a fake version;
 - the editor can mark any saved version as final, including `v1` after later
   versions exist.
@@ -711,7 +720,9 @@ Output:
 - compatibility mirror fields `PostDraft.title/body/version` always reflect the
   active version;
 - `FinalText.draftVersionId`, `FinalText.versionNumber`, and
-  `FinalText.editorDecisionSnapshot`.
+  `FinalText.editorDecisionSnapshot`;
+- `DraftVersion.qualityCheck` for human-comment revisions when the review ran or
+  explicitly could not run.
 
 Role/model handoff:
 
@@ -719,6 +730,9 @@ Role/model handoff:
 - it receives a compact machine context, not raw DraftRun JSON;
 - it must preserve source markers, allowed claims, forbidden moves, and final
   quality constraints.
+- post-run human revision quality check uses the `review` role;
+- it is diagnostic: it can mark the version as passed, warning, critical, or not-run,
+  but it cannot block saving or final approval.
 
 ## 5. Role model usage and handoff AS IS
 
@@ -740,7 +754,8 @@ flowchart TD
   J --> K[complete stores finalDraft or blocked result]
   K --> L[editor stores v1 and may request comment revisions]
   L --> M[writer creates v2, v3, ... when requested]
-  M --> N[editor selects any version as final]
+  M --> M2[review checks comment compliance and regressions]
+  M2 --> N[editor selects any version as final]
 ```
 
 Role summary:
@@ -754,6 +769,7 @@ Role summary:
 | `critic` | report-only editorial critique | critic context pack, evidence interpretation, candidates, validation context | rewrite prose or change final selection |
 | `anotherAngle` | one critic-driven challenger route | another-angle context pack, initial validation, editorial critique, rejected/weak moves | act as technical backup or invent new evidence |
 | `writer` post-run | human-comment revision of one saved version | active draft version, editor comment, compact machine trace context | mutate prior versions or fabricate a successful revision after provider failure |
+| `review` post-run | comment-compliance quality check for human-comment revisions | base version, revised version, editor comment, compact machine trace context | block saving a successful revision or turn warnings into learning signals automatically |
 
 ## 6. Context flow
 
@@ -807,6 +823,7 @@ Important AS IS rules:
 | `ArticleDossier` | article memory service | context pack builder, trace | selected step artifacts |
 | `ContextPack` | article memory service | child LLM services | step artifacts and child `AiRun.requestPayload` |
 | `DraftVersion` | frontend/editor actions | editor version list, final selection | local workspace `postDraft.versions[]` |
+| `HumanCommentRevisionQualityCheck` | post-run revise-with-comment endpoint | editor version list, final selection, future learning slice | local workspace `postDraft.versions[].qualityCheck`, child `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` |
 | `EditorDecisionSnapshot` | final text approval | future learning slice, audit/debug | local workspace `finalText.editorDecisionSnapshot` |
 
 ## 8. Retry, fallback, and blocked behavior
@@ -827,6 +844,7 @@ Important AS IS rules:
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | unresolved attribution requirement | record diagnostic metadata; not a repair goal unless it resolves to expected source markers that are missing from the final body |
 | human-comment revision provider failure | no new version is created; UI keeps the current version list and shows a safe error |
+| human revision quality-check failure | created version is kept; `qualityCheck.status=notRun` records attempts and safe reason |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
 | feasibility blocked | run succeeds with `finalDraft = null`; no local fallback |
@@ -870,6 +888,11 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     `finalText.editorDecisionSnapshot` to see which version the human selected,
     which comments created new versions, and whether machine trace context was
     available when the final text was approved.
+21. post-run quality check: for human-comment revisions, inspect
+    `postDraft.versions[].qualityCheck` and child
+    `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` to confirm
+    matched/missed comment intents, source-marker preservation, public-prose status,
+    internal jargon leaks, and review attempts.
 
 ## 10. Known AS IS limitations
 

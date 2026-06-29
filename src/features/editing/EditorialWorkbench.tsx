@@ -302,6 +302,7 @@ function DraftEditor({
         versions={versions}
         onSelect={onSelectDraftVersion}
       />
+      <DraftVersionQualitySummary version={activeVersion} />
       <label className="draft-editor">
         <span className="k">Текст</span>
         <textarea
@@ -363,9 +364,41 @@ function DraftVersionList({
           onClick={() => onSelect(version.id)}
         >
           <span>v{version.versionNumber}</span>
-          <small>{versionSourceLabel(version.source)}{version.id === finalVersionId ? ' · финал' : ''}</small>
+          <small>
+            {versionSourceLabel(version.source)}
+            {version.qualityCheck ? ` · ${qualityStatusLabel(version.qualityCheck.status)}` : ''}
+            {version.id === finalVersionId ? ' · финал' : ''}
+          </small>
         </button>
       ))}
+    </div>
+  );
+}
+
+function DraftVersionQualitySummary({ version }: { version: DraftVersion }) {
+  const quality = version.qualityCheck;
+  if (!quality) return null;
+
+  const details = [
+    ...quality.missedCommentIntents.map((intent) => `Не закрыто: ${intent}`),
+    ...quality.regressionWarnings,
+    ...quality.internalJargonLeaks.map((term) => `Внутренний термин в тексте: ${term}`)
+  ].slice(0, 5);
+
+  return (
+    <div className={`draft-version-quality ${quality.status === 'passed' ? 'ok' : quality.status === 'notRun' ? 'muted' : 'warning'}`}>
+      <b>{qualityStatusLabel(quality.status)}</b>
+      <span>{quality.summary || 'Проверка качества версии не дала текстового вывода.'}</span>
+      <div className="draft-version-quality-grid">
+        <span>Комментарий: {qualityStatusLabel(quality.commentComplianceStatus)}</span>
+        <span>Источники: {qualityStatusLabel(quality.sourceIntegrityStatus)}</span>
+        <span>Публичная проза: {qualityStatusLabel(quality.publicProseStatus)}</span>
+      </div>
+      {details.length > 0 ? (
+        <ul>
+          {details.map((detail) => <li key={detail}>{detail}</li>)}
+        </ul>
+      ) : null}
     </div>
   );
 }
@@ -374,6 +407,13 @@ function versionSourceLabel(source: DraftVersion['source']): string {
   if (source === 'humanCommentRevision') return 'по комментарию';
   if (source === 'manualEdit') return 'ручная правка';
   return 'машина';
+}
+
+function qualityStatusLabel(status: NonNullable<DraftVersion['qualityCheck']>['status']): string {
+  if (status === 'passed') return 'прошла проверку';
+  if (status === 'warning') return 'есть риски';
+  if (status === 'critical') return 'критично';
+  return 'проверка недоступна';
 }
 
 function DraftGenerationSummary({

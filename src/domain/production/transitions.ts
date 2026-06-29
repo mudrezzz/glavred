@@ -137,6 +137,7 @@ export function addHumanCommentRevisionVersion(
     editorComment: string;
     revisionSummary?: string;
     aiRunId?: string | null;
+    qualityCheck?: DraftVersion['qualityCheck'];
   }
 ): PostDraft {
   const active = getActiveDraftVersion(postDraft);
@@ -147,7 +148,8 @@ export function addHumanCommentRevisionVersion(
     body: patch.body,
     editorComment: patch.editorComment,
     revisionSummary: patch.revisionSummary,
-    aiRunId: patch.aiRunId ?? null
+    aiRunId: patch.aiRunId ?? null,
+    qualityCheck: patch.qualityCheck
   });
 }
 
@@ -161,6 +163,7 @@ function addDraftVersion(
     editorComment?: string;
     revisionSummary?: string;
     aiRunId?: string | null;
+    qualityCheck?: DraftVersion['qualityCheck'];
   }
 ): PostDraft {
   const normalizedDraft = normalizePostDraftVersions(postDraft);
@@ -181,6 +184,7 @@ function addDraftVersion(
     revisionSummary: patch.revisionSummary?.trim() || undefined,
     draftRunId: normalizedDraft.generation?.draftRunId ?? null,
     aiRunId: patch.aiRunId ?? null,
+    qualityCheck: patch.qualityCheck,
     createdAt
   };
 

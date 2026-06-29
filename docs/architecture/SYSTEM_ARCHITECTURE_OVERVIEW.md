@@ -600,6 +600,16 @@ versions. The editor can approve any saved version, including an older one, and
 counts, compact machine trace summaries, and unresolved risks. Cross-post learning
 from those snapshots remains Slice 2.16.1.
 
+Slice 2.16.0.1 adds a diagnostic review after each successful human-comment
+revision. The same endpoint runs a lightweight review-role
+`HumanCommentRevisionQualityCheck` and stores it on the created `DraftVersion`.
+The check records comment compliance, matched and missed intents, source-marker
+integrity, public-prose status, internal jargon leaks, regression warnings, and JSON
+attempt metadata. It is deliberately non-blocking: if the review provider is
+unavailable or malformed after retries, the version remains saved with
+`qualityCheck.status=notRun`; if the check returns warning or critical, the editor can
+still approve that version with the risk visible.
+
 Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
 Validation progress writes now merge `artifactPayload.progress` into the existing
 partial validation artifact instead of replacing it with a progress-only object.
@@ -1607,8 +1617,8 @@ Current implemented production contracts:
 - `PostDraft`: brief, active title/body/version mirror, draft status, updated time,
   immutable `DraftVersion[]`, `activeVersionId`, and optional `finalVersionId`.
 - `DraftVersion`: immutable machine, human-comment, or manual-edit draft version with
-  title/body, base version, editor comment, revision summary, and optional child
-  `AiRun` id.
+  title/body, base version, editor comment, revision summary, optional child `AiRun`
+  id, and optional `qualityCheck` for human-comment revisions.
 - `EditorialCheck`: type, title, check status, summary, findings.
 - `EditorNote`: agent, tone, text, target.
 - `FinalText`: approved draft version, title, body, approval status, approved time, and

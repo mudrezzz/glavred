@@ -66,7 +66,7 @@ export type {
   DraftGenerationTrace,
   DraftGenerationUiState,
   EditorNote,
-  FinalText,
+  FinalText, HumanCommentRevisionQualityCheck,
   ManualMetricSnapshot,
   PostBrief,
   PostDraft,

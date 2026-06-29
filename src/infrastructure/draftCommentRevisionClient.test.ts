@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { PostDraft } from '../domain/editorialWorkspace';
+import type { HumanCommentRevisionQualityCheck, PostDraft } from '../domain/editorialWorkspace';
 import { reviseDraftWithEditorComment, setDraftCommentRevisionFetchForTests } from './draftCommentRevisionClient';
 
 describe('draftCommentRevisionClient', () => {
@@ -16,7 +16,8 @@ describe('draftCommentRevisionClient', () => {
         revisionSummary: 'Used editor comment.',
         aiRunId: 'ai-human-1',
         selectedModel: 'writer-model',
-        attempts: []
+        attempts: [],
+        qualityCheck: makeQualityCheck('passed')
       })
     });
     setDraftCommentRevisionFetchForTests(fetchMock);
@@ -24,6 +25,7 @@ describe('draftCommentRevisionClient', () => {
     const result = await reviseDraftWithEditorComment(makeDraft(), 'Make it more concrete');
 
     expect(result.body).toBe('Revised body');
+    expect(result.qualityCheck.status).toBe('passed');
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8000/api/drafts/revise-with-comment',
       expect.objectContaining({
@@ -93,5 +95,20 @@ function makeDraft(): PostDraft {
       fallbackUsed: false,
       createdAt: '2026-06-28T00:00:00.000Z'
     }
+  };
+}
+
+function makeQualityCheck(status: 'passed' | 'warning' | 'critical' | 'notRun'): HumanCommentRevisionQualityCheck {
+  return {
+    status,
+    commentComplianceStatus: status,
+    sourceIntegrityStatus: 'passed',
+    publicProseStatus: 'passed',
+    internalJargonLeaks: [],
+    regressionWarnings: [],
+    matchedCommentIntents: ['concreteness'],
+    missedCommentIntents: [],
+    summary: 'Revision follows the comment.',
+    attempts: []
   };
 }

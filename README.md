@@ -258,8 +258,12 @@ After the machine run returns `finalDraft`, the editor works with immutable draf
 versions. The delivered machine draft becomes `v1`; manual edits are saved as new
 versions, and the editor can send the active version plus a comment to
 `POST /api/drafts/revise-with-comment` for a writer-role revision that creates
-`v2`, `v3`, and so on. Failed comment revisions do not create fake versions. Any
-saved version can be selected as final, including `v1` after later revisions exist.
+`v2`, `v3`, and so on. After a successful comment revision, Glavred runs a
+review-role diagnostic quality check for comment compliance, source-marker
+preservation, public-prose health, and internal jargon leaks. Failed comment
+revisions do not create fake versions; failed quality checks keep the new version
+with `qualityCheck.status=notRun`. Any saved version can be selected as final,
+including `v1` after later revisions exist.
 The approved `FinalText` stores an `EditorDecisionSnapshot` with the selected version,
 human comments/manual edit counts, available machine trace summaries, and unresolved
 risks. Cross-post learning from these decisions is intentionally deferred to the next

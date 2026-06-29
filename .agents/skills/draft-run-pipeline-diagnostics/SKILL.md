@@ -76,6 +76,10 @@ Check these failure classes explicitly:
   `eligible / penalized / excluded` decisions.
 - **UI/trace**: trace hides the important decision, scorecard unreadable, missing
   DraftRun ID, child runs not linked.
+- **HITL revisions**: human-comment revision created a version without
+  `qualityCheck`, quality check is `notRun` without attempts, missed comment intents
+  are hidden, source markers regressed, internal pipeline jargon leaked into the
+  public version, or warnings are treated as blocking when they should be diagnostic.
 
 ## Output Format
 
@@ -123,6 +127,12 @@ hide bad output behind polite abstractions.
   Empty expected markers or `evidence.attribution.diagnostic` are not prose-quality
   failures by themselves; they mean a material-plan attribution requirement could not
   be mapped to concrete claim provenance.
+- For post-run human-comment revisions, inspect `PostDraft.versions[].qualityCheck`
+  and the child `AiRun` with
+  `requestPayload.draftRunStep = "humanCommentRevisionQualityCheck"`. The check is
+  diagnostic, not blocking: `warning` or `critical` must be shown to the editor, while
+  `notRun` means the version still exists but compliance could not be reviewed after
+  retries.
 - Do not accept emergency fallback text as publication-quality unless the trace proves
   all provider paths are unavailable and the fallback passed publishability checks.
 - Read `selectionStatus`, `selectionPenalty`, `selectionReasons`, and `publishable`

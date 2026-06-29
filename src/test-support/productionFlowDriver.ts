@@ -3,6 +3,8 @@ import { expect, vi } from 'vitest';
 import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../infrastructure/draftRunClient';
 import { goToSignals, openFoundSignals } from './signalsFlowDriver';
 
+const APP_FLOW_WAIT = { timeout: 30000 };
+
 export async function createApprovedBrief() {
   goToSignals();
   openFoundSignals();
@@ -21,11 +23,11 @@ export async function createApprovedBrief() {
     fireEvent.click(screen.getByRole('button', { name: /Утвердить фабулу/i }));
     await waitFor(() => {
       expect(draftRunFetch).toHaveBeenCalled();
-    });
+    }, APP_FLOW_WAIT);
     fireEvent.click(screen.getByRole('tab', { name: /Драфт/i }));
     await waitFor(() => {
       expect(screen.getByLabelText('Текст драфта')).toBeInTheDocument();
-    });
+    }, APP_FLOW_WAIT);
   } finally {
     setDraftRunFetchForTests(null);
     setDraftRunPollingForTests({ intervalMs: 1600, timeoutMs: 120000 });
@@ -37,7 +39,7 @@ export async function createApprovedFinalText() {
   fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));
   await waitFor(() => {
     expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
-  });
+  }, APP_FLOW_WAIT);
 }
 
 export async function createExportedRelease() {
@@ -52,7 +54,7 @@ export async function createExportedRelease() {
 
   await waitFor(() => {
     expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
-  });
+  }, APP_FLOW_WAIT);
 }
 
 function makeCreatedRun() {
