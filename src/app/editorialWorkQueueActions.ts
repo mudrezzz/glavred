@@ -11,13 +11,17 @@ import {
   editPostBrief,
   preparePostVisualMemeReferences,
   preparePostVisualVariants,
+  addHumanCommentRevisionVersion,
+  normalizePostDraftVersions,
   replacePostCandidate,
   reviseDraft,
+  selectDraftVersion,
   selectPostVisualMemeReference,
   selectPostVisualVariant,
   syncEditorialWorkItemArtifacts,
   upsertEditorialWorkItem,
   type ContentPlanItem,
+  type EditorDecisionMachineTraceSummary,
   type PostBriefEditPatch,
   type PostVisualEditPatch,
   type PostCandidate,
@@ -259,16 +263,63 @@ export function buildSaveDraftTextPatch(workspace: WorkspaceState, body: string)
   });
 }
 
-export function buildApproveDraftTextPatch(workspace: WorkspaceState, body?: string): Partial<WorkspaceState> {
+export function buildAddHumanCommentRevisionPatch(
+  workspace: WorkspaceState,
+  revision: {
+    title: string;
+    body: string;
+    editorComment: string;
+    revisionSummary?: string;
+    aiRunId?: string | null;
+  }
+): Partial<WorkspaceState> {
+  if (!workspace.postDraft || !workspace.postBrief) return {};
+
+  const postDraft = addHumanCommentRevisionVersion(workspace.postDraft, revision);
+  const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
+  const editorNotes = createEditorNotes(editorialChecks);
+
+  return withEditorialWorkItemSync(workspace, {
+    postDraft,
+    editorialChecks,
+    editorNotes,
+    finalText: null,
+    postVisual: null,
+    releasePackage: null,
+    editorialLearningNote: null
+  });
+}
+
+export function buildSelectDraftVersionPatch(workspace: WorkspaceState, versionId: string): Partial<WorkspaceState> {
+  if (!workspace.postDraft || !workspace.postBrief) return {};
+
+  const postDraft = selectDraftVersion(workspace.postDraft, versionId);
+  const editorialChecks = runEditorialChecks(postDraft, workspace.postBrief, workspace.editorialModel);
+  const editorNotes = createEditorNotes(editorialChecks);
+
+  return withEditorialWorkItemSync(workspace, {
+    postDraft,
+    editorialChecks,
+    editorNotes
+  });
+}
+
+export function buildApproveDraftTextPatch(
+  workspace: WorkspaceState,
+  versionId?: string,
+  machineTrace?: EditorDecisionMachineTraceSummary
+): Partial<WorkspaceState> {
   if (!workspace.postDraft) return {};
 
-  const shouldSaveDraft = typeof body === 'string' && body !== workspace.postDraft.body;
-  const savedPatch = shouldSaveDraft ? buildSaveDraftTextPatch(workspace, body) : {};
-  const postDraft = savedPatch.postDraft ?? workspace.postDraft;
-  const finalText = approveFinalText(postDraft);
+  const postDraft = normalizePostDraftVersions(workspace.postDraft);
+  const finalText = approveFinalText(postDraft, { versionId, machineTrace });
+  const nextPostDraft = {
+    ...selectDraftVersion(postDraft, finalText.draftVersionId ?? postDraft.activeVersionId ?? ''),
+    finalVersionId: finalText.draftVersionId
+  };
 
-  return withEditorialWorkItemSync({ ...workspace, ...savedPatch }, {
-    ...savedPatch,
+  return withEditorialWorkItemSync({ ...workspace, postDraft: nextPostDraft }, {
+    postDraft: nextPostDraft,
     finalText,
     postVisual: null,
     releasePackage: null,

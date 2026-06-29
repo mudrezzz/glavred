@@ -438,6 +438,14 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   the reader a clear takeaway. The gate combines deterministic checks with an
   independent final-gate model review. If needed, Glavred runs bounded targeted final
   repair cycles and accepts a repair only when it improves without regression.
+- When the machine draft reaches the editor, it becomes version `v1`. You can switch
+  between saved versions, write a comment in `Что улучшить в этой версии`, and click
+  `Улучшить по комментарию` to ask the writer model for `v2`, `v3`, and later
+  versions. Manual textarea changes are not applied over an old version; save them as
+  a new version first. You may mark any saved version as final, including `v1` after
+  later versions exist. The final text keeps a decision snapshot with selected version,
+  comments, manual edit count, machine trace availability, and visible unresolved
+  risks.
 - The trace now also shows `ArticleDossier` and `ContextPacks`. The dossier is local
   memory for one DraftRun: accepted evidence, usable claims, locked decisions, risks,
   rejected moves, and open questions as compact cards. Context packs show which of

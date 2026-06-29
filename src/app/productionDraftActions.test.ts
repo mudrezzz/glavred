@@ -28,6 +28,12 @@ describe('production draft actions', () => {
 
     expect(patch.postBrief?.approvalStatus).toBe('approved');
     expect(patch.postDraft?.body).toBe('Backend body');
+    expect(patch.postDraft?.versions).toHaveLength(1);
+    expect(patch.postDraft?.versions?.[0]).toMatchObject({
+      versionNumber: 1,
+      source: 'machineFinal',
+      body: 'Backend body'
+    });
     expect(patch.editorialChecks?.length).toBeGreaterThan(0);
     expect(patch.editorNotes?.length).toBeGreaterThan(0);
     expect(patch.editorialWorkItems?.[0].draft?.body).toBe('Backend body');

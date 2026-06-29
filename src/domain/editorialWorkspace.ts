@@ -54,6 +54,7 @@ export type { BroadcastGridDemandSummary, ContentPlanItem, ContentPlanSettings, 
 export type { PostCandidate } from './post-candidates/types';
 export type {
   AnalyticsStatus,
+  DraftVersion, DraftVersionSource, EditorDecisionMachineTraceSummary, EditorDecisionSnapshot, EditorDecisionTraceStatus,
   EditorialCheck,
   EditorialCheckStatus,
   EditorialCheckType,
@@ -158,8 +159,7 @@ import type {
 } from './signals/types';
 import type { WorkspaceState } from './workspace/types';
 export * from './editorial-model/transitions';
-export * from './planning/settings';
-export * from './planning/schedule';
+export * from './planning/settings'; export * from './planning/schedule';
 export * from './planning/defaultSlots';
 export * from './planning/transitions';
 export * from './signals/transitions';

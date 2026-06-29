@@ -278,8 +278,8 @@ Current backend files:
 - `backend/app/settings.py`: typed environment settings.
 - `backend/app/api/health.py`: `/health` and `/api/health` routes.
 - `backend/app/api/ai_runs.py`: `/api/ai-runs` create/read/list audit routes.
-- `backend/app/api/drafts.py`: `/api/drafts/generate` route for backend-assisted
-  draft generation.
+- `backend/app/api/drafts.py`: `/api/drafts/generate` compatibility draft route and
+  `/api/drafts/revise-with-comment` post-run human-comment revision route.
 - `backend/app/api/draft_runs.py`: queued draft-run routes.
 - `backend/app/api/dependencies.py`: request-time application service wiring.
 - `backend/app/application/health_service.py`: health use-case orchestration.
@@ -287,6 +287,9 @@ Current backend files:
   redaction, and repository port.
 - `backend/app/application/draft_generation_service.py`: OpenRouter/fallback
   orchestration for draft generation.
+- `backend/app/application/draft_human_comment_revision_service.py`: post-run
+  writer-role revision from active draft version plus editor comment and compact
+  machine trace context.
 - `backend/app/application/deterministic_draft_service.py`: deterministic backend
   fallback draft generation.
 - `backend/app/application/draft_run_service.py`: durable run creation and dispatch
@@ -336,6 +339,10 @@ Draft generation API:
 
 - `POST /api/drafts/generate`: accepts an approved `PostBrief` context and
   `EditorialModel` context, returns a frontend-compatible `PostDraft` and `AiRun`.
+- `POST /api/drafts/revise-with-comment`: accepts the active draft version, an editor
+  comment, optional `draftRunId`, and returns revised title/body, revision summary,
+  selected writer model, attempts, and child `AiRun` id. Provider failure returns a
+  safe error and must not create a local draft version.
 - OpenRouter calls happen only in `backend/app/infrastructure/openrouter_draft_adapter.py`.
 - Missing OpenRouter configuration, provider errors, and invalid provider JSON return a
   deterministic fallback draft and an audited `fallbackUsed: true` run.
@@ -1015,7 +1022,7 @@ The target drafting boundary is no longer a single request/response provider cal
 The current `POST /api/drafts/generate` endpoint is a compatibility path and provider
 integration proof. The primary UI path now uses a queued `DraftRun`:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> RevisionLoop -> FinalQualityGate -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> RevisionLoop -> FinalQualityGate -> SelectedDraft -> VersionedHumanRevisionLoop -> HumanDecisionSnapshot`
 
 This order is a workflow rule. Do not implement the validator/revision loop before
 the source ledger and post contract exist: validators need claim ids, allowed-use
@@ -1416,6 +1423,18 @@ The next artifacts must make candidate validation meaningful:
   concrete missing source marker. Keep deterministic heuristics in
   `draft_final_quality_assessment.py`; keep contract/review/provider handoff in
   `draft_final_quality_gate.py` and final-quality review modules.
+- After `finalQualityGate`, the machine pipeline is done. The frontend stores
+  `DraftRun.finalDraft` as immutable `PostDraft.versions[0]` (`v1`,
+  `source=machineFinal`). Human comment revisions are post-run editor actions through
+  `POST /api/drafts/revise-with-comment`, not new DraftRuns and not new
+  `DraftRunStepKey`s. The endpoint uses the writer role and existing JSON retry
+  discipline with compact machine trace context from the parent DraftRun. Manual edits
+  and successful comment revisions create new immutable `DraftVersion` records; old
+  versions must not be mutated. Approving final text creates
+  `FinalText.editorDecisionSnapshot` with selected version, human comments/manual
+  edit counts, machine trace availability, final-gate/revision/alternative-angle
+  summaries, validation summary, and unresolved risks. Learning signals from those
+  snapshots are Slice 2.16.1.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

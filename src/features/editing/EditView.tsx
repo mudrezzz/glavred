@@ -28,7 +28,9 @@ export function EditView({
   onSelectMemeReference,
   onSelectVisualVariant,
   onReturnWorkItem,
+  onReviseDraftWithComment,
   onSelectWorkItem,
+  onSelectDraftVersion,
   onApproveFinal,
   onApproveVisual
 }: {
@@ -45,8 +47,10 @@ export function EditView({
   onSelectMemeReference: (referenceId: string) => void;
   onSelectVisualVariant: (variantId: string) => void;
   onReturnWorkItem: (workItemId: string) => void;
+  onReviseDraftWithComment: (comment: string) => Promise<void>;
   onSelectWorkItem: (workItemId: string) => void;
-  onApproveFinal: (body?: string) => void;
+  onSelectDraftVersion: (versionId: string) => void;
+  onApproveFinal: (versionId?: string) => void | Promise<void>;
   onApproveVisual: (patch: PostVisualEditPatch) => void;
 }) {
   const [mode, setMode] = useState<'posts' | 'workbench'>('posts');
@@ -143,8 +147,10 @@ export function EditView({
               onPrepareMemeRemixVariants={onPrepareMemeRemixVariants}
               onPrepareVisualVariants={onPrepareVisualVariants}
               onSaveVisual={onSaveVisual}
+              onReviseDraftWithComment={onReviseDraftWithComment}
               onSelectMemeReference={onSelectMemeReference}
               onSelectVisualVariant={onSelectVisualVariant}
+              onSelectDraftVersion={onSelectDraftVersion}
             />
           </section>
           <EditorialWorkbenchAside workspace={workspace} draftGenerationState={draftGenerationState} />

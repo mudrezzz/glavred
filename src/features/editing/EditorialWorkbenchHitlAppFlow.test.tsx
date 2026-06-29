@@ -1,0 +1,110 @@
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { App } from '../../App';
+import { setDraftCommentRevisionFetchForTests } from '../../infrastructure/draftCommentRevisionClient';
+import { createApprovedBrief } from '../../test-support/productionFlowDriver';
+
+describe('Editorial workbench HITL app flow', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    setDraftCommentRevisionFetchForTests(null);
+  });
+
+  it('creates a new immutable draft version from an editor comment', async () => {
+    const revisionFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        title: 'Усиленная версия',
+        body: 'Усиленная версия с более ясной авторской позицией и меньшим пересказом источников.',
+        revisionSummary: 'Усилена авторская позиция.',
+        aiRunId: 'ai-human-comment-1',
+        selectedModel: 'writer-model',
+        attempts: []
+      })
+    });
+    setDraftCommentRevisionFetchForTests(revisionFetch);
+
+    render(<App />);
+    await createApprovedBrief();
+
+    fireEvent.change(screen.getByLabelText('Комментарий к улучшению драфта'), {
+      target: { value: 'Усиль авторскую позицию и убери пересказ источников' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Улучшить по комментарию/i }));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(/Усиленная версия с более ясной авторской позицией/i)).toBeInTheDocument();
+    });
+    expect(within(screen.getByLabelText('Версии драфта')).getByRole('button', { name: /v1/i })).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Версии драфта')).getByRole('button', { name: /v2/i })).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Усиль авторскую позицию и убери пересказ источников')).not.toBeInTheDocument();
+
+    const payload = JSON.parse(String(revisionFetch.mock.calls[0][1].body));
+    expect(payload).toMatchObject({
+      draftRunId: 'draft-run-app-flow',
+      currentVersion: {
+        id: 'draft-app-flow-v1',
+        versionNumber: 1
+      },
+      editorComment: 'Усиль авторскую позицию и убери пересказ источников'
+    });
+  });
+
+  it('keeps the current version list intact when comment revision fails', async () => {
+    setDraftCommentRevisionFetchForTests(vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+
+    render(<App />);
+    await createApprovedBrief();
+
+    fireEvent.change(screen.getByLabelText('Комментарий к улучшению драфта'), {
+      target: { value: 'Сделай текст конкретнее' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Улучшить по комментарию/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Draft revision failed with HTTP 503/i)).toBeInTheDocument();
+    });
+    expect(within(screen.getByLabelText('Версии драфта')).getByRole('button', { name: /v1/i })).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Версии драфта')).queryByRole('button', { name: /v2/i })).not.toBeInTheDocument();
+  });
+
+  it('allows selecting the original machine version as final after human revisions', async () => {
+    setDraftCommentRevisionFetchForTests(vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        title: 'Новая версия',
+        body: 'Новая версия по комментарию редактора.',
+        revisionSummary: 'Переписано по комментарию.',
+        aiRunId: 'ai-human-comment-2',
+        selectedModel: 'writer-model',
+        attempts: []
+      })
+    }));
+
+    render(<App />);
+    await createApprovedBrief();
+
+    const originalBody = (screen.getByLabelText('Текст драфта') as HTMLTextAreaElement).value;
+    fireEvent.change(screen.getByLabelText('Комментарий к улучшению драфта'), {
+      target: { value: 'Сделай версию короче' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Улучшить по комментарию/i }));
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Новая версия по комментарию редактора.')).toBeInTheDocument();
+    });
+
+    fireEvent.click(within(screen.getByLabelText('Версии драфта')).getByRole('button', { name: /v1/i }));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Текст драфта')).toHaveValue(originalBody);
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    });
+    expect(within(screen.getByLabelText('Версии драфта')).getByRole('button', { name: /v1.*финал/i })).toBeInTheDocument();
+  });
+});

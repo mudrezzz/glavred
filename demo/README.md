@@ -340,8 +340,15 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     `modelRole`, `selectedModel`, and `modelSelectionSource`, so the trace distinguishes
     researcher, strategist, writer, review, critic, active alternative-angle policy,
     and technical backup retries.
-29. Edit the draft text.
-30. Click `Утвердить текст` in `Драфт`.
+29. In `Драфт`, inspect the version list. The machine draft is `v1`. To test the
+    human loop, add a comment such as `Сделай вывод жестче и убери лишнюю
+    канцелярщину`, then click `Улучшить по комментарию`; a successful writer-role
+    revision creates `v2` without mutating `v1`. Manual textarea edits must be saved
+    with `Сохранить как новую версию`, which creates a separate `manualEdit` version.
+30. Select the version you want to approve, including `v1` if it is still better than
+    later revisions, then click `Сделать финальной` in `Драфт`. The final text stores
+    an `EditorDecisionSnapshot` with the selected version, human comments, manual edit
+    count, machine trace availability, and unresolved risks.
 31. Open `Визуал`, choose one visual mode (`Сгенерировать`, `Найти мем`,
     `Мем + генерация`, or `Без визуала`). For `Сгенерировать` and `Найти мем`,
     fill one local `Бриф`, click `Подготовить варианты`, select one placeholder

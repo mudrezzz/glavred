@@ -5192,21 +5192,146 @@ Status:
     PDF.
 - Completed: 2026-06-28
 
-### Slice 2.16: Regression Report and Editor Decision Learning
+### Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot
+
+- Status: Done
+- Goal: Add an unlimited human-in-the-loop revision cycle after the machine
+  `finalDraft`, while capturing the editor's final decision against the actual
+  machine trace.
+- User value:
+  - The editor can comment on the delivered draft, ask the system to improve it,
+    receive `v2`, `v3`, `v4`, and continue as many times as needed.
+  - The editor can select any version as final, including `v1`; the latest version
+    is not automatically the approved version.
+  - The final decision is understandable: selected version, remaining risks,
+    validation status, final-gate status, and the human comments that shaped it are
+    visible together.
+- Scope:
+  - Convert the delivered machine `finalDraft` into draft version `v1` in the
+    editing workspace.
+  - Add local `draftVersions[]` with `versionId`, `versionNumber`, `source`,
+    `baseVersionId`, `title`, `body`, `comment`, `revisionSummary`, `aiRunId?`,
+    `createdAt`, and `selectedAsFinal`.
+  - Add an editor comment flow in `Редактура -> Рабочий стол -> Драфт`:
+    comment field, `Улучшить по комментарию`, version list, version preview, and
+    `Сделать финальной`.
+  - Add a backend endpoint for one human-comment revision call:
+    current version + editor comment + compact DraftRun context -> revised title/body
+    + `revisionSummary` + child `AiRun ID`.
+  - Store `EditorDecisionSnapshot` when a version is selected as final. It must link
+    the human decision to:
+    - selected version id and source;
+    - base DraftRun id;
+    - `finalQualityGate` summary;
+    - `revisionLoop` stop reason and accepted/rejected cycles summary;
+    - `alternativeAngleTournament` status/outcome;
+    - deterministic and LLM validation summary for the delivered machine candidate;
+    - unresolved risks and warnings still relevant to the selected version;
+    - editor comments and manual edits made before selection.
+  - Manual text edits create a version with `source=manualEdit` rather than mutating
+    an existing version in place.
+  - Failed human-comment revision does not create a new version; UI shows a clear
+    error and keeps the current version list intact.
+- Out of scope:
+  - Cross-post learning, rule-improvement queue, or automatic updates to Topic,
+    Fabula, publisher rules, prompts, model choices, or validators.
+  - LLM comparison of all human versions.
+  - Multi-user approval workflow.
+  - Backend long-term persistence for editor learning beyond the existing local
+    workspace and child `AiRun` trace.
+- Implementation notes:
+  - One human comment produces one backend revision attempt. The loop is unlimited
+    because the editor can submit another comment, not because the backend runs an
+    autonomous loop.
+  - Human revision prompt must preserve `PostContract`, allowed claim ids, forbidden
+    moves, source attribution constraints, and final quality contract.
+  - Use the writer role and existing JSON retry discipline for the human-comment
+    revision endpoint.
+  - The `EditorDecisionSnapshot` is a per-post decision record, not a learning engine.
+- Architecture impact:
+  - No new DraftRun step is required.
+  - Add frontend/local workspace version state and a small backend application service
+    for human-comment revision.
+  - If new trace or child `AiRun` semantics are added, update
+    `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` and regenerate
+    `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
+- Tests:
+  - Machine `finalDraft` becomes version `v1`.
+  - A human comment creates `v2`; a second comment creates `v3`.
+  - The editor can select `v1` as final after `v3` exists.
+  - Manual edit creates a `manualEdit` version.
+  - Failed revision call does not create a new version.
+  - `EditorDecisionSnapshot` includes selected version, DraftRun id,
+    final-gate/revision/alternative-angle/validation summaries, unresolved risks, and
+    human comments.
+  - Existing DraftRun polling and trace views remain compatible.
+- Docs:
+  - Update README, developer guide, user guide, demo docs, AS IS pipeline map, and PDF.
+- Demo impact:
+  - Demo should show at least one machine final draft, one human comment revision,
+    and choosing a non-latest version as final.
+- Acceptance criteria:
+  - The editor can run an unlimited comment -> revision -> version cycle.
+  - Versions are immutable and numbered.
+  - Any version can be selected as final.
+  - Final selection produces an `EditorDecisionSnapshot` grounded in the actual
+    machine trace, not a generic acceptance flag.
+- Risks:
+  - Version state can become confusing if UI does not clearly distinguish selected,
+    previewed, latest, and final versions.
+  - Human-comment revision may accidentally violate source/contract constraints if the
+    prompt does not carry the compact final-quality context.
+- Dependency:
+  - Requires 2.15.6.2-2.15.6.4.2 so the decision snapshot observes controlled
+    research depth, universal JSON retry behavior, contract-based final draft
+    acceptance, and calibrated final-gate attribution handoff.
+- Completed: 2026-06-28
+
+### Slice 2.16.1: Editor Learning Signals and Rule Improvement Queue
 
 - Status: Ready
-- Goal: Capture the human editor's final decision after the machine revision loop is
-  complete.
+- Goal: Turn accepted/rejected human decisions from 2.16 into reviewable improvement
+  signals for the editorial model and drafting pipeline.
+- User value:
+  - The system can explain recurring human corrections without silently changing
+    rules.
+  - Editors get a controlled queue of suggested improvements instead of hidden
+    automatic learning.
 - Scope:
-  - Store `RegressionReport` after the bounded revision loop.
-  - Show compact editor-facing report: why selected, used claims, unresolved risks,
-    resolved repair goals, and validation status.
-  - Save human edits, overrides, rejected machine moves, and rule-improvement signals
-    for future learning.
-- Dependency:
-  - Requires 2.15.6.2-2.15.6.4.2 so editor learning observes controlled research
-    depth, universal JSON retry behavior, contract-based final draft acceptance, and
-    calibrated final-gate attribution handoff.
+  - Aggregate per-post `EditorDecisionSnapshot` data into local learning signals:
+    repeated editor comments, rejected machine moves, accepted manual rewrites,
+    final-version preferences, and unresolved risks.
+  - Create a `RuleImprovementQueue` or equivalent local artifact with suggested
+    updates to publisher rules, Topic guidance, Fabula guidance, source strategy, or
+    validator prompts.
+  - Show suggested improvements as reviewable items, not automatic changes.
+  - Link each suggestion back to concrete post versions, comments, and machine trace
+    artifacts.
+- Out of scope:
+  - Automatic model fine-tuning.
+  - Silent prompt/rule mutation.
+  - Cross-user or cloud learning.
+- Implementation notes:
+  - A rejected machine move is a learning signal only when the human either selects an
+    older version, writes a correction comment, or manually edits away the move.
+  - Suggestions must remain explainable and reversible.
+- Architecture impact:
+  - Adds local learning artifacts on top of `EditorDecisionSnapshot`.
+  - May require a new user-facing review surface in the editorial model area.
+- Tests:
+  - Repeated comments create grouped learning signals.
+  - Selecting an older version after rejecting a later machine revision creates a
+    rejected-move signal.
+  - Suggestions link back to source versions and comments.
+  - Applying or dismissing suggestions does not mutate unrelated rules.
+- Docs:
+  - Update developer/user/demo docs with the human-reviewed learning model.
+- Demo impact:
+  - Demo should show at least one suggested rule/fabula improvement created from
+    editor comments and then accepted or dismissed by the user.
+- Acceptance criteria:
+  - Learning signals are visible, reviewable, and traceable.
+  - No automatic rule or prompt changes happen without explicit human approval.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -5386,4 +5511,4 @@ Status:
 ## Next Recommended Task
 
 Continue the backend track with
-`Slice 2.16: Regression Report and Editor Decision Learning`.
+`Slice 2.16.1: Editor Learning Signals and Rule Improvement Queue`.

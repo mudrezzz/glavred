@@ -3833,6 +3833,44 @@ select:focus {
   gap: 8px;
 }
 
+.draft-version-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+}
+
+.draft-version-chip {
+  display: inline-grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: 8px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+  color: var(--ink-700);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--dur) var(--ease);
+}
+
+.draft-version-chip:hover,
+.draft-version-chip.active {
+  border-color: var(--accent-tint);
+  background: var(--accent-wash);
+  color: var(--ink-900);
+}
+
+.draft-version-chip span {
+  font: var(--ui-sm);
+  font-weight: 700;
+}
+
+.draft-version-chip small {
+  color: var(--ink-600);
+  font: var(--mono-sm);
+}
+
 .draft-editor .k {
   color: var(--ink-500);
   font: var(--mono-sm);
@@ -3847,6 +3885,39 @@ select:focus {
   font: var(--ed-body);
   font-size: 18px;
   line-height: 1.62;
+}
+
+.draft-human-loop {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--accent-tint);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.draft-human-loop label {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.draft-human-loop .k {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.draft-human-loop textarea {
+  min-height: 92px;
+}
+
+.draft-revision-error {
+  margin: 0;
+  color: var(--danger-ink);
+  font: var(--ui-sm);
 }
 
 .draft-generation-pending {

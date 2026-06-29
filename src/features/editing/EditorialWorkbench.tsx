@@ -1,5 +1,14 @@
 ﻿import { useEffect, useState } from 'react';
-import type { DraftGenerationUiState, PostBriefEditPatch, PostDraft, PostVisualEditPatch, WorkspaceState } from '../../domain/editorialWorkspace';
+import {
+  getActiveDraftVersion,
+  normalizePostDraftVersions,
+  type DraftGenerationUiState,
+  type DraftVersion,
+  type PostBriefEditPatch,
+  type PostDraft,
+  type PostVisualEditPatch,
+  type WorkspaceState
+} from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
 import { EditorialBriefStage } from './EditorialBriefStage';
 import { EditorialVisualStage } from './EditorialVisualStage';
@@ -17,14 +26,16 @@ export function EditorialWorkbench({
   onPrepareMemeReferences,
   onPrepareMemeRemixVariants,
   onPrepareVisualVariants,
+  onReviseDraftWithComment,
   onSelectMemeReference,
   onSelectVisualVariant,
+  onSelectDraftVersion,
   onSaveVisual
 }: {
   workspace: WorkspaceState;
   draftGenerationState: DraftGenerationUiState;
   onApproveBrief: () => void;
-  onApproveFinal: (body?: string) => void;
+  onApproveFinal: (versionId?: string) => void | Promise<void>;
   onApproveVisual: (patch: PostVisualEditPatch) => void;
   onDraftChange: (body: string) => void;
   onEditBrief: (patch: PostBriefEditPatch) => void;
@@ -32,8 +43,10 @@ export function EditorialWorkbench({
   onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
   onPrepareMemeRemixVariants: () => void;
   onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
+  onReviseDraftWithComment: (comment: string) => Promise<void>;
   onSelectMemeReference: (referenceId: string) => void;
   onSelectVisualVariant: (variantId: string) => void;
+  onSelectDraftVersion: (versionId: string) => void;
   onSaveVisual: (patch: PostVisualEditPatch) => void;
 }) {
   const brief = workspace.postBrief;
@@ -189,6 +202,8 @@ export function EditorialWorkbench({
             onApproveDraft={onApproveFinal}
             onDraftChange={onDraftChange}
             onOpenBrief={() => setTab('brief')}
+            onReviseDraftWithComment={onReviseDraftWithComment}
+            onSelectDraftVersion={onSelectDraftVersion}
           />
         </section>
       )}
@@ -217,28 +232,54 @@ function DraftEditor({
   generationState,
   onApproveDraft,
   onDraftChange,
-  onOpenBrief
+  onOpenBrief,
+  onReviseDraftWithComment,
+  onSelectDraftVersion
 }: {
   draft: PostDraft;
   isTextApproved: boolean;
   generationState: DraftGenerationUiState;
-  onApproveDraft: (body: string) => void;
+  onApproveDraft: (versionId: string) => void | Promise<void>;
   onDraftChange: (body: string) => void;
   onOpenBrief: () => void;
+  onReviseDraftWithComment: (comment: string) => Promise<void>;
+  onSelectDraftVersion: (versionId: string) => void;
 }) {
-  const [body, setBody] = useState(draft.body);
-  const hasUnsavedChanges = body !== draft.body;
+  const normalizedDraft = normalizePostDraftVersions(draft);
+  const activeVersion = getActiveDraftVersion(normalizedDraft);
+  const versions = normalizedDraft.versions ?? [activeVersion];
+  const [body, setBody] = useState(activeVersion.body);
+  const [editorComment, setEditorComment] = useState('');
+  const [revisionError, setRevisionError] = useState('');
+  const [isRevisionRunning, setRevisionRunning] = useState(false);
+  const hasUnsavedChanges = body !== activeVersion.body;
 
   useEffect(() => {
-    setBody(draft.body);
-  }, [draft.body, draft.id]);
+    setBody(activeVersion.body);
+    setRevisionError('');
+  }, [activeVersion.body, activeVersion.id]);
+
+  async function improveByComment() {
+    const normalizedComment = editorComment.trim();
+    if (!normalizedComment) return;
+    setRevisionRunning(true);
+    setRevisionError('');
+    try {
+      await onReviseDraftWithComment(normalizedComment);
+      setEditorComment('');
+    } catch (error) {
+      setRevisionError(error instanceof Error ? error.message : 'Не удалось создать новую версию');
+    } finally {
+      setRevisionRunning(false);
+    }
+  }
 
   return (
     <>
       <div className="doc-head">
         <div>
-          <span className="rub">Версия {draft.version}</span>
-          <h2>{draft.title}</h2>
+          <span className="rub">Версия {activeVersion.versionNumber}</span>
+          <h2>{activeVersion.title}</h2>
         </div>
         <span className={`pill ${draft.status === 'revised' ? 'pin' : 'ok'}`}>
           <i />
@@ -255,6 +296,12 @@ function DraftEditor({
         </div>
       ) : null}
       <DraftGenerationSummary draft={draft} generationState={generationState} />
+      <DraftVersionList
+        activeVersionId={activeVersion.id}
+        finalVersionId={normalizedDraft.finalVersionId}
+        versions={versions}
+        onSelect={onSelectDraftVersion}
+      />
       <label className="draft-editor">
         <span className="k">Текст</span>
         <textarea
@@ -263,14 +310,29 @@ function DraftEditor({
           onChange={(event) => setBody(event.target.value)}
         />
       </label>
-      {hasUnsavedChanges ? <p className="muted">Есть несохраненные правки.</p> : null}
+      {hasUnsavedChanges ? <p className="muted">Есть несохраненные правки. Сохраните их как новую версию перед утверждением финала.</p> : null}
+      <div className="draft-human-loop">
+        <label>
+          <span className="k">Комментарий редактора</span>
+          <textarea
+            aria-label="Комментарий к улучшению драфта"
+            value={editorComment}
+            onChange={(event) => setEditorComment(event.target.value)}
+            placeholder="Например: усилить авторскую позицию и убрать пересказ источников"
+          />
+        </label>
+        {revisionError ? <p className="draft-revision-error">{revisionError}</p> : null}
+        <button className="btn btn-sec" type="button" disabled={!editorComment.trim() || isRevisionRunning} onClick={improveByComment}>
+          Улучшить по комментарию
+        </button>
+      </div>
       <div className="inline-actions">
-        <button className="btn btn-pri" type="button" onClick={() => onApproveDraft(body)}>
+        <button className="btn btn-pri" type="button" disabled={hasUnsavedChanges} onClick={() => onApproveDraft(activeVersion.id)}>
           <Icon name="check" size={16} />
-          Утвердить текст
+          Сделать финальной
         </button>
         <button className="btn btn-sec" type="button" disabled={!hasUnsavedChanges} onClick={() => onDraftChange(body)}>
-          Сохранить правки
+          Сохранить как новую версию
         </button>
         <button className="btn btn-sec" type="button" onClick={onOpenBrief}>
           Вернуться к фабуле
@@ -278,6 +340,40 @@ function DraftEditor({
       </div>
     </>
   );
+}
+
+function DraftVersionList({
+  activeVersionId,
+  finalVersionId,
+  versions,
+  onSelect
+}: {
+  activeVersionId: string;
+  finalVersionId: string | undefined;
+  versions: DraftVersion[];
+  onSelect: (versionId: string) => void;
+}) {
+  return (
+    <div className="draft-version-list" aria-label="Версии драфта">
+      {versions.map((version) => (
+        <button
+          className={`draft-version-chip${version.id === activeVersionId ? ' active' : ''}`}
+          key={version.id}
+          type="button"
+          onClick={() => onSelect(version.id)}
+        >
+          <span>v{version.versionNumber}</span>
+          <small>{versionSourceLabel(version.source)}{version.id === finalVersionId ? ' · финал' : ''}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function versionSourceLabel(source: DraftVersion['source']): string {
+  if (source === 'humanCommentRevision') return 'по комментарию';
+  if (source === 'manualEdit') return 'ручная правка';
+  return 'машина';
 }
 
 function DraftGenerationSummary({

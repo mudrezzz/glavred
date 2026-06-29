@@ -447,7 +447,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> FinalQualityGate -> SelectedDraft -> HumanDecision`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> FinalQualityGate -> SelectedDraft -> VersionedHumanRevisionLoop -> EditorDecisionSnapshot`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -588,6 +588,17 @@ Final quality ownership is intentionally split:
   independent final-gate review with universal JSON retry policy.
 - `backend/app/application/source_research_plan_sanitizer.py`: deterministic cleanup
   that prevents non-URL named sources from becoming URL-read tasks.
+
+Slice 2.16 adds the post-machine editor loop after this final quality gate. It does
+not add DraftRun steps or SQLite tables: the frontend stores `DraftRun.finalDraft` as
+local `PostDraft.versions[0]` (`v1`, `source=machineFinal`). Human comment revisions
+call `POST /api/drafts/revise-with-comment`, use the writer role and existing JSON
+retry discipline, and create immutable `DraftVersion` records only on provider
+success. Manual textarea edits also become new versions rather than mutating old
+versions. The editor can approve any saved version, including an older one, and
+`FinalText.editorDecisionSnapshot` records selected version, comment/manual-edit
+counts, compact machine trace summaries, and unresolved risks. Cross-post learning
+from those snapshots remains Slice 2.16.1.
 
 Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
 Validation progress writes now merge `artifactPayload.progress` into the existing
@@ -1593,10 +1604,16 @@ Current implemented production contracts:
   weights, matrix compatibility, or required slot fields.
 - `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,
   risks, sources, approval status.
-- `PostDraft`: brief, title, body, version, draft status, updated time.
+- `PostDraft`: brief, active title/body/version mirror, draft status, updated time,
+  immutable `DraftVersion[]`, `activeVersionId`, and optional `finalVersionId`.
+- `DraftVersion`: immutable machine, human-comment, or manual-edit draft version with
+  title/body, base version, editor comment, revision summary, and optional child
+  `AiRun` id.
 - `EditorialCheck`: type, title, check status, summary, findings.
 - `EditorNote`: agent, tone, text, target.
-- `FinalText`: draft, title, body, approval status, approved time.
+- `FinalText`: approved draft version, title, body, approval status, approved time, and
+  `EditorDecisionSnapshot` tying the human decision to machine trace summaries and
+  editor comments.
 - `ReleasePackage`: compatibility/manual-export surface with final text, targets,
   Markdown, checklist, release status, and updated time. It is not the future source of
   truth for release state.

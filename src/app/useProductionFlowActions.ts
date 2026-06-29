@@ -15,10 +15,12 @@ import {
 } from '../domain/editorialWorkspace';
 import {
   buildApproveDraftTextPatch,
+  buildAddHumanCommentRevisionPatch,
   buildApprovePlanSlotPatch,
   buildEditCurrentBriefPatch,
   buildReturnEditorialWorkItemToCandidatesPatch,
   buildSaveDraftTextPatch,
+  buildSelectDraftVersionPatch,
   buildSelectEditorialWorkItemPatch,
 } from './editorialWorkQueueActions';
 import { buildAddInsightToPlanPatch, buildGenerateBroadcastPlanPatch, buildSaveContentPlanSettingsPatch, buildUpdatePlanItemPatch } from './productionPlanActions';
@@ -26,6 +28,8 @@ import { createProductionVisualActions } from './productionVisualActions';
 import { copyToClipboard, downloadMarkdown, markReleaseManuallyExported } from './releaseExport';
 import type { WorkspacePatch } from './useWorkspacePersistence';
 import { useDraftGenerationController } from './useDraftGenerationController';
+import { reviseDraftWithEditorComment } from '../infrastructure/draftCommentRevisionClient';
+import { loadEditorDecisionTraceSummary } from '../infrastructure/editorDecisionTraceClient';
 
 type ProductionFlowActionsParams = {
   patchWorkspace: WorkspacePatch;
@@ -89,12 +93,39 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
   }
 
   function updateDraftBody(body: string) {
-    patchWorkspace(buildSaveDraftTextPatch(workspace, body));
+    patchWorkspace(buildSaveDraftTextPatch(workspace, body), 'Правка сохранена как новая версия');
   }
 
-  function approveCurrentFinalText(body?: string) {
+  function selectDraftVersion(versionId: string) {
+    patchWorkspace(buildSelectDraftVersionPatch(workspace, versionId));
+  }
+
+  async function reviseCurrentDraftWithComment(editorComment: string) {
+    if (!workspace.postDraft) return;
+    try {
+      const revision = await reviseDraftWithEditorComment(workspace.postDraft, editorComment);
+      patchWorkspace(
+        buildAddHumanCommentRevisionPatch(workspace, {
+          title: revision.title,
+          body: revision.body,
+          editorComment,
+          revisionSummary: revision.revisionSummary,
+          aiRunId: revision.aiRunId
+        }),
+        'Новая версия создана по комментарию редактора'
+      );
+    } catch (error) {
+      patchWorkspace({}, error instanceof Error ? error.message : 'Не удалось создать новую версию');
+      throw error;
+    }
+  }
+
+  async function approveCurrentFinalText(versionId?: string) {
+    const machineTrace = workspace.postDraft
+      ? await loadEditorDecisionTraceSummary(workspace.postDraft)
+      : undefined;
     patchWorkspace(
-      buildApproveDraftTextPatch(workspace, body),
+      buildApproveDraftTextPatch(workspace, versionId, machineTrace),
       'РўРµРєСЃС‚ СѓС‚РІРµСЂР¶РґРµРЅ В· СЃР»РµРґСѓСЋС‰РёР№ С€Р°Рі: Р’РёР·СѓР°Р»'
     );
   }
@@ -184,10 +215,12 @@ export function useProductionFlowActions({ patchWorkspace, workspace }: Producti
     markCurrentReleaseReady,
     returnEditorialWorkItemToCandidates,
     saveContentPlanSettings,
+    selectDraftVersion,
     selectEditorialWorkItem,
     toggleReleaseChecklist,
     updateCurrentLearningNote,
     updateDraftBody,
+    reviseCurrentDraftWithComment,
     updatePlanItemAndWarnings,
     draftGenerationState: draftGeneration.draftGenerationState,
     ...visualActions

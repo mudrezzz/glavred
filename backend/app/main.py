@@ -11,6 +11,7 @@ from backend.app.settings import BackendSettings, get_settings
 def create_app(
     settings: BackendSettings | None = None,
     openrouter_draft_adapter: object | None = None,
+    openrouter_json_adapter: object | None = None,
     draft_run_dispatcher: object | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Glavred Backend", version="0.1.0")
@@ -24,6 +25,8 @@ def create_app(
     )
     if openrouter_draft_adapter is not None:
         app.state.openrouter_draft_adapter = openrouter_draft_adapter
+    if openrouter_json_adapter is not None:
+        app.state.openrouter_json_adapter = openrouter_json_adapter
     if draft_run_dispatcher is not None:
         app.state.draft_run_dispatcher = draft_run_dispatcher
     app.include_router(health_router)

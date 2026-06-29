@@ -7,6 +7,7 @@ import type {
 } from '../domain/editorialWorkspace';
 
 export function createPostDraft(postBrief: PostBrief, model: EditorialModel): PostDraft {
+  const now = new Date().toISOString();
   const body = [
     postBrief.title,
     '',
@@ -39,7 +40,20 @@ export function createPostDraft(postBrief: PostBrief, model: EditorialModel): Po
     body,
     version: 1,
     status: 'draft',
-    updatedAt: new Date().toISOString()
+    updatedAt: now,
+    activeVersionId: `draft-${postBrief.id}-v1`,
+    versions: [
+      {
+        id: `draft-${postBrief.id}-v1`,
+        versionNumber: 1,
+        source: 'machineFinal',
+        title: postBrief.title,
+        body,
+        draftRunId: null,
+        aiRunId: null,
+        createdAt: now
+      }
+    ]
   };
 }
 

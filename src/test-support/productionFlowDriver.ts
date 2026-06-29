@@ -34,7 +34,10 @@ export async function createApprovedBrief() {
 
 export async function createApprovedFinalText() {
   await createApprovedBrief();
-  fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));
+  await waitFor(() => {
+    expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+  });
 }
 
 export async function createExportedRelease() {

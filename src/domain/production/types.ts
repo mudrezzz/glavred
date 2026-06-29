@@ -10,6 +10,8 @@ export type EditorialWorkStage = 'brief' | 'draft' | 'visual' | 'readyForRelease
 export type EditorialWorkStatus = 'todo' | 'inProgress' | 'approved' | 'blocked';
 export type VisualMode = 'generate' | 'memeSearch' | 'memeRemix' | 'noVisual';
 export type DraftGenerationSource = 'draftRun' | 'openrouter' | 'backendFallback' | 'localFallback';
+export type DraftVersionSource = 'machineFinal' | 'humanCommentRevision' | 'manualEdit';
+export type EditorDecisionTraceStatus = 'available' | 'unavailable';
 
 export interface DraftGenerationTrace {
   source: DraftGenerationSource;
@@ -79,6 +81,48 @@ export interface PostBrief {
   fabulaTitle?: string;
 }
 
+export interface DraftVersion {
+  id: string;
+  versionNumber: number;
+  source: DraftVersionSource;
+  baseVersionId?: string;
+  title: string;
+  body: string;
+  editorComment?: string;
+  revisionSummary?: string;
+  draftRunId?: string | null;
+  aiRunId?: string | null;
+  createdAt: string;
+}
+
+export interface EditorDecisionMachineTraceSummary {
+  draftRunId: string | null;
+  traceStatus: EditorDecisionTraceStatus;
+  finalQualityGate?: Record<string, unknown> | null;
+  revisionLoop?: Record<string, unknown> | null;
+  alternativeAngleTournament?: Record<string, unknown> | null;
+  validationSummary?: Record<string, unknown> | null;
+  unresolvedRisks: string[];
+}
+
+export interface EditorDecisionSnapshot {
+  id: string;
+  draftId: string;
+  selectedVersionId: string;
+  selectedVersionNumber: number;
+  selectedVersionSource: DraftVersionSource;
+  machineFinalVersionId: string | null;
+  humanRevisionCount: number;
+  manualEditCount: number;
+  comments: Array<{
+    versionId: string;
+    versionNumber: number;
+    comment: string;
+  }>;
+  machineTrace: EditorDecisionMachineTraceSummary;
+  createdAt: string;
+}
+
 export interface PostDraft {
   id: string;
   briefId: string;
@@ -88,6 +132,9 @@ export interface PostDraft {
   status: DraftStatus;
   updatedAt: string;
   generation?: DraftGenerationTrace;
+  versions?: DraftVersion[];
+  activeVersionId?: string;
+  finalVersionId?: string;
 }
 
 export interface EditorialCheck {
@@ -110,10 +157,13 @@ export interface EditorNote {
 export interface FinalText {
   id: string;
   draftId: string;
+  draftVersionId?: string;
+  versionNumber?: number;
   title: string;
   body: string;
   approvalStatus: ApprovalStatus;
   approvedAt: string;
+  editorDecisionSnapshot?: EditorDecisionSnapshot;
 }
 
 export interface PostVisual {

@@ -1,5 +1,5 @@
 import { createEditorNotes, createPostDraft, runEditorialChecks } from '../application/editorialServices';
-import { approvePostBrief, type PostDraft, type WorkspaceState } from '../domain/editorialWorkspace';
+import { approvePostBrief, normalizePostDraftVersions, type PostDraft, type WorkspaceState } from '../domain/editorialWorkspace';
 import { withEditorialWorkItemSync } from './editorialWorkQueueActions';
 
 export function buildApproveBriefWithGeneratedDraftPatch(
@@ -9,7 +9,7 @@ export function buildApproveBriefWithGeneratedDraftPatch(
   if (!workspace.postBrief) return {};
 
   const postBrief = approvePostBrief(workspace.postBrief);
-  const postDraft: PostDraft = {
+  const postDraft: PostDraft = normalizePostDraftVersions({
     ...generatedDraft,
     id: generatedDraft.id || `draft-${postBrief.id}`,
     briefId: postBrief.id,
@@ -17,7 +17,7 @@ export function buildApproveBriefWithGeneratedDraftPatch(
     status: generatedDraft.status ?? 'draft',
     version: generatedDraft.version || 1,
     updatedAt: generatedDraft.updatedAt || new Date().toISOString()
-  };
+  });
   const editorialChecks = runEditorialChecks(postDraft, postBrief, workspace.editorialModel);
   const editorNotes = createEditorNotes(editorialChecks);
 

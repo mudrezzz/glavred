@@ -13,7 +13,7 @@ import {
 } from '../../domain/editorialWorkspace';
 import { createPostBrief, createPostCandidates, createPostDraft, createWorkspaceInsightCard } from '../../application/editorialServices';
 import { createDemoWorkspace } from '../../fixtures/demoWorkspace';
-import { buildEditCurrentBriefPatch, buildSelectEditorialWorkItemPatch } from '../../app/editorialWorkQueueActions';
+import { buildEditCurrentBriefPatch, buildSelectDraftVersionPatch, buildSelectEditorialWorkItemPatch } from '../../app/editorialWorkQueueActions';
 import { EditView } from './EditView';
 
 describe('EditView', () => {
@@ -123,7 +123,7 @@ describe('EditView', () => {
     expect(context.querySelectorAll('.candidate-fact.wide')).toHaveLength(1);
   });
 
-  it('approves draft text from the draft stage without a final tab', () => {
+  it('approves a selected saved draft version from the draft stage without a final tab', () => {
     const workspace = createWorkspaceWithQueue();
     const onDraftChange = vi.fn();
     const onApproveFinal = vi.fn();
@@ -135,19 +135,19 @@ describe('EditView', () => {
 
     expect(workbench.queryByRole('tab', { name: /Финал/i })).not.toBeInTheDocument();
     expect(workbench.getByRole('tab', { name: /Драфт/i })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('button', { name: /Сохранить правки/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Утвердить текст/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Сохранить как новую версию/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Сделать финальной/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Вернуться к фабуле/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));
+    expect(onApproveFinal).toHaveBeenCalledWith(workspace.postDraft!.activeVersionId ?? `${workspace.postDraft!.id}-v1`);
 
     fireEvent.change(screen.getByLabelText('Текст драфта'), { target: { value: 'Unsaved draft edit' } });
     expect(onDraftChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Сделать финальной/i })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole('button', { name: /Сохранить правки/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить как новую версию/i }));
     expect(onDraftChange).toHaveBeenCalledWith('Unsaved draft edit');
-
-    fireEvent.change(screen.getByLabelText('Текст драфта'), { target: { value: 'Approved draft edit' } });
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
-    expect(onApproveFinal).toHaveBeenCalledWith('Approved draft edit');
   });
 
   it('shows visual stage in queue filters instead of final', () => {
@@ -394,14 +394,16 @@ describe('EditView', () => {
 function renderEdit(
   workspace: WorkspaceState,
   overrides: Partial<{
-    onApproveFinal: (body?: string) => void;
+    onApproveFinal: (versionId?: string) => void | Promise<void>;
     onApproveVisual: (patch: PostVisualEditPatch) => void;
     onDraftChange: (body: string) => void;
     onPrepareMemeReferences: (patch: PostVisualEditPatch) => void;
     onPrepareMemeRemixVariants: () => void;
     onPrepareVisualVariants: (patch: PostVisualEditPatch) => void;
+    onReviseDraftWithComment: (comment: string) => Promise<void>;
     onSaveVisual: (patch: PostVisualEditPatch) => void;
     onSelectMemeReference: (referenceId: string) => void;
+    onSelectDraftVersion: (versionId: string) => void;
     onSelectVisualVariant: (variantId: string) => void;
     onReturnWorkItem: (itemId: string) => void;
     onSelectWorkItem: (itemId: string) => void;
@@ -419,9 +421,11 @@ function renderEdit(
       onPrepareMemeReferences={overrides.onPrepareMemeReferences ?? vi.fn()}
       onPrepareMemeRemixVariants={overrides.onPrepareMemeRemixVariants ?? vi.fn()}
       onPrepareVisualVariants={overrides.onPrepareVisualVariants ?? vi.fn()}
+      onReviseDraftWithComment={overrides.onReviseDraftWithComment ?? vi.fn()}
       onReturnWorkItem={overrides.onReturnWorkItem ?? vi.fn()}
       onSaveVisual={overrides.onSaveVisual ?? vi.fn()}
       onSelectMemeReference={overrides.onSelectMemeReference ?? vi.fn()}
+      onSelectDraftVersion={overrides.onSelectDraftVersion ?? vi.fn()}
       onSelectVisualVariant={overrides.onSelectVisualVariant ?? vi.fn()}
       onSelectWorkItem={overrides.onSelectWorkItem ?? vi.fn()}
     />
@@ -448,9 +452,16 @@ function ControlledEditView({ workspace }: { workspace: WorkspaceState }) {
       onPrepareMemeReferences={vi.fn()}
       onPrepareMemeRemixVariants={vi.fn()}
       onPrepareVisualVariants={vi.fn()}
+      onReviseDraftWithComment={vi.fn()}
       onReturnWorkItem={vi.fn()}
       onSaveVisual={vi.fn()}
       onSelectMemeReference={vi.fn()}
+      onSelectDraftVersion={(versionId) =>
+        setCurrent((previous) => ({
+          ...previous,
+          ...buildSelectDraftVersionPatch(previous, versionId)
+        }))
+      }
       onSelectVisualVariant={vi.fn()}
       onSelectWorkItem={(itemId) =>
         setCurrent((previous) => ({

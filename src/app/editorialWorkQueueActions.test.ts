@@ -111,6 +111,8 @@ describe('editorial work queue actions', () => {
 
     expect(patch.postBrief?.approvalStatus).toBe('approved');
     expect(patch.postDraft?.briefId).toBe(patch.postBrief?.id);
+    expect(patch.postDraft?.versions).toHaveLength(1);
+    expect(patch.postDraft?.activeVersionId).toBe(patch.postDraft?.versions?.[0].id);
     expect(patch.editorialChecks?.length).toBeGreaterThan(0);
     expect(patch.editorNotes?.length).toBeGreaterThan(0);
     expect(patch.editorialWorkItems?.[0].brief?.approvalStatus).toBe('approved');
@@ -124,10 +126,15 @@ describe('editorial work queue actions', () => {
     const withSlot = { ...workspace, ...approvedSlot };
     const approvedBrief = buildApproveBriefAndCreateDraftPatch(withSlot);
     const withDraft = { ...withSlot, ...approvedBrief };
-    const patch = buildApproveDraftTextPatch(withDraft, 'Approved text with inline edits');
+    const saved = buildSaveDraftTextPatch(withDraft, 'Approved text with inline edits');
+    const withSaved = { ...withDraft, ...saved };
+    const patch = buildApproveDraftTextPatch(withSaved, saved.postDraft!.activeVersionId);
 
     expect(patch.postDraft?.body).toBe('Approved text with inline edits');
+    expect(patch.postDraft?.versions).toHaveLength(2);
     expect(patch.finalText?.body).toBe('Approved text with inline edits');
+    expect(patch.finalText?.draftVersionId).toBe(saved.postDraft?.activeVersionId);
+    expect(patch.finalText?.editorDecisionSnapshot?.manualEditCount).toBe(1);
     expect(patch.finalText?.approvalStatus).toBe('approved');
     expect(patch.releasePackage).toBeNull();
     expect(patch.editorialLearningNote).toBeNull();
@@ -164,6 +171,8 @@ describe('editorial work queue actions', () => {
     const patch = buildSaveDraftTextPatch(current, 'Saved revised draft');
 
     expect(patch.postDraft?.body).toBe('Saved revised draft');
+    expect(patch.postDraft?.versions).toHaveLength(2);
+    expect(patch.postDraft?.versions?.[1].source).toBe('manualEdit');
     expect(patch.finalText).toBeNull();
     expect(patch.postVisual).toBeNull();
     expect(patch.releasePackage).toBeNull();

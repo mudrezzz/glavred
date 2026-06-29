@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
@@ -43,9 +43,12 @@ describe('Editorial workbench app flow', () => {
             value: `${(draftEditor as HTMLTextAreaElement).value}\n\nРучная редакторская правка перед утверждением текста.`
       }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Утвердить текст/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Сохранить как новую версию/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));
 
-    expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Текст утвержден/i).length).toBeGreaterThan(0);
+    });
     expect(screen.getAllByText(/следующий шаг: Визуал/i).length).toBeGreaterThan(0);
 
     unmount();

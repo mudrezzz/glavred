@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.15.6.4.2: Final Gate Attribution Handoff Repair.
+Current as of Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -35,6 +35,8 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
+| `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
+| `EditorDecisionSnapshot` | Human final-selection record linking the chosen version to machine trace summaries, unresolved risks, comments, and manual edit counts. | local workspace `finalText.editorDecisionSnapshot` |
 
 ## 2. Runtime topology
 
@@ -56,6 +58,11 @@ sequenceDiagram
   Worker->>DB: write child AiRun ids and artifacts
   Worker->>DB: set finalDraft and succeeded
   UI->>API: read final run
+  UI->>UI: store finalDraft as local v1
+  UI->>API: optional POST /api/drafts/revise-with-comment
+  API->>OR: writer-role human-comment revision JSON call
+  API-->>UI: revised title/body + child AiRun id
+  UI->>UI: store v2/v3/... and final version decision
 ```
 
 The frontend never treats a live queued/running DraftRun as a reason to call the
@@ -80,6 +87,7 @@ flowchart TD
   K --> L[draft]
   L --> M[validation]
   M --> N[complete]
+  N --> O[Post-run editor version loop]
 ```
 
 The backend enum is:
@@ -119,6 +127,7 @@ Role-aware execution map:
 | `validation` revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed/not-run if no usable JSON | current best candidate, repair goals, anti-regression constraints, writer `ContextPack`, revision generation params | regression guard and final draft |
 | `validation` final quality gate | `finalGate`, then optional `writer` | `DRAFT_FINAL_GATE_MODEL`, or independent critic/review/default fallback; `DRAFT_WRITER_MODEL` for bounded final repair cycles | delivered final candidate, `FinalQualityContract`, validation reports, critique, evidence interpretation, ledger, contract, rule registry, material plan | accepted public draft or rejected repair trace |
 | `complete` | none | no model | final DraftRun state | frontend |
+| post-run human comment revision | `writer` | `DRAFT_WRITER_MODEL`, then default, repair, backup, failed if no usable JSON | selected `DraftVersion`, editor comment, compact machine trace context from final quality gate, revision loop, alternative angle, validation, contract/material evidence | new local `DraftVersion`; not a new DraftRun |
 
 Practical reading rule: when a step says `Role/model handoff: strategy`, it does
 not mean that the strategy model talks directly to the writer model. It means the
@@ -668,6 +677,49 @@ Role/model handoff:
 - this step only records the final orchestration outcome for the frontend and
   trace workbench.
 
+### 4.13 Post-run editor version loop
+
+Purpose: let the human editor keep improving or manually editing the delivered
+machine draft without mutating older versions.
+
+Inputs:
+
+- parent `DraftRun.finalDraft`, stored locally as `DraftVersion v1` with
+  `source=machineFinal`;
+- active draft version chosen by the editor;
+- optional editor comment;
+- optional compact machine trace context from the parent DraftRun: final quality
+  gate summary, revision loop summary, alternative-angle outcome, validation
+  summary, unresolved risks, post contract, and material evidence.
+
+Behavior:
+
+- the editor can switch between saved versions;
+- manual text edits are local until the user saves them as a new
+  `source=manualEdit` version;
+- one click on `Улучшить по комментарию` calls
+  `POST /api/drafts/revise-with-comment`;
+- that endpoint is not a new DraftRun. It is a post-run writer-role JSON call with
+  child `AiRun` audit and existing JSON retry discipline;
+- provider failure does not create a fake version;
+- the editor can mark any saved version as final, including `v1` after later
+  versions exist.
+
+Output:
+
+- local `PostDraft.versions[]`, `activeVersionId`, and `finalVersionId`;
+- compatibility mirror fields `PostDraft.title/body/version` always reflect the
+  active version;
+- `FinalText.draftVersionId`, `FinalText.versionNumber`, and
+  `FinalText.editorDecisionSnapshot`.
+
+Role/model handoff:
+
+- post-run human-comment revision uses the `writer` role;
+- it receives a compact machine context, not raw DraftRun JSON;
+- it must preserve source markers, allowed claims, forbidden moves, and final
+  quality constraints.
+
 ## 5. Role model usage and handoff AS IS
 
 The current role interaction is artifact-mediated. A role does not continue the
@@ -686,6 +738,9 @@ flowchart TD
   H --> I[writer revises the current best candidate]
   I --> J[deterministic regression guard accepts or rejects revision]
   J --> K[complete stores finalDraft or blocked result]
+  K --> L[editor stores v1 and may request comment revisions]
+  L --> M[writer creates v2, v3, ... when requested]
+  M --> N[editor selects any version as final]
 ```
 
 Role summary:
@@ -698,6 +753,7 @@ Role summary:
 | `review` | LLM validation and pairwise ranking | review context pack, candidates, rules, ledger, validation reports | rewrite prose directly |
 | `critic` | report-only editorial critique | critic context pack, evidence interpretation, candidates, validation context | rewrite prose or change final selection |
 | `anotherAngle` | one critic-driven challenger route | another-angle context pack, initial validation, editorial critique, rejected/weak moves | act as technical backup or invent new evidence |
+| `writer` post-run | human-comment revision of one saved version | active draft version, editor comment, compact machine trace context | mutate prior versions or fabricate a successful revision after provider failure |
 
 ## 6. Context flow
 
@@ -750,6 +806,8 @@ Important AS IS rules:
 | `FinalQualityGate` | validation | final draft selection, trace | `validation.rankingRevision.finalQualityGate` |
 | `ArticleDossier` | article memory service | context pack builder, trace | selected step artifacts |
 | `ContextPack` | article memory service | child LLM services | step artifacts and child `AiRun.requestPayload` |
+| `DraftVersion` | frontend/editor actions | editor version list, final selection | local workspace `postDraft.versions[]` |
+| `EditorDecisionSnapshot` | final text approval | future learning slice, audit/debug | local workspace `finalText.editorDecisionSnapshot` |
 
 ## 8. Retry, fallback, and blocked behavior
 
@@ -768,6 +826,7 @@ Important AS IS rules:
 | validation sub-operation failure | mark nested operation failed, preserve partial artifact, keep previous best if available |
 | material plan ignores evidence | accountability retry, optional backup model, then emergency fallback |
 | unresolved attribution requirement | record diagnostic metadata; not a repair goal unless it resolves to expected source markers that are missing from the final body |
+| human-comment revision provider failure | no new version is created; UI keeps the current version list and shows a safe error |
 | candidate provider failure | fallback only for that candidate direction |
 | fallback candidate selection | fallback is diagnostic unless publishability guard allows it |
 | feasibility blocked | run succeeds with `finalDraft = null`; no local fallback |
@@ -807,6 +866,10 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     safe errors and the final previous-best decision when available.
 19. child `AiRun` detail: inspect prompt messages, role model, generation params,
     context pack, provider result, and sanitized raw response excerpt on JSON failures.
+20. post-run editor state: inspect local `postDraft.versions[]` and
+    `finalText.editorDecisionSnapshot` to see which version the human selected,
+    which comments created new versions, and whether machine trace context was
+    available when the final text was approved.
 
 ## 10. Known AS IS limitations
 
@@ -819,8 +882,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 - Failed late provider operations are safely finalized when the Python call returns or
   raises; a separate infrastructure watchdog is still needed for externally stuck
   Celery tasks that never return control to the worker.
-- The pipeline has detailed traceability, but the main editor UI still receives only
-  one final draft and a compact status.
+- The pipeline has detailed traceability. The main editor UI receives one machine
+  draft first, then manages post-run human versions locally; cross-post learning from
+  those decisions is still Slice 2.16.1.
 
 ## 11. Maintenance rules
 

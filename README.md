@@ -254,6 +254,17 @@ accepted only if deterministic regression checks pass and the gate findings impr
 Otherwise the previous best draft remains final and the trace shows why the repair was
 rejected.
 
+After the machine run returns `finalDraft`, the editor works with immutable draft
+versions. The delivered machine draft becomes `v1`; manual edits are saved as new
+versions, and the editor can send the active version plus a comment to
+`POST /api/drafts/revise-with-comment` for a writer-role revision that creates
+`v2`, `v3`, and so on. Failed comment revisions do not create fake versions. Any
+saved version can be selected as final, including `v1` after later revisions exist.
+The approved `FinalText` stores an `EditorDecisionSnapshot` with the selected version,
+human comments/manual edit counts, available machine trace summaries, and unresolved
+risks. Cross-post learning from these decisions is intentionally deferred to the next
+slice.
+
 The next drafting-quality direction is an editorial lab around this spine, not a
 larger "bad draft" report. DraftRun now has role-specific model policy: research,
 strategy, writer, review, critic, and another-angle roles can use different OpenRouter

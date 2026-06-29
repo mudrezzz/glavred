@@ -142,6 +142,8 @@ function CabinetApp() {
           onSelectWorkItem={controller.selectEditorialWorkItem}
           onDraftChange={controller.updateDraftBody}
           onApproveFinal={controller.approveCurrentFinalText}
+          onReviseDraftWithComment={controller.reviseCurrentDraftWithComment}
+          onSelectDraftVersion={controller.selectDraftVersion}
           onSaveVisual={controller.saveCurrentVisualDraft}
           onPrepareMemeReferences={controller.prepareCurrentMemeReferences}
           onPrepareMemeRemixVariants={controller.prepareCurrentMemeRemixVariants}

@@ -1,4 +1,18 @@
-import type { EditorialCheck, EditorialLearningNote, FinalText, PostBrief, PostDraft, PostVisual, PostVisualMemeReference, PostVisualVariant, ReleasePackage, VisualMode } from './types';
+import type {
+  DraftVersion,
+  EditorDecisionMachineTraceSummary,
+  EditorDecisionSnapshot,
+  EditorialCheck,
+  EditorialLearningNote,
+  FinalText,
+  PostBrief,
+  PostDraft,
+  PostVisual,
+  PostVisualMemeReference,
+  PostVisualVariant,
+  ReleasePackage,
+  VisualMode
+} from './types';
 
 export type PostBriefEditPatch = Pick<
   PostBrief,
@@ -47,23 +61,221 @@ function normalizeLines(items: string[]): string[] {
 }
 
 export function reviseDraft(postDraft: PostDraft, body: string): PostDraft {
-  return {
-    ...postDraft,
+  return addDraftVersion(postDraft, {
+    source: 'manualEdit',
+    title: getActiveDraftVersion(postDraft).title,
     body,
-    version: postDraft.version + 1,
-    status: 'revised',
-    updatedAt: new Date().toISOString()
-  };
+    revisionSummary: 'Ручная редакторская правка.'
+  });
 }
 
-export function approveFinalText(postDraft: PostDraft): FinalText {
+export function approveFinalText(
+  postDraft: PostDraft,
+  options: {
+    versionId?: string;
+    machineTrace?: EditorDecisionMachineTraceSummary;
+  } = {}
+): FinalText {
+  const normalizedDraft = normalizePostDraftVersions(postDraft);
+  const selectedVersion = findDraftVersion(normalizedDraft, options.versionId) ?? getActiveDraftVersion(normalizedDraft);
+  const now = new Date().toISOString();
+  const snapshot = createEditorDecisionSnapshot(normalizedDraft, selectedVersion, options.machineTrace, now);
+
   return {
     id: `final-${postDraft.id}`,
     draftId: postDraft.id,
+    draftVersionId: selectedVersion.id,
+    versionNumber: selectedVersion.versionNumber,
+    title: selectedVersion.title,
+    body: selectedVersion.body,
+    approvalStatus: 'approved',
+    approvedAt: now,
+    editorDecisionSnapshot: snapshot
+  };
+}
+
+export function normalizePostDraftVersions(postDraft: PostDraft): PostDraft {
+  const versions = normalizeDraftVersions(postDraft);
+  const activeVersion =
+    versions.find((version) => version.id === postDraft.activeVersionId) ??
+    versions.find((version) => version.versionNumber === postDraft.version) ??
+    versions[versions.length - 1];
+
+  return mirrorDraftVersion(postDraft, activeVersion, {
+    versions,
+    activeVersionId: activeVersion.id,
+    finalVersionId: postDraft.finalVersionId
+  });
+}
+
+export function getActiveDraftVersion(postDraft: PostDraft): DraftVersion {
+  const normalizedDraft = normalizePostDraftVersions(postDraft);
+  return (
+    normalizedDraft.versions?.find((version) => version.id === normalizedDraft.activeVersionId) ??
+    normalizedDraft.versions?.[0] ??
+    createInitialDraftVersion(postDraft)
+  );
+}
+
+export function selectDraftVersion(postDraft: PostDraft, versionId: string): PostDraft {
+  const normalizedDraft = normalizePostDraftVersions(postDraft);
+  const selectedVersion = findDraftVersion(normalizedDraft, versionId);
+  if (!selectedVersion) return normalizedDraft;
+
+  return mirrorDraftVersion(normalizedDraft, selectedVersion, {
+    versions: normalizedDraft.versions ?? [selectedVersion],
+    activeVersionId: selectedVersion.id,
+    finalVersionId: normalizedDraft.finalVersionId
+  });
+}
+
+export function addHumanCommentRevisionVersion(
+  postDraft: PostDraft,
+  patch: {
+    title: string;
+    body: string;
+    editorComment: string;
+    revisionSummary?: string;
+    aiRunId?: string | null;
+  }
+): PostDraft {
+  const active = getActiveDraftVersion(postDraft);
+  return addDraftVersion(postDraft, {
+    source: 'humanCommentRevision',
+    baseVersionId: active.id,
+    title: patch.title,
+    body: patch.body,
+    editorComment: patch.editorComment,
+    revisionSummary: patch.revisionSummary,
+    aiRunId: patch.aiRunId ?? null
+  });
+}
+
+function addDraftVersion(
+  postDraft: PostDraft,
+  patch: {
+    source: DraftVersion['source'];
+    title: string;
+    body: string;
+    baseVersionId?: string;
+    editorComment?: string;
+    revisionSummary?: string;
+    aiRunId?: string | null;
+  }
+): PostDraft {
+  const normalizedDraft = normalizePostDraftVersions(postDraft);
+  const current = getActiveDraftVersion(normalizedDraft);
+  if (patch.body === current.body && patch.title === current.title) return normalizedDraft;
+
+  const versions = normalizedDraft.versions ?? [current];
+  const nextNumber = Math.max(...versions.map((version) => version.versionNumber), 0) + 1;
+  const createdAt = new Date().toISOString();
+  const nextVersion: DraftVersion = {
+    id: `${normalizedDraft.id}-v${nextNumber}`,
+    versionNumber: nextNumber,
+    source: patch.source,
+    baseVersionId: patch.baseVersionId ?? current.id,
+    title: patch.title,
+    body: patch.body,
+    editorComment: patch.editorComment?.trim() || undefined,
+    revisionSummary: patch.revisionSummary?.trim() || undefined,
+    draftRunId: normalizedDraft.generation?.draftRunId ?? null,
+    aiRunId: patch.aiRunId ?? null,
+    createdAt
+  };
+
+  return mirrorDraftVersion(normalizedDraft, nextVersion, {
+    versions: [...versions, nextVersion],
+    activeVersionId: nextVersion.id,
+    finalVersionId: undefined
+  });
+}
+
+function normalizeDraftVersions(postDraft: PostDraft): DraftVersion[] {
+  const versions = Array.isArray(postDraft.versions) && postDraft.versions.length > 0
+    ? postDraft.versions
+    : [createInitialDraftVersion(postDraft)];
+
+  return versions
+    .map((version, index) => ({
+      ...version,
+      id: version.id || `${postDraft.id}-v${index + 1}`,
+      versionNumber: version.versionNumber || index + 1,
+      source: version.source ?? 'machineFinal',
+      title: version.title || postDraft.title,
+      body: version.body || postDraft.body,
+      draftRunId: version.draftRunId ?? postDraft.generation?.draftRunId ?? null,
+      aiRunId: version.aiRunId ?? null,
+      createdAt: version.createdAt || postDraft.updatedAt
+    }))
+    .sort((left, right) => left.versionNumber - right.versionNumber);
+}
+
+function createInitialDraftVersion(postDraft: PostDraft): DraftVersion {
+  return {
+    id: `${postDraft.id}-v1`,
+    versionNumber: 1,
+    source: 'machineFinal',
     title: postDraft.title,
     body: postDraft.body,
-    approvalStatus: 'approved',
-    approvedAt: new Date().toISOString()
+    draftRunId: postDraft.generation?.draftRunId ?? null,
+    aiRunId: postDraft.generation?.aiRunId ?? null,
+    createdAt: postDraft.updatedAt
+  };
+}
+
+function mirrorDraftVersion(
+  postDraft: PostDraft,
+  version: DraftVersion,
+  patch: Pick<PostDraft, 'versions' | 'activeVersionId' | 'finalVersionId'>
+): PostDraft {
+  return {
+    ...postDraft,
+    ...patch,
+    title: version.title,
+    body: version.body,
+    version: version.versionNumber,
+    status: version.source === 'machineFinal' ? postDraft.status : 'revised',
+    updatedAt: version.createdAt
+  };
+}
+
+function findDraftVersion(postDraft: PostDraft, versionId: string | undefined): DraftVersion | undefined {
+  if (!versionId) return undefined;
+  return (postDraft.versions ?? []).find((version) => version.id === versionId);
+}
+
+function createEditorDecisionSnapshot(
+  postDraft: PostDraft,
+  selectedVersion: DraftVersion,
+  machineTrace: EditorDecisionMachineTraceSummary | undefined,
+  createdAt: string
+): EditorDecisionSnapshot {
+  const versions = postDraft.versions ?? [selectedVersion];
+  const comments = versions
+    .filter((version) => version.editorComment)
+    .map((version) => ({
+      versionId: version.id,
+      versionNumber: version.versionNumber,
+      comment: version.editorComment ?? ''
+    }));
+
+  return {
+    id: `editor-decision-${postDraft.id}-${selectedVersion.id}`,
+    draftId: postDraft.id,
+    selectedVersionId: selectedVersion.id,
+    selectedVersionNumber: selectedVersion.versionNumber,
+    selectedVersionSource: selectedVersion.source,
+    machineFinalVersionId: versions.find((version) => version.source === 'machineFinal')?.id ?? null,
+    humanRevisionCount: versions.filter((version) => version.source === 'humanCommentRevision').length,
+    manualEditCount: versions.filter((version) => version.source === 'manualEdit').length,
+    comments,
+    machineTrace: machineTrace ?? {
+      draftRunId: postDraft.generation?.draftRunId ?? null,
+      traceStatus: 'unavailable',
+      unresolvedRisks: []
+    },
+    createdAt
   };
 }
 
