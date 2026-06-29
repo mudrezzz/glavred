@@ -8,7 +8,7 @@ import { BriefView } from './features/briefing/BriefView';
 import { EditorialModelView } from './features/editorial-model/EditorialModelView';
 import { EditView } from './features/editing/EditView';
 import { PlanView } from './features/plan/PlanView';
-import { PortfolioSwitcher } from './features/portfolio/PortfolioSwitcher';
+import { SidebarPortfolioSwitcher } from './features/portfolio/SidebarPortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
 import { SignalsView } from './features/signals/SignalsView';
 
@@ -44,8 +44,8 @@ function CabinetApp() {
     <AppShell
       active={active}
       chatOpen={contextChatOpen}
-      portfolioSwitcher={
-        <PortfolioSwitcher
+      sidebarFooter={
+        <SidebarPortfolioSwitcher
           accessibleProjects={accessibleProjects}
           activeProject={activeProject}
           activeUser={activeUser}

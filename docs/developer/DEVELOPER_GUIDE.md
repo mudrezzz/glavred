@@ -26,7 +26,9 @@ Slice 2.17.1 implements the local shell for that boundary. Frontend runtime now 
 `PortfolioState` through `LocalPortfolioStore`, then hydrates the existing app from
 the active project's `WorkspaceState`. Legacy `glavred.workspace.v1` storage is
 migrated into one default project; fresh reset seeds two users and three project
-containers. Keep future portfolio logic in role-owned modules such as
+containers. The visible switcher is placed in the sidebar footer identity slot, not in
+an extra top strip, so global account/project context stays out of screen-level
+actions. Keep future portfolio logic in role-owned modules such as
 `src/domain/portfolio`, `src/application/portfolioService.ts`, and
 `src/infrastructure/localPortfolioStore.ts` instead of expanding near-limit
 workspace or demo fixture files.

@@ -47,7 +47,9 @@ log area, analytics prep area, and the new author memory workspace.
 ## Local Portfolio Shell and Planned Benchmark Demo
 
 The demo now includes a SaaS-style local portfolio shell with two users and three
-independent blog project containers. The architecture contract for the portfolio is
+independent blog project containers. The switcher lives in the lower-left sidebar
+identity block: click the current blog/user area to change user or blog. The
+architecture contract for the portfolio is
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 will replace
@@ -438,7 +440,7 @@ These are reference prototypes and design materials, not production code.
 
 The next demo step is the SaaS-style blog portfolio benchmark:
 
-1. Add a local user/project switcher.
+1. Add a local user/project switcher. Done.
 2. Seed two users and three independent blogs.
 3. Give each blog its own author memory, editorial model, publication channels, and
    benchmark scenarios.

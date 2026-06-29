@@ -104,8 +104,9 @@ The current product loop wraps the local workspace in a SaaS-ready portfolio she
 
 `BlogProject` is the key boundary: one independent blog or media system with its own
 author memory, editorial model, sources, plan, DraftRuns, final decisions, and learning
-notes. Project switching is available locally through a `PortfolioState` with demo
-users, memberships, projects, and one isolated workspace per selected blog.
+notes. Project switching is available locally from the lower-left sidebar identity
+block through a `PortfolioState` with demo users, memberships, projects, and one
+isolated workspace per selected blog.
 Authentication, backend project persistence, multi-platform generation, and
 publication adapters should grow around this boundary rather than around the old
 singleton workspace. This direction is captured in ADR

@@ -1,13 +1,16 @@
+import type { ReactNode } from 'react';
 import type { WorkspaceSection, WorkspaceState } from '../domain/editorialWorkspace';
 import { Icon } from '../shared/ui/Icon';
 import { NAV } from './navigation';
 
 export function Sidebar({
   active,
+  footer,
   onNav,
   workspace
 }: {
   active: WorkspaceSection;
+  footer?: ReactNode;
   onNav: (section: WorkspaceSection) => void;
   workspace: WorkspaceState;
 }) {
@@ -36,13 +39,15 @@ export function Sidebar({
         </button>
       ))}
       <div className="side-foot">
-        <div className="author">
-          <div className="ava">АК</div>
-          <div>
-            <b>{workspace.editorialModel.author.split(' — ')[0]}</b>
-            <span>Главный редактор</span>
+        {footer ?? (
+          <div className="author">
+            <div className="ava">АК</div>
+            <div>
+              <b>{workspace.editorialModel.author.split(' — ')[0]}</b>
+              <span>Главный редактор</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </aside>
   );

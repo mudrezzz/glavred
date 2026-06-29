@@ -84,8 +84,9 @@ The seeded notes cover:
 - confidence boundaries from customer interviews.
 
 Current demo shell: a SaaS-style local portfolio where a user can switch between
-independent blog projects before entering the editorial cabinet. The app currently
-seeds two demo users and three project containers:
+independent blog projects from the lower-left identity block in the sidebar. Click the
+current blog/user block to reveal the user and blog selectors. The app currently seeds
+two demo users and three project containers:
 
 - `AI Design Patterns`: a technical/research blog about durable AI design patterns
   and best practices, likely LinkedIn-first and English-capable.

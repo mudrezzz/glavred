@@ -5507,7 +5507,7 @@ Status:
   - Add local `UserAccount`, `BlogProject`, and `ProjectMembership` domain contracts.
   - Add `activeUserId`, `activeProjectId`, and `workspacesByProjectId` storage shape.
   - Migrate the current singleton workspace into the first selected project.
-  - Add project switcher UI above the current app shell.
+  - Add project switcher UI to the app shell.
   - Keep all existing sections project-scoped by selected project.
 - Out of scope:
   - Real authentication/security.
@@ -5543,6 +5543,36 @@ Status:
 - Risks:
   - Project shell can become heavy; keep it a thin wrapper around existing workspace.
 - Completed: 2026-06-29
+
+### Slice 2.17.1.1: Sidebar Portfolio Switcher Placement Repair
+
+- Status: Done
+- Goal: Move local user/blog switching from the extra top strip into the sidebar
+  identity block.
+- User value:
+  - The workbench regains vertical space.
+  - Account and blog context live where users expect global identity controls.
+- Scope:
+  - Replace the top portfolio strip with a compact sidebar footer switcher.
+  - Keep the local portfolio store, domain contracts, and project isolation unchanged.
+  - Show current blog and user in the collapsed footer state.
+  - Reveal user/blog selectors in an inline sidebar panel.
+- Out of scope:
+  - Backend auth.
+  - Project settings screen.
+  - Real per-blog demo content.
+- Architecture impact:
+  - Keeps `src/app` as shell composition: App passes a sidebar footer node, while
+    portfolio UI stays feature-owned.
+  - Removes the temporary top-level portfolio UI from the main content column.
+- Tests:
+  - UI app-flow test verifies the switcher is inside `aside.side`, not `main.main`.
+  - Project/user switching and project isolation tests remain green.
+- Docs:
+  - Updated roadmap, SaaS portfolio architecture, user guide, and demo docs.
+- Demo impact:
+  - Demo portfolio control now appears in the lower-left sidebar identity area.
+- Completed: 2026-06-30
 
 ### Slice 2.17.2: Three-Blog Benchmark Demo Portfolio
 
@@ -5959,6 +5989,7 @@ Status:
 - Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios. Completed 2026-06-29.
 - Slice 2.17.0: SaaS Blog Portfolio Architecture. Completed 2026-06-29.
 - Slice 2.17.1: Local Multi-Account and Blog Project Switcher. Completed 2026-06-29.
+- Slice 2.17.1.1: Sidebar Portfolio Switcher Placement Repair. Completed 2026-06-30.
 
 ## Blocked Items
 

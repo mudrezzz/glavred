@@ -286,7 +286,7 @@ Top-level app flow:
 
 The first implementation is restrained:
 
-- a compact switcher above the current app shell;
+- a compact switcher in the lower sidebar identity block;
 - user and blog project selectors;
 - no complex organization/admin surface;
 - no backend auth guarantee.
