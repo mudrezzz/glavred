@@ -35,8 +35,10 @@ export function AuthorNoteCard({
   onChangeEditTags,
   onChangeEditTitle,
   onDelete,
+  onAcceptLearning,
   onEditAttach,
   onEditRemoveAttachment,
+  onRejectLearning,
   onSaveEdit,
   onToggleExpanded
 }: {
@@ -57,8 +59,10 @@ export function AuthorNoteCard({
   onChangeEditTags: (value: string) => void;
   onChangeEditTitle: (value: string) => void;
   onDelete: (note: AuthorNote) => void;
+  onAcceptLearning: (note: AuthorNote) => void;
   onEditAttach: (file: File | undefined) => Promise<void>;
   onEditRemoveAttachment: () => void;
+  onRejectLearning: (note: AuthorNote) => void;
   onSaveEdit: (note: AuthorNote) => void;
   onToggleExpanded: () => void;
 }) {
@@ -67,11 +71,15 @@ export function AuthorNoteCard({
   const noteAttachments = note.attachments ?? [];
   const bodyIsLong = note.body.length > 420;
   const visibleBody = !bodyIsLong || expanded ? note.body : `${note.body.slice(0, 420)}...`;
+  const isLearningNote = note.type === 'editorialLearning';
+  const learningStatus = note.editorialLearning?.status;
 
   return (
     <article className="card memory-note">
       <div className="note-top">
-        <span className="sig info">{authorNoteTypeLabel(note.type)}</span>
+        <span className="sig info">{isLearningNote ? 'Редакторское наблюдение' : authorNoteTypeLabel(note.type)}</span>
+        {isLearningNote ? <span className="sc">Авто</span> : null}
+        {learningStatus ? <span className="sc">{learningStatusLabel(learningStatus)}</span> : null}
         <span className="sc">{formatDate(note.capturedAt)}</span>
         {isEvidenceNote(note.id, assertions) ? <span className="sc">evidence</span> : null}
         <div className="note-actions">
@@ -103,7 +111,7 @@ export function AuthorNoteCard({
             Теги
             <input value={editTags} onChange={(event) => onChangeEditTags(event.target.value)} />
           </label>
-          {note.type !== 'manualCorrection' ? (
+          {note.type !== 'manualCorrection' && !isLearningNote ? (
             <FileAttachmentPicker
               attachments={editAttachments}
               error={editAttachmentError}
@@ -126,6 +134,16 @@ export function AuthorNoteCard({
           <h3>{deriveNoteTitle(note)}</h3>
           {note.targetTitle ? <span className="target-chip">Корректировка: {note.targetTitle}</span> : null}
           <p>{visibleBody}</p>
+          {isLearningNote && learningStatus === 'pendingReview' ? (
+            <div className="inline-actions">
+              <button className="btn btn-sec btn-sm" type="button" onClick={() => onAcceptLearning(note)}>
+                Принять в память
+              </button>
+              <button className="btn btn-sec btn-sm" type="button" onClick={() => onRejectLearning(note)}>
+                Отклонить
+              </button>
+            </div>
+          ) : null}
           {bodyIsLong ? (
             <button className="link-button" type="button" onClick={onToggleExpanded}>
               {expanded ? 'Свернуть' : 'Показать полностью'}
@@ -144,6 +162,12 @@ export function AuthorNoteCard({
       )}
     </article>
   );
+}
+
+function learningStatusLabel(status: NonNullable<AuthorNote['editorialLearning']>['status']): string {
+  if (status === 'accepted') return 'Принято';
+  if (status === 'rejected') return 'Отклонено';
+  return 'На проверке';
 }
 
 export function AssertionCard({

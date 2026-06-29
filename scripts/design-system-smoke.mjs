@@ -67,7 +67,7 @@ function sharedDesignChecks() {
       '.project-profile-header',
       '.signals-section-header',
       '.panel',
-      '.card:not(.signal-card):not(.radar-card):not(.broadcast-row)'
+      '.card:not(.signal-card):not(.radar-card):not(.broadcast-row):not(.editorial-work-row)'
     ];
     document.querySelectorAll(selectors.join(',')).forEach((element) => {
       const rect = element.getBoundingClientRect();

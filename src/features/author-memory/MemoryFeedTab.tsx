@@ -186,6 +186,7 @@ export function MemoryFeedTab({ feed }: { feed: MemoryFeedController }) {
           <option value="thought">Мысли</option>
           <option value="linkReaction">Ссылки</option>
           <option value="manualCorrection">Правки</option>
+          <option value="editorialLearning">Редакторские наблюдения</option>
         </select>
       </div>
 
@@ -203,6 +204,7 @@ export function MemoryFeedTab({ feed }: { feed: MemoryFeedController }) {
             expanded={feed.expandedNoteIds.includes(note.id)}
             key={note.id}
             note={note}
+            onAcceptLearning={feed.acceptEditorialLearning}
             onBeginEdit={feed.beginEdit}
             onCancelEdit={() => feed.setEditingId(null)}
             onChangeEditBody={feed.setEditBody}
@@ -215,6 +217,7 @@ export function MemoryFeedTab({ feed }: { feed: MemoryFeedController }) {
               feed.setEditAttachments([]);
               feed.setEditAttachmentError('');
             }}
+            onRejectLearning={feed.rejectEditorialLearning}
             onSaveEdit={feed.saveEdit}
             onToggleExpanded={() => feed.toggleExpanded(note.id)}
           />

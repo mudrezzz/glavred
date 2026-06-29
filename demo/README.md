@@ -163,6 +163,23 @@ backup, and final fallback/not-run/failed decisions. A single malformed JSON res
 is no longer expected to silently disable draft candidates, critique, alternative
 angle, ranking, or revision.
 
+The post-run demo also shows the Author Memory learning handoff. After the editor
+selects a draft version as final, Glavred creates an auto `Редакторское наблюдение`
+note in `Память автора`. It summarizes selected and rejected versions, human
+comments, manual edits, HITL quality-check risks, and a suggested takeaway. The note
+starts as `На проверке`: it is visible in the `Редакторские наблюдения` filter but it
+does not strengthen author-position inference until the user clicks
+`Принять в память`.
+
+The seeded demo workspace includes this flow out of the box. In
+`Редактура -> Рабочий стол -> Драфт`, the selected demo post has versions `v1-v4`:
+`v1` is the machine final, `v2` responds to "усиль авторскую позицию" and is selected
+as final, `v3` responds to "добавь 3 критерия" with a warning, and `v4` is a manual
+tone cleanup that remains rejected. In `Память автора -> Редакторские наблюдения`,
+the linked pending auto note summarizes those comments, rejected versions, quality
+checks, and the suggested takeaway. This is seeded fixture data, not a live OpenRouter
+HITL run.
+
 ## External Sources Scenario
 
 The import layer is implemented as a local-first UI shell around the same AI Product

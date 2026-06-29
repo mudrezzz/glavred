@@ -49,7 +49,7 @@ describe('LocalWorkspaceStore', () => {
 
     expect(store.load().activeSection).toBe('memory');
     expect(store.load().editorialModel.author).toContain('AI Product Manager');
-    expect(store.load().authorNotes).toHaveLength(6);
+    expect(store.load().authorNotes).toHaveLength(7);
     expect(store.load().topics).toHaveLength(5);
     expect(store.load().fabulas).toHaveLength(5);
     expect(store.load().topicFabulaMatrix).toHaveLength(25);
@@ -763,7 +763,7 @@ describe('LocalWorkspaceStore', () => {
 
     expect(store.reset().activeSection).toBe('memory');
     expect(store.load().activeSection).toBe('memory');
-    expect(store.load().authorNotes).toHaveLength(6);
+    expect(store.load().authorNotes).toHaveLength(7);
     expect(store.load().postDraft).toBeNull();
     expect(store.load().editorialChecks).toEqual([]);
     expect(store.load().finalText).toBeNull();

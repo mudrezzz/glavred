@@ -3,6 +3,7 @@ import type {
   AuthorNote,
   AuthorPositionAssertion
 } from '../domain/editorialWorkspace';
+import { isEditorialLearningInferenceEligible } from './editorialLearningMemoryService';
 
 export function createAuthorMemoryEvent(note: AuthorNote): AuthorMemoryEvent {
   return {
@@ -30,7 +31,13 @@ export function inferAuthorPositionAssertions(
       }));
 
   const signalNotes = (signal: string) =>
-    events.filter((event) => event.detectedSignals.includes(signal)).map((event) => event.noteId);
+    events
+      .filter((event) => event.detectedSignals.includes(signal))
+      .filter((event) => {
+        const note = notes.find((item) => item.id === event.noteId);
+        return note ? isEditorialLearningInferenceEligible(note) : false;
+      })
+      .map((event) => event.noteId);
 
   const workflowNotes = signalNotes('workflow-risk');
   const evalNotes = signalNotes('evals');
@@ -108,19 +115,25 @@ export function inferAuthorPositionAssertions(
 }
 
 function summarizeAuthorNote(note: AuthorNote): string {
-  const prefix: Record<AuthorNote['type'], string> = {
+  const prefix: Partial<Record<AuthorNote['type'], string>> = {
     thought: 'Мысль автора',
     linkReaction: 'Реакция на источник',
     manualCorrection: 'Ручная корректировка'
   };
 
   const title = note.title.trim() || excerpt(note.body);
-  return `${prefix[note.type]}: ${title}`;
+  return `${prefix[note.type] ?? 'Редакторское наблюдение'}: ${title}`;
 }
 
 function detectAuthorSignals(note: AuthorNote): string[] {
   const normalized = `${note.title} ${note.body} ${note.tags.join(' ')}`.toLowerCase();
   const signals: string[] = [];
+
+  if (note.type === 'editorialLearning') {
+    if (note.tags.includes('source-integration')) signals.push('trust');
+    if (note.tags.includes('structure') || note.tags.includes('comment-compliance')) signals.push('evals');
+    if (note.tags.includes('author-stance') || note.tags.includes('tone')) signals.push('confidence-boundaries');
+  }
 
   if ((note.attachments ?? []).length > 0) {
     signals.push('attached-material');

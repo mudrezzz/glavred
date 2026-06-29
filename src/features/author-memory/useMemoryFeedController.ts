@@ -5,6 +5,7 @@ import {
   type AuthorNoteType,
   type AuthorPositionAssertion
 } from '../../domain/editorialWorkspace';
+import { updateEditorialLearningStatus } from '../../application/editorialLearningMemoryService';
 import type { CorrectionTarget, MemoryTypeFilter, PendingCorrectionConflict } from './types';
 import {
   buildCorrectionTargets,
@@ -150,7 +151,7 @@ export function useMemoryFeedController({
               body: editBody.trim(),
               sourceUrl: item.type === 'linkReaction' ? buildLinkPreview(editSourceUrl).normalizedUrl : '',
               tags: splitTags(editTags),
-              attachments: item.type === 'manualCorrection' ? [] : editAttachments
+              attachments: item.type === 'manualCorrection' || item.type === 'editorialLearning' ? [] : editAttachments
             }
           : item
       ),
@@ -166,6 +167,20 @@ export function useMemoryFeedController({
     }
 
     deleteNote(note.id);
+  }
+
+  function acceptEditorialLearning(note: AuthorNote) {
+    onChangeNotes(
+      updateEditorialLearningStatus(notes, note.id, 'accepted'),
+      'Редакторское наблюдение принято в память'
+    );
+  }
+
+  function rejectEditorialLearning(note: AuthorNote) {
+    onChangeNotes(
+      updateEditorialLearningStatus(notes, note.id, 'rejected'),
+      'Редакторское наблюдение отклонено'
+    );
   }
 
   function deleteNote(noteId: string) {
@@ -248,13 +263,13 @@ export function useMemoryFeedController({
     editSourceUrl, editTags, editTitle, expandedNoteIds, filter, filteredNotes,
     isManualCorrection, linkPreview, pendingConflict, pendingDeleteNote, query,
     showFile, showTitle, sourceUrl, summary, tags, title, type, visibleCount, visibleNotes,
-    attachComposerFile, attachEditFile, beginCorrection, beginEdit, changeNoteType,
+    acceptEditorialLearning, attachComposerFile, attachEditFile, beginCorrection, beginEdit, changeNoteType,
     deleteNote, deriveNoteTitle, requestDelete, resolveCorrectionConflict, saveEdit,
     setAttachmentError, setAttachments, setBody, setCorrectionTarget,
     setEditAttachmentError, setEditAttachments, setEditBody, setEditingId,
     setEditSourceUrl, setEditTags, setEditTitle, setFilter, setPendingConflict,
     setPendingDeleteNote, setQuery, setShowFile, setShowTitle, setSourceUrl,
-    setTags, setTitle, setVisibleCount, startVoiceInput, submitNote, toggleExpanded
+    rejectEditorialLearning, setTags, setTitle, setVisibleCount, startVoiceInput, submitNote, toggleExpanded
   };
 }
 

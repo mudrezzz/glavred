@@ -1441,8 +1441,17 @@ The next artifacts must make candidate validation meaningful:
   mutated. Approving final text creates
   `FinalText.editorDecisionSnapshot` with selected version, human comments/manual
   edit counts, machine trace availability, final-gate/revision/alternative-angle
-  summaries, validation summary, and unresolved risks. Learning signals from those
-  snapshots are Slice 2.16.1.
+  summaries, validation summary, and unresolved risks.
+- Slice 2.16.1 moves post-run learning into Author Memory. Final version selection
+  calls `upsertEditorialLearningAuthorNote`, creating or updating one deterministic
+  `AuthorNote.type = editorialLearning` per `FinalText`. The note stores structured
+  metadata from `EditorDecisionSnapshot`, version history, human comments, manual edit
+  counts, rejected version ids, quality-check summaries, unresolved risks, and a
+  suggested takeaway. New learning notes start as `pendingReview`; rejected or pending
+  notes stay visible in the memory feed but `inferAuthorPositionAssertions` must
+  ignore them. Only accepted editorial-learning notes become normal author-memory
+  evidence. Do not mutate publisher rules, Topic, Fabula, validators, prompts, or
+  model settings from these notes in this slice.
 - `FeasibilityReport` stops unsafe drafting before prose is generated. A blocked
   DraftRun is `status=succeeded`, `finalDraft=null`, and `complete.status=blocked`;
   this is a quality decision, not an infrastructure failure.

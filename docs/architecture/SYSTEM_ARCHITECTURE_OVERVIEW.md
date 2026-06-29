@@ -447,7 +447,7 @@ surface, but the primary draft path starts a long-running `DraftRun`:
 
 The target drafting pipeline is:
 
-`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> FinalQualityGate -> SelectedDraft -> VersionedHumanRevisionLoop -> EditorDecisionSnapshot`
+`EditorialWorkItem -> DraftRunContext -> SourceIntent -> seed SourceLedger -> ResearchPlan -> PublicResearch -> EvidenceExtraction -> enriched SourceLedger -> EvidenceSynthesis -> FeasibilityGate -> PostContract -> RuleRegistrySnapshot -> RulePack -> EvidenceInterpretation -> MaterialPlan -> RhetoricalPlans -> DraftCandidates -> InitialValidation -> EditorialCritique -> AlternativeAngleTournament -> FinalValidation -> PairwiseRanking -> IterativeRevisionLoop -> FinalQualityGate -> SelectedDraft -> VersionedHumanRevisionLoop -> EditorDecisionSnapshot -> EditorialLearningAuthorNote`
 
 This order is intentional. Future drafting work must not jump directly from
 multi-candidate generation to a generic validator loop. Validators and revisions need
@@ -609,6 +609,16 @@ attempt metadata. It is deliberately non-blocking: if the review provider is
 unavailable or malformed after retries, the version remains saved with
 `qualityCheck.status=notRun`; if the check returns warning or critical, the editor can
 still approve that version with the risk visible.
+
+Slice 2.16.1 adds `EditorialLearningAuthorNote` as the post-run learning handoff.
+Final version selection creates or updates a deterministic `editorialLearning` note in
+Author Memory. The note starts as `pendingReview`, is visible with an auto/status
+badge, and contains the selected version, rejected version ids, human comments, manual
+edit count, HITL quality summaries, unresolved risks, and suggested takeaway. Pending
+or rejected learning notes are excluded from author-position inference; accepted notes
+flow through the existing `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion`
+path. This slice deliberately does not mutate editorial rules, prompts, topics,
+fabulas, validators, or model configuration.
 
 Slice 2.15.6.1 hardens the same loop against late provider-heavy operation failures.
 Validation progress writes now merge `artifactPayload.progress` into the existing

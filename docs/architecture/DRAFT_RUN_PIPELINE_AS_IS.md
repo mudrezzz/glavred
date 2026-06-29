@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace.
+Current as of Slice 2.16.1: Editorial Learning Notes in Author Memory.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -38,6 +38,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
 | `EditorDecisionSnapshot` | Human final-selection record linking the chosen version to machine trace summaries, unresolved risks, comments, and manual edit counts. | local workspace `finalText.editorDecisionSnapshot` |
+| `EditorialLearningAuthorNote` | Auto-created author-memory note summarizing what the editor appears to have taught the system through final version choice, comments, manual edits, rejected versions, and quality checks. Starts as `pendingReview`; only accepted notes influence author-position inference. | local workspace `authorNotes[]`, type `editorialLearning` |
 
 ## 2. Runtime topology
 
@@ -712,7 +713,11 @@ Behavior:
   version. The version receives `qualityCheck.status = notRun` with attempt metadata;
 - provider failure does not create a fake version;
 - the editor can mark any saved version as final, including `v1` after later
-  versions exist.
+  versions exist;
+- final version selection creates or updates one deterministic
+  `editorialLearning` note in Author Memory. The note is visible immediately with
+  status `pendingReview`, but it does not influence author-position inference until
+  the editor accepts it.
 
 Output:
 
@@ -722,7 +727,10 @@ Output:
 - `FinalText.draftVersionId`, `FinalText.versionNumber`, and
   `FinalText.editorDecisionSnapshot`;
 - `DraftVersion.qualityCheck` for human-comment revisions when the review ran or
-  explicitly could not run.
+  explicitly could not run;
+- one `AuthorNote.type = editorialLearning` with selected/rejected version metadata,
+  comment summaries, manual edit count, quality-check summaries, unresolved risks,
+  suggested takeaway, and status `pendingReview | accepted | rejected`.
 
 Role/model handoff:
 
@@ -756,6 +764,7 @@ flowchart TD
   L --> M[writer creates v2, v3, ... when requested]
   M --> M2[review checks comment compliance and regressions]
   M2 --> N[editor selects any version as final]
+  N --> O[editorialLearning note in Author Memory]
 ```
 
 Role summary:
@@ -824,7 +833,8 @@ Important AS IS rules:
 | `ContextPack` | article memory service | child LLM services | step artifacts and child `AiRun.requestPayload` |
 | `DraftVersion` | frontend/editor actions | editor version list, final selection | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | post-run revise-with-comment endpoint | editor version list, final selection, future learning slice | local workspace `postDraft.versions[].qualityCheck`, child `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` |
-| `EditorDecisionSnapshot` | final text approval | future learning slice, audit/debug | local workspace `finalText.editorDecisionSnapshot` |
+| `EditorDecisionSnapshot` | final text approval | editorial-learning note builder, audit/debug | local workspace `finalText.editorDecisionSnapshot` |
+| `EditorialLearningAuthorNote` | final text approval | author memory feed, optional author-position inference after acceptance | local workspace `authorNotes[]`, type `editorialLearning` |
 
 ## 8. Retry, fallback, and blocked behavior
 
@@ -893,6 +903,10 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` to confirm
     matched/missed comment intents, source-marker preservation, public-prose status,
     internal jargon leaks, and review attempts.
+22. post-run learning note: inspect `authorNotes[]` for type `editorialLearning`.
+    Pending and rejected notes should be visible but not used as author-position
+    evidence. Accepted notes should flow through normal author-memory event and
+    inference logic.
 
 ## 10. Known AS IS limitations
 
@@ -906,8 +920,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
   raises; a separate infrastructure watchdog is still needed for externally stuck
   Celery tasks that never return control to the worker.
 - The pipeline has detailed traceability. The main editor UI receives one machine
-  draft first, then manages post-run human versions locally; cross-post learning from
-  those decisions is still Slice 2.16.1.
+  draft first, then manages post-run human versions locally. Cross-post learning is
+  currently limited to reviewable `editorialLearning` author-memory notes; promotion
+  into actual editorial rules remains a future slice.
 
 ## 11. Maintenance rules
 

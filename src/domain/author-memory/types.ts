@@ -8,9 +8,10 @@ import type {
 import type { ImportRiskLevel } from '../imports/types';
 
 // Author memory is the source of evidence about the author's position.
-export type AuthorNoteType = 'thought' | 'linkReaction' | 'manualCorrection';
+export type AuthorNoteType = 'thought' | 'linkReaction' | 'manualCorrection' | 'editorialLearning';
 export type AuthorPositionAssertionType = 'persona' | 'style' | 'audience' | 'topic' | 'principle';
 export type AuthorPositionAssertionStatus = 'inferred' | 'confirmed';
+export type EditorialLearningStatus = 'pendingReview' | 'accepted' | 'rejected';
 
 export interface AuthorNote {
   id: string;
@@ -24,6 +25,25 @@ export interface AuthorNote {
   targetType?: 'assertion' | 'evidence';
   targetId?: string;
   targetTitle?: string;
+  editorialLearning?: EditorialLearningMetadata;
+}
+
+export interface EditorialLearningMetadata {
+  status: EditorialLearningStatus;
+  finalTextId: string;
+  draftId: string;
+  draftRunId: string | null;
+  selectedVersionId: string;
+  selectedVersionNumber: number;
+  selectedVersionSource: string;
+  machineFinalVersionId: string | null;
+  humanRevisionCount: number;
+  manualEditCount: number;
+  rejectedVersionIds: string[];
+  comments: string[];
+  qualitySummaries: string[];
+  unresolvedRisks: string[];
+  suggestedMemoryTakeaway: string;
 }
 
 export interface AuthorAttachment {

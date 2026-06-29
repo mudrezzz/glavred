@@ -396,6 +396,18 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   `publicationSizeContract` with target length range, hard max, paragraph/section
   range, density, and fabula scale. The main editor will keep
   showing compact status and warnings; full trace details stay in `/ai-runs`.
+- After the machine draft is delivered, `Драфт` stores it as version `v1`. Human
+  comments and manual edits create new saved versions such as `v2` and `v3`; any saved
+  version can be selected as final. When you mark a version final, Glavred creates an
+  auto note in `Память автора` with type `Редакторское наблюдение`. It is created with
+  status `На проверке`, so it is visible for review but does not influence author
+  memory inference until you accept it. Use the `Редакторские наблюдения` filter in
+  `Память автора` to accept, reject, or edit these notes.
+  The demo workspace already contains a seeded HITL example: open
+  `Редактура -> Рабочий стол -> Драфт` to see `v1-v4`, where `v2` is selected as final
+  after comments such as "усиль авторскую позицию" and "добавь 3 критерия". Then open
+  `Память автора -> Редакторские наблюдения` to see the pending auto note, review its
+  quality-check summary, and accept it into memory.
 - Research defaults are configured in `Редакционная модель -> Фабулы` as
   `Исследовательская стратегия`. `Автоопределение` lets Glavred create human-readable
   research instructions from the post context; `Задать вручную` copies the fabula's

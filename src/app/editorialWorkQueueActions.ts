@@ -29,11 +29,14 @@ import {
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
+  createAuthorMemoryEvent,
   createEditorNotes,
+  inferAuthorPositionAssertions,
   createPostBrief,
   createPostDraft,
   createWorkspaceInsightCard,
-  runEditorialChecks
+  runEditorialChecks,
+  upsertEditorialLearningAuthorNote
 } from '../application/editorialServices';
 import { createMemeReferences, createMemeRemixVariants } from '../application/visualMemeRemixService';
 import { createVisualVariants } from '../application/visualVariantService';
@@ -319,10 +322,16 @@ export function buildApproveDraftTextPatch(
     ...selectDraftVersion(postDraft, finalText.draftVersionId ?? postDraft.activeVersionId ?? ''),
     finalVersionId: finalText.draftVersionId
   };
+  const authorNotes = upsertEditorialLearningAuthorNote(workspace.authorNotes, nextPostDraft, finalText);
+  const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
+  const authorPositionAssertions = inferAuthorPositionAssertions(authorNotes, authorMemoryEvents);
 
   return withEditorialWorkItemSync({ ...workspace, postDraft: nextPostDraft }, {
     postDraft: nextPostDraft,
     finalText,
+    authorNotes,
+    authorMemoryEvents,
+    authorPositionAssertions,
     postVisual: null,
     releasePackage: null,
     editorialLearningNote: null

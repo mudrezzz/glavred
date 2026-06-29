@@ -29,13 +29,13 @@ export class LocalWorkspaceStore implements WorkspaceStore {
     const raw = this.storage.getItem(STORAGE_KEY);
 
     if (!raw) {
-      return createDemoWorkspace();
+      return createDemoWorkspace({ includeSeededHitlLearning: true });
     }
 
     try {
       return normalizeWorkspace(JSON.parse(raw) as Partial<WorkspaceState>);
     } catch {
-      return createDemoWorkspace();
+      return createDemoWorkspace({ includeSeededHitlLearning: true });
     }
   }
 
@@ -44,7 +44,7 @@ export class LocalWorkspaceStore implements WorkspaceStore {
   }
 
   reset(): WorkspaceState {
-    const workspace = createDemoWorkspace();
+    const workspace = createDemoWorkspace({ includeSeededHitlLearning: true });
     this.save(workspace);
     return workspace;
   }
@@ -93,10 +93,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   return {
     ...demo,
     ...saved,
-    authorNotes: (saved.authorNotes ?? demo.authorNotes).map((note) => ({
-      ...note,
-      attachments: note.attachments ?? []
-    })),
+    authorNotes: (saved.authorNotes ?? demo.authorNotes).map((note) => normalizeAuthorNote(note)),
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel: saved.editorialModel ?? demo.editorialModel,
@@ -133,6 +130,35 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     bulkImportActions: saved.bulkImportActions ?? [],
     activeSection: activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt
+  };
+}
+
+function normalizeAuthorNote(note: WorkspaceState['authorNotes'][number]): WorkspaceState['authorNotes'][number] {
+  if (note.type !== 'editorialLearning') {
+    return { ...note, attachments: note.attachments ?? [] };
+  }
+
+  return {
+    ...note,
+    attachments: [],
+    tags: Array.from(new Set([...(note.tags ?? []), 'editorial-learning'])),
+    editorialLearning: note.editorialLearning ?? {
+      status: 'pendingReview',
+      finalTextId: note.targetId ?? note.id,
+      draftId: '',
+      draftRunId: null,
+      selectedVersionId: '',
+      selectedVersionNumber: 1,
+      selectedVersionSource: 'machineFinal',
+      machineFinalVersionId: null,
+      humanRevisionCount: 0,
+      manualEditCount: 0,
+      rejectedVersionIds: [],
+      comments: [],
+      qualitySummaries: [],
+      unresolvedRisks: [],
+      suggestedMemoryTakeaway: note.body
+    }
   };
 }
 

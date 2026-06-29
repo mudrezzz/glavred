@@ -6,3 +6,4 @@ export * from './briefingService';
 export * from './draftingService';
 export * from './releaseService';
 export * from './analyticsService';
+export * from './editorialLearningMemoryService';

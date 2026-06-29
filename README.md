@@ -266,8 +266,19 @@ with `qualityCheck.status=notRun`. Any saved version can be selected as final,
 including `v1` after later revisions exist.
 The approved `FinalText` stores an `EditorDecisionSnapshot` with the selected version,
 human comments/manual edit counts, available machine trace summaries, and unresolved
-risks. Cross-post learning from these decisions is intentionally deferred to the next
-slice.
+risks. The same final-selection action now creates or updates one deterministic
+`editorialLearning` author-memory note. The note is visible in `Память автора` as an
+auto `Редакторское наблюдение` with status `На проверке`; it summarizes selected and
+rejected versions, repeated comments, manual edits, HITL quality-check risks, and the
+suggested takeaway. Pending or rejected learning notes do not affect author-position
+inference. Only after the editor accepts the note does it become normal author memory.
+
+The demo seed already includes one completed HITL learning scenario. After clearing
+local storage or loading the demo workspace, open `Редактура -> Рабочий стол -> Драфт`
+to see seeded versions `v1-v4`: `v2` is selected as final even though later versions
+exist, and `v3/v4` show comment-quality risks. Then open
+`Память автора -> Редакторские наблюдения` to review the pending auto note and accept
+it into memory.
 
 The next drafting-quality direction is an editorial lab around this spine, not a
 larger "bad draft" report. DraftRun now has role-specific model policy: research,

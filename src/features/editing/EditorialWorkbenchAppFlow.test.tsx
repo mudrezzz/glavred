@@ -18,12 +18,13 @@ describe('Editorial workbench app flow', () => {
     expect(screen.getByLabelText('Текст драфта')).toBeInTheDocument();
   });
 
-  it('shows an empty editorial work queue before approved plan slots', () => {
+  it('shows the seeded HITL demo work item before approving new plan slots', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
 
-    expect(screen.getByTestId('editorial-work-empty')).toHaveTextContent(/План/i);
+    expect(screen.queryByTestId('editorial-work-empty')).not.toBeInTheDocument();
+    expect(screen.getAllByText(/AI-B2B demo не доказывает продукт/i).length).toBeGreaterThan(0);
     expect(screen.getByTestId('editorial-work-toolbar')).toBeInTheDocument();
   });
 

@@ -4,9 +4,10 @@ import type { WorkspaceState } from '../domain/editorialWorkspace';
 import { demoAuthorNotes } from './demoAuthorMemory';
 import { demoArchiveRecords, demoExternalSources, demoImportCandidates } from './demoImports';
 import { demoEditorialRules, demoFabulas, demoProjectProfile, demoTopics } from './demoEditorialModel';
+import { withSeededHitlLearningScenario } from './demoHitlLearning';
 import { createEvaluatedDemoSourceSignals, demoRadarsWithFilters } from './demoSignals';
 
-export function createDemoWorkspace(): WorkspaceState {
+export function createDemoWorkspace(options: { includeSeededHitlLearning?: boolean } = {}): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);
   const authorPositionAssertions = inferAuthorPositionAssertions(demoAuthorNotes, authorMemoryEvents);
   const evaluatedSourceSignals = createEvaluatedDemoSourceSignals(demoTopics);
@@ -108,8 +109,10 @@ export function createDemoWorkspace(): WorkspaceState {
     sourceSignal: selectedSourceSignal
   };
 
-  return {
+  const demoWorkspace = {
     ...workspaceWithSelectedSignal,
     contentPlanItems: createBroadcastPlan(workspaceWithSelectedSignal)
   };
+
+  return options.includeSeededHitlLearning ? withSeededHitlLearningScenario(demoWorkspace) : demoWorkspace;
 }

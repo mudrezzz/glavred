@@ -5326,51 +5326,125 @@ Status:
   - Updated README, developer guide, user guide, demo docs, AS IS pipeline map, and PDF.
 - Completed: 2026-06-29
 
-### Slice 2.16.1: Editor Learning Signals and Rule Improvement Queue
+### Slice 2.16.1: Editorial Learning Notes in Author Memory
 
-- Status: Ready
-- Goal: Turn accepted/rejected human decisions from 2.16 into reviewable improvement
-  signals for the editorial model and drafting pipeline.
+- Status: Done
+- Goal: Capture post-run human editing lessons as reviewable auto-notes inside
+  `Память автора`, not as a separate hidden rule queue.
 - User value:
-  - The system can explain recurring human corrections without silently changing
-    rules.
-  - Editors get a controlled queue of suggested improvements instead of hidden
-    automatic learning.
+  - The author can see what the system thinks it learned from final version choice,
+    human comments, manual edits, rejected versions, and HITL quality checks.
+  - Nothing silently changes rules, prompts, topics, fabulas, or validators.
+  - A learning note becomes active memory only after the editor accepts it.
 - Scope:
-  - Aggregate per-post `EditorDecisionSnapshot` data into local learning signals:
-    repeated editor comments, rejected machine moves, accepted manual rewrites,
-    final-version preferences, and unresolved risks.
-  - Create a `RuleImprovementQueue` or equivalent local artifact with suggested
-    updates to publisher rules, Topic guidance, Fabula guidance, source strategy, or
-    validator prompts.
-  - Show suggested improvements as reviewable items, not automatic changes.
-  - Link each suggestion back to concrete post versions, comments, and machine trace
-    artifacts.
+  - Add `AuthorNote.type = editorialLearning` with UI label
+    `Редакторское наблюдение`.
+  - Create or update one deterministic auto-note when the editor marks a draft
+    version as final.
+  - Store structured `editorialLearning` metadata: linked `finalTextId`, `draftId`,
+    optional `draftRunId`, selected version, machine `v1`, human comments, manual edit
+    count, rejected version ids, quality-check summaries, unresolved risks, suggested
+    takeaway, and status `pendingReview | accepted | rejected`.
+  - Add tags `editorial-learning`, `hitl`, `draft-version`, plus detected signals such
+    as `author-stance`, `tone`, `source-integration`, `structure`, and
+    `comment-compliance`.
+  - Show the notes in `Память автора` with an `Авто` badge and status
+    `На проверке / Принято / Отклонено`.
+  - Add filter `Редакторские наблюдения`.
+  - Let pending notes be accepted, rejected, or edited from the author-memory feed.
+  - Exclude pending/rejected learning notes from author-position inference; accepted
+    notes participate through normal author-memory events.
 - Out of scope:
-  - Automatic model fine-tuning.
-  - Silent prompt/rule mutation.
-  - Cross-user or cloud learning.
+  - Automatic mutation of publisher rules, Topic, Fabula, validators, prompts, model
+    choices, or drafting settings.
+  - A separate rule-improvement queue.
+  - New backend persistence or cloud/cross-user learning.
+  - New LLM calls; learning note text and metadata are deterministic.
 - Implementation notes:
-  - A rejected machine move is a learning signal only when the human either selects an
-    older version, writes a correction comment, or manually edits away the move.
-  - Suggestions must remain explainable and reversible.
-- Architecture impact:
-  - Adds local learning artifacts on top of `EditorDecisionSnapshot`.
-  - May require a new user-facing review surface in the editorial model area.
+  - Note id is deterministic from `FinalText.id`, so repeated final-save of the same
+    decision updates the note rather than creating duplicates.
+  - Selecting an older version after human or machine revisions records rejected
+    version ids and rejected-machine-move context.
+  - Quality-check warnings explain why a rejected version may have been rejected, but
+    they are not promoted into a rule.
 - Tests:
-  - Repeated comments create grouped learning signals.
-  - Selecting an older version after rejecting a later machine revision creates a
-    rejected-move signal.
-  - Suggestions link back to source versions and comments.
-  - Applying or dismissing suggestions does not mutate unrelated rules.
+  - Legacy author notes normalize unchanged.
+  - Legacy `editorialLearning` notes normalize to pending review metadata.
+  - Final version selection creates one pending learning note.
+  - Repeating the same final decision does not create duplicates.
+  - Pending/rejected notes do not affect `inferAuthorPositionAssertions`.
+  - Accepted learning notes create author-memory events and can influence inference.
+  - UI shows the learning-note filter, status badges, and accept/reject actions.
+  - Choosing `v1` after `v2/v3` records rejected version ids.
 - Docs:
-  - Update developer/user/demo docs with the human-reviewed learning model.
-- Demo impact:
-  - Demo should show at least one suggested rule/fabula improvement created from
-    editor comments and then accepted or dismissed by the user.
+  - Updated README, SAO, developer guide, user guide, demo docs, AS IS pipeline map,
+    and PDF.
 - Acceptance criteria:
-  - Learning signals are visible, reviewable, and traceable.
-  - No automatic rule or prompt changes happen without explicit human approval.
+  - Final selection creates a readable pending editorial-learning note in Author
+    Memory.
+  - The editor controls whether the learning becomes active memory.
+  - No rule/prompt/model mutation happens in this slice.
+- Completed: 2026-06-29
+
+### Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios
+
+- Status: Done
+- Goal: Make the 2.16/2.16.0.1/2.16.1 HITL learning mechanism visible immediately
+  in the demo workspace after reset/seed.
+- User value:
+  - The editor can open the app and see a ready versioned draft with human comments,
+    quality-check metadata, a non-latest final version, and the linked
+    `Редакторское наблюдение` in Author Memory.
+  - The seeded scenario demonstrates the product loop without requiring a live
+    DraftRun, OpenRouter calls, or manual setup.
+- Scope delivered:
+  - Added a seeded post draft with immutable versions:
+    - `v1`: machine final;
+    - `v2`: human-comment revision for `усиль авторскую позицию`, selected as final;
+    - `v3`: human-comment revision for `добавь 3 критерия`, kept as rejected risk;
+    - `v4`: manual/editorial version for `убери сухой отчетный тон`, also rejected.
+  - Added realistic `qualityCheck` metadata for human-comment versions:
+    matched/missed intents, source/public-prose/internal-jargon status, and warning/pass
+    summaries.
+  - Added a linked `FinalText.editorDecisionSnapshot` where `v2` is final even though
+    later versions exist.
+  - Seeded one pending `AuthorNote.type=editorialLearning` with selected/rejected
+    versions, comments, quality-check summaries, unresolved risks, and suggested
+    takeaway.
+  - Kept `editorialLearning` unavailable in the manual composer; it remains an
+    auto-note type.
+- Out of scope:
+  - New backend DraftRun behavior, new LLM calls, or substituting real HITL runs.
+  - Changing author-memory inference rules beyond demonstrating pending vs accepted
+    note behavior.
+- Tests:
+  - Demo workspace contains the versioned HITL draft, quality checks, final snapshot,
+    and pending editorial-learning note.
+  - Pending seeded note does not affect author-position inference until accepted.
+  - `Редактура -> Рабочий стол -> Драфт` renders seeded versions and final marker.
+  - `Память автора -> Редакторские наблюдения` renders the seeded auto-note and lets
+    the editor accept it into memory.
+- Docs:
+  - Updated README, user guide, and demo docs so the seeded scenario can be found in
+    the UI.
+- Completed: 2026-06-29
+
+### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
+
+- Status: Backlog
+- Goal: Turn accepted `editorialLearning` notes into explicit, reviewable proposals
+  for publisher rules, Topic/Fabula guidance, source strategy, validators, prompts, or
+  model policy.
+- Scope:
+  - Read only accepted editorial-learning notes.
+  - Group repeated lessons across posts.
+  - Create explainable improvement proposals linked back to versions, comments,
+    quality checks, and final decisions.
+  - Require explicit human approval before mutating any editorial setting.
+- Out of scope:
+  - Silent prompt/rule mutation.
+  - Automatic fine-tuning.
+  - Cross-user learning.
 
 ### Deferred: Document AI Platform Import Adapter
 
@@ -5529,6 +5603,21 @@ Status:
   2026-06-27.
 - Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes. Completed
   2026-06-27.
+- Slice 2.15.6.3: Model Stabilization and Universal JSON Retry Repair. Completed
+  2026-06-27.
+- Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params.
+  Completed 2026-06-28.
+- Slice 2.15.6.4: Final Draft Quality Gate and Public Prose Repair. Completed
+  2026-06-28.
+- Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review. Completed
+  2026-06-28.
+- Slice 2.15.6.4.2: Final Gate Attribution Handoff Repair. Completed 2026-06-28.
+- Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot. Completed
+  2026-06-28.
+- Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace. Completed
+  2026-06-29.
+- Slice 2.16.1: Editorial Learning Notes in Author Memory. Completed 2026-06-29.
+- Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios. Completed 2026-06-29.
 
 ## Blocked Items
 
@@ -5549,5 +5638,5 @@ Status:
 
 ## Next Recommended Task
 
-Continue the backend track with
-`Slice 2.16.1: Editor Learning Signals and Rule Improvement Queue`.
+Continue with the future rule-promotion backlog:
+`Future Slice: Rule Promotion from Accepted Editorial Learning Notes`.
