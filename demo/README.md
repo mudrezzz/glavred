@@ -47,7 +47,8 @@ log area, analytics prep area, and the new author memory workspace.
 ## Planned Portfolio Benchmark Demo
 
 The next demo evolution is a SaaS-style portfolio with two users and three independent
-blogs. This is planned work, not current runtime behavior.
+blogs. This is planned work, not current runtime behavior. The architecture contract
+for the portfolio is `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 Target portfolio:
 

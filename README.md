@@ -107,7 +107,8 @@ author memory, editorial model, sources, plan, DraftRuns, final decisions, and l
 notes. Authentication, project switching, multi-platform generation, and publication
 adapters should grow around this boundary rather than around the current singleton
 workspace. This direction is captured in ADR
-`docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+`docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and detailed in
+`docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 The existing source-signal workflow remains useful, but it is a production layer, not
 the product center. Source signals, radar findings, archive imports, analytics notes,

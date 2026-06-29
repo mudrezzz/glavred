@@ -5444,7 +5444,7 @@ Status:
 
 ### Slice 2.17.0: SaaS Blog Portfolio Architecture
 
-- Status: Ready
+- Status: Done
 - Goal: Define the SaaS-ready product boundary around users, independent blog
   projects, publication channels, and benchmark portfolios before changing runtime
   state.
@@ -5462,6 +5462,8 @@ Status:
     `UserAccount -> BlogProject -> Author Memory / Editorial Model / Publication Channels -> Content Production -> Platform Variants -> Learning`.
   - Capture the decision in ADR
     `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+  - Add detailed architecture contract
+    `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
   - Update SAO, README, user/developer/demo docs, and roadmap.
 - Out of scope:
   - Runtime auth UI.
@@ -5477,22 +5479,24 @@ Status:
   - Establishes the next product boundary above the current local workspace.
   - Keeps DraftRun pipeline intact while preparing project/channel context.
 - Tests:
-  - Documentation-only slice: run `git diff --check`.
+  - Documentation-only slice: `git diff --check` passed.
 - Docs:
-  - ROADMAP, SAO, README, developer guide, user guide, demo docs, ADR.
+  - ROADMAP, SAO, README, developer guide, user guide, demo docs, ADR, and SaaS blog
+    portfolio architecture document.
 - Demo impact:
   - Defines the upcoming two-user / three-blog demo benchmark portfolio.
 - Acceptance criteria:
-  - Docs explain why SaaS starts with `BlogProject`, not autoposting.
-  - Next implementation slice is clearly `2.17.1`.
-  - Three target blogs and benchmark use are recorded.
+  - Docs explain why SaaS starts with `BlogProject`, not autoposting. Done.
+  - Next implementation slice is clearly `2.17.1`. Done.
+  - Three target blogs and benchmark use are recorded. Done.
 - Risks:
   - If this layer is skipped, later auth and platform work may hard-code singleton
     workspace assumptions.
+- Completed: 2026-06-29
 
 ### Slice 2.17.1: Local Multi-Account and Blog Project Switcher
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add a local-first SaaS shell with demo users and project switching while
   keeping the current editorial workspace intact inside one selected project.
 - User value:
@@ -5943,6 +5947,7 @@ Status:
   2026-06-29.
 - Slice 2.16.1: Editorial Learning Notes in Author Memory. Completed 2026-06-29.
 - Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios. Completed 2026-06-29.
+- Slice 2.17.0: SaaS Blog Portfolio Architecture. Completed 2026-06-29.
 
 ## Blocked Items
 
@@ -5969,5 +5974,5 @@ Status:
 
 ## Next Recommended Task
 
-Start the SaaS/blog portfolio foundation:
-`Slice 2.17.0: SaaS Blog Portfolio Architecture`.
+Implement the local SaaS/blog portfolio shell:
+`Slice 2.17.1: Local Multi-Account and Blog Project Switcher`.

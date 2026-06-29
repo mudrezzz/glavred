@@ -34,6 +34,9 @@ Important architecture rules for upcoming slices:
   realistic, isolated, and maintainable.
 
 See ADR `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementation
+contract for Slice 2.17.x. If code behavior diverges from that document, update the
+document in the same slice.
 
 ## Environment
 

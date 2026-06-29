@@ -22,6 +22,9 @@ authentication, multi-platform posting, and benchmarks directly onto that single
 workspace because project memory, learning notes, platform rules, and generated
 drafts would become ambiguous.
 
+The implementation contract for this decision is maintained in
+`docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
+
 ## Decision
 
 The next product boundary is `BlogProject`, not "workspace" and not "platform".
@@ -48,6 +51,16 @@ Key rules:
 - Autoposting remains later than channel modeling, variant generation, and manual
   publication-log readiness.
 
+Implementation sequence:
+
+1. Local multi-account/project shell.
+2. Two-user / three-blog demo portfolio.
+3. Backend auth and project persistence boundary.
+4. Publication channels.
+5. Multi-target planning and variant workbench.
+6. Multi-platform DraftRun contract.
+7. Blog portfolio benchmark runner.
+
 ## Consequences
 
 - The first implementation slices should create a local multi-account/project shell
@@ -60,6 +73,9 @@ Key rules:
   adaptation, and drafting quality across blogs.
 - Publication channels can evolve into adapters later without coupling fabulas to
   Telegram, LinkedIn, Dzen, or any other platform.
+- The architecture must preserve a clean distinction between user identity,
+  project-owned editorial memory and rules, channel-owned publication defaults, and
+  variant-owned drafts/final decisions.
 
 ## Alternatives considered
 

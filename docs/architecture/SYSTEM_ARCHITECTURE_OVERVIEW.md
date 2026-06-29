@@ -24,6 +24,12 @@ The external source and import-review concept is documented in
 The revised signal and broadcast planning concept is documented in
 `docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md`.
 
+The SaaS blog portfolio concept for Slice 2.17.x is documented in
+`docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`. It defines
+`UserAccount`, `BlogProject`, `ProjectMembership`, `PublicationChannel`,
+`PublicationGroup`, `PlatformVariant`, project-scoped data ownership, and the
+two-user / three-blog benchmark portfolio.
+
 The current queued drafting pipeline is documented as a maintained AS IS technical map
 in `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, with a generated quick-view PDF at
 `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`. DraftRun planning, implementation,
