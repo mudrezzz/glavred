@@ -107,10 +107,15 @@ author memory, editorial model, sources, plan, DraftRuns, final decisions, and l
 notes. Project switching is available locally from the lower-left sidebar identity
 block through a `PortfolioState` with demo users, memberships, projects, and one
 isolated workspace per selected blog.
-Authentication, backend project persistence, multi-platform generation, and
-publication adapters should grow around this boundary rather than around the old
-singleton workspace. This direction is captured in ADR
-`docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and detailed in
+Slice 2.17.3 adds the first backend SaaS boundary around that same shape:
+email/password dev login, HttpOnly session cookie, project memberships, and
+project-scoped workspace snapshots in SQLite. The frontend tries the backend first,
+shows a login panel on `401`, and falls back to the local demo portfolio when the
+backend is unavailable. Production auth, multi-platform generation, and publication
+adapters should grow around this boundary rather than around the old singleton
+workspace. This direction is captured in ADRs
+`docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`,
+`docs/adr/2026-06-30-dev-password-session-auth-boundary.md`, and detailed in
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 The existing source-signal workflow remains useful, but it is a production layer, not
@@ -202,6 +207,16 @@ runner:
 - `POST /api/draft-runs`
 - `GET /api/draft-runs/{id}`
 - `GET /api/draft-runs/{id}/events`
+
+The dev SaaS portfolio boundary exposes:
+
+- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/users/me`;
+- `GET /api/projects`, `GET /api/projects/{projectId}`;
+- `GET/PUT /api/projects/{projectId}/workspace`.
+
+Seeded demo users are `founder@example.test` with `AI Design Patterns` and
+`Каша из топора`, and `glavred-editor@example.test` with `Блог Главреда`. The
+default dev password is `glavred-demo`.
 
 When OpenRouter is configured, the compatibility endpoint can generate drafts through
 the provider; missing provider config or provider errors fall back to deterministic

@@ -29,6 +29,11 @@ def test_settings_defaults_without_env_file() -> None:
     assert settings.draft_final_gate_model == ""
     assert settings.draft_another_angle_model == ""
     assert settings.draft_final_repair_max_iterations == 2
+    assert settings.portfolio_db_path.name == "glavred-portfolio.sqlite3"
+    assert settings.glavred_auth_mode == "dev-password"
+    assert settings.glavred_dev_auth_password.get_secret_value() == "glavred-demo"
+    assert settings.glavred_session_cookie_name == "glavred_session"
+    assert settings.glavred_session_ttl_hours == 168
 
 
 def test_openrouter_config_is_unconfigured_without_token_or_model() -> None:

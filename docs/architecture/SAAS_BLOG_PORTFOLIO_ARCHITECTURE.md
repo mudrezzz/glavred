@@ -1,15 +1,19 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.1: Local Multi-Account and Blog Project Switcher.
+Current as of Slice 2.17.3: Backend Auth and Project Persistence Boundary.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
 architecture document for the 2.17.x portfolio track. The local portfolio shell from
-Slice 2.17.1 is now runtime behavior; backend auth, real project persistence,
-publication channels, platform variants, and realistic benchmark fixtures remain later
-slices.
+Slice 2.17.1 and 2.17.2 are now runtime/demo behavior. Slice 2.17.3 adds the first
+backend SaaS boundary: dev-password login, session cookie, users/projects/memberships,
+and project-scoped workspace snapshots in SQLite. Publication channels, platform
+variants, production auth, and benchmark runner remain later slices.
 
-Related decision: `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+Related decisions:
+
+- `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`;
+- `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.
 
 ## 1. Product intent
 
@@ -48,7 +52,7 @@ Slice 2.17 therefore starts with:
 1. architecture;
 2. local multi-account/project shell;
 3. demo portfolio;
-4. backend auth/persistence;
+4. backend auth/persistence (implemented as dev-password session boundary);
 5. publication channels;
 6. multi-target variants;
 7. multi-platform DraftRun contract;
@@ -260,7 +264,7 @@ memory, editorial model, source/radar examples, plan slots, and benchmark scenar
 The fixtures are public-safe paraphrases of private working materials; the private
 source PDFs/resume are not committed.
 
-### Slice 2.17.3 target
+### Slice 2.17.3 implemented
 
 Backend persistence should mirror the same boundary:
 
@@ -274,6 +278,25 @@ Backend persistence should mirror the same boundary:
 Backend route handlers stay thin. Project persistence belongs in application services.
 The backend should not introduce a second domain shape that conflicts with the local
 portfolio store.
+
+Implemented v1:
+
+- `POST /api/auth/login` validates seeded email plus `GLAVRED_DEV_AUTH_PASSWORD` and
+  sets an HttpOnly `SameSite=Lax` session cookie;
+- `POST /api/auth/logout` invalidates the SQLite session and clears the cookie;
+- `GET /api/users/me` requires a valid session;
+- `GET /api/projects` returns only active projects reachable through active
+  memberships;
+- `GET /api/projects/{projectId}` and workspace load/save enforce membership;
+- `workspace_snapshots` store JSON blobs, not fine-grained tables;
+- frontend startup tries backend first, shows login on `401`, and silently keeps the
+  local demo portfolio if the backend is unreachable.
+
+Dev seed users:
+
+- `founder@example.test`: `AI Design Patterns`, `Каша из топора`;
+- `glavred-editor@example.test`: `Блог Главреда`;
+- default password: `glavred-demo`.
 
 ## 6. UI / UX target
 
@@ -290,7 +313,8 @@ The first implementation is restrained:
 - a compact switcher in the lower sidebar identity block;
 - user and blog project selectors;
 - no complex organization/admin surface;
-- no backend auth guarantee.
+- dev-password backend auth when FastAPI is available;
+- local demo fallback when FastAPI is unavailable.
 
 The local switcher is a development/demo shell. It proves product isolation before
 real authentication and backend persistence are added.
@@ -478,7 +502,7 @@ Slice 2.17.5/2.17.6 should include:
 
 ## 12. Open decisions for later slices
 
-- Which auth provider or dev auth mode should be used in 2.17.3?
+- Which production auth provider should replace dev-password session auth?
 - Whether `AI Design Patterns` should be LinkedIn newsletter-first or standalone
   site/blog-first.
 - Whether Dzen should be implemented before LinkedIn adaptation for `Блог Главреда`.

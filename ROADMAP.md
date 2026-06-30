@@ -5627,7 +5627,7 @@ Status:
 
 ### Slice 2.17.3: Backend Auth and Project Persistence Boundary
 
-- Status: Backlog
+- Status: Done
 - Goal: Introduce the first real backend boundary for users, sessions, projects, and
   project-scoped workspace persistence.
 - User value:
@@ -5638,7 +5638,8 @@ Status:
     snapshots.
   - Add thin FastAPI routes and application services.
   - Add dev-safe auth mode suitable for local testing.
-  - Keep frontend local-first fallback until backend persistence is explicitly enabled.
+  - Frontend starts backend-first: authenticated session loads backend projects and
+    workspace snapshots; `401` shows login; network failure falls back to local demo.
 - Out of scope:
   - Full production auth provider selection.
   - Billing, organizations, invites, SSO.
@@ -5651,7 +5652,8 @@ Status:
 - Tests:
   - Backend API tests, frontend integration tests, architecture smoke.
 - Docs:
-  - Developer setup, env docs, SAO, ADR if auth provider is chosen.
+  - Developer setup, env docs, SAO, and ADR
+    `2026-06-30-dev-password-session-auth-boundary`.
 - Demo impact:
   - Demo can run in local-only or backend-backed project mode.
 - Acceptance criteria:
@@ -5662,7 +5664,7 @@ Status:
 
 ### Slice 2.17.4: Publication Channels and Platform Profiles
 
-- Status: Backlog
+- Status: Ready
 - Goal: Model actual publishing destinations as project-owned channels before
   generating or publishing multi-platform variants.
 - User value:

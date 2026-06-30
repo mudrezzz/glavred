@@ -22,23 +22,25 @@ learning notes are project-scoped unless a later slice explicitly marks data as
 user-scoped. Do not add new singleton workspace assumptions when implementing auth,
 project switching, publication channels, or benchmark fixtures.
 
-Slice 2.17.1 implements the local shell for that boundary. Frontend runtime now loads
-`PortfolioState` through `LocalPortfolioStore`, then hydrates the existing app from
-the active project's `WorkspaceState`. Legacy `glavred.workspace.v1` storage is
-migrated into one default project; fresh reset seeds two users and three project
-containers. The visible switcher is placed in the sidebar footer identity slot, not in
-an extra top strip, so global account/project context stays out of screen-level
-actions. Keep future portfolio logic in role-owned modules such as
-`src/domain/portfolio`, `src/application/portfolioService.ts`, and
-`src/infrastructure/localPortfolioStore.ts` instead of expanding near-limit
+Slice 2.17.1 implements the local shell for that boundary; Slice 2.17.3 adds the
+backend dev-password session and SQLite project snapshot boundary. Frontend runtime
+still keeps `LocalPortfolioStore` as fallback, but first tries
+`BackendPortfolioStore`: authenticated sessions load backend projects/workspaces,
+`401` shows the login panel, and network failure keeps the local demo portfolio.
+Legacy `glavred.workspace.v1` storage is migrated into one default project; fresh
+local reset seeds two users and three project containers. The visible switcher is
+placed in the sidebar footer identity slot, not in an extra top strip, so global
+account/project context stays out of screen-level actions. Keep future portfolio
+logic in role-owned modules such as `src/domain/portfolio`,
+`src/application/portfolioService.ts`, `src/infrastructure/localPortfolioStore.ts`,
+and `src/infrastructure/backendPortfolioStore.ts` instead of expanding near-limit
 workspace or demo fixture files.
 
 Important architecture rules for upcoming slices:
 
-- local multi-account/project switching comes before full backend auth and is now
-  implemented as a local-first shell;
-- backend auth and persistence attach to `UserAccount`, `BlogProject`, and
-  `ProjectMembership`;
+- local multi-account/project switching remains the local fallback/demo shell;
+- backend dev-password auth and persistence attach to `UserAccount`, `BlogProject`,
+  and `ProjectMembership`;
 - publication channels are modeled before platform adapters/autoposting;
 - topic/fabula concepts remain reusable, while platform/channel constraints resolve
   later through plan items, post contracts, and platform variants;
@@ -50,7 +52,8 @@ Slice 2.17.2 keeps benchmark fixture construction in
 when adding or revising benchmark blogs; add project-owned fixture data and tests
 beside the portfolio demo fixture instead.
 
-See ADR `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
+See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
+`docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.
 Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementation
 contract for Slice 2.17.x. If code behavior diverges from that document, update the
 document in the same slice.
@@ -69,6 +72,15 @@ Required variables for the backend/AI track:
 - `DATABASE_URL`, `REDIS_URL`: future persistence and queue configuration.
 - `AI_RUN_AUDIT_DB_PATH`: local SQLite audit store for backend AI run records,
   default `var/glavred-ai-runs.sqlite3`.
+- `DRAFT_RUN_DB_PATH`: local SQLite store for queued DraftRun records, default
+  `var/glavred-draft-runs.sqlite3`.
+- `PORTFOLIO_DB_PATH`: local SQLite store for dev users, sessions, projects,
+  memberships, and workspace snapshots, default `var/glavred-portfolio.sqlite3`.
+- `GLAVRED_AUTH_MODE`: v1 value `dev-password`.
+- `GLAVRED_DEV_AUTH_PASSWORD`: shared dev password for seeded users. Never commit a
+  real password; default demo value is `glavred-demo`.
+- `GLAVRED_SESSION_COOKIE_NAME`, `GLAVRED_SESSION_TTL_HOURS`: local HttpOnly session
+  cookie name and TTL.
 - `OPENROUTER_API_KEY`: local OpenRouter token. Never commit it.
 - `OPENROUTER_BASE_URL`: default `https://openrouter.ai/api/v1`.
 - `OPENROUTER_DEFAULT_MODEL`: default model chosen for local backend runs.
@@ -326,10 +338,16 @@ Current backend files:
 - `backend/app/api/drafts.py`: `/api/drafts/generate` compatibility draft route and
   `/api/drafts/revise-with-comment` post-run human-comment revision route.
 - `backend/app/api/draft_runs.py`: queued draft-run routes.
+- `backend/app/api/portfolio.py`: dev auth/session, project, and workspace snapshot
+  routes.
+- `backend/app/api/portfolio_contracts.py`: portfolio request/response models and
+  HTTP mappers.
 - `backend/app/api/dependencies.py`: request-time application service wiring.
 - `backend/app/application/health_service.py`: health use-case orchestration.
 - `backend/app/application/ai_run_service.py`: AI run audit use case, payload
   redaction, and repository port.
+- `backend/app/application/portfolio_service.py`: dev auth, session lookup, project
+  access checks, and workspace snapshot use cases.
 - `backend/app/application/draft_generation_service.py`: OpenRouter/fallback
   orchestration for draft generation.
 - `backend/app/application/draft_human_comment_revision_service.py`: post-run

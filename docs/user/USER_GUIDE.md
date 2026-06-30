@@ -83,10 +83,18 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
-Current demo: a SaaS-style local portfolio where a user can switch between
-independent blog projects from the lower-left identity block in the sidebar. Click the
-current blog/user block to reveal the user and blog selectors. The app currently seeds
-two demo users and three realistic benchmark blog projects:
+Current demo: a SaaS-style portfolio where a user can switch between independent blog
+projects from the lower-left identity block in the sidebar. If the backend is running,
+Glavred first asks you to log in and then loads the accessible backend projects. If
+the backend is not running, the same UI falls back to the local demo portfolio.
+
+Seeded backend users:
+
+- `founder@example.test`: can access `AI Design Patterns` and `Каша из топора`.
+- `glavred-editor@example.test`: can access `Блог Главреда`.
+- Default dev password: `glavred-demo`.
+
+The app currently seeds two demo users and three realistic benchmark blog projects:
 
 - `AI Design Patterns`: a technical/research blog about durable AI design patterns
   and best practices, likely LinkedIn-first and English-capable.
@@ -95,8 +103,8 @@ two demo users and three realistic benchmark blog projects:
 - `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
   Telegram + Dzen multi-platform adaptation benchmark.
 
-Each selected project has its own local workspace state: author memory, editorial
-model, plan, drafts, final decisions, and learning notes are isolated by project.
+Each selected project has its own workspace state: author memory, editorial model,
+plan, drafts, final decisions, and learning notes are isolated by project.
 The per-blog memories, editorial models, source signals, plan slots, and benchmark
 scenarios are already seeded as sanitized public fixtures. Private source documents
 are not included in the repository.

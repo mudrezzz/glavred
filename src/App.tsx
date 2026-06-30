@@ -8,6 +8,7 @@ import { BriefView } from './features/briefing/BriefView';
 import { EditorialModelView } from './features/editorial-model/EditorialModelView';
 import { EditView } from './features/editing/EditView';
 import { PlanView } from './features/plan/PlanView';
+import { PortfolioLoginPanel } from './features/portfolio/PortfolioLoginPanel';
 import { SidebarPortfolioSwitcher } from './features/portfolio/SidebarPortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
 import { SignalsView } from './features/signals/SignalsView';
@@ -27,6 +28,8 @@ function CabinetApp() {
     accessibleProjects,
     activeProject,
     activeUser,
+    authError,
+    backendStatus,
     contextChatIntent,
     contextChatMessages,
     contextChatOpen,
@@ -40,6 +43,10 @@ function CabinetApp() {
     workspace
   } = controller;
 
+  if (backendStatus === 'loginRequired') {
+    return <PortfolioLoginPanel error={authError} loading={false} onLogin={controller.login} />;
+  }
+
   return (
     <AppShell
       active={active}
@@ -49,7 +56,9 @@ function CabinetApp() {
           accessibleProjects={accessibleProjects}
           activeProject={activeProject}
           activeUser={activeUser}
+          backendStatus={backendStatus}
           portfolio={portfolio}
+          onLogout={controller.logout}
           onProjectChange={controller.selectProject}
           onUserChange={controller.selectUser}
         />

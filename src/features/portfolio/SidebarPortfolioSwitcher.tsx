@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import type { BlogProject, PortfolioState, UserAccount } from '../../domain/portfolio/types';
+import type { PortfolioBackendStatus } from '../../app/useBackendPortfolioBridge';
 import { Icon } from '../../shared/ui/Icon';
 
 export function SidebarPortfolioSwitcher({
   activeProject,
   activeUser,
   accessibleProjects,
+  backendStatus,
+  onLogout,
   portfolio,
   onProjectChange,
   onUserChange
@@ -13,7 +16,9 @@ export function SidebarPortfolioSwitcher({
   activeProject: BlogProject;
   activeUser: UserAccount;
   accessibleProjects: BlogProject[];
+  backendStatus?: PortfolioBackendStatus;
   portfolio: PortfolioState;
+  onLogout?: () => void;
   onProjectChange: (projectId: string) => void;
   onUserChange: (userId: string) => void;
 }) {
@@ -59,6 +64,14 @@ export function SidebarPortfolioSwitcher({
           <div className="sidebar-portfolio-meta" aria-label="Текущий проект">
             <span>{activeProject.language}</span>
             <span>{activeProject.benchmarkRole === 'demo' ? 'demo' : activeProject.status}</span>
+          </div>
+          <div className="sidebar-portfolio-session">
+            <span>{backendStatus === 'authenticated' ? 'backend session' : 'local fallback'}</span>
+            {backendStatus === 'authenticated' && onLogout ? (
+              <button type="button" onClick={onLogout}>
+                Выйти
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}

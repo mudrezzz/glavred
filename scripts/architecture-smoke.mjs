@@ -582,6 +582,16 @@ const BACKEND_SOURCE_BASELINES = [
     next: "DraftRun routes should stay thin and delegate orchestration to DraftRunService.",
   },
   {
+    path: "backend/app/api/portfolio.py",
+    limit: 130,
+    next: "Portfolio routes should stay thin and delegate auth/project logic to PortfolioService.",
+  },
+  {
+    path: "backend/app/api/portfolio_contracts.py",
+    limit: 140,
+    next: "Portfolio API contracts should stay HTTP-shape mapping only.",
+  },
+  {
     path: "backend/app/application/health_service.py",
     limit: 90,
     next: "Health service should stay focused on liveness/readiness orchestration.",
@@ -1207,6 +1217,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "DraftRun service should stay queue/audit orchestration only.",
   },
   {
+    path: "backend/app/application/portfolio_service.py",
+    limit: 90,
+    next: "Portfolio service should own auth/session/access use cases only.",
+  },
+  {
     path: "backend/app/domain/health.py",
     limit: 60,
     next: "Health domain objects should stay provider-free and framework-free.",
@@ -1225,6 +1240,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/domain/draft_run.py",
     limit: 120,
     next: "DraftRun domain objects should stay provider-free and infrastructure-free.",
+  },
+  {
+    path: "backend/app/domain/portfolio.py",
+    limit: 70,
+    next: "Portfolio DTOs should stay provider-free and persistence-free.",
   },
   {
     path: "backend/app/domain/draft_run_steps.py",
@@ -1392,6 +1412,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "SQLite DraftRun repository should own storage only; split mappers/schema before adding more tables.",
   },
   {
+    path: "backend/app/infrastructure/sqlite_portfolio_repository.py",
+    limit: 340,
+    next: "SQLite portfolio repository should own storage/schema only; split seed/mappers before growing.",
+  },
+  {
     path: "backend/tests/test_settings.py",
     limit: 100,
     next: "Backend settings tests should split when provider config coverage grows.",
@@ -1440,6 +1465,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/tests/test_draft_run_api.py",
     limit: 130,
     next: "DraftRun API tests should split by create/read/worker handoff before growing further.",
+  },
+  {
+    path: "backend/tests/test_portfolio_api.py",
+    limit: 140,
+    next: "Portfolio API tests should split auth/session and project snapshot cases before growing further.",
   },
   {
     path: "backend/tests/test_draft_run_pipeline.py",
@@ -2514,9 +2544,12 @@ const requiredSaoFragments = [
   "backend/app/api/ai_runs.py",
   "backend/app/api/drafts.py",
   "backend/app/api/draft_runs.py",
+  "backend/app/api/portfolio.py",
+  "backend/app/api/portfolio_contracts.py",
   "backend/app/application/health_service.py",
   "backend/app/application/ai_run_service.py",
   "backend/app/application/draft_generation_service.py",
+  "backend/app/application/portfolio_service.py",
   "backend/app/application/draft_run_service.py",
   "backend/app/application/draft_run_pipeline.py",
   "backend/app/application/draft_validation_linter.py",
@@ -2625,11 +2658,13 @@ const requiredSaoFragments = [
   "backend/app/infrastructure/public_url_reader.py",
   "backend/app/infrastructure/sqlite_ai_run_repository.py",
   "backend/app/infrastructure/sqlite_draft_run_repository.py",
+  "backend/app/infrastructure/sqlite_portfolio_repository.py",
   "backend/app/infrastructure/celery_app.py",
   "backend/app/infrastructure/draft_run_tasks.py",
   "backend/app/infrastructure/draft_run_pipeline_factory.py",
   "backend/app/infrastructure/draft_run_pipeline_provider_services.py",
   "backend/app/infrastructure/draft_run_pipeline_validation_services.py",
+  "backend/app/domain/portfolio.py",
   "backend/app/domain/draft_run_steps.py",
   "backend/app/domain/draft_run_context.py",
   "backend/app/domain/draft_source_ledger.py",

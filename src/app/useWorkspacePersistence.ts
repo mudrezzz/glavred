@@ -8,16 +8,14 @@ import {
   selectPortfolioUser,
   updateActiveProjectWorkspace
 } from '../application/portfolioService';
-import {
-  createAuthorMemoryEvent,
-  inferAuthorPositionAssertions
-} from '../application/editorialServices';
+import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
 import {
   createEditorialValidationRun,
   type AuthorNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
+import { useBackendPortfolioBridge } from './useBackendPortfolioBridge';
 
 const store = new LocalPortfolioStore();
 
@@ -27,6 +25,7 @@ export type WorkspaceSetter = Dispatch<SetStateAction<WorkspaceState>>;
 export function useWorkspacePersistence() {
   const [portfolio, setPortfolio] = useState(() => store.load());
   const [toast, setToast] = useState('');
+  const backend = useBackendPortfolioBridge({ localStore: store, portfolio, setPortfolio, setToast });
   const activeUser = getActiveUser(portfolio);
   const activeProject = getActiveProject(portfolio);
   const accessibleProjects = getAccessibleProjects(portfolio);
@@ -38,7 +37,6 @@ export function useWorkspacePersistence() {
 
   useEffect(() => {
     if (!toast) return undefined;
-
     const timeoutId = window.setTimeout(() => setToast(''), 2800);
     return () => window.clearTimeout(timeoutId);
   }, [toast]);
@@ -86,6 +84,7 @@ export function useWorkspacePersistence() {
   }
 
   function resetWorkspace() {
+    if (backend.reloadBackendPortfolio()) return;
     setPortfolio(store.reset());
     setToast('Демо-портфель восстановлен');
   }
@@ -104,7 +103,11 @@ export function useWorkspacePersistence() {
     accessibleProjects,
     activeProject,
     activeUser,
+    authError: backend.authError,
+    backendStatus: backend.backendStatus,
     changeAuthorNotes,
+    login: backend.login,
+    logout: backend.logout,
     patchEditorialSetup,
     patchWorkspace,
     portfolio,

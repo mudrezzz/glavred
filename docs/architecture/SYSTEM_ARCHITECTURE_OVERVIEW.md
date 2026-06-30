@@ -1271,6 +1271,14 @@ Concrete queued drafting files:
 - `src/application/draftRunContext.ts`
 - `src/application/postCandidateLinking.ts`
 
+Concrete portfolio backend files:
+
+- `backend/app/api/portfolio.py`
+- `backend/app/api/portfolio_contracts.py`
+- `backend/app/application/portfolio_service.py`
+- `backend/app/domain/portfolio.py`
+- `backend/app/infrastructure/sqlite_portfolio_repository.py`
+
 The Dockerized local stack is an execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.
@@ -1843,7 +1851,7 @@ research experience building AI-B2B products:
    Until platform integrations exist, any manual export package remains compatibility
    behavior rather than the conceptual release model.
 
-## Local Blog Portfolio Shell and Planned Benchmark
+## Backend/Local Blog Portfolio Shell and Planned Benchmark
 
 Slice 2.17.1 replaces the single implicit local workspace with a local portfolio
 shell. The app now keeps a `PortfolioState` with active user, active project,
@@ -1869,6 +1877,11 @@ memory, editorial models, source/radar examples, plan scenarios, and benchmark
 expectations. The portfolio is not only demo decoration. It is now the seed surface
 for a benchmark suite:
 
+Slice 2.17.3 adds a dev backend boundary around the same model: seeded users log in
+with email/password, the backend stores session cookies and project-scoped workspace
+snapshots in SQLite, and the frontend falls back to the local portfolio when FastAPI
+is unavailable.
+
 - project isolation: no memory, learning notes, rules, or drafts leak between blogs;
 - channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen
   variants;
@@ -1880,11 +1893,11 @@ for a benchmark suite:
 
 ## Extension Points
 
-- The current singleton workspace can be wrapped by a local portfolio store:
-  `activeUserId`, `activeProjectId`, and `workspacesByProjectId`. That transition
-  is implemented locally by `LocalPortfolioStore`; real backend auth should attach to
-  the same boundary instead of reintroducing singleton workspace assumptions.
-- Backend auth and persistence should attach to `UserAccount`, `BlogProject`, and
+- The current singleton workspace is wrapped by a local portfolio store:
+  `activeUserId`, `activeProjectId`, and `workspacesByProjectId`. That transition is
+  implemented locally by `LocalPortfolioStore` and remotely by `BackendPortfolioStore`
+  plus SQLite `users/projects/memberships/workspace_snapshots`.
+- Backend auth and persistence attach to `UserAccount`, `BlogProject`, and
   `ProjectMembership`, not directly to the old singleton workspace.
 - Publication channels should be modeled before publication adapters. Autoposting
   adapters write publication-log entries; they should not define editorial strategy
@@ -1975,8 +1988,8 @@ For backend slices, add:
 
 ## Known Trade-offs
 
-- Local-first project switching can simulate SaaS workflows, but it is not security.
-  Real auth and backend project persistence still need their own slices.
+- Dev-password project switching gives a real backend boundary for local SaaS
+  workflows, but it is not production security.
 - Seeding three blogs gives much better benchmark coverage than one demo, but large
   fixtures can become noisy. Public fixtures should stay concise and sanitized; real
   private inputs should live in gitignored benchmark packs.
@@ -2000,9 +2013,7 @@ For backend slices, add:
 
 ## Open Questions
 
-- Which authentication path should be chosen after the local portfolio shell:
-  built-in dev/password auth, managed auth provider, or an adapter boundary that can
-  switch later?
+- Which production authentication provider should replace dev-password session auth?
 - Should `AI Design Patterns` start as a LinkedIn newsletter/articles project, a
   standalone site/blog, or a LinkedIn-first project with Telegram companion notes?
 - Should `Блог Главреда` use Telegram + Dzen as the first multi-platform benchmark,

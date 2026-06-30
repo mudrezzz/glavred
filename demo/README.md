@@ -44,17 +44,27 @@ log area, analytics prep area, and the new author memory workspace.
 - Expected output: an approved Telegram research note with a completed visual decision,
   ready for release logging and followed by captured editorial learning.
 
-## Local Portfolio Shell and Planned Benchmark Demo
+## Backend/Local Portfolio Shell and Benchmark Demo
 
-The demo now includes a SaaS-style local portfolio shell with two users and three
-independent blog project containers. The switcher lives in the lower-left sidebar
-identity block: click the current blog/user area to change user or blog. The
-architecture contract for the portfolio is
+The demo now includes a SaaS-style portfolio shell with two users and three
+independent blog project containers. With FastAPI running, the frontend uses
+dev-password backend login and project-scoped SQLite workspace snapshots. Without
+FastAPI, the same shell falls back to local browser storage.
+
+The switcher lives in the lower-left sidebar identity block: click the current
+blog/user area to change blog or log out of a backend session. The architecture
+contract for the portfolio is
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 fills those
 project containers with realistic benchmark memories, editorial models, source
-examples, plan slots, and production scenarios.
+examples, plan slots, and production scenarios. Slice 2.17.3 adds backend login,
+sessions, memberships, and workspace snapshots.
+
+Backend demo login:
+
+- `founder@example.test` / `glavred-demo`
+- `glavred-editor@example.test` / `glavred-demo`
 
 Target portfolio:
 

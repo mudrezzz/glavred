@@ -15,18 +15,14 @@ class BackendSettings(BaseSettings):
     environment: str = Field(default="local", validation_alias="GLAVRED_ENV")
     api_host: str = Field(default="127.0.0.1", validation_alias="GLAVRED_API_HOST")
     api_port: int = Field(default=8000, validation_alias="GLAVRED_API_PORT")
-    cors_origins: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173",
-        validation_alias="GLAVRED_CORS_ORIGINS",
-    )
-    ai_run_audit_db_path: Path = Field(
-        default=Path("var/glavred-ai-runs.sqlite3"),
-        validation_alias="AI_RUN_AUDIT_DB_PATH",
-    )
-    draft_run_db_path: Path = Field(
-        default=Path("var/glavred-draft-runs.sqlite3"),
-        validation_alias="DRAFT_RUN_DB_PATH",
-    )
+    cors_origins: str = Field(default="http://localhost:5173,http://127.0.0.1:5173", validation_alias="GLAVRED_CORS_ORIGINS")
+    ai_run_audit_db_path: Path = Field(default=Path("var/glavred-ai-runs.sqlite3"), validation_alias="AI_RUN_AUDIT_DB_PATH")
+    draft_run_db_path: Path = Field(default=Path("var/glavred-draft-runs.sqlite3"), validation_alias="DRAFT_RUN_DB_PATH")
+    portfolio_db_path: Path = Field(default=Path("var/glavred-portfolio.sqlite3"), validation_alias="PORTFOLIO_DB_PATH")
+    glavred_auth_mode: str = Field(default="dev-password", validation_alias="GLAVRED_AUTH_MODE")
+    glavred_dev_auth_password: SecretStr = Field(default=SecretStr("glavred-demo"), validation_alias="GLAVRED_DEV_AUTH_PASSWORD")
+    glavred_session_cookie_name: str = Field(default="glavred_session", validation_alias="GLAVRED_SESSION_COOKIE_NAME")
+    glavred_session_ttl_hours: int = Field(default=168, validation_alias="GLAVRED_SESSION_TTL_HOURS")
     draft_revision_max_iterations: int = Field(default=3, validation_alias="DRAFT_REVISION_MAX_ITERATIONS")
     draft_run_execution_mode: str = Field(default="standard", validation_alias="DRAFT_RUN_EXECUTION_MODE")
     draft_research_budget_overrides: str = Field(default="", validation_alias="DRAFT_RESEARCH_BUDGET_OVERRIDES")
@@ -52,22 +48,10 @@ class BackendSettings(BaseSettings):
     draft_json_repair_temperature: str = Field(default="0.15", validation_alias="DRAFT_JSON_REPAIR_TEMPERATURE")
     draft_another_angle_temperature: str = Field(default="0.8", validation_alias="DRAFT_ANOTHER_ANGLE_TEMPERATURE")
     openrouter_app_name: str = Field(default="Glavred", validation_alias="OPENROUTER_APP_NAME")
-    openrouter_http_referer: str = Field(
-        default="http://localhost:5173",
-        validation_alias="OPENROUTER_HTTP_REFERER",
-    )
-    openrouter_web_tools_enabled: bool = Field(
-        default=False,
-        validation_alias="OPENROUTER_WEB_TOOLS_ENABLED",
-    )
-    openrouter_web_search_model: str = Field(
-        default="",
-        validation_alias="OPENROUTER_WEB_SEARCH_MODEL",
-    )
-    openrouter_web_search_max_results: int = Field(
-        default=5,
-        validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS",
-    )
+    openrouter_http_referer: str = Field(default="http://localhost:5173", validation_alias="OPENROUTER_HTTP_REFERER")
+    openrouter_web_tools_enabled: bool = Field(default=False, validation_alias="OPENROUTER_WEB_TOOLS_ENABLED")
+    openrouter_web_search_model: str = Field(default="", validation_alias="OPENROUTER_WEB_SEARCH_MODEL")
+    openrouter_web_search_max_results: int = Field(default=5, validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS")
 
     @property
     def has_openrouter_api_key(self) -> bool:
