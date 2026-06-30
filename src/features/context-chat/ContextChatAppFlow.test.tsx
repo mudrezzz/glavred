@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 describe('Context chat app flow', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('Context chat app flow', () => {
   });
 
   it('renders context chat collapsed by default and opens from the topbar', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByTestId('context-chat-topbar-trigger')).toBeInTheDocument();
     expect(screen.queryByTestId('context-chat-toggle')).not.toBeInTheDocument();
@@ -29,7 +30,7 @@ describe('Context chat app flow', () => {
   });
 
   it('updates context chat suggestions when the active section changes', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByTestId('context-chat-topbar-trigger'));
     fireEvent.click(screen.getByRole('tab', { name: /Подсказки/i }));
@@ -41,7 +42,7 @@ describe('Context chat app flow', () => {
   });
 
   it('opens existing draft flows from accepted context chat suggestions without saving automatically', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель|Р РµРґР°РєС†РёРѕРЅРЅР°СЏ РјРѕРґРµР»СЊ/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Темы|РўРµРјС‹/i }));
@@ -54,7 +55,7 @@ describe('Context chat app flow', () => {
   });
 
   it('allows asking the context chat to generate a topic without saving automatically', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
     fireEvent.click(screen.getByTestId('context-chat-topbar-trigger'));
@@ -71,7 +72,7 @@ describe('Context chat app flow', () => {
   });
 
   it('allows dismissing context chat suggestions instead of accepting read-only actions', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByTestId('context-chat-topbar-trigger'));
     fireEvent.click(screen.getByRole('tab', { name: /Подсказки/i }));

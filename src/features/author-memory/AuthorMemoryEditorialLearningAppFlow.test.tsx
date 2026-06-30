@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
 
 const FLOW_WAIT = { timeout: 30000 };
@@ -11,7 +12,7 @@ describe('Author memory editorial learning flow', () => {
   });
 
   it('creates a reviewable editorial learning note after final draft selection', async () => {
-    render(<App />);
+    renderAppCabinet();
     await createApprovedBrief();
 
     fireEvent.click(screen.getByRole('button', { name: /Сделать финальной/i }));

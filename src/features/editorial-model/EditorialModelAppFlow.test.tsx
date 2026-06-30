@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 describe('Editorial model app flow', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('Editorial model app flow', () => {
   });
 
   it('edits editorial rules, topics, fabulas, and compatibility matrix', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
     expect(screen.getAllByText('AI Design Patterns').length).toBeGreaterThan(0);
@@ -64,7 +65,7 @@ describe('Editorial model app flow', () => {
   });
 
   it('shows validator cards with score, evidence, and suggestions after manual validation', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
     expect(screen.queryByText('author-position-clarity')).not.toBeInTheDocument();
@@ -79,7 +80,7 @@ describe('Editorial model app flow', () => {
 
   it('adds and deletes topics and fabulas with matrix updates', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
     fireEvent.click(screen.getByRole('button', { name: /^Проверить$/i }));

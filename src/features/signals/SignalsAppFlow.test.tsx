@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { goToSignals } from '../../test-support/signalsFlowDriver';
 
 describe('Signals app flow', () => {
@@ -9,7 +10,7 @@ describe('Signals app flow', () => {
   });
 
   it('shows the signals workspace with radars, reviewable signals, and post-candidate preview', () => {
-    render(<App />);
+    renderAppCabinet();
 
     goToSignals();
 
@@ -69,7 +70,7 @@ describe('Signals app flow', () => {
   });
 
   it('edits an existing radar inline with multiline rule and source fields', () => {
-    render(<App />);
+    renderAppCabinet();
 
     goToSignals();
 

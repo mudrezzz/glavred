@@ -13,14 +13,18 @@ export function useWorkspaceController() {
     accessibleProjects,
     activeProject,
     activeUser,
+    archivedProjects,
     authError,
+    archiveProject,
     backendStatus,
     changeAuthorNotes,
+    createProject,
     login,
     logout,
     patchEditorialSetup,
     patchWorkspace,
     portfolio,
+    renameProject,
     resetWorkspace,
     runEditorialValidation,
     selectProject,
@@ -30,6 +34,7 @@ export function useWorkspaceController() {
     toast,
     workspace
   } = useWorkspacePersistence();
+  const [portfolioMode, setPortfolioMode] = useState<'projectDashboard' | 'projectCabinet'>('projectDashboard');
   const [memoryTab, setMemoryTab] = useState<MemoryInternalTab>('feed');
   const [editorialModelTab, setEditorialModelTab] = useState<EditorialModelTab>('publisher');
   const active = workspace.activeSection;
@@ -53,9 +58,19 @@ export function useWorkspaceController() {
 
   function resetDemo() {
     resetWorkspace();
+    setPortfolioMode('projectDashboard');
     setMemoryTab('feed');
     setEditorialModelTab('publisher');
     contextChatController.resetContextChat();
+  }
+
+  function openProject(projectId: string) {
+    if (activeProject.id !== projectId) selectProject(projectId);
+    setPortfolioMode('projectCabinet');
+  }
+
+  function goProjectDashboard() {
+    setPortfolioMode('projectDashboard');
   }
 
   return {
@@ -63,8 +78,11 @@ export function useWorkspaceController() {
     active,
     activeProject,
     activeUser,
+    archivedProjects,
+    archiveProject,
     authError,
     backendStatus,
+    createProject,
     editorialModelTab,
     memoryTab,
     portfolio,
@@ -81,9 +99,13 @@ export function useWorkspaceController() {
     patchEditorialSetup,
     patchWorkspace,
     resetDemo,
+    renameProject,
     runEditorialValidation,
+    openProject,
     selectProject,
     selectUser,
+    goProjectDashboard,
+    portfolioMode,
     setEditorialModelTab,
     setMemoryTab
   };

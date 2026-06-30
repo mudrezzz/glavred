@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 function openPortfolioSwitcher() {
   fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
@@ -12,7 +13,7 @@ describe('Portfolio switcher app flow', () => {
   });
 
   it('renders the portfolio control in the sidebar footer instead of the main top area', () => {
-    render(<App />);
+    renderAppCabinet();
 
     const switcher = screen.getByTestId('portfolio-switcher');
     expect(switcher.closest('aside.side')).toBeInTheDocument();
@@ -27,7 +28,7 @@ describe('Portfolio switcher app flow', () => {
   });
 
   it('shows local users and their accessible blog projects', () => {
-    render(<App />);
+    renderAppCabinet();
     openPortfolioSwitcher();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
@@ -43,7 +44,7 @@ describe('Portfolio switcher app flow', () => {
   });
 
   it('keeps author memory isolated between projects', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByText(/AI as an execution layer/i)).toBeInTheDocument();
 
@@ -67,7 +68,7 @@ describe('Portfolio switcher app flow', () => {
   });
 
   it('shows Glavred blog context for the second demo user', () => {
-    render(<App />);
+    renderAppCabinet();
     openPortfolioSwitcher();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Пользователь' }), {

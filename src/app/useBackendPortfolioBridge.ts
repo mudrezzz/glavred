@@ -3,7 +3,8 @@ import type { PortfolioState } from '../domain/portfolio/types';
 import {
   BackendPortfolioAuthRequiredError,
   BackendPortfolioStore,
-  BackendPortfolioUnavailableError
+  type BackendProjectCreateInput,
+  type BackendProjectUpdateInput
 } from '../infrastructure/backendPortfolioStore';
 import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
 
@@ -83,5 +84,33 @@ export function useBackendPortfolioBridge({
     return true;
   }
 
-  return { authError, backendStatus, login, logout, reloadBackendPortfolio };
+  async function createProject(input: BackendProjectCreateInput): Promise<boolean> {
+    if (backendStatus !== 'authenticated') return false;
+    try {
+      await backendStore.createProject(input);
+      setPortfolio(await backendStore.load());
+      setToast('Проект создан');
+      return true;
+    } catch {
+      setBackendStatus('localFallback');
+      setToast('Backend недоступен, проект будет создан локально');
+      return false;
+    }
+  }
+
+  async function updateProject(projectId: string, patch: BackendProjectUpdateInput): Promise<boolean> {
+    if (backendStatus !== 'authenticated') return false;
+    try {
+      await backendStore.updateProject(projectId, patch);
+      setPortfolio(await backendStore.load());
+      setToast(patch.status === 'archived' ? 'Проект отправлен в архив' : 'Проект обновлен');
+      return true;
+    } catch {
+      setBackendStatus('localFallback');
+      setToast('Backend недоступен, изменение сохранено локально');
+      return false;
+    }
+  }
+
+  return { authError, backendStatus, createProject, login, logout, reloadBackendPortfolio, updateProject };
 }

@@ -83,10 +83,20 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
-Current demo: a SaaS-style portfolio where a user can switch between independent blog
-projects from the lower-left identity block in the sidebar. If the backend is running,
-Glavred first asks you to log in and then loads the accessible backend projects. If
-the backend is not running, the same UI falls back to the local demo portfolio.
+Current demo: a SaaS-style portfolio where login opens the `Project Dashboard`. If the
+backend is running, Glavred asks you to log in and then shows only the projects
+available to that user. If the backend is not running, the same dashboard falls back
+to the local demo portfolio.
+
+From the dashboard you can:
+
+- open a project card or press `Открыть кабинет` to enter the editorial cabinet;
+- create a new project with a minimal normalized workspace;
+- rename an existing project;
+- send a project to the archive and view it through the `Активные / Архив` filter.
+
+Inside an opened project the lower-left identity block still provides fast project
+switching. Use `Все проекты` there to return to the dashboard.
 
 Seeded backend users:
 

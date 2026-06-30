@@ -78,6 +78,36 @@ describe('BackendPortfolioStore', () => {
       'http://localhost:8000/api/users/me',
       expect.objectContaining({ credentials: 'include' })
     );
+    expect(fetcher).toHaveBeenCalledWith(
+      'http://localhost:8000/api/projects?includeArchived=true',
+      expect.objectContaining({ credentials: 'include' })
+    );
+  });
+
+  it('creates and updates projects through project lifecycle endpoints', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({}));
+    vi.stubGlobal('fetch', fetcher);
+    const store = new BackendPortfolioStore();
+
+    await store.createProject({ title: 'New blog', description: 'Draft', language: 'en' });
+    await store.updateProject('project-new', { title: 'Renamed', status: 'archived' });
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      'http://localhost:8000/api/projects',
+      expect.objectContaining({
+        body: JSON.stringify({ title: 'New blog', description: 'Draft', language: 'en' }),
+        method: 'POST'
+      })
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'http://localhost:8000/api/projects/project-new',
+      expect.objectContaining({
+        body: JSON.stringify({ title: 'Renamed', status: 'archived' }),
+        method: 'PATCH'
+      })
+    );
   });
 
   it('maps 401 to auth required', async () => {

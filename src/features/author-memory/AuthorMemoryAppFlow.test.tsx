@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 describe('Author memory app flow', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('Author memory app flow', () => {
   });
 
   it('opens on author memory with demo notes and evidence-backed assertions', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByText('Авторская память')).toBeInTheDocument();
     expect(screen.getByText(/Workflow risk важнее выбора модели/i)).toBeInTheDocument();
@@ -17,7 +18,7 @@ describe('Author memory app flow', () => {
   });
 
   it('shows external source tabs and demo sources as a single-column list inside author memory', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByText('Импорт и архив')).toBeInTheDocument();
@@ -45,7 +46,7 @@ describe('Author memory app flow', () => {
   });
 
   it('allows clearing import candidate selection', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
     fireEvent.click(screen.getByRole('button', { name: /Выбрать все по фильтру|Р’С‹Р±СЂР°С‚СЊ РІСЃРµ РїРѕ С„РёР»СЊС‚СЂСѓ/i }));
@@ -60,7 +61,7 @@ describe('Author memory app flow', () => {
   });
 
   it('makes archive records actionable and can return an archive record to review queue', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('tab', { name: /Архив|РђСЂС…РёРІ/i }));
     const archiveRecord = screen.getByText(/Старый пост про пилоты/i).closest('article');
@@ -78,7 +79,7 @@ describe('Author memory app flow', () => {
   });
 
   it('bulk archives filtered import candidates and can undo the latest bulk action', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
     fireEvent.change(screen.getByLabelText(/Источник|РСЃС‚РѕС‡РЅРёРє/i), { target: { value: 'source-tg-archive' } });
@@ -100,7 +101,7 @@ describe('Author memory app flow', () => {
   });
 
   it('accepts one import candidate into author memory', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('tab', { name: /Очередь разбора|РћС‡РµСЂРµРґСЊ СЂР°Р·Р±РѕСЂР°/i }));
     fireEvent.change(screen.getByLabelText(/Источник|РСЃС‚РѕС‡РЅРёРє/i), { target: { value: 'source-blog-essays' } });
@@ -116,7 +117,7 @@ describe('Author memory app flow', () => {
   });
 
   it('adds an author thought note without a title and persists it after reload', () => {
-    const { unmount } = render(<App />);
+    const { unmount } = renderAppCabinet();
 
     fireEvent.change(screen.getByLabelText('Заметка автора'), {
       target: { value: 'AI onboarding должен объяснять, где пользователь может доверять системе, а где нужен fallback.' }
@@ -127,13 +128,13 @@ describe('Author memory app flow', () => {
     expect(screen.getAllByText(/AI onboarding должен объяснять/i).length).toBeGreaterThan(0);
 
     unmount();
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getAllByText(/AI onboarding должен объяснять/i).length).toBeGreaterThan(0);
   });
 
   it('reveals and hides the optional title field', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.queryByLabelText('Заголовок')).not.toBeInTheDocument();
 
@@ -147,7 +148,7 @@ describe('Author memory app flow', () => {
   });
 
   it('attaches a small file to a thought note and persists it after reload', async () => {
-    const { unmount } = render(<App />);
+    const { unmount } = renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
     fireEvent.change(screen.getByLabelText('Файл'), {
@@ -164,13 +165,13 @@ describe('Author memory app flow', () => {
     await waitFor(() => expect(screen.getAllByText('research-memo.txt').length).toBeGreaterThan(0));
 
     unmount();
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByText('research-memo.txt')).toBeInTheDocument();
   });
 
   it('rejects oversized author-memory attachments', async () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
     fireEvent.change(screen.getByLabelText('Файл'), {
@@ -184,7 +185,7 @@ describe('Author memory app flow', () => {
   });
 
   it('removes an attachment before saving a note', async () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
     fireEvent.change(screen.getByLabelText('Файл'), {
@@ -198,7 +199,7 @@ describe('Author memory app flow', () => {
   });
 
   it('replaces an attachment while editing a note', async () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Файл/i }));
     fireEvent.change(screen.getByLabelText('Файл'), {
@@ -224,7 +225,7 @@ describe('Author memory app flow', () => {
   });
 
   it('shows a local link preview in the composer and saved note feed', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.change(screen.getByLabelText('Тип записи'), { target: { value: 'linkReaction' } });
     fireEvent.change(screen.getByLabelText('Ссылка'), { target: { value: 'ux-source.test/research-note' } });
@@ -241,7 +242,7 @@ describe('Author memory app flow', () => {
   });
 
   it('starts a targeted manual correction from an assertion and shows a conflict prompt', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Корректировать$/i })[0]);
 
@@ -261,7 +262,7 @@ describe('Author memory app flow', () => {
   });
 
   it('preselects the exact evidence target when correcting evidence', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getAllByText('Evidence')[0]);
     fireEvent.click(screen.getAllByRole('button', { name: /Корректировать evidence/i })[0]);
@@ -273,7 +274,7 @@ describe('Author memory app flow', () => {
   });
 
   it('searches, filters, and lazily expands the author memory feed', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByRole('button', { name: /Показать еще/i })).toBeInTheDocument();
 
@@ -288,7 +289,7 @@ describe('Author memory app flow', () => {
   });
 
   it('collapses long notes and allows expanding them', () => {
-    render(<App />);
+    renderAppCabinet();
     const longText = Array.from({ length: 12 }, () => 'AI-B2B заметка про workflow, adoption, trust loop и границы уверенности.').join(' ');
 
     fireEvent.change(screen.getByLabelText('Заметка автора'), { target: { value: longText } });
@@ -300,7 +301,7 @@ describe('Author memory app flow', () => {
   });
 
   it('edits and deletes author notes with evidence-aware confirmation', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.change(screen.getByLabelText('Заметка автора'), {
       target: { value: 'Редактируемая заметка про onboarding и доверие.' }
@@ -325,7 +326,7 @@ describe('Author memory app flow', () => {
   });
 
   it('shows memory summary and voice input fallback', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByText('Сводка памяти')).toBeInTheDocument();
     expect(screen.getByText('Всего')).toBeInTheDocument();

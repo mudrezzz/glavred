@@ -16,6 +16,15 @@ export function getAccessibleProjects(portfolio: PortfolioState, userId = portfo
   return portfolio.projects.filter((project) => project.status === 'active' && accessibleProjectIds.has(project.id));
 }
 
+export function getArchivedProjects(portfolio: PortfolioState, userId = portfolio.activeUserId): BlogProject[] {
+  const accessibleProjectIds = new Set(
+    portfolio.memberships
+      .filter((membership) => membership.userId === userId && membership.status === 'active')
+      .map((membership) => membership.projectId)
+  );
+  return portfolio.projects.filter((project) => project.status === 'archived' && accessibleProjectIds.has(project.id));
+}
+
 export function getActiveProject(portfolio: PortfolioState): BlogProject {
   const accessibleProjects = getAccessibleProjects(portfolio);
   return accessibleProjects.find((project) => project.id === portfolio.activeProjectId) ?? accessibleProjects[0] ?? portfolio.projects[0];

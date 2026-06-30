@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { createExportedRelease } from '../../test-support/productionFlowDriver';
 
 describe('Analytics app flow', () => {
@@ -9,7 +10,7 @@ describe('Analytics app flow', () => {
   });
 
   it('shows an empty analytics state before manual export', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Аналитика/i }));
 
@@ -18,7 +19,7 @@ describe('Analytics app flow', () => {
   });
 
   it('prepares, captures, and persists editorial learning notes after manual export', async () => {
-    const { unmount } = render(<App />);
+    const { unmount } = renderAppCabinet();
 
     await createExportedRelease();
 
@@ -39,7 +40,7 @@ describe('Analytics app flow', () => {
     expect(screen.getAllByText(/Выводы зафиксированы/i).length).toBeGreaterThan(0);
 
     unmount();
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getAllByText(/Выводы зафиксированы/i).length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue(/demo-to-adoption gap/i)).toBeInTheDocument();

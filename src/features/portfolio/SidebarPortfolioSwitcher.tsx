@@ -9,6 +9,7 @@ export function SidebarPortfolioSwitcher({
   accessibleProjects,
   backendStatus,
   onLogout,
+  onOpenDashboard,
   portfolio,
   onProjectChange,
   onUserChange
@@ -19,6 +20,7 @@ export function SidebarPortfolioSwitcher({
   backendStatus?: PortfolioBackendStatus;
   portfolio: PortfolioState;
   onLogout?: () => void;
+  onOpenDashboard?: () => void;
   onProjectChange: (projectId: string) => void;
   onUserChange: (userId: string) => void;
 }) {
@@ -67,6 +69,11 @@ export function SidebarPortfolioSwitcher({
           </div>
           <div className="sidebar-portfolio-session">
             <span>{backendStatus === 'authenticated' ? 'backend session' : 'local fallback'}</span>
+            {onOpenDashboard ? (
+              <button type="button" onClick={onOpenDashboard}>
+                Все проекты
+              </button>
+            ) : null}
             {backendStatus === 'authenticated' && onLogout ? (
               <button type="button" onClick={onLogout}>
                 Выйти

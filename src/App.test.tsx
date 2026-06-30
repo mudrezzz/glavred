@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App';
+import { renderAppCabinet } from './test-support/appFlowDriver';
 
 describe('App shell', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('App shell', () => {
   });
 
   it('renders the editorial cabinet shell and planned sections', () => {
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getByText('Главред')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Память автора/i })).toBeInTheDocument();

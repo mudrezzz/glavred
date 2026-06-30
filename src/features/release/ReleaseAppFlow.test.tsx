@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { createExportedRelease } from '../../test-support/productionFlowDriver';
 
 describe('Release app flow', () => {
@@ -9,7 +10,7 @@ describe('Release app flow', () => {
   });
 
   it('shows an empty release state before an approved final text', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Выпуск/i }));
 
@@ -18,7 +19,7 @@ describe('Release app flow', () => {
   });
 
   it('prepares, marks ready, exports, and persists a manual release package', async () => {
-    const { unmount } = render(<App />);
+    const { unmount } = renderAppCabinet();
 
     await createExportedRelease();
 
@@ -26,7 +27,7 @@ describe('Release app flow', () => {
     expect(screen.getByText(/Markdown export/i)).toBeInTheDocument();
 
     unmount();
-    render(<App />);
+    renderAppCabinet();
 
     expect(screen.getAllByText(/Экспортировано вручную/i).length).toBeGreaterThan(0);
   });

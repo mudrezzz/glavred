@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from backend.app.domain.portfolio import BlogProject, ProjectMembership, Session, UserAccount, WorkspaceSnapshot
+from backend.app.infrastructure.sqlite_portfolio_seed import ensure_seeded, seed_workspace
 
 
 class SQLitePortfolioRepository:
@@ -17,79 +19,7 @@ class SQLitePortfolioRepository:
 
     def ensure_seeded(self) -> None:
         with self._connect() as conn:
-            if conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] > 0:
-                return
-            now = _now()
-            users = [
-                ("user-founder-editor", "Владелец портфеля", "founder@example.test", None, "active", now),
-                ("user-product-editor", "Редактор Главреда", "glavred-editor@example.test", None, "active", now),
-            ]
-            projects = [
-                (
-                    "project-ai-design-patterns",
-                    "user-founder-editor",
-                    "AI Design Patterns",
-                    "Research-heavy blog about durable AI engineering and product design patterns.",
-                    "en",
-                    "active",
-                    "demo",
-                    now,
-                    now,
-                ),
-                (
-                    "project-kasha-iz-topora",
-                    "user-founder-editor",
-                    "Каша из топора",
-                    "RevOps and Product Marketing Telegram-native author blog.",
-                    "ru",
-                    "active",
-                    "demo",
-                    now,
-                    now,
-                ),
-                (
-                    "project-glavred-blog",
-                    "user-product-editor",
-                    "Блог Главреда",
-                    "Product philosophy and practical AI-native editorial methods.",
-                    "ru",
-                    "active",
-                    "demo",
-                    now,
-                    now,
-                ),
-            ]
-            memberships = [
-                ("membership-founder-ai-design-patterns", "user-founder-editor", "project-ai-design-patterns", "owner", "active"),
-                ("membership-founder-kasha", "user-founder-editor", "project-kasha-iz-topora", "owner", "active"),
-                ("membership-product-editor-glavred", "user-product-editor", "project-glavred-blog", "owner", "active"),
-            ]
-            conn.executemany(
-                "INSERT INTO users(id, display_name, email, avatar_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-                users,
-            )
-            conn.executemany(
-                """
-                INSERT INTO projects(
-                    id, owner_user_id, title, description, language, status, benchmark_role, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                projects,
-            )
-            conn.executemany(
-                "INSERT INTO memberships(id, user_id, project_id, role, status) VALUES (?, ?, ?, ?, ?)",
-                memberships,
-            )
-            for project in projects:
-                conn.execute(
-                    "INSERT INTO workspace_snapshots(id, project_id, payload, created_at) VALUES (?, ?, ?, ?)",
-                    (
-                        f"snapshot-seed-{project[0]}",
-                        project[0],
-                        json.dumps(_seed_workspace(project[0], project[2]), ensure_ascii=False),
-                        now,
-                    ),
-                )
+            ensure_seeded(conn, _now())
 
     def get_user_by_email(self, email: str) -> UserAccount | None:
         with self._connect() as conn:
@@ -101,23 +31,104 @@ class SQLitePortfolioRepository:
             row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return _user(row) if row else None
 
-    def list_projects_for_user(self, user_id: str) -> list[tuple[BlogProject, ProjectMembership]]:
+    def list_projects_for_user(
+        self,
+        user_id: str,
+        *,
+        include_archived: bool = False,
+    ) -> list[tuple[BlogProject, ProjectMembership]]:
+        status_filter = "" if include_archived else "AND p.status = 'active'"
         with self._connect() as conn:
             rows = conn.execute(
-                """
+                f"""
                 SELECT p.*, m.id AS membership_id, m.user_id, m.project_id, m.role, m.status AS membership_status
                 FROM projects p
                 JOIN memberships m ON m.project_id = p.id
-                WHERE m.user_id = ? AND m.status = 'active' AND p.status = 'active'
+                WHERE m.user_id = ? AND m.status = 'active' {status_filter}
                 ORDER BY p.created_at, p.id
                 """,
                 (user_id,),
             ).fetchall()
         return [(_project(row), _membership_from_join(row)) for row in rows]
 
-    def get_project_for_user(self, user_id: str, project_id: str) -> tuple[BlogProject, ProjectMembership] | None:
-        projects = [item for item in self.list_projects_for_user(user_id) if item[0].id == project_id]
+    def get_project_for_user(
+        self,
+        user_id: str,
+        project_id: str,
+        *,
+        include_archived: bool = True,
+    ) -> tuple[BlogProject, ProjectMembership] | None:
+        projects = [
+            item
+            for item in self.list_projects_for_user(user_id, include_archived=include_archived)
+            if item[0].id == project_id
+        ]
         return projects[0] if projects else None
+
+    def create_project_for_user(
+        self,
+        owner_user_id: str,
+        *,
+        title: str,
+        description: str,
+        language: str,
+    ) -> tuple[BlogProject, ProjectMembership]:
+        now = _now()
+        project_id = f"project-{uuid.uuid4().hex[:12]}"
+        membership_id = f"membership-{owner_user_id}-{project_id}"
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO projects(
+                    id, owner_user_id, title, description, language, status, benchmark_role, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (project_id, owner_user_id, title, description, language, "active", "real", now, now),
+            )
+            conn.execute(
+                "INSERT INTO memberships(id, user_id, project_id, role, status) VALUES (?, ?, ?, ?, ?)",
+                (membership_id, owner_user_id, project_id, "owner", "active"),
+            )
+            conn.execute(
+                "INSERT INTO workspace_snapshots(id, project_id, payload, created_at) VALUES (?, ?, ?, ?)",
+                (
+                    f"snapshot-seed-{project_id}",
+                    project_id,
+                    json.dumps(seed_workspace(project_id, title, now), ensure_ascii=False),
+                    now,
+                ),
+            )
+        item = self.get_project_for_user(owner_user_id, project_id, include_archived=True)
+        if item is None:
+            raise RuntimeError("created-project-not-readable")
+        return item
+
+    def update_project(
+        self,
+        project_id: str,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        status: str | None = None,
+    ) -> None:
+        assignments: list[str] = []
+        values: list[str] = []
+        if title is not None and title:
+            assignments.append("title = ?")
+            values.append(title)
+        if description is not None:
+            assignments.append("description = ?")
+            values.append(description)
+        if status is not None:
+            assignments.append("status = ?")
+            values.append(status)
+        if not assignments:
+            return
+        now = _now()
+        assignments.append("updated_at = ?")
+        values.extend([now, project_id])
+        with self._connect() as conn:
+            conn.execute(f"UPDATE projects SET {', '.join(assignments)} WHERE id = ?", values)
 
     def latest_workspace_snapshot(self, project_id: str) -> WorkspaceSnapshot | None:
         with self._connect() as conn:
@@ -213,16 +224,6 @@ class SQLitePortfolioRepository:
         conn = sqlite3.connect(self._db_path)
         conn.row_factory = sqlite3.Row
         return conn
-
-
-def _seed_workspace(project_id: str, title: str) -> dict[str, Any]:
-    return {
-        "id": f"workspace-{project_id}",
-        "projectProfile": {"name": title},
-        "portfolioProjectId": project_id,
-        "seedSource": "backend-dev-auth",
-        "updatedAt": _now(),
-    }
 
 
 def _now() -> str:

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import type { HumanCommentRevisionQualityCheck } from '../../domain/editorialWorkspace';
 import { setDraftCommentRevisionFetchForTests } from '../../infrastructure/draftCommentRevisionClient';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
@@ -34,7 +35,7 @@ describe('Editorial workbench HITL app flow', () => {
     });
     setDraftCommentRevisionFetchForTests(revisionFetch);
 
-    render(<App />);
+    renderAppCabinet();
     await createApprovedBrief();
 
     fireEvent.change(screen.getByLabelText('Комментарий к улучшению драфта'), {
@@ -65,7 +66,7 @@ describe('Editorial workbench HITL app flow', () => {
   it('keeps the current version list intact when comment revision fails', async () => {
     setDraftCommentRevisionFetchForTests(vi.fn().mockResolvedValue({ ok: false, status: 503 }));
 
-    render(<App />);
+    renderAppCabinet();
     await createApprovedBrief();
 
     fireEvent.change(screen.getByLabelText('Комментарий к улучшению драфта'), {
@@ -94,7 +95,7 @@ describe('Editorial workbench HITL app flow', () => {
       })
     }));
 
-    render(<App />);
+    renderAppCabinet();
     await createApprovedBrief();
 
     const originalBody = (screen.getByLabelText('Текст драфта') as HTMLTextAreaElement).value;

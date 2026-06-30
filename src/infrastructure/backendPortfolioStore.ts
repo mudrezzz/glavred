@@ -40,10 +40,20 @@ interface BackendWorkspaceResponse {
   workspace: Partial<WorkspaceState>;
 }
 
+export interface BackendProjectCreateInput {
+  title: string;
+  description?: string;
+  language?: string;
+}
+
+export type BackendProjectUpdateInput = Partial<Pick<BlogProject, 'title' | 'description' | 'status'>>;
+
 export class BackendPortfolioStore {
   async load(): Promise<PortfolioState> {
     const me = await this.request<{ user: BackendUserResponse }>('/api/users/me');
-    const projectsPayload = await this.request<{ projects: BackendProjectAccessResponse[] }>('/api/projects');
+    const projectsPayload = await this.request<{ projects: BackendProjectAccessResponse[] }>(
+      '/api/projects?includeArchived=true'
+    );
     const users = [mapUser(me.user)];
     const projects = projectsPayload.projects.map((item) => item.project);
     const memberships = projectsPayload.projects.map((item) => item.membership);
@@ -81,6 +91,24 @@ export class BackendPortfolioStore {
 
   async logout(): Promise<void> {
     await this.request('/api/auth/logout', { method: 'POST' });
+  }
+
+  async createProject(input: BackendProjectCreateInput): Promise<void> {
+    await this.request('/api/projects', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: input.title,
+        description: input.description ?? '',
+        language: input.language ?? 'ru'
+      })
+    });
+  }
+
+  async updateProject(projectId: string, patch: BackendProjectUpdateInput): Promise<void> {
+    await this.request(`/api/projects/${encodeURIComponent(projectId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(patch)
+    });
   }
 
   async save(portfolio: PortfolioState): Promise<void> {

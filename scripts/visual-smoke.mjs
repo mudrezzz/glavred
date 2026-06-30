@@ -61,6 +61,14 @@ async function clickNavItem(page, label) {
   await item.click();
 }
 
+async function openDefaultProjectCabinet(page) {
+  const button = page.getByRole('button', { name: 'Открыть кабинет' }).first();
+  if (await button.count()) {
+    await button.click();
+  }
+  await page.locator('.app').waitFor({ timeout: 10000 });
+}
+
 function assertLayout(result) {
   const failures = [];
 
@@ -260,6 +268,7 @@ async function assertPlanAtViewport(page, viewport, viewportName) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
+  await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'План');
   await page.locator('[data-testid="broadcast-filter-toolbar"]').waitFor();
 
@@ -323,6 +332,7 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
+  await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'Сигналы');
   await page.locator('[data-testid="radar-row"]').first().waitFor();
 
@@ -469,6 +479,7 @@ async function assertContextChatAtViewport(page, viewport, options) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
+  await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'Редакционная модель');
   await page.locator('.validation-panel').waitFor();
   await page.locator('[data-testid="context-chat-topbar-trigger"]').waitFor();
@@ -537,6 +548,7 @@ async function main() {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.evaluate(() => window.localStorage.clear());
     await page.reload({ waitUntil: 'networkidle' });
+  await openDefaultProjectCabinet(page);
     await page.locator('[role="tab"]').nth(1).click();
     await page.locator('[data-testid="source-row"]').first().waitFor();
 

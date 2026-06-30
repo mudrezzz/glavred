@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 const FLOW_WAIT = { timeout: 30000 };
 
@@ -10,7 +11,7 @@ describe('Seeded editorial learning demo flow', () => {
   });
 
   it('shows seeded HITL draft versions and the reviewable author-memory note', async () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     const seededRowTitles = await screen.findAllByText(/AI-B2B demo не доказывает продукт/i, undefined, FLOW_WAIT);

@@ -1,6 +1,7 @@
 ﻿import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { setDraftRunFetchForTests, setDraftRunPollingForTests } from '../../infrastructure/draftRunClient';
 import { goToSignals, openFoundSignals } from '../../test-support/signalsFlowDriver';
 
@@ -16,7 +17,7 @@ describe('Editorial workbench DraftRun status', () => {
   });
 
   it('keeps a live stale DraftRun visible instead of using compatibility fallback', async () => {
-    render(<App />);
+    renderAppCabinet();
     goToSignals();
     openFoundSignals();
     fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));

@@ -23,16 +23,18 @@ user-scoped. Do not add new singleton workspace assumptions when implementing au
 project switching, publication channels, or benchmark fixtures.
 
 Slice 2.17.1 implements the local shell for that boundary; Slice 2.17.3 adds the
-backend dev-password session and SQLite project snapshot boundary. Frontend runtime
-still keeps `LocalPortfolioStore` as fallback, but first tries
-`BackendPortfolioStore`: authenticated sessions load backend projects/workspaces,
-`401` shows the login panel, and network failure keeps the local demo portfolio.
+backend dev-password session and SQLite project snapshot boundary; Slice 2.17.3.1
+adds the project dashboard and lifecycle UX. Frontend runtime still keeps
+`LocalPortfolioStore` as fallback, but first tries `BackendPortfolioStore`:
+authenticated sessions load backend projects/workspaces, `401` shows the login
+panel, and network failure keeps the local demo portfolio.
 Legacy `glavred.workspace.v1` storage is migrated into one default project; fresh
-local reset seeds two users and three project containers. The visible switcher is
-placed in the sidebar footer identity slot, not in an extra top strip, so global
-account/project context stays out of screen-level actions. Keep future portfolio
-logic in role-owned modules such as `src/domain/portfolio`,
-`src/application/portfolioService.ts`, `src/infrastructure/localPortfolioStore.ts`,
+local reset seeds two users and three project containers. After login, users land on
+the project dashboard; they enter a project cabinet explicitly through `Открыть
+кабинет`. The visible in-cabinet switcher remains in the sidebar footer identity slot
+for fast switching and `Все проекты`. Keep future portfolio logic in role-owned
+modules such as `src/domain/portfolio`, `src/application/portfolioService.ts`,
+`src/application/portfolioLifecycleService.ts`, `src/infrastructure/localPortfolioStore.ts`,
 and `src/infrastructure/backendPortfolioStore.ts` instead of expanding near-limit
 workspace or demo fixture files.
 
@@ -41,6 +43,8 @@ Important architecture rules for upcoming slices:
 - local multi-account/project switching remains the local fallback/demo shell;
 - backend dev-password auth and persistence attach to `UserAccount`, `BlogProject`,
   and `ProjectMembership`;
+- project dashboard is the default post-login destination; project cabinet screens
+  must not assume they are the global account/project admin surface;
 - publication channels are modeled before platform adapters/autoposting;
 - topic/fabula concepts remain reusable, while platform/channel constraints resolve
   later through plan items, post contracts, and platform variants;

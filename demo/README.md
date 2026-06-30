@@ -51,15 +51,17 @@ independent blog project containers. With FastAPI running, the frontend uses
 dev-password backend login and project-scoped SQLite workspace snapshots. Without
 FastAPI, the same shell falls back to local browser storage.
 
-The switcher lives in the lower-left sidebar identity block: click the current
-blog/user area to change blog or log out of a backend session. The architecture
-contract for the portfolio is
+The default post-login entry point is the `Project Dashboard`: choose a blog card,
+click `Открыть кабинет`, or create/rename/archive a project. The lower-left sidebar
+identity block remains inside an opened project for quick switching and has `Все
+проекты` to return to the dashboard. The architecture contract for the portfolio is
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
 Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 fills those
 project containers with realistic benchmark memories, editorial models, source
 examples, plan slots, and production scenarios. Slice 2.17.3 adds backend login,
-sessions, memberships, and workspace snapshots.
+sessions, memberships, and workspace snapshots. Slice 2.17.3.1 adds dashboard-first
+navigation and owner-local project lifecycle actions.
 
 Backend demo login:
 
@@ -125,7 +127,9 @@ without the normal `Сохранить` action.
 
 ## Structured Editorial Model
 
-`Редакционная модель` now opens inside the active local portfolio project. The default demo project is `AI Design Patterns`; the portfolio also contains `Каша из топора` and `Блог Главреда`, each with its own profile, memory, topics, fabulas, signals, and ready benchmark scenario.
+`Редакционная модель` opens inside the selected portfolio project. The dashboard shows
+`AI Design Patterns`, `Каша из топора`, and `Блог Главреда` as separate projects; each
+has its own profile, memory, topics, fabulas, signals, and ready benchmark scenario.
 
 The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic `ValidatorRun`. The panel then shows validator cards with score, red/yellow/green status, evidence, and suggested fixes. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
 

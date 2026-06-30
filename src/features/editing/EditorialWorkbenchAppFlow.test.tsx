@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 import { createApprovedBrief } from '../../test-support/productionFlowDriver';
 
 describe('Editorial workbench app flow', () => {
@@ -9,7 +10,7 @@ describe('Editorial workbench app flow', () => {
   });
 
   it('moves from source signal to an approved post brief and automatic draft', async () => {
-    render(<App />);
+    renderAppCabinet();
 
     await createApprovedBrief();
 
@@ -19,7 +20,7 @@ describe('Editorial workbench app flow', () => {
   });
 
   it('shows the seeded HITL demo work item before approving new plan slots', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
 
@@ -29,7 +30,7 @@ describe('Editorial workbench app flow', () => {
   });
 
   it('creates, edits, approves, and persists approved draft text', async () => {
-    const { unmount } = render(<App />);
+    const { unmount } = renderAppCabinet();
 
     await createApprovedBrief();
 
@@ -53,7 +54,7 @@ describe('Editorial workbench app flow', () => {
     expect(screen.getAllByText(/следующий шаг: Визуал/i).length).toBeGreaterThan(0);
 
     unmount();
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редактура/i }));
     fireEvent.click(screen.getByRole('tab', { name: /Рабочий стол/i }));

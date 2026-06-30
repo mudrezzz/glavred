@@ -1,6 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   getAccessibleProjects,
+  getArchivedProjects,
   getActiveProject,
   getActiveUser,
   getActiveWorkspace,
@@ -8,12 +9,18 @@ import {
   selectPortfolioUser,
   updateActiveProjectWorkspace
 } from '../application/portfolioService';
+import {
+  createProjectInPortfolio,
+  updateProjectInPortfolio,
+  type ProjectLifecycleInput
+} from '../application/portfolioLifecycleService';
 import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
 import {
   createEditorialValidationRun,
   type AuthorNote,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
+import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
 import { useBackendPortfolioBridge } from './useBackendPortfolioBridge';
 
@@ -29,6 +36,7 @@ export function useWorkspacePersistence() {
   const activeUser = getActiveUser(portfolio);
   const activeProject = getActiveProject(portfolio);
   const accessibleProjects = getAccessibleProjects(portfolio);
+  const archivedProjects = getArchivedProjects(portfolio);
   const workspace = getActiveWorkspace(portfolio);
 
   useEffect(() => {
@@ -99,18 +107,41 @@ export function useWorkspacePersistence() {
     setToast('Блог выбран');
   }
 
+  async function createProject(input: ProjectLifecycleInput) {
+    if (await backend.createProject(input)) return;
+    setPortfolio((current) => createProjectInPortfolio(current, input, createDemoWorkspace()));
+    setToast('Проект создан локально');
+  }
+
+  async function renameProject(projectId: string, title: string, description: string) {
+    const patch = { title, description };
+    if (await backend.updateProject(projectId, patch)) return;
+    setPortfolio((current) => updateProjectInPortfolio(current, projectId, patch));
+    setToast('Проект обновлен локально');
+  }
+
+  async function archiveProject(projectId: string) {
+    if (await backend.updateProject(projectId, { status: 'archived' })) return;
+    setPortfolio((current) => updateProjectInPortfolio(current, projectId, { status: 'archived' }));
+    setToast('Проект отправлен в архив локально');
+  }
+
   return {
     accessibleProjects,
     activeProject,
     activeUser,
+    archivedProjects,
     authError: backend.authError,
+    archiveProject,
     backendStatus: backend.backendStatus,
     changeAuthorNotes,
+    createProject,
     login: backend.login,
     logout: backend.logout,
     patchEditorialSetup,
     patchWorkspace,
     portfolio,
+    renameProject,
     resetWorkspace,
     runEditorialValidation,
     selectProject,

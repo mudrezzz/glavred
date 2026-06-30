@@ -118,6 +118,13 @@ workspace. This direction is captured in ADRs
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`, and detailed in
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
+After login the app opens the `Project Dashboard`, not the first blog cabinet. The
+dashboard shows available blog projects as cards, supports creating a new project,
+renaming a project, and soft-archiving it. Opening a card enters the existing editorial
+cabinet for that project. Inside the cabinet the lower-left portfolio switcher remains
+available for quick project switching and has a `Все проекты` action to return to the
+dashboard.
+
 The existing source-signal workflow remains useful, but it is a production layer, not
 the product center. Source signals, radar findings, archive imports, analytics notes,
 and manual corrections all become material for the author memory.
@@ -211,7 +218,8 @@ runner:
 The dev SaaS portfolio boundary exposes:
 
 - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/users/me`;
-- `GET /api/projects`, `GET /api/projects/{projectId}`;
+- `GET /api/projects`, `GET /api/projects?includeArchived=true`,
+  `POST /api/projects`, `GET/PATCH /api/projects/{projectId}`;
 - `GET/PUT /api/projects/{projectId}/workspace`.
 
 Seeded demo users are `founder@example.test` with `AI Design Patterns` and

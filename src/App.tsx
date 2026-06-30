@@ -9,6 +9,7 @@ import { EditorialModelView } from './features/editorial-model/EditorialModelVie
 import { EditView } from './features/editing/EditView';
 import { PlanView } from './features/plan/PlanView';
 import { PortfolioLoginPanel } from './features/portfolio/PortfolioLoginPanel';
+import { ProjectDashboardView } from './features/portfolio/ProjectDashboardView';
 import { SidebarPortfolioSwitcher } from './features/portfolio/SidebarPortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
 import { SignalsView } from './features/signals/SignalsView';
@@ -28,6 +29,7 @@ function CabinetApp() {
     accessibleProjects,
     activeProject,
     activeUser,
+    archivedProjects,
     authError,
     backendStatus,
     contextChatIntent,
@@ -38,6 +40,7 @@ function CabinetApp() {
     editorialModelTab,
     memoryTab,
     portfolio,
+    portfolioMode,
     toast,
     visibleContextChatSuggestions,
     workspace
@@ -45,6 +48,23 @@ function CabinetApp() {
 
   if (backendStatus === 'loginRequired') {
     return <PortfolioLoginPanel error={authError} loading={false} onLogin={controller.login} />;
+  }
+
+  if (portfolioMode === 'projectDashboard') {
+    return (
+      <ProjectDashboardView
+        activeProjects={accessibleProjects}
+        archivedProjects={archivedProjects}
+        activeUser={activeUser}
+        backendStatus={backendStatus}
+        portfolio={portfolio}
+        onArchiveProject={controller.archiveProject}
+        onCreateProject={controller.createProject}
+        onLogout={controller.logout}
+        onOpenProject={controller.openProject}
+        onRenameProject={controller.renameProject}
+      />
+    );
   }
 
   return (
@@ -59,6 +79,7 @@ function CabinetApp() {
           backendStatus={backendStatus}
           portfolio={portfolio}
           onLogout={controller.logout}
+          onOpenDashboard={controller.goProjectDashboard}
           onProjectChange={controller.selectProject}
           onUserChange={controller.selectUser}
         />

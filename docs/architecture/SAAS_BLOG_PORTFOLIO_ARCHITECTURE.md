@@ -1,14 +1,16 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.3: Backend Auth and Project Persistence Boundary.
+Current as of Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
 architecture document for the 2.17.x portfolio track. The local portfolio shell from
 Slice 2.17.1 and 2.17.2 are now runtime/demo behavior. Slice 2.17.3 adds the first
 backend SaaS boundary: dev-password login, session cookie, users/projects/memberships,
-and project-scoped workspace snapshots in SQLite. Publication channels, platform
-variants, production auth, and benchmark runner remain later slices.
+and project-scoped workspace snapshots in SQLite. Slice 2.17.3.1 makes the project
+dashboard the post-login destination and adds create/rename/archive lifecycle actions.
+Publication channels, platform variants, production auth, and benchmark runner remain
+later slices.
 
 Related decisions:
 
@@ -271,7 +273,10 @@ Backend persistence should mirror the same boundary:
 ```text
 /api/users/me
 /api/projects
+/api/projects?includeArchived=true
+/api/projects [POST]
 /api/projects/{projectId}
+/api/projects/{projectId} [PATCH]
 /api/projects/{projectId}/workspace
 ```
 
@@ -287,6 +292,12 @@ Implemented v1:
 - `GET /api/users/me` requires a valid session;
 - `GET /api/projects` returns only active projects reachable through active
   memberships;
+- `GET /api/projects?includeArchived=true` returns active and archived projects for
+  dashboard filters;
+- `POST /api/projects` creates a project, owner membership, and initial workspace
+  snapshot;
+- `PATCH /api/projects/{projectId}` renames, updates description, or soft-archives a
+  project through `status=archived`;
 - `GET /api/projects/{projectId}` and workspace load/save enforce membership;
 - `workspace_snapshots` store JSON blobs, not fine-grained tables;
 - frontend startup tries backend first, shows login on `401`, and silently keeps the
@@ -300,35 +311,42 @@ Dev seed users:
 
 ## 6. UI / UX target
 
-### Local portfolio shell
+### Project dashboard first
 
 Top-level app flow:
 
-1. choose demo/current user;
-2. choose blog project;
-3. enter the existing editorial cabinet for that project.
+1. authenticate or use local fallback;
+2. land on `Project Dashboard`;
+3. create, rename, archive, or open a blog project;
+4. enter the existing editorial cabinet for the selected project.
 
 The first implementation is restrained:
 
-- a compact switcher in the lower sidebar identity block;
+- a project dashboard with cards for active projects;
+- an archive filter for soft-archived projects;
+- create, rename, and archive actions;
+- a compact switcher in the lower sidebar identity block after entering a project;
 - user and blog project selectors;
-- no complex organization/admin surface;
+- no complex organization/admin surface and no project deletion;
 - dev-password backend auth when FastAPI is available;
 - local demo fallback when FastAPI is unavailable.
 
-The local switcher is a development/demo shell. It proves product isolation before
-real authentication and backend persistence are added.
+The sidebar switcher is a fast in-cabinet shortcut, not the main navigation surface.
+It must keep a `Все проекты` action that returns to the dashboard.
 
 ### Project dashboard
 
 Each project card should show:
 
 - title;
+- description;
 - language;
-- primary channels;
 - status;
-- latest active production item;
-- pending learning notes or quality risks when useful.
+- benchmark role;
+- updated date;
+- compact workspace summary;
+- primary action `Открыть кабинет`;
+- menu actions `Переименовать` and `В архив`.
 
 ### Inside a project
 

@@ -1117,6 +1117,229 @@ button:disabled {
   font: var(--ui-sm);
 }
 
+.project-dashboard {
+  display: grid;
+  min-height: 100vh;
+  gap: 18px;
+  align-content: start;
+  padding: clamp(22px, 5vw, 54px);
+  background: var(--surface-sunk);
+}
+
+.project-dashboard-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.project-dashboard-header h1 {
+  margin: 4px 0 8px;
+  color: var(--ink-900);
+  font: var(--title-lg);
+}
+
+.project-dashboard-header p {
+  margin: 0;
+  color: var(--ink-600);
+  font: var(--ui-md);
+}
+
+.project-dashboard-actions,
+.project-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.project-dashboard-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1.6fr) minmax(120px, 0.4fr) auto;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.project-dashboard-form input,
+.project-dashboard-form select,
+.project-card.editing input,
+.project-card.editing textarea {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-900);
+  font: var(--ui-md);
+}
+
+.project-card.editing textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.project-dashboard-toolbar {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.project-dashboard-toolbar button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-650);
+  font: var(--ui-sm);
+  cursor: pointer;
+}
+
+.project-dashboard-toolbar button.active {
+  background: var(--ink-900);
+  color: var(--paper);
+}
+
+.project-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.project-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 300px;
+  padding: 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.project-card:hover {
+  border-color: var(--ink-300);
+  box-shadow: var(--shadow-md);
+}
+
+.project-card.editing {
+  cursor: default;
+}
+
+.project-card-head {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.project-card h2 {
+  margin: 0 0 6px;
+  color: var(--ink-900);
+  font: var(--title-sm);
+}
+
+.project-card p {
+  margin: 0;
+  color: var(--ink-600);
+  font: var(--ui-sm);
+}
+
+.project-card-menu {
+  position: relative;
+  color: var(--ink-650);
+}
+
+.project-card-menu summary {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  list-style: none;
+}
+
+.project-card-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.project-card-menu[open] {
+  z-index: 5;
+}
+
+.project-card-menu[open]::after {
+  position: absolute;
+  inset: 40px 0 auto auto;
+  content: '';
+}
+
+.project-card-menu button {
+  display: block;
+  width: 150px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink-200);
+  border-bottom: 0;
+  background: var(--surface);
+  color: var(--ink-800);
+  font: var(--ui-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.project-card-menu button:last-child {
+  border-bottom: 1px solid var(--ink-200);
+}
+
+.project-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.project-card-meta div {
+  padding: 8px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.project-card-meta dt {
+  color: var(--ink-500);
+  font: var(--mono-sm);
+  text-transform: uppercase;
+}
+
+.project-card-meta dd {
+  margin: 2px 0 0;
+  color: var(--ink-850);
+  font: var(--ui-sm);
+}
+
+.project-card-summary,
+.project-dashboard-empty {
+  padding: 10px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  background: var(--surface-sunk);
+}
+
+.project-dashboard-empty {
+  color: var(--ink-600);
+  font: var(--ui-md);
+}
+
 .author b,
 .author span {
   display: block;

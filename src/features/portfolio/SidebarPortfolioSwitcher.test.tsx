@@ -34,8 +34,9 @@ const portfolio = {
 } as PortfolioState;
 
 describe('SidebarPortfolioSwitcher', () => {
-  it('shows backend session status and logout action', () => {
+  it('shows backend status, dashboard action, and logout action', () => {
     const onLogout = vi.fn();
+    const onOpenDashboard = vi.fn();
 
     render(
       <SidebarPortfolioSwitcher
@@ -45,15 +46,18 @@ describe('SidebarPortfolioSwitcher', () => {
         backendStatus="authenticated"
         portfolio={portfolio}
         onLogout={onLogout}
+        onOpenDashboard={onOpenDashboard}
         onProjectChange={vi.fn()}
         onUserChange={vi.fn()}
       />
     );
 
     fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Все проекты' }));
     fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
 
     expect(screen.getByText('backend session')).toBeInTheDocument();
+    expect(onOpenDashboard).toHaveBeenCalledTimes(1);
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 });

@@ -5662,6 +5662,53 @@ Status:
 - Risks:
   - Auth can sprawl; keep v1 deliberately narrow.
 
+### Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX
+
+- Status: Done
+- Goal: Make the project dashboard the default post-login destination and add the
+  first project lifecycle actions.
+- User value:
+  - A user sees the portfolio first, opens the intended blog deliberately, and can
+    create, rename, or archive projects without entering the wrong cabinet.
+- Scope:
+  - Add app-level `projectDashboard | projectCabinet` navigation mode.
+  - Show active projects as dashboard cards with description, language, status,
+    benchmark role, update date, and compact workspace summary.
+  - Add `Новый проект`, `Переименовать`, and soft `В архив` actions.
+  - Keep the lower-left project switcher inside the cabinet and add `Все проекты`.
+  - Add backend `POST /api/projects`, `PATCH /api/projects/{projectId}`, and
+    `GET /api/projects?includeArchived=true`.
+  - Add matching local fallback lifecycle operations.
+- Out of scope:
+  - Publication channels.
+  - Project deletion.
+  - Organization/team administration.
+  - DraftRun pipeline changes.
+- Implementation notes:
+  - Archive is a soft project status; snapshots are preserved.
+  - Backend mode and local fallback use the same dashboard UX.
+  - New project creation starts from a minimal normalized workspace, not an onboarding
+    wizard.
+- Architecture impact:
+  - Portfolio lifecycle logic stays in backend services and role-owned frontend
+    modules instead of screen-level shortcuts.
+- Tests:
+  - Backend lifecycle API tests and frontend dashboard/switcher/backend-store tests.
+- Docs:
+  - README, user guide, developer guide, demo docs, and SaaS portfolio architecture.
+- Demo impact:
+  - Demo now starts from a portfolio dashboard rather than immediately entering the
+    default project.
+- Acceptance criteria:
+  - Login leads to dashboard.
+  - Opening a card enters the selected project cabinet.
+  - `Все проекты` returns from cabinet to dashboard.
+  - Archive hides projects from active list and shows them in archive filter.
+- Risks:
+  - Project lifecycle can become a full admin console; keep this slice to owner-local
+    create/rename/archive.
+- Completed: 2026-06-30
+
 ### Slice 2.17.4: Publication Channels and Platform Profiles
 
 - Status: Ready

@@ -680,6 +680,14 @@ async function assertAiRunTraceDesign(page) {
   failIfAny('AI run trace design contract', [...await page.evaluate(sharedDesignChecks), ...failures]);
 }
 
+async function openDefaultProjectCabinet(page) {
+  const button = page.getByRole('button', { name: 'Открыть кабинет' }).first();
+  if (await button.count()) {
+    await button.click();
+  }
+  await page.locator('.app').waitFor({ timeout: 10000 });
+}
+
 async function main() {
   const server = runDevServer();
   let stderr = '';
@@ -694,6 +702,7 @@ async function main() {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.evaluate(() => window.localStorage.clear());
     await page.reload({ waitUntil: 'networkidle' });
+    await openDefaultProjectCabinet(page);
 
     await page.locator('.nav-item').nth(1).click();
     await page.locator('.project-profile-header').waitFor();
@@ -741,15 +750,18 @@ async function main() {
     await installAiRunTraceMocks(page);
     await assertAiRunTraceDesign(page);
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await openDefaultProjectCabinet(page);
 
     await page.setViewportSize({ width: 2048, height: 1100 });
     await page.reload({ waitUntil: 'networkidle' });
+    await openDefaultProjectCabinet(page);
     await page.locator('.nav-item').nth(2).click();
     await page.locator('[data-testid="signals-section-header"]').waitFor();
     await assertSignalsDesign(page, 'wide desktop');
 
     await page.setViewportSize({ width: 1180, height: 820 });
     await page.reload({ waitUntil: 'networkidle' });
+    await openDefaultProjectCabinet(page);
     await page.locator('.nav-item').nth(2).click();
     await page.locator('[data-testid="radar-row"]').first().waitFor();
     await assertSignalsDesign(page, 'laptop');

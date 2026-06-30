@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../App';
+import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 describe('Plan app flow', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('Plan app flow', () => {
   });
 
   it('shows broadcast grid slots and keeps post brief as an internal production step', () => {
-    render(<App />);
+    renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /План/i }));
 
