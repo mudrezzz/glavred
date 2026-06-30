@@ -31,8 +31,9 @@ panel, and network failure keeps the local demo portfolio.
 Legacy `glavred.workspace.v1` storage is migrated into one default project; fresh
 local reset seeds two users and three project containers. After login, users land on
 the project dashboard; they enter a project cabinet explicitly through `Открыть
-кабинет`. The visible in-cabinet switcher remains in the sidebar footer identity slot
-for fast switching and `Все проекты`. Keep future portfolio logic in role-owned
+кабинет`. The dashboard owns the account-level sidebar and keeps cards in a bounded
+two-column grid; project cabinets still own the lower-left switcher for fast switching
+and `Все проекты`. Keep future portfolio logic in role-owned
 modules such as `src/domain/portfolio`, `src/application/portfolioService.ts`,
 `src/application/portfolioLifecycleService.ts`, `src/infrastructure/localPortfolioStore.ts`,
 and `src/infrastructure/backendPortfolioStore.ts` instead of expanding near-limit

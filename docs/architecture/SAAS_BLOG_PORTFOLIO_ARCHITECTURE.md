@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX.
+Current as of Slice 2.17.3.2: Project Dashboard Layout Polish.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -9,6 +9,9 @@ Slice 2.17.1 and 2.17.2 are now runtime/demo behavior. Slice 2.17.3 adds the fir
 backend SaaS boundary: dev-password login, session cookie, users/projects/memberships,
 and project-scoped workspace snapshots in SQLite. Slice 2.17.3.1 makes the project
 dashboard the post-login destination and adds create/rename/archive lifecycle actions.
+Slice 2.17.3.2 keeps that behavior but gives the dashboard an account-level sidebar
+and a bounded project tile grid so project administration feels like a SaaS dashboard
+rather than an empty stretched content page.
 Publication channels, platform variants, production auth, and benchmark runner remain
 later slices.
 

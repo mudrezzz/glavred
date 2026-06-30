@@ -95,6 +95,11 @@ From the dashboard you can:
 - rename an existing project;
 - send a project to the archive and view it through the `Активные / Архив` filter.
 
+The dashboard has a left account sidebar. In this slice only `Проекты` is active; the
+`Аккаунт`, `Статистика`, `Биллинг`, and `Настройки` entries are visible SaaS navigation
+placeholders for later account sections. Project cards are shown as a compact tile grid
+with up to two cards per row on desktop.
+
 Inside an opened project the lower-left identity block still provides fast project
 switching. Use `Все проекты` there to return to the dashboard.
 

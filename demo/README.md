@@ -61,7 +61,8 @@ Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 fills th
 project containers with realistic benchmark memories, editorial models, source
 examples, plan slots, and production scenarios. Slice 2.17.3 adds backend login,
 sessions, memberships, and workspace snapshots. Slice 2.17.3.1 adds dashboard-first
-navigation and owner-local project lifecycle actions.
+navigation and owner-local project lifecycle actions. Slice 2.17.3.2 polishes the
+dashboard with an account sidebar and a bounded two-column project tile grid.
 
 Backend demo login:
 

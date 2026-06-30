@@ -5709,6 +5709,44 @@ Status:
     create/rename/archive.
 - Completed: 2026-06-30
 
+### Slice 2.17.3.2: Project Dashboard Layout Polish
+
+- Status: Done
+- Goal: Make the post-login project dashboard feel like a compact SaaS workspace
+  instead of a sparse stretched page.
+- User value:
+  - A user can recognize account-level navigation and see project cards as stable
+    tiles, including the single-project case.
+- Scope:
+  - Add a dashboard-level left sidebar with account identity, session status, and
+    account navigation placeholders: `Проекты`, `Аккаунт`, `Статистика`, `Биллинг`,
+    and `Настройки`.
+  - Keep only `Проекты` functional in this slice; do not fake account, billing, or
+    analytics sections.
+  - Constrain project cards to a bounded tile grid with at most two cards per row on
+    desktop and one column on narrower screens.
+  - Keep project lifecycle behavior from 2.17.3.1 unchanged.
+- Out of scope:
+  - Real account settings, billing, statistics, team management, or routing.
+  - Backend API changes.
+  - Publication channel modeling.
+- Architecture impact:
+  - Dashboard polish stays inside the portfolio feature UI and shared styles; no
+    DraftRun, storage, or backend contracts change.
+- Tests:
+  - Project dashboard component coverage for account navigation and dashboard shell.
+  - Design, visual, architecture, smoke, and regression checks.
+- Docs:
+  - README, user guide, developer guide, demo docs, SaaS portfolio architecture, and
+    roadmap.
+- Acceptance criteria:
+  - A single project card no longer stretches across the full dashboard width.
+  - Two projects render as a two-card row on desktop.
+  - Dashboard has visible account navigation while project cabinets keep their
+    lower-left project switcher.
+  - Placeholder account sections are visible but disabled until later slices.
+- Completed: 2026-06-30
+
 ### Slice 2.17.4: Publication Channels and Platform Profiles
 
 - Status: Ready
@@ -6044,6 +6082,9 @@ Status:
 - Slice 2.17.1: Local Multi-Account and Blog Project Switcher. Completed 2026-06-29.
 - Slice 2.17.1.1: Sidebar Portfolio Switcher Placement Repair. Completed 2026-06-30.
 - Slice 2.17.2: Three-Blog Benchmark Demo Portfolio. Completed 2026-06-30.
+- Slice 2.17.3: Backend Auth and Project Persistence Boundary. Completed 2026-06-30.
+- Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX. Completed 2026-06-30.
+- Slice 2.17.3.2: Project Dashboard Layout Polish. Completed 2026-06-30.
 
 ## Blocked Items
 
@@ -6070,5 +6111,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement the backend boundary for users, sessions, projects, and project-scoped
-workspace persistence: `Slice 2.17.3: Backend Auth and Project Persistence Boundary`.
+Implement `Slice 2.17.4: Publication Channels and Platform Profiles`.

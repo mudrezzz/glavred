@@ -33,73 +33,162 @@ export function ProjectDashboardView({
   const [creating, setCreating] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const projects = filter === 'active' ? activeProjects : archivedProjects;
+  const totalNotes = useMemo(
+    () =>
+      Object.values(portfolio.workspacesByProjectId).reduce(
+        (count, workspace) => count + (workspace.authorNotes?.length ?? 0),
+        0
+      ),
+    [portfolio.workspacesByProjectId]
+  );
 
   return (
     <main className="project-dashboard" data-testid="project-dashboard">
-      <header className="project-dashboard-header">
-        <div>
-          <p className="eyebrow">Портфель блогов</p>
-          <h1>Проекты</h1>
-          <p>
-            {activeUser.displayName} ·{' '}
-            {backendStatus === 'authenticated' ? 'backend session' : 'local fallback'}
-          </p>
-        </div>
-        <div className="project-dashboard-actions">
-          {backendStatus === 'authenticated' ? (
-            <button type="button" className="btn btn-sec" onClick={onLogout}>
-              Выйти
+      <ProjectDashboardSidebar
+        activeProjectsCount={activeProjects.length}
+        activeUser={activeUser}
+        archivedProjectsCount={archivedProjects.length}
+        backendStatus={backendStatus}
+        onLogout={onLogout}
+      />
+      <div className="project-dashboard-content" data-testid="project-dashboard-shell">
+        <header className="project-dashboard-header">
+          <div>
+            <p className="eyebrow">Портфель блогов</p>
+            <h1>Проекты</h1>
+            <p>Выберите блог, создайте новый кабинет или вернитесь к архиву.</p>
+          </div>
+          <div className="project-dashboard-actions">
+            <button type="button" className="btn btn-pri" onClick={() => setCreating((current) => !current)}>
+              Новый проект
             </button>
-          ) : null}
-          <button type="button" className="btn btn-pri" onClick={() => setCreating((current) => !current)}>
-            Новый проект
+          </div>
+        </header>
+
+        <section className="project-dashboard-stats" aria-label="Сводка портфеля">
+          <div>
+            <span>Активные</span>
+            <b>{activeProjects.length}</b>
+          </div>
+          <div>
+            <span>Архив</span>
+            <b>{archivedProjects.length}</b>
+          </div>
+          <div>
+            <span>Память автора</span>
+            <b>{totalNotes}</b>
+          </div>
+        </section>
+
+        {creating ? <ProjectCreateForm onCreate={onCreateProject} /> : null}
+
+        <div className="project-dashboard-toolbar" aria-label="Фильтр проектов">
+          <button
+            type="button"
+            className={filter === 'active' ? 'active' : ''}
+            onClick={() => setFilter('active')}
+          >
+            Активные · {activeProjects.length}
+          </button>
+          <button
+            type="button"
+            className={filter === 'archived' ? 'active' : ''}
+            onClick={() => setFilter('archived')}
+          >
+            Архив · {archivedProjects.length}
           </button>
         </div>
-      </header>
 
-      {creating ? <ProjectCreateForm onCreate={onCreateProject} /> : null}
+        <section className="project-dashboard-grid" aria-label="Проекты пользователя" data-testid="project-dashboard-grid">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              editing={editingProjectId === project.id}
+              project={project}
+              workspace={portfolio.workspacesByProjectId[project.id]}
+              onArchiveProject={onArchiveProject}
+              onEdit={() => setEditingProjectId(project.id)}
+              onOpenProject={onOpenProject}
+              onRenameProject={async (title, description) => {
+                await onRenameProject(project.id, title, description);
+                setEditingProjectId(null);
+              }}
+              onStopEdit={() => setEditingProjectId(null)}
+            />
+          ))}
+          {projects.length === 0 ? (
+            <div className="project-dashboard-empty">
+              {filter === 'active' ? 'Активных проектов нет.' : 'Архив пуст.'}
+            </div>
+          ) : null}
+        </section>
+      </div>
+    </main>
+  );
+}
 
-      <div className="project-dashboard-toolbar" aria-label="Фильтр проектов">
-        <button
-          type="button"
-          className={filter === 'active' ? 'active' : ''}
-          onClick={() => setFilter('active')}
-        >
-          Активные · {activeProjects.length}
-        </button>
-        <button
-          type="button"
-          className={filter === 'archived' ? 'active' : ''}
-          onClick={() => setFilter('archived')}
-        >
-          Архив · {archivedProjects.length}
-        </button>
+function ProjectDashboardSidebar({
+  activeProjectsCount,
+  activeUser,
+  archivedProjectsCount,
+  backendStatus,
+  onLogout
+}: {
+  activeProjectsCount: number;
+  activeUser: UserAccount;
+  archivedProjectsCount: number;
+  backendStatus: PortfolioBackendStatus;
+  onLogout: () => void;
+}) {
+  return (
+    <aside className="project-dashboard-sidebar" aria-label="Управление портфелем">
+      <div className="project-dashboard-account">
+        <span className="ava dashboard-account-avatar">{initials(activeUser.displayName)}</span>
+        <div>
+          <b>{activeUser.displayName}</b>
+          <span>{activeUser.email}</span>
+        </div>
       </div>
 
-      <section className="project-dashboard-grid" aria-label="Проекты пользователя">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project.id}
-            editing={editingProjectId === project.id}
-            project={project}
-            workspace={portfolio.workspacesByProjectId[project.id]}
-            onArchiveProject={onArchiveProject}
-            onEdit={() => setEditingProjectId(project.id)}
-            onOpenProject={onOpenProject}
-            onRenameProject={async (title, description) => {
-              await onRenameProject(project.id, title, description);
-              setEditingProjectId(null);
-            }}
-            onStopEdit={() => setEditingProjectId(null)}
-          />
-        ))}
-        {projects.length === 0 ? (
-          <div className="project-dashboard-empty">
-            {filter === 'active' ? 'Активных проектов нет.' : 'Архив пуст.'}
-          </div>
-        ) : null}
-      </section>
-    </main>
+      <nav className="project-dashboard-nav" aria-label="Разделы аккаунта">
+        <button type="button" className="active" aria-current="page">
+          Проекты
+        </button>
+        <button type="button" disabled>
+          Аккаунт
+        </button>
+        <button type="button" disabled>
+          Статистика
+        </button>
+        <button type="button" disabled>
+          Биллинг
+        </button>
+        <button type="button" disabled>
+          Настройки
+        </button>
+      </nav>
+
+      <dl className="project-dashboard-sidebar-meta">
+        <div>
+          <dt>Сессия</dt>
+          <dd>{backendStatus === 'authenticated' ? 'Backend' : 'Local'}</dd>
+        </div>
+        <div>
+          <dt>Активные</dt>
+          <dd>{activeProjectsCount}</dd>
+        </div>
+        <div>
+          <dt>Архив</dt>
+          <dd>{archivedProjectsCount}</dd>
+        </div>
+      </dl>
+
+      {backendStatus === 'authenticated' ? (
+        <button type="button" className="btn btn-sec project-dashboard-logout" onClick={onLogout}>
+          Выйти
+        </button>
+      ) : null}
+    </aside>
   );
 }
 
@@ -227,11 +316,23 @@ function ProjectCard({
         </div>
       </dl>
       <p className="project-card-summary">{summary}</p>
-      <button type="button" className="btn btn-pri" onClick={() => onOpenProject(project.id)}>
+      <button
+        type="button"
+        className="btn btn-pri"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenProject(project.id);
+        }}
+      >
         Открыть кабинет
       </button>
     </article>
   );
+}
+
+function initials(value: string): string {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return (words[0]?.[0] ?? 'G').toUpperCase() + (words[1]?.[0] ?? '').toUpperCase();
 }
 
 function workspaceSummary(workspace?: WorkspaceState): string {
