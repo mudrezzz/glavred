@@ -45,6 +45,8 @@ describe('Portfolio switcher app flow', () => {
   it('keeps author memory isolated between projects', () => {
     render(<App />);
 
+    expect(screen.getByText(/AI as an execution layer/i)).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('Заметка автора'), {
       target: { value: 'Project-specific note for AI Design Patterns only.' }
     });
@@ -56,10 +58,24 @@ describe('Portfolio switcher app flow', () => {
       target: { value: 'project-kasha-iz-topora' }
     });
     expect(screen.queryByText(/Project-specific note for AI Design Patterns only/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Сложный B2B не продается как коробка/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
       target: { value: 'project-ai-design-patterns' }
     });
     expect(screen.getAllByText(/Project-specific note for AI Design Patterns only/i).length).toBeGreaterThan(0);
+  });
+
+  it('shows Glavred blog context for the second demo user', () => {
+    render(<App />);
+    openPortfolioSwitcher();
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Пользователь' }), {
+      target: { value: 'user-product-editor' }
+    });
+
+    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Блог Главреда');
+    expect(screen.getByText(/Главред - не генератор постов/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Сложный B2B не продается как коробка/i)).not.toBeInTheDocument();
   });
 });

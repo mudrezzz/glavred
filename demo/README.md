@@ -52,9 +52,9 @@ identity block: click the current blog/user area to change user or blog. The
 architecture contract for the portfolio is
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
 
-Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 will replace
-the placeholder per-project workspace content with realistic benchmark memories,
-editorial models, channels, source examples, and production scenarios.
+Slice 2.17.1 proves local switching and project isolation. Slice 2.17.2 fills those
+project containers with realistic benchmark memories, editorial models, source
+examples, plan slots, and production scenarios.
 
 Target portfolio:
 
@@ -83,19 +83,24 @@ The portfolio should become both visible demo data and a quality benchmark:
 - product narrative: the Glavred blog should explain product philosophy without
   sounding like a generic marketing brochure.
 
+The seeded fixtures are intentionally sanitized. They are derived from real working
+materials supplied by the product owner, but the source PDFs/resume and private
+details are not committed. The public demo keeps only reusable editorial signals,
+source descriptions, author-memory notes, and benchmark expectations.
+
 ## Seeded Author Memory
 
-The demo starts with six notes:
+Each blog now has its own memory feed:
 
-- workflow risk instead of model choice;
-- evals as a product function;
-- reaction to demo magic failing after pilot;
-- manual correction from support automation to GTM/adoption;
-- enterprise trust through evidence and rollback;
-- customer interview reaction about confidence boundaries.
+- `AI Design Patterns`: execution layer, evidence-first generation, context packs,
+  and reliability layers.
+- `Каша из топора`: complex B2B sales, five RevOps questions, BANT+, Loss-to-Action,
+  and sales enablement materials.
+- `Блог Главреда`: product philosophy, SourceLedger/evidence discipline, HITL,
+  editor decision learning, and future Telegram/Dzen adaptation.
 
-The app shows inferred author-position assertions with evidence links back to these
-notes.
+The app shows inferred author-position assertions with evidence links back to the
+active project's notes only.
 
 The author memory workspace also demonstrates the hardened UX: titleless capture,
 optional title reveal, local file attachments, local link preview, targeted correction
@@ -104,13 +109,13 @@ edit/delete actions, summary counters, and a browser voice-input fallback.
 
 The demo also includes a topbar `Помощник` overlay with `Чат` and `Подсказки` modes. It
 is synchronized with the current section, answers deterministic local questions,
-suggests next steps for the AI Product Manager demo, and can open draft forms for
+suggests next steps for the active portfolio project, and can open draft forms for
 rules, topics, and fabulas. It does not call AI providers and does not save changes
 without the normal `Сохранить` action.
 
 ## Structured Editorial Model
 
-`Редакционная модель` now opens as a virtual publishing workspace for the same AI Product Manager blog. The top profile is `TG-блог AI Product Manager`, with the description `Исследовательский блог о построении AI-B2B продуктов`.
+`Редакционная модель` now opens inside the active local portfolio project. The default demo project is `AI Design Patterns`; the portfolio also contains `Каша из топора` and `Блог Главреда`, each with its own profile, memory, topics, fabulas, signals, and ready benchmark scenario.
 
 The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic `ValidatorRun`. The panel then shows validator cards with score, red/yellow/green status, evidence, and suggested fixes. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
 
@@ -252,7 +257,7 @@ local app:
 npm run docs:screenshots
 ```
 
-The wiki covers the same AI Product Manager demo: author memory, production flow,
+The wiki covers the same local portfolio demo: author memory, production flow,
 future release log, manual export compatibility, and analytics learning note.
 
 If the GitHub Wiki has not been initialized yet, GitHub redirects the URL back to the
@@ -438,14 +443,15 @@ These are reference prototypes and design materials, not production code.
 
 ## Next Demo Step
 
-The next demo step is the SaaS-style blog portfolio benchmark:
+The SaaS-style blog portfolio benchmark is now seeded:
 
 1. Add a local user/project switcher. Done.
-2. Seed two users and three independent blogs.
-3. Give each blog its own author memory, editorial model, publication channels, and
-   benchmark scenarios.
+2. Seed two users and three independent blogs. Done.
+3. Give each blog its own author memory, editorial model, source examples, plan slots,
+   and benchmark scenarios. Done.
 4. Use the portfolio to test project isolation, author voice preservation, research
-   depth, and multi-platform adaptation.
+   depth, and multi-platform adaptation. In progress through future benchmark runner
+   and multi-platform slices.
 
 Real provider-backed drafts already exist through the local backend/OpenRouter path.
 Backend auth, publication automation, platform metrics, real attachment parsing, and

@@ -43,7 +43,12 @@ Important architecture rules for upcoming slices:
 - topic/fabula concepts remain reusable, while platform/channel constraints resolve
   later through plan items, post contracts, and platform variants;
 - the three-blog demo portfolio is also a benchmark surface, so seeded data must stay
-  realistic, isolated, and maintainable.
+  realistic, isolated, maintainable, and sanitized from private source materials.
+
+Slice 2.17.2 keeps benchmark fixture construction in
+`src/fixtures/demoBenchmarkPortfolio.ts`. Do not expand near-limit `demoWorkspace.ts`
+when adding or revising benchmark blogs; add project-owned fixture data and tests
+beside the portfolio demo fixture instead.
 
 See ADR `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md`.
 Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementation
@@ -983,7 +988,9 @@ shared validator baseline.
 Runtime rules:
 
 - `WorkspaceState.projectProfile` stores the project name, description, and setup
-  status. The seeded demo project is `TG-блог AI Product Manager`.
+  status. The public demo entry point is the local portfolio: `AI Design Patterns`,
+  `Каша из топора`, and `Блог Главреда`. Legacy `createDemoWorkspace` fixtures still
+  exist for low-level compatibility tests.
 - `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
   positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and
   forbidden topic.

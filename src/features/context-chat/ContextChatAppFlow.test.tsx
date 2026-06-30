@@ -50,7 +50,7 @@ describe('Context chat app flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Создать черновик темы/i }));
 
     expect(screen.getByDisplayValue('AI trust onboarding')).toBeInTheDocument();
-    expect(screen.getByText(/5 тем|5 тем/i)).toBeInTheDocument();
+    expect(screen.getByText(/8 тем|8 тем/i)).toBeInTheDocument();
   });
 
   it('allows asking the context chat to generate a topic without saving automatically', () => {
@@ -67,7 +67,7 @@ describe('Context chat app flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /Создать черновик темы/i }));
 
     expect(screen.getByDisplayValue('AI rollout risk')).toBeInTheDocument();
-    expect(screen.queryByText(/6 тем/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/9 тем/i)).not.toBeInTheDocument();
   });
 
   it('allows dismissing context chat suggestions instead of accepting read-only actions', () => {

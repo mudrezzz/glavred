@@ -1,11 +1,10 @@
 import { createPortfolioFromWorkspace } from '../application/portfolioService';
 import type { PortfolioState } from '../domain/portfolio/types';
 import type { WorkspaceState } from '../domain/workspace/types';
-import { createDemoWorkspace } from './demoWorkspace';
+import { createBenchmarkProjectWorkspace } from './demoBenchmarkPortfolio';
 
 export function createDemoPortfolio(): PortfolioState {
   const now = new Date().toISOString();
-  const baseWorkspace = createDemoWorkspace({ includeSeededHitlLearning: true });
 
   return {
     activeUserId: 'user-founder-editor',
@@ -85,9 +84,9 @@ export function createDemoPortfolio(): PortfolioState {
       }
     ],
     workspacesByProjectId: {
-      'project-ai-design-patterns': createProjectWorkspace(baseWorkspace, 'memory'),
-      'project-kasha-iz-topora': createProjectWorkspace(baseWorkspace, 'memory'),
-      'project-glavred-blog': createProjectWorkspace(baseWorkspace, 'memory')
+      'project-ai-design-patterns': createBenchmarkProjectWorkspace('project-ai-design-patterns'),
+      'project-kasha-iz-topora': createBenchmarkProjectWorkspace('project-kasha-iz-topora'),
+      'project-glavred-blog': createBenchmarkProjectWorkspace('project-glavred-blog')
     },
     updatedAt: now
   };
@@ -95,15 +94,4 @@ export function createDemoPortfolio(): PortfolioState {
 
 export function createDemoPortfolioFromWorkspace(workspace: WorkspaceState): PortfolioState {
   return createPortfolioFromWorkspace(workspace);
-}
-
-function createProjectWorkspace(
-  baseWorkspace: WorkspaceState,
-  activeSection: WorkspaceState['activeSection']
-): WorkspaceState {
-  return {
-    ...(JSON.parse(JSON.stringify(baseWorkspace)) as WorkspaceState),
-    activeSection,
-    updatedAt: new Date().toISOString()
-  };
 }

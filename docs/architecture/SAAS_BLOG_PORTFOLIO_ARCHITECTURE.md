@@ -253,11 +253,12 @@ Implemented migration rule:
 - keep old workspace normalization as fallback;
 - selected project hydrates the existing app shell;
 - switching project swaps the workspace object and saves under the project id;
-- reset seeds a local shell with two demo users and three project containers.
+- reset seeds a local shell with two demo users and three benchmark blog workspaces.
 
-The 2.17.1 seed project containers are intentionally light. Realistic author memory,
-editorial model, channel, plan, and benchmark content for the three blogs belongs to
-Slice 2.17.2.
+Slice 2.17.2 fills those project containers with realistic but sanitized author
+memory, editorial model, source/radar examples, plan slots, and benchmark scenarios.
+The fixtures are public-safe paraphrases of private working materials; the private
+source PDFs/resume are not committed.
 
 ### Slice 2.17.3 target
 
@@ -463,7 +464,7 @@ Slice 2.17.1 should include:
 - UI app-flow test for selecting user/project;
 - regression that current demo workspace still opens after reset.
 
-Slice 2.17.2 should include:
+Slice 2.17.2 includes:
 
 - seeded portfolio completeness tests;
 - no cross-project memory inference tests;

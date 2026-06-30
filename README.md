@@ -24,7 +24,7 @@ voice-input fallback are available before any production workflow starts.
 
 The same author-memory workspace now includes a local-first external-source shell:
 `Лента`, `Источники`, `Очередь разбора`, and `Архив`. It uses deterministic mock
-candidates for the AI Product Manager demo, supports filtering, grouping, individual
+candidates for the active demo portfolio project, supports filtering, grouping, individual
 review actions, `Добавить все`, archive-safe bulk acceptance, and undo for the latest
 bulk action. Unreviewed and archive-only material does not change the author-position
 assertions.
@@ -147,20 +147,19 @@ Current working flow: the first implementation still reaches a captured editoria
 learning note and uses local-first browser persistence before backend, real metrics
 ingestion, autoposting, or AI provider integration.
 
-Permanent demo example: a Telegram blog by an AI Product Manager who shares research
-experience building AI-B2B products. The demo starts with author notes about workflow
-risk, evals, trust, adoption, and confidence boundaries, then routes the same example
-through the existing production flow.
-
-Local demo portfolio shell: two users and three independent blog containers. Slice
-2.17.2 will replace placeholder per-project content with realistic benchmark fixtures:
+Permanent demo portfolio: two users and three independent blog projects. Each project
+has its own author memory, editorial model, topics, fabulas, signals, plan slots, and
+ready benchmark scenario:
 
 - `AI Design Patterns`: technical/research blog about AI design patterns and durable
-  best practices, likely LinkedIn-first and English-capable.
+  best practices, LinkedIn-first and English-capable.
 - `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with strong
-  stance, irony, and field observations.
+  stance, irony, and field observations from complex B2B commercialization.
 - `Блог Главреда`: product philosophy and practical editorial methods, with the first
   planned Telegram + Dzen multi-platform adaptation benchmark.
+
+The demo fixtures are sanitized paraphrases of real working materials; private source
+documents are not committed to the repository.
 
 ## Quick Start
 

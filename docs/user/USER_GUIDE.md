@@ -83,10 +83,10 @@ The seeded notes cover:
 - enterprise trust through evidence and rollback;
 - confidence boundaries from customer interviews.
 
-Current demo shell: a SaaS-style local portfolio where a user can switch between
+Current demo: a SaaS-style local portfolio where a user can switch between
 independent blog projects from the lower-left identity block in the sidebar. Click the
 current blog/user block to reveal the user and blog selectors. The app currently seeds
-two demo users and three project containers:
+two demo users and three realistic benchmark blog projects:
 
 - `AI Design Patterns`: a technical/research blog about durable AI design patterns
   and best practices, likely LinkedIn-first and English-capable.
@@ -97,9 +97,9 @@ two demo users and three project containers:
 
 Each selected project has its own local workspace state: author memory, editorial
 model, plan, drafts, final decisions, and learning notes are isolated by project.
-The realistic per-blog memories, editorial models, channels, and benchmark scenarios
-will be filled in Slice 2.17.2; Slice 2.17.1 focuses on the local switching shell and
-project isolation.
+The per-blog memories, editorial models, source signals, plan slots, and benchmark
+scenarios are already seeded as sanitized public fixtures. Private source documents
+are not included in the repository.
 
 ## External Sources Local Shell
 

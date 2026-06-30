@@ -41,7 +41,7 @@ describe('LocalPortfolioStore', () => {
     ]);
     expect(portfolio.activeUserId).toBe('user-founder-editor');
     expect(portfolio.activeProjectId).toBe('project-ai-design-patterns');
-    expect(getActiveWorkspace(portfolio).projectProfile.name).toBe('TG-блог AI Product Manager');
+    expect(getActiveWorkspace(portfolio).projectProfile.name).toBe('AI Design Patterns');
   });
 
   it('migrates a legacy singleton workspace into one project', () => {
@@ -94,6 +94,6 @@ describe('LocalPortfolioStore', () => {
 
     expect(switched.activeUserId).toBe('user-product-editor');
     expect(switched.activeProjectId).toBe('project-glavred-blog');
-    expect(getActiveWorkspace(switched).projectProfile.name).toBe('TG-блог AI Product Manager');
+    expect(getActiveWorkspace(switched).projectProfile.name).toBe('Блог Главреда');
   });
 });

@@ -11,7 +11,7 @@ describe('Editorial model app flow', () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
-    expect(screen.getByText('TG-блог AI Product Manager')).toBeInTheDocument();
+    expect(screen.getAllByText('AI Design Patterns').length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /Издательство/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Темы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Фабулы/i })).toBeInTheDocument();

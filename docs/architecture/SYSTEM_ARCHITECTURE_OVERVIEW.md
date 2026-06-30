@@ -1864,9 +1864,10 @@ The local shell seeds two users and three project containers:
     methods, and explanations of why Glavred's AI-native editorial approach matters.
     It is the first good candidate for Telegram + Dzen multi-platform adaptation.
 
-Slice 2.17.2 will fill those project containers with realistic author memory,
-editorial models, channels, scenarios, and benchmark expectations. The portfolio is
-not only demo decoration. It should become a benchmark suite:
+Slice 2.17.2 fills those project containers with realistic but sanitized author
+memory, editorial models, source/radar examples, plan scenarios, and benchmark
+expectations. The portfolio is not only demo decoration. It is now the seed surface
+for a benchmark suite:
 
 - project isolation: no memory, learning notes, rules, or drafts leak between blogs;
 - channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen

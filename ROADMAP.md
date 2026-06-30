@@ -5535,7 +5535,7 @@ Status:
 - Demo impact:
   - Demo opens with user/project choices instead of one implicit workspace.
   - Slice 2.17.1 seeds the local shell with two users and three project containers;
-    Slice 2.17.2 adds realistic per-blog memory/editorial/benchmark content.
+    Slice 2.17.2 adds realistic per-blog memory/editorial/benchmark content. Done.
 - Acceptance criteria:
   - Switching projects does not leak notes, drafts, learning notes, or plan state.
     Done.
@@ -5576,7 +5576,7 @@ Status:
 
 ### Slice 2.17.2: Three-Blog Benchmark Demo Portfolio
 
-- Status: Ready
+- Status: Done
 - Goal: Seed two users and three realistic blog projects as demo and benchmark data.
 - User value:
   - The app demonstrates real variation: different author memory, editorial models,
@@ -5590,7 +5590,7 @@ Status:
     - `Блог Главреда`.
   - Seed each blog with project profile, author memory, editorial rules, topics,
     fabulas, publication channels, source/radar examples, plan slots, and at least one
-    benchmark scenario.
+    benchmark scenario. Done.
   - Define per-blog benchmark expectations:
     - `AI Design Patterns`: research-heavy, English-capable, pattern catalog,
       anti-hype, external evidence.
@@ -5605,8 +5605,11 @@ Status:
 - Implementation notes:
   - Public repository fixtures must stay sanitized.
   - Real private inputs can later live in a gitignored benchmark pack.
+  - Implemented fixture ownership in `src/fixtures/demoBenchmarkPortfolio.ts` to avoid
+    expanding near-limit `demoWorkspace.ts`.
 - Architecture impact:
   - Turns demo data into benchmarkable portfolio fixtures.
+  - Keeps the existing local portfolio contracts unchanged.
 - Tests:
   - Demo fixture tests for project isolation and seeded data completeness.
   - UI smoke for project switcher and per-blog landing context.
@@ -5620,6 +5623,7 @@ Status:
   - Each blog has enough memory/editorial data to run the existing production flow.
 - Risks:
   - Demo data can become too large; keep each blog representative, not exhaustive.
+- Completed: 2026-06-30
 
 ### Slice 2.17.3: Backend Auth and Project Persistence Boundary
 
@@ -5990,6 +5994,7 @@ Status:
 - Slice 2.17.0: SaaS Blog Portfolio Architecture. Completed 2026-06-29.
 - Slice 2.17.1: Local Multi-Account and Blog Project Switcher. Completed 2026-06-29.
 - Slice 2.17.1.1: Sidebar Portfolio Switcher Placement Repair. Completed 2026-06-30.
+- Slice 2.17.2: Three-Blog Benchmark Demo Portfolio. Completed 2026-06-30.
 
 ## Blocked Items
 
@@ -6016,5 +6021,5 @@ Status:
 
 ## Next Recommended Task
 
-Implement realistic seeded benchmark content for the local portfolio:
-`Slice 2.17.2: Three-Blog Benchmark Demo Portfolio`.
+Implement the backend boundary for users, sessions, projects, and project-scoped
+workspace persistence: `Slice 2.17.3: Backend Auth and Project Persistence Boundary`.
