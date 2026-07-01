@@ -1,6 +1,6 @@
 ---
 name: project-onboarding
-description: Use at the start of a new Codex chat or when asked to continue an existing project, take the next task, inspect project status, or resume from ROADMAP.md. Reconstructs context from repository files without requiring the user to re-explain the project.
+description: Use at the start of a new Codex chat or when asked to continue an existing project, take the next task, inspect project status, or resume from the roadmap tracker. Reconstructs context from repository files without requiring the user to re-explain the project.
 ---
 
 # Project Onboarding Skill
@@ -12,7 +12,7 @@ Quickly understand the project state and select the next appropriate action from
 ## Process
 
 1. Read `AGENTS.md`.
-2. Read `ROADMAP.md`.
+2. Read tracker state with `python -m backend.app.roadmap next/list/show`; read generated `ROADMAP.md` for context.
 3. Read `README.md`.
 4. Read the source requirements document if identifiable.
 5. Inspect:
@@ -39,10 +39,10 @@ Do not ask the user to repeat project context.
 
 Instead:
 
-1. Determine the next `Ready` task from `ROADMAP.md`.
+1. Determine the next `Ready` task from `python -m backend.app.roadmap next`.
 2. If there is an `In Progress` task, prefer continuing it unless it is blocked.
 3. If no task is ready, propose the smallest next slice based on requirements and current architecture.
-4. Update `ROADMAP.md` before starting implementation if the selected task needs clarification.
+4. Update the tracker before starting implementation if the selected task needs clarification, then render/export.
 5. Before selecting a product slice, account for current file-size limits, near-limit
    warnings, module ownership, and feature dependency guardrails.
 6. Before selecting a backend slice, account for OpenRouter environment requirements,
@@ -72,4 +72,4 @@ Before finishing onboarding:
 - The next task is identified.
 - The reason for selecting it is clear.
 - Relevant docs and requirements were inspected.
-- Any ambiguity is recorded in `ROADMAP.md`.
+- Any ambiguity is recorded in the tracker/export and rendered into `ROADMAP.md`.

@@ -177,6 +177,31 @@ ready benchmark scenario:
 The demo fixtures are sanitized paraphrases of real working materials; private source
 documents are not committed to the repository.
 
+## Roadmap Workflow
+
+The roadmap is tracker-backed. `ROADMAP.md` is a generated report and should not be
+edited manually.
+
+- Source artifact for Git review: `docs/roadmap/slices.export.jsonl`.
+- Local working cache: `var/roadmap/roadmap.sqlite`.
+- Human-readable report: `ROADMAP.md`.
+
+Useful commands:
+
+```bash
+python -m backend.app.roadmap next
+python -m backend.app.roadmap show 2.17.4
+python -m backend.app.roadmap list --status Ready
+python -m backend.app.roadmap update-status 2.17.4 Done
+python -m backend.app.roadmap check
+python -m backend.app.roadmap render
+python -m backend.app.roadmap export
+```
+
+Before committing roadmap changes, run `check`, `render`, `export`, and
+`git diff --check`. Details are in `docs/roadmap/README.md` and ADR
+`docs/adr/2026-07-01-roadmap-tracker-source-of-truth.md`.
+
 ## Quick Start
 
 Run the full local stack with Docker:

@@ -1222,6 +1222,11 @@ const BACKEND_SOURCE_BASELINES = [
     next: "Portfolio service should own auth/session/access use cases only.",
   },
   {
+    path: "backend/app/application/roadmap_tracker.py",
+    limit: 430,
+    next: "Roadmap tracker application logic should split parser/render/check responsibilities before adding richer planning workflows.",
+  },
+  {
     path: "backend/app/domain/health.py",
     limit: 60,
     next: "Health domain objects should stay provider-free and framework-free.",
@@ -1245,6 +1250,11 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/domain/portfolio.py",
     limit: 70,
     next: "Portfolio DTOs should stay provider-free and persistence-free.",
+  },
+  {
+    path: "backend/app/domain/roadmap_tracker.py",
+    limit: 80,
+    next: "Roadmap tracker domain should remain provider-free DTOs and status validation only.",
   },
   {
     path: "backend/app/domain/draft_run_steps.py",
@@ -1415,6 +1425,16 @@ const BACKEND_SOURCE_BASELINES = [
     path: "backend/app/infrastructure/sqlite_portfolio_repository.py",
     limit: 340,
     next: "SQLite portfolio repository should own storage/schema only; split seed/mappers before growing.",
+  },
+  {
+    path: "backend/app/infrastructure/sqlite_roadmap_repository.py",
+    limit: 150,
+    next: "SQLite roadmap repository should stay storage-only; keep parsing/rendering in the roadmap application layer.",
+  },
+  {
+    path: "backend/app/roadmap/__main__.py",
+    limit: 230,
+    next: "Roadmap CLI should remain a thin command adapter over application services.",
   },
   {
     path: "backend/tests/test_settings.py",
@@ -2550,6 +2570,7 @@ const requiredSaoFragments = [
   "backend/app/application/ai_run_service.py",
   "backend/app/application/draft_generation_service.py",
   "backend/app/application/portfolio_service.py",
+  "backend/app/application/roadmap_tracker.py",
   "backend/app/application/draft_run_service.py",
   "backend/app/application/draft_run_pipeline.py",
   "backend/app/application/draft_validation_linter.py",
@@ -2659,12 +2680,14 @@ const requiredSaoFragments = [
   "backend/app/infrastructure/sqlite_ai_run_repository.py",
   "backend/app/infrastructure/sqlite_draft_run_repository.py",
   "backend/app/infrastructure/sqlite_portfolio_repository.py",
+  "backend/app/infrastructure/sqlite_roadmap_repository.py",
   "backend/app/infrastructure/celery_app.py",
   "backend/app/infrastructure/draft_run_tasks.py",
   "backend/app/infrastructure/draft_run_pipeline_factory.py",
   "backend/app/infrastructure/draft_run_pipeline_provider_services.py",
   "backend/app/infrastructure/draft_run_pipeline_validation_services.py",
   "backend/app/domain/portfolio.py",
+  "backend/app/domain/roadmap_tracker.py",
   "backend/app/domain/draft_run_steps.py",
   "backend/app/domain/draft_run_context.py",
   "backend/app/domain/draft_source_ledger.py",

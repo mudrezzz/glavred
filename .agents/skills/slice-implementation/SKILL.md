@@ -1,6 +1,6 @@
 ---
 name: slice-implementation
-description: Use when implementing a selected ROADMAP.md slice. Keeps the increment small, updates tests, docs, demo, and roadmap, and preserves a working product after the slice.
+description: Use when implementing a selected tracker-backed roadmap slice. Keeps the increment small, updates tests, docs, demo, and roadmap, and preserves a working product after the slice.
 ---
 
 # Slice Implementation Skill
@@ -12,7 +12,7 @@ Implement one small, complete, tested, documented product increment.
 ## Process
 
 1. Read `AGENTS.md`.
-2. Read `ROADMAP.md`.
+2. Read tracker state with `python -m backend.app.roadmap next/list/show` and use generated `ROADMAP.md` for narrative context.
 3. Identify the active or next slice.
 4. Read relevant requirements, architecture docs, ADRs, and existing code.
 5. Run an architecture preflight before implementation:
@@ -28,7 +28,7 @@ Implement one small, complete, tested, documented product increment.
 9. Update documentation.
 10. Update demo if user-visible behavior changed.
 11. Run relevant validation, including final `npm run test:architecture`.
-12. Update `ROADMAP.md`.
+12. Update the tracker, then run `python -m backend.app.roadmap render` and `python -m backend.app.roadmap export`.
 
 ## Implementation rules
 
@@ -37,7 +37,7 @@ Implement one small, complete, tested, documented product increment.
 - Follow OOP and single-responsibility principles.
 - Comment non-obvious code and tests.
 - Do not expand scope unless required for the slice to work.
-- Record follow-up work in `ROADMAP.md` instead of silently doing it.
+- Record follow-up work in the tracker/export instead of silently doing it.
 - Do not add new behavior to a near-limit file unless the same slice includes a
   refactor step into a role-owned module and keeps the architecture smoke hard limits
   green.
@@ -62,7 +62,7 @@ Implement one small, complete, tested, documented product increment.
   `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` before
   editing. Do not jump from draft candidates directly to a validator/revision loop:
   source ledger, feasibility gate, and post contract must exist first unless
-  `ROADMAP.md` explicitly records a safe exception.
+  the tracker record explicitly records a safe exception.
 - For DraftRun pipeline slices, also read
   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` before implementation. If behavior
   changes, update that Markdown file and regenerate
@@ -81,5 +81,5 @@ Before finishing:
   architecture smoke covers new backend ownership rules.
 - Docs were updated.
 - Demo was updated if needed.
-- `ROADMAP.md` status was updated.
+- Tracker status was updated and `ROADMAP.md`/`docs/roadmap/slices.export.jsonl` were regenerated.
 - Remaining risks and next tasks are documented.

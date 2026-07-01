@@ -1,18 +1,18 @@
 ---
 name: roadmap-slice-planning
-description: Use when turning requirements, user ideas, or architecture into ROADMAP.md iterations, slices, backlog items, and next actions. Optimizes for small complete increments and concentric product growth.
+description: Use when turning requirements, user ideas, or architecture into tracker-backed roadmap iterations, slices, backlog items, and next actions. Optimizes for small complete increments and concentric product growth.
 ---
 
 # Roadmap Slice Planning Skill
 
 ## Goal
 
-Maintain `ROADMAP.md` as the project control center.
+Maintain the tracker-backed roadmap as the project control center. `ROADMAP.md` is a generated report; the committed source artifact is `docs/roadmap/slices.export.jsonl`.
 
 ## Process
 
 1. Read the requirements source.
-2. Read current `ROADMAP.md`.
+2. Read current tracker state with `python -m backend.app.roadmap next/list/show`; use `ROADMAP.md` as a generated report fallback.
 3. Read architecture docs if present.
 4. Identify the smallest useful product perimeter.
 5. Break work into iterations.
@@ -28,7 +28,7 @@ Maintain `ROADMAP.md` as the project control center.
 
 ## Slice format
 
-Use this format in `ROADMAP.md`:
+Use this format in the slice `body_markdown` stored by the tracker/export:
 
 ```markdown
 ### Slice <number>: <title>
@@ -68,7 +68,8 @@ Use this format in `ROADMAP.md`:
 
 Before finishing:
 
-- `ROADMAP.md` is updated.
+- The tracker is updated with CLI commands or JSONL changes.
+- `python -m backend.app.roadmap render` and `python -m backend.app.roadmap export` were run.
 - The next task is clearly marked.
 - Slices are small enough to implement independently.
 - Testing and docs are included in each slice.

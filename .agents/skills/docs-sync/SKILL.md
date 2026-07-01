@@ -1,6 +1,6 @@
 ---
 name: docs-sync
-description: Use when code, architecture, setup, public behavior, demo behavior, or user-facing functionality changes and documentation must be synchronized. Updates README, architecture overview, ADRs, contributor docs, developer docs, user docs, demo docs, and ROADMAP.md.
+description: Use when code, architecture, setup, public behavior, demo behavior, or user-facing functionality changes and documentation must be synchronized. Updates README, architecture overview, ADRs, contributor docs, developer docs, user docs, demo docs, and tracker-rendered roadmap artifacts.
 ---
 
 # Docs Sync Skill
@@ -16,12 +16,13 @@ Keep documentation accurate, useful, and GitHub-ready.
 3. Update the minimum necessary docs.
 4. Add ADRs for meaningful architectural decisions.
 5. Ensure `README.md` remains the project entry point.
-6. Ensure `ROADMAP.md` reflects completed or new work.
+6. Ensure tracker state reflects completed or new work, then regenerate `ROADMAP.md` and `docs/roadmap/slices.export.jsonl`.
 
 ## Documentation responsibilities
 
 - `README.md`: product overview, quick start, links to docs.
-- `ROADMAP.md`: backlog, iterations, slices, statuses.
+- `docs/roadmap/slices.export.jsonl`: tracker source artifact for backlog, iterations, slices, statuses.
+- `ROADMAP.md`: generated readable roadmap report.
 - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`: architecture and component responsibilities.
 - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`: current DraftRun pipeline map.
   If DraftRun steps, artifacts, role model usage, retry/fallback behavior, validation,

@@ -1,3 +1,5 @@
+<!-- GENERATED FROM docs/roadmap/slices.export.jsonl. DO NOT EDIT MANUALLY. -->
+
 # ROADMAP.md
 
 ## Product Vision
@@ -84,6 +86,7 @@ Status:
   Git baseline.
 - Validation: `npm test`, `npm run smoke`, and `npm audit --audit-level=moderate`
   passed.
+- Completed: 2026-06-03
 
 ### Slice 0.2: Brief-Backed Bootstrap Update
 
@@ -92,12 +95,14 @@ Status:
   from the filled brief.
 - Validation: `npm test`, `npm run smoke`, and `npm audit --audit-level=moderate`
   passed.
+- Completed: 2026-06-03
 
 ### Slice 0.3: Architecture Baseline for the First Product Perimeter
 
 - Status: Done
 - Goal: Define the first local-first flow from source signal to approved post brief.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-03
 
 ### Slice 0.4: First Working Flow to Approved Post Brief
 
@@ -105,6 +110,7 @@ Status:
 - Goal: Implement the first working editorial cabinet from signal to approved post
   brief with local-first persistence.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-03
 
 ### Slice 0.5: Draft and Editorial Checks
 
@@ -112,6 +118,7 @@ Status:
 - Goal: Extend approved briefs into deterministic drafts, editorial checks, and
   approved final text.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-03
 
 ### Slice 0.6: Manual Export and Release Prep
 
@@ -119,6 +126,7 @@ Status:
 - Goal: Prepare approved final text for manual release through copy and Markdown
   export.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-04
 
 ### Slice 0.7: Analytics Prep and Editorial Learning Notes
 
@@ -126,6 +134,7 @@ Status:
 - Goal: Turn analytics into local manual metrics and captured editorial learning after
   manual export.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-04
 
 ### Slice 0.8: AI Provider Architecture Baseline
 
@@ -134,6 +143,7 @@ Status:
 - Note: This remains valid, but implementation is deferred until author position and
   validators are stronger.
 - Validation: `npm test` and `npm run smoke` passed.
+- Completed: 2026-06-04
 
 ### Slice 0.9: Author Position Product Reframe
 
@@ -170,6 +180,7 @@ Status:
 - Risks:
   - The existing UI still reflects the old signal-first model until the next
     implementation slice.
+- Completed: 2026-06-10
 
 ### Slice 1.0: Author Memory Feed and Position Evidence Baseline
 
@@ -221,6 +232,7 @@ Status:
 - Risks:
   - Deterministic classification may feel simplistic; UI copy should make clear this is
     the first baseline before AI assistance.
+- Completed: 2026-06-10
 
 ### Slice 1.0.1: Author Memory UX Hardening
 
@@ -292,6 +304,7 @@ Status:
   - Correction conflict handling can become too complex; keep it to a small HITL
     choice rather than building a full merge engine.
   - Browser speech recognition support varies; the fallback state must be explicit.
+- Completed: 2026-06-10
 
 ### Slice 1.0.2: Author Memory File Attachments
 
@@ -347,6 +360,7 @@ Status:
   - Browser `localStorage` is not a real file store; size limits must stay explicit.
   - Data URLs can grow quickly; this remains demo-only until a real storage boundary is
     designed.
+- Completed: 2026-06-10
 
 ### Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline
 
@@ -399,6 +413,7 @@ Status:
     them.
   - GitHub Wiki backing repo is created lazily by GitHub and cannot be bootstrapped by
     REST/GraphQL/git push alone.
+- Completed: 2026-06-11
 
 ### Slice 1.0.4: Author Memory External Sources and Import Design
 
@@ -466,6 +481,7 @@ Status:
     focused on source configuration and reviewed import, not automation.
   - Bulk import can hide low-quality material if summary and filters are weak; keep
     confirmation and evidence policy visible.
+- Completed: 2026-06-11
 
 ### Slice 1.0.5: External Sources Local UI Shell
 
@@ -519,6 +535,7 @@ Status:
     candidate into memory. Done.
   - `npm test`, `npm run smoke`, `npm run docs:screenshots`, and
     `npm run docs:wiki:publish` passed.
+- Completed: 2026-06-11
 
 ### Slice 1.0.5.1: External Sources UX Fixes
 
@@ -565,6 +582,7 @@ Status:
   - Generate attachment-derived `AuthorMemoryEvent` signals.
   - Link assertions to exact attachment fragments with evidence provenance.
   - Let the author approve or reject extracted evidence before it affects position.
+- Completed: 2026-06-11
 
 ### Slice 1.1: Topics and Fabulas as Editorial Entities
 
@@ -603,6 +621,7 @@ Status:
 - Validation:
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
+- Completed: 2026-06-11
 
 ### Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs
 
@@ -690,6 +709,7 @@ Status:
     matrix draft/save behavior, and validation panel visibility. Done.
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
+- Completed: 2026-06-11
 
 ### Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes
 
@@ -745,6 +765,7 @@ Status:
   - Topic and fabula list rows, previews, and edit forms do not overflow their cards. Done.
   - Matrix remains readable with horizontal scroll and sticky topic names. Done.
   - Existing production flow remains working. Done.
+- Completed: 2026-06-11
 
 ### Slice 1.1.3: Add and Delete Topics and Fabulas
 
@@ -788,6 +809,7 @@ Status:
   - New entities appear in the matrix with default enabled links. Done.
   - Delete removes the entity and its matrix links after confirmation. Done.
   - Manual validation snapshot becomes stale after committed add/delete. Done.
+- Completed: 2026-06-11
 
 ### Slice 1.2: Validator Framework Baseline
 
@@ -821,6 +843,7 @@ Status:
   - Storage tests for `ValidatorRun.results` and old snapshot normalization. Done.
   - UI tests for manual validator cards, score, evidence, and stale state. Done.
   - `npm test -- --run` passed.
+- Completed: 2026-06-11
 
 ### Slice 1.2.1: Author Memory Sources UX Alignment
 
@@ -848,6 +871,7 @@ Status:
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-12
 
 ### Slice 1.2.2: Source List Visual Repair and UI Guardrails
 
@@ -873,6 +897,7 @@ Status:
   - UI tests for source row structure and initial toast absence. Done.
   - Playwright visual smoke for row overflow/title collapse/actions/toast lifecycle.
     Done.
+- Completed: 2026-06-12
 
 ### Slice 1.3: Context Chat Wizard Skeleton
 
@@ -899,6 +924,7 @@ Status:
   - UI tests for collapsed/expanded state, scope changes, and draft flow opening. Done.
   - Playwright visual smoke for context chat overlay. Done.
   - Full regression commands listed in Slice completion notes.
+- Completed: 2026-06-12
 
 ### Slice 1.3.1: Context Chat UX Repair and Chat Mode
 
@@ -933,6 +959,7 @@ Status:
     safe draft actions. Done.
   - Visual smoke updated to verify drawer right-edge anchoring and normal suggestion
     card/button heights.
+- Completed: 2026-06-13
 
 ### Slice 1.4: Content Plan as Broadcast Grid
 
@@ -955,6 +982,7 @@ Status:
     internal post-brief navigation, and downstream regression. Done.
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
+- Completed: 2026-06-13
 
 ### Slice 1.4.1: Broadcast Planning Concept Correction
 
@@ -996,6 +1024,7 @@ Status:
 - Risks:
   - If this correction stays docs-only too long, the UI will continue showing a
     simplified plan that does not yet explain signal deficit or candidate readiness.
+- Completed: 2026-06-13
 
 ### Slice 1.5: Signals and Radar Workspace
 
@@ -1052,6 +1081,7 @@ Status:
   - The boundary between import candidates and source signals must stay clear:
     imported candidates are source material; reviewed signals are editorial triggers.
   - `Кандидаты постов` is intentionally read-only until Slice 1.6.
+- Completed: 2026-06-13
 
 ### Slice 1.5.1: Radar Rules/Sources and Raw Signal UX Repair
 
@@ -1080,6 +1110,7 @@ Status:
   - Storage normalization for old radars/signals. Done.
   - `npm test -- --run` passed.
   - `npm run smoke` passed.
+- Completed: 2026-06-13
 
 ### Slice 1.5.2: Signals UI Design-System Repair and Visual Guardrails
 
@@ -1102,6 +1133,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-13
 
 ### Slice 1.5.3: Signals Layout Polish and Pixel Guardrails
 
@@ -1131,6 +1163,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.4: Design-System Guardrails and Signals UI Alignment
 
@@ -1164,6 +1197,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.5: Frontend Design-System Consolidation
 
@@ -1194,6 +1228,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.6: Layout Stability and Form Rhythm Guardrails
 
@@ -1220,6 +1255,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources
 
@@ -1245,6 +1281,7 @@ Status:
   - `npm run test:design` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode
 
@@ -1274,6 +1311,7 @@ Status:
   - `npm run test:design` passed.
   - `npm run test:visual` passed.
   - `npm run docs:screenshots` passed.
+- Completed: 2026-06-14
 
 ### Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails
 
@@ -1317,6 +1355,7 @@ Status:
 - Risks:
   - The current monolith remains until extraction slices are completed; future work must
     not use this baseline as permission to keep adding code to `App.tsx`.
+- Completed: 2026-06-15
 
 ### Slice 1.5.10: Extract App Shell and Workspace Controller
 
@@ -1347,6 +1386,7 @@ Status:
   - `npm run smoke`. Passed.
   - `npm run test:design`. Passed.
   - `npm run test:visual`. Passed.
+- Completed: 2026-06-15
 
 ### Slice 1.5.11: Extract Signals Feature
 
@@ -1362,6 +1402,7 @@ Status:
     `SignalsView` / `RadarView` code.
   - Architecture guardrails were lowered to `App.tsx <= 5400` and large App UI
     declarations `<= 26`.
+- Completed: 2026-06-15
 
 ### Slice 1.5.12: Extract Editorial Model Feature
 
@@ -1377,6 +1418,7 @@ Status:
     editorial setup editors, matrix UI, validation panel, or editorial-only helpers.
   - Architecture guardrails were lowered to `App.tsx <= 3600` and large App UI
     declarations `<= 17`.
+- Completed: 2026-06-15
 
 ### Slice 1.5.13: Extract Author Memory Feature
 
@@ -1392,6 +1434,7 @@ Status:
     author-memory cards, import queue, archive UI, or author-memory-only helpers.
   - Architecture guardrails were lowered to `App.tsx <= 1700` and large App UI
     declarations `<= 10`.
+- Completed: 2026-06-15
 
 ### Slice 1.5.14: Extract Production Flow Features
 
@@ -1415,6 +1458,7 @@ Status:
   - `npm run smoke` passed.
   - `npm run test:design` passed.
   - `npm run test:visual` passed.
+- Completed: 2026-06-15
 
 ### Slice 1.5.15: Codebase Size Audit and Modularization Guardrails
 
@@ -1462,6 +1506,7 @@ Status:
 - Risks:
   - Overly strict limits could block necessary refactors; use temporary baselines and
     lower them slice by slice.
+- Completed: 2026-06-15
 
 ### Slice 1.5.16: Split Domain Workspace Types by Bounded Context
 
@@ -1504,6 +1549,7 @@ Status:
   - Existing product flow and tests behave unchanged.
 - Risks:
   - Type moves can cause broad import churn; keep a compatibility barrel until later.
+- Completed: 2026-06-15
 
 ### Slice 1.5.17: Split Domain Transitions and Invariants
 
@@ -1539,6 +1585,7 @@ Status:
 - Risks:
   - Hidden import cycles may appear; fix by adjusting context ownership, not by adding
     cross-layer shortcuts.
+- Completed: 2026-06-15
 
 ### Slice 1.5.18: Split Application Services
 
@@ -1581,6 +1628,7 @@ Status:
 - Risks:
   - Over-splitting could create boilerplate; group by workflow role, not by every
     function.
+- Completed: 2026-06-15
 
 ### Slice 1.5.19: Split Demo Workspace Fixtures
 
@@ -1621,6 +1669,7 @@ Status:
 - Risks:
   - Fixture split can accidentally alter IDs; preserve stable IDs unless intentionally
     changed.
+- Completed: 2026-06-15
 
 ### Slice 1.5.20: Split Author Memory Feature Internals
 
@@ -1655,6 +1704,7 @@ Status:
 - Risks:
   - Feature-local state can be accidentally split incorrectly; preserve existing
     callback boundaries.
+- Completed: 2026-06-15
 
 ### Slice 1.5.21: Split Editorial Model Feature Internals
 
@@ -1687,6 +1737,7 @@ Status:
   - Existing add/edit/delete/validation flows still work.
 - Risks:
   - Matrix and topic/fabula editors share state; keep save/cancel behavior identical.
+- Completed: 2026-06-15
 
 ### Slice 1.5.22: Split Signals Feature Internals
 
@@ -1719,6 +1770,7 @@ Status:
   - Radar and signal flows behave unchanged.
 - Risks:
   - Signals has recent layout guardrails; visual smoke must remain mandatory.
+- Completed: 2026-06-15
 
 ### Slice 1.5.23: Bundle and Import Hygiene Baseline
 
@@ -1753,6 +1805,7 @@ Status:
 - Risks:
   - Premature optimization can distract from maintainability; keep this slice focused
     on visibility and boundaries.
+- Completed: 2026-06-15
 
 ### Slice 1.5.24: Feature Internals Cleanup and OOP Boundaries
 
@@ -1797,6 +1850,7 @@ Status:
 - Risks:
   - Mechanical extraction can accidentally move state ownership; preserve existing
     props/callback boundaries and use tests to catch regressions.
+- Completed: 2026-06-15
 
 ### Slice 1.5.25: Author Memory Entry Point Decomposition
 
@@ -1833,6 +1887,7 @@ Status:
 - Risks:
   - Hook extraction can accidentally change stale closure behavior; preserve existing
     callback boundaries and rely on regression tests.
+- Completed: 2026-06-15
 
 ### Slice 1.5.26: Signals Feature Internal Decomposition
 
@@ -1870,6 +1925,7 @@ Status:
 - Risks:
   - Mechanical extraction can accidentally change expanded/edit state; preserve existing
     callbacks and rely on regression tests.
+- Completed: 2026-06-15
 
 ### Slice 1.5.27: Author Memory Import Queue Decomposition
 
@@ -1907,6 +1963,7 @@ Status:
 - Risks:
   - Mechanical extraction can accidentally change selection behavior; preserve existing
     props/callback boundaries and rely on regression tests.
+- Completed: 2026-06-15
 
 ### Slice 1.5.28: App Workspace Controller Decomposition
 
@@ -1949,6 +2006,7 @@ Status:
 - Risks:
   - App-level action extraction can accidentally change stale workspace reads; keep
     existing callback boundaries and rely on regression tests.
+- Completed: 2026-06-15
 
 ### Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules
 
@@ -2000,6 +2058,7 @@ Status:
 - Risks:
   - Warning-level export counts can be noisy; keep them informational until a separate
     cleanup slice lowers public surfaces deliberately.
+- Completed: 2026-06-16
 
 ### Slice 1.6: First Real Post Candidate Assemblies
 
@@ -2064,6 +2123,7 @@ Status:
 - Risks:
   - Candidate generation is deterministic and intentionally simple; edit/reject/request-
     more candidates should be handled in the next product slice.
+- Completed: 2026-06-16
 
 ### Slice 1.7: Candidate List UX Parity and Review Actions
 
@@ -2131,6 +2191,7 @@ Status:
   - `PostCandidateCard` and `usePostCandidateWorkspaceActions` are near their smoke
     limits; future candidate behavior should split card subparts and orchestration
     helpers before adding more state.
+- Completed: 2026-06-16
 
 ### Slice 1.7.1: Candidate Format Cleanup and Edit Context
 
@@ -2178,6 +2239,7 @@ Status:
 - Risks:
   - `PostCandidateEditForm` is exactly at its architecture smoke limit; future
     candidate edit behavior should split field groups before adding more controls.
+- Completed: 2026-06-16
 
 ### Slice 1.8: Broadcast Grid Settings
 
@@ -2231,6 +2293,7 @@ Status:
   - Candidate deficit/proficit is visible.
 - Risks:
   - Calendar settings can become platform-specific; keep platform entities deferred.
+- Completed: 2026-06-17
 
 ### Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings
 
@@ -2292,6 +2355,7 @@ Status:
 - Risks:
   - `PlanSettingsPanel` and `BroadcastGridRow` are close enough to smoke limits that
     field groups must be split before adding behavior.
+- Completed: 2026-06-17
 
 ### Slice 1.8.2: Broadcast Grid Candidate Calendar View
 
@@ -2337,6 +2401,7 @@ Status:
   - Calendar period matches the saved week/month/quarter planning setting. Done.
   - Candidate counts reflect the current filtered grid. Done.
   - Clicking a date shows the same row cards as the normal list. Done.
+- Completed: 2026-06-17
 
 ### Slice 1.9: Editorial Work Queue Foundation
 
@@ -2407,6 +2472,7 @@ Status:
   - Historical note: before Slice 1.10, `Подготовить фабулу поста` opened
     `Редактура`; after Slice 1.10, slot approval prepares the brief automatically.
     `BriefView` remains a compatibility surface.
+- Completed: 2026-06-17
 
 ### Slice 1.10: Редактура как очередь постов и рабочий стол
 
@@ -2469,6 +2535,7 @@ Status:
 - Risks:
   - Compatibility fields can still diverge from work-item state until future slices
     move all production actions to explicit work-item ids.
+- Completed: 2026-06-17
 
 ### Slice 1.10.1: Editorial Workspace UX Guardrail Repair
 
@@ -2491,6 +2558,7 @@ Status:
   - `npm run test:design` covers the new editing design contract.
 - Docs:
   - Update developer/design-system guidance and roadmap.
+- Completed: 2026-06-17
 
 ### Slice 1.10.2: Automatic Draft After Fabula Approval
 
@@ -2516,6 +2584,7 @@ Status:
     after `Утвердить фабулу`. Done.
 - Docs:
   - Update user guide, demo docs, wiki notes, and roadmap.
+- Completed: 2026-06-17
 
 ### Slice 1.10.3: Editorial Workbench Selection and Picker Repair
 
@@ -2543,6 +2612,7 @@ Status:
   - Stateful `EditView` test verifies queue row and picker selection switch the
     active workbench post.
   - Design smoke verifies the picker is a single select combobox.
+- Completed: 2026-06-17
 
 ### Slice 1.10.4: Editable Fabula Brief With Candidate Context
 
@@ -2579,6 +2649,7 @@ Status:
     after editing. Done.
 - Docs:
   - Update SAO, user guide, demo docs, wiki, and roadmap.
+- Completed: 2026-06-17
 
 ### Slice 1.10.5: Draft Approval Without Final Tab
 
@@ -2624,6 +2695,7 @@ Status:
   - Approving text still creates compatibility `FinalText`, but the selected work item
     moves to `visual/todo` instead of `readyForRelease`.
   - Legacy stored work items with stage `final` normalize to `visual`.
+- Completed: 2026-06-18
 
 ### Slice 1.10.6: Visual Stage Foundation
 
@@ -2677,6 +2749,7 @@ Status:
   - Visual save/approve uses explicit bottom-left actions and a local edit buffer.
   - Visual approval does not mark the item `readyForRelease`; Slice 1.10.7 owns that
     handoff rule.
+- Completed: 2026-06-18
 
 ### Slice 1.10.6.1: Visual Variants Review Flow
 
@@ -2716,6 +2789,7 @@ Status:
     modes.
   - `Без визуала` can be confirmed without variants.
   - `К выпуску: нет` remains true until Slice 1.10.7.
+- Completed: 2026-06-18
 
 ### Slice 1.10.6.2: Two-Step Meme Remix Visual Flow
 
@@ -2767,6 +2841,7 @@ Status:
   - After choosing a reference, the user can generate custom remix variants.
   - Visual approval requires a selected custom remix variant.
   - Other visual modes keep their existing behavior.
+- Completed: 2026-06-18
 
 ### Slice 1.10.6.3: App Flow Test Ownership Guardrails
 
@@ -2804,6 +2879,7 @@ Status:
   - Feature user-flow tests live beside their owning feature.
   - Future additions to near-limit test files are blocked by workflow and smoke
     guardrails.
+- Completed: 2026-06-18
 
 ### Slice 1.10.7: Ready Post Handoff
 
@@ -2831,6 +2907,7 @@ Status:
 - Acceptance criteria:
   - Ready status requires text approval and visual completion.
   - Ready posts can be listed as candidates for future release logging.
+- Completed: unknown
 
 ### Slice 1.11: Release Log Foundation
 
@@ -2957,6 +3034,7 @@ Status:
   - OpenRouter env variables are documented.
   - `.env` exists locally for developer tokens but is ignored by Git.
   - Backend architecture rules are present in ADR/SAO/agent workflow docs.
+- Completed: 2026-06-18
 
 ### Slice 2.1: Backend Foundation and OpenRouter Environment
 
@@ -2993,6 +3071,7 @@ Status:
   - Backend starts locally. Done.
   - Missing OpenRouter token is reported as unconfigured, not as a crash. Done.
   - No provider call happens in Slice 2.1. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.2: AI Run Contract and Audit Trail
 
@@ -3029,6 +3108,7 @@ Status:
   - Audit records are durable in SQLite. Done.
   - API responses do not expose OpenRouter token or absolute DB path. Done.
   - Slice 2.2 does not call any provider. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.3: First OpenRouter Draft Run
 
@@ -3067,6 +3147,7 @@ Status:
     browser. Done.
   - Local deterministic drafting remains the emergency fallback when backend is
     unreachable. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.3.1: Dockerized Local Full-Stack Runner
 
@@ -3094,6 +3175,7 @@ Status:
   - `docker compose up --build` is the documented full-stack startup command. Done.
   - Dockerized frontend runs at `http://localhost:5176`; backend remains at
     `http://localhost:8000`. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.3.2: AI Run Observability and Draft Generation Status
 
@@ -3135,6 +3217,7 @@ Status:
     sent, what provider returned, and whether fallback was used. Done.
   - After `Утвердить фабулу`, the user sees generation progress instead of an empty
     draft screen. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.3.3: AI Run Trace Debug Page
 
@@ -3162,6 +3245,7 @@ Status:
 - Acceptance criteria:
   - A developer can open `/ai-runs`, paste an `AiRun ID`, and see the detailed local
     trace. Done.
+- Completed: 2026-06-18
 
 ### Slice 2.3.4: Agentic Draft Runner Architecture Plan
 
@@ -3193,6 +3277,7 @@ Status:
 - Acceptance criteria:
   - Roadmap, SAO, developer docs, and ADR agree that the next implementation slice is
     queued `DraftRun`, not a bigger synchronous prompt. Done.
+- Completed: 2026-06-19
 
 ### Slice 2.4: Draft Run Contract and Queue Foundation
 
@@ -3252,6 +3337,7 @@ Status:
   - Introducing queue infrastructure can create boilerplate; keep modules role-owned
     and small.
   - Worker state and frontend polling can drift; keep status contracts explicit.
+- Completed: 2026-06-19
 
 ### Slice 2.5: Draft Run Context Builder
 
@@ -3273,6 +3359,7 @@ Status:
     candidate, source signal, topic, fabula, publisher rules, author-position
     evidence, and `missingContext`.
   - Old brief/editorial-model-only requests remain compatible.
+- Completed: 2026-06-19
 
 ### Slice 2.6: Draft Rule Pack Compiler
 
@@ -3295,6 +3382,7 @@ Status:
     topic-fit requirements, quality rubric, and forbidden moves.
   - Worker `rulePack` step now writes the compiled artifact to draft-run trace.
   - Brief-only compatibility runs still receive a minimal rule pack.
+- Completed: 2026-06-19
 
 ### Slice 2.7: Material Plan and Draft Strategy Steps
 
@@ -3317,6 +3405,7 @@ Status:
     full material-plan or draft-strategy payload.
   - `DraftRun.ai_run_ids` records child planning `AiRun` ids for trace inspection.
   - Final prose generation remained deterministic until Slice 2.8.
+- Completed: 2026-06-19
 
 ### Slice 2.8: Agentic Multi-Candidate Draft Generation
 
@@ -3332,6 +3421,7 @@ Status:
   - Keep `DraftRun.finalDraft` frontend-compatible by returning the selected
     candidate only.
   - Completed 2026-06-19.
+- Completed: 2026-06-19
 
 ### Slice 2.8.1: AI Run Trace Workbench
 
@@ -3351,6 +3441,7 @@ Status:
     but is not the primary analysis surface.
   - Do not add backend endpoints; use `GET /api/ai-runs/{id}` as the source of truth.
   - Completed 2026-06-19.
+- Completed: 2026-06-19
 
 ### Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair
 
@@ -3370,6 +3461,7 @@ Status:
   - Replace custom trace tabs with canonical `.tabs .tab`, repair spacing, and add
     design/visual smoke coverage for `/ai-runs`.
   - Completed 2026-06-19.
+- Completed: 2026-06-19
 
 ### Slice 2.9: Source Ledger Foundation
 
@@ -3417,6 +3509,7 @@ Status:
   - Completed 2026-06-20.
 - Risks:
   - Claim extraction can become over-complicated; keep v1 deterministic and traceable.
+- Completed: 2026-06-20
 
 ### Slice 2.10: Feasibility Gate and Post Contract
 
@@ -3453,6 +3546,7 @@ Status:
     compatibility/local fallback.
   - `/ai-runs` semantic trace now reads feasibility and contract artifacts.
   - Completed 2026-06-20.
+- Completed: 2026-06-20
 
 ### Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration
 
@@ -3487,6 +3581,7 @@ Status:
     `candidate=null` while source signal, topic, fabula, and evidence were present.
   - Added shared candidate-link recovery and adjusted feasibility policy.
   - Completed 2026-06-22.
+- Completed: 2026-06-22
 
 ### Slice 2.11: Rule Registry v2 and Validator Bindings
 
@@ -3510,6 +3605,7 @@ Status:
     changing step order or SQLite schema.
   - Updated `/ai-runs` semantic trace to show a readable Rule registry summary.
   - Completed 2026-06-22.
+- Completed: 2026-06-22
 
 ### Slice 2.11.1: Publication Size Contract Foundation
 
@@ -3537,6 +3633,7 @@ Status:
   - Added backend `PublicationSizeContract` resolver and registry size rules.
   - Added trace rendering for the size contract.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12: Contract-Based Rhetorical Plans
 
@@ -3559,6 +3656,7 @@ Status:
   - Updated `/ai-runs` semantic trace to show rhetorical plans and candidate plan
     linkage.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline
 
@@ -3585,6 +3683,7 @@ Status:
   - Added stale/last-progress UX in the draft generation screen and right panel.
   - Updated trace view-model to render stale-running state.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12.2: Draft Candidate Scoring and Selection Trace
 
@@ -3617,6 +3716,7 @@ Status:
   - Added semantic sections for draft candidates, scorecard, and selected candidate.
   - Repaired nested trace row wrapping so provider/model/id values do not break layout.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12.2.1: Scorecard Trace Table Repair
 
@@ -3645,6 +3745,7 @@ Status:
   - Added a dedicated scorecard comparison table renderer.
   - Updated trace tests so scorecard details are not rendered as `Rows` text blobs.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12.3: Source Intent and Research Plan
 
@@ -3691,6 +3792,7 @@ Status:
 - Risks:
   - Source classification can be too heuristic; keep it conservative and visible in
     trace.
+- Completed: 2026-06-23
 
 ### Slice 2.12.3.1: Fabula Research Strategy Defaults
 
@@ -3731,6 +3833,7 @@ Status:
   - New work briefs receive manual or auto sources. Done.
   - The editor can override sources before DraftRun. Done.
   - Completed 2026-06-23.
+- Completed: 2026-06-23
 
 ### Slice 2.12.4: Public Evidence Retrieval Foundation
 
@@ -3921,10 +4024,11 @@ Status:
 - Risks:
   - Over-penalizing fallback could hide useful local drafts when provider output is
     also poor; keep trace explicit and conservative.
+- Completed: unknown
 
 ### Slice 2.12.5: SourceLedger External Evidence Merge
 
-- Status: Done (2026-06-24)
+- Status: Done
 - Goal: Merge public evidence into the source ledger and synthesize what it changes
   before feasibility, post contract, rule registry, and drafting.
 - User value: The runner can explain which external material supports, qualifies, or
@@ -3960,10 +4064,11 @@ Status:
     contract/rule planning.
 - Risks:
   - Over-trusting external snippets; keep allowed-use conservative.
+- Completed: 2026-06-24
 
 ### Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry
 
-- Status: Done (2026-06-24)
+- Status: Done
 - Goal: Prevent `materialPlan` from silently ignoring enriched SourceLedger evidence.
 - User value: DraftRun trace now explains whether the runner used public/internal
   evidence, rejected it with reasons, retried the planner, or fell back only as an
@@ -3996,6 +4101,7 @@ Status:
 - Risks:
   - Retry increases latency and model cost when the planner ignores evidence; this is
     intentional until validators and directed revision exist.
+- Completed: 2026-06-24
 
 ### Slice 2.13: Deterministic Linter and Validator Orchestrator
 
@@ -4062,6 +4168,7 @@ Status:
     any source mention globally.
   - Findings expose expected/matched/missing attribution markers in validation
     metadata and `/ai-runs` semantic trace.
+- Completed: 2026-06-24
 
 ### Slice 2.13.2: JSON Step Retry Discipline
 
@@ -4095,6 +4202,7 @@ Status:
     fallback.
   - The step artifact stores `attempts[]`, and DraftRun `aiRunIds` includes all child
     provider attempts.
+- Completed: 2026-06-25
 
 ### Slice 2.13.3: LLM-Assisted Validator Reports
 
@@ -4187,6 +4295,7 @@ Status:
   - `/ai-runs?runId=...` shows ranking/revision semantic sections.
   - Built-in publication size defaults were expanded for Telegram post, LinkedIn post,
     and LinkedIn article, while user-edited profiles are preserved.
+- Completed: 2026-06-25
 
 ### Slice 2.14.1: DraftRun Long-Running Step Progress Budget
 
@@ -4227,6 +4336,7 @@ Status:
     `/ai-runs?runId=...` renders nested operations under logical steps.
   - Added `backend/app/application/draft_run_step_progress.py` and
     `src/infrastructure/draftRunProgress.ts` as role-owned progress helpers.
+- Completed: 2026-06-25
 
 ### Slice 2.15: Iterative Revision Loop and Improvement Gate
 
@@ -4416,6 +4526,7 @@ Status:
     `modelSelectionSource`.
   - Backup retry still uses `OPENROUTER_BACKUP_MODEL`; public search still uses
     `OPENROUTER_WEB_SEARCH_MODEL`.
+- Completed: 2026-06-26
 
 ### Slice 2.15.2: Article Dossier and Context Packs
 
@@ -4460,6 +4571,7 @@ Status:
     `contextPack` they received.
   - `/ai-runs?runId=...` renders Article Dossier and Context Packs as semantic trace
     sections, while old runs without these fields remain readable.
+- Completed: 2026-06-26
 
 ### Slice 2.15.3: Evidence Interpretation, Not Citation Injection
 
@@ -4510,6 +4622,7 @@ Status:
     raw snippets.
   - `/ai-runs?runId=...` renders `EvidenceInterpretation` as a readable semantic
     section and maps child `evidenceInterpretation` AiRuns under the `rulePack` step.
+- Completed: 2026-06-26
 
 ### Slice 2.15.4: Prosecutor / Editor Critic Loop
 
@@ -4552,6 +4665,7 @@ Status:
     slices can consume weak moves, risks, and voice/tension observations.
   - `/ai-runs?runId=...` now renders `Editorial critique` separately from
     deterministic validation and LLM validation.
+- Completed: 2026-06-26
 
 ### Slice 2.15.5: Alternative Angle Tournament
 
@@ -4595,6 +4709,7 @@ Status:
     `alternativeAngleCandidate`, including model-role metadata.
   - `/ai-runs?runId=...` now renders `Alternative angle tournament` as a semantic
     trace section.
+- Completed: 2026-06-27
 
 ### Slice 2.15.6: Deep Revision Loop v2
 
@@ -4649,6 +4764,7 @@ Status:
     revision cycle 1, and then can become stale inside `directed-revision-cycle-2`.
     This is an orchestration reliability issue for a follow-up repair slice; it is not
     part of the 2.15.6 editorial-loop policy itself.
+- Completed: 2026-06-27
 
 ### Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair
 
@@ -5661,6 +5777,7 @@ Status:
   - Project isolation survives backend round-trip.
 - Risks:
   - Auth can sprawl; keep v1 deliberately narrow.
+- Completed: 2026-06-30
 
 ### Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX
 
@@ -5788,6 +5905,31 @@ Status:
   - Owner profile is shown in the sidebar footer, not the top of a floating card.
   - `Новый проект` appears below the page header.
   - A single project card remains bounded and centered.
+- Completed: 2026-07-01
+
+### Slice 2.17.3.4: Roadmap Tracker Source of Truth
+
+- Status: Done
+- Goal: Move roadmap editing behind a SQLite-backed CLI, reviewable JSONL export, and generated Markdown report.
+- User value: Agents can query and update roadmap state without hand-editing a 6000+ line Markdown file, while humans still get a readable report.
+- Scope:
+  - SQLite local tracker database
+  - JSONL review export
+  - generated ROADMAP.md
+  - CLI commands for list next show add-slice update-status import export render check
+  - ADR and workflow docs
+- Out of scope:
+  - Product runtime behavior changes.
+- Architecture impact:
+  - Moves roadmap editing behind a tracker/export/render workflow.
+- Tests:
+  - Roadmap CLI import/export/render/check coverage.
+- Docs:
+  - README, ADR, contributor guide, developer guide, AGENTS, and roadmap docs.
+- Acceptance criteria:
+  - Agents can use CLI commands instead of manually editing ROADMAP.md.
+  - ROADMAP.md renders from docs/roadmap/slices.export.jsonl.
+  - Roadmap changes remain reviewable in git diff.
 - Completed: 2026-07-01
 
 ### Slice 2.17.4: Publication Channels and Platform Profiles
@@ -5965,16 +6107,14 @@ Status:
 
 - Slice 0.1: Bootstrap Project Structure. Completed 2026-06-03.
 - Slice 0.2: Brief-Backed Bootstrap Update. Completed 2026-06-03.
-- Slice 0.3: Architecture Baseline for the First Product Perimeter. Completed
-  2026-06-03.
+- Slice 0.3: Architecture Baseline for the First Product Perimeter. Completed 2026-06-03.
 - Slice 0.4: First Working Flow to Approved Post Brief. Completed 2026-06-03.
 - Slice 0.5: Draft and Editorial Checks. Completed 2026-06-03.
 - Slice 0.6: Manual Export and Release Prep. Completed 2026-06-04.
 - Slice 0.7: Analytics Prep and Editorial Learning Notes. Completed 2026-06-04.
 - Slice 0.8: AI Provider Architecture Baseline. Completed 2026-06-04.
 - Slice 0.9: Author Position Product Reframe. Completed 2026-06-10.
-- Slice 1.0: Author Memory Feed and Position Evidence Baseline. Completed
-  2026-06-10.
+- Slice 1.0: Author Memory Feed and Position Evidence Baseline. Completed 2026-06-10.
 - Slice 1.0.1: Author Memory UX Hardening. Completed 2026-06-10.
 - Slice 1.0.2: Author Memory File Attachments. Completed 2026-06-10.
 - Slice 1.0.3: GitHub Wiki Screenshot Documentation Baseline. Completed 2026-06-11.
@@ -5983,8 +6123,7 @@ Status:
 - Slice 1.0.5.1: External Sources UX Fixes. Completed 2026-06-11.
 - Slice 1.1: Topics and Fabulas as Editorial Entities. Completed 2026-06-11.
 - Slice 1.1.1: Editorial Model UX Repair and Frontend UX ADRs. Completed 2026-06-11.
-- Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes. Completed
-  2026-06-11.
+- Slice 1.1.2: Editorial Model Layout and Manual Validation UX Fixes. Completed 2026-06-11.
 - Slice 1.1.3: Add and Delete Topics and Fabulas. Completed 2026-06-11.
 - Slice 1.2: Validator Framework Baseline. Completed 2026-06-11.
 - Slice 1.2.1: Author Memory Sources UX Alignment. Completed 2026-06-12.
@@ -5997,25 +6136,19 @@ Status:
 - Slice 1.5.1: Radar Rules/Sources and Raw Signal UX Repair. Completed 2026-06-13.
 - Slice 1.5.2: Signals UI Design-System Repair and Visual Guardrails. Completed 2026-06-13.
 - Slice 1.5.3: Signals Layout Polish and Pixel Guardrails. Completed 2026-06-14.
-- Slice 1.5.4: Design-System Guardrails and Signals UI Alignment. Completed
-  2026-06-14.
+- Slice 1.5.4: Design-System Guardrails and Signals UI Alignment. Completed 2026-06-14.
 - Slice 1.5.5: Frontend Design-System Consolidation. Completed 2026-06-14.
 - Slice 1.5.6: Layout Stability and Form Rhythm Guardrails. Completed 2026-06-14.
-- Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources. Completed
-  2026-06-14.
-- Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode. Completed
-  2026-06-14.
-- Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails. Completed
-  2026-06-15.
+- Slice 1.5.7: Inline Radar Editing and Multiline Rule Sources. Completed 2026-06-14.
+- Slice 1.5.8: Radar Editorial Filters and Source Discovery Mode. Completed 2026-06-14.
+- Slice 1.5.9: React Architecture Baseline and App.tsx Growth Guardrails. Completed 2026-06-15.
 - Slice 1.5.10: Extract App Shell and Workspace Controller. Completed 2026-06-15.
 - Slice 1.5.11: Extract Signals Feature. Completed 2026-06-15.
 - Slice 1.5.12: Extract Editorial Model Feature. Completed 2026-06-15.
 - Slice 1.5.13: Extract Author Memory Feature. Completed 2026-06-15.
 - Slice 1.5.14: Extract Production Flow Features. Completed 2026-06-15.
-- Slice 1.5.15: Codebase Size Audit and Modularization Guardrails. Completed
-  2026-06-15.
-- Slice 1.5.16: Split Domain Workspace Types by Bounded Context. Completed
-  2026-06-15.
+- Slice 1.5.15: Codebase Size Audit and Modularization Guardrails. Completed 2026-06-15.
+- Slice 1.5.16: Split Domain Workspace Types by Bounded Context. Completed 2026-06-15.
 - Slice 1.5.17: Split Domain Transitions and Invariants. Completed 2026-06-15.
 - Slice 1.5.18: Split Application Services. Completed 2026-06-15.
 - Slice 1.5.19: Split Demo Workspace Fixtures. Completed 2026-06-15.
@@ -6028,34 +6161,31 @@ Status:
 - Slice 1.5.26: Signals Feature Internal Decomposition. Completed 2026-06-15.
 - Slice 1.5.27: Author Memory Import Queue Decomposition. Completed 2026-06-15.
 - Slice 1.5.28: App Workspace Controller Decomposition. Completed 2026-06-15.
-- Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules. Completed
-  2026-06-16.
+- Slice 1.5.29: Architecture Drift Guardrails and Agent Workflow Rules. Completed 2026-06-16.
 - Slice 1.6: First Real Post Candidate Assemblies. Completed 2026-06-16.
 - Slice 1.7: Candidate List UX Parity and Review Actions. Completed 2026-06-16.
 - Slice 1.7.1: Candidate Format Cleanup and Edit Context. Completed 2026-06-16.
 - Slice 1.8: Broadcast Grid Settings. Completed 2026-06-17.
-- Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings. Completed
-  2026-06-17.
+- Slice 1.8.1: Broadcast Grid UX Parity, Filters, and Calendar Settings. Completed 2026-06-17.
 - Slice 1.8.2: Broadcast Grid Candidate Calendar View. Completed 2026-06-17.
 - Slice 1.9: Editorial Work Queue Foundation. Completed 2026-06-17.
 - Slice 1.10: Редактура как очередь постов и рабочий стол. Completed 2026-06-17.
 - Slice 1.10.1: Editorial Workspace UX Guardrail Repair. Completed 2026-06-17.
 - Slice 1.10.2: Automatic Draft After Fabula Approval. Completed 2026-06-17.
-- Slice 1.10.3: Editorial Workbench Selection and Picker Repair. Completed
-  2026-06-17.
+- Slice 1.10.3: Editorial Workbench Selection and Picker Repair. Completed 2026-06-17.
 - Slice 1.10.4: Editable Fabula Brief With Candidate Context. Completed 2026-06-17.
 - Slice 1.10.5: Draft Approval Without Final Tab. Completed 2026-06-18.
 - Slice 1.10.6: Visual Stage Foundation. Completed 2026-06-18.
 - Slice 1.10.6.1: Visual Variants Review Flow. Completed 2026-06-18.
 - Slice 1.10.6.2: Two-Step Meme Remix Visual Flow. Completed 2026-06-18.
 - Slice 1.10.6.3: App Flow Test Ownership Guardrails. Completed 2026-06-18.
+- Slice 1.10.7: Ready Post Handoff. Completed unknown.
 - Slice 2.0: Backend AI Execution Architecture Baseline. Completed 2026-06-18.
 - Slice 2.1: Backend Foundation and OpenRouter Environment. Completed 2026-06-18.
 - Slice 2.2: AI Run Contract and Audit Trail. Completed 2026-06-18.
 - Slice 2.3: First OpenRouter Draft Run. Completed 2026-06-18.
 - Slice 2.3.1: Dockerized Local Full-Stack Runner. Completed 2026-06-18.
-- Slice 2.3.2: AI Run Observability and Draft Generation Status. Completed
-  2026-06-18.
+- Slice 2.3.2: AI Run Observability and Draft Generation Status. Completed 2026-06-18.
 - Slice 2.3.3: AI Run Trace Debug Page. Completed 2026-06-18.
 - Slice 2.3.4: Agentic Draft Runner Architecture Plan. Completed 2026-06-19.
 - Slice 2.4: Draft Run Contract and Queue Foundation. Completed 2026-06-19.
@@ -6064,61 +6194,47 @@ Status:
 - Slice 2.7: Material Plan and Draft Strategy Steps. Completed 2026-06-19.
 - Slice 2.8: Agentic Multi-Candidate Draft Generation. Completed 2026-06-19.
 - Slice 2.8.1: AI Run Trace Workbench. Completed 2026-06-19.
-- Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair. Completed
-  2026-06-19.
+- Slice 2.8.1.1: Draft Run Trace Timeline and Trace UI Repair. Completed 2026-06-19.
 - Slice 2.9: Source Ledger Foundation. Completed 2026-06-20.
 - Slice 2.10: Feasibility Gate and Post Contract. Completed 2026-06-20.
-- Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration.
-  Completed 2026-06-22.
+- Slice 2.10.1: DraftRun Candidate Link Recovery and Feasibility Calibration. Completed 2026-06-22.
 - Slice 2.11: Rule Registry v2 and Validator Bindings. Completed 2026-06-22.
 - Slice 2.11.1: Publication Size Contract Foundation. Completed 2026-06-23.
 - Slice 2.12: Contract-Based Rhetorical Plans. Completed 2026-06-23.
-- Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline. Completed
-  2026-06-23.
+- Slice 2.12.1: DraftRun Stale Runner Recovery and Fallback Discipline. Completed 2026-06-23.
 - Slice 2.12.2: Draft Candidate Scoring and Selection Trace. Completed 2026-06-23.
-- Slice 2.12.2.1: Draft Candidate Scorecard Trace UI. Completed 2026-06-23.
+- Slice 2.12.2.1: Scorecard Trace Table Repair. Completed 2026-06-23.
 - Slice 2.12.3: Source Intent and Research Plan. Completed 2026-06-23.
 - Slice 2.12.3.1: Fabula Research Strategy Defaults. Completed 2026-06-23.
-- Slice 2.12.4: Public Evidence Retrieval Foundation. Completed 2026-06-24.
-- Slice 2.12.4.1: OpenRouter Web Search Adapter. Completed 2026-06-24.
-- Slice 2.12.4.2: Public Evidence Query and Relevance Repair. Completed 2026-06-24.
+- Slice 2.12.4: Public Evidence Retrieval Foundation. Completed - Completed 2026-06-24..
+- Slice 2.12.4.1: OpenRouter Web Search Adapter. Completed - Completed 2026-06-24..
+- Slice 2.12.4.2: Public Evidence Query and Relevance Repair. Completed - Completed 2026-06-24..
+- Slice 2.12.4.3: Draft Candidate Fallback Selection Guard. Completed unknown.
 - Slice 2.12.5: SourceLedger External Evidence Merge. Completed 2026-06-24.
-- Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry. Completed
-  2026-06-24.
-- Slice 2.13: Deterministic Linter and Validator Orchestrator. Completed
-  2026-06-24.
+- Slice 2.12.5.1: MaterialPlan Evidence Accountability and Retry. Completed 2026-06-24.
+- Slice 2.13: Deterministic Linter and Validator Orchestrator. Completed 2026-06-24.
 - Slice 2.13.1: Attribution Validator Calibration. Completed 2026-06-24.
 - Slice 2.13.2: JSON Step Retry Discipline. Completed 2026-06-25.
 - Slice 2.13.3: LLM-Assisted Validator Reports. Completed 2026-06-25.
-- Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair.
-  Completed 2026-06-25.
+- Slice 2.13.3.1: LLM Validation Report Normalization and Evidence Trace Repair. Completed 2026-06-25.
 - Slice 2.14: Pairwise Ranking and Directed Revision. Completed 2026-06-25.
 - Slice 2.14.1: DraftRun Long-Running Step Progress Budget. Completed 2026-06-25.
 - Slice 2.15: Iterative Revision Loop and Improvement Gate. Completed 2026-06-25.
 - Slice 2.15.1: Multi-Model Drafting Roles. Completed 2026-06-26.
 - Slice 2.15.2: Article Dossier and Context Packs. Completed 2026-06-26.
-- Slice 2.15.3: Evidence Interpretation, Not Citation Injection. Completed
-  2026-06-26.
+- Slice 2.15.3: Evidence Interpretation, Not Citation Injection. Completed 2026-06-26.
 - Slice 2.15.4: Prosecutor / Editor Critic Loop. Completed 2026-06-26.
 - Slice 2.15.5: Alternative Angle Tournament. Completed 2026-06-27.
 - Slice 2.15.6: Deep Revision Loop v2. Completed 2026-06-27.
-- Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair. Completed
-  2026-06-27.
-- Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes. Completed
-  2026-06-27.
-- Slice 2.15.6.3: Model Stabilization and Universal JSON Retry Repair. Completed
-  2026-06-27.
-- Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params.
-  Completed 2026-06-28.
-- Slice 2.15.6.4: Final Draft Quality Gate and Public Prose Repair. Completed
-  2026-06-28.
-- Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review. Completed
-  2026-06-28.
+- Slice 2.15.6.1: Revision Operation Timeout and Validation Progress Commit Repair. Completed 2026-06-27.
+- Slice 2.15.6.2: Research Depth Profiles and DraftRun Budget Modes. Completed 2026-06-27.
+- Slice 2.15.6.3: Model Stabilization and Universal JSON Retry Repair. Completed 2026-06-27.
+- Slice 2.15.6.3.1: Writer Model Strength, Backup Separation, and Generation Params. Completed 2026-06-28.
+- Slice 2.15.6.4: Final Draft Quality Gate and Public Prose Repair. Completed 2026-06-28.
+- Slice 2.15.6.4.1: Final Quality Contract and Independent Gate Review. Completed 2026-06-28.
 - Slice 2.15.6.4.2: Final Gate Attribution Handoff Repair. Completed 2026-06-28.
-- Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot. Completed
-  2026-06-28.
-- Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace. Completed
-  2026-06-29.
+- Slice 2.16: Versioned Human Revision Loop and Editor Decision Snapshot. Completed 2026-06-28.
+- Slice 2.16.0.1: HITL Revision Quality Check and Comment Compliance Trace. Completed 2026-06-29.
 - Slice 2.16.1: Editorial Learning Notes in Author Memory. Completed 2026-06-29.
 - Slice 2.16.1.1: Seeded HITL Learning Demo Scenarios. Completed 2026-06-29.
 - Slice 2.17.0: SaaS Blog Portfolio Architecture. Completed 2026-06-29.
@@ -6129,10 +6245,13 @@ Status:
 - Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX. Completed 2026-06-30.
 - Slice 2.17.3.2: Project Dashboard Layout Polish. Completed 2026-06-30.
 - Slice 2.17.3.3: Project Dashboard App Shell Alignment. Completed 2026-07-01.
+- Slice 2.17.3.4: Roadmap Tracker Source of Truth. Completed 2026-07-01.
+
 
 ## Blocked Items
 
 - None.
+
 
 ## Open Questions
 

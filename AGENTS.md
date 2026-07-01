@@ -16,18 +16,33 @@ Do not work in a waterfall style where one large module is fully built before th
 
 ## Source of truth
 
-The project backlog is maintained in `ROADMAP.md`.
+The project backlog is maintained through the roadmap tracker.
 
-Always keep `ROADMAP.md` current:
+- `docs/roadmap/slices.export.jsonl` is the committed source artifact for review.
+- `var/roadmap/roadmap.sqlite` is the local generated working database and is not committed.
+- `ROADMAP.md` is a generated human-readable report. Do not edit it manually.
 
-- Add new tasks there.
-- Take work from there.
-- Update task status during and after work.
-- Record completed slices.
-- Record blocked items and assumptions.
+Use the tracker CLI for roadmap work:
+
+```bash
+python -m backend.app.roadmap next
+python -m backend.app.roadmap show <slice-id>
+python -m backend.app.roadmap add-slice ...
+python -m backend.app.roadmap update-status <slice-id> Done
+python -m backend.app.roadmap check
+python -m backend.app.roadmap render
+python -m backend.app.roadmap export
+```
+
+Always keep the tracker artifacts current:
+
+- Add new tasks through the CLI or JSONL export, then render.
+- Take work from `python -m backend.app.roadmap next`.
+- Update task status during and after work through the tracker.
+- Record completed slices, blocked items, and assumptions in tracker records.
 - Keep the next actionable task easy to identify.
 
-Before starting implementation, inspect `ROADMAP.md`.
+Before starting implementation, inspect the tracker first and use `ROADMAP.md` as the generated report fallback.
 
 If the user asks to “take the next task”, “continue the project”, “work on the next slice”, or gives a vague continuation request, use `$project-onboarding` first.
 
@@ -57,7 +72,9 @@ Keep documentation current together with code.
 The repository should maintain:
 
 - `README.md` as the main entry point.
-- `ROADMAP.md` as the backlog and delivery tracker.
+- `ROADMAP.md` as the generated backlog and delivery report.
+- `docs/roadmap/slices.export.jsonl` as the roadmap source artifact.
+- `docs/roadmap/README.md` as the roadmap workflow guide.
 - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`.
 - ADRs in `docs/adr/`.
 - Contributor documentation in `docs/contributor/CONTRIBUTING.md`.
@@ -159,7 +176,7 @@ Use `$project-bootstrap` for initial repository creation, structure setup, READM
 
 Before making changes:
 
-1. Inspect `ROADMAP.md`.
+1. Inspect the roadmap tracker (`python -m backend.app.roadmap next/show`) and generated `ROADMAP.md`.
 2. Inspect relevant documentation.
 3. Inspect the source requirements file if the task depends on product requirements.
 4. Identify the current iteration and slice.
@@ -175,7 +192,7 @@ During changes:
 
 Before finishing:
 
-1. Update `ROADMAP.md`.
+1. Update the roadmap tracker, then run `python -m backend.app.roadmap render` and `python -m backend.app.roadmap export`.
 2. Update relevant docs.
 3. Add or update tests.
 4. Run the relevant validation commands.

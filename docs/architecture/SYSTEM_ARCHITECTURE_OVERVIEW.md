@@ -41,6 +41,18 @@ target for Slice 2.15.3 is documented in
 `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.md`, with a generated PDF at
 `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.pdf`.
 
+Roadmap state is tracker-backed. `docs/roadmap/slices.export.jsonl` is the committed
+source artifact, `var/roadmap/roadmap.sqlite` is the local generated working database,
+and `ROADMAP.md` is a generated report. Contributors and agents should use
+`python -m backend.app.roadmap ...` commands for slice queries and status changes.
+The decision is recorded in
+`docs/adr/2026-07-01-roadmap-tracker-source-of-truth.md`.
+The tracker is split by backend ownership:
+`backend/app/domain/roadmap_tracker.py` owns provider-free roadmap DTOs,
+`backend/app/application/roadmap_tracker.py` owns import/export/render/check logic,
+and `backend/app/infrastructure/sqlite_roadmap_repository.py` owns the local SQLite
+cache adapter.
+
 ## Strategic Product Model
 
 The durable model is:

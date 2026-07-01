@@ -65,6 +65,31 @@ Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementatio
 contract for Slice 2.17.x. If code behavior diverges from that document, update the
 document in the same slice.
 
+## Roadmap Tracker
+
+Roadmap state is no longer edited directly in `ROADMAP.md`.
+
+- `docs/roadmap/slices.export.jsonl` is the committed source artifact.
+- `var/roadmap/roadmap.sqlite` is the local generated database for CLI work.
+- `ROADMAP.md` is a generated report.
+
+Use:
+
+```bash
+python -m backend.app.roadmap next
+python -m backend.app.roadmap show <slice-id>
+python -m backend.app.roadmap list --status Ready
+python -m backend.app.roadmap add-slice <slice-id> "Title" --after <slice-id> --status Backlog --goal "..." --user-value "..." --scope "..."
+python -m backend.app.roadmap update-status <slice-id> Done
+python -m backend.app.roadmap check
+python -m backend.app.roadmap render
+python -m backend.app.roadmap export
+```
+
+Roadmap-changing slices must commit both `docs/roadmap/slices.export.jsonl` and the
+generated `ROADMAP.md`. Review JSONL for the actual state change and use `ROADMAP.md`
+as the readable report.
+
 ## Environment
 
 Copy `.env.example` to `.env` for local development and fill secrets locally. `.env`
