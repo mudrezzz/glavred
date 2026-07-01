@@ -5,7 +5,7 @@ import { createDemoPortfolio } from '../../fixtures/demoPortfolio';
 import { ProjectDashboardView } from './ProjectDashboardView';
 
 describe('ProjectDashboardView', () => {
-  it('renders dashboard account navigation and constrained project grid shell', () => {
+  it('renders dashboard in the cabinet app shell with owner profile in sidebar footer', () => {
     const portfolio = createDemoPortfolio();
     const activeProjects = getAccessibleProjects(portfolio).slice(0, 1);
 
@@ -24,17 +24,30 @@ describe('ProjectDashboardView', () => {
       />
     );
 
+    expect(screen.getByTestId('project-dashboard')).toHaveClass('app');
+    expect(screen.getByText('Главред')).toBeInTheDocument();
     expect(screen.getByTestId('project-dashboard-shell')).toBeInTheDocument();
-    expect(screen.getByTestId('project-dashboard-grid')).toHaveClass('project-dashboard-grid');
+    expect(screen.getByTestId('project-dashboard-action-row')).toContainElement(
+      screen.getByRole('button', { name: /Новый проект/ })
+    );
+    expect(
+      screen.getByRole('button', { name: /Активные/ }).compareDocumentPosition(
+        screen.getByTestId('project-dashboard-action-row')
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.getByTestId('project-dashboard-grid')).toHaveClass('project-dashboard-grid', 'single');
 
     const accountNavigation = screen.getByRole('navigation', { name: 'Разделы аккаунта' });
-    expect(within(accountNavigation).getByRole('button', { name: 'Проекты' })).toHaveAttribute(
+    expect(within(accountNavigation).getByRole('button', { name: /Проекты/ })).toHaveAttribute(
       'aria-current',
       'page'
     );
-    expect(within(accountNavigation).getByRole('button', { name: 'Аккаунт' })).toBeDisabled();
-    expect(within(accountNavigation).getByRole('button', { name: 'Биллинг' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
+    expect(within(accountNavigation).getByRole('button', { name: /Аккаунт/ })).toBeDisabled();
+    expect(within(accountNavigation).getByRole('button', { name: /Биллинг/ })).toBeDisabled();
+
+    const ownerFooter = screen.getByTestId('project-dashboard-owner');
+    expect(ownerFooter).toHaveTextContent('Владелец профиля');
+    expect(within(ownerFooter).getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
   });
 
   it('opens, creates, renames, and archives projects', async () => {
@@ -60,7 +73,7 @@ describe('ProjectDashboardView', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Новый проект' }));
+    fireEvent.click(screen.getByRole('button', { name: /Новый проект/ }));
     fireEvent.change(screen.getByLabelText('Название проекта'), { target: { value: 'New blog' } });
     fireEvent.change(screen.getByLabelText('Описание проекта'), { target: { value: 'New description' } });
     fireEvent.click(screen.getByRole('button', { name: 'Создать' }));
@@ -73,6 +86,7 @@ describe('ProjectDashboardView', () => {
     );
 
     fireEvent.click(screen.getAllByLabelText('Действия проекта')[0]);
+    expect(document.querySelector('.project-card-menu-panel')).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: 'Переименовать' })[0]);
     fireEvent.change(screen.getByLabelText('Новое название'), { target: { value: 'Renamed blog' } });
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }));

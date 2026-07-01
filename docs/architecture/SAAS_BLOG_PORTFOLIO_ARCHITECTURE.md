@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.3.2: Project Dashboard Layout Polish.
+Current as of Slice 2.17.3.3: Project Dashboard App Shell Alignment.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -11,7 +11,9 @@ and project-scoped workspace snapshots in SQLite. Slice 2.17.3.1 makes the proje
 dashboard the post-login destination and adds create/rename/archive lifecycle actions.
 Slice 2.17.3.2 keeps that behavior but gives the dashboard an account-level sidebar
 and a bounded project tile grid so project administration feels like a SaaS dashboard
-rather than an empty stretched content page.
+rather than an empty stretched content page. Slice 2.17.3.3 aligns that dashboard with
+the project cabinet shell: full-height left sidebar, topbar, scroll area, centered
+working canvas, and account owner in the sidebar footer.
 Publication channels, platform variants, production auth, and benchmark runner remain
 later slices.
 
@@ -338,6 +340,19 @@ The sidebar switcher is a fast in-cabinet shortcut, not the main navigation surf
 It must keep a `Все проекты` action that returns to the dashboard.
 
 ### Project dashboard
+
+The dashboard is not a standalone landing page. It shares the cabinet visual shell:
+
+- full-height left sidebar with the `Главред` brand;
+- portfolio navigation in the sidebar: `Проекты`, `Аккаунт`, `Статистика`,
+  `Биллинг`, `Настройки`;
+- account owner profile in the sidebar footer, not in the page header;
+- topbar with `Проекты` and `Портфель блогов`;
+- centered working canvas with the same visual width discipline as the cabinet's
+  central + right column area;
+- `Новый проект` below the page header and above summary/filter/grid controls;
+- two project cards per desktop row, one per narrow screen row, and a bounded centered
+  single-card layout.
 
 Each project card should show:
 

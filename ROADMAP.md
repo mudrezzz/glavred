@@ -5747,6 +5747,49 @@ Status:
   - Placeholder account sections are visible but disabled until later slices.
 - Completed: 2026-06-30
 
+### Slice 2.17.3.3: Project Dashboard App Shell Alignment
+
+- Status: Done
+- Goal: Align the project dashboard with the editorial cabinet shell instead of
+  rendering it as a separate sparse page.
+- User value:
+  - The portfolio entry point feels like the same product as the project cabinet:
+    full-height left navigation, topbar, centered working canvas, and stable project
+    tiles.
+- Scope:
+  - Rebuild `ProjectDashboardView` as a dashboard-local app shell using the same
+    structural patterns as the cabinet: `.app`, `.side`, `.main`, `.topbar`, and
+    `.scroll`.
+  - Keep `AppShell` itself out of the dashboard because it is tied to
+    `WorkspaceSection` and project-cabinet navigation.
+  - Move the owner profile block to the sidebar footer and keep `Проекты`,
+    `Аккаунт`, `Статистика`, `Биллинг`, and `Настройки` in the left navigation.
+  - Center dashboard content in a working canvas close to the combined width of the
+    cabinet's central and right columns.
+  - Keep `Новый проект` under the page header, above summary/filter/grid controls.
+  - Keep the project grid at two cards per desktop row, one column on narrow screens,
+    and a bounded centered layout for single-project users.
+- Out of scope:
+  - Backend API changes.
+  - Account, billing, statistics, or settings implementation.
+  - Publication channel modeling.
+- Architecture impact:
+  - Dashboard shell alignment remains a portfolio UI concern; project lifecycle,
+    storage, auth, and DraftRun behavior stay unchanged.
+- Tests:
+  - Project dashboard component tests assert shell structure, sidebar footer owner,
+    disabled account placeholders, action placement, and single-card grid mode.
+  - Design, visual, architecture, smoke, and regression checks.
+- Docs:
+  - README, user guide, developer guide, demo docs, SaaS portfolio architecture, and
+    roadmap.
+- Acceptance criteria:
+  - Dashboard root uses the product app shell structure.
+  - Owner profile is shown in the sidebar footer, not the top of a floating card.
+  - `Новый проект` appears below the page header.
+  - A single project card remains bounded and centered.
+- Completed: 2026-07-01
+
 ### Slice 2.17.4: Publication Channels and Platform Profiles
 
 - Status: Ready
@@ -6085,6 +6128,7 @@ Status:
 - Slice 2.17.3: Backend Auth and Project Persistence Boundary. Completed 2026-06-30.
 - Slice 2.17.3.1: Project Dashboard and Project Lifecycle UX. Completed 2026-06-30.
 - Slice 2.17.3.2: Project Dashboard Layout Polish. Completed 2026-06-30.
+- Slice 2.17.3.3: Project Dashboard App Shell Alignment. Completed 2026-07-01.
 
 ## Blocked Items
 

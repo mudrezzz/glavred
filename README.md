@@ -123,9 +123,11 @@ dashboard shows available blog projects as cards, supports creating a new projec
 renaming a project, and soft-archiving it. Opening a card enters the existing editorial
 cabinet for that project. Inside the cabinet the lower-left portfolio switcher remains
 available for quick project switching and has a `Все проекты` action to return to the
-dashboard. The dashboard uses a dedicated account sidebar for session/account sections
-and keeps project cards in a constrained two-column tile grid so a single project does
-not stretch across the whole screen.
+dashboard. The dashboard uses the same shell language as the project cabinet: a
+full-height left sidebar, topbar, centered working canvas, account placeholders in the
+sidebar, and the owner profile in the sidebar footer. Project cards stay in a
+constrained two-column tile grid so a single project does not stretch across the whole
+screen.
 
 The existing source-signal workflow remains useful, but it is a production layer, not
 the product center. Source signals, radar findings, archive imports, analytics notes,

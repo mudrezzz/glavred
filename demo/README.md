@@ -62,7 +62,10 @@ project containers with realistic benchmark memories, editorial models, source
 examples, plan slots, and production scenarios. Slice 2.17.3 adds backend login,
 sessions, memberships, and workspace snapshots. Slice 2.17.3.1 adds dashboard-first
 navigation and owner-local project lifecycle actions. Slice 2.17.3.2 polishes the
-dashboard with an account sidebar and a bounded two-column project tile grid.
+dashboard with an account sidebar and a bounded two-column project tile grid. Slice
+2.17.3.3 aligns the dashboard to the same shell language as the project cabinet:
+full-height left sidebar, topbar, centered canvas, and owner profile in the sidebar
+footer.
 
 Backend demo login:
 
