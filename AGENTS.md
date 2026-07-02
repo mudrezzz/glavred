@@ -220,6 +220,8 @@ Use these skills when available:
   Markdown + PDF before implementing a new drafting slice, so the target design can
   be discussed and approved first.
 - `$project-bootstrap` for initial project creation, repository structure, Git, GitHub, README, and baseline docs.
+- `$project-blueprint-creation` for turning an approved Glavred blog-project blueprint
+  into project fixtures, docs, backend-visible demo snapshots, and validation checks.
 - `$project-onboarding` when entering an existing project, starting a new chat, or continuing from `ROADMAP.md`.
 - `$roadmap-slice-planning` for turning requirements into iterations, slices, and actionable backlog items.
 - `$slice-implementation` for implementing the next small product increment.

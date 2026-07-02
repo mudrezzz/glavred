@@ -103,6 +103,13 @@ materials supplied by the product owner, but the source PDFs/resume and private
 details are not committed. The public demo keeps only reusable editorial signals,
 source descriptions, author-memory notes, and benchmark expectations.
 
+New and reworked benchmark projects should be created through
+`$project-blueprint-creation`. The workflow starts from an approved project blueprint,
+updates UTF-8 source fixtures/docs, runs project blueprint validation, and only then
+refreshes backend-visible snapshots. The validation guards against empty Publisher
+blocks, channel audience duplication, mojibake/question-mark replacement text,
+one-to-one topic/fabula coupling, and missing ready scenarios.
+
 ## Seeded Author Memory
 
 Each blog now has its own memory feed:

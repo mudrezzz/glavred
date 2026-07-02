@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Blueprint Creation"
+  short_description: "Create or rework Glavred blog projects from approved blueprints"
+  default_prompt: "Create or rework a Glavred project from an approved blueprint."

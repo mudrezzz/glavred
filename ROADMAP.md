@@ -6132,48 +6132,65 @@ Status:
 
 ### Slice 2.17.4.2.2.1: Project Blueprint Creation Skill
 
-- Status: Ready
-- Goal: Create a reusable agent skill for turning an approved blog-project blueprint into consistent Glavred project data, fixtures, docs, backend demo snapshots, and validation checks.
+- Status: Done
+- Goal: Create a reusable local agent skill that turns an approved blog-project blueprint into consistent Glavred project data, sanitized fixtures, backend-visible demo snapshots, docs, and validation checks.
 - User value:
-  - New/reworked projects stop being hand-wired through ad hoc fixture edits and SQLite snapshot patches.
-  - Project setup becomes repeatable: author memory, editorial rules, topics, fabulas, matrix, channels, plan scenarios and benchmark expectations are created from one agreed blueprint.
-  - UTF-8/mojibake, empty Publisher blocks, topic/fabula one-to-one coupling, and stale backend snapshots become explicit failure checks.
+  - New and reworked projects stop being hand-wired through ad hoc fixture edits, direct SQLite patches, or stale backend snapshots.
+  - Project setup becomes repeatable: author memory, Publisher contract, editorial rules, topics, reusable fabulas, topic/fabula matrix, channels, plan scenarios, and benchmark expectations come from one agreed blueprint.
+  - The failures we just hit become hard checks: empty Author/Audience/Goals blocks, mojibake/question-mark Cyrillic, channel-level audience duplication, one-to-one topic/fabula coupling, and backend mode showing old seeded data.
 - Scope:
-  - Add a local `.agents/skills/project-blueprint-creation/SKILL.md` for creating or reworking blog projects from blueprint docs.
-  - The skill must read the roadmap tracker, `ui-design-systems/START-HERE.md`, existing project blueprints, demo fixture builders, and SaaS portfolio architecture before editing.
-  - Define a project blueprint checklist covering project profile, author image, goals, audience, positioning, style, forbidden moves, author memory, editorial rules, topics, reusable fabulas, topic/fabula matrix, publication channels, source signals, ready scenarios and benchmark criteria.
-  - Define the correct write path: update UTF-8 source fixtures/docs first, then reset or migrate backend snapshots through safe scripts; never patch Cyrillic data into SQLite via brittle inline shell commands.
-  - Add or update helper validation so seeded projects fail tests when Publisher blocks are empty, `editorialRules` are missing, topic/fabula matrix degenerates into one-to-one pairs, or mojibake/question-mark runs appear in fixture text.
-  - Document when to create a blueprint first, when to update fixtures, and how to make the updated project visible in backend mode.
+  - Add a local `.agents/skills/project-blueprint-creation/SKILL.md` for creating or reworking blog projects from approved blueprint documents.
+  - Add skill-owned references/templates for the required blueprint shape: project profile, author image, goals, audience, positioning, style, forbidden moves, author memory, editorial rules, topics, reusable fabulas, topic/fabula matrix, publication channels, source signals, ready scenarios, and benchmark criteria.
+  - The skill must start by reading the roadmap tracker, `ui-design-systems/START-HERE.md`, SaaS portfolio architecture, existing project blueprints, demo fixture builders, and current backend seed/snapshot behavior.
+  - Define the canonical mapping rules:
+    - Publisher/editorial contract blocks are owned by canonical editorial rules/groups used by UI and pipeline.
+    - `PublicationChannel` owns destination mechanics only: platform, title/handle, language, role, publishing mode, status, default size profile.
+    - Channel audience is not canonical and must not duplicate Publisher audience.
+    - Topic defines editorial territory; Fabula defines reusable story mechanics and must be applicable across multiple topics where intended.
+  - Define the correct write path: update UTF-8 source docs and fixture builders first, run validation, then refresh backend snapshots through safe scripts or application seed/reset flow; never patch Cyrillic demo content into SQLite through brittle inline shell commands.
+  - Add or update fixture validation helpers/tests that fail on empty Publisher blocks, missing `editorialRules`, mojibake/question-mark runs, channel audience duplication, degenerate topic/fabula one-to-one matrix, and missing ready benchmark scenarios.
+  - Document how to make a changed project visible in backend mode: when to reset local portfolio DB, when to migrate/update snapshots, and how to verify that UI reads the refreshed project.
 - Out of scope:
-  - Implementing a full UI project wizard.
+  - Implementing a product UI wizard for project creation.
   - Persisting project blueprints as a new runtime domain object.
-  - Running DraftRun generation benchmarks.
+  - Running DraftRun quality benchmarks for the new project.
+  - Reworking Severnaya Stena topic/fabula content itself; that remains `2.17.4.2.3`.
 - Implementation notes:
-  - This is an agent workflow skill, not product UI.
-  - The skill should make the approved blueprint the source for project seed data and tests.
-  - It should explicitly prevent direct manual duplication between `editorialModel` summaries and canonical `editorialRules`.
+  - This is an agent workflow skill plus validation guardrails, not a runtime product feature.
+  - The approved blueprint document is the planning source; generated fixture/backend state is the implementation output.
+  - The skill must explicitly avoid manual duplication between summary text fields and canonical `editorialRules`; if compatibility summaries remain, they are mirrors, not the source of truth.
+  - The skill should include a compact checklist for human approval before implementation starts, so project concepts are reviewed before they enter fixtures.
+  - UTF-8 safety is part of the workflow: write files as UTF-8, validate rendered Cyrillic, and never trust mojibake PowerShell output without a UTF-8-aware read.
 - Architecture impact:
-  - Establishes a project creation/rework workflow boundary parallel to DraftRun TO BE planning.
-  - Reduces accidental coupling between docs, fixtures, backend snapshots and UI-visible editorial blocks.
+  - Establishes a repeatable project-creation/rework boundary parallel to DraftRun TO BE planning.
+  - Reduces accidental coupling between project blueprints, demo fixtures, backend snapshots, UI-visible Publisher blocks, and publication channels.
+  - Makes future benchmark projects easier to extend without turning `demoWorkspace` or portfolio seed modules into god files.
 - Tests:
-  - Skill installation/metadata smoke if available.
-  - Fixture validation tests for missing author/audience/goals rules, mojibake, and topic/fabula matrix degeneracy.
-  - Demo portfolio tests proving backend-visible projects can be refreshed from fixtures without corrupting Cyrillic.
+  - Add fixture/project validation tests for required Publisher groups, channel boundary, mojibake detection, reusable fabula matrix, and ready scenario completeness.
+  - Add demo portfolio tests proving backend-visible projects can be refreshed from source fixtures without corrupting Cyrillic.
+  - Add a skill smoke/manual validation note if there is no automated skill test harness.
+  - Run targeted tests plus roadmap checks: `npm test -- --run --pool=threads --maxWorkers=4`, `npm run test:architecture`, `npm run smoke`, `python -m backend.app.roadmap check`, `git diff --check`.
 - Docs:
-  - Update AGENTS/skills guidance, demo README, developer guide, SaaS portfolio architecture, and project blueprint docs.
+  - Update `AGENTS.md`/skills guidance, `docs/developer/DEVELOPER_GUIDE.md`, `docs/user/USER_GUIDE.md` if the visible workflow changes, `demo/README.md`, and `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`.
+  - Link the new skill from project blueprint docs and explain when a blueprint must be prepared before fixture changes.
 - Demo impact:
-  - Future demo projects are created through the skill-backed checklist instead of one-off fixture edits.
+  - Future demo projects are created through a blueprint-backed checklist and validation path instead of one-off fixture edits.
+  - Existing AI Design Patterns / Severnaya Stena / Glavred projects become reusable examples for the workflow.
 - Acceptance criteria:
-  - A new or reworked project can be created from a blueprint through documented skill steps.
-  - The workflow includes checks for empty Publisher blocks, duplicated audience/channel ownership, mojibake, and one-to-one topic/fabula coupling.
-  - The workflow explains how to refresh local backend snapshots safely.
+  - The repository contains a usable `project-blueprint-creation` agent skill with clear inputs, steps, outputs, and validation checklist.
+  - A new or reworked project can be implemented from an approved blueprint through documented skill steps.
+  - Fixture validation catches empty Author/Audience/Goals blocks, channel audience duplication, mojibake, and one-to-one topic/fabula coupling.
+  - The workflow explains how to refresh local backend snapshots safely and verify the result in UI/backend mode.
+  - `2.17.4.2.3` remains the next content-calibration slice after this workflow guardrail is in place.
 - Risks:
-  - A skill can enforce process but cannot replace product-level validation; keep the fixture/domain checks as real tests.
+  - A skill can enforce process only when agents actually use it; keep real fixture/domain validation tests as the hard safety net.
+  - Snapshot refresh can still be confusing if local dev DB state diverges; document the exact safe reset/migration path.
+  - Over-validating the topic/fabula matrix could block legitimate narrow projects; make the degeneracy check configurable or project-intent-aware.
+- Completed: 2026-07-02
 
 ### Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Calibrate the `Северная стена` editorial model so goals, positioning, topics, fabulas, and the topic/fabula matrix have distinct responsibilities and produce reusable drafting combinations.
 - User value:
   - The project becomes a better real benchmark for RevOps / complex B2B sales content.
@@ -6526,6 +6543,7 @@ Status:
 - Slice 2.17.4.2: Северная стена Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration. Completed 2026-07-02.
 - Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair. Completed 2026-07-02.
+- Slice 2.17.4.2.2.1: Project Blueprint Creation Skill. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6554,4 +6572,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.2.2.1: Project Blueprint Creation Skill`.
+Implement `Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration`.

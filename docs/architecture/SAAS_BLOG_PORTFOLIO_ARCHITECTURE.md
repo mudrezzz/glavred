@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair.
+Current as of Slice 2.17.4.2.2.1: Project Blueprint Creation Skill.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -17,6 +17,9 @@ working canvas, and account owner in the sidebar footer. Slice 2.17.4 implements
 project-scoped publication channels in workspace state and planning compatibility
 paths. Platform variants, publication adapters, production auth, and benchmark runner
 remain later slices.
+Slice 2.17.4.2.2.1 adds the project-blueprint creation workflow and fixture
+validation guardrails so future blog-project reworks start from an approved blueprint
+instead of ad hoc fixture and SQLite snapshot edits.
 
 Related decisions:
 

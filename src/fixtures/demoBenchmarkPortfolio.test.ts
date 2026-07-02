@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoPortfolio } from './demoPortfolio';
 import { demoPortfolioBenchmarkExpectations } from './demoBenchmarkPortfolio';
+import { validateProjectBlueprintSeeds } from './projectBlueprintValidation';
 
 describe('three-blog benchmark demo portfolio', () => {
   it('seeds two users and three distinct benchmark blogs', () => {
@@ -119,5 +120,16 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(ai.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(true);
     expect(kasha.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(false);
     expect(glavred.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(false);
+  });
+
+  it('keeps project blueprint seeds ready for fixture and backend snapshot refresh', () => {
+    const portfolio = createDemoPortfolio();
+    const issues = validateProjectBlueprintSeeds(Object.entries(portfolio.workspacesByProjectId).map(([projectId, workspace]) => ({
+      projectId,
+      workspace,
+      readyScenarioId: demoPortfolioBenchmarkExpectations[projectId as keyof typeof demoPortfolioBenchmarkExpectations]?.readyScenarioId
+    })));
+
+    expect(issues).toEqual([]);
   });
 });

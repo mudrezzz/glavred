@@ -111,6 +111,18 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Не публиковать новость ради новости. На выходе нужен паттерн, анти-паттерн, критерий внедрения, схема архитектуры или повод для RFC.'
     ),
     rule(
+      'ai-pattern-rule-industrial-audience',
+      'audience',
+      'Писать для команд, которые внедряют промышленный AI',
+      'Основная аудитория: CDO/CIO, product leaders, инженеры ТОиР/EAM, AI architects и B2B-команды, которым нужны надежные AI-системы для промышленного контура, а не общий AI-шум.'
+    ),
+    rule(
+      'ai-pattern-rule-client-attraction-goal',
+      'goal',
+      'Привлекать клиентов через видимую экспертизу',
+      'Каждый материал должен показывать зрелый подход к industrial AI application design: кейс, паттерн, ограничения, архитектурный вывод и практическую применимость для клиента.'
+    ),
+    rule(
       'ai-pattern-rule-proof-limits',
       'positioning',
       'Доказательства плюс ограничения',

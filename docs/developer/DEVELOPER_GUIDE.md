@@ -61,6 +61,14 @@ in role-owned fixture modules such as
 `demoWorkspace.ts` when adding or revising benchmark blogs; add project-owned fixture
 data and tests beside the portfolio demo fixture instead.
 
+Use `$project-blueprint-creation` before adding or reworking a benchmark blog project.
+The approved blueprint should be mapped into UTF-8 fixtures first, then validated,
+then refreshed into backend-visible snapshots through safe seed/reset or migration
+paths. Do not patch Cyrillic project content directly into SQLite. Project fixture
+validation must catch empty Publisher rule groups, channel-level audience duplication,
+mojibake/question-mark replacement text, one-to-one topic/fabula coupling, and missing
+ready benchmark scenarios before the project is treated as demo-ready.
+
 See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.
 Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementation
