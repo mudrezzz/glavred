@@ -40,7 +40,7 @@ describe('Portfolio switcher app flow', () => {
       target: { value: 'user-product-editor' }
     });
     expect(screen.getByRole('combobox', { name: 'Пользователь' })).toHaveDisplayValue('Редактор Главреда');
-    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Блог Главреда');
+    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Главред: быть интересным');
   });
 
   it('keeps author memory isolated between projects', () => {
@@ -75,8 +75,8 @@ describe('Portfolio switcher app flow', () => {
       target: { value: 'user-product-editor' }
     });
 
-    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Блог Главреда');
-    expect(screen.getByText(/Главред - не генератор постов/i)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Главред: быть интересным');
+    expect(screen.getByText(/Главред - это быть интересным/i)).toBeInTheDocument();
     expect(screen.queryByText(/Сделка не зависает, она теряет маршрут/i)).not.toBeInTheDocument();
   });
 });

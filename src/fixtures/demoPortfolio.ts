@@ -51,8 +51,8 @@ export function createDemoPortfolio(): PortfolioState {
       {
         id: 'project-glavred-blog',
         ownerUserId: 'user-product-editor',
-        title: 'Блог Главреда',
-        description: 'Product philosophy and practical AI-native editorial methods.',
+        title: 'Главред: быть интересным',
+        description: 'Product philosophy blog about author voice, AI-assisted editorial systems and practical content templates.',
         language: 'ru',
         status: 'active',
         benchmarkRole: 'demo',

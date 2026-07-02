@@ -180,8 +180,9 @@ ready benchmark scenario:
   a future OSS/community pattern book.
 - `Северная стена`: Telegram-native blog about complex B2B deals, RevOps, ABM,
   CRM discipline, sales gear, and commercial routes through client-side fog.
-- `Блог Главреда`: product philosophy and practical editorial methods, with the first
-  planned Telegram + Dzen multi-platform adaptation benchmark.
+- `Главред: быть интересным`: product philosophy and practical editorial methods for
+  preserving author voice, avoiding flat AI prose, and preparing the first planned
+  Telegram + Dzen multi-platform adaptation benchmark.
 
 The demo fixtures are sanitized paraphrases of real working materials; private source
 documents are not committed to the repository.
@@ -261,7 +262,7 @@ The dev SaaS portfolio boundary exposes:
 - `GET/PUT /api/projects/{projectId}/workspace`.
 
 Seeded demo users are `founder@example.test` with `Опытный цех «Сборочная»` and
-`Северная стена`, and `glavred-editor@example.test` with `Блог Главреда`. The
+`Северная стена`, and `glavred-editor@example.test` with `Главред: быть интересным`. The
 default dev password is `glavred-demo`.
 
 When OpenRouter is configured, the compatibility endpoint can generate drafts through

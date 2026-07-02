@@ -17,11 +17,14 @@ import {
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import type { PublicationChannel } from '../domain/publication-channels/types';
-import { createPublicationChannel } from '../domain/publication-channels/transitions';
 import {
   aiDesignPatternsBenchmarkSeed,
   createAiDesignPatternsPublicationChannels
 } from './demoAiDesignPatternsProject';
+import {
+  createGlavredBlogPublicationChannels,
+  glavredBlogBenchmarkSeed
+} from './demoGlavredBlogProject';
 import { createDemoWorkspace } from './demoWorkspace';
 import {
   createSevernayaStenaPublicationChannels,
@@ -68,9 +71,9 @@ export const demoPortfolioBenchmarkExpectations: Record<DemoBenchmarkProjectId, 
     projectId: 'project-glavred-blog',
     language: 'ru',
     defaultPlatform: 'Telegram',
-    readyScenarioId: 'glavred-plan-editorial-memory',
-    benchmarkSignals: ['product philosophy', 'practical editorial method', 'build-in-public clarity', 'Telegram/Dzen readiness'],
-    mustAvoid: ['generic product marketing', 'opaque AI magic', 'internal trace dump as public prose']
+    readyScenarioId: 'glavred-plan-flat-ai-draft',
+    benchmarkSignals: ['being interesting', 'author voice', 'practical editorial method', 'Telegram/Dzen readiness'],
+    mustAvoid: ['generic product marketing', 'opaque AI magic', 'internal trace dump as public prose', 'autoposting promise']
   }
 };
 
@@ -111,7 +114,7 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
   const topic = seed.topics.find((item) => item.id === seed.readyScenario.topicId) ?? seed.topics[0];
   const fabula = seed.fabulas.find((item) => item.id === seed.readyScenario.fabulaId) ?? seed.fabulas[0];
   const insightCard = createBenchmarkInsight(seed, sourceSignal, topic, fabula);
-  const publicationChannels = createBenchmarkPublicationChannels(projectId, seed);
+  const publicationChannels = createBenchmarkPublicationChannels(projectId);
   const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
   const contentPlanItems = createBenchmarkPlanItems(seed, defaultChannel);
 
@@ -181,7 +184,7 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
   const topic = topics.find((item) => item.id === seed.readyScenario.topicId) ?? topics[0];
   const fabula = fabulas.find((item) => item.id === seed.readyScenario.fabulaId) ?? fabulas[0];
   const insightCard = createBenchmarkInsight(seed, sourceSignal, topic, fabula);
-  const publicationChannels = createBenchmarkPublicationChannels('project-ai-design-patterns', seed);
+  const publicationChannels = createBenchmarkPublicationChannels('project-ai-design-patterns');
   const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
   const contentPlanItems = createBenchmarkPlanItems(seed, defaultChannel);
 
@@ -305,37 +308,13 @@ function createPlanItem(
   };
 }
 
-function createBenchmarkPublicationChannels(
-  projectId: DemoBenchmarkProjectId,
-  seed: BenchmarkWorkspaceSeed
-): PublicationChannel[] {
+function createBenchmarkPublicationChannels(projectId: DemoBenchmarkProjectId): PublicationChannel[] {
   if (projectId === 'project-ai-design-patterns') {
     return createAiDesignPatternsPublicationChannels();
   }
 
   if (projectId === 'project-glavred-blog') {
-    return [
-      createPublicationChannel({
-        id: 'channel-glavred-telegram',
-        projectId,
-        platform: 'telegram',
-        title: 'Telegram',
-        handleOrUrl: '@glavred_product',
-        language: 'ru',
-        role: 'primary',
-        defaultPublicationSizeProfileId: 'telegram-post'
-      }),
-      createPublicationChannel({
-        id: 'channel-glavred-dzen',
-        projectId,
-        platform: 'dzen',
-        title: 'Дзен',
-        handleOrUrl: 'dzen.ru/glavred',
-        language: 'ru',
-        role: 'experiment',
-        defaultPublicationSizeProfileId: 'linkedin-article'
-      })
-    ];
+    return createGlavredBlogPublicationChannels();
   }
 
   return createSevernayaStenaPublicationChannels();
@@ -375,274 +354,6 @@ function withSignalEvidence(signal: SourceSignal): SourceSignal {
 const benchmarkWorkspaceSeeds: Record<DemoBenchmarkProjectId, BenchmarkWorkspaceSeed> = {
   'project-ai-design-patterns': aiDesignPatternsBenchmarkSeed,
   'project-kasha-iz-topora': severnayaStenaBenchmarkSeed,
-  'project-glavred-blog': {
-    projectProfile: {
-      name: 'Блог Главреда',
-      description: 'Product philosophy blog about AI-native editorial discipline and practical Glavred usage.',
-      setupStatus: 'needsReview'
-    },
-    editorialModel: {
-      author: 'Редактор продукта Главред, который объясняет философию и практику AI-native редакции.',
-      audience:
-        'Основатели, редакторы, product marketing и контент-команды, которые хотят управлять AI-производством текста как редакционным процессом.',
-      positioning:
-        'Главред показывает, как AI-пайплайн превращается из генератора текста в управляемую редакционную систему с памятью, проверками и HITL.',
-      fabula:
-        'Качественный AI-текст рождается не из одного промпта, а из редакционного контура: сигнал, фабула, источники, роли, проверки, правки и обучение памяти автора.',
-      rubrics: ['Философия продукта', 'Практика редакции', 'Build in public', 'AI-native workflow'],
-      styleRules: [
-        'Писать как продуктовый главред: спокойно, предметно, с примерами из пайплайна.',
-        'Объяснять внутренние механики через пользу редактора, а не через технический жаргон.',
-        'Показывать, где человек принимает решение и чему система учится.'
-      ],
-      forbiddenTopics: ['Generic AI copywriting tips', 'Маркетинговые обещания без workflow', 'Внутренний trace dump вместо публичного объяснения'],
-      goals: [
-        'Объяснить философию Главреда и AI-native editorial office.',
-        'Показывать практические приемы работы с фабулой, источниками, памятью и HITL.',
-        'Готовить будущую multi-platform демонстрацию Telegram + Dzen.'
-      ]
-    },
-    authorNotes: [
-      note('glavred-note-not-generator', 'thought', 'Главред - не генератор постов',
-        'Ценность продукта в том, что текст проходит редакционный контур: источники, договоренности, роли, проверки и человеческое решение.',
-        ['product-philosophy', 'editorial-system'], '2026-06-22T09:00:00.000Z'),
-      note('glavred-note-source-ledger', 'thought', 'SourceLedger должен быть понятен редактору',
-        'Источники нужны не как механические ссылки в тексте, а как управляемая доказательная база для тезисов и ограничений.',
-        ['source-ledger', 'evidence'], '2026-06-22T09:20:00.000Z'),
-      note('glavred-note-hitl', 'manualCorrection', 'HITL должен возвращать текст в улучшение',
-        'Комментарий редактора - это не заметка на будущее, а активный цикл: версия, правка, проверка, выбор финала и память о решении.',
-        ['hitl', 'versions', 'editorial-learning'], '2026-06-22T09:40:00.000Z'),
-      note('glavred-note-platform-variants', 'thought', 'Одна идея может жить на разных площадках',
-        'Telegram и Dzen требуют разных версий одного замысла: один быстрый и плотный, второй длиннее и объяснительнее.',
-        ['platforms', 'telegram', 'dzen'], '2026-06-22T10:00:00.000Z')
-    ],
-    editorialRules: [
-      rule('glavred-rule-author', 'author', 'Product editor voice',
-        'Автор объясняет продукт через редакционную практику и конкретные решения пайплайна.'),
-      rule('glavred-rule-benefit', 'audience', 'Польза для редактора',
-        'Каждый пост должен отвечать, что редактор сможет делать увереннее после прочтения.'),
-      rule('glavred-rule-no-jargon', 'styleLanguage', 'Технический жаргон переводить в редакционную пользу',
-        'SourceLedger, validators, final gate и HITL можно упоминать только с человеческим объяснением.'),
-      rule('glavred-rule-platforms', 'goal', 'Готовить multi-platform мышление',
-        'Фабула должна сохраняться, а версия текста адаптироваться под канал.')
-    ],
-    topics: [
-      topic('glavred-topic-editorial-system', 'AI-native editorial system',
-        'Почему продукт должен управлять не текстом, а редакционным контуром.',
-        'Объяснить Главред как систему решений, а не генератор.',
-        'Читатель понимает, где появляется качество и управляемость.',
-        'Пайплайн должен показывать, почему текст выбран и какие риски остались.'),
-      topic('glavred-topic-hitl-learning', 'HITL и память автора',
-        'Как комментарии, версии и финальный выбор редактора становятся наблюдениями в памяти автора.',
-        'Показать, что человек не только правит текст, но и обучает редакционную систему.',
-        'Читатель видит, как улучшения становятся повторяемыми без скрытого автотренинга.',
-        'Редакторское решение должно быть явным артефактом, а не потерянным комментарием.'),
-      topic('glavred-topic-platform-variants', 'Telegram + Dzen adaptation',
-        'Как одна фабула может породить разные версии для Telegram и Dzen.',
-        'Подготовить будущий multi-platform workflow.',
-        'Читатель понимает, почему фабула не должна быть прибита к платформе.',
-        'Площадка меняет форму, но не должна разрушать источник, позицию и доказательную базу.')
-    ],
-    fabulas: [
-      fabula('glavred-fabula-product-principle', 'Продуктовый принцип',
-        'Объяснить один принцип Главреда через проблему редактора и решение продукта.',
-        'От боли редактора к продуктовому принципу и рабочему примеру.',
-        ['Проблема', 'Почему обычный AI-подход ломается', 'Принцип Главреда', 'Как это работает в практике'],
-        ['Пример из текущего пайплайна', 'Польза для редактора'],
-        'standard', 'standard', 'auto'),
-      fabula('glavred-fabula-practical-case', 'Практический кейс',
-        'Показать ситуацию в редактуре и решение через инструменты Главреда.',
-        'Сцена -> ход редактора -> артефакт системы -> вывод.',
-        ['Сцена', 'Решение', 'Что сохранилось в trace/memory', 'Чему научились'],
-        ['Один конкретный workflow', 'Ограничение автоматизации'],
-        'standard', 'light', 'auto'),
-      fabula('glavred-fabula-platform-explainer', 'Объяснение для двух площадок',
-        'Объяснить, как один замысел меняет форму под разные каналы.',
-        'От одной фабулы к двум редакционным версиям.',
-        ['Общий замысел', 'Telegram-версия', 'Dzen-версия', 'Что нельзя потерять'],
-        ['Каналовые требования', 'Сохранение авторской позиции'],
-        'deep', 'deep', 'manual', [
-          'найти: публичные примеры адаптации одной идеи под короткий пост и длинную статью',
-          'проверить: какие элементы нельзя терять при адаптации под канал'
-        ])
-    ],
-    radars: [
-      radar('glavred-radar-product-notes', 'Product build notes',
-        'Искать заметки о философии Главреда, пайплайне, HITL и learning loop.',
-        'Внутренние публично-безопасные заметки продукта.'),
-      radar('glavred-radar-user-situations', 'Editorial situations',
-        'Искать ситуации, где редактору нужна трассировка, версии или авторская память.',
-        'Demo scenarios and sanitized product notes.')
-    ],
-    sourceSignals: [
-      signal('glavred-signal-not-generator', 'Product principle', 'Главред - не генератор постов, а редакционный контур',
-        'Product architecture notes', 'Пайплайн собирает источники, контекст, роли, проверки, правки и финальное человеческое решение.',
-        'Сильный первый пост для объяснения философии продукта.',
-        'glavred-topic-editorial-system', 'glavred-fabula-product-principle'),
-      signal('glavred-signal-hitl-memory', 'Workflow case', 'Комментарий редактора должен возвращать текст в улучшение',
-        'HITL implementation notes', 'Редактор может давать комментарии, получать версии и выбирать любую версию как финальную; система сохраняет наблюдение в память автора.',
-        'Показать HITL как активный цикл, а не форму обратной связи.',
-        'glavred-topic-hitl-learning', 'glavred-fabula-practical-case'),
-      signal('glavred-signal-telegram-dzen', 'Platform intent', 'Одна фабула должна жить в Telegram и Dzen по-разному',
-        'Portfolio roadmap notes', 'Будущая multi-platform механика должна сохранять замысел, но выпускать разные варианты под канал.',
-        'Подготовить аудиторию к следующему срезу multi-platform publishing.',
-        'glavred-topic-platform-variants', 'glavred-fabula-platform-explainer')
-    ],
-    externalSources: [
-      externalSource('glavred-source-product-docs', 'Glavred product docs', 'document',
-        'Current public-safe product docs and roadmap notes.'),
-      externalSource('glavred-source-demo-trace', 'Demo DraftRun traces', 'manualUpload',
-        'Sanitized examples of validation, final quality gate and HITL traces.')
-    ],
-    defaultPlatform: 'Telegram',
-    defaultPublicationSizeProfileId: 'telegram-post',
-    postsPerWeek: 2,
-    readyScenario: {
-      planId: 'glavred-plan-editorial-memory',
-      title: 'Почему Главред - не генератор постов',
-      expectedEffect: 'Объяснить продуктовую философию через пользу редактора: качество возникает из контура, а не из одного запроса к модели.',
-      topicId: 'glavred-topic-editorial-system',
-      fabulaId: 'glavred-fabula-product-principle',
-      sourceSignalId: 'glavred-signal-not-generator',
-      format: 'Telegram product note'
-    }
-  }
+  'project-glavred-blog': glavredBlogBenchmarkSeed
+
 };
-
-function note(
-  id: string,
-  type: AuthorNote['type'],
-  title: string,
-  body: string,
-  tags: string[],
-  capturedAt: string
-): AuthorNote {
-  return { id, type, title, body, sourceUrl: '', tags, attachments: [], capturedAt };
-}
-
-function rule(id: string, group: EditorialRule['group'], title: string, statement: string): EditorialRule {
-  return { id, group, title, statement, status: 'active' };
-}
-
-function topic(
-  id: string,
-  title: string,
-  description: string,
-  purpose: string,
-  audienceValue: string,
-  authorStance: string
-): Topic {
-  return {
-    id,
-    title,
-    description,
-    purpose,
-    audienceValue,
-    authorStance,
-    rules: ['Начинать с конкретной ситуации', 'Давать авторскую позицию', 'Заканчивать проверяемым выводом'],
-    forbiddenAngles: ['generic AI advice', 'стерильная консультационная вода'],
-    weightRange: { min: 20, max: 35 },
-    status: 'active'
-  };
-}
-
-function fabula(
-  id: string,
-  title: string,
-  description: string,
-  dramaturgy: string,
-  structure: string[],
-  proofRequirements: string[],
-  sizeIntent: Fabula['sizeIntent'],
-  researchDepth: Fabula['researchDepth'],
-  researchMode: Fabula['researchStrategy']['mode'],
-  instructions: string[] = []
-): Fabula {
-  return {
-    id,
-    title,
-    description,
-    dramaturgy,
-    structure,
-    proofRequirements,
-    rules: ['Не терять авторскую позицию', 'Не подменять вывод списком источников'],
-    weightRange: { min: 20, max: 35 },
-    sizeIntent,
-    researchDepth,
-    researchStrategy: { mode: researchMode, instructions },
-    status: 'active'
-  };
-}
-
-function radar(id: string, title: string, ruleStatement: string, scope: string): RadarDefinition {
-  return {
-    id,
-    title,
-    sourceType: id.includes('external') ? 'externalSource' : 'authorMemory',
-    scope,
-    rules: [{ id: `${id}-rule`, operator: 'and', negate: false, statement: ruleStatement, status: 'active' }],
-    sources: [
-      {
-        id: `${id}-source`,
-        type: 'manualSource',
-        title: `${title} source`,
-        value: scope,
-        notes: 'Sanitized benchmark seed; real private material is not committed.',
-        status: 'active'
-      }
-    ],
-    sourceDiscoveryMode: 'specifiedAndAdditional',
-    acceptancePolicy: 'manual',
-    triggerMode: 'deficitDriven',
-    status: 'active',
-    lastRunAt: '2026-06-30T10:00:00.000Z',
-    notes: 'Benchmark radar for demo portfolio fixtures.'
-  };
-}
-
-function signal(
-  id: string,
-  type: string,
-  title: string,
-  source: string,
-  summary: string,
-  rawNote: string,
-  topicId: string,
-  fabulaId: string
-): SourceSignal {
-  return {
-    id,
-    type,
-    title,
-    source,
-    capturedAt: '2026-06-30',
-    summary,
-    rawNote,
-    radarId: `${id.split('-').slice(0, 2).join('-')}-radar`,
-    reviewStatus: 'approved',
-    suggestedTopicId: topicId,
-    suggestedFabulaId: fabulaId,
-    suggestedValue: rawNote,
-    duplicateRisk: 'low'
-  };
-}
-
-function externalSource(
-  id: string,
-  title: string,
-  type: AuthorExternalSource['type'],
-  notes: string
-): AuthorExternalSource {
-  return {
-    id,
-    type,
-    title,
-    url: '',
-    fileReference: '',
-    status: 'needsReview',
-    importMode: 'reviewedQueue',
-    lastCheckedAt: '2026-06-30',
-    lastImportedAt: '',
-    notes
-  };
-}

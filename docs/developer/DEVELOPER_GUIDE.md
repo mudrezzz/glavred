@@ -1059,7 +1059,7 @@ Runtime rules:
 
 - `WorkspaceState.projectProfile` stores the project name, description, and setup
   status. The public demo entry point is the local portfolio: `Опытный цех «Сборочная»`,
-  `Северная стена`, and `Блог Главреда`. Legacy `createDemoWorkspace` fixtures still
+  `Северная стена`, and `Главред: быть интересным`. Legacy `createDemoWorkspace` fixtures still
   exist for low-level compatibility tests.
 - `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
   positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and

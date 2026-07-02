@@ -1888,9 +1888,10 @@ The local shell seeds two users and three project containers:
     climbs: route, client relief, sales gear, RevOps belay, lost routes, ABM, and
     CRM discipline, with a curated reusable topic/fabula matrix.
 - User B owns one independent blog:
-  - `Блог Главреда`: product philosophy, build-in-public lessons, practical editorial
-    methods, and explanations of why Glavred's AI-native editorial approach matters.
-    It is the first good candidate for Telegram + Dzen multi-platform adaptation.
+  - `Главред: быть интересным`: product philosophy, author-voice preservation,
+    flat-AI draft diagnosis, practical editorial methods, template libraries, and
+    explanations of why Glavred's AI-native editorial approach matters. It is the
+    first good candidate for Telegram + Dzen multi-platform adaptation.
 
 Slice 2.17.2 fills those project containers with realistic but sanitized author
 memory, editorial models, source/radar examples, plan scenarios, and benchmark
@@ -1908,8 +1909,8 @@ is unavailable.
 - author voice: `Северная стена` should not sound like `Опытный цех «Сборочная»`;
 - research depth: the technical blog can require deeper evidence than a quick
   Telegram opinion post;
-- product narrative: `Блог Главреда` should explain the product without sounding like
-  a generic marketing brochure.
+- product narrative: `Главред: быть интересным` should explain the product philosophy without
+  sounding like generic marketing, feature-release notes, or internal trace dumps.
 
 ## Extension Points
 
@@ -2036,7 +2037,7 @@ For backend slices, add:
 - Which production authentication provider should replace dev-password session auth?
 - When should `Опытный цех «Сборочная»` add LinkedIn/site variants after its Russian
   Telegram-first industrial AI baseline is stable?
-- Should `Блог Главреда` use Telegram + Dzen as the first multi-platform benchmark,
+- Should `Главред: быть интересным` use Telegram + Dzen as the first multi-platform benchmark,
   or should LinkedIn be introduced earlier for product/B2B reach?
 - Which author memory event types should be implemented first: raw thoughts,
   link-reactions, radar corrections, archive annotations, or release learning?

@@ -28,11 +28,11 @@ describe('three-blog benchmark demo portfolio', () => {
 
     expect(ai.projectProfile.name).toBe('Опытный цех «Сборочная»');
     expect(kasha.projectProfile.name).toBe('Северная стена');
-    expect(glavred.projectProfile.name).toBe('Блог Главреда');
+    expect(glavred.projectProfile.name).toBe('Главред: быть интересным');
 
     expect(ai.editorialModel.positioning).toContain('Опытный цех');
     expect(kasha.editorialModel.positioning).toContain('туман');
-    expect(glavred.editorialModel.positioning).toContain('редакционную систему');
+    expect(glavred.editorialModel.positioning).toContain('быть интересным');
 
     expect(ai.authorNotes.some((note) => note.tags.includes('industrial-ai'))).toBe(true);
     expect(ai.topics.map((topic) => topic.id)).toContain('ai-pattern-topic-industrial-artifacts');
@@ -44,7 +44,7 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(kasha.topics.map((topic) => topic.id)).toContain('stena-topic-lost-route');
     expect(kasha.fabulas.map((fabula) => fabula.id)).toContain('stena-fabula-failure-analysis');
     expect(kasha.sourceSignals.map((signal) => signal.id)).toContain('stena-signal-lost-route');
-    expect(glavred.authorNotes.some((note) => note.tags.includes('editorial-system'))).toBe(true);
+    expect(glavred.authorNotes.some((note) => note.tags.includes('be-interesting'))).toBe(true);
 
     expect(ai.contentPlanItems.some((item) => item.id === demoPortfolioBenchmarkExpectations['project-ai-design-patterns'].readyScenarioId)).toBe(true);
     expect(kasha.contentPlanItems[0].id).toBe(demoPortfolioBenchmarkExpectations['project-kasha-iz-topora'].readyScenarioId);
@@ -67,6 +67,63 @@ describe('three-blog benchmark demo portfolio', () => {
     )).toBe(true);
     expect(kasha.contentPlanItems[0].channelId).toBe('channel-stena-telegram');
     expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
+  });
+
+  it('calibrates Glavred as a being-interesting editorial philosophy benchmark', () => {
+    const portfolio = createDemoPortfolio();
+    const glavred = portfolio.workspacesByProjectId['project-glavred-blog'];
+
+    expect(glavred.projectProfile.name).toBe('Главред: быть интересным');
+    expect(glavred.projectProfile.description).toContain('author voice');
+    expect(glavred.editorialModel.author).toContain('редакционный цех');
+    expect(glavred.editorialModel.audience).toContain('Эксперты');
+    expect(glavred.editorialModel.positioning).toContain('не обещает волшебную кнопку');
+    expect(glavred.editorialModel.goals.join(' ')).toContain('AI помогает быть интересным');
+    expect(glavred.editorialModel.forbiddenTopics.join(' ')).toContain('Generic AI copywriting tips');
+
+    const ruleIdsByGroup = (group: string) =>
+      glavred.editorialRules.filter((rule) => rule.group === group).map((rule) => rule.id);
+    expect(ruleIdsByGroup('author')).toContain('glavred-rule-author-product-editor');
+    expect(ruleIdsByGroup('audience')).toContain('glavred-rule-audience-authors-teams');
+    expect(ruleIdsByGroup('goal')).toEqual(
+      expect.arrayContaining(['glavred-rule-goal-interesting-content', 'glavred-rule-goal-practical-templates'])
+    );
+    expect(ruleIdsByGroup('positioning')).toContain('glavred-rule-positioning-not-autoposter');
+    expect(ruleIdsByGroup('styleVoice')).toContain('glavred-rule-style-pain-first');
+    expect(ruleIdsByGroup('antiAiPattern')).toContain('glavred-rule-anti-pattern-feature-marketing');
+
+    expect(glavred.topics.map((topic) => topic.id)).toEqual([
+      'glavred-topic-be-interesting',
+      'glavred-topic-editorial-system',
+      'glavred-topic-ai-without-flattening',
+      'glavred-topic-template-library',
+      'glavred-topic-before-after',
+      'glavred-topic-adoption-practice'
+    ]);
+    expect(glavred.fabulas.map((fabula) => fabula.id)).toEqual([
+      'glavred-fabula-flat-draft',
+      'glavred-fabula-editorial-method',
+      'glavred-fabula-inside-mechanism',
+      'glavred-fabula-role-template',
+      'glavred-fabula-before-after',
+      'glavred-fabula-anti-pattern'
+    ]);
+
+    const enabledPairs = glavred.topicFabulaMatrix.filter((entry) => entry.enabled);
+    expect(glavred.topicFabulaMatrix).toHaveLength(glavred.topics.length * glavred.fabulas.length);
+    expect(enabledPairs).toHaveLength(18);
+    for (const fabula of glavred.fabulas) {
+      expect(enabledPairs.filter((entry) => entry.fabulaId === fabula.id).length).toBeGreaterThanOrEqual(3);
+    }
+    expect(enabledPairs.filter((entry) => entry.topicId === 'glavred-topic-be-interesting').map((entry) => entry.fabulaId)).toEqual(
+      expect.arrayContaining(['glavred-fabula-flat-draft', 'glavred-fabula-editorial-method'])
+    );
+
+    const ready = glavred.contentPlanItems.find((item) => item.id === 'glavred-plan-flat-ai-draft');
+    expect(ready?.topicId).toBe('glavred-topic-be-interesting');
+    expect(ready?.fabulaId).toBe('glavred-fabula-flat-draft');
+    expect(ready?.sourceSignalId).toBe('glavred-signal-flat-ai-content');
+    expect(ready?.channelId).toBe('channel-glavred-telegram');
   });
 
   it('calibrates Sborochnaya author, goals, positioning and reusable topic-fabula matrix', () => {

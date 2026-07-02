@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.4.2.2.1: Project Blueprint Creation Skill.
+Current as of Slice 2.17.4.3: Блог Главреда Project Rework.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -19,7 +19,8 @@ paths. Platform variants, publication adapters, production auth, and benchmark r
 remain later slices.
 Slice 2.17.4.2.2.1 adds the project-blueprint creation workflow and fixture
 validation guardrails so future blog-project reworks start from an approved blueprint
-instead of ad hoc fixture and SQLite snapshot edits.
+instead of ad hoc fixture and SQLite snapshot edits. Slice 2.17.4.3 applies that
+workflow to the product-philosophy benchmark project: `Главред: быть интересным`.
 
 Related decisions:
 
@@ -328,7 +329,7 @@ Implemented v1:
 Dev seed users:
 
 - `founder@example.test`: `Опытный цех «Сборочная»`, `Северная стена`;
-- `glavred-editor@example.test`: `Блог Главреда`;
+- `glavred-editor@example.test`: `Главред: быть интересным`;
 - default password: `glavred-demo`.
 
 ## 6. UI / UX target
@@ -488,13 +489,15 @@ Benchmark expectations:
   fabulas are narrative mechanics rather than one-to-one topic aliases;
 - can reuse author memory without borrowing the `Опытный цех «Сборочная»` voice.
 
-### User B / Blog 3: `Блог Главреда`
+### User B / Blog 3: `Главред: быть интересным`
 
 Purpose:
 
-- explain the product philosophy behind Glavred;
-- show practical editorial methods and situations;
-- describe why AI-native editorial discipline matters.
+- explain the product philosophy behind Glavred: AI should help authors be
+  interesting, not only faster;
+- show practical editorial methods, template libraries, and before/after diagnostics;
+- describe why AI-native editorial discipline matters when ordinary model output
+  becomes flat, safe, and interchangeable.
 
 Likely channels:
 
@@ -504,9 +507,10 @@ Likely channels:
 
 Benchmark expectations:
 
-- product narrative without generic marketing;
-- build-in-public clarity;
-- practical editorial advice;
+- product narrative without generic marketing or feature-release notes;
+- explicit philosophy: `Главред - это быть интересным`;
+- practical editorial advice, templates, and anti-patterns;
+- author voice preservation and human final decision;
 - multi-platform adaptation from one idea to Telegram + Dzen.
 
 ## 9. Benchmark rules
@@ -570,6 +574,6 @@ Slice 2.17.5/2.17.6 should include:
 - Which production auth provider should replace dev-password session auth?
 - When `Опытный цех «Сборочная»` should add LinkedIn/site variants after the Russian
   Telegram-first industrial AI baseline is stable.
-- Whether Dzen should be implemented before LinkedIn adaptation for `Блог Главреда`.
+- Whether Dzen should be implemented before LinkedIn adaptation for `Главред: быть интересным`.
 - Whether user-level memory should ever exist, or whether all author memory should
   remain project-scoped until explicit cross-project import is designed.

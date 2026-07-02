@@ -21,7 +21,11 @@ SEVERNAYA_STENA_DESCRIPTION = (
     "Telegram blog about complex B2B deal routes, RevOps belay, lost route analysis "
     "and sales-marketing-product alignment."
 )
-GLAVRED_BLOG_TITLE = "\u0411\u043b\u043e\u0433 \u0413\u043b\u0430\u0432\u0440\u0435\u0434\u0430"
+GLAVRED_BLOG_TITLE = "\u0413\u043b\u0430\u0432\u0440\u0435\u0434: \u0431\u044b\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u043d\u044b\u043c"
+GLAVRED_BLOG_DESCRIPTION = (
+    "Product philosophy blog about author voice, AI-assisted editorial systems "
+    "and practical content templates."
+)
 
 
 def ensure_seeded(conn: sqlite3.Connection, now: str) -> None:
@@ -58,7 +62,7 @@ def ensure_seeded(conn: sqlite3.Connection, now: str) -> None:
             "project-glavred-blog",
             "user-product-editor",
             GLAVRED_BLOG_TITLE,
-            "Product philosophy and practical AI-native editorial methods.",
+            GLAVRED_BLOG_DESCRIPTION,
             "ru",
             "active",
             "demo",

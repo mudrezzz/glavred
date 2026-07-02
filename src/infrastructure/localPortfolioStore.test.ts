@@ -37,7 +37,7 @@ describe('LocalPortfolioStore', () => {
     expect(portfolio.projects.map((project) => project.title)).toEqual([
       'Опытный цех «Сборочная»',
       'Северная стена',
-      'Блог Главреда'
+      'Главред: быть интересным'
     ]);
     expect(portfolio.activeUserId).toBe('user-founder-editor');
     expect(portfolio.activeProjectId).toBe('project-ai-design-patterns');
@@ -94,6 +94,6 @@ describe('LocalPortfolioStore', () => {
 
     expect(switched.activeUserId).toBe('user-product-editor');
     expect(switched.activeProjectId).toBe('project-glavred-blog');
-    expect(getActiveWorkspace(switched).projectProfile.name).toBe('Блог Главреда');
+    expect(getActiveWorkspace(switched).projectProfile.name).toBe('Главред: быть интересным');
   });
 });

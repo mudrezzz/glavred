@@ -78,3 +78,17 @@ def test_seeded_severnaya_stena_project_matches_current_baseline(tmp_path: Path)
     assert "complex B2B deal routes" in project["description"]
     assert "RevOps" in project["description"]
     assert "lost route analysis" in project["description"]
+
+
+def test_seeded_glavred_blog_project_matches_current_baseline(tmp_path: Path) -> None:
+    client = portfolio_client(tmp_path)
+    login_portfolio(client, "glavred-editor@example.test")
+
+    projects = client.get("/api/projects?includeArchived=true").json()["projects"]
+    project = next(item["project"] for item in projects if item["project"]["id"] == "project-glavred-blog")
+
+    assert project["title"] == "Главред: быть интересным"
+    assert project["language"] == "ru"
+    assert "author voice" in project["description"]
+    assert "AI-assisted editorial systems" in project["description"]
+    assert "practical content templates" in project["description"]

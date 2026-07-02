@@ -6277,7 +6277,7 @@ Status:
 
 ### Slice 2.17.4.3: Блог Главреда Project Rework
 
-- Status: Ready
+- Status: Done
 - Goal: Rework the `Блог Главреда` benchmark project before continuing multi-platform planning.
 - User value:
   - The product/philosophy blog becomes a stronger benchmark for explaining Glavred's editorial philosophy, practical methods, and Telegram/Dzen adaptation readiness.
@@ -6300,10 +6300,11 @@ Status:
   - `Блог Главреда` has stronger product-philosophy positioning and ready Telegram/Dzen-oriented benchmark context.
 - Risks:
   - Should not become generic product marketing; must stay tied to Glavred's actual editorial pipeline philosophy.
+- Completed: 2026-07-03
 
 ### Slice 2.17.5: Multi-Target Planning and Variant Workbench
 
-- Status: Backlog
+- Status: Ready
 - Goal: Let one editorial idea target multiple publication channels while keeping a
   shared fabula/brief and separate platform variants.
 - User value:
@@ -6587,6 +6588,7 @@ Status:
 - Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair. Completed 2026-07-02.
 - Slice 2.17.4.2.2.1: Project Blueprint Creation Skill. Completed 2026-07-02.
 - Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration. Completed 2026-07-02.
+- Slice 2.17.4.3: Блог Главреда Project Rework. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -6615,4 +6617,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.3: Блог Главреда Project Rework`.
+Implement `Slice 2.17.5: Multi-Target Planning and Variant Workbench`.

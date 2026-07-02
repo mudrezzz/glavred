@@ -109,7 +109,7 @@ switching. Use `Все проекты` there to return to the dashboard.
 Seeded backend users:
 
 - `founder@example.test`: can access `Опытный цех «Сборочная»` and `Северная стена`.
-- `glavred-editor@example.test`: can access `Блог Главреда`.
+- `glavred-editor@example.test`: can access `Главред: быть интересным`.
 - Default dev password: `glavred-demo`.
 
 The app currently seeds two demo users and three realistic benchmark blog projects:
@@ -121,8 +121,9 @@ The app currently seeds two demo users and three realistic benchmark blog projec
   client fog, sales gear, CRM belay, sales-marketing-product alignment, and lost
   route analysis. Its seeded topics are domains, while fabulas are reusable story
   forms that can combine across those domains.
-- `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
-  Telegram + Dzen multi-platform adaptation benchmark.
+- `Главред: быть интересным`: a product-philosophy blog for Glavred itself. It is
+  about keeping author voice and practical interest in AI-assisted content, and is
+  planned as the first Telegram + Dzen multi-platform adaptation benchmark.
 
 Each selected project has its own workspace state: author memory, editorial model,
 plan, drafts, final decisions, and learning notes are isolated by project.
