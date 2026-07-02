@@ -1,6 +1,7 @@
 import type { WorkspaceState } from '../workspace/types';
 import type { Fabula, Topic, TopicFabulaMatrixEntry } from '../editorial-model/types';
 import { isTopicFabulaEnabled } from '../editorial-model/transitions';
+import { publicationChannelLabel, resolvePlanItemPublicationChannel } from '../publication-channels/transitions';
 import type { ContentPlanItem, PlanWeightWarning } from './types';
 
 // Broadcast-plan transitions keep manual overrides explicit and validation deterministic.
@@ -38,7 +39,7 @@ export function applyPlanWarnings(
 }
 
 export function detectBroadcastPlanConflicts(
-  workspace: Pick<WorkspaceState, 'topics' | 'fabulas' | 'topicFabulaMatrix'>,
+  workspace: Pick<WorkspaceState, 'topics' | 'fabulas' | 'topicFabulaMatrix' | 'publicationChannels'>,
   items: ContentPlanItem[]
 ): PlanWeightWarning[] {
   const activeItems = items.filter((item) => item.approvalStatus !== 'rejected');
@@ -59,6 +60,17 @@ export function detectBroadcastPlanConflicts(
 
     const topic = workspace.topics.find((candidate) => candidate.id === item.topicId);
     const fabula = workspace.fabulas.find((candidate) => candidate.id === item.fabulaId);
+    const channel = resolvePlanItemPublicationChannel(item, workspace.publicationChannels);
+
+    if (channel?.status === 'paused') {
+      warnings.push({
+        id: `slot-paused-channel-${item.id}`,
+        severity: 'yellow',
+        targetType: 'slot',
+        targetId: item.id,
+        message: `Слот использует канал "${publicationChannelLabel(channel)}", который сейчас на паузе.`
+      });
+    }
 
     if (topic?.status === 'paused') {
       warnings.push({

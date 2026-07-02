@@ -25,6 +25,7 @@ export interface ContentPlanItem {
   insightId: string;
   title: string;
   platform: string;
+  channelId?: string;
   date: string;
   time: string;
   priority: string;
@@ -54,6 +55,7 @@ export interface ContentPlanSettings {
   minCandidatesPerSlot: number;
   maxCandidatesPerSlot: number;
   defaultPlatform: string;
+  defaultChannelId?: string;
   signalSelectionPolicy: SignalSelectionPolicy;
   publicationSizeProfiles: PublicationSizeProfile[];
   defaultPublicationSizeProfileId: string;

@@ -164,11 +164,14 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 
 ## Broadcast Content Plan
 
-`План` now opens as a broadcast grid for the AI Product Manager Telegram blog. The demo
-seed contains a monthly settings profile: three posts per week, Monday/Wednesday/Friday
-publishing at 10:00, Telegram as the local-first platform, HITL signal selection, and
-candidate limits per slot. The generated grid shows dates, times, topics, fabulas,
-approval status, manual override state, and advisory weight/matrix warnings.
+`План` now opens as a broadcast grid for the selected blog project. The demo
+seed contains project-scoped publication channels: AI Design Patterns defaults to a
+LinkedIn article/newsletter channel with a Telegram companion, `Каша из топора`
+defaults to Telegram, and `Блог Главреда` contains Telegram plus a Dzen experiment.
+The monthly settings profile still uses three posts per week, Monday/Wednesday/Friday
+publishing at 10:00, HITL signal selection, and candidate limits per slot. The
+generated grid shows dates, times, channel/platform labels, topics, fabulas, approval
+status, manual override state, and advisory weight/matrix warnings.
 
 This is a useful compatibility prototype, but it is not the final planning model. The
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
@@ -333,12 +336,12 @@ repository. Create the first temporary Wiki page in the web UI once, then run
     topic, fabula, value, and risks.
 21. Click `В план`.
 22. In `План`, open `Настройка сетки` if you want to change period, tempo, days/times,
-    candidate limits, platform, signal policy, or publication size profile; save settings before rebuilding.
+    candidate limits, default channel, signal policy, or publication size profile; save settings before rebuilding.
     Slice 1.8.1 note: select dates directly in the mini-calendar; the counter shows
     target, selected, remaining, or extra slots while you click.
     Slice 2.11.1 note: `Размер публикации` edits demo profiles such as Telegram post,
     LinkedIn post, or LinkedIn article. Fabulas keep only compact/standard/deep scale,
-    so the same `Signal X Topic X Fabula` can still be reused across platforms.
+    while slots and settings point at project-owned channels.
 23. Switch the broadcast grid to `Календарь` to see candidate counts by publish date,
     then click a date to inspect that day's same slot cards.
 24. Review the broadcast grid, expand a slot, optionally edit it with `Сохранить` or

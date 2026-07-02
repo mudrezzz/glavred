@@ -5934,7 +5934,7 @@ Status:
 
 ### Slice 2.17.4: Publication Channels and Platform Profiles
 
-- Status: Ready
+- Status: Done
 - Goal: Model actual publishing destinations as project-owned channels before
   generating or publishing multi-platform variants.
 - User value:
@@ -5967,10 +5967,11 @@ Status:
 - Risks:
   - Channel settings can duplicate publication-size settings; keep size contract
     resolver as the downstream owner.
+- Completed: 2026-07-01
 
 ### Slice 2.17.5: Multi-Target Planning and Variant Workbench
 
-- Status: Backlog
+- Status: Ready
 - Goal: Let one editorial idea target multiple publication channels while keeping a
   shared fabula/brief and separate platform variants.
 - User value:
@@ -6246,6 +6247,7 @@ Status:
 - Slice 2.17.3.2: Project Dashboard Layout Polish. Completed 2026-06-30.
 - Slice 2.17.3.3: Project Dashboard App Shell Alignment. Completed 2026-07-01.
 - Slice 2.17.3.4: Roadmap Tracker Source of Truth. Completed 2026-07-01.
+- Slice 2.17.4: Publication Channels and Platform Profiles. Completed 2026-07-01.
 
 
 ## Blocked Items
@@ -6274,4 +6276,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4: Publication Channels and Platform Profiles`.
+Implement `Slice 2.17.5: Multi-Target Planning and Variant Workbench`.

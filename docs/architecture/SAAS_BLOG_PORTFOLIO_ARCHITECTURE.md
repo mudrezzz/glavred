@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.3.3: Project Dashboard App Shell Alignment.
+Current as of Slice 2.17.4: Publication Channels and Platform Profiles.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -13,9 +13,10 @@ Slice 2.17.3.2 keeps that behavior but gives the dashboard an account-level side
 and a bounded project tile grid so project administration feels like a SaaS dashboard
 rather than an empty stretched content page. Slice 2.17.3.3 aligns that dashboard with
 the project cabinet shell: full-height left sidebar, topbar, scroll area, centered
-working canvas, and account owner in the sidebar footer.
-Publication channels, platform variants, production auth, and benchmark runner remain
-later slices.
+working canvas, and account owner in the sidebar footer. Slice 2.17.4 implements
+project-scoped publication channels in workspace state and planning compatibility
+paths. Platform variants, publication adapters, production auth, and benchmark runner
+remain later slices.
 
 Related decisions:
 
@@ -170,6 +171,12 @@ Channel is not the same as platform. A project may have two Telegram channels, o
 LinkedIn profile plus a LinkedIn newsletter. Platform-specific constraints resolve
 through channel settings and `PostContract`, not by duplicating fabulas.
 
+Slice 2.17.4 stores v1 channels in `WorkspaceState.publicationChannels`.
+`ContentPlanSettings.defaultChannelId` and `ContentPlanItem.channelId` are the stable
+links for planning. Legacy `defaultPlatform` and slot `platform` remain denormalized
+labels for older UI/export/DraftRun compatibility and should not be treated as the
+source of truth for new channel logic.
+
 ### `PublicationGroup`
 
 Shared editorial idea that may produce one or more channel variants.
@@ -227,7 +234,7 @@ Variant-scoped data:
 | topics/fabulas | project | reusable across channels within one blog |
 | publication size profiles | project/channel | defaults can be project-wide, selected per channel/contract |
 | source signals | project | may come from project-specific radars/imports |
-| content plan items | project | target channels added in later slice |
+| content plan items | project | target one channel in v1; multi-target variants come later |
 | shared post brief | publication group | one editorial idea |
 | draft versions | platform variant | each channel can diverge |
 | final decisions | platform variant | user can approve Telegram v2 and Dzen v1 separately |

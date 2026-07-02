@@ -1678,11 +1678,12 @@ Current implemented production contracts:
   normalization.
 - `InsightCard`: source signal, why it matters, audience relevance, author position,
   rubric, urgency, score, banality risk, fact gaps.
-- `ContentPlanItem`: insight, platform, date, time, priority, fabula-derived format,
-  expected effect, approval status, topic/fabula link, manual override state, and
-  warning links.
+- `ContentPlanItem`: insight, channel id, legacy platform label, date, time, priority,
+  fabula-derived format, expected effect, approval status, topic/fabula link, manual
+  override state, and warning links.
 - `ContentPlanSettings`: local-first period, tempo, publishing days/times, candidate
-  limits, default platform, and signal-selection policy for the broadcast grid.
+  limits, default channel id, legacy default platform label, and signal-selection
+  policy for the broadcast grid.
 - `PlanWeightWarning`: advisory warning when the grid diverges from topic/fabula
   weights, matrix compatibility, or required slot fields.
 - `PostBrief`: thesis, conflict, author position, evidence, examples, structure, CTA,

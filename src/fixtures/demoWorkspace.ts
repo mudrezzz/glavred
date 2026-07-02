@@ -1,16 +1,17 @@
 import { createAuthorMemoryEvent, createBroadcastPlan, inferAuthorPositionAssertions } from '../application/editorialServices';
-import { createDefaultTopicFabulaMatrix, DEFAULT_CONTENT_PLAN_SETTINGS } from '../domain/editorialWorkspace';
-import type { WorkspaceState } from '../domain/editorialWorkspace';
+import { createDefaultTopicFabulaMatrix, DEFAULT_CONTENT_PLAN_SETTINGS, type WorkspaceState } from '../domain/editorialWorkspace';
 import { demoAuthorNotes } from './demoAuthorMemory';
 import { demoArchiveRecords, demoExternalSources, demoImportCandidates } from './demoImports';
 import { demoEditorialRules, demoFabulas, demoProjectProfile, demoTopics } from './demoEditorialModel';
 import { withSeededHitlLearningScenario } from './demoHitlLearning';
+import { createDemoPublicationChannels } from './demoPublicationChannels';
 import { createEvaluatedDemoSourceSignals, demoRadarsWithFilters } from './demoSignals';
 
 export function createDemoWorkspace(options: { includeSeededHitlLearning?: boolean } = {}): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);
   const authorPositionAssertions = inferAuthorPositionAssertions(demoAuthorNotes, authorMemoryEvents);
   const evaluatedSourceSignals = createEvaluatedDemoSourceSignals(demoTopics);
+  const publicationChannels = createDemoPublicationChannels();
 
   const workspace: WorkspaceState = {
     authorNotes: demoAuthorNotes,
@@ -82,8 +83,10 @@ export function createDemoWorkspace(options: { includeSeededHitlLearning?: boole
       minCandidatesPerSlot: 1,
       maxCandidatesPerSlot: 2,
       defaultPlatform: 'Telegram',
+      defaultChannelId: 'channel-telegram-main',
       signalSelectionPolicy: 'hitl-only'
     },
+    publicationChannels,
     planWeightWarnings: [],
     editorialWorkItems: [],
     selectedEditorialWorkItemId: null,
@@ -104,10 +107,7 @@ export function createDemoWorkspace(options: { includeSeededHitlLearning?: boole
   };
 
   const selectedSourceSignal = evaluatedSourceSignals[0];
-  const workspaceWithSelectedSignal = {
-    ...workspace,
-    sourceSignal: selectedSourceSignal
-  };
+  const workspaceWithSelectedSignal = { ...workspace, sourceSignal: selectedSourceSignal };
 
   const demoWorkspace = {
     ...workspaceWithSelectedSignal,

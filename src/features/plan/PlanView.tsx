@@ -64,6 +64,7 @@ export function PlanView({
             <PlanSettingsPanel
               demandSummary={demandSummary}
               hasCurrentPlan={items.length > 0}
+              publicationChannels={workspace.publicationChannels}
               settings={workspace.contentPlanSettings}
               onGenerate={onGenerate}
               onSave={onSettingsSave}

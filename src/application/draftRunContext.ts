@@ -216,6 +216,7 @@ function compactPlanSlot(item: PlanSlot) {
     id: item.id,
     title: item.title,
     platform: item.platform,
+    channelId: item.channelId ?? null,
     date: item.date,
     time: item.time,
     priority: item.priority,

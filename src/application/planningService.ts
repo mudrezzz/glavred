@@ -10,6 +10,10 @@ import type {
   WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
+  applyPublicationChannelToPlanItem,
+  resolveDefaultPublicationChannel
+} from '../domain/publication-channels/transitions';
+import {
   applyPlanWarnings,
   createPublishWindows,
   detectBroadcastPlanConflicts,
@@ -96,6 +100,7 @@ export function createWorkspaceInsightCard(workspace: WorkspaceState): InsightCa
 
 export function createBroadcastPlan(workspace: WorkspaceState, startDate = new Date()): ContentPlanItem[] {
   const settings = workspace.contentPlanSettings;
+  const defaultChannel = resolveDefaultPublicationChannel(settings, workspace.publicationChannels);
   const slotCount = getBroadcastSlotCount(settings, startDate);
   const existingInsight = workspace.insightCard ?? createWorkspaceInsightCard(workspace);
   const pairs = getBroadcastPairs(workspace.topics, workspace.fabulas, workspace.topicFabulaMatrix);
@@ -106,11 +111,11 @@ export function createBroadcastPlan(workspace: WorkspaceState, startDate = new D
     const publishWindow = publishWindows[index % publishWindows.length] ?? { date: '', time: '' };
     const priority = index === 0 ? 'Высокий' : index % 3 === 0 ? 'Средний' : 'Нормальный';
 
-    return {
+    const item: ContentPlanItem = {
       id: `broadcast-slot-${index + 1}`,
       insightId: existingInsight.id,
       title: createPlanTitle(pair.topic.title, pair.fabula.title),
-      platform: settings.defaultPlatform,
+      platform: defaultChannel?.title ?? settings.defaultPlatform,
       date: publishWindow.date,
       time: publishWindow.time,
       priority,
@@ -126,6 +131,7 @@ export function createBroadcastPlan(workspace: WorkspaceState, startDate = new D
       manualOverride: false,
       weightWarningIds: []
     };
+    return defaultChannel ? applyPublicationChannelToPlanItem(item, defaultChannel) : item;
   });
 
   return applyPlanWarnings(items, detectBroadcastPlanConflicts(workspace, items));

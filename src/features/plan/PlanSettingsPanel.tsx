@@ -5,6 +5,12 @@ import {
   type BroadcastGridDemandSummary,
   type ContentPlanSettings
 } from '../../domain/editorialWorkspace';
+import type { PublicationChannel } from '../../domain/publication-channels/types';
+import {
+  applyPublicationChannelToSettings,
+  publicationChannelLabel,
+  resolveDefaultPublicationChannel
+} from '../../domain/publication-channels/transitions';
 import { MiniPublishCalendar } from './MiniPublishCalendar';
 import { PublicationSizeSettings } from './PublicationSizeSettings';
 import { getWeekdaysFromSlots, togglePublishSlot } from './planningCalendar';
@@ -12,12 +18,14 @@ import { getWeekdaysFromSlots, togglePublishSlot } from './planningCalendar';
 export function PlanSettingsPanel({
   demandSummary,
   hasCurrentPlan,
+  publicationChannels,
   settings,
   onGenerate,
   onSave
 }: {
   demandSummary: BroadcastGridDemandSummary;
   hasCurrentPlan: boolean;
+  publicationChannels: PublicationChannel[];
   settings: ContentPlanSettings;
   onGenerate: () => void;
   onSave: (settings: ContentPlanSettings) => void;
@@ -53,6 +61,11 @@ export function PlanSettingsPanel({
     }));
   }
 
+  function selectDefaultChannel(channelId: string) {
+    const channel = publicationChannels.find((item) => item.id === channelId) ?? null;
+    setDraft((current) => applyPublicationChannelToSettings(current, channel));
+  }
+
   return (
     <section className="card import-toolbar-panel plan-settings-panel" data-testid="plan-settings-panel">
       <div className="plan-settings-grid">
@@ -75,8 +88,12 @@ export function PlanSettingsPanel({
           />
         </label>
         <label>
-          Площадка
-          <input value={draft.defaultPlatform} onChange={(event) => setDraft((current) => ({ ...current, defaultPlatform: event.target.value }))} />
+          Канал
+          <select value={resolveDefaultPublicationChannel(draft, publicationChannels)?.id ?? ''} onChange={(event) => selectDefaultChannel(event.target.value)}>
+            {publicationChannels
+              .filter((channel) => channel.status === 'active' || channel.id === draft.defaultChannelId)
+              .map((channel) => <option value={channel.id} key={channel.id}>{publicationChannelLabel(channel)}</option>)}
+          </select>
         </label>
         <label>
           Политика сигналов

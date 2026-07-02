@@ -137,6 +137,7 @@ function CabinetApp() {
           onFabulasAndMatrixChange={(fabulas, topicFabulaMatrix) =>
             controller.patchEditorialSetup({ fabulas, topicFabulaMatrix })
           }
+          onPublicationChannelsChange={(publicationChannels) => controller.patchEditorialSetup({ publicationChannels })}
           onChangeTab={controller.setEditorialModelTab}
           onChatIntentConsumed={() => controller.setContextChatIntent(null)}
           onRunValidation={controller.runEditorialValidation}

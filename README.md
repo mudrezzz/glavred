@@ -107,6 +107,12 @@ author memory, editorial model, sources, plan, DraftRuns, final decisions, and l
 notes. Project switching is available locally from the lower-left sidebar identity
 block through a `PortfolioState` with demo users, memberships, projects, and one
 isolated workspace per selected blog.
+Publication channels now live inside that project-scoped workspace. A channel is a
+managed destination such as a Telegram channel, LinkedIn newsletter, Dzen project, or
+site; it is not just the old freeform `platform` string. Planning keeps `platform` as a
+denormalized compatibility label, but new plan slots and settings can reference a
+stable `channelId`. Autoposting, OAuth credentials, and multi-target generation remain
+future slices.
 Slice 2.17.3 adds the first backend SaaS boundary around that same shape:
 email/password dev login, HttpOnly session cookie, project memberships, and
 project-scoped workspace snapshots in SQLite. The frontend tries the backend first,

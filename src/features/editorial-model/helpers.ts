@@ -9,6 +9,7 @@ export const EDITORIAL_TABS: Array<[EditorialModelTab, string]> = [
   ['publisher', 'Издательство'],
   ['topics', 'Темы'],
   ['fabulas', 'Фабулы'],
+  ['channels', 'Каналы'],
   ['matrix', 'Матрица']
 ];
 
@@ -64,6 +65,7 @@ export function editorialTabLabel(tab: EditorialModelTab): string {
   if (tab === 'publisher') return 'Издательство';
   if (tab === 'topics') return 'Темы';
   if (tab === 'fabulas') return 'Фабулы';
+  if (tab === 'channels') return 'Каналы';
   return 'Матрица';
 }
 

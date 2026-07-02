@@ -43,7 +43,8 @@ The wiki explains the current product through real screenshots:
 
 Planning note: the current `План` screen is a local-first broadcast grid prototype
 with explicit `Настройка сетки`. Settings define period, tempo, publishing days/times,
-candidate limits, default platform, signal policy, and publication-size profiles. The
+candidate limits, default channel, legacy platform label, signal policy, and
+publication-size profiles. The
 grid is still not the final calendar model: it creates publish-window slots and fills
 them with deterministic topic/fabula ideas from the approved signal/candidate layer.
 Publication size is not a candidate field: the slot/profile defines platform-kind
@@ -366,6 +367,10 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   reverted.
 - Open `Редакционная модель`, review the project profile in `Издательство`, add or edit one structured rule, and check the right-side validation panel.
 - Open `Темы` and `Фабулы`, expand one row, use `Редактировать`, then `Сохранить` or `Отменить`. In `Фабулы`, `Масштаб` sets compact/standard/deep dramaturgical size intent without binding the fabula to a platform.
+- Open `Каналы` to configure project-owned publication destinations such as Telegram,
+  LinkedIn, Dzen, site, or other manual channels. A channel is not just a platform
+  string: it has title, handle/URL, language, audience, role, publication mode,
+  status, and an optional default publication-size profile.
 - Open `Матрица`, toggle one compatibility checkbox, then use `Сохранить матрицу` or `Отменить`.
 - Open `Сигналы`.
 - Inspect `Радары`, then open `Найденные сигналы`.
@@ -378,10 +383,13 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
 - Open `Настройка сетки` when the publishing frame needs to change. Save settings
   explicitly; saved changes clear the current grid and downstream production artifacts
   so the plan can be rebuilt.
+- In `Канал`, choose the default publication channel for new generated slots. The old
+  platform label remains visible for compatibility, but the stable setting is the
+  selected channel.
 - In `Размер публикации`, choose the default publication profile and edit platform,
   publication kind, and min/target/max character range. These demo defaults are
   editable planning assumptions, not hard-coded official platform guarantees.
-- Review the broadcast grid: each slot has date, time, platform, topic, fabula,
+- Review the broadcast grid: each slot has date, time, channel/platform label, topic, fabula,
   priority, status, and advisory warnings. The side summary separates available
   candidates from approved concepts and shows deficit/proficit.
 - Slice 1.8.1 note: filters/search sit above the broadcast list, and

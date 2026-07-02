@@ -37,7 +37,15 @@ import {
   splitLines
 } from './helpers';
 import type { EditorialModelTab } from './types';
-import { FabulaListView, ProjectProfileHeader, PublisherRulesView, TopicFabulaMatrixView, TopicListView } from './EditorialModelParts';
+import {
+  FabulaListView,
+  ProjectProfileHeader,
+  PublicationChannelsTab,
+  PublisherRulesView,
+  TopicFabulaMatrixView,
+  TopicListView
+} from './EditorialModelParts';
+import type { PublicationChannel } from '../../domain/publication-channels/types';
 
 
 export function EditorialModelView({
@@ -56,6 +64,7 @@ export function EditorialModelView({
   onMatrixChange,
   onTopicsAndMatrixChange,
   onFabulasAndMatrixChange,
+  onPublicationChannelsChange,
   onChangeTab,
   onChatIntentConsumed,
   onRunValidation
@@ -77,6 +86,7 @@ export function EditorialModelView({
   onMatrixChange: (matrix: TopicFabulaMatrixEntry[]) => void;
   onTopicsAndMatrixChange: (topics: Topic[], matrix: TopicFabulaMatrixEntry[]) => void;
   onFabulasAndMatrixChange: (fabulas: Fabula[], matrix: TopicFabulaMatrixEntry[]) => void;
+  onPublicationChannelsChange: (channels: PublicationChannel[]) => void;
   onChangeTab: (tab: EditorialModelTab) => void;
   onChatIntentConsumed: () => void;
   onRunValidation: () => void;
@@ -182,6 +192,14 @@ export function EditorialModelView({
               onChatIntentConsumed={onChatIntentConsumed}
               onDelete={removeFabula}
               onSave={updateFabula}
+            />
+          ) : null}
+          {tab === 'channels' ? (
+            <PublicationChannelsTab
+              channels={workspace.publicationChannels}
+              planItems={workspace.contentPlanItems}
+              settings={workspace.contentPlanSettings}
+              onChange={onPublicationChannelsChange}
             />
           ) : null}
           {tab === 'matrix' ? (

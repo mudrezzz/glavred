@@ -15,6 +15,8 @@ import {
   type Topic,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
+import type { PublicationChannel } from '../domain/publication-channels/types';
+import { createPublicationChannel } from '../domain/publication-channels/transitions';
 import { createDemoWorkspace } from './demoWorkspace';
 
 export type DemoBenchmarkProjectId =
@@ -94,7 +96,9 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
   const topic = seed.topics.find((item) => item.id === seed.readyScenario.topicId) ?? seed.topics[0];
   const fabula = seed.fabulas.find((item) => item.id === seed.readyScenario.fabulaId) ?? seed.fabulas[0];
   const insightCard = createBenchmarkInsight(seed, sourceSignal, topic, fabula);
-  const contentPlanItems = createBenchmarkPlanItems(seed);
+  const publicationChannels = createBenchmarkPublicationChannels(projectId, seed);
+  const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
+  const contentPlanItems = createBenchmarkPlanItems(seed, defaultChannel);
 
   const workspace: WorkspaceState = {
     ...base,
@@ -118,7 +122,8 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
       ...DEFAULT_CONTENT_PLAN_SETTINGS,
       period: 'month',
       postsPerWeek: seed.postsPerWeek,
-      defaultPlatform: seed.defaultPlatform,
+      defaultPlatform: defaultChannel?.title ?? seed.defaultPlatform,
+      defaultChannelId: defaultChannel?.id,
       defaultPublicationSizeProfileId: seed.defaultPublicationSizeProfileId,
       publishSlots: [
         { date: '2026-07-01', time: '10:00' },
@@ -126,6 +131,7 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
         { date: '2026-07-06', time: '10:00' }
       ]
     },
+    publicationChannels,
     postCandidates: [],
     postCandidate: null,
     postBrief: null,
@@ -154,7 +160,9 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
   const topics = [...legacy.topics, ...seed.topics];
   const fabulas = [...legacy.fabulas, ...seed.fabulas];
   const sourceSignals = [...legacy.sourceSignals, ...seed.sourceSignals.map(withSignalEvidence)];
-  const contentPlanItems = [...legacy.contentPlanItems, ...createBenchmarkPlanItems(seed)];
+  const publicationChannels = createBenchmarkPublicationChannels('project-ai-design-patterns', seed);
+  const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
+  const contentPlanItems = [...legacy.contentPlanItems, ...createBenchmarkPlanItems(seed, defaultChannel)];
 
   return {
     ...legacy,
@@ -180,8 +188,14 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
     contentPlanItems,
     contentPlanSettings: {
       ...legacy.contentPlanSettings,
+      defaultPlatform: defaultChannel?.title ?? seed.defaultPlatform,
+      defaultChannelId: defaultChannel?.id,
       maxCandidatesPerSlot: Math.max(legacy.contentPlanSettings.maxCandidatesPerSlot, 2)
     },
+    publicationChannels: [
+      ...publicationChannels,
+      ...legacy.publicationChannels.filter((channel) => !publicationChannels.some((item) => item.id === channel.id))
+    ],
     externalSources: [...legacy.externalSources, ...seed.externalSources],
     activeSection: 'memory',
     updatedAt: new Date().toISOString()
@@ -213,15 +227,15 @@ function createBenchmarkInsight(
   };
 }
 
-function createBenchmarkPlanItems(seed: BenchmarkWorkspaceSeed): ContentPlanItem[] {
+function createBenchmarkPlanItems(seed: BenchmarkWorkspaceSeed, defaultChannel?: PublicationChannel): ContentPlanItem[] {
   const first = seed.readyScenario;
   return [
-    createPlanItem(seed, first, 'Высокий', '2026-07-01'),
+    createPlanItem(seed, first, 'Высокий', '2026-07-01', defaultChannel),
     createPlanItem(seed, {
       ...first,
       planId: `${first.planId}-followup`,
       title: `${first.title}: follow-up angle`
-    }, 'Нормальный', '2026-07-03')
+    }, 'Нормальный', '2026-07-03', defaultChannel)
   ];
 }
 
@@ -229,7 +243,8 @@ function createPlanItem(
   seed: BenchmarkWorkspaceSeed,
   scenario: BenchmarkWorkspaceSeed['readyScenario'],
   priority: string,
-  date: string
+  date: string,
+  defaultChannel?: PublicationChannel
 ): ContentPlanItem {
   const topic = seed.topics.find((item) => item.id === scenario.topicId);
   const fabula = seed.fabulas.find((item) => item.id === scenario.fabulaId);
@@ -237,7 +252,8 @@ function createPlanItem(
     id: scenario.planId,
     insightId: `insight-${seed.readyScenario.planId}`,
     title: scenario.title,
-    platform: seed.defaultPlatform,
+    platform: defaultChannel?.title ?? seed.defaultPlatform,
+    channelId: defaultChannel?.id,
     date,
     time: '10:00',
     priority,
@@ -249,10 +265,83 @@ function createPlanItem(
     fabulaId: scenario.fabulaId,
     fabulaTitle: fabula?.title,
     sourceSignalId: scenario.sourceSignalId,
-    publicationSizeProfileId: seed.defaultPublicationSizeProfileId,
+    publicationSizeProfileId: defaultChannel?.defaultPublicationSizeProfileId ?? seed.defaultPublicationSizeProfileId,
     manualOverride: false,
     weightWarningIds: []
   };
+}
+
+function createBenchmarkPublicationChannels(
+  projectId: DemoBenchmarkProjectId,
+  seed: BenchmarkWorkspaceSeed
+): PublicationChannel[] {
+  if (projectId === 'project-ai-design-patterns') {
+    return [
+      createPublicationChannel({
+        id: 'channel-ai-linkedin',
+        projectId,
+        platform: 'linkedin',
+        title: 'LinkedIn newsletter',
+        handleOrUrl: 'https://www.linkedin.com/newsletters/ai-design-patterns',
+        language: 'en',
+        audience: 'AI product and engineering leaders',
+        role: 'primary',
+        defaultPublicationSizeProfileId: 'linkedin-article'
+      }),
+      createPublicationChannel({
+        id: 'channel-ai-telegram-companion',
+        projectId,
+        platform: 'telegram',
+        title: 'Telegram companion',
+        handleOrUrl: '@ai_design_patterns',
+        language: 'en',
+        audience: 'Practitioners who want shorter implementation notes',
+        role: 'experiment',
+        defaultPublicationSizeProfileId: 'telegram-post'
+      })
+    ];
+  }
+
+  if (projectId === 'project-glavred-blog') {
+    return [
+      createPublicationChannel({
+        id: 'channel-glavred-telegram',
+        projectId,
+        platform: 'telegram',
+        title: 'Telegram',
+        handleOrUrl: '@glavred_product',
+        language: 'ru',
+        audience: seed.editorialModel.audience,
+        role: 'primary',
+        defaultPublicationSizeProfileId: 'telegram-post'
+      }),
+      createPublicationChannel({
+        id: 'channel-glavred-dzen',
+        projectId,
+        platform: 'dzen',
+        title: 'Дзен',
+        handleOrUrl: 'dzen.ru/glavred',
+        language: 'ru',
+        audience: 'Читатели длинных практических разборов про редакционный AI',
+        role: 'experiment',
+        defaultPublicationSizeProfileId: 'linkedin-article'
+      })
+    ];
+  }
+
+  return [
+    createPublicationChannel({
+      id: 'channel-kasha-telegram',
+      projectId,
+      platform: 'telegram',
+      title: 'Telegram',
+      handleOrUrl: '@kasha_iz_topora',
+      language: 'ru',
+      audience: seed.editorialModel.audience,
+      role: 'primary',
+      defaultPublicationSizeProfileId: seed.defaultPublicationSizeProfileId
+    })
+  ];
 }
 
 function withSignalEvidence(signal: SourceSignal): SourceSignal {

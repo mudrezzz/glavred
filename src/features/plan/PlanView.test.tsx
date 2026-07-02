@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { createDemoWorkspace } from '../../fixtures/demoWorkspace';
 import type { ContentPlanItem, ContentPlanSettings } from '../../domain/editorialWorkspace';
+import { createPublicationChannel } from '../../domain/publication-channels/transitions';
 import { PlanView } from './PlanView';
 
 describe('PlanView', () => {
@@ -73,7 +74,18 @@ describe('PlanView', () => {
   });
 
   it('shows calendar settings, saves explicit slots, and keeps candidate summary visible', () => {
-    const workspace = createDemoWorkspace();
+    const demo = createDemoWorkspace();
+    const linkedInChannel = createPublicationChannel({
+      id: 'channel-test-linkedin',
+      platform: 'linkedin',
+      title: 'LinkedIn',
+      language: 'en',
+      defaultPublicationSizeProfileId: 'linkedin-post'
+    });
+    const workspace = {
+      ...demo,
+      publicationChannels: [...demo.publicationChannels, linkedInChannel]
+    };
     const onSettingsSave = vi.fn();
 
     renderPlan(workspace, { onSettingsSave });
@@ -85,7 +97,7 @@ describe('PlanView', () => {
 
     fireEvent.change(screen.getByLabelText(/Период/i), { target: { value: 'week' } });
     fireEvent.change(screen.getByLabelText(/Темп/i), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText(/Площадка/i), { target: { value: 'LinkedIn' } });
+    fireEvent.change(screen.getByLabelText(/Канал/i), { target: { value: linkedInChannel.id } });
     fireEvent.change(screen.getByLabelText(/Время публикаций/i), { target: { value: '09:00, 18:30' } });
     const calendarDay = screen.getAllByRole('button', { pressed: false }).find((button) =>
       button.classList.contains('publish-calendar-day') && !button.hasAttribute('disabled')
@@ -98,6 +110,7 @@ describe('PlanView', () => {
       expect.objectContaining({
         period: 'week',
         postsPerWeek: 2,
+        defaultChannelId: linkedInChannel.id,
         defaultPlatform: 'LinkedIn',
         publishingTimes: ['09:00', '18:30'],
         signalSelectionPolicy: 'hitl-only',

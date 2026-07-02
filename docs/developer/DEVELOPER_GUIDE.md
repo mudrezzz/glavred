@@ -910,9 +910,14 @@ Use these boundaries:
   records, statuses, external links, platform errors, and retry notes. It must not
   edit text, visual, brief, candidate, or slot artifacts.
 - `WorkspaceState.contentPlanSettings` is normalized on load. It owns period, tempo,
-  publishing days/times, candidate limits, default platform, and signal-selection
-  policy. Saving settings clears generated plan slots and downstream production
-  artifacts so the grid is rebuilt explicitly.
+  publishing days/times, candidate limits, default channel, legacy default platform,
+  and signal-selection policy. Saving settings clears generated plan slots and
+  downstream production artifacts so the grid is rebuilt explicitly.
+- `WorkspaceState.publicationChannels` is the project-owned channel list. Channel
+  logic lives in `src/domain/publication-channels/*`; do not add channel policy to the
+  compatibility barrel or to `editorialWorkspace.ts`. `ContentPlanSettings.defaultChannelId`
+  and `ContentPlanItem.channelId` are the stable links, while `defaultPlatform` and
+  `platform` stay denormalized labels for legacy UI, export, and DraftRun paths.
 - `Сигналы` owns local-first radar settings and reviewed source material. `sourceSignals`
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and

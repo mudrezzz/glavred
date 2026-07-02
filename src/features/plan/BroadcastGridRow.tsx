@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { ContentPlanItem, PlanWeightWarning, WorkspaceState } from '../../domain/editorialWorkspace';
+import { applyPublicationChannelToPlanItem } from '../../domain/publication-channels/transitions';
 import { statusLabel } from '../../shared/format/production';
 import { Icon } from '../../shared/ui/Icon';
+import { BroadcastGridChannelSelect } from './BroadcastGridChannelSelect';
 import { getPlanSlotContext } from './planSlotContext';
 
 export function BroadcastGridRow({
@@ -50,6 +52,12 @@ export function BroadcastGridRow({
     updateEditingItem({ fabulaId, fabulaTitle: fabula?.title ?? '' });
   }
 
+  function updateEditingChannel(channelId: string) {
+    const channel = workspace.publicationChannels.find((candidate) => candidate.id === channelId);
+    if (!channel) return;
+    setEditingItem((currentItem) => currentItem ? applyPublicationChannelToPlanItem(currentItem, channel) : currentItem);
+  }
+
   return (
     <article className={`card broadcast-row${expanded ? ' expanded' : ''}`}>
       <button className="broadcast-row-main" type="button" onClick={() => setExpanded((value) => !value)}>
@@ -87,8 +95,8 @@ export function BroadcastGridRow({
                   <input type="time" value={current.time} onChange={(event) => updateEditingItem({ time: event.target.value })} />
                 </label>
                 <label>
-                  Площадка
-                  <input value={current.platform} onChange={(event) => updateEditingItem({ platform: event.target.value })} />
+                  Канал
+                  <BroadcastGridChannelSelect item={current} workspace={workspace} onChange={updateEditingChannel} />
                 </label>
                 <label>
                   Тема слота

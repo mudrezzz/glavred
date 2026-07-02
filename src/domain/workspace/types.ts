@@ -21,6 +21,7 @@ import type {
   InsightCard,
   PlanWeightWarning,
 } from '../planning/types';
+import type { PublicationChannel } from '../publication-channels/types';
 import type { PostCandidate } from '../post-candidates/types';
 import type {
   EditorialCheck,
@@ -57,6 +58,7 @@ export interface WorkspaceState {
   contentPlanItem: ContentPlanItem | null;
   contentPlanItems: ContentPlanItem[];
   contentPlanSettings: ContentPlanSettings;
+  publicationChannels: PublicationChannel[];
   planWeightWarnings: PlanWeightWarning[];
   editorialWorkItems: EditorialWorkItem[];
   selectedEditorialWorkItemId: string | null;

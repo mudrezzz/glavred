@@ -43,9 +43,8 @@ export function normalizeContentPlanSettings(
     minCandidatesPerSlot,
     clampInteger(saved?.maxCandidatesPerSlot, fallback.maxCandidatesPerSlot, 1, 20)
   );
-  const defaultPlatform = typeof saved?.defaultPlatform === 'string' && saved.defaultPlatform.trim()
-    ? saved.defaultPlatform.trim()
-    : fallback.defaultPlatform;
+  const defaultPlatform = typeof saved?.defaultPlatform === 'string' && saved.defaultPlatform.trim() ? saved.defaultPlatform.trim() : fallback.defaultPlatform;
+  const defaultChannelId = typeof saved?.defaultChannelId === 'string' && saved.defaultChannelId.trim() ? saved.defaultChannelId.trim() : fallback.defaultChannelId;
   const signalSelectionPolicy = VALID_POLICIES.includes(saved?.signalSelectionPolicy as SignalSelectionPolicy)
     ? (saved?.signalSelectionPolicy as SignalSelectionPolicy)
     : fallback.signalSelectionPolicy;
@@ -61,6 +60,7 @@ export function normalizeContentPlanSettings(
     minCandidatesPerSlot,
     maxCandidatesPerSlot,
     defaultPlatform,
+    defaultChannelId,
     signalSelectionPolicy,
     ...sizeSettings
   };

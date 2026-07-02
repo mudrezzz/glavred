@@ -47,6 +47,26 @@ describe('planning service', () => {
     expect(items.every((item) => item.format === item.fabulaTitle)).toBe(true);
   });
 
+  it('assigns default publication channel to generated broadcast slots', () => {
+    const workspace = createDemoWorkspace();
+    const [channel] = workspace.publicationChannels;
+    const settings = normalizeContentPlanSettings({
+      ...workspace.contentPlanSettings,
+      defaultChannelId: channel.id,
+      period: 'week',
+      postsPerWeek: 1,
+      publishingDays: [3],
+      publishSlots: []
+    });
+    const items = createBroadcastPlan({ ...workspace, contentPlanSettings: settings }, startDate);
+
+    expect(items[0]).toMatchObject({
+      channelId: channel.id,
+      platform: channel.title,
+      publicationSizeProfileId: channel.defaultPublicationSizeProfileId
+    });
+  });
+
   it('summarizes candidate deficit and approved concepts separately', () => {
     const workspace = createDemoWorkspace();
     const [approvedCandidate] = createPostCandidates(workspace);

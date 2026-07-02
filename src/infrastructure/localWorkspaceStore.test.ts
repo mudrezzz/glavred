@@ -114,6 +114,29 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.contentPlanSettings).not.toHaveProperty('allowedFormats');
   });
 
+  it('normalizes legacy workspaces without publication channels', () => {
+    const storage = createMemoryStorage();
+    const workspace = createDemoWorkspace();
+    const legacyWorkspace = { ...workspace } as Partial<typeof workspace>;
+    delete legacyWorkspace.publicationChannels;
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...legacyWorkspace,
+        contentPlanSettings: {
+          ...workspace.contentPlanSettings,
+          defaultPlatform: 'LinkedIn'
+        }
+      })
+    );
+    const store = new LocalWorkspaceStore(storage);
+    const loaded = store.load();
+
+    expect(loaded.publicationChannels).toHaveLength(1);
+    expect(loaded.publicationChannels[0]).toMatchObject({ platform: 'linkedin', title: 'LinkedIn', status: 'active' });
+    expect(loaded.contentPlanSettings.defaultChannelId).toBe(loaded.publicationChannels[0].id);
+  });
+
   it('drops legacy post candidate format values while loading saved workspaces', () => {
     const storage = createMemoryStorage();
     const workspace = createDemoWorkspace();

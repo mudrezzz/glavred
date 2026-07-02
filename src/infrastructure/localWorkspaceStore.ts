@@ -19,6 +19,15 @@ import {
 import { normalizeFabulaResearchStrategy } from '../domain/editorial-model/researchStrategy';
 import { normalizeFabulaResearchDepth } from '../domain/editorial-model/researchDepth';
 import { normalizeFabulaSizeIntent } from '../domain/planning/publicationSize';
+import {
+  PUBLICATION_PLATFORM_LABELS,
+  applyPublicationChannelToPlanItem,
+  applyPublicationChannelToSettings,
+  createPublicationChannel,
+  normalizePublicationChannels,
+  resolveDefaultPublicationChannel,
+  resolvePlanItemPublicationChannel
+} from '../domain/publication-channels/transitions';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
 
@@ -63,15 +72,44 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     researchDepth: normalizeFabulaResearchDepth(fabula.researchDepth),
     researchStrategy: normalizeFabulaResearchStrategy(fabula.researchStrategy)
   }));
+  let baseContentPlanSettings = normalizeContentPlanSettings(saved.contentPlanSettings, demo.contentPlanSettings);
+  if (!saved.contentPlanSettings?.defaultChannelId && saved.contentPlanSettings?.defaultPlatform) {
+    baseContentPlanSettings = { ...baseContentPlanSettings, defaultChannelId: undefined };
+  }
+  let publicationChannels = normalizePublicationChannels(
+    saved.publicationChannels,
+    baseContentPlanSettings.defaultPlatform,
+    (saved.projectProfile ?? demo.projectProfile).name === 'AI Design Patterns' ? 'en' : 'ru',
+    baseContentPlanSettings.defaultPublicationSizeProfileId
+  );
+  if (!baseContentPlanSettings.defaultChannelId && !hasChannelLabel(publicationChannels, baseContentPlanSettings.defaultPlatform)) {
+    publicationChannels = [
+      createPublicationChannel({
+        id: `channel-${baseContentPlanSettings.defaultPlatform.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-')}`,
+        title: baseContentPlanSettings.defaultPlatform,
+        language: (saved.projectProfile ?? demo.projectProfile).name === 'AI Design Patterns' ? 'en' : 'ru',
+        defaultPublicationSizeProfileId: baseContentPlanSettings.defaultPublicationSizeProfileId
+      }),
+      ...publicationChannels
+    ];
+  }
+  const contentPlanSettings = applyPublicationChannelToSettings(
+    baseContentPlanSettings,
+    resolveDefaultPublicationChannel(baseContentPlanSettings, publicationChannels)
+  );
   const contentPlanItems = (saved.contentPlanItems ?? (saved.contentPlanItem ? [saved.contentPlanItem] : demo.contentPlanItems)).map(
-    (item) => ({
-      ...item,
-      time: item.time ?? demo.contentPlanSettings.publishingTimes[0],
-      manualOverride: item.manualOverride ?? false,
-      sourceSignalId: item.sourceSignalId ?? saved.sourceSignal?.id ?? demo.sourceSignal.id,
-      publicationSizeProfileId: item.publicationSizeProfileId,
-      weightWarningIds: item.weightWarningIds ?? []
-    })
+    (item) => {
+      const normalizedItem = {
+        ...item,
+        time: item.time ?? demo.contentPlanSettings.publishingTimes[0],
+        manualOverride: item.manualOverride ?? false,
+        sourceSignalId: item.sourceSignalId ?? saved.sourceSignal?.id ?? demo.sourceSignal.id,
+        publicationSizeProfileId: item.publicationSizeProfileId,
+        weightWarningIds: item.weightWarningIds ?? []
+      };
+      const channel = resolvePlanItemPublicationChannel(normalizedItem, publicationChannels);
+      return channel ? applyPublicationChannelToPlanItem(normalizedItem, channel) : normalizedItem;
+    }
   );
   const radars = (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar));
   const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
@@ -112,7 +150,8 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     insightCard: saved.insightCard ?? null,
     contentPlanItem: saved.contentPlanItem ?? null,
     contentPlanItems,
-    contentPlanSettings: normalizeContentPlanSettings(saved.contentPlanSettings, demo.contentPlanSettings),
+    contentPlanSettings,
+    publicationChannels,
     planWeightWarnings: saved.planWeightWarnings ?? [],
     editorialWorkItems,
     selectedEditorialWorkItemId,
@@ -160,6 +199,10 @@ function normalizeAuthorNote(note: WorkspaceState['authorNotes'][number]): Works
       suggestedMemoryTakeaway: note.body
     }
   };
+}
+
+function hasChannelLabel(channels: WorkspaceState['publicationChannels'], label: string): boolean {
+  return channels.some((channel) => channel.title === label || PUBLICATION_PLATFORM_LABELS[channel.platform] === label);
 }
 
 function normalizePostCandidate(candidate: WorkspaceState['postCandidates'][number]): WorkspaceState['postCandidates'][number] {

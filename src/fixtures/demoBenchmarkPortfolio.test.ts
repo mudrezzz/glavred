@@ -40,6 +40,15 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(ai.contentPlanItems.some((item) => item.id === demoPortfolioBenchmarkExpectations['project-ai-design-patterns'].readyScenarioId)).toBe(true);
     expect(kasha.contentPlanItems[0].id).toBe(demoPortfolioBenchmarkExpectations['project-kasha-iz-topora'].readyScenarioId);
     expect(glavred.contentPlanItems[0].id).toBe(demoPortfolioBenchmarkExpectations['project-glavred-blog'].readyScenarioId);
+
+    expect(ai.publicationChannels.map((channel) => channel.id)).toContain('channel-ai-linkedin');
+    expect(kasha.publicationChannels.map((channel) => channel.id)).toEqual(['channel-kasha-telegram']);
+    expect(glavred.publicationChannels.map((channel) => channel.id)).toEqual([
+      'channel-glavred-telegram',
+      'channel-glavred-dzen'
+    ]);
+    expect(kasha.contentPlanItems[0].channelId).toBe('channel-kasha-telegram');
+    expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
   });
 
   it('keeps memory and accepted learning isolated by project', () => {
