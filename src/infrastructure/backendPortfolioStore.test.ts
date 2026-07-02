@@ -39,9 +39,9 @@ describe('BackendPortfolioStore', () => {
               project: {
                 id: 'project-ai-design-patterns',
                 ownerUserId: 'user-founder-editor',
-                title: 'AI Design Patterns',
-                description: 'Research-heavy blog.',
-                language: 'en',
+                title: 'Опытный цех «Сборочная»',
+                description: 'Research-heavy industrial AI workshop.',
+                language: 'ru',
                 status: 'active',
                 benchmarkRole: 'demo',
                 createdAt: '2026-06-30T00:00:00Z',
@@ -61,7 +61,7 @@ describe('BackendPortfolioStore', () => {
       .mockResolvedValueOnce(
         jsonResponse({
           projectId: 'project-ai-design-patterns',
-          workspace: { projectProfile: { name: 'Backend AI Design Patterns' } }
+          workspace: { projectProfile: { name: 'Backend Сборочная' } }
         })
       );
     vi.stubGlobal('fetch', fetcher);
@@ -72,7 +72,7 @@ describe('BackendPortfolioStore', () => {
     expect(portfolio.projects).toHaveLength(1);
     expect(portfolio.activeProjectId).toBe('project-ai-design-patterns');
     expect(portfolio.workspacesByProjectId['project-ai-design-patterns'].projectProfile.name).toBe(
-      'Backend AI Design Patterns'
+      'Backend Сборочная'
     );
     expect(fetcher).toHaveBeenCalledWith(
       'http://localhost:8000/api/users/me',

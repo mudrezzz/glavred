@@ -17,41 +17,47 @@ const projectId: DemoBenchmarkProjectId = 'project-ai-design-patterns';
 
 export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
   projectProfile: {
-    name: 'AI Design Patterns',
-    description: 'Telegram-first blog about industrial AI design patterns, Decision Intelligence and reliable AI systems.',
+    name: 'Опытный цех «Сборочная»',
+    description: 'Telegram-first workshop for industrial AI patterns: cases, test protocols, hybrid contours and reliable decision support.',
     setupStatus: 'needsReview'
   },
   editorialModel: {
-    author: 'Практик industrial AI и AI Product Management, который собирает работающие паттерны разработки AI-приложений для промышленности.',
+    author:
+      'Практик industrial AI product design и прикладной AI-архитектуры, который пишет как руководитель опытного цеха: берет кейсы, документы, OSS и research на испытательный стенд, ищет слабые сборки и выводит пригодные паттерны.',
     audience:
-      'Руководители промышленной цифровизации, CDO/CIO, product leaders, инженеры ТОиР/EAM, AI architects и B2B-команды, которым нужны надежные AI-системы, а не новости про модели.',
+      'Руководители промышленной цифровизации, CDO/CIO/CTO, product leaders, инженеры ТОиР/EAM, AI architects и B2B-команды, которым нужны надежные industrial AI-системы, а не демонстрации моделей.',
     positioning:
-      'Собираем открытую industrial AI pattern book о том, как строить надежные AI-приложения для промышленности: не вокруг модели, а вокруг решений, данных, проверок, ограничений и человека в контуре.',
+      'Опытный цех, где industrial AI идеи проходят через стенд: решение, данные, роли, ограничения, надежность, HITL и критерии применения. На выходе не новость, а паттерн, анти-паттерн, протокол или RFC для будущей pattern book.',
     fabula:
-      'Ценность блога в том, чтобы из разрозненных кейсов, статей, OSS и внутренних практик выделять повторяемые design patterns industrial AI и приглашать сообщество к совместной книге паттернов.',
+      'Ценность блога в том, чтобы из разрозненных кейсов, статей, OSS и авторских материалов собирать проверяемые industrial AI patterns и приглашать сообщество к совместной инженерной книге.',
     rubrics: [
-      'Industrial AI patterns',
+      'Промышленные артефакты',
+      'Контуры надежности',
+      'Гибридная сборка',
+      'Данные как сырье',
+      'Полигон внедрения',
+      'Открытый каталог паттернов',
       'ТОиР и EAM',
-      'Decision Intelligence',
-      'RAG / Knowledge Graph / HITL',
-      'OSS pattern book'
+      'Decision Intelligence'
     ],
     styleRules: [
-      'Писать по-русски, Telegram-first: энергично, предметно, без академической воды.',
-      'Каждый пост должен выводить паттерн, анти-паттерн, критерий или проверяемую гипотезу для industrial AI.',
+      'Писать по-русски, Telegram-first: живо, предметно, с ощущением цеха и испытательного стенда, но без натянутой метафоры в каждом абзаце.',
+      'Публичный артефакт выпуска: паттерн, анти-паттерн, протокол испытаний, критерий внедрения, архитектурная граница или RFC-вопрос.',
       'Разделять доказанные практики, сильные гипотезы и спорные места; приглашать к критике и соавторству.',
-      'Показывать промышленный контекст: данные, регламенты, роли инженера, надежность, ограничения внедрения.'
+      'Сильные claims должны иметь источник, кейс, benchmark, OSS-пример или честную пометку авторской гипотезы.'
     ],
     forbiddenTopics: [
       'Новости моделей без industrial AI вывода',
       'Список инструментов без паттерна применения',
       'Обещания автономного AI без HITL и контроля',
-      'Vendor marketing без механизма и ограничений'
+      'Vendor marketing без механизма и ограничений',
+      'Мистический флер вокруг AI вместо инженерного разбора'
     ],
     goals: [
-      'Привлекать клиентов через демонстрацию экспертизы в industrial AI application design.',
-      'Собрать вокруг блога сообщество, которое помогает формировать открытую книгу AI design patterns.',
-      'Сделать блог витриной зрелого подхода: кейс, паттерн, доказательство, ограничение, применение.'
+      'Привлекать клиентов через демонстрацию зрелой экспертизы в industrial AI application design.',
+      'Собрать вокруг блога сообщество, которое помогает формировать открытую книгу industrial AI patterns.',
+      'Показывать, как industrial AI собирается из решения, данных, ролей, надежности, ограничений и ответственности человека.',
+      'Создать отличимый авторский проект: не AI-новости, а опытный цех прикладных паттернов.'
     ]
   },
   authorNotes: [
@@ -82,8 +88,8 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
     note(
       'ai-pattern-pattern-book',
       'thought',
-      'Будущая OSS pattern book',
-      'Блог должен вести к открытой книге industrial AI patterns: как GoF/POSA/Fowler, но для AI-приложений в промышленности. Не догма, а живая crowd-книга с критикой, pull requests и разбором спорных паттернов.',
+      'Будущая OSS pattern book как журнал цеха',
+      'Блог должен вести к открытой книге industrial AI patterns: как GoF/POSA/Fowler, но для AI-приложений в промышленности. Не догма, а живая crowd-книга с критикой, pull requests, протоколами испытаний и разбором спорных паттернов.',
       ['oss', 'pattern-book', 'community'],
       '2026-07-02T09:45:00.000Z'
     ),
@@ -95,26 +101,28 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       ['author-validation', 'ai-product-management', 'voice'],
       '2026-07-02T10:00:00.000Z',
       'https://t.me/ai_product_mgmt'
+    ),
+    note(
+      'ai-pattern-workshop-identity',
+      'thought',
+      'Опытный цех вместо сухого каталога',
+      'Авторская рамка: мы не называем AI магией и не пишем каталог ради каталога. Мы берем industrial AI артефакт на стенд, проверяем сборку, называем паттерн, показываем допуски и зовем практиков спорить по делу.',
+      ['workshop', 'voice', 'pattern-book'],
+      '2026-07-02T10:15:00.000Z'
     )
   ],
   editorialRules: [
     rule(
-      'ai-pattern-rule-industrial-scope',
-      'positioning',
-      'AI для промышленности, не AI вообще',
-      'Каждый материал должен объяснять industrial AI контекст: ТОиР, EAM, диагностика, производственные данные, регламенты, риски, роли или экономику внедрения.'
-    ),
-    rule(
-      'ai-pattern-rule-pattern-output',
+      'ai-pattern-rule-author-workshop-lead',
       'author',
-      'Пост должен давать reusable pattern',
-      'Не публиковать новость ради новости. На выходе нужен паттерн, анти-паттерн, критерий внедрения, схема архитектуры или повод для RFC.'
+      'Автор как руководитель опытного цеха',
+      'Писать с позиции практика industrial AI product design: разбирать сборку решения, данные, роли, надежность и ограничения, а не пересказывать новости AI.'
     ),
     rule(
       'ai-pattern-rule-industrial-audience',
       'audience',
       'Писать для команд, которые внедряют промышленный AI',
-      'Основная аудитория: CDO/CIO, product leaders, инженеры ТОиР/EAM, AI architects и B2B-команды, которым нужны надежные AI-системы для промышленного контура, а не общий AI-шум.'
+      'Основная аудитория: CDO/CIO/CTO, product leaders, инженеры ТОиР/EAM, AI architects и B2B-команды, которым нужны надежные industrial AI-системы, а не общий AI-шум.'
     ),
     rule(
       'ai-pattern-rule-client-attraction-goal',
@@ -123,8 +131,26 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Каждый материал должен показывать зрелый подход к industrial AI application design: кейс, паттерн, ограничения, архитектурный вывод и практическую применимость для клиента.'
     ),
     rule(
-      'ai-pattern-rule-proof-limits',
+      'ai-pattern-rule-pattern-book-goal',
+      'goal',
+      'Собирать открытую книгу промышленных AI-паттернов',
+      'Посты должны постепенно складываться в community pattern book: проверенные паттерны, спорные гипотезы, анти-паттерны, протоколы испытаний и RFC-вопросы.'
+    ),
+    rule(
+      'ai-pattern-rule-industrial-scope',
       'positioning',
+      'Industrial AI workshop, не AI вообще',
+      'Материал должен объяснять промышленный контекст: ТОиР, EAM, диагностика, производственные данные, регламенты, риски, роли, экономику внедрения или reliability contour.'
+    ),
+    rule(
+      'ai-pattern-rule-pattern-output',
+      'styleVoice',
+      'Пост должен давать рабочий артефакт',
+      'Не публиковать новость ради новости. На выходе нужен паттерн, анти-паттерн, критерий внедрения, схема архитектуры или повод для RFC.'
+    ),
+    rule(
+      'ai-pattern-rule-proof-limits',
+      'styleLanguage',
       'Доказательства плюс ограничения',
       'Сильные claims требуют источника, кейса, benchmark, OSS-примера или честной пометки, что это гипотеза автора.'
     ),
@@ -133,39 +159,61 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'styleVoice',
       'Приглашение к соавторству',
       'Тон не догматический: приветствуются критика, спор, уточнения и будущие pull requests в pattern book.'
+    ),
+    rule(
+      'ai-pattern-rule-no-mystic-frame',
+      'positioning',
+      'Не продавать AI как магию',
+      'Публичная рамка проекта - цех, сборка, стенд и проверка. Избегать мистического флера: AI интересен как инженерная сборка, а не как непостижимое чудо.'
     )
   ],
   topics: [
     topic(
-      'ai-pattern-topic-decision-intelligence',
-      'Decision Intelligence для ТОиР',
-      'Как AI помогает инженеру ТОиР собрать данные, объяснить событие, найти похожие случаи, построить RCA и выбрать действие.',
-      'Показать AI как рабочее место принятия решения, а не чат-бот вокруг документов.',
-      'Читатель видит, где industrial AI дает ценность: меньше ручной сборки, лучше трассируемость, быстрее экспертная проверка.',
-      'Промышленный AI начинается с решения, источников и ответственности человека.'
+      'ai-pattern-topic-industrial-artifacts',
+      'Промышленные артефакты',
+      'Кейсы и объекты промышленного контура: ТОиР, EAM, диагностика, паспорта оборудования, наряды, дефекты, запчасти, RCA и события обслуживания.',
+      'Показывать industrial AI через реальные артефакты, а не через абстрактные возможности модели.',
+      'Читатель видит, из каких данных и ролей собирается рабочий AI-контур.',
+      'Ценность industrial AI начинается с понятного объекта, решения и владельца ответственности.'
     ),
     topic(
-      'ai-pattern-topic-hybrid-ai',
-      'Hybrid AI architecture',
-      'Паттерны связки LLM, ML/диагностики, правил, регламентов, knowledge graph, оптимизации и HITL.',
-      'Снять иллюзию, что промышленную задачу можно решить одной моделью или одним агентом.',
-      'Читатель получает архитектурную рамку для надежного industrial AI контура.',
-      'Надежность в промышленности возникает из гибридной архитектуры, а не из размера модели.'
+      'ai-pattern-topic-reliability-contours',
+      'Контуры надежности',
+      'Валидация, fallback, трассировка, evidence, HITL, safety boundaries и ответственность в industrial AI.',
+      'Показывать, почему надежность рождается из контроля, а не из размера модели.',
+      'Читатель получает критерии, по которым можно отличить production-контур от красивого демо.',
+      'Без надежности и ответственности industrial AI остается демонстрацией, а не системой.'
     ),
     topic(
-      'ai-pattern-topic-industrial-cases',
-      'Живые кейсы industrial AI',
-      'Небанальные применения AI в промышленности: паспортизация оборудования, классификаторы, качество данных, похожие отказы, планирование, RCA, training simulators.',
-      'Отбирать кейсы, где виден механизм, данные, роль пользователя и ограничение.',
-      'Читатель получает идеи для пилотов и критерии, по которым отличать рабочий кейс от демо.',
-      'Кейс интересен только тогда, когда понятно, какие данные он использует и какое решение улучшает.'
+      'ai-pattern-topic-hybrid-assembly',
+      'Гибридная сборка',
+      'Связка LLM, ML/диагностики, правил, регламентов, knowledge graph, оптимизации, инструментов и workflow.',
+      'Снимать иллюзию, что промышленную задачу можно решить одной моделью или одним агентом.',
+      'Читатель получает архитектурную рамку для сборки промышленного AI-контура.',
+      'Сильный industrial AI - это сборка, где каждый компонент имеет роль и допуск.'
     ),
     topic(
-      'ai-pattern-topic-pattern-book',
-      'OSS pattern book',
-      'Методика сбора, именования и обсуждения industrial AI design patterns как открытой книги.',
-      'Постепенно переводить блог из авторского монолога в community-driven pattern catalog.',
-      'Читатель понимает, как предложить паттерн, раскритиковать существующий или принести пример.',
+      'ai-pattern-topic-data-raw-material',
+      'Данные как сырье',
+      'Классификаторы, журналы событий, документы, регламенты, коды дефектов, иерархия оборудования, качество данных и provenance.',
+      'Показывать, что industrial AI собирается из сырья разного качества, а не из чистого prompt engineering.',
+      'Читатель понимает, какие данные нужны, где они ломаются и как это влияет на паттерн.',
+      'Плохое сырье нельзя спрятать за красивым интерфейсом.'
+    ),
+    topic(
+      'ai-pattern-topic-implementation-field',
+      'Полигон внедрения',
+      'Пилоты, экономика, adoption, роли, операционные изменения, интеграции с EAM/ERP/CRM и критерии успеха.',
+      'Проверять industrial AI паттерны на внедряемость, а не только на техническую красоту.',
+      'Читатель получает рамку для пилота, оценки эффекта и разговора с бизнесом.',
+      'Паттерн становится ценным только после проверки на реальном контуре внедрения.'
+    ),
+    topic(
+      'ai-pattern-topic-open-catalog',
+      'Открытый каталог паттернов',
+      'Именование, спор, RFC, примеры, анти-паттерны, digest updates и будущая OSS/community pattern book.',
+      'Переводить блог из авторской витрины в живой каталог, который можно критиковать и дополнять.',
+      'Читатель понимает, как принести пример, оспорить паттерн или предложить улучшение.',
       'Industrial AI patterns должны становиться общим языком практиков, а не личной коллекцией автора.'
     )
   ],
@@ -173,9 +221,9 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
     fabula(
       'ai-pattern-fabula-pattern-card',
       'Карточка паттерна',
-      'Разбор одного industrial AI паттерна: проблема, механизм, пример, ограничения, где применять.',
-      'От промышленной боли к named pattern и практическому критерию применения.',
-      ['Ситуация', 'Паттерн', 'Механизм', 'Пример или источник', 'Где работает', 'Где ломается', 'Что берем на вооружение'],
+      'Разбор одного industrial AI паттерна: recurring problem, механизм, пример, ограничения и критерий применения.',
+      'От промышленной ситуации к named pattern и практическому критерию применения.',
+      ['Ситуация', 'Повторяемая проблема', 'Паттерн', 'Механизм', 'Пример или источник', 'Где работает', 'Где ломается', 'Что берем на вооружение'],
       ['Минимум один источник/пример', 'Ограничение или failure mode', 'Промышленный контекст'],
       'standard',
       'deep',
@@ -187,62 +235,97 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       ]
     ),
     fabula(
-      'ai-pattern-fabula-case-breakdown',
-      'Разбор industrial AI кейса',
-      'Живой разбор промышленного AI применения без банальности: что было, как работало, почему интересно.',
-      'От кейса к повторяемому design pattern или anti-pattern.',
-      ['Кейс', 'Данные и роли', 'AI-механизм', 'Что изменилось', 'Ограничения', 'Паттерн для книги'],
-      ['Публичный источник или sanitized internal material', 'Ясная граница применения'],
+      'ai-pattern-fabula-test-protocol',
+      'Протокол испытаний',
+      'Проверка claim, инструмента, подхода или архитектурной сборки на стенде: условия, поведение, failure modes, допуск.',
+      'От обещания к проверке на применимость в промышленном контуре.',
+      ['Что заявлено', 'Стенд и условия', 'Что наблюдаем', 'Где ломается', 'Допустимое применение', 'Решение цеха'],
+      ['Источник claim/tool', 'Условия проверки', 'Failure mode или ограничение'],
       'standard',
-      'marketResearch',
+      'deep',
       'manual',
       [
-        'искать: ТОиР, EAM, predictive maintenance, industrial knowledge graph, diagnostics assistant',
-        'добавлять: что именно может повторить другая команда'
+        'искать: case, tool, OSS, paper или industrial AI claim, который можно проверить как сборку',
+        'добавлять: условия допустимости и что нельзя обещать'
       ]
     ),
     fabula(
-      'ai-pattern-fabula-paper-benchmark',
-      'Paper / benchmark review',
-      'Разбор статьи, arXiv, benchmark или technical report через вопрос: какой паттерн можно взять в industrial AI practice.',
-      'От research artifact к практическому паттерну и проверяемой гипотезе.',
-      ['Что проверяли', 'Почему это важно для промышленности', 'Цифры/доказательства', 'Ограничения', 'Что берем на вооружение'],
-      ['Ссылка на paper/report', 'Цифры или результат', 'Ограничение переносимости'],
+      'ai-pattern-fabula-artifact-teardown',
+      'Разбор артефакта',
+      'Разбор кейса, paper, OSS-репозитория или продукта как воплощенного industrial AI паттерна.',
+      'От внешнего артефакта к тому, что можно забрать в свою сборку.',
+      ['Что это', 'Какой паттерн воплощает', 'Что можно взять', 'Риски внедрения', 'Где применить', 'Что спорно'],
+      ['Ссылка на artifact', 'Промышленная переносимость', 'Ограничение production readiness'],
       'deep',
       'deep',
       'manual',
       [
-        'не делать model leaderboard',
-        'искать benchmark, который говорит о применении паттерна, а не просто о сравнении моделей'
+        'не делать tool announcement',
+        'искать embodied pattern, а не просто список features'
       ]
     ),
     fabula(
-      'ai-pattern-fabula-digest',
-      'Ежемесячный digest pattern book',
-      'Большой обновляемый дайджест найденных паттернов, кейсов, OSS и спорных вопросов.',
-      'От разрозненных сигналов месяца к обновлению открытой книги паттернов.',
-      ['Что добавили', 'Что подтвердилось', 'Что спорно', 'Что просим у сообщества', 'Планы на следующий месяц'],
+      'ai-pattern-fabula-field-note',
+      'Полевой отчет из цеха',
+      'Живая industrial AI сцена, из которой выводится принцип и практический ход.',
+      'От наблюдения к принципу и следующему действию.',
+      ['Сцена', 'Наблюдение', 'Почему важно', 'Принцип', 'Практический ход'],
+      ['Конкретная сцена или sanitized material', 'Практический вывод'],
+      'standard',
+      'standard',
+      'manual',
+      [
+        'не превращать сцену в байку без вывода',
+        'держать промышленный контекст и роль пользователя'
+      ]
+    ),
+    fabula(
+      'ai-pattern-fabula-anti-pattern',
+      'Анти-паттерн',
+      'Разбор соблазнительного, но опасного industrial AI хода: почему выглядит разумно, где ломается, чем заменить.',
+      'От красивого shortcut к безопасной инженерной сборке.',
+      ['Соблазнительный ход', 'Почему кажется разумным', 'Как ломается в промышленности', 'Более безопасная сборка', 'Проверка перед использованием'],
+      ['Failure mode', 'Контрпример или ограничение', 'Альтернативная сборка'],
+      'standard',
+      'deep',
+      'manual',
+      ['искать: AI shortcuts, model-first решения, vendor claims или внутренние риски внедрения']
+    ),
+    fabula(
+      'ai-pattern-fabula-test-journal',
+      'Журнал испытаний',
+      'Периодический digest цеха: подтвержденные паттерны, candidate patterns, спорные места, anti-patterns, source queue и вопросы к сообществу.',
+      'От разрозненных сигналов месяца к обновлению открытого каталога паттернов.',
+      ['Что подтвердили', 'Что стало candidate pattern', 'Что спорно', 'Какие anti-patterns нашли', 'Что просим у сообщества', 'Следующая партия испытаний'],
       ['Несколько источников', 'Явная сортировка confirmed / hypothesis / disputed'],
       'deep',
       'marketResearch',
       'manual',
       [
         'собрать: свежие industrial AI cases, OSS, papers, статьи практиков',
-        'разделить: confirmed patterns, candidate patterns, anti-patterns'
+        'разделить: confirmed patterns, candidate patterns, anti-patterns, RFC'
       ]
-    ),
-    fabula(
-      'ai-pattern-fabula-oss-teardown',
-      'OSS / framework teardown',
-      'Разбор OSS-проекта или framework: что в нем реально полезно для industrial AI и какой паттерн он воплощает.',
-      'От репозитория к применимости в промышленном контуре.',
-      ['Что это', 'Какой паттерн воплощает', 'Что можно взять', 'Риски внедрения', 'Где применить'],
-      ['GitHub/project link', 'Ограничение production readiness'],
-      'standard',
-      'deep',
-      'manual',
-      ['искать GitHub/OSS, где виден не только demo, но и архитектурная механика']
     )
+  ],
+  topicFabulaCompatibility: [
+    compatibility('ai-pattern-topic-industrial-artifacts', 'ai-pattern-fabula-pattern-card'),
+    compatibility('ai-pattern-topic-industrial-artifacts', 'ai-pattern-fabula-test-protocol'),
+    compatibility('ai-pattern-topic-industrial-artifacts', 'ai-pattern-fabula-field-note'),
+    compatibility('ai-pattern-topic-reliability-contours', 'ai-pattern-fabula-pattern-card'),
+    compatibility('ai-pattern-topic-reliability-contours', 'ai-pattern-fabula-test-protocol'),
+    compatibility('ai-pattern-topic-reliability-contours', 'ai-pattern-fabula-anti-pattern'),
+    compatibility('ai-pattern-topic-hybrid-assembly', 'ai-pattern-fabula-pattern-card'),
+    compatibility('ai-pattern-topic-hybrid-assembly', 'ai-pattern-fabula-artifact-teardown'),
+    compatibility('ai-pattern-topic-hybrid-assembly', 'ai-pattern-fabula-anti-pattern'),
+    compatibility('ai-pattern-topic-data-raw-material', 'ai-pattern-fabula-pattern-card'),
+    compatibility('ai-pattern-topic-data-raw-material', 'ai-pattern-fabula-field-note'),
+    compatibility('ai-pattern-topic-data-raw-material', 'ai-pattern-fabula-anti-pattern'),
+    compatibility('ai-pattern-topic-implementation-field', 'ai-pattern-fabula-test-protocol'),
+    compatibility('ai-pattern-topic-implementation-field', 'ai-pattern-fabula-field-note'),
+    compatibility('ai-pattern-topic-implementation-field', 'ai-pattern-fabula-anti-pattern'),
+    compatibility('ai-pattern-topic-open-catalog', 'ai-pattern-fabula-pattern-card'),
+    compatibility('ai-pattern-topic-open-catalog', 'ai-pattern-fabula-artifact-teardown'),
+    compatibility('ai-pattern-topic-open-catalog', 'ai-pattern-fabula-test-journal')
   ],
   radars: [
     radar(
@@ -274,11 +357,11 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
     signal(
       'ai-pattern-signal-decision-workbench',
       'Pattern candidate',
-      'Maintenance Decision Intelligence Workbench как industrial AI pattern',
+      'Maintenance Decision Intelligence Workbench как артефакт для стенда',
       'Sanitized ТОиР / Ctrl2GO Solutions material',
       'В ТОиР данные уже есть в диагностике, паспортах, регламентах, RCA, нарядах, дефектах и запчастях, но решение часто собирается вручную. Паттерн: AI workbench собирает источники, показывает уверенность и оставляет инженера финальным владельцем решения.',
-      'Первый пост должен объяснить Decision Intelligence Workbench как industrial AI паттерн: GenAI + диагностика + правила + knowledge graph + HITL.',
-      'ai-pattern-topic-decision-intelligence',
+      'Первый пост должен поставить Decision Intelligence Workbench на стенд: что собирается, где допуск, где ломается, почему человек остается в контуре.',
+      'ai-pattern-topic-industrial-artifacts',
       'ai-pattern-fabula-pattern-card'
     ),
     signal(
@@ -288,7 +371,7 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Sanitized ТОиР / Ctrl2GO Solutions material',
       'Промышленный контур требует гибридной архитектуры: GenAI для объяснения, ML/диагностика для сигналов, правила и регламенты для допустимости, оптимизация для выбора, knowledge graph для связей, HITL для ответственности.',
       'Хороший архитектурный пост: почему industrial AI нельзя строить как один чат с моделью.',
-      'ai-pattern-topic-hybrid-ai',
+      'ai-pattern-topic-hybrid-assembly',
       'ai-pattern-fabula-pattern-card'
     ),
     signal(
@@ -298,8 +381,8 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Sanitized ТОиР / Ctrl2GO Solutions material',
       'Паспортизация оборудования, классификаторы, контроль качества данных, поиск похожих отказов, интерпретация диагностических событий, AI-планировщик, RCA assistant, обследование перед EAM, анализ встреч и training simulator дают карту паттернов, а не список фич.',
       'Можно сделать вводный Telegram-пост: какие кейсы не банальны и почему каждый тянет на отдельный паттерн.',
-      'ai-pattern-topic-industrial-cases',
-      'ai-pattern-fabula-case-breakdown'
+      'ai-pattern-topic-industrial-artifacts',
+      'ai-pattern-fabula-field-note'
     ),
     signal(
       'ai-pattern-signal-pattern-book',
@@ -307,9 +390,9 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Industrial AI нуждается в своей pattern book',
       'Author concept and public software-pattern tradition',
       'Как GoF, POSA и Fowler собирали язык проектирования для software architecture, industrial AI нуждается в живой книге паттернов: карточки, критика, примеры, disputed sections, community pull requests.',
-      'Пост-приглашение к сообществу: не очередной канал про AI, а попытка собрать общий язык практиков.',
-      'ai-pattern-topic-pattern-book',
-      'ai-pattern-fabula-digest'
+      'Пост-приглашение к сообществу: не очередной канал про AI, а попытка вести журнал цеха и собрать общий язык практиков.',
+      'ai-pattern-topic-open-catalog',
+      'ai-pattern-fabula-test-journal'
     )
   ],
   externalSources: [
@@ -343,13 +426,13 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
   postsPerWeek: 2,
   readyScenario: {
     planId: 'ai-patterns-plan-decision-workbench',
-    title: 'Decision Intelligence Workbench: первый industrial AI pattern',
+    title: 'Decision Intelligence Workbench: первая сборка на стенде',
     expectedEffect:
-      'Написать русский Telegram-пост, который показывает паттерн Maintenance Decision Intelligence Workbench: зачем он нужен ТОиР, как устроен гибридный AI-контур и почему человек остается в контуре.',
-    topicId: 'ai-pattern-topic-decision-intelligence',
+      'Написать русский Telegram-пост, который показывает Maintenance Decision Intelligence Workbench как промышленный AI-паттерн: зачем он нужен ТОиР, как устроена сборка и где ее допуски.',
+    topicId: 'ai-pattern-topic-industrial-artifacts',
     fabulaId: 'ai-pattern-fabula-pattern-card',
     sourceSignalId: 'ai-pattern-signal-decision-workbench',
-    format: 'Telegram pattern card'
+    format: 'Telegram workshop pattern card'
   }
 };
 
@@ -360,7 +443,7 @@ export function createAiDesignPatternsPublicationChannels(): PublicationChannel[
       projectId,
       platform: 'telegram',
       title: 'Telegram',
-      handleOrUrl: '@industrial_ai_patterns',
+      handleOrUrl: '@sborochnaya_ai',
       language: 'ru',
       role: 'primary',
       defaultPublicationSizeProfileId: 'telegram-post'
@@ -370,7 +453,7 @@ export function createAiDesignPatternsPublicationChannels(): PublicationChannel[
       projectId,
       platform: 'site',
       title: 'GitHub pattern book',
-      handleOrUrl: 'https://github.com/industrial-ai-patterns',
+      handleOrUrl: 'https://github.com/sborochnaya-industrial-ai',
       language: 'ru',
       role: 'experiment',
       publishingMode: 'adapterPlanned',
@@ -394,6 +477,10 @@ function note(
 
 function rule(id: string, group: EditorialRule['group'], title: string, statement: string): EditorialRule {
   return { id, group, title, statement, status: 'active' };
+}
+
+function compatibility(topicId: string, fabulaId: string): { topicId: string; fabulaId: string } {
+  return { topicId, fabulaId };
 }
 
 function topic(
@@ -477,7 +564,7 @@ function radar(id: string, title: string, ruleStatement: string, scope: string):
     triggerMode: 'deficitDriven',
     status: 'active',
     lastRunAt: '2026-07-02T10:00:00.000Z',
-    notes: 'Benchmark radar for AI Design Patterns rework.'
+    notes: 'Benchmark radar for Sborochnaya industrial AI workshop rework.'
   };
 }
 

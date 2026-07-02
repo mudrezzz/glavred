@@ -175,8 +175,9 @@ Permanent demo portfolio: two users and three independent blog projects. Each pr
 has its own author memory, editorial model, topics, fabulas, signals, plan slots, and
 ready benchmark scenario:
 
-- `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
-  about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
+- `Опытный цех «Сборочная»`: Russian Telegram-first workshop for industrial AI
+  patterns: ТОиР, EAM, Decision Intelligence, hybrid AI, reliability contours, and
+  a future OSS/community pattern book.
 - `Северная стена`: Telegram-native blog about complex B2B deals, RevOps, ABM,
   CRM discipline, sales gear, and commercial routes through client-side fog.
 - `Блог Главреда`: product philosophy and practical editorial methods, with the first
@@ -259,7 +260,7 @@ The dev SaaS portfolio boundary exposes:
   `POST /api/projects`, `GET/PATCH /api/projects/{projectId}`;
 - `GET/PUT /api/projects/{projectId}/workspace`.
 
-Seeded demo users are `founder@example.test` with `AI Design Patterns` and
+Seeded demo users are `founder@example.test` with `Опытный цех «Сборочная»` and
 `Северная стена`, and `glavred-editor@example.test` with `Блог Главреда`. The
 default dev password is `glavred-demo`.
 

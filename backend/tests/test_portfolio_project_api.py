@@ -79,7 +79,7 @@ def test_workspace_snapshot_roundtrip_preserves_project_isolation(tmp_path: Path
     client = portfolio_client(tmp_path)
     login_portfolio(client, "founder@example.test")
 
-    payload = {"projectProfile": {"name": "AI Design Patterns edited"}, "authorNotes": []}
+    payload = {"projectProfile": {"name": "Сборочная edited"}, "authorNotes": []}
     save_response = client.put("/api/projects/project-ai-design-patterns/workspace", json={"workspace": payload})
 
     assert save_response.status_code == 200

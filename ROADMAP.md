@@ -6004,6 +6004,46 @@ Status:
   - Future LinkedIn/site adaptation still needs a separate variant slice after the Russian Telegram baseline stabilizes.
 - Completed: 2026-07-02
 
+### Slice 2.17.4.1.1: Цех прикладной магии Project Rework
+
+- Status: Done
+- Goal: Rework the former `AI Design Patterns` benchmark into the user-approved `Опытный цех «Сборочная»` concept with clean Publisher ownership, reusable industrial AI topics/fabulas, and backend-visible demo data.
+- User value:
+  - The industrial AI benchmark stops sounding like a dry generic pattern catalog and becomes a distinctive client-attraction project with a workshop/test-stand metaphor, stronger author stance, and usable generation inputs.
+  - The project now has a clearer public identity: cases, papers, OSS, and author materials go through a workshop and produce tested industrial AI patterns, protocols, anti-patterns, or RFC questions.
+- Scope:
+  - Update `docs/architecture/AI_DESIGN_PATTERNS_PROJECT_BLUEPRINT.md` as the concept source.
+  - Update `src/fixtures/demoAiDesignPatternsProject.ts` and portfolio/backend seed labels while preserving technical id `project-ai-design-patterns`.
+  - Move reusable-output and evidence/limits rules out of `author`/`positioning` into style-owned editorial rules.
+  - Add six reusable industrial AI topics, six reusable fabulas, and a curated non-one-to-one topic/fabula matrix.
+  - Refresh backend-visible dev project metadata and minimal workspace snapshot through portfolio API.
+- Out of scope:
+  - DraftRun pipeline changes.
+  - Publication adapters or multi-platform generation.
+  - Live ingestion from the user's private source documents or Telegram archive.
+- Architecture impact:
+  - Keeps the project rework in role-owned fixture/docs modules.
+  - Reinforces that UI-visible Publisher blocks and DraftRun context are backed by `editorialRules`, not only summary text fields.
+  - Keeps `PublicationChannel` as destination mechanics only; audience remains project/editorial-contract owned.
+- Tests:
+  - Updated demo fixture, portfolio flow, editorial model flow, backend seed, and blueprint validation tests.
+  - Full frontend regression and backend regression passed.
+- Docs:
+  - Updated README, demo README, user guide, developer guide, SaaS architecture, system architecture overview, and the project blueprint.
+- Demo impact:
+  - After reset/demo seed, the founder portfolio shows `Опытный цех «Сборочная»` instead of `AI Design Patterns`.
+  - The active project contains workshop-style author memory, Publisher rules, topics, fabulas, matrix, Telegram channel, paused GitHub pattern-book experiment, and the Decision Intelligence Workbench ready scenario.
+- Acceptance criteria:
+  - Public project name is `Опытный цех «Сборочная»`. Done.
+  - Active Publisher groups `author`, `audience`, and `goal` are non-empty and semantically correct. Done.
+  - `ai-pattern-rule-pattern-output` is no longer an `author` rule and `ai-pattern-rule-proof-limits` is no longer a `positioning` rule. Done.
+  - Topic/fabula matrix is curated and not one-to-one. Done.
+  - Backend mode no longer shows stale `AI Design Patterns` project metadata after local refresh. Done.
+- Risks:
+  - Existing browser localStorage or old backend snapshots can still preserve stale project names until reset/logout/reload or a backend workspace refresh.
+  - Future LinkedIn/site adaptation remains a later slice after the Russian Telegram baseline stabilizes.
+- Completed: 2026-07-02
+
 ### Slice 2.17.4.2: Северная стена Project Rework
 
 - Status: Done
@@ -6541,6 +6581,7 @@ Status:
 - Slice 2.17.3.4: Roadmap Tracker Source of Truth. Completed 2026-07-01.
 - Slice 2.17.4: Publication Channels and Platform Profiles. Completed 2026-07-01.
 - Slice 2.17.4.1: AI Design Patterns Project Rework. Completed 2026-07-02.
+- Slice 2.17.4.1.1: Цех прикладной магии Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2: Северная стена Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration. Completed 2026-07-02.
 - Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair. Completed 2026-07-02.
@@ -6567,7 +6608,7 @@ Status:
 - Which hosted deployment target should be used after local-first development?
 - Should the first production auth implementation use a built-in dev/password mode,
   a managed provider, or a staged adapter boundary with local SaaS shell first?
-- When should `AI Design Patterns` add LinkedIn/site variants after the Russian
+- When should `Опытный цех «Сборочная»` add LinkedIn/site variants after the Russian
   Telegram-first industrial AI baseline is stable?
 - For `Блог Главреда`, should Telegram + Dzen be the first multi-platform benchmark,
   or should LinkedIn be added earlier for B2B/product-market reach?

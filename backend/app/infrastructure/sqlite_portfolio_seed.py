@@ -8,9 +8,13 @@ from typing import Any
 FOUNDER_NAME = "\u0412\u043b\u0430\u0434\u0435\u043b\u0435\u0446 \u043f\u043e\u0440\u0442\u0444\u0435\u043b\u044f"
 PRODUCT_EDITOR_NAME = "\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u0413\u043b\u0430\u0432\u0440\u0435\u0434\u0430"
 AI_DESIGN_PATTERNS_DESCRIPTION = (
-    "Industrial AI design patterns, "
+    "Telegram workshop for industrial AI patterns, "
     "\u0422\u041e\u0438\u0420"
-    " and Decision Intelligence Telegram blog."
+    ", Decision Intelligence, reliability contours and pattern-book experiments."
+)
+SBOROCHNAYA_TITLE = (
+    "\u041e\u043f\u044b\u0442\u043d\u044b\u0439 \u0446\u0435\u0445 "
+    "\u00ab\u0421\u0431\u043e\u0440\u043e\u0447\u043d\u0430\u044f\u00bb"
 )
 SEVERNAYA_STENA_TITLE = "\u0421\u0435\u0432\u0435\u0440\u043d\u0430\u044f \u0441\u0442\u0435\u043d\u0430"
 SEVERNAYA_STENA_DESCRIPTION = (
@@ -31,7 +35,7 @@ def ensure_seeded(conn: sqlite3.Connection, now: str) -> None:
         (
             "project-ai-design-patterns",
             "user-founder-editor",
-            "AI Design Patterns",
+            SBOROCHNAYA_TITLE,
             AI_DESIGN_PATTERNS_DESCRIPTION,
             "ru",
             "active",

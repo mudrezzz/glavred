@@ -108,14 +108,15 @@ switching. Use `Все проекты` there to return to the dashboard.
 
 Seeded backend users:
 
-- `founder@example.test`: can access `AI Design Patterns` and `Северная стена`.
+- `founder@example.test`: can access `Опытный цех «Сборочная»` and `Северная стена`.
 - `glavred-editor@example.test`: can access `Блог Главреда`.
 - Default dev password: `glavred-demo`.
 
 The app currently seeds two demo users and three realistic benchmark blog projects:
 
-- `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
-  about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
+- `Опытный цех «Сборочная»`: a Russian Telegram-first workshop for industrial AI
+  patterns about ТОиР, EAM, Decision Intelligence, hybrid AI, reliability contours,
+  and a future OSS pattern book.
 - `Северная стена`: a Telegram complex B2B / RevOps blog about commercial routes,
   client fog, sales gear, CRM belay, sales-marketing-product alignment, and lost
   route analysis. Its seeded topics are domains, while fabulas are reusable story

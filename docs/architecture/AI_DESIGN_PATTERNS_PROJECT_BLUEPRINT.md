@@ -1,159 +1,284 @@
-# AI Design Patterns Project Blueprint
+# Опытный цех «Сборочная» Project Blueprint
 
-This document defines the current demo/benchmark contract for the `AI Design Patterns`
-blog project. It is intentionally written in Glavred product entities, so the concept
-can be loaded into project fixtures and later into real project tables.
+This document defines the current demo/benchmark contract for the former
+`AI Design Patterns` blog project. The technical project id stays
+`project-ai-design-patterns`, but the user-facing project is now:
+
+`Опытный цех «Сборочная»`
+
+The document is written in Glavred product entities so the project can be loaded into
+fixtures and, later, into real project tables without losing ownership boundaries.
 
 ## 1. Project Concept
 
-`AI Design Patterns` is no longer a generic AI engineering publication. It is a
-Russian, Telegram-first industrial AI blog whose product goal is client attraction
-through visible expertise.
+`Опытный цех «Сборочная»` is a Russian, Telegram-first industrial AI publication for
+client attraction through visible expertise.
 
-The editorial promise:
+The blog is not about AI in general. It is about applied AI for industry: maintenance,
+EAM, diagnostics, production data, regulations, reliability contours, and real
+decision support.
 
-> We collect an open pattern book about how to build reliable AI applications for
-> industry: not around the model, but around decisions, data, checks, constraints,
-> and the human in the loop.
+The core metaphor is not magic, hype, or a generic software catalog. It is an
+experimental workshop:
 
-The project narrows the AI topic to industrial contexts: maintenance, EAM, equipment
-diagnostics, production data quality, industrial decision support, and applied AI
-architecture.
+- industrial AI ideas enter the workshop as raw artifacts;
+- cases, papers, OSS projects, and internal field notes go onto the test stand;
+- the output is a usable pattern, anti-pattern, protocol, boundary, or RFC question;
+- the community is invited to critique and improve the pattern book.
+
+Editorial promise:
+
+> We assemble industrial AI practice into tested patterns: with evidence, limits,
+> implementation criteria, and enough skepticism to be useful outside a demo.
+
+The long-term asset is an OSS/community pattern book inspired by GoF, POSA, and
+Fowler, but adapted for industrial AI and written as a living workshop journal.
 
 ## 2. Project Profile
 
-- Name: `AI Design Patterns`
+- Technical id: `project-ai-design-patterns`
+- User-facing name: `Опытный цех «Сборочная»`
+- Compatibility name: former `AI Design Patterns`
 - Language: `ru`
 - Primary channel: Telegram
 - Business role: expertise-led client attraction
 - Benchmark role: industrial AI pattern-quality benchmark
-- Future asset: OSS/community `industrial-ai-patterns` pattern book
+- Future asset: OSS/community industrial AI pattern book
 
-## 3. Editorial Model
+## 3. Author Image
 
-### Author
+The author is a practitioner of industrial AI product design and applied AI
+architecture.
 
-The author is an industrial AI / AI Product Management practitioner who curates
-repeatable design patterns from field knowledge, source material, OSS, papers, and
-public cases.
+He writes as a workshop lead, not as a trend commentator:
 
-### Audience
+- has field context in AI for ТОиР/EAM, diagnostics, production data, and industrial
+  decision support;
+- understands that a model is only one part of a controlled contour;
+- treats claims as artifacts that need sources, tests, limits, and operating criteria;
+- is curious and open to dispute, but allergic to empty AI news and vendor gloss;
+- wants clients to see engineering judgment, not just content production.
 
-- industrial digital transformation leaders;
-- CDO/CIO;
-- product leaders in B2B industrial software;
-- maintenance / EAM / ТОиР practitioners;
-- AI architects and engineering teams building reliable applied AI systems.
+The author should sound like a person who has opened the hood, inspected the parts,
+found the weak assembly, and can explain what should be rebuilt.
 
-### Positioning
+## 4. Goals
 
-The blog is not an AI news channel. It turns noisy practice into named industrial AI
-patterns with evidence, limits, implementation hints, and community discussion.
+The blog exists to:
 
-### Editorial Rules
+- attract clients who need practical industrial AI expertise, not AI theater;
+- show that reliable industrial AI requires product, data, process, and reliability
+  engineering;
+- build a public pattern language for industrial AI applications;
+- invite expert discussion and community co-authorship around the pattern book;
+- make the author's expertise visible through concrete analysis, not self-promotion.
 
-- Stay inside industrial AI unless a general AI pattern is explicitly translated to
-  industrial use.
-- Every post should produce a reusable pattern, anti-pattern, criterion, architecture
-  boundary, or RFC question.
-- Strong claims require a source, case, benchmark, OSS example, or explicit
-  author-hypothesis marker.
-- Tone is confident but not dogmatic: criticism and co-authorship are part of the
-  format.
+Every issue should support at least one of these goals.
 
-## 4. Author Memory
+## 5. Audience
+
+The primary audience:
+
+- leaders of industrial digital transformation;
+- CDO/CIO/CTO roles in industrial and B2B technology companies;
+- product leaders building AI-enabled industrial products;
+- ТОиР/EAM practitioners and maintenance transformation teams;
+- AI architects and engineering teams building reliable applied AI systems;
+- clients who suspect they need AI, but want a grounded industrial implementation
+  path instead of a model demo.
+
+The reader comes for:
+
+- non-obvious industrial AI cases;
+- architecture patterns that survive real constraints;
+- evidence and limits;
+- implementation criteria;
+- a language for discussing AI with engineers, operations, product, and management.
+
+## 6. Positioning
+
+`Опытный цех «Сборочная»` is not:
+
+- AI news;
+- a model leaderboard;
+- a list of tools;
+- vendor marketing;
+- a mystical story about AI;
+- an academic paper review for its own sake.
+
+It is a workshop for turning scattered industrial AI practice into named and reusable
+patterns.
+
+Positioning principles:
+
+- Industrial AI starts with a decision, role, process, data, and responsibility.
+- The model is one part of the assembly, not the hero.
+- Hybrid contours matter: GenAI, diagnostics, rules, regulations, optimization,
+  knowledge graphs, and HITL.
+- Strong claims need evidence or an explicit hypothesis marker.
+- Good industrial AI patterns include failure modes and conditions of use.
+
+## 7. Style
+
+Voice:
+
+- energetic, precise, workshop-like;
+- confident but not dogmatic;
+- alive enough for Telegram, specific enough for technical readers;
+- inviting criticism and co-authorship.
+
+Language:
+
+- use the workshop metaphor consistently: цех, сборка, стенд, протокол испытаний,
+  допуск, дефект, партия паттернов, контрольный образец;
+- do not force the metaphor into every sentence;
+- avoid mystical vocabulary as the public frame;
+- explain English technical terms when they carry the idea better than a weak
+  translation.
+
+Public post shape should normally produce one clear artifact:
+
+- pattern;
+- anti-pattern;
+- test protocol;
+- implementation criterion;
+- architecture boundary;
+- RFC/community question.
+
+This is a style and output-quality rule, not the author image.
+
+## 8. Forbidden Moves
+
+- Publish a tool or model announcement without extracting an industrial AI pattern.
+- Promise autonomous AI without HITL, validation, and responsibility boundaries.
+- Turn a post into a generic AI productivity thread.
+- Retell a vendor case without mechanism, data, role, limitation, or result.
+- Use internal Glavred pipeline jargon as public prose.
+- Present unverified hypotheses as proven practice.
+- Collapse every topic into the same `pattern card` structure when a failure story,
+  protocol, field note, or digest would be stronger.
+
+## 9. Author Memory
 
 Seeded memory should include these durable positions:
 
-- Industrial AI is designed around a decision, not a model.
+- Industrial AI is designed around a decision, not around a model.
 - The system should augment engineers, not replace them.
 - Reliable industrial AI is hybrid: GenAI, diagnostics, rules, regulations,
   optimization, knowledge graph, and HITL.
-- The project should grow into an OSS/community pattern book inspired by GoF, POSA,
-  and Fowler, but adapted for industrial AI.
+- A useful AI pattern is a tested assembly: mechanism, context, limits, and criteria.
+- The future pattern book should be a community artifact, not a one-author dogma.
 - The existing `https://t.me/ai_product_mgmt` channel is author-validated material,
   not a template to copy.
 
 Private user documents must be paraphrased into public-safe notes. The repository must
 not contain the original PDF text or full private materials.
 
-## 5. Topics
+## 10. Editorial Rules
 
-### Decision Intelligence for ТОиР
+Canonical UI-visible Publisher blocks are `editorialRules`, not only free-text
+`EditorialModel` summaries.
 
-AI helps maintenance engineers assemble data, understand events, find similar cases,
-build RCA, and choose the next action. The key claim: industrial AI starts with
-decision support, source visibility, and human responsibility.
+Required active groups:
 
-### Hybrid AI Architecture
+- `author`: workshop lead / industrial AI practitioner.
+- `audience`: industrial and B2B teams who need reliable AI systems.
+- `goal`: client attraction, pattern book, and mature industrial AI framing.
+- `positioning`: industrial AI workshop, not AI news or model-first hype.
+- `styleVoice` / `styleLanguage`: reusable output, evidence plus limits, and a
+  practical workshop voice.
 
-Industrial AI is not one LLM. It is a controlled contour combining GenAI,
-ML/diagnostics, rules, regulations, knowledge graph, optimization, and human review.
+## 11. Topics
 
-### Live Industrial AI Cases
+Topics are territories. They define what the blog studies, not the story form.
 
-Case selection should prefer non-obvious, mechanism-rich examples: equipment
-passporting, classification of defects and work types, data quality control, similar
-failure search, diagnostics event interpretation, AI planning, RCA assistants, EAM
-survey agents, call/request analysis, and training simulators.
+### Промышленные артефакты
 
-### OSS Pattern Book
+Cases and objects from the industrial floor: ТОиР, EAM, diagnostics, equipment
+passports, work orders, defects, spare parts, RCA, and maintenance events.
 
-The blog gradually becomes an invitation to build a community pattern book: pattern
-cards, critique, examples, disputed sections, and future pull requests.
+### Контуры надежности
 
-## 6. Fabulas
+How industrial AI remains controlled: validation, fallback, traceability, evidence,
+HITL, safety boundaries, and responsibility.
 
-### Pattern Card
+### Гибридная сборка
 
-Structure:
+How different components assemble into a working AI contour: LLM, ML diagnostics,
+rules, regulations, knowledge graph, optimization, tools, workflow.
 
-1. Situation
-2. Pattern
-3. Mechanism
-4. Example or source
-5. Where it works
-6. Where it breaks
-7. What we take into practice
+### Данные как сырье
 
-### Industrial Case Breakdown
+The raw material of industrial AI: classifications, event logs, documents,
+regulations, defect codes, equipment hierarchy, data quality, and provenance.
 
-Structure:
+### Полигон внедрения
 
-1. Case
-2. Data and roles
-3. AI mechanism
-4. What changed
-5. Limits
-6. Pattern for the book
+Where patterns meet reality: pilots, economics, adoption, roles, operational change,
+integration with EAM/ERP/CRM, and measurable success criteria.
 
-### Paper / Benchmark Review
+### Открытый каталог паттернов
 
-Must not become a model leaderboard. The review should answer: which pattern becomes
-more useful for industrial AI practice because of this paper/report/benchmark?
+The community pattern book itself: naming, dispute, RFCs, examples, anti-patterns,
+digest updates, and future OSS collaboration.
 
-### Monthly Pattern Book Digest
+## 12. Fabulas
 
-Separates:
+Fabulas are reusable narrative mechanics. They must be able to work across several
+topics.
 
-- confirmed patterns;
-- candidate patterns;
-- disputed patterns;
-- anti-patterns;
-- questions for the community.
+### Карточка паттерна
 
-### OSS / Framework Teardown
+Situation -> recurring problem -> named pattern -> mechanism -> source/example ->
+where it works -> where it breaks -> what we take into practice.
 
-Looks at a repository or framework as an embodied pattern, not as a tool announcement.
+### Протокол испытаний
 
-## 7. Publication Channels
+Claim or tool -> test stand -> input data/conditions -> observed behavior -> failure
+modes -> admissible use -> decision.
+
+### Разбор артефакта
+
+Case, paper, OSS repository, or product artifact -> what it is -> embodied pattern ->
+useful parts -> limits -> industrial application.
+
+### Полевой отчет из цеха
+
+Concrete scene -> observation -> why it matters -> principle -> practical move.
+
+### Анти-паттерн
+
+Common seductive move -> why it looks reasonable -> how it fails in industry -> safer
+assembly -> check before use.
+
+### Журнал испытаний
+
+Periodic digest: confirmed patterns, candidate patterns, disputed patterns,
+anti-patterns, source queue, and community questions.
+
+## 13. Topic x Fabula Matrix
+
+The matrix is curated, not all-to-all and not one-to-one.
+
+- `Промышленные артефакты`: `Карточка паттерна`, `Протокол испытаний`,
+  `Полевой отчет из цеха`.
+- `Контуры надежности`: `Карточка паттерна`, `Протокол испытаний`, `Анти-паттерн`.
+- `Гибридная сборка`: `Карточка паттерна`, `Разбор артефакта`, `Анти-паттерн`.
+- `Данные как сырье`: `Карточка паттерна`, `Полевой отчет из цеха`,
+  `Анти-паттерн`.
+- `Полигон внедрения`: `Протокол испытаний`, `Полевой отчет из цеха`,
+  `Анти-паттерн`.
+- `Открытый каталог паттернов`: `Карточка паттерна`, `Разбор артефакта`,
+  `Журнал испытаний`.
+
+## 14. Publication Channels
 
 ### Telegram
 
 - Role: primary
 - Language: Russian
 - Size profile: `telegram-post`
-- Content expectation: energetic, concrete, practical, with enough detail to show
+- Content expectation: energetic, concrete, practical, and distinct enough to show
   expertise.
 
 ### GitHub Pattern Book
@@ -162,29 +287,43 @@ Looks at a repository or framework as an embodied pattern, not as a tool announc
 - Status: paused in v1
 - Purpose: future community pattern book, not active publishing in this slice.
 
-## 8. Source Signals and Radars
+Channels store destination mechanics only. Project audience stays in Publisher /
+editorial rules.
+
+## 15. Source Signals and Radars
 
 Radars should seek:
 
 - industrial AI cases with data, roles, limits, and results;
 - papers and reports about patterns/frameworks, not model leaderboards;
-- OSS/frameworks that embody a reusable architecture pattern;
+- OSS/frameworks that embody reusable architecture patterns;
 - sanitized author materials about applied AI for ТОиР and AI Product Management.
 
 The first seeded signal is `Maintenance Decision Intelligence Workbench`: a pattern
 where the system collects ТОиР data, explains confidence, surfaces sources, and leaves
 the final decision to an engineer.
 
-## 9. Benchmark Expectations
+## 16. Ready Scenario
 
-A good generated post for this project should:
+Ready benchmark scenario:
 
-- stay in industrial AI;
-- name a reusable pattern;
-- use source/evidence material without dumping it;
-- distinguish proven practice from author hypothesis;
-- show client-attracting expertise;
-- invite expert discussion instead of closing the topic with dogma.
+- Topic: `Промышленные артефакты`
+- Fabula: `Карточка паттерна`
+- Signal: `Maintenance Decision Intelligence Workbench`
+- Channel: Telegram
+- Expected output: a Russian Telegram post that presents a concrete industrial AI
+  pattern, not a generic AI promise.
+
+## 17. Benchmark Expectations
+
+A good generated post:
+
+- stays in industrial AI;
+- names a reusable pattern or anti-pattern;
+- uses source/evidence material without dumping it;
+- distinguishes proven practice from author hypothesis;
+- shows client-attracting expertise;
+- invites expert discussion instead of closing the topic with dogma.
 
 A bad generated post:
 
@@ -192,11 +331,12 @@ A bad generated post:
 - centers model comparison without industrial context;
 - promises autonomous AI without HITL and controls;
 - lists tools without an implementation pattern;
-- sounds like vendor marketing.
+- sounds like vendor marketing;
+- loses the workshop identity.
 
-## 10. Slice 2.17.4.1 Fixture Mapping
+## 18. Fixture Mapping
 
-The slice maps this blueprint to:
+The fixture maps this blueprint to:
 
 - `ProjectProfile`;
 - `EditorialModel`;
@@ -204,6 +344,7 @@ The slice maps this blueprint to:
 - `EditorialRule[]`;
 - `Topic[]`;
 - `Fabula[]`;
+- `TopicFabulaMatrixEntry[]`;
 - `RadarDefinition[]`;
 - `SourceSignal[]`;
 - `PublicationChannel[]`;
@@ -212,6 +353,3 @@ The slice maps this blueprint to:
 `PublicationChannel[]` stores destination, handle, language, role, publishing mode,
 status, and default size/profile only. Project audience stays in the `Audience`
 editorial rules above; channels must not duplicate it.
-
-Future project rework slices should follow the same document-first pattern for
-`Северная стена` and `Блог Главреда`.

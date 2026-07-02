@@ -1881,9 +1881,9 @@ cabinet still runs unchanged inside the selected project.
 The local shell seeds two users and three project containers:
 
 - User A owns two independent blogs:
-  - `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
-    about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
-    future OSS/community pattern book.
+  - `Опытный цех «Сборочная»`: a Russian Telegram-first workshop for industrial AI
+    patterns about ТОиР, EAM, Decision Intelligence, hybrid AI, reliability contours,
+    source-grounded systems, and a future OSS/community pattern book.
   - `Северная стена`: a Russian Telegram blog about complex B2B deals as commercial
     climbs: route, client relief, sales gear, RevOps belay, lost routes, ABM, and
     CRM discipline, with a curated reusable topic/fabula matrix.
@@ -1905,7 +1905,7 @@ is unavailable.
 - project isolation: no memory, learning notes, rules, or drafts leak between blogs;
 - channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen
   variants;
-- author voice: `Северная стена` should not sound like `AI Design Patterns`;
+- author voice: `Северная стена` should not sound like `Опытный цех «Сборочная»`;
 - research depth: the technical blog can require deeper evidence than a quick
   Telegram opinion post;
 - product narrative: `Блог Главреда` should explain the product without sounding like
@@ -2034,7 +2034,7 @@ For backend slices, add:
 ## Open Questions
 
 - Which production authentication provider should replace dev-password session auth?
-- When should `AI Design Patterns` add LinkedIn/site variants after its Russian
+- When should `Опытный цех «Сборочная»` add LinkedIn/site variants after its Russian
   Telegram-first industrial AI baseline is stable?
 - Should `Блог Главреда` use Telegram + Dzen as the first multi-platform benchmark,
   or should LinkedIn be introduced earlier for product/B2B reach?

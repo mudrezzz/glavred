@@ -59,8 +59,9 @@ def test_seeded_ai_design_patterns_project_matches_current_industrial_baseline(t
     projects = client.get("/api/projects?includeArchived=true").json()["projects"]
     ai_project = next(item["project"] for item in projects if item["project"]["id"] == "project-ai-design-patterns")
 
+    assert ai_project["title"] == "Опытный цех «Сборочная»"
     assert ai_project["language"] == "ru"
-    assert "Industrial AI" in ai_project["description"]
+    assert "industrial AI patterns" in ai_project["description"]
     assert "ТОиР" in ai_project["description"]
     assert "Decision Intelligence" in ai_project["description"]
 

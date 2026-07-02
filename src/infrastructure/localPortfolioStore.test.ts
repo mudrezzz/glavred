@@ -35,13 +35,13 @@ describe('LocalPortfolioStore', () => {
 
     expect(portfolio.users).toHaveLength(2);
     expect(portfolio.projects.map((project) => project.title)).toEqual([
-      'AI Design Patterns',
+      'Опытный цех «Сборочная»',
       'Северная стена',
       'Блог Главреда'
     ]);
     expect(portfolio.activeUserId).toBe('user-founder-editor');
     expect(portfolio.activeProjectId).toBe('project-ai-design-patterns');
-    expect(getActiveWorkspace(portfolio).projectProfile.name).toBe('AI Design Patterns');
+    expect(getActiveWorkspace(portfolio).projectProfile.name).toBe('Опытный цех «Сборочная»');
   });
 
   it('migrates a legacy singleton workspace into one project', () => {
@@ -67,7 +67,7 @@ describe('LocalPortfolioStore', () => {
       id: 'note-project-isolation',
       type: 'thought',
       title: '',
-      body: 'Only AI Design Patterns should see this note.',
+      body: 'Only Sborochnaya should see this note.',
       sourceUrl: '',
       tags: ['isolation'],
       attachments: [],

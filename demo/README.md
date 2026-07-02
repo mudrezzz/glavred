@@ -75,9 +75,9 @@ Backend demo login:
 Target portfolio:
 
 - User A:
-  - `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
-    about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
-    future OSS/community pattern book.
+  - `Опытный цех «Сборочная»`: Russian Telegram-first workshop for industrial AI
+    patterns about ТОиР, EAM, Decision Intelligence, hybrid AI, reliability contours,
+    and a future OSS/community pattern book.
   - `Северная стена`: Telegram-native complex B2B / RevOps blog with an alpine
     metaphor, strong stance, field pain, and practical route-building mechanics.
 - User B:
@@ -114,8 +114,9 @@ one-to-one topic/fabula coupling, and missing ready scenarios.
 
 Each blog now has its own memory feed:
 
-- `AI Design Patterns`: industrial AI decision support, engineer augmentation,
-  hybrid AI, ТОиР/EAM patterns, and the future OSS pattern book.
+- `Опытный цех «Сборочная»`: industrial AI decision support, engineer augmentation,
+  hybrid AI, ТОиР/EAM artifacts, workshop/test-stand pattern language, and the future
+  OSS pattern book.
 - `Северная стена`: complex B2B sales as commercial climbs: deal route, client
   relief, sales gear, RevOps belay, rope team, lost routes, and AI as light gear.
   Its topics are subject territories, while fabulas are reusable narrative mechanics
@@ -141,7 +142,7 @@ without the normal `Сохранить` action.
 ## Structured Editorial Model
 
 `Редакционная модель` opens inside the selected portfolio project. The dashboard shows
-`AI Design Patterns`, `Северная стена`, and `Блог Главреда` as separate projects; each
+`Опытный цех «Сборочная»`, `Северная стена`, and `Блог Главреда` as separate projects; each
 has its own profile, memory, topics, fabulas, signals, and ready benchmark scenario.
 
 The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic `ValidatorRun`. The panel then shows validator cards with score, red/yellow/green status, evidence, and suggested fixes. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
@@ -174,7 +175,7 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 ## Broadcast Content Plan
 
 `План` now opens as a broadcast grid for the selected blog project. The demo
-seed contains project-scoped publication channels: AI Design Patterns defaults to a
+seed contains project-scoped publication channels: `Опытный цех «Сборочная»` defaults to a
 Telegram channel with a paused GitHub pattern-book experiment, `Северная стена`
 defaults to Telegram, and `Блог Главреда` contains Telegram plus a Dzen experiment.
 The monthly settings profile still uses three posts per week, Monday/Wednesday/Friday

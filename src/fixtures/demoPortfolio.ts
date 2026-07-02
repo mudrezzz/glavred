@@ -29,8 +29,8 @@ export function createDemoPortfolio(): PortfolioState {
       {
         id: 'project-ai-design-patterns',
         ownerUserId: 'user-founder-editor',
-        title: 'AI Design Patterns',
-        description: 'Industrial AI design patterns, ТОиР and Decision Intelligence Telegram blog.',
+        title: 'Опытный цех «Сборочная»',
+        description: 'Telegram workshop for industrial AI patterns, ТОиР, Decision Intelligence and reliable AI systems.',
         language: 'ru',
         status: 'active',
         benchmarkRole: 'demo',

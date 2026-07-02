@@ -327,7 +327,7 @@ Implemented v1:
 
 Dev seed users:
 
-- `founder@example.test`: `AI Design Patterns`, `Северная стена`;
+- `founder@example.test`: `Опытный цех «Сборочная»`, `Северная стена`;
 - `glavred-editor@example.test`: `Блог Главреда`;
 - default password: `glavred-demo`.
 
@@ -436,13 +436,15 @@ platform/channel constraints are resolved in the final contract layer.
 
 The portfolio should include two users and three blogs.
 
-### User A / Blog 1: `AI Design Patterns`
+### User A / Blog 1: `Опытный цех «Сборочная»`
 
 Purpose:
 
 - attract clients through visible expertise in industrial AI application design;
-- aggregate scattered industrial AI practice into durable design patterns;
-- build a Russian Telegram-first community around a future OSS pattern book.
+- aggregate scattered industrial AI practice into tested workshop patterns;
+- build a Russian Telegram-first community around a future OSS pattern book;
+- make the project feel like an experimental workshop/test stand, not a generic AI
+  design-pattern catalog.
 
 Likely channels:
 
@@ -453,10 +455,11 @@ Benchmark expectations:
 
 - industrial AI scope: ТОиР, EAM, diagnostics, Decision Intelligence, hybrid AI;
 - research-heavy when the fabula requires it;
-- explicit pattern naming;
+- explicit pattern naming and test-stand framing;
 - avoids "new tool appeared" hype;
 - uses external evidence and practical examples;
-- produces systematic synthesis and a reusable pattern, not a hot take.
+- produces systematic synthesis and a reusable pattern, protocol, anti-pattern, or RFC
+  question, not a hot take.
 
 ### User A / Blog 2: `Северная стена`
 
@@ -483,7 +486,7 @@ Benchmark expectations:
 - practical field observations about route, sales gear, CRM belay, ABM, and client-side politics;
 - reusable topic/fabula combinations, where topics are commercial territories and
   fabulas are narrative mechanics rather than one-to-one topic aliases;
-- can reuse author memory without borrowing the AI Design Patterns voice.
+- can reuse author memory without borrowing the `Опытный цех «Сборочная»` voice.
 
 ### User B / Blog 3: `Блог Главреда`
 
@@ -565,7 +568,7 @@ Slice 2.17.5/2.17.6 should include:
 ## 12. Open decisions for later slices
 
 - Which production auth provider should replace dev-password session auth?
-- When `AI Design Patterns` should add LinkedIn/site variants after the Russian
+- When `Опытный цех «Сборочная»` should add LinkedIn/site variants after the Russian
   Telegram-first industrial AI baseline is stable.
 - Whether Dzen should be implemented before LinkedIn adaptation for `Блог Главреда`.
 - Whether user-level memory should ever exist, or whether all author memory should

@@ -12,7 +12,7 @@ describe('Editorial model app flow', () => {
     renderAppCabinet();
 
     fireEvent.click(screen.getByRole('button', { name: /Редакционная модель/i }));
-    expect(screen.getAllByText('AI Design Patterns').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Опытный цех «Сборочная»').length).toBeGreaterThan(0);
     expect(screen.getByRole('tab', { name: /Издательство/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Темы/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Фабулы/i })).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('Editorial model app flow', () => {
     expect(screen.getByText(/Требует повторной проверки/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
-    const topicButton = screen.getByRole('button', { name: 'Decision Intelligence для ТОиР' });
+    const topicButton = screen.getByRole('button', { name: 'Промышленные артефакты' });
     expect(topicButton).toBeInTheDocument();
     expect(topicButton.closest('.entity-row-main')?.querySelector('.entity-row-meta')).toBeTruthy();
     expect(document.querySelector('.entity-details-scroll')).toBeInTheDocument();

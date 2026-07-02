@@ -4,7 +4,7 @@ import { App } from '../../App';
 import { renderAppCabinet } from '../../test-support/appFlowDriver';
 
 function openPortfolioSwitcher() {
-  fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Опытный цех/i }));
 }
 
 describe('Portfolio switcher app flow', () => {
@@ -24,7 +24,7 @@ describe('Portfolio switcher app flow', () => {
 
     expect(screen.getByTestId('portfolio-switcher-panel')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Пользователь' })).toHaveDisplayValue('Владелец портфеля');
-    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('AI Design Patterns');
+    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Опытный цех «Сборочная»');
   });
 
   it('shows local users and their accessible blog projects', () => {
@@ -49,22 +49,22 @@ describe('Portfolio switcher app flow', () => {
     expect(screen.getByText(/Industrial AI надо проектировать вокруг решения/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Заметка автора'), {
-      target: { value: 'Project-specific note for AI Design Patterns only.' }
+      target: { value: 'Project-specific note for Sborochnaya only.' }
     });
     fireEvent.click(screen.getByRole('button', { name: /Добавить в память/i }));
-    expect(screen.getAllByText(/Project-specific note for AI Design Patterns only/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Project-specific note for Sborochnaya only/i).length).toBeGreaterThan(0);
 
     openPortfolioSwitcher();
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
       target: { value: 'project-kasha-iz-topora' }
     });
-    expect(screen.queryByText(/Project-specific note for AI Design Patterns only/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Project-specific note for Sborochnaya only/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Сделка не зависает, она теряет маршрут/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
       target: { value: 'project-ai-design-patterns' }
     });
-    expect(screen.getAllByText(/Project-specific note for AI Design Patterns only/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Project-specific note for Sborochnaya only/i).length).toBeGreaterThan(0);
   });
 
   it('shows Glavred blog context for the second demo user', () => {

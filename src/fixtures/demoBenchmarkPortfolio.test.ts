@@ -26,17 +26,17 @@ describe('three-blog benchmark demo portfolio', () => {
     const kasha = portfolio.workspacesByProjectId['project-kasha-iz-topora'];
     const glavred = portfolio.workspacesByProjectId['project-glavred-blog'];
 
-    expect(ai.projectProfile.name).toBe('AI Design Patterns');
+    expect(ai.projectProfile.name).toBe('Опытный цех «Сборочная»');
     expect(kasha.projectProfile.name).toBe('Северная стена');
     expect(glavred.projectProfile.name).toBe('Блог Главреда');
 
-    expect(ai.editorialModel.positioning).toContain('industrial AI');
+    expect(ai.editorialModel.positioning).toContain('Опытный цех');
     expect(kasha.editorialModel.positioning).toContain('туман');
     expect(glavred.editorialModel.positioning).toContain('редакционную систему');
 
     expect(ai.authorNotes.some((note) => note.tags.includes('industrial-ai'))).toBe(true);
-    expect(ai.topics.map((topic) => topic.id)).toContain('ai-pattern-topic-decision-intelligence');
-    expect(ai.fabulas.map((fabula) => fabula.id)).toContain('ai-pattern-fabula-digest');
+    expect(ai.topics.map((topic) => topic.id)).toContain('ai-pattern-topic-industrial-artifacts');
+    expect(ai.fabulas.map((fabula) => fabula.id)).toContain('ai-pattern-fabula-test-journal');
     expect(ai.sourceSignals.map((signal) => signal.id)).toContain('ai-pattern-signal-decision-workbench');
     expect(kasha.authorNotes.some((note) => note.tags.includes('revops'))).toBe(true);
     expect(kasha.authorNotes.some((note) => note.tags.includes('belay'))).toBe(true);
@@ -67,6 +67,61 @@ describe('three-blog benchmark demo portfolio', () => {
     )).toBe(true);
     expect(kasha.contentPlanItems[0].channelId).toBe('channel-stena-telegram');
     expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
+  });
+
+  it('calibrates Sborochnaya author, goals, positioning and reusable topic-fabula matrix', () => {
+    const portfolio = createDemoPortfolio();
+    const ai = portfolio.workspacesByProjectId['project-ai-design-patterns'];
+
+    expect(ai.projectProfile.name).toBe('Опытный цех «Сборочная»');
+    expect(ai.projectProfile.description).toContain('industrial AI patterns');
+    expect(ai.editorialModel.author).toContain('руководитель опытного цеха');
+    expect(ai.editorialModel.goals.join(' ')).toContain('Привлекать клиентов');
+    expect(ai.editorialModel.goals.join(' ')).toContain('industrial AI patterns');
+    expect(ai.editorialModel.positioning).toContain('стенд');
+    expect(ai.editorialModel.styleRules.join(' ')).toContain('Публичный артефакт выпуска');
+
+    const ruleIdsByGroup = (group: string) =>
+      ai.editorialRules.filter((rule) => rule.group === group).map((rule) => rule.id);
+    expect(ruleIdsByGroup('author')).toContain('ai-pattern-rule-author-workshop-lead');
+    expect(ruleIdsByGroup('audience')).toContain('ai-pattern-rule-industrial-audience');
+    expect(ruleIdsByGroup('goal')).toEqual(
+      expect.arrayContaining(['ai-pattern-rule-client-attraction-goal', 'ai-pattern-rule-pattern-book-goal'])
+    );
+    expect(ruleIdsByGroup('author')).not.toContain('ai-pattern-rule-pattern-output');
+    expect(ruleIdsByGroup('positioning')).not.toContain('ai-pattern-rule-proof-limits');
+    expect(ruleIdsByGroup('styleVoice')).toContain('ai-pattern-rule-pattern-output');
+    expect(ruleIdsByGroup('styleLanguage')).toContain('ai-pattern-rule-proof-limits');
+
+    expect(ai.topics.map((topic) => topic.id)).toEqual([
+      'ai-pattern-topic-industrial-artifacts',
+      'ai-pattern-topic-reliability-contours',
+      'ai-pattern-topic-hybrid-assembly',
+      'ai-pattern-topic-data-raw-material',
+      'ai-pattern-topic-implementation-field',
+      'ai-pattern-topic-open-catalog'
+    ]);
+    expect(ai.fabulas.map((fabula) => fabula.id)).toEqual([
+      'ai-pattern-fabula-pattern-card',
+      'ai-pattern-fabula-test-protocol',
+      'ai-pattern-fabula-artifact-teardown',
+      'ai-pattern-fabula-field-note',
+      'ai-pattern-fabula-anti-pattern',
+      'ai-pattern-fabula-test-journal'
+    ]);
+
+    const enabledPairs = ai.topicFabulaMatrix.filter((entry) => entry.enabled);
+    expect(ai.topicFabulaMatrix).toHaveLength(ai.topics.length * ai.fabulas.length);
+    expect(enabledPairs).toHaveLength(18);
+    expect(enabledPairs.filter((entry) => entry.topicId === 'ai-pattern-topic-industrial-artifacts').map((entry) => entry.fabulaId)).toEqual(
+      expect.arrayContaining(['ai-pattern-fabula-pattern-card', 'ai-pattern-fabula-test-protocol'])
+    );
+    expect(enabledPairs.filter((entry) => entry.fabulaId === 'ai-pattern-fabula-pattern-card').length).toBeGreaterThanOrEqual(3);
+
+    const ready = ai.contentPlanItems.find((item) => item.id === 'ai-patterns-plan-decision-workbench');
+    expect(ready?.topicId).toBe('ai-pattern-topic-industrial-artifacts');
+    expect(ready?.fabulaId).toBe('ai-pattern-fabula-pattern-card');
+    expect(ready?.channelId).toBe('channel-ai-telegram');
   });
 
   it('calibrates Severnaya Stena author, goals, audience and pain-first dramaturgy', () => {

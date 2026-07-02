@@ -14,9 +14,9 @@ const user: UserAccount = {
 const project: BlogProject = {
   id: 'project-ai-design-patterns',
   ownerUserId: user.id,
-  title: 'AI Design Patterns',
+  title: 'Опытный цех «Сборочная»',
   description: 'Research-heavy blog.',
-  language: 'en',
+  language: 'ru',
   status: 'active',
   benchmarkRole: 'demo',
   createdAt: '2026-06-30T00:00:00Z',
@@ -52,7 +52,7 @@ describe('SidebarPortfolioSwitcher', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Опытный цех/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Все проекты' }));
     fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
 
@@ -77,7 +77,7 @@ describe('SidebarPortfolioSwitcher', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Опытный цех/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
