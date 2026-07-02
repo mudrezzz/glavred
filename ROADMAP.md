@@ -6041,7 +6041,7 @@ Status:
 
 ### Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration
 
-- Status: Ready
+- Status: Done
 - Goal: Calibrate the `Северная стена` project contract after editorial review so the demo project has a usable author persona, business goals, audience boundary, style rules, and fabula dramaturgy.
 - User value:
   - The RevOps benchmark becomes a real client-attraction project brief instead of a generic content seed.
@@ -6076,44 +6076,145 @@ Status:
   - Pain-first opening guidance lives in `Voice` and/or a specific fabula.
 - Risks:
   - Overwriting useful roughness with consulting polish; preserve the sharper alpine voice.
+- Completed: 2026-07-02
 
-### Slice 2.17.4.2.2: Publication Channel Audience Boundary Repair
+### Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair
 
-- Status: Backlog
-- Goal: Repair the product-wide boundary so project audience is centralized in the editorial model / post brief and is no longer duplicated inside publication channels.
+- Status: Ready
+- Goal: Repair two product-wide ownership boundaries: project audience must live in the editorial contract / post brief, not publication channels; and `editorialRules` must be the canonical editable editorial contract for Author, Audience, Goals, Positioning, Style and Forbidden blocks, not a duplicate shadow of `editorialModel` summary fields.
 - User value:
   - Channel settings become simpler and less misleading.
-  - DraftRun context uses the same audience the editor configured centrally, not an accidental per-channel copy.
+  - Editors see one working place for author/audience/goals rules.
+  - DraftRun context uses the same visible blocks the editor configured, not stale duplicated summaries.
 - Scope:
   - Deprecate legacy `PublicationChannel.audience` in domain normalization and new fixtures.
   - Remove the audience block from `PublicationChannelsTab` cards/forms.
   - Preserve old snapshots that still contain channel audience data without using it for generation.
-  - Ensure `buildDraftRunContext` and backend context summaries use `PostBrief.audience || EditorialModel.audience`, never channel audience.
+  - Define `editorialRules` groups `author`, `audience`, `goal`, `positioning`, `style*`, and `forbiddenTopic` as the canonical editable editorial contract used by UI and DraftRun.
+  - Treat `editorialModel.author`, `editorialModel.audience`, and `editorialModel.goals` as derived/legacy summary fields during compatibility normalization; they must not become an independent second source of truth.
+  - Normalize legacy workspaces by synthesizing missing `editorialRules` from old `editorialModel` summary fields when needed, so old projects do not show empty Publisher blocks.
+  - Ensure `buildDraftRunContext` and backend context summaries use `PostBrief.audience || editorialRules(audience) || legacy EditorialModel.audience`, never channel audience.
+  - Ensure DraftRun author/goals/style context prefers visible `editorialRules` over stale `editorialModel` duplicates when rules exist.
   - Update channel fixture builders so channels contain destination, language, role, mode, status, and default size/profile only.
 - Out of scope:
   - Platform variants.
   - Per-channel audience segmentation.
   - Publication adapters, OAuth, or autoposting.
+  - Full removal of legacy `editorialModel` fields from storage in this slice.
 - Implementation notes:
   - If future channel-specific nuance is needed, model it as adaptation notes or platform-variant guidance, not as a second audience owner.
+  - If compact model summaries are still useful, compute them from rules or keep them explicitly marked as compatibility summaries.
 - Architecture impact:
-  - Enforces ADR `publication-channel-audience-boundary`.
-  - Clarifies the distinction between destination setup and editorial contract.
+  - Enforces ADR `publication-channel-audience-boundary` and adds/updates an editorial contract ownership note.
+  - Clarifies the distinction between destination setup, editable editorial contract, and legacy summaries.
 - Tests:
   - Domain normalization keeps legacy channel audience readable but ignored.
+  - Legacy workspaces with only `editorialModel.author/audience/goals` synthesize visible `editorialRules`.
   - UI tests verify channel forms/cards do not show audience.
-  - DraftRun context tests verify audience comes from editorial model or brief.
-  - Demo fixture tests verify channels no longer duplicate project audience.
+  - Publisher UI tests verify Author, Audience and Goals blocks are populated from rules.
+  - DraftRun context tests verify audience comes from brief/rules/model fallback and never channel audience.
+  - DraftRun context tests verify author/goals prefer `editorialRules` over stale model summaries.
+  - Demo fixture tests verify channels no longer duplicate project audience and seeded project blocks are not empty.
 - Docs:
   - ADR, architecture overview, SaaS portfolio architecture, developer guide, user/demo docs, and roadmap.
 - Demo impact:
   - Demo channel cards stop showing a duplicate audience block.
+  - Demo Publisher blocks remain populated after backend snapshot normalization.
 - Acceptance criteria:
   - No new editable channel audience UI remains.
   - Generation context has one auditable audience source.
-  - Old workspaces still load.
+  - Author/Audience/Goals blocks are visible rules, not duplicated hidden summaries.
+  - Old workspaces still load and do not show empty Publisher blocks when legacy summary data exists.
 - Risks:
   - Some projects may later need channel-specific audience nuance; defer that to platform variants/adaptation notes.
+  - Legacy `editorialModel` fields may remain useful as API/export summaries, so the slice must clarify ownership before deleting anything.
+
+### Slice 2.17.4.2.2.1: Project Blueprint Creation Skill
+
+- Status: Backlog
+- Goal: Create a reusable agent skill for turning an approved blog-project blueprint into consistent Glavred project data, fixtures, docs, backend demo snapshots, and validation checks.
+- User value:
+  - New/reworked projects stop being hand-wired through ad hoc fixture edits and SQLite snapshot patches.
+  - Project setup becomes repeatable: author memory, editorial rules, topics, fabulas, matrix, channels, plan scenarios and benchmark expectations are created from one agreed blueprint.
+  - UTF-8/mojibake, empty Publisher blocks, topic/fabula one-to-one coupling, and stale backend snapshots become explicit failure checks.
+- Scope:
+  - Add a local `.agents/skills/project-blueprint-creation/SKILL.md` for creating or reworking blog projects from blueprint docs.
+  - The skill must read the roadmap tracker, `ui-design-systems/START-HERE.md`, existing project blueprints, demo fixture builders, and SaaS portfolio architecture before editing.
+  - Define a project blueprint checklist covering project profile, author image, goals, audience, positioning, style, forbidden moves, author memory, editorial rules, topics, reusable fabulas, topic/fabula matrix, publication channels, source signals, ready scenarios and benchmark criteria.
+  - Define the correct write path: update UTF-8 source fixtures/docs first, then reset or migrate backend snapshots through safe scripts; never patch Cyrillic data into SQLite via brittle inline shell commands.
+  - Add or update helper validation so seeded projects fail tests when Publisher blocks are empty, `editorialRules` are missing, topic/fabula matrix degenerates into one-to-one pairs, or mojibake/question-mark runs appear in fixture text.
+  - Document when to create a blueprint first, when to update fixtures, and how to make the updated project visible in backend mode.
+- Out of scope:
+  - Implementing a full UI project wizard.
+  - Persisting project blueprints as a new runtime domain object.
+  - Running DraftRun generation benchmarks.
+- Implementation notes:
+  - This is an agent workflow skill, not product UI.
+  - The skill should make the approved blueprint the source for project seed data and tests.
+  - It should explicitly prevent direct manual duplication between `editorialModel` summaries and canonical `editorialRules`.
+- Architecture impact:
+  - Establishes a project creation/rework workflow boundary parallel to DraftRun TO BE planning.
+  - Reduces accidental coupling between docs, fixtures, backend snapshots and UI-visible editorial blocks.
+- Tests:
+  - Skill installation/metadata smoke if available.
+  - Fixture validation tests for missing author/audience/goals rules, mojibake, and topic/fabula matrix degeneracy.
+  - Demo portfolio tests proving backend-visible projects can be refreshed from fixtures without corrupting Cyrillic.
+- Docs:
+  - Update AGENTS/skills guidance, demo README, developer guide, SaaS portfolio architecture, and project blueprint docs.
+- Demo impact:
+  - Future demo projects are created through the skill-backed checklist instead of one-off fixture edits.
+- Acceptance criteria:
+  - A new or reworked project can be created from a blueprint through documented skill steps.
+  - The workflow includes checks for empty Publisher blocks, duplicated audience/channel ownership, mojibake, and one-to-one topic/fabula coupling.
+  - The workflow explains how to refresh local backend snapshots safely.
+- Risks:
+  - A skill can enforce process but cannot replace product-level validation; keep the fixture/domain checks as real tests.
+
+### Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration
+
+- Status: Backlog
+- Goal: Calibrate the `Северная стена` editorial model so goals, positioning, topics, fabulas, and the topic/fabula matrix have distinct responsibilities and produce reusable drafting combinations.
+- User value:
+  - The project becomes a better real benchmark for RevOps / complex B2B sales content.
+  - Editors can combine subjects and dramaturgies instead of picking from four nearly hard-coded topic+fabula pairs.
+  - DraftRun receives cleaner inputs: goals are business/editorial aims, positioning is author stance, topics are domains, and fabulas are reusable narrative forms.
+- Scope:
+  - Move `AI как легкое снаряжение` from `goal` to `positioning` and phrase it as author stance, not blog objective.
+  - Clean `goal` rules so they contain only business/editorial goals: client attraction through expertise, RevOps market education, engineering approach to complex B2B sales, trust in a small fast practical team.
+  - Rewrite topics as subject domains: client relief, RevOps belay, deal gear, lost route, sales-marketing-product rope team, procurement/DMU/internal politics.
+  - Rewrite fabulas as reusable dramaturgical forms: fog removal, failure analysis, gear check, field route, control point/checklist, summit brief.
+  - Rebuild `topicFabulaMatrix` so each key fabula is compatible with at least two or three meaningful topics.
+  - Update ready scenario to use one topic and one reusable fabula without semantic overlap.
+  - Update `docs/architecture/SEVERNAYA_STENA_PROJECT_BLUEPRINT.md` and benchmark metadata.
+- Out of scope:
+  - Global Topic/Fabula domain redesign for all projects.
+  - UI matrix redesign.
+  - DraftRun pipeline changes.
+  - Live generation quality evaluation.
+- Implementation notes:
+  - Keep the alpine metaphor consistent; do not mix pilot/war jargon back in.
+  - Treat `Фабула` as a reusable genre/dynamic, not as a renamed topic.
+  - Keep the blog sharper than a student RevOps handbook: audience, pain, stakes, field examples and practical route logic must remain visible.
+- Architecture impact:
+  - Exercises the project blueprint creation skill on a real project rework.
+  - Clarifies project-level content modeling rules for future benchmark blogs.
+- Tests:
+  - Fixture tests verify no `goal` rule contains AI-as-gear.
+  - Fixture tests verify AI-as-gear exists under positioning.
+  - Fixture tests verify key fabulas map to multiple topics.
+  - Fixture tests verify topics and fabulas do not duplicate each other by id/title/description intent.
+  - Existing demo portfolio and architecture tests remain green.
+- Docs:
+  - Update `SEVERNAYA_STENA_PROJECT_BLUEPRINT.md`, demo README if needed, and roadmap artifacts.
+- Demo impact:
+  - `Северная стена` becomes a stronger benchmark project with a real matrix instead of paired topic/fabula rows.
+- Acceptance criteria:
+  - Goals, positioning, topics and fabulas are visibly separated in UI and fixtures.
+  - `AI как легкое снаряжение` appears in Positioning, not Goals.
+  - The topic/fabula matrix supports cross-combination rather than one-to-one pairs.
+  - The ready scenario remains runnable and project-specific.
+- Risks:
+  - Over-generalizing fabulas may make the project less vivid; keep scenario examples concrete even when fabulas are reusable.
 
 ### Slice 2.17.4.3: Блог Главреда Project Rework
 
@@ -6422,6 +6523,7 @@ Status:
 - Slice 2.17.4: Publication Channels and Platform Profiles. Completed 2026-07-01.
 - Slice 2.17.4.1: AI Design Patterns Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2: Северная стена Project Rework. Completed 2026-07-02.
+- Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6450,4 +6552,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration`.
+Implement `Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair`.

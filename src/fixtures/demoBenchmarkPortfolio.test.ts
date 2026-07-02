@@ -64,6 +64,45 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
   });
 
+  it('calibrates Severnaya Stena author, goals, audience and pain-first dramaturgy', () => {
+    const portfolio = createDemoPortfolio();
+    const stena = portfolio.workspacesByProjectId['project-kasha-iz-topora'];
+
+    expect(stena.projectProfile.name).toBe('Северная стена');
+    expect(stena.editorialModel.author).toContain('коммерциализации сложных технических B2B-продуктов');
+    expect(stena.editorialModel.author).toContain('пресейла');
+    expect(stena.editorialModel.author).toContain('Не sales coach');
+    expect(stena.editorialModel.goals).toHaveLength(6);
+    expect(stena.editorialModel.goals.join(' ')).toContain('Привлекать клиентов');
+    expect(stena.editorialModel.goals.join(' ')).toContain('рынок дозрел до RevOps');
+    expect(stena.editorialModel.goals.join(' ')).toContain('AI как ускоритель');
+
+    expect(stena.editorialModel.audience).toContain('Фаундеры B2B-компаний');
+    expect(stena.editorialModel.audience).not.toContain('начинаться');
+    expect(stena.editorialModel.audience).not.toContain('узнаваемой боли');
+
+    const ruleIdsByGroup = (group: string) =>
+      stena.editorialRules.filter((rule) => rule.group === group).map((rule) => rule.id);
+    expect(ruleIdsByGroup('author')).toContain('stena-rule-author-field-practitioner');
+    expect(ruleIdsByGroup('audience')).toContain('stena-rule-audience-commercial-fog');
+    expect(ruleIdsByGroup('goal')).toEqual(
+      expect.arrayContaining([
+        'stena-rule-goal-client-attraction',
+        'stena-rule-goal-revops-maturity',
+        'stena-rule-goal-ai-light-gear'
+      ])
+    );
+
+    const painRule = stena.editorialRules.find((rule) => rule.id === 'stena-rule-reader-pain');
+    expect(painRule?.group).toBe('styleVoice');
+    expect(stena.editorialModel.styleRules.some((rule) => rule.includes('начинать с узнаваемой сцены сделки'))).toBe(true);
+    expect(
+      stena.fabulas
+        .find((fabula) => fabula.id === 'stena-fabula-route-note')
+        ?.researchStrategy.instructions.some((instruction) => instruction.includes('узнаваемой боли сделки'))
+    ).toBe(true);
+  });
+
   it('keeps memory and accepted learning isolated by project', () => {
     const portfolio = createDemoPortfolio();
     const ai = portfolio.workspacesByProjectId['project-ai-design-patterns'];
