@@ -23,6 +23,7 @@ export const PUBLICATION_PLATFORM_LABELS: Record<PublicationPlatform, string> = 
 
 export function createPublicationChannel(input: Partial<PublicationChannel> & { title: string }): PublicationChannel {
   const platform = normalizePublicationPlatform(input.platform ?? input.title);
+  const audience = normalizeText(input.audience, '');
   return {
     id: input.id ?? `channel-${slugify(input.title || PUBLICATION_PLATFORM_LABELS[platform])}`,
     projectId: input.projectId ?? 'local-project',
@@ -30,7 +31,7 @@ export function createPublicationChannel(input: Partial<PublicationChannel> & { 
     title: normalizeText(input.title, PUBLICATION_PLATFORM_LABELS[platform]),
     handleOrUrl: normalizeText(input.handleOrUrl, ''),
     language: normalizeText(input.language, 'ru'),
-    audience: normalizeText(input.audience, ''),
+    ...(audience ? { audience } : {}),
     role: VALID_ROLES.includes(input.role as PublicationChannelRole) ? input.role as PublicationChannelRole : 'primary',
     publishingMode: VALID_MODES.includes(input.publishingMode as PublicationChannelPublishingMode)
       ? input.publishingMode as PublicationChannelPublishingMode

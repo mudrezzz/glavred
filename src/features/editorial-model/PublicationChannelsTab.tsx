@@ -195,7 +195,6 @@ function ChannelDetails({
   return (
     <div className="entity-details">
       <div className="entity-details-scroll">
-        <p>{channel.audience || 'Аудитория канала не описана.'}</p>
         <dl className="entity-detail-list">
           <dt>Платформа</dt>
           <dd>{PUBLICATION_PLATFORM_LABELS[channel.platform]}</dd>
@@ -286,9 +285,6 @@ function ChannelEditor({
             <option value="">По умолчанию: {settings.defaultPublicationSizeProfileId}</option>
             {settings.publicationSizeProfiles.map((profile) => <option value={profile.id} key={profile.id}>{profile.title}</option>)}
           </select>
-        </label>
-        <label>Аудитория
-          <textarea value={draft.audience} onChange={(event) => patch({ audience: event.target.value })} />
         </label>
       </div>
       <div className="inline-actions">

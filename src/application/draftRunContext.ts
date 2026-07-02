@@ -2,6 +2,7 @@ import type { WorkspaceState } from '../domain/editorialWorkspace';
 import { findLinkedPostCandidate } from './postCandidateLinking';
 import { buildPublicationSizeContext } from './draftRunPublicationContext';
 import { buildSourceIntentDefaults } from './draftRunSourceIntentContext';
+import { buildDraftRunEditorialModel } from './draftRunEditorialContract';
 
 export type DraftRunMissingContext = {
   entity: string;
@@ -34,6 +35,7 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
   const topic = findTopic(workspace, workItem, candidate, planSlot, missingContext);
   const fabula = findFabula(workspace, workItem, candidate, planSlot, missingContext);
   const publicationSize = buildPublicationSizeContext(workspace, workItem, planSlot, fabula);
+  const briefAudience = workItem?.brief?.audience ?? workspace.postBrief?.audience ?? null;
 
   return {
     workItem: workItem ? compactWorkItem(workItem) : null,
@@ -47,16 +49,7 @@ export function buildDraftRunContext(workspace: WorkspaceState): DraftRunContext
       description: workspace.projectProfile.description,
       setupStatus: workspace.projectProfile.setupStatus
     },
-    editorialModel: {
-      author: workspace.editorialModel.author,
-      audience: workspace.editorialModel.audience,
-      positioning: workspace.editorialModel.positioning,
-      fabula: workspace.editorialModel.fabula,
-      rubrics: workspace.editorialModel.rubrics,
-      styleRules: workspace.editorialModel.styleRules,
-      forbiddenTopics: workspace.editorialModel.forbiddenTopics,
-      goals: workspace.editorialModel.goals
-    },
+    editorialModel: buildDraftRunEditorialModel(workspace, briefAudience),
     publisherRules: workspace.editorialRules.map((rule) => ({
       id: rule.id,
       group: rule.group,

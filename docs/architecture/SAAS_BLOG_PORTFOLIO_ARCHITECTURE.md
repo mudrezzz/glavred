@@ -1,6 +1,6 @@
 # SaaS Blog Portfolio Architecture
 
-Current as of Slice 2.17.4: Publication Channels and Platform Profiles.
+Current as of Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair.
 
 This document defines the product and technical boundary for moving Glavred from one
 local editorial workspace to a SaaS-ready portfolio of independent blogs. It is a
@@ -159,7 +159,7 @@ interface PublicationChannel {
   title: string;
   handleOrUrl?: string;
   language: string;
-  audience?: string; // legacy only; not the project audience source of truth
+  audience?: string; // legacy snapshots only; ignored by new UI and DraftRun
   role: 'primary' | 'repurpose' | 'experiment' | 'archive';
   defaultPublicationSizeProfileId?: string;
   publishingMode: 'manual' | 'adapterPlanned' | 'connected';
@@ -172,10 +172,11 @@ LinkedIn profile plus a LinkedIn newsletter. Platform-specific constraints resol
 through channel settings and `PostContract`, not by duplicating fabulas.
 
 Audience is not owned by `PublicationChannel`. Project audience is centralized in
-the editorial model (`EditorialModel.audience` and later the structured publisher
-contract). A concrete post may override it through `PostBrief.audience`. Legacy
-snapshots may still contain `channel.audience`, but new UI and DraftRun context must
-ignore it until the repair slice removes the field from channel editing.
+the editable publisher rules: active `editorialRules` with group `audience`. A
+concrete post may override it through `PostBrief.audience`. `EditorialModel.audience`
+is a compatibility summary and legacy fallback, not an independent editable owner.
+Legacy snapshots may still contain `channel.audience`, but new UI and DraftRun
+context ignore it.
 
 Slice 2.17.4 stores v1 channels in `WorkspaceState.publicationChannels`.
 `ContentPlanSettings.defaultChannelId` and `ContentPlanItem.channelId` are the stable

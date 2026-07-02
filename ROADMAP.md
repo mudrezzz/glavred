@@ -6080,7 +6080,7 @@ Status:
 
 ### Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Repair two product-wide ownership boundaries: project audience must live in the editorial contract / post brief, not publication channels; and `editorialRules` must be the canonical editable editorial contract for Author, Audience, Goals, Positioning, Style and Forbidden blocks, not a duplicate shadow of `editorialModel` summary fields.
 - User value:
   - Channel settings become simpler and less misleading.
@@ -6128,10 +6128,11 @@ Status:
 - Risks:
   - Some projects may later need channel-specific audience nuance; defer that to platform variants/adaptation notes.
   - Legacy `editorialModel` fields may remain useful as API/export summaries, so the slice must clarify ownership before deleting anything.
+- Completed: 2026-07-02
 
 ### Slice 2.17.4.2.2.1: Project Blueprint Creation Skill
 
-- Status: Backlog
+- Status: Ready
 - Goal: Create a reusable agent skill for turning an approved blog-project blueprint into consistent Glavred project data, fixtures, docs, backend demo snapshots, and validation checks.
 - User value:
   - New/reworked projects stop being hand-wired through ad hoc fixture edits and SQLite snapshot patches.
@@ -6524,6 +6525,7 @@ Status:
 - Slice 2.17.4.1: AI Design Patterns Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2: Северная стена Project Rework. Completed 2026-07-02.
 - Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration. Completed 2026-07-02.
+- Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6552,4 +6554,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair`.
+Implement `Slice 2.17.4.2.2.1: Project Blueprint Creation Skill`.

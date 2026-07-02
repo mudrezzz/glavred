@@ -352,7 +352,6 @@ export function createSevernayaStenaPublicationChannels(): PublicationChannel[] 
       title: 'Telegram',
       handleOrUrl: '@north_wall_b2b',
       language: 'ru',
-      audience: severnayaStenaBenchmarkSeed.editorialModel.audience,
       role: 'primary',
       defaultPublicationSizeProfileId: 'telegram-post'
     })

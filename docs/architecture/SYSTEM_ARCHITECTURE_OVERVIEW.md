@@ -196,7 +196,8 @@ approves editorial artifacts automatically.
   or future site/blog. A channel is not the same as platform: one project can have
   several channels on the same platform, and one editorial idea can target several
   channels. Channel audience is deprecated compatibility data only; generation
-  context must use `EditorialModel.audience` or `PostBrief.audience`.
+  context must use `PostBrief.audience`, active audience `EditorialRules`, or the
+  legacy `EditorialModel.audience` fallback.
 - `PublicationGroup`: future wrapper for one shared editorial idea that produces
   several platform/channel variants.
 - `PlatformVariant`: per-channel draft/final/readiness state for a publication group.
@@ -204,10 +205,13 @@ approves editorial artifacts automatically.
   separate drafts, version history, size contracts, validation, and release status.
 - `EditorialRules`: stores atomic rules for author, audience, positioning, style,
   anti-AI patterns, goals, and forbidden topics. These are the validator-ready
-  successor to large editorial settings textareas.
+  successor to large editorial settings textareas and the canonical editable
+  publisher contract for DraftRun context.
 - `EditorialModel`: compatibility aggregate for author, audience, positioning, legacy
   fabula, legacy rubrics, style rules, forbidden topics, and blog goals. Legacy fields
-  remain available to downstream services while the UI moves toward structured rules.
+  remain available to downstream services, but storage normalization should derive
+  author/audience/goals/style/forbidden summaries from active editorial rules when
+  rules exist.
 - `TopicCatalog`: stores editable topic cards with purpose, audience value, author
   stance, rules, forbidden angles, status, and advisory weight ranges for planning.
 - `FabulaCatalog`: stores reusable post dramaturgy patterns with structure, conflict,

@@ -60,6 +60,9 @@ describe('three-blog benchmark demo portfolio', () => {
       'channel-glavred-telegram',
       'channel-glavred-dzen'
     ]);
+    expect([...ai.publicationChannels, ...kasha.publicationChannels, ...glavred.publicationChannels].every(
+      (channel) => channel.audience === undefined
+    )).toBe(true);
     expect(kasha.contentPlanItems[0].channelId).toBe('channel-stena-telegram');
     expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
   });

@@ -47,6 +47,27 @@ describe('PublicationChannelsTab', () => {
     expect(row.querySelector('.publication-channel-editor')).toBeTruthy();
   });
 
+  it('does not expose legacy channel audience as an editable channel field', () => {
+    const workspace = createDemoWorkspace();
+    const channel = { ...workspace.publicationChannels[0], audience: 'Legacy channel audience' };
+
+    render(
+      <PublicationChannelsTab
+        channels={[channel]}
+        planItems={workspace.contentPlanItems}
+        settings={workspace.contentPlanSettings}
+        onChange={vi.fn()}
+      />
+    );
+
+    const row = screen.getByRole('button', { name: channel.title }).closest('article') as HTMLElement;
+    expect(within(row).queryByText('Legacy channel audience')).toBeNull();
+
+    fireEvent.click(within(row).getByRole('button', { name: /Редактировать|Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ/ }));
+
+    expect(within(row).queryByDisplayValue('Legacy channel audience')).toBeNull();
+  });
+
   it('pauses referenced channel instead of deleting it', () => {
     const workspace = createDemoWorkspace();
     const channel = workspace.publicationChannels[0];

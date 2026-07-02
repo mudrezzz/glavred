@@ -350,7 +350,6 @@ export function createAiDesignPatternsPublicationChannels(): PublicationChannel[
       title: 'Telegram',
       handleOrUrl: '@industrial_ai_patterns',
       language: 'ru',
-      audience: aiDesignPatternsBenchmarkSeed.editorialModel.audience,
       role: 'primary',
       defaultPublicationSizeProfileId: 'telegram-post'
     }),
@@ -361,7 +360,6 @@ export function createAiDesignPatternsPublicationChannels(): PublicationChannel[
       title: 'GitHub pattern book',
       handleOrUrl: 'https://github.com/industrial-ai-patterns',
       language: 'ru',
-      audience: 'Практики, готовые обсуждать и дополнять industrial AI patterns через OSS-книгу.',
       role: 'experiment',
       publishingMode: 'adapterPlanned',
       status: 'paused',

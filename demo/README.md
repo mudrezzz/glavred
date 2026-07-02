@@ -172,8 +172,9 @@ publishing at 10:00, HITL signal selection, and candidate limits per slot. The
 generated grid shows dates, times, channel/platform labels, topics, fabulas, approval
 status, manual override state, and advisory weight/matrix warnings.
 Channels describe destinations and platform constraints only. The project audience
-comes from the editorial model, so seeded channel cards should not be treated as a
-second audience source.
+comes from the `Издательство` editorial rules, with legacy model summaries as
+compatibility fallback, so seeded channel cards should not be treated as a second
+audience source.
 
 This is a useful compatibility prototype, but it is not the final planning model. The
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and

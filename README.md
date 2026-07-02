@@ -112,8 +112,9 @@ managed destination such as a Telegram channel, LinkedIn newsletter, Dzen projec
 site; it is not just the old freeform `platform` string. Planning keeps `platform` as a
 denormalized compatibility label, but new plan slots and settings can reference a
 stable `channelId`. Autoposting, OAuth credentials, and multi-target generation remain
-future slices. Channel settings do not define the blog audience: audience remains in
-the editorial model or in a concrete post brief.
+future slices. Channel settings do not define the blog audience: audience lives in
+the editable publisher rules, with `editorialModel.audience` kept as a compatibility
+summary and `PostBrief.audience` as a concrete post override.
 Slice 2.17.3 adds the first backend SaaS boundary around that same shape:
 email/password dev login, HttpOnly session cookie, project memberships, and
 project-scoped workspace snapshots in SQLite. The frontend tries the backend first,

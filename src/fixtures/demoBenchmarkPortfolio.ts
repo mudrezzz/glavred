@@ -315,7 +315,6 @@ function createBenchmarkPublicationChannels(
         title: 'Telegram',
         handleOrUrl: '@glavred_product',
         language: 'ru',
-        audience: seed.editorialModel.audience,
         role: 'primary',
         defaultPublicationSizeProfileId: 'telegram-post'
       }),
@@ -326,7 +325,6 @@ function createBenchmarkPublicationChannels(
         title: 'Дзен',
         handleOrUrl: 'dzen.ru/glavred',
         language: 'ru',
-        audience: 'Читатели длинных практических разборов про редакционный AI',
         role: 'experiment',
         defaultPublicationSizeProfileId: 'linkedin-article'
       })

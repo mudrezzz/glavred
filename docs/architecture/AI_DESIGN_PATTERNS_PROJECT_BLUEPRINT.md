@@ -209,5 +209,9 @@ The slice maps this blueprint to:
 - `PublicationChannel[]`;
 - one ready-to-run `ContentPlanItem`.
 
+`PublicationChannel[]` stores destination, handle, language, role, publishing mode,
+status, and default size/profile only. Project audience stays in the `Audience`
+editorial rules above; channels must not duplicate it.
+
 Future project rework slices should follow the same document-first pattern for
 `Северная стена` and `Блог Главреда`.

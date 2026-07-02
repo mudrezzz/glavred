@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createPublicationChannel,
   applyPublicationChannelToPlanItem,
   applyPublicationChannelToSettings,
   canDeletePublicationChannel,
@@ -43,6 +44,17 @@ describe('publication channel transitions', () => {
       channelId: channels[0].id,
       platform: channels[0].title
     });
+  });
+
+  it('keeps legacy channel audience readable but omits it from new channels', () => {
+    const legacy = createPublicationChannel({
+      title: 'Telegram',
+      audience: 'Legacy channel audience'
+    });
+    const current = normalizePublicationChannels(undefined, 'Telegram');
+
+    expect(legacy.audience).toBe('Legacy channel audience');
+    expect(current[0].audience).toBeUndefined();
   });
 
   it('does not delete referenced channels', () => {

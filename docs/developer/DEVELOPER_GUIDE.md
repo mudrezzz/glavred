@@ -920,11 +920,11 @@ Use these boundaries:
   compatibility barrel or to `editorialWorkspace.ts`. `ContentPlanSettings.defaultChannelId`
   and `ContentPlanItem.channelId` are the stable links, while `defaultPlatform` and
   `platform` stay denormalized labels for legacy UI, export, and DraftRun paths.
-- Publication channels do not own project audience. Use
-  `WorkspaceState.editorialModel.audience` as the project-level audience source and
-  `PostBrief.audience` for post-level overrides. Legacy `PublicationChannel.audience`
-  data must be ignored by DraftRun context and removed from channel editing in the
-  dedicated repair slice.
+- Publication channels do not own project audience. Use active `editorialRules` in the
+  `audience` group as the project-level source and `PostBrief.audience` for post-level
+  overrides. `WorkspaceState.editorialModel.audience` is a compatibility summary and
+  fallback. Legacy `PublicationChannel.audience` data may remain in old snapshots, but
+  DraftRun context and channel editing must ignore it.
 - `Сигналы` owns local-first radar settings and reviewed source material. `sourceSignals`
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and
@@ -1055,7 +1055,10 @@ Runtime rules:
   exist for low-level compatibility tests.
 - `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
   positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and
-  forbidden topic.
+  forbidden topic. These rules are the canonical editable publisher contract. Legacy
+  `editorialModel.author`, `editorialModel.audience`, and `editorialModel.goals` are
+  summaries/fallbacks and should be synthesized from rules during normalization when
+  rules exist.
 - `WorkspaceState.editorialSetupRevision` increments after committed editorial setup
   changes.
 - `WorkspaceState.editorialValidationRun` stores the last manual validation snapshot:

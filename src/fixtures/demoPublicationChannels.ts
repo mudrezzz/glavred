@@ -8,7 +8,6 @@ export function createDemoPublicationChannels() {
       platform: 'telegram',
       title: 'Telegram',
       language: 'ru',
-      audience: 'AI PM, founders, CPO/product leaders',
       defaultPublicationSizeProfileId: 'telegram-post'
     })
   ];

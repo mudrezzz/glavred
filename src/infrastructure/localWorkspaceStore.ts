@@ -28,6 +28,10 @@ import {
   resolveDefaultPublicationChannel,
   resolvePlanItemPublicationChannel
 } from '../domain/publication-channels/transitions';
+import {
+  deriveEditorialModelSummary,
+  synthesizeEditorialRulesFromModel
+} from '../domain/editorial-contract/summary';
 
 const STORAGE_KEY = 'glavred.workspace.v1';
 
@@ -61,6 +65,11 @@ export class LocalWorkspaceStore implements WorkspaceStore {
 
 export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceState {
   const demo = createDemoWorkspace();
+  const baseEditorialModel = saved.editorialModel ?? demo.editorialModel;
+  const baseEditorialRules = saved.editorialRules ??
+    (saved.editorialModel ? [] : demo.editorialRules);
+  const editorialRules = synthesizeEditorialRulesFromModel(baseEditorialModel, baseEditorialRules);
+  const editorialModel = deriveEditorialModelSummary(baseEditorialModel, editorialRules);
   const topics = (saved.topics ?? demo.topics).map((topic) => ({
     ...topic,
     weightRange: normalizeWeightRange(topic.weightRange)
@@ -134,9 +143,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     authorNotes: (saved.authorNotes ?? demo.authorNotes).map((note) => normalizeAuthorNote(note)),
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
-    editorialModel: saved.editorialModel ?? demo.editorialModel,
+    editorialModel,
     projectProfile: saved.projectProfile ?? demo.projectProfile,
-    editorialRules: saved.editorialRules ?? demo.editorialRules,
+    editorialRules,
     editorialSetupRevision: saved.editorialSetupRevision ?? demo.editorialSetupRevision,
     editorialValidationRun: normalizeEditorialValidationRun(saved.editorialValidationRun),
     topics,

@@ -10,7 +10,7 @@ export interface PublicationChannel {
   title: string;
   handleOrUrl: string;
   language: string;
-  audience: string;
+  audience?: string;
   role: PublicationChannelRole;
   publishingMode: PublicationChannelPublishingMode;
   status: PublicationChannelStatus;

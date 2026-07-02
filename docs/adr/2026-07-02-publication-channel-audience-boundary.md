@@ -24,10 +24,11 @@ only says where the blog is published and which platform/profile constraints app
 
 Audience ownership is:
 
-- project-level source: `WorkspaceState.editorialModel.audience`;
+- project-level source: active `WorkspaceState.editorialRules` in the `audience`
+  group;
+- compatibility summary: `WorkspaceState.editorialModel.audience`, derived from
+  rules where possible and used only as a legacy fallback;
 - post-level override: `PostBrief.audience`;
-- future structured publisher contract: the normalized replacement for legacy
-  editorial-model audience fields.
 
 `PublicationChannel` owns destination data and channel constraints:
 
@@ -41,14 +42,17 @@ Audience ownership is:
 - default publication size profile.
 
 Legacy snapshots may still contain `PublicationChannel.audience`, but new UI and
-DraftRun context must ignore it. A dedicated repair slice will remove the audience
-block from channel editing and ensure the pipeline reads only the central audience
-source.
+DraftRun context ignore it. Channel editing does not expose audience. DraftRun context
+uses `PostBrief.audience || editorialRules(audience) || legacy EditorialModel.audience`
+and never reads channel audience.
 
 ## Consequences
 
 - Channel cards and forms stay focused on destination setup.
-- The editorial model remains the single project-level source for audience.
+- The editable publisher rules remain the single project-level source for audience.
+- Legacy `EditorialModel` summary fields stay available for old snapshots and narrow
+  compatibility APIs, but they must be derived from rules during normalization when
+  rules exist.
 - DraftRun prompt context is easier to audit because audience does not depend on the
   selected channel.
 - Future per-channel nuance must be modeled as platform adaptation notes, channel
