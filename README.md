@@ -173,8 +173,8 @@ Permanent demo portfolio: two users and three independent blog projects. Each pr
 has its own author memory, editorial model, topics, fabulas, signals, plan slots, and
 ready benchmark scenario:
 
-- `AI Design Patterns`: technical/research blog about AI design patterns and durable
-  best practices, LinkedIn-first and English-capable.
+- `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
+  about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
 - `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with strong
   stance, irony, and field observations from complex B2B commercialization.
 - `Блог Главреда`: product philosophy and practical editorial methods, with the first

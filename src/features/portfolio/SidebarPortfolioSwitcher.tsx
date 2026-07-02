@@ -74,7 +74,7 @@ export function SidebarPortfolioSwitcher({
                 Все проекты
               </button>
             ) : null}
-            {backendStatus === 'authenticated' && onLogout ? (
+            {onLogout ? (
               <button type="button" onClick={onLogout}>
                 Выйти
               </button>

@@ -5708,8 +5708,7 @@ Status:
     fabulas, publication channels, source/radar examples, plan slots, and at least one
     benchmark scenario. Done.
   - Define per-blog benchmark expectations:
-    - `AI Design Patterns`: research-heavy, English-capable, pattern catalog,
-      anti-hype, external evidence.
+    - `AI Design Patterns`: initial research-heavy pattern catalog seed; superseded by 2.17.4.1 as Russian Telegram-first industrial AI.
     - `Каша из топора`: Telegram-native author voice, RevOps/Product Marketing,
       irony, strong stance, not consulting memo.
     - `Блог Главреда`: product philosophy, practical cases, build-in-public,
@@ -5969,9 +5968,96 @@ Status:
     resolver as the downstream owner.
 - Completed: 2026-07-01
 
-### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+### Slice 2.17.4.1: AI Design Patterns Project Rework
+
+- Status: Done
+- Goal: Rework the `AI Design Patterns` benchmark project from user-provided inputs before continuing multi-platform planning.
+- User value:
+  - The demo project now represents a real client-attraction blog concept: Russian Telegram-first industrial AI design patterns for ТОиР/EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
+  - The benchmark can test whether generation stays inside industrial AI and produces reusable patterns instead of generic AI news.
+- Scope:
+  - Capture sanitized inputs from the industrial AI / ТОиР material and author blog context.
+  - Update project profile, editorial model, author memory, rules, topics, fabulas, radars, source signals, publication channels, and benchmark expectations.
+  - Add a project blueprint document in product entities so future fixture/database loading has a clear source.
+- Out of scope:
+  - Product runtime behavior changes.
+  - Live source ingestion from Telegram or private PDFs.
+  - Multi-platform DraftRun execution or publication adapters.
+- Implementation notes:
+  - Private user materials are paraphrased into sanitized fixtures; source documents are not committed.
+  - Project-specific fixture data lives in `src/fixtures/demoAiDesignPatternsProject.ts`; the portfolio assembler only wires it into the two-user/three-blog demo.
+- Architecture impact:
+  - Keeps `WorkspaceState` and portfolio contracts unchanged.
+  - Establishes a document-first pattern for project rework slices.
+- Tests:
+  - Updated demo benchmark fixture tests for Russian Telegram-first industrial AI data, source signals, channels, and isolation.
+- Docs:
+  - Added `docs/architecture/AI_DESIGN_PATTERNS_PROJECT_BLUEPRINT.md`.
+  - Updated README, demo README, user guide, developer guide, and architecture docs.
+- Demo impact:
+  - After reset/demo seed, `AI Design Patterns` shows industrial AI memory, topics, fabulas, radars, Telegram primary channel, paused GitHub pattern-book experiment, and a ready Decision Intelligence Workbench scenario.
+- Acceptance criteria:
+  - AI project no longer defaults to English/LinkedIn-first. Done.
+  - Ready scenario is `Decision Intelligence Workbench` as a Telegram pattern card. Done.
+  - Project-specific fixture lives outside near-limit demo workspace files. Done.
+- Risks:
+  - Future LinkedIn/site adaptation still needs a separate variant slice after the Russian Telegram baseline stabilizes.
+- Completed: 2026-07-02
+
+### Slice 2.17.4.2: Каша из топора Project Rework
 
 - Status: Ready
+- Goal: Rework the `Каша из топора` benchmark project from user-provided inputs before continuing multi-platform planning.
+- User value:
+  - The Telegram RevOps/Product Marketing blog should become a realistic author project with stronger voice, sharper positioning, and usable benchmark scenarios.
+- Scope:
+  - Capture the next user inputs for `Каша из топора`.
+  - Update sanitized project profile, author memory, editorial rules, topics, fabulas, channels, source signals, and benchmark expectations.
+  - Prefer a project-specific fixture module instead of expanding near-limit portfolio/demo files.
+- Out of scope:
+  - Product runtime behavior changes.
+  - Live import from private materials or old channels.
+  - Multi-platform DraftRun execution.
+- Architecture impact:
+  - Should follow the document-first project rework pattern established by 2.17.4.1.
+- Tests:
+  - Demo fixture tests for project isolation and seeded Kasha data completeness.
+- Docs:
+  - Project blueprint, demo docs, user/developer docs, roadmap tracker.
+- Acceptance criteria:
+  - `Каша из топора` has distinct author memory, Telegram voice, topics, fabulas, and ready benchmark scenario grounded in user inputs.
+  - No AI Design Patterns or Glavred memory leaks into this project.
+- Risks:
+  - Needs user-provided project inputs before implementation can be meaningful.
+
+### Slice 2.17.4.3: Блог Главреда Project Rework
+
+- Status: Backlog
+- Goal: Rework the `Блог Главреда` benchmark project before continuing multi-platform planning.
+- User value:
+  - The product/philosophy blog becomes a stronger benchmark for explaining Glavred's editorial philosophy, practical methods, and Telegram/Dzen adaptation readiness.
+- Scope:
+  - Capture product-context assumptions and any user inputs for `Блог Главреда`.
+  - Update sanitized project profile, author memory, editorial rules, topics, fabulas, channels, source signals, and benchmark expectations.
+  - Prefer a project-specific fixture module and blueprint document.
+- Out of scope:
+  - Product runtime behavior changes.
+  - Multi-platform DraftRun execution.
+  - Publication adapters.
+- Architecture impact:
+  - Should follow the document-first project rework pattern established by 2.17.4.1.
+- Tests:
+  - Demo fixture tests for project isolation and Glavred-specific seeded data completeness.
+- Docs:
+  - Project blueprint, demo docs, user/developer docs, roadmap tracker.
+- Acceptance criteria:
+  - `Блог Главреда` has stronger product-philosophy positioning and ready Telegram/Dzen-oriented benchmark context.
+- Risks:
+  - Should not become generic product marketing; must stay tied to Glavred's actual editorial pipeline philosophy.
+
+### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+
+- Status: Backlog
 - Goal: Let one editorial idea target multiple publication channels while keeping a
   shared fabula/brief and separate platform variants.
 - User value:
@@ -6248,6 +6334,7 @@ Status:
 - Slice 2.17.3.3: Project Dashboard App Shell Alignment. Completed 2026-07-01.
 - Slice 2.17.3.4: Roadmap Tracker Source of Truth. Completed 2026-07-01.
 - Slice 2.17.4: Publication Channels and Platform Profiles. Completed 2026-07-01.
+- Slice 2.17.4.1: AI Design Patterns Project Rework. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6269,11 +6356,11 @@ Status:
 - Which hosted deployment target should be used after local-first development?
 - Should the first production auth implementation use a built-in dev/password mode,
   a managed provider, or a staged adapter boundary with local SaaS shell first?
-- Which platform should be primary for `AI Design Patterns`: LinkedIn newsletter,
-  LinkedIn articles, a standalone blog, or a Telegram companion channel?
+- When should `AI Design Patterns` add LinkedIn/site variants after the Russian
+  Telegram-first industrial AI baseline is stable?
 - For `Блог Главреда`, should Telegram + Dzen be the first multi-platform benchmark,
   or should LinkedIn be added earlier for B2B/product-market reach?
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.5: Multi-Target Planning and Variant Workbench`.
+Implement `Slice 2.17.4.2: Каша из топора Project Rework`.

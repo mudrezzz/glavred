@@ -114,8 +114,8 @@ Seeded backend users:
 
 The app currently seeds two demo users and three realistic benchmark blog projects:
 
-- `AI Design Patterns`: a technical/research blog about durable AI design patterns
-  and best practices, likely LinkedIn-first and English-capable.
+- `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
+  about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
 - `Каша из топора`: a Telegram RevOps/Product Marketing blog with strong author
   stance and irony.
 - `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first

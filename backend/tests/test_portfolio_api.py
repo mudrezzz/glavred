@@ -50,3 +50,16 @@ def test_seed_is_idempotent_and_logout_invalidates_session(tmp_path: Path) -> No
 
     assert logout.status_code == 200
     assert client.get("/api/users/me").status_code == 401
+
+
+def test_seeded_ai_design_patterns_project_matches_current_industrial_baseline(tmp_path: Path) -> None:
+    client = portfolio_client(tmp_path)
+    login_portfolio(client, "founder@example.test")
+
+    projects = client.get("/api/projects?includeArchived=true").json()["projects"]
+    ai_project = next(item["project"] for item in projects if item["project"]["id"] == "project-ai-design-patterns")
+
+    assert ai_project["language"] == "ru"
+    assert "Industrial AI" in ai_project["description"]
+    assert "ТОиР" in ai_project["description"]
+    assert "Decision Intelligence" in ai_project["description"]

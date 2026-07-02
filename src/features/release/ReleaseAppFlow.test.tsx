@@ -23,7 +23,7 @@ describe('Release app flow', () => {
 
     await createExportedRelease();
 
-    expect(screen.getAllByText(/LinkedIn/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Telegram/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Markdown export/i)).toBeInTheDocument();
 
     unmount();

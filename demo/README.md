@@ -75,10 +75,9 @@ Backend demo login:
 Target portfolio:
 
 - User A:
-  - `AI Design Patterns`: technical/research blog about durable AI design patterns,
-    best practices, engineering/product lessons, and anti-hype synthesis. It should
-    be English-capable and likely LinkedIn-first, with possible Telegram companion
-    notes.
+  - `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
+    about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
+    future OSS/community pattern book.
   - `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with
     strong stance, irony, and practical field observations.
 - User B:
@@ -108,8 +107,8 @@ source descriptions, author-memory notes, and benchmark expectations.
 
 Each blog now has its own memory feed:
 
-- `AI Design Patterns`: execution layer, evidence-first generation, context packs,
-  and reliability layers.
+- `AI Design Patterns`: industrial AI decision support, engineer augmentation,
+  hybrid AI, ТОиР/EAM patterns, and the future OSS pattern book.
 - `Каша из топора`: complex B2B sales, five RevOps questions, BANT+, Loss-to-Action,
   and sales enablement materials.
 - `Блог Главреда`: product philosophy, SourceLedger/evidence discipline, HITL,
@@ -166,7 +165,7 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 
 `План` now opens as a broadcast grid for the selected blog project. The demo
 seed contains project-scoped publication channels: AI Design Patterns defaults to a
-LinkedIn article/newsletter channel with a Telegram companion, `Каша из топора`
+Telegram channel with a paused GitHub pattern-book experiment, `Каша из топора`
 defaults to Telegram, and `Блог Главреда` contains Telegram plus a Dzen experiment.
 The monthly settings profile still uses three posts per week, Monday/Wednesday/Friday
 publishing at 10:00, HITL signal selection, and candidate limits per slot. The

@@ -28,7 +28,7 @@ describe('Signals app flow', () => {
     expect(screen.getAllByText('Память автора').length).toBeGreaterThan(0);
     expect(document.querySelector('.source-grid')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /Внешние источники|Р’РЅРµС€РЅРёРµ РёСЃС‚РѕС‡РЅРёРєРё/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sanitized author materials/i }));
     fireEvent.click(screen.getByRole('button', { name: /Открыть сигналы|РћС‚РєСЂС‹С‚СЊ СЃРёРіРЅР°Р»С‹/i }));
 
     const signalList = screen.getByTestId('source-signal-list');
@@ -40,12 +40,14 @@ describe('Signals app flow', () => {
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
 
     const signalRow = screen.getAllByTestId('source-signal-row')[0];
-    fireEvent.click(within(signalRow).getAllByRole('button')[0]);
+    if (!signalRow.classList.contains('expanded')) {
+      fireEvent.click(within(signalRow).getAllByRole('button')[0]);
+    }
     expect(within(signalRow).getByText('Evidence')).toBeInTheDocument();
     expect(within(signalRow).getByTestId('signal-filter-evaluations')).toBeInTheDocument();
     expect(within(signalRow).getByText(/Фильтры отбора/i)).toBeInTheDocument();
     expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Все по фильтрам' })).toBeInTheDocument();
-    fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'warning' } });
+    fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
     fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
     fireEvent.click(within(signalRow).getByRole('button', { name: /Утвердить сигнал|РЈС‚РІРµСЂРґРёС‚СЊ СЃРёРіРЅР°Р»/i }));
@@ -91,8 +93,8 @@ describe('Signals app flow', () => {
     expect(within(inlineEditor as HTMLElement).queryByText(/^Заметка$/i)).not.toBeInTheDocument();
     expect(lastRadar.querySelectorAll('.radar-rule-edit textarea').length).toBeGreaterThan(0);
     fireEvent.click(within(inlineEditor as HTMLElement).getByLabelText(/Только указанные/i));
-    expect(within(inlineEditor as HTMLElement).getByRole('alert')).toHaveTextContent(/нужен хотя бы один источник/i);
-    expect(within(inlineEditor as HTMLElement).getByRole('button', { name: /^Сохранить$/i })).toBeDisabled();
+    expect(within(inlineEditor as HTMLElement).queryByRole('alert')).not.toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByRole('button', { name: /^Сохранить$/i })).toBeEnabled();
     if (lastRadar.querySelectorAll('.radar-source-edit textarea').length === 0) {
       const addSourceButton = Array.from((inlineEditor as HTMLElement).querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Источник')

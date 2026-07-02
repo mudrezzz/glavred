@@ -60,4 +60,26 @@ describe('SidebarPortfolioSwitcher', () => {
     expect(onOpenDashboard).toHaveBeenCalledTimes(1);
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps logout action available when backend state falls back after login', () => {
+    const onLogout = vi.fn();
+
+    render(
+      <SidebarPortfolioSwitcher
+        accessibleProjects={[project]}
+        activeProject={project}
+        activeUser={user}
+        backendStatus="localFallback"
+        portfolio={portfolio}
+        onLogout={onLogout}
+        onProjectChange={vi.fn()}
+        onUserChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /AI Design Patterns/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
+
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
 });

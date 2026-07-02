@@ -430,23 +430,23 @@ The portfolio should include two users and three blogs.
 
 Purpose:
 
-- aggregate scattered AI engineering/product practice into durable design patterns;
-- reduce hype and identify what actually works;
-- build the author's reputation as someone who deeply understands AI systems.
+- attract clients through visible expertise in industrial AI application design;
+- aggregate scattered industrial AI practice into durable design patterns;
+- build a Russian Telegram-first community around a future OSS pattern book.
 
 Likely channels:
 
-- LinkedIn articles/newsletter as primary;
-- optional Telegram companion notes.
+- Telegram as primary;
+- paused GitHub pattern-book experiment for future community co-authorship.
 
 Benchmark expectations:
 
-- English-capable;
-- research-heavy;
+- industrial AI scope: ТОиР, EAM, diagnostics, Decision Intelligence, hybrid AI;
+- research-heavy when the fabula requires it;
 - explicit pattern naming;
 - avoids "new tool appeared" hype;
 - uses external evidence and practical examples;
-- produces systematic synthesis, not a hot take.
+- produces systematic synthesis and a reusable pattern, not a hot take.
 
 ### User A / Blog 2: `Каша из топора`
 
@@ -546,8 +546,8 @@ Slice 2.17.5/2.17.6 should include:
 ## 12. Open decisions for later slices
 
 - Which production auth provider should replace dev-password session auth?
-- Whether `AI Design Patterns` should be LinkedIn newsletter-first or standalone
-  site/blog-first.
+- When `AI Design Patterns` should add LinkedIn/site variants after the Russian
+  Telegram-first industrial AI baseline is stable.
 - Whether Dzen should be implemented before LinkedIn adaptation for `Блог Главреда`.
 - Whether user-level memory should ever exist, or whether all author memory should
   remain project-scoped until explicit cross-project import is designed.

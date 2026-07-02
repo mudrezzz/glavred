@@ -1,4 +1,4 @@
-import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
+﻿import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
 import {
   createDefaultTopicFabulaMatrix,
   DEFAULT_CONTENT_PLAN_SETTINGS,
@@ -17,6 +17,10 @@ import {
 } from '../domain/editorialWorkspace';
 import type { PublicationChannel } from '../domain/publication-channels/types';
 import { createPublicationChannel } from '../domain/publication-channels/transitions';
+import {
+  aiDesignPatternsBenchmarkSeed,
+  createAiDesignPatternsPublicationChannels
+} from './demoAiDesignPatternsProject';
 import { createDemoWorkspace } from './demoWorkspace';
 
 export type DemoBenchmarkProjectId =
@@ -36,11 +40,11 @@ export interface DemoPortfolioBenchmarkExpectation {
 export const demoPortfolioBenchmarkExpectations: Record<DemoBenchmarkProjectId, DemoPortfolioBenchmarkExpectation> = {
   'project-ai-design-patterns': {
     projectId: 'project-ai-design-patterns',
-    language: 'en',
-    defaultPlatform: 'LinkedIn',
-    readyScenarioId: 'ai-patterns-plan-execution-layer',
-    benchmarkSignals: ['pattern naming', 'anti-hype synthesis', 'external evidence', 'English-ready prose'],
-    mustAvoid: ['new-tool roundup', 'model leaderboard without operating context', 'generic AI optimism']
+    language: 'ru',
+    defaultPlatform: 'Telegram',
+    readyScenarioId: 'ai-patterns-plan-decision-workbench',
+    benchmarkSignals: ['industrial AI scope', 'pattern naming', 'ТОиР evidence', 'community pattern book'],
+    mustAvoid: ['generic AI news', 'model leaderboard without industrial context', 'autonomous AI promises without HITL']
   },
   'project-kasha-iz-topora': {
     projectId: 'project-kasha-iz-topora',
@@ -60,7 +64,7 @@ export const demoPortfolioBenchmarkExpectations: Record<DemoBenchmarkProjectId, 
   }
 };
 
-type BenchmarkWorkspaceSeed = {
+export type BenchmarkWorkspaceSeed = {
   projectProfile: ProjectProfile;
   editorialModel: EditorialModel;
   authorNotes: AuthorNote[];
@@ -154,49 +158,68 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
 }
 
 function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): WorkspaceState {
-  const legacy = createDemoWorkspace({ includeSeededHitlLearning: true });
-  const authorNotes = [legacy.authorNotes[0], ...seed.authorNotes, ...legacy.authorNotes.slice(1)];
+  const base = createDemoWorkspace({ includeSeededHitlLearning: true });
+  const learningNotes = base.authorNotes.filter((note) => note.type === 'editorialLearning');
+  const authorNotes = [...seed.authorNotes, ...learningNotes];
   const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
-  const topics = [...legacy.topics, ...seed.topics];
-  const fabulas = [...legacy.fabulas, ...seed.fabulas];
-  const sourceSignals = [...legacy.sourceSignals, ...seed.sourceSignals.map(withSignalEvidence)];
+  const topics = seed.topics;
+  const fabulas = seed.fabulas;
+  const topicFabulaMatrix = createDefaultTopicFabulaMatrix(topics, fabulas);
+  const sourceSignals = seed.sourceSignals.map(withSignalEvidence);
+  const sourceSignal = sourceSignals.find((signal) => signal.id === seed.readyScenario.sourceSignalId) ?? sourceSignals[0];
+  const topic = topics.find((item) => item.id === seed.readyScenario.topicId) ?? topics[0];
+  const fabula = fabulas.find((item) => item.id === seed.readyScenario.fabulaId) ?? fabulas[0];
+  const insightCard = createBenchmarkInsight(seed, sourceSignal, topic, fabula);
   const publicationChannels = createBenchmarkPublicationChannels('project-ai-design-patterns', seed);
   const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
-  const contentPlanItems = [...legacy.contentPlanItems, ...createBenchmarkPlanItems(seed, defaultChannel)];
+  const contentPlanItems = createBenchmarkPlanItems(seed, defaultChannel);
 
   return {
-    ...legacy,
+    ...base,
     projectProfile: seed.projectProfile,
-    editorialModel: {
-      ...legacy.editorialModel,
-      positioning: `${legacy.editorialModel.positioning} ${seed.editorialModel.positioning}`,
-      rubrics: Array.from(new Set([...legacy.editorialModel.rubrics, ...seed.editorialModel.rubrics])),
-      styleRules: Array.from(new Set([...legacy.editorialModel.styleRules, ...seed.editorialModel.styleRules])),
-      forbiddenTopics: Array.from(new Set([...legacy.editorialModel.forbiddenTopics, ...seed.editorialModel.forbiddenTopics])),
-      goals: Array.from(new Set([...legacy.editorialModel.goals, ...seed.editorialModel.goals]))
-    },
+    editorialModel: seed.editorialModel,
     authorNotes,
     authorMemoryEvents,
     authorPositionAssertions: inferAuthorPositionAssertions(authorNotes, authorMemoryEvents),
-    editorialRules: [...legacy.editorialRules, ...seed.editorialRules],
+    editorialRules: seed.editorialRules,
+    editorialValidationRun: null,
     topics,
     fabulas,
-    topicFabulaMatrix: createDefaultTopicFabulaMatrix(topics, fabulas),
-    radars: [...seed.radars, ...legacy.radars],
+    topicFabulaMatrix,
+    radars: seed.radars,
     sourceSignals,
-    sourceSignal: legacy.sourceSignal,
+    sourceSignal,
+    insightCard,
+    contentPlanItem: contentPlanItems[0],
     contentPlanItems,
     contentPlanSettings: {
-      ...legacy.contentPlanSettings,
+      ...DEFAULT_CONTENT_PLAN_SETTINGS,
+      period: 'month',
+      postsPerWeek: seed.postsPerWeek,
       defaultPlatform: defaultChannel?.title ?? seed.defaultPlatform,
       defaultChannelId: defaultChannel?.id,
-      maxCandidatesPerSlot: Math.max(legacy.contentPlanSettings.maxCandidatesPerSlot, 2)
+      defaultPublicationSizeProfileId: seed.defaultPublicationSizeProfileId,
+      maxCandidatesPerSlot: 2,
+      publishSlots: [
+        { date: '2026-07-01', time: '10:00' },
+        { date: '2026-07-08', time: '10:00' }
+      ]
     },
-    publicationChannels: [
-      ...publicationChannels,
-      ...legacy.publicationChannels.filter((channel) => !publicationChannels.some((item) => item.id === channel.id))
-    ],
-    externalSources: [...legacy.externalSources, ...seed.externalSources],
+    publicationChannels,
+    postCandidates: base.postCandidates,
+    postCandidate: base.postCandidate,
+    postBrief: base.postBrief,
+    postDraft: base.postDraft,
+    editorialChecks: base.editorialChecks,
+    editorNotes: base.editorNotes,
+    finalText: base.finalText,
+    postVisual: base.postVisual,
+    releasePackage: base.releasePackage,
+    editorialLearningNote: base.editorialLearningNote,
+    externalSources: [...seed.externalSources, ...base.externalSources],
+    importCandidates: base.importCandidates,
+    archiveRecords: base.archiveRecords,
+    bulkImportActions: base.bulkImportActions,
     activeSection: 'memory',
     updatedAt: new Date().toISOString()
   };
@@ -276,30 +299,7 @@ function createBenchmarkPublicationChannels(
   seed: BenchmarkWorkspaceSeed
 ): PublicationChannel[] {
   if (projectId === 'project-ai-design-patterns') {
-    return [
-      createPublicationChannel({
-        id: 'channel-ai-linkedin',
-        projectId,
-        platform: 'linkedin',
-        title: 'LinkedIn newsletter',
-        handleOrUrl: 'https://www.linkedin.com/newsletters/ai-design-patterns',
-        language: 'en',
-        audience: 'AI product and engineering leaders',
-        role: 'primary',
-        defaultPublicationSizeProfileId: 'linkedin-article'
-      }),
-      createPublicationChannel({
-        id: 'channel-ai-telegram-companion',
-        projectId,
-        platform: 'telegram',
-        title: 'Telegram companion',
-        handleOrUrl: '@ai_design_patterns',
-        language: 'en',
-        audience: 'Practitioners who want shorter implementation notes',
-        role: 'experiment',
-        defaultPublicationSizeProfileId: 'telegram-post'
-      })
-    ];
+    return createAiDesignPatternsPublicationChannels();
   }
 
   if (projectId === 'project-glavred-blog') {
@@ -361,139 +361,7 @@ function withSignalEvidence(signal: SourceSignal): SourceSignal {
 }
 
 const benchmarkWorkspaceSeeds: Record<DemoBenchmarkProjectId, BenchmarkWorkspaceSeed> = {
-  'project-ai-design-patterns': {
-    projectProfile: {
-      name: 'AI Design Patterns',
-      description: 'English-capable research blog about durable AI product and engineering patterns.',
-      setupStatus: 'needsReview'
-    },
-    editorialModel: {
-      author: 'AI systems practitioner who curates durable design patterns from scattered field knowledge.',
-      audience:
-        'AI product leaders, staff engineers, founders and technical product teams who need reliable AI systems, not tool hype.',
-      positioning:
-        'Anti-hype synthesis: turn noisy AI practice into named patterns with evidence, constraints and operating guidance.',
-      fabula:
-        'The value is not in announcing a new tool, but in explaining the repeatable pattern that makes AI useful in a real workflow.',
-      rubrics: ['Pattern catalog', 'Applied AI architecture', 'Evidence and evals', 'Enterprise reliability'],
-      styleRules: [
-        'Write in clear English by default, with pattern names and practical trade-offs.',
-        'Separate what works now from what is still experimental.',
-        'Use public evidence and concrete system boundaries before advice.'
-      ],
-      forbiddenTopics: ['New model hype without operational lesson', 'Tool roundup without pattern', 'Benchmark ranking as the main point'],
-      goals: [
-        'Build authority as a curator of durable AI design patterns.',
-        'Help teams reason about context, evidence, tools, orchestration and validation.',
-        'Create a reusable pattern catalog for AI product and engineering teams.'
-      ]
-    },
-    authorNotes: [
-      note('ai-pattern-execution-layer', 'thought', 'AI as an execution layer, not a chat box',
-        'The durable pattern is not "ask the model better". It is an execution layer: understand context, find grounds, call tools, produce a structured artifact and leave an audit trail.',
-        ['execution-layer', 'orchestration', 'tools'], '2026-06-20T09:00:00.000Z'),
-      note('ai-pattern-evidence-first', 'thought', 'Evidence before generation',
-        'For enterprise AI, retrieval is not decoration. The system needs visible grounds before it is allowed to state conclusions.',
-        ['evidence', 'rag', 'enterprise'], '2026-06-20T09:20:00.000Z'),
-      note('ai-pattern-context-budget', 'manualCorrection', 'Too much context is also a bug',
-        'A long context window does not replace context design. Good systems select context packs by role and purpose instead of dumping the whole trace.',
-        ['context', 'rag', 'context-pack'], '2026-06-20T09:40:00.000Z'),
-      note('ai-pattern-validator-layer', 'thought', 'Reliability is layered outside the model',
-        'The useful question is not which model is smartest. It is where schemas, deterministic checks, evals and human review compensate for model limits.',
-        ['validators', 'evals', 'reliability'], '2026-06-20T10:00:00.000Z')
-    ],
-    editorialRules: [
-      rule('ai-pattern-rule-author', 'author', 'Pattern curator, not AI news commentator',
-        'Author must extract a reusable pattern from noisy AI practice instead of reacting to new tools.'),
-      rule('ai-pattern-rule-evidence', 'positioning', 'Claims need operating evidence',
-        'Every serious recommendation should name its evidence source, limitation or failure mode.'),
-      rule('ai-pattern-rule-language', 'styleLanguage', 'English-ready technical clarity',
-        'Use concise English terms for patterns, but explain them through workflow scenes.'),
-      rule('ai-pattern-rule-no-hype', 'forbiddenTopic', 'No model hype as thesis',
-        'Do not make the model leaderboard the main argument.')
-    ],
-    topics: [
-      topic('ai-pattern-topic-execution-layer', 'AI execution layer',
-        'Patterns for turning model output into controlled process execution.',
-        'Explain the architecture between user intent and reliable output.',
-        'Readers get a repeatable map: context, evidence, orchestration, tools, schema, validation.',
-        'AI value appears when the model is embedded into a controlled execution contour.'),
-      topic('ai-pattern-topic-context-packs', 'Context packs and article memory',
-        'How AI systems select the right context without flooding the model.',
-        'Show context engineering as product architecture, not prompt decoration.',
-        'Readers learn when to preserve memory, compress it, or retrieve only the relevant cards.',
-        'Good context is curated by role and task; raw trace dumping is a reliability risk.'),
-      topic('ai-pattern-topic-reliability', 'Reliability layers',
-        'Evals, deterministic validators, schemas and human review as design patterns.',
-        'Translate model uncertainty into engineering controls.',
-        'Readers get practical reliability layers for production AI systems.',
-        'Reliable AI is model capability plus external discipline.')
-    ],
-    fabulas: [
-      fabula('ai-pattern-fabula-pattern-card', 'Pattern card',
-        'Name a durable pattern, show when it applies, why it works and where it breaks.',
-        'From noisy practice to a named reusable pattern.',
-        ['Problem signal', 'Pattern name', 'Operating mechanism', 'Failure modes', 'How to apply'],
-        ['At least two public examples or sources', 'One failure mode or limitation'],
-        'deep', 'deep', 'manual', [
-          'find: recent public examples of AI systems using tools, RAG, schemas or validators in production',
-          'verify: whether the examples show actual workflow execution, not only demo output',
-          'do not use: vendor launch posts without operational detail'
-        ]),
-      fabula('ai-pattern-fabula-architecture-note', 'Architecture note',
-        'Explain a system boundary or component choice through trade-offs.',
-        'From architecture smell to a safer AI system design.',
-        ['Architecture smell', 'Why it fails', 'Better boundary', 'Implementation checklist'],
-        ['Concrete system boundary', 'Trade-off or cost'],
-        'standard', 'standard', 'auto'),
-      fabula('ai-pattern-fabula-anti-hype', 'Anti-hype teardown',
-        'Challenge a fashionable AI claim and replace it with a more useful pattern.',
-        'From hype claim to operational criterion.',
-        ['Hype claim', 'What it hides', 'Operational criterion', 'Better question'],
-        ['Public claim or example', 'Author stance'],
-        'standard', 'light', 'auto')
-    ],
-    radars: [
-      radar('ai-pattern-radar-public-practice', 'Public AI engineering practice',
-        'Search for mature public examples of AI architecture, RAG, orchestration and evaluation.',
-        'AI engineering essays, product architecture writeups and public talks.'),
-      radar('ai-pattern-radar-author-notes', 'Author pattern notes',
-        'Extract repeated patterns from author memory and manual research notes.',
-        'Local author memory and imported research snippets.')
-    ],
-    sourceSignals: [
-      signal('ai-pattern-signal-execution-layer', 'Pattern candidate', 'AI systems are moving from answers to controlled execution',
-        'Sanitized enterprise AI deck', 'A strong pattern emerges: useful AI systems collect context, find grounds, call tools, produce structured output and keep auditability.',
-        'Use this to write a pattern card about AI as an execution layer rather than a chat UI.',
-        'ai-pattern-topic-execution-layer', 'ai-pattern-fabula-pattern-card'),
-      signal('ai-pattern-signal-context-overload', 'Architecture smell', 'Long context does not solve context selection',
-        'Author memory and public architecture discussions', 'Teams with huge context windows still need role-specific context packs, summarization and retrieval discipline.',
-        'Good scenario for explaining ArticleDossier and ContextPack as a general AI product pattern.',
-        'ai-pattern-topic-context-packs', 'ai-pattern-fabula-architecture-note'),
-      signal('ai-pattern-signal-reliability-layers', 'Reliability note', 'Model limits are compensated by engineering layers',
-        'Sanitized enterprise AI deck', 'Hallucination, nondeterminism and context limits require schemas, deterministic checks, evals and human review.',
-        'Turn this into an anti-hype note: reliability is designed outside the model too.',
-        'ai-pattern-topic-reliability', 'ai-pattern-fabula-anti-hype')
-    ],
-    externalSources: [
-      externalSource('ai-pattern-source-enterprise-deck', 'Enterprise AI architecture deck', 'document',
-        'Sanitized notes from a private deck about AI as execution layer and reliability controls.'),
-      externalSource('ai-pattern-source-public-practice', 'Public AI engineering essays', 'blogSite',
-        'Future reviewed queue for public examples of production AI patterns.')
-    ],
-    defaultPlatform: 'LinkedIn',
-    defaultPublicationSizeProfileId: 'linkedin-article',
-    postsPerWeek: 1,
-    readyScenario: {
-      planId: 'ai-patterns-plan-execution-layer',
-      title: 'AI execution layer: Pattern card',
-      expectedEffect: 'Produce an English-ready pattern card that explains AI as controlled execution, not a chat answer.',
-      topicId: 'ai-pattern-topic-execution-layer',
-      fabulaId: 'ai-pattern-fabula-pattern-card',
-      sourceSignalId: 'ai-pattern-signal-execution-layer',
-      format: 'LinkedIn article / pattern card'
-    }
-  },
+  'project-ai-design-patterns': aiDesignPatternsBenchmarkSeed,
   'project-kasha-iz-topora': {
     projectProfile: {
       name: 'Каша из топора',

@@ -1874,10 +1874,9 @@ cabinet still runs unchanged inside the selected project.
 The local shell seeds two users and three project containers:
 
 - User A owns two independent blogs:
-  - `AI Design Patterns`: an English-capable technical/research blog about durable AI
-    design patterns, best practices, engineering/product lessons, and anti-hype
-    synthesis. Likely primary channel: LinkedIn newsletter/articles, with possible
-    Telegram companion notes.
+  - `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
+    about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
+    future OSS/community pattern book.
   - `Каша из топора`: a Russian Telegram blog with an author's RevOps/Product
     Marketing philosophy, irony, strong stance, and practical field observations.
 - User B owns one independent blog:
@@ -2027,8 +2026,8 @@ For backend slices, add:
 ## Open Questions
 
 - Which production authentication provider should replace dev-password session auth?
-- Should `AI Design Patterns` start as a LinkedIn newsletter/articles project, a
-  standalone site/blog, or a LinkedIn-first project with Telegram companion notes?
+- When should `AI Design Patterns` add LinkedIn/site variants after its Russian
+  Telegram-first industrial AI baseline is stable?
 - Should `Блог Главреда` use Telegram + Dzen as the first multi-platform benchmark,
   or should LinkedIn be introduced earlier for product/B2B reach?
 - Which author memory event types should be implemented first: raw thoughts,

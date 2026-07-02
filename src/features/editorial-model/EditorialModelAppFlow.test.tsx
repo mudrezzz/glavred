@@ -35,24 +35,24 @@ describe('Editorial model app flow', () => {
     expect(screen.getByText(/Требует повторной проверки/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Темы/i }));
-    const topicButton = screen.getByRole('button', { name: 'AI product discovery' });
+    const topicButton = screen.getByRole('button', { name: 'Decision Intelligence для ТОиР' });
     expect(topicButton).toBeInTheDocument();
     expect(topicButton.closest('.entity-row-main')?.querySelector('.entity-row-meta')).toBeTruthy();
     expect(document.querySelector('.entity-details-scroll')).toBeInTheDocument();
     const topicRow = topicButton.closest('article') as HTMLElement;
     fireEvent.click(within(topicRow).getByRole('button', { name: /^Редактировать$/i }));
     fireEvent.change(screen.getByLabelText('Название'), {
-      target: { value: 'AI workflow discovery' }
+      target: { value: 'Industrial workflow discovery' }
     });
     fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
-    expect(screen.getByText('AI workflow discovery')).toBeInTheDocument();
+    expect(screen.getByText('Industrial workflow discovery')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Фабулы/i }));
-    const fabulaRow = screen.getByText('Исследовательская заметка').closest('article') as HTMLElement;
+    const fabulaRow = screen.getByText('Карточка паттерна').closest('article') as HTMLElement;
     fireEvent.click(within(fabulaRow).getByRole('button', { name: /^Редактировать$/i }));
-    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Исследовательская записка' } });
+    fireEvent.change(screen.getByLabelText('Название'), { target: { value: 'Карточка industrial AI паттерна' } });
     fireEvent.click(screen.getByRole('button', { name: /^Сохранить$/i }));
-    expect(screen.getByText('Исследовательская записка')).toBeInTheDocument();
+    expect(screen.getByText('Карточка industrial AI паттерна')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /Матрица/i }));
     expect(screen.getByTestId('topic-fabula-matrix-scroll')).toBeInTheDocument();

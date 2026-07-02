@@ -29,11 +29,14 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(kasha.projectProfile.name).toBe('Каша из топора');
     expect(glavred.projectProfile.name).toBe('Блог Главреда');
 
-    expect(ai.editorialModel.positioning).toContain('Anti-hype synthesis');
+    expect(ai.editorialModel.positioning).toContain('industrial AI');
     expect(kasha.editorialModel.positioning).toContain('сложный B2B');
     expect(glavred.editorialModel.positioning).toContain('редакционную систему');
 
-    expect(ai.authorNotes.some((note) => note.tags.includes('execution-layer'))).toBe(true);
+    expect(ai.authorNotes.some((note) => note.tags.includes('industrial-ai'))).toBe(true);
+    expect(ai.topics.map((topic) => topic.id)).toContain('ai-pattern-topic-decision-intelligence');
+    expect(ai.fabulas.map((fabula) => fabula.id)).toContain('ai-pattern-fabula-digest');
+    expect(ai.sourceSignals.map((signal) => signal.id)).toContain('ai-pattern-signal-decision-workbench');
     expect(kasha.authorNotes.some((note) => note.tags.includes('revops'))).toBe(true);
     expect(glavred.authorNotes.some((note) => note.tags.includes('editorial-system'))).toBe(true);
 
@@ -41,7 +44,13 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(kasha.contentPlanItems[0].id).toBe(demoPortfolioBenchmarkExpectations['project-kasha-iz-topora'].readyScenarioId);
     expect(glavred.contentPlanItems[0].id).toBe(demoPortfolioBenchmarkExpectations['project-glavred-blog'].readyScenarioId);
 
-    expect(ai.publicationChannels.map((channel) => channel.id)).toContain('channel-ai-linkedin');
+    expect(ai.contentPlanSettings.defaultPlatform).toBe('Telegram');
+    expect(ai.contentPlanItems[0].channelId).toBe('channel-ai-telegram');
+    expect(ai.publicationChannels.map((channel) => channel.id)).toEqual([
+      'channel-ai-telegram',
+      'channel-ai-github-pattern-book'
+    ]);
+    expect(ai.publicationChannels.find((channel) => channel.id === 'channel-ai-github-pattern-book')?.status).toBe('paused');
     expect(kasha.publicationChannels.map((channel) => channel.id)).toEqual(['channel-kasha-telegram']);
     expect(glavred.publicationChannels.map((channel) => channel.id)).toEqual([
       'channel-glavred-telegram',

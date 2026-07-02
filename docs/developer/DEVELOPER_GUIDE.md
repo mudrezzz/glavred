@@ -54,10 +54,12 @@ Important architecture rules for upcoming slices:
 - the three-blog demo portfolio is also a benchmark surface, so seeded data must stay
   realistic, isolated, maintainable, and sanitized from private source materials.
 
-Slice 2.17.2 keeps benchmark fixture construction in
-`src/fixtures/demoBenchmarkPortfolio.ts`. Do not expand near-limit `demoWorkspace.ts`
-when adding or revising benchmark blogs; add project-owned fixture data and tests
-beside the portfolio demo fixture instead.
+Slice 2.17.2 keeps the benchmark portfolio assembly in
+`src/fixtures/demoBenchmarkPortfolio.ts`, while project-specific reworks should live
+in role-owned fixture modules such as
+`src/fixtures/demoAiDesignPatternsProject.ts`. Do not expand near-limit
+`demoWorkspace.ts` when adding or revising benchmark blogs; add project-owned fixture
+data and tests beside the portfolio demo fixture instead.
 
 See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.

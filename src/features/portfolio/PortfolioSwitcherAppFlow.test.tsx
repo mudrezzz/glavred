@@ -46,7 +46,7 @@ describe('Portfolio switcher app flow', () => {
   it('keeps author memory isolated between projects', () => {
     renderAppCabinet();
 
-    expect(screen.getByText(/AI as an execution layer/i)).toBeInTheDocument();
+    expect(screen.getByText(/Industrial AI надо проектировать вокруг решения/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Заметка автора'), {
       target: { value: 'Project-specific note for AI Design Patterns only.' }

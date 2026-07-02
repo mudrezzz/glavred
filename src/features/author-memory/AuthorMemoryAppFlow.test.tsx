@@ -12,8 +12,8 @@ describe('Author memory app flow', () => {
     renderAppCabinet();
 
     expect(screen.getByText('Авторская память')).toBeInTheDocument();
-    expect(screen.getByText(/Workflow risk важнее выбора модели/i)).toBeInTheDocument();
-    expect(screen.getByText(/AI Product Manager с исследовательской оптикой/i)).toBeInTheDocument();
+    expect(screen.getByText(/Industrial AI надо проектировать вокруг решения/i)).toBeInTheDocument();
+    expect(screen.getByText(/Усиление инженера, а не замена инженера/i)).toBeInTheDocument();
     expect(screen.getByText(/Как система поняла автора/i)).toBeInTheDocument();
   });
 
@@ -278,8 +278,8 @@ describe('Author memory app flow', () => {
 
     expect(screen.getByRole('button', { name: /Показать еще/i })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Поиск по памяти'), { target: { value: 'customer interview' } });
-    expect(screen.getByText(/AI-фича должна объяснять границы уверенности/i)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Поиск по памяти'), { target: { value: 'инженер' } });
+    expect(screen.getByText(/Усиление инженера, а не замена инженера/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Показать еще/i })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Поиск по памяти'), { target: { value: '' } });
