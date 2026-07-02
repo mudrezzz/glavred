@@ -481,6 +481,8 @@ Benchmark expectations:
 - no student-handbook RevOps explanations;
 - one alpine metaphor, no mixed pilot/military jargon;
 - practical field observations about route, sales gear, CRM belay, ABM, and client-side politics;
+- reusable topic/fabula combinations, where topics are commercial territories and
+  fabulas are narrative mechanics rather than one-to-one topic aliases;
 - can reuse author memory without borrowing the AI Design Patterns voice.
 
 ### User B / Blog 3: `Блог Главреда`

@@ -13,7 +13,10 @@ AI_DESIGN_PATTERNS_DESCRIPTION = (
     " and Decision Intelligence Telegram blog."
 )
 SEVERNAYA_STENA_TITLE = "\u0421\u0435\u0432\u0435\u0440\u043d\u0430\u044f \u0441\u0442\u0435\u043d\u0430"
-SEVERNAYA_STENA_DESCRIPTION = "Telegram blog about complex B2B deals, RevOps, ABM and commercial routes."
+SEVERNAYA_STENA_DESCRIPTION = (
+    "Telegram blog about complex B2B deal routes, RevOps belay, lost route analysis "
+    "and sales-marketing-product alignment."
+)
 GLAVRED_BLOG_TITLE = "\u0411\u043b\u043e\u0433 \u0413\u043b\u0430\u0432\u0440\u0435\u0434\u0430"
 
 

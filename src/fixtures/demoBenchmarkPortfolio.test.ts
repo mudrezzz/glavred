@@ -40,8 +40,9 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(ai.sourceSignals.map((signal) => signal.id)).toContain('ai-pattern-signal-decision-workbench');
     expect(kasha.authorNotes.some((note) => note.tags.includes('revops'))).toBe(true);
     expect(kasha.authorNotes.some((note) => note.tags.includes('belay'))).toBe(true);
-    expect(kasha.topics.map((topic) => topic.id)).toContain('stena-topic-route');
-    expect(kasha.fabulas.map((fabula) => fabula.id)).toContain('stena-fabula-route-note');
+    expect(kasha.topics.map((topic) => topic.id)).toContain('stena-topic-deal-route');
+    expect(kasha.topics.map((topic) => topic.id)).toContain('stena-topic-lost-route');
+    expect(kasha.fabulas.map((fabula) => fabula.id)).toContain('stena-fabula-failure-analysis');
     expect(kasha.sourceSignals.map((signal) => signal.id)).toContain('stena-signal-lost-route');
     expect(glavred.authorNotes.some((note) => note.tags.includes('editorial-system'))).toBe(true);
 
@@ -76,10 +77,10 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(stena.editorialModel.author).toContain('коммерциализации сложных технических B2B-продуктов');
     expect(stena.editorialModel.author).toContain('пресейла');
     expect(stena.editorialModel.author).toContain('Не sales coach');
-    expect(stena.editorialModel.goals).toHaveLength(6);
+    expect(stena.editorialModel.goals).toHaveLength(5);
     expect(stena.editorialModel.goals.join(' ')).toContain('Привлекать клиентов');
     expect(stena.editorialModel.goals.join(' ')).toContain('рынок дозрел до RevOps');
-    expect(stena.editorialModel.goals.join(' ')).toContain('AI как ускоритель');
+    expect(stena.editorialModel.goals.join(' ')).not.toContain('AI как');
 
     expect(stena.editorialModel.audience).toContain('Фаундеры B2B-компаний');
     expect(stena.editorialModel.audience).not.toContain('начинаться');
@@ -93,18 +94,59 @@ describe('three-blog benchmark demo portfolio', () => {
       expect.arrayContaining([
         'stena-rule-goal-client-attraction',
         'stena-rule-goal-revops-maturity',
-        'stena-rule-goal-ai-light-gear'
+        'stena-rule-goal-sales-engineering',
+        'stena-rule-goal-practical-team'
       ])
     );
+    expect(ruleIdsByGroup('goal')).not.toContain('stena-rule-goal-ai-light-gear');
+    expect(ruleIdsByGroup('positioning')).toContain('stena-rule-ai-light-gear');
 
     const painRule = stena.editorialRules.find((rule) => rule.id === 'stena-rule-reader-pain');
     expect(painRule?.group).toBe('styleVoice');
     expect(stena.editorialModel.styleRules.some((rule) => rule.includes('начинать с узнаваемой сцены сделки'))).toBe(true);
     expect(
       stena.fabulas
-        .find((fabula) => fabula.id === 'stena-fabula-route-note')
+        .find((fabula) => fabula.id === 'stena-fabula-fog-removal')
         ?.researchStrategy.instructions.some((instruction) => instruction.includes('узнаваемой боли сделки'))
     ).toBe(true);
+  });
+
+  it('calibrates Severnaya Stena topics, reusable fabulas and curated matrix', () => {
+    const portfolio = createDemoPortfolio();
+    const stena = portfolio.workspacesByProjectId['project-kasha-iz-topora'];
+
+    expect(stena.topics.map((topic) => topic.id)).toEqual([
+      'stena-topic-deal-route',
+      'stena-topic-client-relief',
+      'stena-topic-gear',
+      'stena-topic-belay',
+      'stena-topic-rope-team',
+      'stena-topic-lost-route'
+    ]);
+    expect(stena.fabulas.map((fabula) => fabula.id)).toEqual([
+      'stena-fabula-fog-removal',
+      'stena-fabula-failure-analysis',
+      'stena-fabula-gear-check',
+      'stena-fabula-route-note',
+      'stena-fabula-checkpoint',
+      'stena-fabula-climb-plan'
+    ]);
+    expect(stena.fabulas.map((fabula) => fabula.title)).not.toContain('RevOps без тумана');
+
+    const enabledPairs = stena.topicFabulaMatrix.filter((entry) => entry.enabled);
+    expect(stena.topicFabulaMatrix).toHaveLength(stena.topics.length * stena.fabulas.length);
+    expect(enabledPairs).toHaveLength(18);
+
+    for (const fabula of stena.fabulas) {
+      expect(enabledPairs.filter((entry) => entry.fabulaId === fabula.id).length).toBeGreaterThanOrEqual(3);
+    }
+    expect(enabledPairs.filter((entry) => entry.topicId === 'stena-topic-lost-route').map((entry) => entry.fabulaId)).toEqual(
+      expect.arrayContaining(['stena-fabula-failure-analysis', 'stena-fabula-route-note'])
+    );
+
+    const ready = stena.contentPlanItems.find((item) => item.id === 'stena-plan-lost-route');
+    expect(ready?.topicId).toBe('stena-topic-lost-route');
+    expect(ready?.fabulaId).toBe('stena-fabula-failure-analysis');
   });
 
   it('keeps memory and accepted learning isolated by project', () => {

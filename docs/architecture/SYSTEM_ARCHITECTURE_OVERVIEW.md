@@ -1885,7 +1885,8 @@ The local shell seeds two users and three project containers:
     about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
     future OSS/community pattern book.
   - `Северная стена`: a Russian Telegram blog about complex B2B deals as commercial
-    climbs: route, client relief, sales gear, RevOps belay, ABM, and CRM discipline.
+    climbs: route, client relief, sales gear, RevOps belay, lost routes, ABM, and
+    CRM discipline, with a curated reusable topic/fabula matrix.
 - User B owns one independent blog:
   - `Блог Главреда`: product philosophy, build-in-public lessons, practical editorial
     methods, and explanations of why Glavred's AI-native editorial approach matters.

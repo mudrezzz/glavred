@@ -5,13 +5,35 @@ import type {
   Fabula,
   RadarDefinition,
   SourceSignal,
-  Topic
+  Topic,
+  TopicFabulaMatrixEntry
 } from '../domain/editorialWorkspace';
 import type { PublicationChannel } from '../domain/publication-channels/types';
 import { createPublicationChannel } from '../domain/publication-channels/transitions';
 import type { BenchmarkWorkspaceSeed, DemoBenchmarkProjectId } from './demoBenchmarkPortfolio';
 
 const projectId: DemoBenchmarkProjectId = 'project-kasha-iz-topora';
+
+const severnayaStenaTopicFabulaCompatibility: Pick<TopicFabulaMatrixEntry, 'topicId' | 'fabulaId'>[] = [
+  { topicId: 'stena-topic-client-relief', fabulaId: 'stena-fabula-fog-removal' },
+  { topicId: 'stena-topic-deal-route', fabulaId: 'stena-fabula-fog-removal' },
+  { topicId: 'stena-topic-rope-team', fabulaId: 'stena-fabula-fog-removal' },
+  { topicId: 'stena-topic-lost-route', fabulaId: 'stena-fabula-failure-analysis' },
+  { topicId: 'stena-topic-deal-route', fabulaId: 'stena-fabula-failure-analysis' },
+  { topicId: 'stena-topic-belay', fabulaId: 'stena-fabula-failure-analysis' },
+  { topicId: 'stena-topic-gear', fabulaId: 'stena-fabula-gear-check' },
+  { topicId: 'stena-topic-belay', fabulaId: 'stena-fabula-gear-check' },
+  { topicId: 'stena-topic-rope-team', fabulaId: 'stena-fabula-gear-check' },
+  { topicId: 'stena-topic-client-relief', fabulaId: 'stena-fabula-route-note' },
+  { topicId: 'stena-topic-deal-route', fabulaId: 'stena-fabula-route-note' },
+  { topicId: 'stena-topic-lost-route', fabulaId: 'stena-fabula-route-note' },
+  { topicId: 'stena-topic-belay', fabulaId: 'stena-fabula-checkpoint' },
+  { topicId: 'stena-topic-client-relief', fabulaId: 'stena-fabula-checkpoint' },
+  { topicId: 'stena-topic-gear', fabulaId: 'stena-fabula-checkpoint' },
+  { topicId: 'stena-topic-deal-route', fabulaId: 'stena-fabula-climb-plan' },
+  { topicId: 'stena-topic-rope-team', fabulaId: 'stena-fabula-climb-plan' },
+  { topicId: 'stena-topic-belay', fabulaId: 'stena-fabula-climb-plan' }
+];
 
 export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
   projectProfile: {
@@ -26,17 +48,16 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
     audience:
       'Фаундеры B2B-компаний, коммерческие директора, heads of sales, RevOps, product marketing и продуктовые команды, у которых сделки вязнут в ЛПР, закупках, CRM-хаосе и внутренней политике клиента.',
     positioning:
-      'Северная стена показывает, как проводить сложные B2B-сделки через туман, закупки, ЛПР, CRM-хаос и внутреннюю политику клиента без консалтингового пафоса и без веры в героизм одного продавца.',
+      'Северная стена показывает, как проводить сложные B2B-сделки через туман, закупки, ЛПР, CRM-хаос и внутреннюю политику клиента без консалтингового пафоса и без веры в героизм одного продавца. AI здесь - легкое снаряжение для account research, call review, CRM hygiene, материалов и аналитики, но не главный герой и не замена коммерческого суждения.',
     fabula:
       'Сложная продажа - это не воронка и не скрипт, а коммерческий маршрут. Побеждает не самый громкий продавец, а связка продаж, маркетинга и продукта, которая понимает рельеф клиента, несет правильное снаряжение и держит страховку на каждом этапе.',
     rubrics: [
-      'Маршрут',
+      'Маршрут сделки',
       'Рельеф клиента',
       'Снаряжение',
       'Страховка',
       'Связка',
-      'Срывы',
-      'Легкое снаряжение'
+      'Потерянный маршрут'
     ],
     styleRules: [
       'Писать как полевые записки с восхождения: сцена, риск, рельеф, решение, вывод.',
@@ -56,7 +77,6 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Объяснять, почему рынок дозрел до RevOps и когда компания уже переросла героические продажи на таланте отдельных сейлзов.',
       'Показывать, что сильная сложная продажа проектируется через процесс, доказательства, CRM, материалы, ABM, product marketing и связку продукта, продаж и маркетинга.',
       'Демонстрировать практическую экспертизу без образа тяжелого и дорогого консалтинга.',
-      'Показывать AI как ускоритель коммерческой операционки, а не как главного героя и замену опыта.',
       'Сделать блог местом, где читатель узнает свою боль и думает: эти люди уже были на моей стене.'
     ]
   },
@@ -129,10 +149,16 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Посты должны показывать, когда компания уже переросла героические продажи на таланте отдельных сейлзов и ей нужна повторяемая коммерческая система на стыке продаж, маркетинга и продукта.'
     ),
     rule(
-      'stena-rule-goal-ai-light-gear',
+      'stena-rule-goal-sales-engineering',
       'goal',
-      'AI как легкое снаряжение',
-      'AI допустим как ускоритель коммерческой операционки: account research, call review, CRM hygiene, материалы и аналитика. Но он не должен становиться главным героем и не заменяет коммерческое суждение команды.'
+      'Продвигать инженерию сложных продаж',
+      'Материалы должны показывать продажи как проектируемую систему: маршрут, роли клиента, доказательства, материалы, CRM, ABM, продуктовую ценность и связь с внедрением.'
+    ),
+    rule(
+      'stena-rule-goal-practical-team',
+      'goal',
+      'Создавать доверие к небольшой практичной команде',
+      'Посты должны демонстрировать опытную, быструю и адекватную по стоимости команду, которая умеет входить в коммерческий туман без театра большого консалтинга.'
     ),
     rule(
       'stena-rule-single-metaphor',
@@ -153,6 +179,12 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Главная позиция: сложные B2B-продажи надо проектировать как повторяемую систему, а не оставлять на харизме отдельных продавцов.'
     ),
     rule(
+      'stena-rule-ai-light-gear',
+      'positioning',
+      'AI как легкое снаряжение',
+      'AI допустим как ускоритель коммерческой операционки: account research, call review, CRM hygiene, материалы и аналитика. Но он не должен становиться главным героем и не заменяет коммерческое суждение команды.'
+    ),
+    rule(
       'stena-rule-no-student-handbook',
       'forbiddenTopic',
       'Не методичка',
@@ -161,8 +193,8 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
   ],
   topics: [
     topic(
-      'stena-topic-route',
-      'Маршрут сложной сделки',
+      'stena-topic-deal-route',
+      'Маршрут сделки',
       'Как сделка проходит через рынок, аккаунт, ЛПР, экономику, закупку, внедрение и обратную связь.',
       'Показать, что сделкой нужно управлять как маршрутом, а не как стадиями в CRM.',
       'Читатель видит, где конкретно его сделка теряет высоту: нет владельца риска, нет процедуры, нет экономики, нет следующего шага.',
@@ -191,16 +223,32 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Объяснить RevOps как страховочную систему сложных сделок.',
       'Читатель получает не модный термин, а проверочные вопросы: где у нас нет страховки и почему прогноз врет.',
       'RevOps нужен там, где продажи, маркетинг и продукт перестали держать общий коммерческий маршрут.'
+    ),
+    topic(
+      'stena-topic-rope-team',
+      'Связка продаж, маркетинга и продукта',
+      'ABM, Power Web, product marketing, продуктовая ценность, пресейл, внедрение и обратная связь как единая коммерческая связка.',
+      'Показать, почему сложная продажа срывается, когда продажи, маркетинг и продукт идут разными маршрутами.',
+      'Читатель видит, какие материалы, сигналы и роли должны соединять отделы, чтобы клиент двигался дальше.',
+      'Коммерческий маршрут держится не на одном сейлзе, а на связке функций, которые несут одну карту ценности.'
+    ),
+    topic(
+      'stena-topic-lost-route',
+      'Потерянный маршрут',
+      'Зависшие сделки, мертвые КП, неверный forecast, забытые next steps и postmortem после потерь.',
+      'Разбирать срывы без охоты на виноватых: где маршрут потеряли, какую страховку не поставили и что менять в системе.',
+      'Читатель получает язык для честного разбора провалов и превращает loss review в следующий рабочий маршрут.',
+      'Проигранная сделка полезна, если из нее достали рельеф, снаряжение и контрольные точки для следующего восхождения.'
     )
   ],
   fabulas: [
     fabula(
-      'stena-fabula-route-note',
-      'Полевая записка с маршрута',
-      'Telegram-пост из одной узнаваемой сцены сложной сделки: где группа потеряла маршрут и как поставить страховку.',
-      'Сцена срыва -> рельеф -> причина -> страховка -> следующий шаг.',
-      ['Сцена', 'Где туман', 'Какой рельеф не учли', 'Что поставить как страховку', 'Вывод для команды'],
-      ['Авторская память или sanitized case', 'Один практический критерий'],
+      'stena-fabula-fog-removal',
+      'Разогнать туман',
+      'Пост, который начинается с узнаваемой коммерческой неясности и превращает ее в карту рельефа и следующий шаг.',
+      'Боль -> скрытый рельеф -> карта -> контрольная точка -> следующий шаг.',
+      ['Узнаваемая боль', 'Что на самом деле скрыто в тумане', 'Карта рельефа', 'Что проверить завтра'],
+      ['Сцена из сделки или публичный кейс', 'Один проверочный критерий'],
       'standard',
       'standard',
       'manual',
@@ -208,37 +256,69 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
         'начать с узнаваемой боли сделки, а не с определения термина',
         'держать альпинистскую метафору без декоративности',
         'не уходить в generic sales advice',
-        'обязательно показать ставку сделки'
+        'обязательно показать ставку сделки и следующий шаг'
+      ]
+    ),
+    fabula(
+      'stena-fabula-failure-analysis',
+      'Разбор сорвавшегося восхождения',
+      'Разбор зависшей или проигранной сделки без поиска виноватых: где команда потеряла маршрут и какую страховку надо было поставить.',
+      'Сбой -> ошибка маршрута -> недостающее снаряжение или страховка -> исправление системы.',
+      ['Сцена срыва', 'Где потеряли маршрут', 'Чего не было в системе', 'Какую страховку поставить', 'Что не повторять'],
+      ['Sanitized case, loss review or author memory', 'Конкретная причина срыва'],
+      'standard',
+      'standard',
+      'manual',
+      [
+        'не обвинять сейлзов в слабости',
+        'показывать системную причину срыва',
+        'заканчивать поправкой к маршруту, CRM, материалам или ролям'
       ]
     ),
     fabula(
       'stena-fabula-gear-check',
       'Проверка снаряжения',
-      'Разбор одного элемента sales enablement: КП, демо, battlecard, account brief или CRM-критерия.',
-      'От проблемы на маршруте к конкретному снаряжению и проверке, выдержит ли оно сделку.',
-      ['Что ломается', 'Какое снаряжение нужно', 'Как проверить', 'Где не поможет'],
-      ['Пример из сложной сделки', 'Критерий применимости'],
+      'Разбор одного инструмента, материала, процесса или AI-ускорителя под нагрузкой сложной сделки.',
+      'Инструмент -> нагрузка маршрута -> где помогает -> где не поможет -> критерий применения.',
+      ['Что проверяем', 'Какая нагрузка сделки', 'Где выдерживает', 'Где не спасает', 'Правило применения'],
+      ['Пример из сложной сделки', 'Критерий применимости', 'Ограничение инструмента'],
       'standard',
       'light',
       'manual'
     ),
     fabula(
-      'stena-fabula-revops-explainer',
-      'RevOps без тумана',
-      'Объяснить один RevOps-механизм через маршрут сделки, а не через определение термина.',
-      'Термин -> боль -> маршрут -> механизм -> эффект.',
-      ['Где болит', 'Почему старый подход не держит', 'Как работает механизм', 'Что меняется в поведении команды'],
-      ['Связь с CRM/ABM/forecast/materials', 'Ограничение применимости'],
-      'deep',
-      'deep',
-      'auto'
+      'stena-fabula-route-note',
+      'Полевая записка с маршрута',
+      'Живая заметка из одной сцены: что увидели на маршруте, какой принцип достали и какой практический ход стоит забрать.',
+      'Сцена -> наблюдение -> принцип -> практический ход.',
+      ['Сцена', 'Наблюдение', 'Что это значит для маршрута', 'Что сделать команде'],
+      ['Авторская память или sanitized case', 'Один практический критерий'],
+      'standard',
+      'standard',
+      'manual',
+      [
+        'сохранять живой голос',
+        'не превращать сцену в учебник',
+        'оставлять читателю один рабочий ход'
+      ]
     ),
     fabula(
-      'stena-fabula-summit-brief',
-      'Разбор вершины',
-      'Длинный разбор сложного коммерческого маршрута от рынка до внедрения.',
+      'stena-fabula-checkpoint',
+      'Контрольная точка',
+      'Диагностический пост: по каким признакам понять, что маршрут, рельеф, снаряжение или страховка не готовы.',
+      'Чеклист -> признаки риска -> вопросы -> действие.',
+      ['Что проверяем', 'Три-пять признаков риска', 'Вопросы команде', 'Какой следующий шаг'],
+      ['Практические критерии', 'Связь с CRM/материалами/ролями'],
+      'deep',
+      'standard',
+      'manual'
+    ),
+    fabula(
+      'stena-fabula-climb-plan',
+      'План восхождения',
+      'Большой разбор коммерческого маршрута: роли, материалы, рельеф клиента, RevOps-контроли и риски внедрения.',
       'Базовый лагерь -> рельеф -> связка -> снаряжение -> страховка -> штурм -> урок.',
-      ['Контекст рынка', 'Карта аккаунта', 'Роли и риски', 'Материалы', 'CRM/RevOps', 'Что брать в следующий маршрут'],
+      ['Контекст рынка', 'Карта маршрута', 'Роли и риски', 'Материалы', 'CRM/RevOps', 'Что брать в следующий маршрут'],
       ['Несколько источников или sanitized case', 'Явные риски переноса'],
       'deep',
       'marketResearch',
@@ -274,8 +354,8 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Sanitized complex B2B sales support deck',
       'Сложная продажа проходит через проблему, экономику, ЛПР, процесс, ТКП, закупку и внедрение. Если команда видит только "КП отправлено", она не видит рельеф сделки.',
       'Первый benchmark-пост должен начинаться со сцены: в CRM стоит "КП отправлено", а внутри клиента уже идут закупка, финансы, инженерный риск и усталый чемпион.',
-      'stena-topic-route',
-      'stena-fabula-route-note'
+      'stena-topic-lost-route',
+      'stena-fabula-failure-analysis'
     ),
     signal(
       'stena-signal-five-questions',
@@ -285,7 +365,7 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Клиент, ценность, сделка, материалы и измерение дают карту того, где коммерческая система проседает.',
       'Использовать как практичный пост без учебника: пять вопросов как контрольные точки маршрута, а не как чеклист ради чеклиста.',
       'stena-topic-belay',
-      'stena-fabula-revops-explainer'
+      'stena-fabula-checkpoint'
     ),
     signal(
       'stena-signal-gear',
@@ -305,7 +385,7 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'AI полезен для account brief, разбора звонков, CRM hygiene, материалов и аналитики, но только если маршрут уже описан.',
       'Пост должен не уходить в AI-хайп: показать, что AI облегчает рюкзак, но не выбирает маршрут за группу.',
       'stena-topic-belay',
-      'stena-fabula-revops-explainer'
+      'stena-fabula-gear-check'
     )
   ],
   externalSources: [
@@ -328,6 +408,7 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
       'Future reviewed queue for RevOps, ABM, enterprise sales, CRM discipline and product marketing cases.'
     )
   ],
+  topicFabulaCompatibility: severnayaStenaTopicFabulaCompatibility,
   defaultPlatform: 'Telegram',
   defaultPublicationSizeProfileId: 'telegram-post',
   postsPerWeek: 3,
@@ -335,11 +416,11 @@ export const severnayaStenaBenchmarkSeed: BenchmarkWorkspaceSeed = {
     planId: 'stena-plan-lost-route',
     title: 'Сделка не зависла. Она потеряла маршрут',
     expectedEffect:
-      'Написать живой Telegram-пост для фаундеров и коммерческих команд: показать, как статус "КП отправлено" скрывает потерянный маршрут через ЛПР, закупку, экономику и CRM-хаос, и почему нужна RevOps-страховка.',
-    topicId: 'stena-topic-route',
-    fabulaId: 'stena-fabula-route-note',
+      'Написать живой Telegram-разбор сорвавшегося восхождения: показать, как статус "КП отправлено" скрывает потерянный маршрут через ЛПР, закупку, экономику и CRM-хаос, и какую RevOps-страховку надо поставить перед следующим подходом.',
+    topicId: 'stena-topic-lost-route',
+    fabulaId: 'stena-fabula-failure-analysis',
     sourceSignalId: 'stena-signal-lost-route',
-    format: 'Telegram field note'
+    format: 'Telegram failure analysis'
   }
 };
 

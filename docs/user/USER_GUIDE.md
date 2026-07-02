@@ -117,7 +117,9 @@ The app currently seeds two demo users and three realistic benchmark blog projec
 - `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
   about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
 - `Северная стена`: a Telegram complex B2B / RevOps blog about commercial routes,
-  client fog, sales gear, CRM belay, and sales-marketing-product alignment.
+  client fog, sales gear, CRM belay, sales-marketing-product alignment, and lost
+  route analysis. Its seeded topics are domains, while fabulas are reusable story
+  forms that can combine across those domains.
 - `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
   Telegram + Dzen multi-platform adaptation benchmark.
 

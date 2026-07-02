@@ -13,6 +13,7 @@ import {
   type RadarDefinition,
   type SourceSignal,
   type Topic,
+  type TopicFabulaMatrixEntry,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
 import type { PublicationChannel } from '../domain/publication-channels/types';
@@ -40,6 +41,11 @@ export interface DemoPortfolioBenchmarkExpectation {
   mustAvoid: string[];
   readyScenarioId: string;
 }
+
+type TopicFabulaCompatibility = {
+  topicId: string;
+  fabulaId: string;
+};
 
 export const demoPortfolioBenchmarkExpectations: Record<DemoBenchmarkProjectId, DemoPortfolioBenchmarkExpectation> = {
   'project-ai-design-patterns': {
@@ -78,6 +84,7 @@ export type BenchmarkWorkspaceSeed = {
   radars: RadarDefinition[];
   sourceSignals: SourceSignal[];
   externalSources: AuthorExternalSource[];
+  topicFabulaCompatibility?: TopicFabulaCompatibility[];
   defaultPlatform: string;
   defaultPublicationSizeProfileId: string;
   postsPerWeek: number;
@@ -98,7 +105,7 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
 
   const base = createDemoWorkspace({ includeSeededHitlLearning: false });
   const authorMemoryEvents = seed.authorNotes.map(createAuthorMemoryEvent);
-  const topicFabulaMatrix = createDefaultTopicFabulaMatrix(seed.topics, seed.fabulas);
+  const topicFabulaMatrix = createBenchmarkTopicFabulaMatrix(seed);
   const sourceSignals = seed.sourceSignals.map(withSignalEvidence);
   const sourceSignal = sourceSignals.find((signal) => signal.id === seed.readyScenario.sourceSignalId) ?? sourceSignals[0];
   const topic = seed.topics.find((item) => item.id === seed.readyScenario.topicId) ?? seed.topics[0];
@@ -168,7 +175,7 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
   const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
   const topics = seed.topics;
   const fabulas = seed.fabulas;
-  const topicFabulaMatrix = createDefaultTopicFabulaMatrix(topics, fabulas);
+  const topicFabulaMatrix = createBenchmarkTopicFabulaMatrix(seed);
   const sourceSignals = seed.sourceSignals.map(withSignalEvidence);
   const sourceSignal = sourceSignals.find((signal) => signal.id === seed.readyScenario.sourceSignalId) ?? sourceSignals[0];
   const topic = topics.find((item) => item.id === seed.readyScenario.topicId) ?? topics[0];
@@ -332,6 +339,21 @@ function createBenchmarkPublicationChannels(
   }
 
   return createSevernayaStenaPublicationChannels();
+}
+
+function createBenchmarkTopicFabulaMatrix(seed: BenchmarkWorkspaceSeed): TopicFabulaMatrixEntry[] {
+  if (!seed.topicFabulaCompatibility?.length) {
+    return createDefaultTopicFabulaMatrix(seed.topics, seed.fabulas);
+  }
+
+  const enabled = new Set(seed.topicFabulaCompatibility.map((entry) => `${entry.topicId}:${entry.fabulaId}`));
+  return seed.topics.flatMap((topic) =>
+    seed.fabulas.map((fabula) => ({
+      topicId: topic.id,
+      fabulaId: fabula.id,
+      enabled: enabled.has(`${topic.id}:${fabula.id}`)
+    }))
+  );
 }
 
 function withSignalEvidence(signal: SourceSignal): SourceSignal {

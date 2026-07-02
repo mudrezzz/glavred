@@ -74,5 +74,6 @@ def test_seeded_severnaya_stena_project_matches_current_baseline(tmp_path: Path)
 
     assert project["title"] == "Северная стена"
     assert project["language"] == "ru"
-    assert "complex B2B deals" in project["description"]
+    assert "complex B2B deal routes" in project["description"]
     assert "RevOps" in project["description"]
+    assert "lost route analysis" in project["description"]

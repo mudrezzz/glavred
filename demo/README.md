@@ -116,8 +116,11 @@ Each blog now has its own memory feed:
 
 - `AI Design Patterns`: industrial AI decision support, engineer augmentation,
   hybrid AI, ТОиР/EAM patterns, and the future OSS pattern book.
-- `Северная стена`: complex B2B sales as commercial climbs: route, client relief,
-  sales gear, RevOps belay, ABM, CRM discipline, and AI as light gear.
+- `Северная стена`: complex B2B sales as commercial climbs: deal route, client
+  relief, sales gear, RevOps belay, rope team, lost routes, and AI as light gear.
+  Its topics are subject territories, while fabulas are reusable narrative mechanics
+  such as fog removal, failure analysis, gear check, field note, checkpoint, and
+  climb plan.
 - `Блог Главреда`: product philosophy, SourceLedger/evidence discipline, HITL,
   editor decision learning, and future Telegram/Dzen adaptation.
 

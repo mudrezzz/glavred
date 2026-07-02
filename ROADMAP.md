@@ -6190,7 +6190,7 @@ Status:
 
 ### Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration
 
-- Status: Ready
+- Status: Done
 - Goal: Calibrate the `Северная стена` editorial model so goals, positioning, topics, fabulas, and the topic/fabula matrix have distinct responsibilities and produce reusable drafting combinations.
 - User value:
   - The project becomes a better real benchmark for RevOps / complex B2B sales content.
@@ -6233,10 +6233,11 @@ Status:
   - The ready scenario remains runnable and project-specific.
 - Risks:
   - Over-generalizing fabulas may make the project less vivid; keep scenario examples concrete even when fabulas are reusable.
+- Completed: 2026-07-02
 
 ### Slice 2.17.4.3: Блог Главреда Project Rework
 
-- Status: Backlog
+- Status: Ready
 - Goal: Rework the `Блог Главреда` benchmark project before continuing multi-platform planning.
 - User value:
   - The product/philosophy blog becomes a stronger benchmark for explaining Glavred's editorial philosophy, practical methods, and Telegram/Dzen adaptation readiness.
@@ -6544,6 +6545,7 @@ Status:
 - Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration. Completed 2026-07-02.
 - Slice 2.17.4.2.2: Publication Channel Audience and Editorial Contract Boundary Repair. Completed 2026-07-02.
 - Slice 2.17.4.2.2.1: Project Blueprint Creation Skill. Completed 2026-07-02.
+- Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6572,4 +6574,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration`.
+Implement `Slice 2.17.4.3: Блог Главреда Project Rework`.
