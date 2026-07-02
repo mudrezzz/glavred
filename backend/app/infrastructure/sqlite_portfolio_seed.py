@@ -12,7 +12,8 @@ AI_DESIGN_PATTERNS_DESCRIPTION = (
     "\u0422\u041e\u0438\u0420"
     " and Decision Intelligence Telegram blog."
 )
-KASHA_TITLE = "\u041a\u0430\u0448\u0430 \u0438\u0437 \u0442\u043e\u043f\u043e\u0440\u0430"
+SEVERNAYA_STENA_TITLE = "\u0421\u0435\u0432\u0435\u0440\u043d\u0430\u044f \u0441\u0442\u0435\u043d\u0430"
+SEVERNAYA_STENA_DESCRIPTION = "Telegram blog about complex B2B deals, RevOps, ABM and commercial routes."
 GLAVRED_BLOG_TITLE = "\u0411\u043b\u043e\u0433 \u0413\u043b\u0430\u0432\u0440\u0435\u0434\u0430"
 
 
@@ -38,8 +39,8 @@ def ensure_seeded(conn: sqlite3.Connection, now: str) -> None:
         (
             "project-kasha-iz-topora",
             "user-founder-editor",
-            KASHA_TITLE,
-            "RevOps and Product Marketing Telegram-native author blog.",
+            SEVERNAYA_STENA_TITLE,
+            SEVERNAYA_STENA_DESCRIPTION,
             "ru",
             "active",
             "demo",

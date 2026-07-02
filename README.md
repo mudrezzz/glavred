@@ -112,7 +112,8 @@ managed destination such as a Telegram channel, LinkedIn newsletter, Dzen projec
 site; it is not just the old freeform `platform` string. Planning keeps `platform` as a
 denormalized compatibility label, but new plan slots and settings can reference a
 stable `channelId`. Autoposting, OAuth credentials, and multi-target generation remain
-future slices.
+future slices. Channel settings do not define the blog audience: audience remains in
+the editorial model or in a concrete post brief.
 Slice 2.17.3 adds the first backend SaaS boundary around that same shape:
 email/password dev login, HttpOnly session cookie, project memberships, and
 project-scoped workspace snapshots in SQLite. The frontend tries the backend first,
@@ -175,8 +176,8 @@ ready benchmark scenario:
 
 - `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
   about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
-- `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with strong
-  stance, irony, and field observations from complex B2B commercialization.
+- `Северная стена`: Telegram-native blog about complex B2B deals, RevOps, ABM,
+  CRM discipline, sales gear, and commercial routes through client-side fog.
 - `Блог Главреда`: product philosophy and practical editorial methods, with the first
   planned Telegram + Dzen multi-platform adaptation benchmark.
 
@@ -258,7 +259,7 @@ The dev SaaS portfolio boundary exposes:
 - `GET/PUT /api/projects/{projectId}/workspace`.
 
 Seeded demo users are `founder@example.test` with `AI Design Patterns` and
-`Каша из топора`, and `glavred-editor@example.test` with `Блог Главреда`. The
+`Северная стена`, and `glavred-editor@example.test` with `Блог Главреда`. The
 default dev password is `glavred-demo`.
 
 When OpenRouter is configured, the compatibility endpoint can generate drafts through

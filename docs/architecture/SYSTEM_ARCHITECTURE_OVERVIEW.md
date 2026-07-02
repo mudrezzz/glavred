@@ -70,7 +70,9 @@ The next SaaS-ready model wraps that loop in a portfolio boundary:
   product boundary above the current local `WorkspaceState`.
 - `PublicationChannels`: project-owned publishing destinations such as a Telegram
   channel, LinkedIn profile/newsletter, Dzen channel, or future blog/site. Channels
-  carry audience, language, role, default size profile, and publishing mode.
+  carry destination, language, role, default size profile, and publishing mode. They
+  do not own project audience; audience belongs to the editorial model or a concrete
+  post brief.
 - `PlatformVariants`: per-channel versions of one shared editorial idea. A variant
   owns its draft, version history, final approval, and publication readiness while
   preserving the shared source/fabula/thesis context.
@@ -193,7 +195,8 @@ approves editorial artifacts automatically.
 - `PublicationChannel`: project-owned destination such as Telegram, LinkedIn, Dzen,
   or future site/blog. A channel is not the same as platform: one project can have
   several channels on the same platform, and one editorial idea can target several
-  channels.
+  channels. Channel audience is deprecated compatibility data only; generation
+  context must use `EditorialModel.audience` or `PostBrief.audience`.
 - `PublicationGroup`: future wrapper for one shared editorial idea that produces
   several platform/channel variants.
 - `PlatformVariant`: per-channel draft/final/readiness state for a publication group.
@@ -1877,8 +1880,8 @@ The local shell seeds two users and three project containers:
   - `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
     about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
     future OSS/community pattern book.
-  - `Каша из топора`: a Russian Telegram blog with an author's RevOps/Product
-    Marketing philosophy, irony, strong stance, and practical field observations.
+  - `Северная стена`: a Russian Telegram blog about complex B2B deals as commercial
+    climbs: route, client relief, sales gear, RevOps belay, ABM, and CRM discipline.
 - User B owns one independent blog:
   - `Блог Главреда`: product philosophy, build-in-public lessons, practical editorial
     methods, and explanations of why Glavred's AI-native editorial approach matters.
@@ -1897,7 +1900,7 @@ is unavailable.
 - project isolation: no memory, learning notes, rules, or drafts leak between blogs;
 - channel adaptation: the same idea can become different Telegram, LinkedIn, or Dzen
   variants;
-- author voice: `Каша из топора` should not sound like `AI Design Patterns`;
+- author voice: `Северная стена` should not sound like `AI Design Patterns`;
 - research depth: the technical blog can require deeper evidence than a quick
   Telegram opinion post;
 - product narrative: `Блог Главреда` should explain the product without sounding like

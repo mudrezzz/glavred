@@ -108,7 +108,7 @@ switching. Use `Все проекты` there to return to the dashboard.
 
 Seeded backend users:
 
-- `founder@example.test`: can access `AI Design Patterns` and `Каша из топора`.
+- `founder@example.test`: can access `AI Design Patterns` and `Северная стена`.
 - `glavred-editor@example.test`: can access `Блог Главреда`.
 - Default dev password: `glavred-demo`.
 
@@ -116,8 +116,8 @@ The app currently seeds two demo users and three realistic benchmark blog projec
 
 - `AI Design Patterns`: a Russian Telegram-first industrial AI design patterns blog
   about ТОиР, EAM, Decision Intelligence, hybrid AI, and a future OSS pattern book.
-- `Каша из топора`: a Telegram RevOps/Product Marketing blog with strong author
-  stance and irony.
+- `Северная стена`: a Telegram complex B2B / RevOps blog about commercial routes,
+  client fog, sales gear, CRM belay, and sales-marketing-product alignment.
 - `Блог Главреда`: a product-philosophy blog for Glavred itself, planned as the first
   Telegram + Dzen multi-platform adaptation benchmark.
 
@@ -126,6 +126,9 @@ plan, drafts, final decisions, and learning notes are isolated by project.
 The per-blog memories, editorial models, source signals, plan slots, and benchmark
 scenarios are already seeded as sanitized public fixtures. Private source documents
 are not included in the repository.
+Publication channels describe where the blog is published. They do not replace the
+central audience in the editorial model; audience is configured once for the project
+and may later be overridden only in a concrete post brief.
 
 ## External Sources Local Shell
 

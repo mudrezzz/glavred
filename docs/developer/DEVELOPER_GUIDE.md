@@ -920,6 +920,11 @@ Use these boundaries:
   compatibility barrel or to `editorialWorkspace.ts`. `ContentPlanSettings.defaultChannelId`
   and `ContentPlanItem.channelId` are the stable links, while `defaultPlatform` and
   `platform` stay denormalized labels for legacy UI, export, and DraftRun paths.
+- Publication channels do not own project audience. Use
+  `WorkspaceState.editorialModel.audience` as the project-level audience source and
+  `PostBrief.audience` for post-level overrides. Legacy `PublicationChannel.audience`
+  data must be ignored by DraftRun context and removed from channel editing in the
+  dedicated repair slice.
 - `Сигналы` owns local-first radar settings and reviewed source material. `sourceSignals`
   is the new signal list; `sourceSignal` remains the compatibility field for the
   currently selected approved signal used by insight, plan, brief, release, and
@@ -1046,7 +1051,7 @@ Runtime rules:
 
 - `WorkspaceState.projectProfile` stores the project name, description, and setup
   status. The public demo entry point is the local portfolio: `AI Design Patterns`,
-  `Каша из топора`, and `Блог Главреда`. Legacy `createDemoWorkspace` fixtures still
+  `Северная стена`, and `Блог Главреда`. Legacy `createDemoWorkspace` fixtures still
   exist for low-level compatibility tests.
 - `WorkspaceState.editorialRules` stores atomic rules grouped by author, audience,
   positioning, style voice, style language, style rhythm, anti-AI pattern, goal, and

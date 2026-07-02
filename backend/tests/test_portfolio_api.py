@@ -63,3 +63,16 @@ def test_seeded_ai_design_patterns_project_matches_current_industrial_baseline(t
     assert "Industrial AI" in ai_project["description"]
     assert "ТОиР" in ai_project["description"]
     assert "Decision Intelligence" in ai_project["description"]
+
+
+def test_seeded_severnaya_stena_project_matches_current_baseline(tmp_path: Path) -> None:
+    client = portfolio_client(tmp_path)
+    login_portfolio(client, "founder@example.test")
+
+    projects = client.get("/api/projects?includeArchived=true").json()["projects"]
+    project = next(item["project"] for item in projects if item["project"]["id"] == "project-kasha-iz-topora")
+
+    assert project["title"] == "Северная стена"
+    assert project["language"] == "ru"
+    assert "complex B2B deals" in project["description"]
+    assert "RevOps" in project["description"]

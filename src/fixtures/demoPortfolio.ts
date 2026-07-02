@@ -40,8 +40,8 @@ export function createDemoPortfolio(): PortfolioState {
       {
         id: 'project-kasha-iz-topora',
         ownerUserId: 'user-founder-editor',
-        title: 'Каша из топора',
-        description: 'RevOps and Product Marketing Telegram-native author blog.',
+        title: 'Северная стена',
+        description: 'Telegram blog about complex B2B deals, RevOps, ABM and commercial routes.',
         language: 'ru',
         status: 'active',
         benchmarkRole: 'demo',

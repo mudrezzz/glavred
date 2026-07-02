@@ -159,7 +159,7 @@ interface PublicationChannel {
   title: string;
   handleOrUrl?: string;
   language: string;
-  audience: string;
+  audience?: string; // legacy only; not the project audience source of truth
   role: 'primary' | 'repurpose' | 'experiment' | 'archive';
   defaultPublicationSizeProfileId?: string;
   publishingMode: 'manual' | 'adapterPlanned' | 'connected';
@@ -170,6 +170,12 @@ interface PublicationChannel {
 Channel is not the same as platform. A project may have two Telegram channels, or a
 LinkedIn profile plus a LinkedIn newsletter. Platform-specific constraints resolve
 through channel settings and `PostContract`, not by duplicating fabulas.
+
+Audience is not owned by `PublicationChannel`. Project audience is centralized in
+the editorial model (`EditorialModel.audience` and later the structured publisher
+contract). A concrete post may override it through `PostBrief.audience`. Legacy
+snapshots may still contain `channel.audience`, but new UI and DraftRun context must
+ignore it until the repair slice removes the field from channel editing.
 
 Slice 2.17.4 stores v1 channels in `WorkspaceState.publicationChannels`.
 `ContentPlanSettings.defaultChannelId` and `ContentPlanItem.channelId` are the stable
@@ -317,7 +323,7 @@ Implemented v1:
 
 Dev seed users:
 
-- `founder@example.test`: `AI Design Patterns`, `Каша из топора`;
+- `founder@example.test`: `AI Design Patterns`, `Северная стена`;
 - `glavred-editor@example.test`: `Блог Главреда`;
 - default password: `glavred-demo`.
 
@@ -448,13 +454,17 @@ Benchmark expectations:
 - uses external evidence and practical examples;
 - produces systematic synthesis and a reusable pattern, not a hot take.
 
-### User A / Blog 2: `Каша из топора`
+### User A / Blog 2: `Северная стена`
+
+Current project blueprint:
+
+- `docs/architecture/SEVERNAYA_STENA_PROJECT_BLUEPRINT.md`
 
 Purpose:
 
-- author's RevOps/Product Marketing philosophy;
-- ironic, opinionated, practical;
-- Telegram-native cadence.
+- client-attracting expertise blog about engineering complex B2B sales systems;
+- alpine metaphor for route, rope team, gear, belay, fog, and summit attempts;
+- Telegram-native cadence with practical, energetic field notes.
 
 Likely channels:
 
@@ -463,9 +473,10 @@ Likely channels:
 Benchmark expectations:
 
 - strong author stance;
-- irony and living voice;
-- does not become a consulting memo;
-- practical field observations;
+- living voice, humor, and recognizable deal pain;
+- no student-handbook RevOps explanations;
+- one alpine metaphor, no mixed pilot/military jargon;
+- practical field observations about route, sales gear, CRM belay, ABM, and client-side politics;
 - can reuse author memory without borrowing the AI Design Patterns voice.
 
 ### User B / Blog 3: `Блог Главреда`
@@ -516,10 +527,12 @@ Future implementation slices must follow these rules:
 2. Do not make `PublicationChannel` a string alias for platform.
 3. Do not duplicate fabulas per platform.
 4. Do not let accepted `editorialLearning` notes influence other projects.
-5. Do not add backend auth before project boundaries are testable locally.
-6. Do not wire autoposting before channels, variants, manual readiness, and
+5. Do not duplicate project audience inside publication channels; channel audience is
+   deprecated compatibility data only.
+6. Do not add backend auth before project boundaries are testable locally.
+7. Do not wire autoposting before channels, variants, manual readiness, and
    publication-log semantics exist.
-7. Do not hide multiple platform variants inside one opaque DraftRun until separate
+8. Do not hide multiple platform variants inside one opaque DraftRun until separate
    variant traces have proven the contract.
 
 ## 11. Tests expected in implementation slices

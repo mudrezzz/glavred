@@ -210,4 +210,4 @@ The slice maps this blueprint to:
 - one ready-to-run `ContentPlanItem`.
 
 Future project rework slices should follow the same document-first pattern for
-`Каша из топора` and `Блог Главреда`.
+`Северная стена` and `Блог Главреда`.

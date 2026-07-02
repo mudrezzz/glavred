@@ -34,7 +34,7 @@ describe('Portfolio switcher app flow', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
       target: { value: 'project-kasha-iz-topora' }
     });
-    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Каша из топора');
+    expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Северная стена');
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Пользователь' }), {
       target: { value: 'user-product-editor' }
@@ -59,7 +59,7 @@ describe('Portfolio switcher app flow', () => {
       target: { value: 'project-kasha-iz-topora' }
     });
     expect(screen.queryByText(/Project-specific note for AI Design Patterns only/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Сложный B2B не продается как коробка/i)).toBeInTheDocument();
+    expect(screen.getByText(/Сделка не зависает, она теряет маршрут/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Блог' }), {
       target: { value: 'project-ai-design-patterns' }
@@ -77,6 +77,6 @@ describe('Portfolio switcher app flow', () => {
 
     expect(screen.getByRole('combobox', { name: 'Блог' })).toHaveDisplayValue('Блог Главреда');
     expect(screen.getByText(/Главред - не генератор постов/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Сложный B2B не продается как коробка/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Сделка не зависает, она теряет маршрут/i)).not.toBeInTheDocument();
   });
 });

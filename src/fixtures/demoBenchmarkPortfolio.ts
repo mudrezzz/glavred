@@ -22,6 +22,10 @@ import {
   createAiDesignPatternsPublicationChannels
 } from './demoAiDesignPatternsProject';
 import { createDemoWorkspace } from './demoWorkspace';
+import {
+  createSevernayaStenaPublicationChannels,
+  severnayaStenaBenchmarkSeed
+} from './demoSevernayaStenaProject';
 
 export type DemoBenchmarkProjectId =
   | 'project-ai-design-patterns'
@@ -50,9 +54,9 @@ export const demoPortfolioBenchmarkExpectations: Record<DemoBenchmarkProjectId, 
     projectId: 'project-kasha-iz-topora',
     language: 'ru',
     defaultPlatform: 'Telegram',
-    readyScenarioId: 'kasha-plan-complex-sales',
-    benchmarkSignals: ['strong stance', 'living Telegram voice', 'RevOps detail', 'field-tested B2B sales logic'],
-    mustAvoid: ['consulting memo tone', 'CRM jargon without scene', 'generic sales motivation']
+    readyScenarioId: 'stena-plan-lost-route',
+    benchmarkSignals: ['alpinist metaphor', 'complex B2B route', 'RevOps belay', 'field-tested deal pain'],
+    mustAvoid: ['student handbook tone', 'mixed pilot metaphor', 'generic sales motivation', 'AI hype as main topic']
   },
   'project-glavred-blog': {
     projectId: 'project-glavred-blog',
@@ -329,19 +333,7 @@ function createBenchmarkPublicationChannels(
     ];
   }
 
-  return [
-    createPublicationChannel({
-      id: 'channel-kasha-telegram',
-      projectId,
-      platform: 'telegram',
-      title: 'Telegram',
-      handleOrUrl: '@kasha_iz_topora',
-      language: 'ru',
-      audience: seed.editorialModel.audience,
-      role: 'primary',
-      defaultPublicationSizeProfileId: seed.defaultPublicationSizeProfileId
-    })
-  ];
+  return createSevernayaStenaPublicationChannels();
 }
 
 function withSignalEvidence(signal: SourceSignal): SourceSignal {
@@ -362,141 +354,7 @@ function withSignalEvidence(signal: SourceSignal): SourceSignal {
 
 const benchmarkWorkspaceSeeds: Record<DemoBenchmarkProjectId, BenchmarkWorkspaceSeed> = {
   'project-ai-design-patterns': aiDesignPatternsBenchmarkSeed,
-  'project-kasha-iz-topora': {
-    projectProfile: {
-      name: 'Каша из топора',
-      description: 'Telegram-native RevOps and Product Marketing blog about complex B2B commercialization.',
-      setupStatus: 'needsReview'
-    },
-    editorialModel: {
-      author: 'Практик product commercialization и RevOps для сложных B2B-продуктов.',
-      audience:
-        'Основатели, CPO, коммерческие директора, product marketing и sales leaders, которые продают сложные продукты длинным корпоративным циклом.',
-      positioning:
-        'Ироничный, практичный разбор того, почему сложный B2B нельзя продать как коробку: нужна связка клиент, ценность, сделка, материалы и изменение.',
-      fabula:
-        'Продажи сложного B2B ломаются не из-за слабой презентации, а из-за отсутствия повторяемой системы: рынок, ценность, CRM, материалы, обучение и аналитика.',
-      rubrics: ['Каша из топора', 'RevOps field notes', 'Product commercialization', 'Сложные B2B-продажи'],
-      styleRules: [
-        'Писать живым Telegram-голосом: жестко, иронично, но с практической пользой.',
-        'Начинать с наблюдения из продаж или внедрения, а не с консалтингового определения.',
-        'Давать управленческую рамку, но не превращать пост в презентационный слайд.'
-      ],
-      forbiddenTopics: ['Мотивационные продажи без механики', 'CRM ради CRM', 'Консалтинговая вода без полевого примера'],
-      goals: [
-        'Собрать вокруг автора аудиторию, которой нужна коммерциализация сложных B2B-продуктов.',
-        'Показать опыт связки product, marketing, sales, presale, delivery и внедрения.',
-        'Превратить прошлую продуктово-коммерческую практику в узнаваемую авторскую оптику.'
-      ]
-    },
-    authorNotes: [
-      note('kasha-note-box-sales', 'thought', 'Сложный B2B не продается как коробка',
-        'Если клиент покупает изменение процесса, презентация продукта сама по себе почти ничего не решает. Нужны проблема, экономика, ЛПР, процесс, ТКП, закупка и внедрение.',
-        ['complex-b2b', 'sales', 'value'], '2026-06-21T09:00:00.000Z'),
-      note('kasha-note-five-questions', 'thought', 'Пять вопросов повторяемых продаж',
-        'Клиент, ценность, сделка, материалы, измерение - без этих пяти вопросов продажи превращаются в героизм отдельных людей.',
-        ['revops', 'sales-system', 'crm'], '2026-06-21T09:20:00.000Z'),
-      note('kasha-note-bant-plus', 'manualCorrection', 'BANT+ нужен как дисциплина сделки, а не табличка',
-        'Скоринг сделки полезен только если меняет поведение команды: кого зовем, какой риск закрываем, какой следующий шаг доказывает движение.',
-        ['bant', 'scoring', 'crm'], '2026-06-21T09:40:00.000Z'),
-      note('kasha-note-loss-to-action', 'thought', 'Loss-to-Action как язык ценности',
-        'Сильная B2B-ценность появляется, когда финансовая потеря переводится в управляемый кейс: причина, действие, эффект, владелец и проверка результата.',
-        ['loss-to-action', 'value', 'industrial-ai'], '2026-06-21T10:00:00.000Z'),
-      note('kasha-note-sales-materials', 'linkReaction', 'Материалы вооружают продажи',
-        'Sales kit нужен не для красоты. Он должен помогать пройти разговор с разными ролями: инженер, ИТ, производство, закупки, финансы, топ-менеджмент.',
-        ['sales-enablement', 'materials', 'roles'], '2026-06-21T10:20:00.000Z')
-    ],
-    editorialRules: [
-      rule('kasha-rule-author', 'author', 'Полевой коммерческий практик',
-        'Автор говорит из опыта вывода сложных B2B-продуктов на рынок, а не как внешний консультант.'),
-      rule('kasha-rule-voice', 'styleVoice', 'Ирония плюс польза',
-        'Можно шутить и спорить, но каждый пост должен оставлять рабочую рамку или критерий.'),
-      rule('kasha-rule-position', 'positioning', 'Повторяемая система важнее героизма продаж',
-        'Главная позиция: сложные продажи надо превращать в систему, а не оставлять на харизме отдельных людей.'),
-      rule('kasha-rule-forbidden-memo', 'forbiddenTopic', 'Не консультационный меморандум',
-        'Не писать сухим языком отчета или презентации без живой сцены.')
-    ],
-    topics: [
-      topic('kasha-topic-complex-sales', 'Сложные B2B-продажи',
-        'Почему корпоративная сделка требует системы, а не только продукта и презентации.',
-        'Показать механику повторяемых продаж.',
-        'Читатель видит, где у него ломается коммерческий контур.',
-        'Сложный B2B продается через управляемое изменение клиента, а не через демо функции.'),
-      topic('kasha-topic-revops-crm', 'RevOps и CRM-дисциплина',
-        'CRM, BANT+, этапы, критерии перехода и аналитика SQL как операционная система продаж.',
-        'Снять романтику с CRM и вернуть ей управленческий смысл.',
-        'Читатель получает критерии, по которым CRM помогает сделке, а не имитирует контроль.',
-        'CRM полезна, когда управляет следующим действием, риском и доказательством движения.'),
-      topic('kasha-topic-value-materials', 'Ценность и материалы продаж',
-        'Как упаковывать ценность, ROI, TCO, роли клиента и возражения для сложных продуктов.',
-        'Показать связь product marketing и sales enablement.',
-        'Читатель понимает, почему one-pager, ТКП и battlecard должны жить в одной логике ценности.',
-        'Материалы должны вооружать разговор, а не украшать продукт.')
-    ],
-    fabulas: [
-      fabula('kasha-fabula-field-note', 'Полевая заметка',
-        'Живой Telegram-пост из наблюдения о продажах, который выводит управленческий принцип.',
-        'От раздражающей сцены к полезной рамке.',
-        ['Сцена', 'Что в ней смешного или болезненного', 'Почему так происходит', 'Что делать иначе'],
-        ['Авторская память', 'Один практический пример'],
-        'compact', 'light', 'manual', [
-          'найти: публичные примеры сложных B2B-продаж, где проблема не в продукте, а в процессе сделки',
-          'не использовать: мотивационные sales-посты без операционной механики'
-        ]),
-      fabula('kasha-fabula-framework', 'Рабочая рамка',
-        'Короткий фреймворк для диагностики коммерческого контура.',
-        'От хаоса сделки к 3-5 проверочным вопросам.',
-        ['Проблема', 'Вопросы диагностики', 'Как применить', 'Где не сработает'],
-        ['Связь с RevOps или product marketing', 'Ограничение применимости'],
-        'standard', 'standard', 'auto'),
-      fabula('kasha-fabula-myth', 'Разбор мифа продаж',
-        'Разобрать привычный миф продаж и заменить его более точной операционной логикой.',
-        'Миф -> почему удобен -> где ломается -> чем заменить.',
-        ['Миф', 'Почему в него верят', 'Полевая поломка', 'Новая формула'],
-        ['Контрпример', 'Авторская позиция'],
-        'standard', 'light', 'auto')
-    ],
-    radars: [
-      radar('kasha-radar-author-memory', 'Память автора: RevOps',
-        'Искать повторяющиеся мысли про сложные сделки, CRM, BANT+, материалы и value selling.',
-        'Авторские заметки и старые материалы.'),
-      radar('kasha-radar-sales-materials', 'Архив коммерческих материалов',
-        'Искать reusable-паттерны из sales kits, ТКП-развилок, battlecards и обучения продаж.',
-        'Санитизированный архив предыдущей версии блога и презентации команды.')
-    ],
-    sourceSignals: [
-      signal('kasha-signal-complex-sales-box', 'Авторская рамка', 'Когда продукт сложно продать "как коробку"',
-        'Санитизированная презентация о поддержке сложных B2B-продаж', 'Сложная продажа проходит через проблему, экономику, ЛПР, процесс, ТКП, закупку и внедрение; простая презентация не покрывает этот путь.',
-        'Хороший первый пост для Каши: объяснить, почему коммерциализация сложного продукта начинается с системы продажи.',
-        'kasha-topic-complex-sales', 'kasha-fabula-field-note'),
-      signal('kasha-signal-five-questions', 'Рабочая рамка', 'Пять вопросов, которые превращают продукт в повторяемые продажи',
-        'Санитизированный RevOps архив', 'Клиент, ценность, сделка, материалы и измерение дают карту того, где коммерческая система проседает.',
-        'Можно сделать Telegram-фреймворк без сухой презентационности.',
-        'kasha-topic-revops-crm', 'kasha-fabula-framework'),
-      signal('kasha-signal-loss-to-action', 'Авторская методология', 'Loss-to-Action помогает говорить о ценности без магии ROI',
-        'Санитизированное резюме product commercialization', 'Финансовая потеря превращается в управляемый кейс: причина, действие, эффект и владелец.',
-        'Связать RevOps, industrial AI и product marketing через язык управляемой потери.',
-        'kasha-topic-value-materials', 'kasha-fabula-framework')
-    ],
-    externalSources: [
-      externalSource('kasha-source-revops-resume', 'Product commercialization background', 'document',
-        'Sanitized notes from product commercialization and RevOps experience.'),
-      externalSource('kasha-source-b2b-sales-deck', 'Complex B2B sales support deck', 'document',
-        'Sanitized slides about market, value, sales process, CRM, education and analytics.')
-    ],
-    defaultPlatform: 'Telegram',
-    defaultPublicationSizeProfileId: 'telegram-post',
-    postsPerWeek: 3,
-    readyScenario: {
-      planId: 'kasha-plan-complex-sales',
-      title: 'Почему сложный B2B нельзя продать как коробку',
-      expectedEffect: 'Показать живой авторский взгляд на RevOps: сложная продажа требует системы, а не очередной красивой презентации.',
-      topicId: 'kasha-topic-complex-sales',
-      fabulaId: 'kasha-fabula-field-note',
-      sourceSignalId: 'kasha-signal-complex-sales-box',
-      format: 'Telegram field note'
-    }
-  },
+  'project-kasha-iz-topora': severnayaStenaBenchmarkSeed,
   'project-glavred-blog': {
     projectProfile: {
       name: 'Блог Главреда',

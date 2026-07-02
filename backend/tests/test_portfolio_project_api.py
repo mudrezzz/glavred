@@ -87,4 +87,4 @@ def test_workspace_snapshot_roundtrip_preserves_project_isolation(tmp_path: Path
     assert client.get("/api/projects/project-ai-design-patterns/workspace").json()["workspace"] == payload
 
     other_workspace = client.get("/api/projects/project-kasha-iz-topora/workspace").json()["workspace"]
-    assert other_workspace["projectProfile"]["name"] == "Каша из топора"
+    assert other_workspace["projectProfile"]["name"] == "Северная стена"

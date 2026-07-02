@@ -26,11 +26,11 @@ describe('three-blog benchmark demo portfolio', () => {
     const glavred = portfolio.workspacesByProjectId['project-glavred-blog'];
 
     expect(ai.projectProfile.name).toBe('AI Design Patterns');
-    expect(kasha.projectProfile.name).toBe('Каша из топора');
+    expect(kasha.projectProfile.name).toBe('Северная стена');
     expect(glavred.projectProfile.name).toBe('Блог Главреда');
 
     expect(ai.editorialModel.positioning).toContain('industrial AI');
-    expect(kasha.editorialModel.positioning).toContain('сложный B2B');
+    expect(kasha.editorialModel.positioning).toContain('туман');
     expect(glavred.editorialModel.positioning).toContain('редакционную систему');
 
     expect(ai.authorNotes.some((note) => note.tags.includes('industrial-ai'))).toBe(true);
@@ -38,6 +38,10 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(ai.fabulas.map((fabula) => fabula.id)).toContain('ai-pattern-fabula-digest');
     expect(ai.sourceSignals.map((signal) => signal.id)).toContain('ai-pattern-signal-decision-workbench');
     expect(kasha.authorNotes.some((note) => note.tags.includes('revops'))).toBe(true);
+    expect(kasha.authorNotes.some((note) => note.tags.includes('belay'))).toBe(true);
+    expect(kasha.topics.map((topic) => topic.id)).toContain('stena-topic-route');
+    expect(kasha.fabulas.map((fabula) => fabula.id)).toContain('stena-fabula-route-note');
+    expect(kasha.sourceSignals.map((signal) => signal.id)).toContain('stena-signal-lost-route');
     expect(glavred.authorNotes.some((note) => note.tags.includes('editorial-system'))).toBe(true);
 
     expect(ai.contentPlanItems.some((item) => item.id === demoPortfolioBenchmarkExpectations['project-ai-design-patterns'].readyScenarioId)).toBe(true);
@@ -51,12 +55,12 @@ describe('three-blog benchmark demo portfolio', () => {
       'channel-ai-github-pattern-book'
     ]);
     expect(ai.publicationChannels.find((channel) => channel.id === 'channel-ai-github-pattern-book')?.status).toBe('paused');
-    expect(kasha.publicationChannels.map((channel) => channel.id)).toEqual(['channel-kasha-telegram']);
+    expect(kasha.publicationChannels.map((channel) => channel.id)).toEqual(['channel-stena-telegram']);
     expect(glavred.publicationChannels.map((channel) => channel.id)).toEqual([
       'channel-glavred-telegram',
       'channel-glavred-dzen'
     ]);
-    expect(kasha.contentPlanItems[0].channelId).toBe('channel-kasha-telegram');
+    expect(kasha.contentPlanItems[0].channelId).toBe('channel-stena-telegram');
     expect(glavred.contentPlanItems[0].channelId).toBe('channel-glavred-telegram');
   });
 
@@ -66,9 +70,9 @@ describe('three-blog benchmark demo portfolio', () => {
     const kasha = portfolio.workspacesByProjectId['project-kasha-iz-topora'];
     const glavred = portfolio.workspacesByProjectId['project-glavred-blog'];
 
-    expect(ai.authorPositionAssertions.flatMap((assertion) => assertion.evidence).some((item) => item.noteId.startsWith('kasha-'))).toBe(false);
+    expect(ai.authorPositionAssertions.flatMap((assertion) => assertion.evidence).some((item) => item.noteId.startsWith('stena-'))).toBe(false);
     expect(kasha.authorPositionAssertions.flatMap((assertion) => assertion.evidence).some((item) => item.noteId.startsWith('ai-pattern-'))).toBe(false);
-    expect(glavred.authorPositionAssertions.flatMap((assertion) => assertion.evidence).some((item) => item.noteId.startsWith('kasha-'))).toBe(false);
+    expect(glavred.authorPositionAssertions.flatMap((assertion) => assertion.evidence).some((item) => item.noteId.startsWith('stena-'))).toBe(false);
 
     expect(ai.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(true);
     expect(kasha.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(false);

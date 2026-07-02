@@ -6004,31 +6004,116 @@ Status:
   - Future LinkedIn/site adaptation still needs a separate variant slice after the Russian Telegram baseline stabilizes.
 - Completed: 2026-07-02
 
-### Slice 2.17.4.2: Каша из топора Project Rework
+### Slice 2.17.4.2: Северная стена Project Rework
 
-- Status: Ready
-- Goal: Rework the `Каша из топора` benchmark project from user-provided inputs before continuing multi-platform planning.
+- Status: Done
+- Goal: Rework the former `Каша из топора` benchmark project into `Северная стена`, a Telegram-first consulting-attraction blog about engineering complex B2B sales systems.
 - User value:
-  - The Telegram RevOps/Product Marketing blog should become a realistic author project with stronger voice, sharper positioning, and usable benchmark scenarios.
+  - The RevOps/Product Marketing benchmark project becomes a realistic author project with a sharper audience, stronger genre, clearer client-attraction purpose, and usable benchmark scenarios.
 - Scope:
-  - Capture the next user inputs for `Каша из топора`.
-  - Update sanitized project profile, author memory, editorial rules, topics, fabulas, channels, source signals, and benchmark expectations.
+  - Rename the user-facing project to `Северная стена` while preserving technical id `project-kasha-iz-topora` for compatibility.
+  - Add a project blueprint in Glavred entities: project profile, editorial model, author memory, rules, topics, fabulas, radars, source signals, channels, and benchmark expectations.
+  - Update sanitized project fixture data from the user's inputs and private source materials without committing the source PDF text.
+  - Keep one alpine metaphor: route, rope team, gear, belay, fog, summit, base camp.
+  - Seed a ready Telegram scenario: `Сделка не зависла. Она потеряла маршрут`.
   - Prefer a project-specific fixture module instead of expanding near-limit portfolio/demo files.
 - Out of scope:
   - Product runtime behavior changes.
   - Live import from private materials or old channels.
   - Multi-platform DraftRun execution.
+  - Publication adapters.
 - Architecture impact:
-  - Should follow the document-first project rework pattern established by 2.17.4.1.
+  - Follows the document-first project rework pattern established by 2.17.4.1.
+  - Keeps `PublicationChannel` project-owned and keeps old `platform` fields as compatibility labels.
 - Tests:
-  - Demo fixture tests for project isolation and seeded Kasha data completeness.
+  - Demo fixture tests for project isolation and seeded Северная стена data completeness.
+  - Portfolio switcher flow checks the new public project name and memory isolation.
+  - Backend seed tests verify dev auth seed exposes the current project title.
 - Docs:
-  - Project blueprint, demo docs, user/developer docs, roadmap tracker.
+  - Project blueprint, demo docs, user/developer docs, architecture docs, roadmap tracker.
 - Acceptance criteria:
-  - `Каша из топора` has distinct author memory, Telegram voice, topics, fabulas, and ready benchmark scenario grounded in user inputs.
+  - `Северная стена` has distinct author memory, Telegram voice, topics, fabulas, source signals, and ready benchmark scenario grounded in user inputs.
   - No AI Design Patterns or Glavred memory leaks into this project.
+  - Existing backend/local portfolio users see the new public project name without changing project ids.
 - Risks:
-  - Needs user-provided project inputs before implementation can be meaningful.
+  - Existing local backend snapshots can preserve old workspace payloads; local dev DB may need a one-time project row/snapshot refresh after implementation.
+- Completed: 2026-07-02
+
+### Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration
+
+- Status: Ready
+- Goal: Calibrate the `Северная стена` project contract after editorial review so the demo project has a usable author persona, business goals, audience boundary, style rules, and fabula dramaturgy.
+- User value:
+  - The RevOps benchmark becomes a real client-attraction project brief instead of a generic content seed.
+  - Future fixture loading has a clear approved document in Glavred product entities.
+- Scope:
+  - Fill the `Author` section with a field-practitioner persona based on sanitized project materials.
+  - Add explicit project goals: client attraction, RevOps market education, commercial-system engineering, pragmatic team positioning, and AI as acceleration rather than the main topic.
+  - Rewrite `Audience` as reader segment and buying context only.
+  - Move the rule about starting from recognizable deal pain into `Voice` and the relevant fabula.
+  - Update the `Северная стена` fixture and tests so the UI shows the calibrated author/goals/audience/style contract.
+- Out of scope:
+  - App-wide publication-channel audience boundary changes.
+  - DraftRun quality, model, retrieval, or generation changes.
+  - Multi-platform generation and publication adapters.
+- Implementation notes:
+  - Private user materials remain paraphrased and sanitized; no source PDF text is committed.
+  - Keep the alpine metaphor pure: route, rope team, gear, belay, fog, wall, base camp.
+- Architecture impact:
+  - Keeps the project-specific blueprint pattern from 2.17.4.1/2.17.4.2.
+  - Does not change `WorkspaceState` contracts.
+- Tests:
+  - Demo fixture tests for non-empty author, explicit goals, audience without style-rule leakage, and pain-first rule in style/fabula data.
+  - Portfolio/demo tests confirming `Северная стена` remains isolated from other projects.
+- Docs:
+  - `Северная стена` blueprint, demo docs, user/developer docs, and tracker-rendered roadmap.
+- Demo impact:
+  - Demo reset should show the corrected project contract in the `Северная стена` project.
+- Acceptance criteria:
+  - `Author` is non-empty and describes a field practitioner, not a generic brand voice.
+  - `Goals` are present and map to consulting client attraction.
+  - `Audience` does not contain dramaturgy/style rules.
+  - Pain-first opening guidance lives in `Voice` and/or a specific fabula.
+- Risks:
+  - Overwriting useful roughness with consulting polish; preserve the sharper alpine voice.
+
+### Slice 2.17.4.2.2: Publication Channel Audience Boundary Repair
+
+- Status: Backlog
+- Goal: Repair the product-wide boundary so project audience is centralized in the editorial model / post brief and is no longer duplicated inside publication channels.
+- User value:
+  - Channel settings become simpler and less misleading.
+  - DraftRun context uses the same audience the editor configured centrally, not an accidental per-channel copy.
+- Scope:
+  - Deprecate legacy `PublicationChannel.audience` in domain normalization and new fixtures.
+  - Remove the audience block from `PublicationChannelsTab` cards/forms.
+  - Preserve old snapshots that still contain channel audience data without using it for generation.
+  - Ensure `buildDraftRunContext` and backend context summaries use `PostBrief.audience || EditorialModel.audience`, never channel audience.
+  - Update channel fixture builders so channels contain destination, language, role, mode, status, and default size/profile only.
+- Out of scope:
+  - Platform variants.
+  - Per-channel audience segmentation.
+  - Publication adapters, OAuth, or autoposting.
+- Implementation notes:
+  - If future channel-specific nuance is needed, model it as adaptation notes or platform-variant guidance, not as a second audience owner.
+- Architecture impact:
+  - Enforces ADR `publication-channel-audience-boundary`.
+  - Clarifies the distinction between destination setup and editorial contract.
+- Tests:
+  - Domain normalization keeps legacy channel audience readable but ignored.
+  - UI tests verify channel forms/cards do not show audience.
+  - DraftRun context tests verify audience comes from editorial model or brief.
+  - Demo fixture tests verify channels no longer duplicate project audience.
+- Docs:
+  - ADR, architecture overview, SaaS portfolio architecture, developer guide, user/demo docs, and roadmap.
+- Demo impact:
+  - Demo channel cards stop showing a duplicate audience block.
+- Acceptance criteria:
+  - No new editable channel audience UI remains.
+  - Generation context has one auditable audience source.
+  - Old workspaces still load.
+- Risks:
+  - Some projects may later need channel-specific audience nuance; defer that to platform variants/adaptation notes.
 
 ### Slice 2.17.4.3: Блог Главреда Project Rework
 
@@ -6046,6 +6131,7 @@ Status:
   - Publication adapters.
 - Architecture impact:
   - Should follow the document-first project rework pattern established by 2.17.4.1.
+  - Should start after the audience/channel boundary repair so new channel fixtures do not repeat deprecated audience data.
 - Tests:
   - Demo fixture tests for project isolation and Glavred-specific seeded data completeness.
 - Docs:
@@ -6335,6 +6421,7 @@ Status:
 - Slice 2.17.3.4: Roadmap Tracker Source of Truth. Completed 2026-07-01.
 - Slice 2.17.4: Publication Channels and Platform Profiles. Completed 2026-07-01.
 - Slice 2.17.4.1: AI Design Patterns Project Rework. Completed 2026-07-02.
+- Slice 2.17.4.2: Северная стена Project Rework. Completed 2026-07-02.
 
 
 ## Blocked Items
@@ -6363,4 +6450,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.2: Каша из топора Project Rework`.
+Implement `Slice 2.17.4.2.1: Северная стена Editorial Contract Calibration`.

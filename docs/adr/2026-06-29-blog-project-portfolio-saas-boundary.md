@@ -41,7 +41,7 @@ Key rules:
 - A user may own or access several `BlogProject` records.
 - The demo/benchmark portfolio should include two users and three blogs:
   - `AI Design Patterns`;
-  - `Каша из топора`;
+  - `Северная стена` (technical continuity from the original `Каша из топора` demo id);
   - `Блог Главреда`.
 - Platform/channel settings live below the project as `PublicationChannel` records.
 - One editorial idea may later produce several platform variants, but topic/fabula

@@ -36,7 +36,7 @@ describe('LocalPortfolioStore', () => {
     expect(portfolio.users).toHaveLength(2);
     expect(portfolio.projects.map((project) => project.title)).toEqual([
       'AI Design Patterns',
-      'Каша из топора',
+      'Северная стена',
       'Блог Главреда'
     ]);
     expect(portfolio.activeUserId).toBe('user-founder-editor');

@@ -78,8 +78,8 @@ Target portfolio:
   - `AI Design Patterns`: Russian Telegram-first industrial AI design patterns blog
     about ТОиР, EAM, Decision Intelligence, hybrid AI, source-grounded systems, and a
     future OSS/community pattern book.
-  - `Каша из топора`: Telegram-native RevOps/Product Marketing author blog with
-    strong stance, irony, and practical field observations.
+  - `Северная стена`: Telegram-native complex B2B / RevOps blog with an alpine
+    metaphor, strong stance, field pain, and practical route-building mechanics.
 - User B:
   - `Блог Главреда`: product philosophy, build-in-public notes, practical editorial
     methods, and explanations of the product's AI-native editorial approach. This is
@@ -109,8 +109,8 @@ Each blog now has its own memory feed:
 
 - `AI Design Patterns`: industrial AI decision support, engineer augmentation,
   hybrid AI, ТОиР/EAM patterns, and the future OSS pattern book.
-- `Каша из топора`: complex B2B sales, five RevOps questions, BANT+, Loss-to-Action,
-  and sales enablement materials.
+- `Северная стена`: complex B2B sales as commercial climbs: route, client relief,
+  sales gear, RevOps belay, ABM, CRM discipline, and AI as light gear.
 - `Блог Главреда`: product philosophy, SourceLedger/evidence discipline, HITL,
   editor decision learning, and future Telegram/Dzen adaptation.
 
@@ -131,7 +131,7 @@ without the normal `Сохранить` action.
 ## Structured Editorial Model
 
 `Редакционная модель` opens inside the selected portfolio project. The dashboard shows
-`AI Design Patterns`, `Каша из топора`, and `Блог Главреда` as separate projects; each
+`AI Design Patterns`, `Северная стена`, and `Блог Главреда` as separate projects; each
 has its own profile, memory, topics, fabulas, signals, and ready benchmark scenario.
 
 The `Издательство` tab contains atomic demo rules for author, audience, position, style, goals, and forbidden topics. The right-side validation panel starts as `Еще не проверено`; click `Проверить` to create the deterministic `ValidatorRun`. The panel then shows validator cards with score, red/yellow/green status, evidence, and suggested fixes. After saving setup changes, the panel marks that snapshot as `Требует повторной проверки` until the next manual run.
@@ -165,12 +165,15 @@ matrix with enabled links by default. Deleting an entity removes its matrix link
 
 `План` now opens as a broadcast grid for the selected blog project. The demo
 seed contains project-scoped publication channels: AI Design Patterns defaults to a
-Telegram channel with a paused GitHub pattern-book experiment, `Каша из топора`
+Telegram channel with a paused GitHub pattern-book experiment, `Северная стена`
 defaults to Telegram, and `Блог Главреда` contains Telegram plus a Dzen experiment.
 The monthly settings profile still uses three posts per week, Monday/Wednesday/Friday
 publishing at 10:00, HITL signal selection, and candidate limits per slot. The
 generated grid shows dates, times, channel/platform labels, topics, fabulas, approval
 status, manual override state, and advisory weight/matrix warnings.
+Channels describe destinations and platform constraints only. The project audience
+comes from the editorial model, so seeded channel cards should not be treated as a
+second audience source.
 
 This is a useful compatibility prototype, but it is not the final planning model. The
 demo now includes `Сигналы`: radar settings, found signals, explicit signal review, and
