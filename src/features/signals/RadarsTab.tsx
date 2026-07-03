@@ -8,6 +8,7 @@ export function RadarsTab({
   workspace,
   controller,
   onDeleteRadar,
+  onRunRadar,
   onToggleRadarStatus,
   onCreateInsight,
   onPlan
@@ -15,6 +16,7 @@ export function RadarsTab({
   workspace: WorkspaceState;
   controller: SignalsController;
   onDeleteRadar: (radar: RadarDefinition) => void;
+  onRunRadar: (radar: RadarDefinition) => void;
   onToggleRadarStatus: (radar: RadarDefinition) => void;
   onCreateInsight: () => void;
   onPlan: () => void;
@@ -57,6 +59,7 @@ export function RadarsTab({
               controller={controller}
               signalCount={controller.signalCountsByRadar[radar.id] ?? 0}
               onDeleteRadar={onDeleteRadar}
+              onRunRadar={onRunRadar}
               onToggleRadarStatus={onToggleRadarStatus}
             />
           ))}

@@ -12,6 +12,7 @@ import {
   radarTriggerModeLabel
 } from './helpers';
 import { RadarEditor } from './RadarEditor';
+import { RadarRunTraceSection } from './RadarRunTraceSection';
 import type { SignalsController } from './useSignalsController';
 
 export function RadarCard({
@@ -19,16 +20,22 @@ export function RadarCard({
   controller,
   signalCount,
   onDeleteRadar,
+  onRunRadar,
   onToggleRadarStatus
 }: {
   radar: RadarDefinition;
   controller: SignalsController;
   signalCount: number;
   onDeleteRadar: (radar: RadarDefinition) => void;
+  onRunRadar: (radar: RadarDefinition) => void;
   onToggleRadarStatus: (radar: RadarDefinition) => void;
 }) {
   const expanded = controller.expandedRadarId === radar.id;
   const editingThisRadar = controller.editingRadar?.id === radar.id && !controller.isNewRadar;
+  const latestRun = controller.latestRunsByRadar[radar.id];
+  const runSummary = controller.radarRunSummaries[radar.id];
+  const sourceHandles = controller.sourceHandlesByRadar[radar.id] ?? [];
+  const foundMaterials = latestRun ? controller.foundMaterialsByRun[latestRun.id] ?? [] : [];
 
   return (
     <article className={`entity-row radar-card ${expanded || editingThisRadar ? 'expanded' : ''} ${editingThisRadar ? 'editing' : ''}`} data-testid="radar-row">
@@ -51,6 +58,9 @@ export function RadarCard({
             <span>{radarStatusLabel(radar.status)}</span>
           </span>
           <span className="count-dot radar-count">{signalCount}</span>
+          <span className="count-dot radar-count radar-run-count" title={`Материалы: ${runSummary?.found ?? 0}; пропущено: ${runSummary?.skipped ?? 0}`}>
+            мат. {runSummary?.found ?? 0}/{runSummary?.skipped ?? 0}
+          </span>
           <span className="radar-date">last run {radar.lastRunAt ? formatDate(radar.lastRunAt) : 'не запускался'}</span>
         </span>
       </button>
@@ -78,6 +88,7 @@ export function RadarCard({
           <p>{radar.scope}</p>
           <RadarRulesSection radar={radar} />
           <RadarSourcesSection radar={radar} />
+          <RadarRunTraceSection latestRun={latestRun} sourceHandles={sourceHandles} foundMaterials={foundMaterials} />
           <RadarFiltersSection radar={radar} />
           <dl className="meta-list">
             <dt>Политика утверждения</dt>
@@ -88,6 +99,9 @@ export function RadarCard({
           <div className="row-actions radar-actions entity-actions-footer">
             <button className="btn btn-sec btn-sm" type="button" onClick={() => controller.startRadarEdit(radar)}>
               Редактировать
+            </button>
+            <button className="btn btn-sec btn-sm" type="button" onClick={() => onRunRadar(radar)}>
+              Запустить радар
             </button>
             <button className="btn btn-sec btn-sm" type="button" onClick={() => onToggleRadarStatus(radar)}>
               {radar.status === 'paused' ? 'Запустить' : 'Остановить'}

@@ -37,6 +37,7 @@ export interface RadarDefinition {
   scope: string;
   rules: RadarSearchRule[];
   sources: RadarSearchSource[];
+  sourceHandleIds?: string[];
   sourceDiscoveryMode?: RadarSourceDiscoveryMode;
   filters?: RadarEditorialFilterRule[];
   acceptancePolicy: RadarAcceptancePolicy;

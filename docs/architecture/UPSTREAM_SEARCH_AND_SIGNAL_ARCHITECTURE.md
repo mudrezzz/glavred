@@ -1,6 +1,6 @@
 # Upstream Search and Signal Architecture
 
-Current as of Slice 2.17.4.4.
+Current as of Slice 2.17.4.5.
 
 ## Purpose
 
@@ -36,8 +36,10 @@ editorial candidate assembly must have separate ownership and trace.
 
 ## Core Contracts
 
-These contracts are architecture targets for the next slices. They do not have to be
-fully implemented in Slice 2.17.4.4.
+These contracts are the upstream boundary. Slice 2.17.4.5 implements the first
+local deterministic part: project-scoped `SourceRegistry`, `RadarRun`, run
+operations, and `FoundMaterial`. Provider-backed search, URL reading, extraction,
+scoring, and candidate assembly v2 remain later slices.
 
 | Contract | Owns | Does Not Own |
 | --- | --- | --- |
@@ -120,15 +122,23 @@ fully implemented in Slice 2.17.4.4.
 The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, and
 `Signals` tabs. The compatibility gaps are:
 
-- no first-class `SourceRegistry`, `RadarRun`, or `FoundMaterial`;
-- `sourceSignals` are seeded/demo-local rather than produced by executable radar runs;
+- `SourceRegistry`, `RadarRun`, and `FoundMaterial` now exist in the local workspace
+  snapshot and are visible in `Сигналы -> Радары`;
+- deterministic `Run radar` creates a contract run over active source handles, records
+  operations, explicit skipped reasons, budget usage, and internal found material;
+- external URL/open-web/social/document handles are stored as execution targets but
+  are skipped as `provider-not-implemented`, `url-reader-not-implemented`, or
+  equivalent metadata-only reasons until 2.17.4.6;
+- `sourceSignals` are still seeded/demo-local or manually reviewed compatibility data
+  rather than produced by extraction from `FoundMaterial`;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
   keeps the first three candidates;
 - some compatibility fields such as `suggestedTopicId` and `suggestedFabulaId` may
   remain on `SourceSignal`, but UI and new services must not treat them as ownership.
 
 Until Slice 2.17.4.8 replaces candidate assembly, blind pairing is legacy behavior and
-must be kept working only as a fallback.
+must be kept working only as a fallback. Running a radar in 2.17.4.5 must not create
+`SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
 
 ## Trace Requirements
 
@@ -144,7 +154,8 @@ Every future upstream run should make the handoff readable:
 
 ## Implementation Slices
 
-- `2.17.4.5`: Source Registry and Radar Run Contract.
+- `2.17.4.5`: Source Registry and Radar Run Contract. Done: deterministic local run
+  only, no provider-backed search.
 - `2.17.4.6`: External Search Radar Runner v1.
 - `2.17.4.7`: Signal Extraction and Editorial Scoring.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
@@ -152,4 +163,3 @@ Every future upstream run should make the handoff readable:
 
 Only after this upstream v1 is demonstrable should multi-target planning and
 multi-platform DraftRun work resume.
-

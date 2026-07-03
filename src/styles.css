@@ -153,7 +153,7 @@
 
 .radar-row-meta {
   display: grid;
-  grid-template-columns: minmax(126px, max-content) 28px minmax(150px, 1fr);
+  grid-template-columns: minmax(126px, max-content) 28px minmax(60px, max-content) minmax(132px, 1fr);
   justify-self: end;
   align-items: center;
   justify-content: flex-end;
@@ -210,6 +210,12 @@
   justify-self: center;
 }
 
+.radar-run-count {
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .count-inline {
   width: fit-content;
   min-width: 24px;
@@ -219,8 +225,8 @@
 }
 
 .radar-date {
-  width: 150px;
-  max-width: 150px;
+  width: 132px;
+  max-width: 132px;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--ink-500);

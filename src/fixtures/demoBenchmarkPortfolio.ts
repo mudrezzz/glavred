@@ -16,6 +16,7 @@ import {
   type TopicFabulaMatrixEntry,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
+import { runLocalRadar } from '../application/upstreamRadarRunService';
 import type { PublicationChannel } from '../domain/publication-channels/types';
 import {
   aiDesignPatternsBenchmarkSeed,
@@ -130,6 +131,9 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
     topics: seed.topics,
     fabulas: seed.fabulas,
     topicFabulaMatrix,
+    sourceRegistry: { id: 'source-registry-project', handles: [], updatedAt: '2026-07-01T09:00:00.000Z' },
+    radarRuns: [],
+    foundMaterials: [],
     radars: seed.radars,
     sourceSignal,
     sourceSignals,
@@ -168,7 +172,7 @@ export function createBenchmarkProjectWorkspace(projectId: DemoBenchmarkProjectI
     updatedAt: new Date().toISOString()
   };
 
-  return workspace;
+  return runLocalRadar(workspace, selectSeededRadarId(workspace), '2026-07-01T09:00:00.000Z');
 }
 
 function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): WorkspaceState {
@@ -188,7 +192,7 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
   const defaultChannel = publicationChannels.find((channel) => channel.status === 'active') ?? publicationChannels[0];
   const contentPlanItems = createBenchmarkPlanItems(seed, defaultChannel);
 
-  return {
+  const workspace: WorkspaceState = {
     ...base,
     projectProfile: seed.projectProfile,
     editorialModel: seed.editorialModel,
@@ -200,6 +204,9 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
     topics,
     fabulas,
     topicFabulaMatrix,
+    sourceRegistry: { id: 'source-registry-project', handles: [], updatedAt: '2026-07-01T09:00:00.000Z' },
+    radarRuns: [],
+    foundMaterials: [],
     radars: seed.radars,
     sourceSignals,
     sourceSignal,
@@ -237,6 +244,14 @@ function createAiDesignPatternsWorkspace(seed: BenchmarkWorkspaceSeed): Workspac
     activeSection: 'memory',
     updatedAt: new Date().toISOString()
   };
+
+  return runLocalRadar(workspace, selectSeededRadarId(workspace), '2026-07-01T09:00:00.000Z');
+}
+
+function selectSeededRadarId(workspace: WorkspaceState): string {
+  return workspace.radars.find((radar) => radar.sourceType === 'authorMemory' || radar.sourceType === 'archive')?.id
+    ?? workspace.radars[0]?.id
+    ?? '';
 }
 
 function createBenchmarkInsight(

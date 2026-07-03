@@ -29,6 +29,9 @@ describe('Signals app flow', () => {
     expect(document.querySelector('.source-grid')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Sanitized author materials/i }));
+    expect(screen.getByTestId('radar-upstream-trace')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Запустить радар/i }));
+    expect(screen.getAllByTestId('radar-upstream-trace').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /Открыть сигналы|РћС‚РєСЂС‹С‚СЊ СЃРёРіРЅР°Р»С‹/i }));
 
     const signalList = screen.getByTestId('source-signal-list');

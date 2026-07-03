@@ -148,6 +148,7 @@ function CabinetApp() {
           workspace={workspace}
           onSaveRadar={controller.saveRadar}
           onDeleteRadar={controller.removeRadar}
+          onRunRadar={controller.runRadar}
           onToggleRadarStatus={controller.switchRadarStatus}
           onApproveSignal={controller.approveSourceSignal}
           onRejectSignal={controller.rejectSourceSignal}

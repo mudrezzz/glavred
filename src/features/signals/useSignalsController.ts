@@ -2,13 +2,17 @@ import { useMemo, useState } from 'react';
 import {
   createRadarDraft,
   isRadarSourceConfigurationValid,
+  summarizeRadarRun,
+  type FoundMaterial,
   type ImportRiskLevel,
   type RadarDefinition,
+  type RadarRun,
   type RadarEditorialFilterRule,
   type RadarSearchRule,
   type RadarSearchSource,
   type SignalFilterStatus,
   type SignalReviewStatus,
+  type SourceHandle,
   type SourceSignal,
   type WorkspaceState
 } from '../../domain/editorialWorkspace';
@@ -41,6 +45,38 @@ export function useSignalsController({
       return { ...counts, [signal.radarId]: (counts[signal.radarId] ?? 0) + 1 };
     }, {});
   }, [workspace.sourceSignals]);
+
+  const latestRunsByRadar = useMemo(() => {
+    return workspace.radarRuns.reduce<Record<string, RadarRun>>((runs, run) => {
+      const current = runs[run.radarId];
+      if (!current || run.startedAt > current.startedAt) return { ...runs, [run.radarId]: run };
+      return runs;
+    }, {});
+  }, [workspace.radarRuns]);
+
+  const sourceHandlesByRadar = useMemo(() => {
+    const byId = new Map(workspace.sourceRegistry.handles.map((handle) => [handle.id, handle]));
+    return workspace.radars.reduce<Record<string, SourceHandle[]>>((handles, radar) => {
+      const radarHandles = (radar.sourceHandleIds ?? [])
+        .map((id) => byId.get(id))
+        .filter((handle): handle is SourceHandle => Boolean(handle));
+      return { ...handles, [radar.id]: radarHandles };
+    }, {});
+  }, [workspace.radars, workspace.sourceRegistry.handles]);
+
+  const foundMaterialsByRun = useMemo(() => {
+    return workspace.foundMaterials.reduce<Record<string, FoundMaterial[]>>((materials, material) => ({
+      ...materials,
+      [material.radarRunId]: [...(materials[material.radarRunId] ?? []), material]
+    }), {});
+  }, [workspace.foundMaterials]);
+
+  const radarRunSummaries = useMemo(() => {
+    return workspace.radars.reduce<Record<string, ReturnType<typeof summarizeRadarRun>>>((summaries, radar) => ({
+      ...summaries,
+      [radar.id]: summarizeRadarRun(latestRunsByRadar[radar.id])
+    }), {});
+  }, [latestRunsByRadar, workspace.radars]);
 
   const filteredSignals = workspace.sourceSignals.filter((signal) => {
     const haystack = [
@@ -156,6 +192,7 @@ export function useSignalsController({
     radarFilter, setRadarFilter, statusFilter, setStatusFilter, filterStatusFilter,
     setFilterStatusFilter, riskFilter, setRiskFilter, query, setQuery,
     signalCountsByRadar, filteredSignals, signalSummary, openNewRadar, startRadarEdit,
+    latestRunsByRadar, sourceHandlesByRadar, foundMaterialsByRun, radarRunSummaries,
     saveRadarDraft, cancelRadarDraft, patchRadarDraft, patchRadarRule, patchRadarFilter,
     addRadarRule, deleteRadarRule, patchRadarSource, addRadarSource, deleteRadarSource,
     startSignalEdit, patchSignalDraft, saveSignalDraft

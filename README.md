@@ -57,12 +57,13 @@ surface from editorial suitability: each radar has a source discovery mode and
 optional filters for author, audience, positioning, goals, forbidden topics, and
 topics. Filtered-out material stays visible for human review; style is checked later
 during drafting and editorial review, not during radar intake.
-Slice 2.17.4.4 fixes the upstream architecture target before more downstream
-multi-platform work: future radars produce `RadarRun` trace and `FoundMaterial`,
-review/scoring promotes material into `SourceSignal`, and explainable candidate
-assembly turns `Signal x Topic x Fabula` into `PostCandidate`. `DraftRun` stays
-downstream and should consume an approved candidate/brief rather than discover the
-first post idea itself.
+Slice 2.17.4.5 adds the first executable upstream contract before more downstream
+multi-platform work: project workspaces now contain `SourceRegistry`, `RadarRun`, and
+`FoundMaterial`. Expanding a radar and clicking `Запустить радар` records source
+handles, local operations, found internal material, and explicit skipped reasons for
+provider-backed search/URL/document handles. This does not create reviewed
+`SourceSignal` or `PostCandidate` records yet. `DraftRun` stays downstream and should
+consume an approved candidate/brief rather than discover the first post idea itself.
 `Кандидаты постов` is now the first working candidate layer: approved signals become
 2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
 confidence, and risks. Candidate format was removed because fabula already owns the

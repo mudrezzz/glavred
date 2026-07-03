@@ -117,10 +117,12 @@ editorial learning note:
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 This perimeter is still compatible, but it skips several upstream artifacts that now
-have an architecture target: `SourceRegistry`, `RadarRun`, `FoundMaterial`,
-`SignalExtractionReport`, `SignalScore`, and `CandidateAssemblyReport`. Until the
-2.17.4.x upstream implementation slices land, seeded source signals and deterministic
-candidate assembly remain compatibility behavior.
+have an architecture target. Slice 2.17.4.5 implements the first part:
+`SourceRegistry`, `RadarRun`, and `FoundMaterial` are project-scoped local workspace
+artifacts and `Сигналы -> Радары` can run a deterministic contract trace. The next
+gaps are still `SignalExtractionReport`, `SignalScore`, and
+`CandidateAssemblyReport`; seeded source signals and deterministic candidate assembly
+remain compatibility behavior until the later upstream slices replace them.
 
 `FinalText` and `ReleasePackage` are compatibility artifacts from the one-post manual
 export perimeter. The target editorial chain is now

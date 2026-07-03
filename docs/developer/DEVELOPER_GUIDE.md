@@ -69,6 +69,13 @@ validation must catch empty Publisher rule groups, channel-level audience duplic
 mojibake/question-mark replacement text, one-to-one topic/fabula coupling, and missing
 ready benchmark scenarios before the project is treated as demo-ready.
 
+Upstream source discovery now has its own boundary. Keep provider-free DTOs and
+normalization in `src/domain/upstream-search`, local deterministic orchestration in
+`src/application/upstreamRadarRunService.ts`, and UI/read-model rendering in
+`src/features/signals`. `Run radar` in Slice 2.17.4.5 is a contract run only: it may
+create `RadarRun` and `FoundMaterial`, but it must not create `SourceSignal`,
+`PostCandidate`, plan slots, DraftRuns, or provider calls.
+
 See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.
 Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementation

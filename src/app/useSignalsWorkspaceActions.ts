@@ -16,6 +16,7 @@ import {
   createAuthorMemoryEvent,
   inferAuthorPositionAssertions
 } from '../application/editorialServices';
+import { runLocalRadar } from '../application/upstreamRadarRunService';
 import type { WorkspaceSetter } from './useWorkspacePersistence';
 
 type SignalsWorkspaceActionsParams = {
@@ -92,6 +93,11 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace }: SignalsWo
     setToast(nextRadar.status === 'paused' ? 'Радар остановлен' : 'Радар запущен');
   }
 
+  function runRadar(radar: RadarDefinition) {
+    setWorkspace((current) => runLocalRadar(current, radar.id));
+    setToast('Р Р°РґР°СЂ Р·Р°РїСѓС‰РµРЅ: upstream trace РѕР±РЅРѕРІР»РµРЅ');
+  }
+
   function correctSourceSignal(signal: SourceSignal, patch: Partial<SourceSignal>) {
     const nextSignal = correctSignal(signal, patch);
     setWorkspace((current) => {
@@ -133,6 +139,7 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace }: SignalsWo
     correctSourceSignal,
     rejectSourceSignal,
     removeRadar,
+    runRadar,
     saveRadar,
     switchRadarStatus
   };

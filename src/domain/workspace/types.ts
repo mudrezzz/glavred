@@ -35,6 +35,7 @@ import type {
   ReleasePackage,
 } from '../production/types';
 import type { RadarDefinition, SourceSignal } from '../signals/types';
+import type { FoundMaterial, RadarRun, SourceRegistry } from '../upstream-search/types';
 
 // WorkspaceState is the local-first aggregate persisted by the browser store.
 export interface WorkspaceState {
@@ -49,6 +50,9 @@ export interface WorkspaceState {
   topics: Topic[];
   fabulas: Fabula[];
   topicFabulaMatrix: TopicFabulaMatrixEntry[];
+  sourceRegistry: SourceRegistry;
+  radarRuns: RadarRun[];
+  foundMaterials: FoundMaterial[];
   radars: RadarDefinition[];
   sourceSignal: SourceSignal;
   sourceSignals: SourceSignal[];

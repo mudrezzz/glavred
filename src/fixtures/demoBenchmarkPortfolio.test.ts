@@ -276,6 +276,29 @@ describe('three-blog benchmark demo portfolio', () => {
     expect(glavred.authorNotes.some((note) => note.type === 'editorialLearning')).toBe(false);
   });
 
+  it('seeds isolated upstream registries, radar runs and found materials for each benchmark project', () => {
+    const portfolio = createDemoPortfolio();
+    const workspaces = Object.values(portfolio.workspacesByProjectId);
+
+    for (const workspace of workspaces) {
+      expect(workspace.sourceRegistry.handles.length).toBeGreaterThan(0);
+      expect(workspace.radars.every((radar) => (radar.sourceHandleIds ?? []).length > 0)).toBe(true);
+      expect(workspace.radarRuns.length).toBeGreaterThan(0);
+      expect(workspace.foundMaterials.length).toBeGreaterThan(0);
+      expect(workspace.sourceSignals.length).toBeGreaterThan(0);
+    }
+
+    const aiHandleIds = new Set(portfolio.workspacesByProjectId['project-ai-design-patterns'].sourceRegistry.handles.map((handle) => handle.id));
+    const stenaHandleIds = new Set(portfolio.workspacesByProjectId['project-kasha-iz-topora'].sourceRegistry.handles.map((handle) => handle.id));
+    const sharedProjectSpecificHandles = [...aiHandleIds].filter((id) => id.includes('ai-pattern') && stenaHandleIds.has(id));
+
+    expect(sharedProjectSpecificHandles).toEqual([]);
+    expect(portfolio.workspacesByProjectId['project-ai-design-patterns'].radarRuns[0].foundMaterialIds.length).toBeGreaterThan(0);
+    expect(portfolio.workspacesByProjectId['project-kasha-iz-topora'].sourceRegistry.handles.some(
+      (handle) => handle.capabilities.canSearch
+    )).toBe(true);
+  });
+
   it('keeps project blueprint seeds ready for fixture and backend snapshot refresh', () => {
     const portfolio = createDemoPortfolio();
     const issues = validateProjectBlueprintSeeds(Object.entries(portfolio.workspacesByProjectId).map(([projectId, workspace]) => ({

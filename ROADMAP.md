@@ -6341,7 +6341,7 @@ Status:
 
 ### Slice 2.17.4.5: Source Registry and Radar Run Contract
 
-- Status: Ready
+- Status: Done
 - Goal: Make radars executable objects with project-owned source registry and traceable run records, even before external search is fully automated.
 - User value:
   - The user can see what sources a radar is allowed to inspect, when it ran, what it attempted, what it skipped, and why.
@@ -6373,6 +6373,30 @@ Status:
   - A radar can have a visible run record and found material trace without creating post candidates yet.
 - Risks:
   - UI can become noisy; keep run trace compact and expandable.
+- Completed: 2026-07-03
+
+### Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs
+
+- Status: Ready
+- Goal: Separate radar configuration from deterministic run diagnostics by adding internal tabs inside expanded radar rows.
+- User value: Radar settings stay readable while run trace and found material diagnostics move into a dedicated place.
+- Scope:
+  - Add internal Settings and Run Trace tabs inside expanded radar cards
+  - move source handles, latest RadarRun operations, found materials, skipped reasons and run summary into the Run Trace tab
+  - keep compact row metadata short
+  - preserve existing deterministic Run radar behavior.
+- Out of scope:
+  - Product runtime behavior changes.
+- Architecture impact:
+  - Moves roadmap editing behind a tracker/export/render workflow.
+- Tests:
+  - Roadmap CLI import/export/render/check coverage.
+- Docs:
+  - README, ADR, contributor guide, developer guide, AGENTS, and roadmap docs.
+- Acceptance criteria:
+  - Agents can use CLI commands instead of manually editing ROADMAP.md.
+  - ROADMAP.md renders from docs/roadmap/slices.export.jsonl.
+  - Roadmap changes remain reviewable in git diff.
 
 ### Slice 2.17.4.6: External Search Radar Runner v1
 
@@ -6799,6 +6823,7 @@ Status:
 - Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration. Completed 2026-07-02.
 - Slice 2.17.4.3: Блог Главреда Project Rework. Completed 2026-07-03.
 - Slice 2.17.4.4: Upstream Search and Signal Architecture. Completed 2026-07-03.
+- Slice 2.17.4.5: Source Registry and Radar Run Contract. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -6827,4 +6852,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.5: Source Registry and Radar Run Contract`.
+Implement `Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs`.

@@ -211,6 +211,9 @@ describe('LocalWorkspaceStore', () => {
     const workspace = createDemoWorkspace();
     const oldWorkspace = { ...workspace, activeSection: 'radar' } as unknown as Partial<typeof workspace> & { activeSection: string };
     delete oldWorkspace.radars;
+    delete oldWorkspace.sourceRegistry;
+    delete oldWorkspace.radarRuns;
+    delete oldWorkspace.foundMaterials;
     delete oldWorkspace.sourceSignals;
     storage.setItem(STORAGE_KEY, JSON.stringify(oldWorkspace));
     const store = new LocalWorkspaceStore(storage);
@@ -221,6 +224,10 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.radars[0].rules.length).toBeGreaterThan(0);
     expect(Array.isArray(loaded.radars[0].sources)).toBe(true);
     expect(loaded.radars[0].sourceDiscoveryMode).toBeDefined();
+    expect(loaded.sourceRegistry.handles.length).toBeGreaterThan(0);
+    expect(loaded.radars[0].sourceHandleIds?.length).toBeGreaterThan(0);
+    expect(loaded.radarRuns.length).toBeGreaterThan(0);
+    expect(loaded.foundMaterials.length).toBeGreaterThan(0);
     expect(loaded.radars[0].filters?.length).toBeGreaterThan(0);
     expect(loaded.sourceSignals.length).toBeGreaterThan(5);
     expect(loaded.sourceSignals[0].filterStatus).toBeDefined();

@@ -16,6 +16,7 @@ export function SignalsView({
   workspace,
   onSaveRadar,
   onDeleteRadar,
+  onRunRadar,
   onToggleRadarStatus,
   onApproveSignal,
   onRejectSignal,
@@ -30,6 +31,7 @@ export function SignalsView({
   workspace: WorkspaceState;
   onSaveRadar: (radar: RadarDefinition, isNew: boolean) => void;
   onDeleteRadar: (radar: RadarDefinition) => void;
+  onRunRadar: (radar: RadarDefinition) => void;
   onToggleRadarStatus: (radar: RadarDefinition) => void;
   onApproveSignal: (signal: SourceSignal) => void;
   onRejectSignal: (signal: SourceSignal) => void;
@@ -53,6 +55,7 @@ export function SignalsView({
           workspace={workspace}
           controller={controller}
           onDeleteRadar={onDeleteRadar}
+          onRunRadar={onRunRadar}
           onToggleRadarStatus={onToggleRadarStatus}
           onCreateInsight={onCreateInsight}
           onPlan={onPlan}

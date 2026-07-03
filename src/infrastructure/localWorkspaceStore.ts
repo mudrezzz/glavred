@@ -6,8 +6,12 @@ import {
   getValidatorRunScore,
   getValidatorRunStatus,
   normalizeContentPlanSettings,
+  normalizeFoundMaterials,
+  normalizeRadarRuns,
+  normalizeSourceRegistry,
   normalizePostDraftVersions,
   normalizeWeightRange,
+  attachRadarSourceHandles,
   summarizeValidatorRun,
   type EditorialValidationRun,
   type RadarDefinition,
@@ -120,7 +124,20 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
       return channel ? applyPublicationChannelToPlanItem(normalizedItem, channel) : normalizedItem;
     }
   );
-  const radars = (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar));
+  const baseRadars = (saved.radars ?? demo.radars).map((radar) => normalizeRadar(radar));
+  const authorNotes = (saved.authorNotes ?? demo.authorNotes).map((note) => normalizeAuthorNote(note));
+  const externalSources = saved.externalSources ?? demo.externalSources;
+  const importCandidates = saved.importCandidates ?? demo.importCandidates;
+  const archiveRecords = saved.archiveRecords ?? demo.archiveRecords;
+  const sourceRegistry = normalizeSourceRegistry(saved.sourceRegistry ?? demo.sourceRegistry, {
+    radars: baseRadars,
+    externalSources,
+    authorNotes,
+    archiveRecords,
+    importCandidates,
+    updatedAt: saved.updatedAt ?? demo.updatedAt
+  });
+  const radars = baseRadars.map((radar) => attachRadarSourceHandles(radar, sourceRegistry));
   const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
   const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) => {
     const normalizedSignal = normalizeSourceSignal(signal, sourceSignal);
@@ -140,7 +157,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   return {
     ...demo,
     ...saved,
-    authorNotes: (saved.authorNotes ?? demo.authorNotes).map((note) => normalizeAuthorNote(note)),
+    authorNotes,
     authorMemoryEvents: saved.authorMemoryEvents ?? demo.authorMemoryEvents,
     authorPositionAssertions: saved.authorPositionAssertions ?? demo.authorPositionAssertions,
     editorialModel,
@@ -151,6 +168,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     topics,
     fabulas,
     topicFabulaMatrix: completeTopicFabulaMatrix(topics, fabulas, saved.topicFabulaMatrix ?? demo.topicFabulaMatrix),
+    sourceRegistry,
+    radarRuns: normalizeRadarRuns(saved.radarRuns ?? demo.radarRuns, sourceRegistry),
+    foundMaterials: normalizeFoundMaterials(saved.foundMaterials ?? demo.foundMaterials, sourceRegistry),
     radars,
     sourceSignal,
     sourceSignals,
@@ -172,9 +192,9 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     postVisual: saved.postVisual ? normalizePostVisual(saved.postVisual) : null,
     releasePackage: saved.releasePackage ?? null,
     editorialLearningNote: saved.editorialLearningNote ?? null,
-    externalSources: saved.externalSources ?? demo.externalSources,
-    importCandidates: saved.importCandidates ?? demo.importCandidates,
-    archiveRecords: saved.archiveRecords ?? demo.archiveRecords,
+    externalSources,
+    importCandidates,
+    archiveRecords,
     bulkImportActions: saved.bulkImportActions ?? [],
     activeSection: activeSection ?? demo.activeSection,
     updatedAt: saved.updatedAt ?? demo.updatedAt

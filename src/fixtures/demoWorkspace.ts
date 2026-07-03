@@ -1,4 +1,4 @@
-import { createAuthorMemoryEvent, createBroadcastPlan, inferAuthorPositionAssertions } from '../application/editorialServices';
+import { createAuthorMemoryEvent, inferAuthorPositionAssertions } from '../application/editorialServices';
 import { createDefaultTopicFabulaMatrix, DEFAULT_CONTENT_PLAN_SETTINGS, type WorkspaceState } from '../domain/editorialWorkspace';
 import { demoAuthorNotes } from './demoAuthorMemory';
 import { demoArchiveRecords, demoExternalSources, demoImportCandidates } from './demoImports';
@@ -6,6 +6,7 @@ import { demoEditorialRules, demoFabulas, demoProjectProfile, demoTopics } from 
 import { withSeededHitlLearningScenario } from './demoHitlLearning';
 import { createDemoPublicationChannels } from './demoPublicationChannels';
 import { createEvaluatedDemoSourceSignals, demoRadarsWithFilters } from './demoSignals';
+import { withDemoContentPlanAndRadarRun } from './demoWorkspaceRuntime';
 
 export function createDemoWorkspace(options: { includeSeededHitlLearning?: boolean } = {}): WorkspaceState {
   const authorMemoryEvents = demoAuthorNotes.map(createAuthorMemoryEvent);
@@ -47,6 +48,9 @@ export function createDemoWorkspace(options: { includeSeededHitlLearning?: boole
     topics: demoTopics,
     fabulas: demoFabulas,
     topicFabulaMatrix: createDefaultTopicFabulaMatrix(demoTopics, demoFabulas),
+    sourceRegistry: { id: 'source-registry-project', handles: [], updatedAt: new Date().toISOString() },
+    radarRuns: [],
+    foundMaterials: [],
     radars: demoRadarsWithFilters,
     sourceSignal: {
       id: 'signal-ai-demo-to-adoption-gap',
@@ -109,10 +113,6 @@ export function createDemoWorkspace(options: { includeSeededHitlLearning?: boole
   const selectedSourceSignal = evaluatedSourceSignals[0];
   const workspaceWithSelectedSignal = { ...workspace, sourceSignal: selectedSourceSignal };
 
-  const demoWorkspace = {
-    ...workspaceWithSelectedSignal,
-    contentPlanItems: createBroadcastPlan(workspaceWithSelectedSignal)
-  };
-
-  return options.includeSeededHitlLearning ? withSeededHitlLearningScenario(demoWorkspace) : demoWorkspace;
+  const workspaceWithRadarRun = withDemoContentPlanAndRadarRun(workspaceWithSelectedSignal);
+  return options.includeSeededHitlLearning ? withSeededHitlLearningScenario(workspaceWithRadarRun) : workspaceWithRadarRun;
 }
