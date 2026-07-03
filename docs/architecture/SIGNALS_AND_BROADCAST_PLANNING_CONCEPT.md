@@ -20,6 +20,15 @@ The revised planning flow is:
 
 `Редакционная модель -> Сигналы -> Кандидаты постов -> Сетка вещания -> Фабула поста -> Редактура -> Выпуск -> Аналитика`
 
+Slice 2.17.4.4 makes the upstream part explicit before more downstream work:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan -> DraftRun`
+
+This means `Сигналы` is not just a list of seeded findings. It is the review surface
+for an upstream pipeline: source handles, radar runs, retrieved material, signal
+extraction, signal scoring, and then candidate assembly. `DraftRun` remains
+downstream and should receive an approved candidate/brief.
+
 Roadmap correction after Slice 1.10.4: `Редактура` owns the full post-preparation
 chain `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Выпуск` is not a preparation
 workbench; it is the future publication log for ready posts, delivery attempts,
@@ -73,6 +82,28 @@ The `Сигналы` section should have three internal tabs:
 
 Unapproved signals do not become active post concepts. Archive-only signals do not
 change author-position assertions unless explicitly accepted into memory.
+
+## Slice 2.17.4.4 Upstream Boundary
+
+The upstream architecture separates these artifacts:
+
+- `SourceHandle`: a project-owned internal or external source descriptor.
+- `RadarRun`: one attempt to execute a radar against source handles and budget caps.
+- `FoundMaterial`: normalized retrieved material with source/run provenance.
+- `SourceSignal`: reviewed material that may become post fuel, without topic/fabula
+  ownership.
+- `SignalScore`: dimension-level editorial fit and risk explanation.
+- `PostCandidate`: an explainable `Signal x Topic x Fabula` assembly.
+
+The current deterministic candidate creation remains a compatibility fallback. It
+should not be treated as the target algorithm because it blindly combines approved
+signals with active topic/fabula pairs and keeps the first few results. Slice 2.17.4.8
+will replace that with candidate assembly that records accepted/rejected matches,
+ranking rationale, and risks.
+
+Provider-backed search, URL reading, extraction, and scoring belong to application
+and infrastructure services. React renders radar runs, found materials, signals,
+scores, and candidates, but does not own search or scoring policy.
 
 ## Broadcast Grid Settings
 
@@ -171,6 +202,11 @@ After the first `Сигналы` implementation, the product model was corrected
 This keeps the flow clean:
 
 `Radar rules/sources -> raw SourceSignal -> reviewed SourceSignal -> PostCandidate`.
+
+After Slice 2.17.4.4, the target flow inserts executable upstream trace before raw
+signals:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> raw SourceSignal -> reviewed SourceSignal -> scored PostCandidate`.
 
 ## Slice 1.5.8 Correction: Radar Discovery Mode and Editorial Filters
 

@@ -764,6 +764,15 @@ current compatibility layer, but the intended flow is:
 
 `AuthorMemory/Archive/ExternalSources -> Сигналы -> Кандидаты постов -> BroadcastContentPlan -> approved PostBrief`
 
+Slice 2.17.4.4 refines the upstream side of that flow:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan -> DraftRun`
+
+`DraftRun` is downstream. It may enrich evidence for one approved brief, but it must
+not become the first discovery layer for what to write about. Provider-backed search,
+URL reading, extraction, and scoring belong in application/infrastructure services;
+`features/signals` renders the upstream trace and collects human decisions.
+
 React UI now has an explicit architecture baseline. `App.tsx` is a composition root
 and must stay small. App shell, navigation, context-chat overlay, shared icon, weight
 range editor, workspace controller, signals, editorial-model, author-memory, plan,
@@ -830,6 +839,11 @@ not a placeholder. Candidate derivation belongs in `usePostCandidatesController`
 candidate rendering belongs in `PostCandidateCard`, deterministic assembly belongs in
 `src/application/postCandidateService.ts`, and candidate approval/downstream reset
 belongs in `src/app/usePostCandidateWorkspaceActions.ts`.
+
+After Slice 2.17.4.4, `src/application/postCandidateService.ts` is explicitly the
+legacy v1 deterministic fallback until Slice 2.17.4.8. New upstream work should not
+expand blind approved-signal x topic/fabula pairing. Add role-owned source registry,
+radar run, found material, signal scoring, and candidate assembly modules instead.
 
 After Slice 1.7, large operational entity lists must use the shared cabinet list
 pattern: `filter card -> search -> list/group toggle -> framed rows -> bottom-left

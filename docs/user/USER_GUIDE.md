@@ -191,6 +191,14 @@ status, evidence, and suggested fixes.
 `Сигналы` replaces the old single `Радар` screen. It is the first review layer between
 raw material and production.
 
+The target upstream flow is now explicit:
+
+`sources -> radar run -> found material -> reviewed signal -> scored post candidate -> plan -> draft`
+
+That means a future radar should show what it searched, what it found, what became a
+signal, why the signal is promising or weak, and why a topic/fabula candidate was
+offered. Draft generation starts only after a candidate is approved.
+
 The section has three internal tabs:
 
 - `Радары`: demo radar definitions for author memory, archive, external sources, and
@@ -243,6 +251,10 @@ signal and suggested topic, and lets you change the fabula. Candidate `format` i
 editable because the fabula already describes the editorial shape; plan formats belong
 to the broadcast grid. Only an approved candidate can drive `Собрать инсайт`; rejected
 or draft candidates stay out of the production flow.
+
+This deterministic candidate list is compatibility behavior. The upstream roadmap now
+adds source registry, radar run, found material, signal scoring, and explainable
+candidate assembly before multi-platform drafting expands.
 
 ### Signals UI after Slice 1.5.2
 

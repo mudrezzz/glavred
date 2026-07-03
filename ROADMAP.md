@@ -6302,9 +6302,218 @@ Status:
   - Should not become generic product marketing; must stay tied to Glavred's actual editorial pipeline philosophy.
 - Completed: 2026-07-03
 
-### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+### Slice 2.17.4.4: Upstream Search and Signal Architecture
+
+- Status: Done
+- Goal: Design the upstream half of Glavred: how internal/external material becomes reviewed source signals and then post candidates before planning and DraftRun.
+- User value:
+  - The product stops depending on manually seeded post ideas and starts explaining how it finds, filters, and frames material for future posts.
+- Scope:
+  - Define the upstream data flow: `SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan`.
+  - Separate raw material, reviewed signal, and editorial candidate responsibilities.
+  - Define provider-free DTOs and ownership boundaries for source registry, radar execution, found material, signal extraction, scoring, and candidate assembly.
+  - Decide how project settings, author memory, publisher rules, topics, fabulas, channels, and research depth influence upstream selection.
+  - Add/refresh ADR and SAO sections for upstream ownership.
+- Out of scope:
+  - Real web search execution.
+  - New DraftRun steps.
+  - Multi-platform planning/generation.
+  - Autoposting or publication adapters.
+- Implementation notes:
+  - Preserve existing ADR rule: `SourceSignal` is raw reviewed material; topic/fabula assignment belongs to `PostCandidate`.
+  - Treat DraftRun as downstream: it should receive a justified candidate, not do first-pass editorial discovery.
+  - Plan for local-first demo compatibility and backend-ready execution contracts.
+- Architecture impact:
+  - Introduces the upstream product spine before channel variants: source discovery, material normalization, signal scoring, and candidate assembly.
+- Tests:
+  - Architecture smoke/checklist for upstream module ownership.
+  - Tracker/ADR consistency checks.
+- Docs:
+  - SAO, ADR, developer guide, user guide, demo README, roadmap.
+- Demo impact:
+  - Three benchmark blogs should describe which upstream scenario each will exercise.
+- Acceptance criteria:
+  - The next implementation slices have clear domain/application/infrastructure/UI boundaries.
+  - The roadmap pauses multi-target downstream work until upstream discovery has a working v1.
+- Risks:
+  - Over-designing a search platform before a small working runner; keep v1 source adapters narrow.
+- Completed: 2026-07-03
+
+### Slice 2.17.4.5: Source Registry and Radar Run Contract
 
 - Status: Ready
+- Goal: Make radars executable objects with project-owned source registry and traceable run records, even before external search is fully automated.
+- User value:
+  - The user can see what sources a radar is allowed to inspect, when it ran, what it attempted, what it skipped, and why.
+- Scope:
+  - Add provider-free contracts for `SourceRegistry`, `SourceHandle`, `RadarRun`, `RadarRunOperation`, and `FoundMaterial`.
+  - Support internal sources: author memory, archive/import queue, previous posts, manual notes.
+  - Support configured external handles: URL, open-web query, social/profile handle as metadata, document/source placeholder.
+  - Store run status, operation trace, budget/caps, found material ids, errors, skipped sources, and used search rules.
+  - Add local-first fixtures and UI trace/read model inside `???????`.
+- Out of scope:
+  - Autonomous web crawling.
+  - LLM extraction/scoring.
+  - Candidate assembly changes.
+  - Backend persistence tables beyond current workspace snapshot unless unavoidable.
+- Implementation notes:
+  - This slice may keep execution deterministic/manual, but the contract must match later provider-backed runs.
+  - Radar configuration remains project-scoped and must not leak across portfolio projects.
+- Architecture impact:
+  - Moves radars from static settings toward auditable upstream orchestration.
+- Tests:
+  - Domain normalization tests for legacy radars and source handles.
+  - UI tests for run status/trace and project isolation.
+  - Demo fixture tests for three-blog source registry coverage.
+- Docs:
+  - User guide, developer guide, demo README, SAO.
+- Demo impact:
+  - Each benchmark blog gets at least one ready radar with explicit allowed sources and expected material type.
+- Acceptance criteria:
+  - A radar can have a visible run record and found material trace without creating post candidates yet.
+- Risks:
+  - UI can become noisy; keep run trace compact and expandable.
+
+### Slice 2.17.4.6: External Search Radar Runner v1
+
+- Status: Backlog
+- Goal: Run a narrow, budgeted external search for selected radars and store normalized found materials instead of hand-seeded signals only.
+- User value:
+  - The system can bring fresh external material into the editorial workflow for review.
+- Scope:
+  - Add backend/application runner for open-web query and URL read operations from `RadarRun`.
+  - Reuse existing OpenRouter web search/URL reader infrastructure where practical.
+  - Apply project/fabula research depth and execution budget caps to upstream search.
+  - Normalize results into `FoundMaterial` with source title, URL, snippet/summary, capturedAt, operation provenance, and retrieval warnings.
+  - Show found materials under `???????` before they become source signals.
+- Out of scope:
+  - Full crawler/RSS/social API integrations.
+  - Candidate generation.
+  - DraftRun changes.
+  - Multi-platform variants.
+- Implementation notes:
+  - External search failures must produce explicit failed operations, not silent empty state.
+  - Use smoke mode to keep local evaluation cheap.
+- Architecture impact:
+  - Adds provider-backed upstream retrieval while keeping raw found material separate from editorial signals.
+- Tests:
+  - Backend runner tests with fake search/read adapters.
+  - Budget cap tests.
+  - UI tests for found materials and failed operations.
+- Docs:
+  - Developer guide, user guide, demo README, diagnostics notes.
+- Demo impact:
+  - Seeded benchmark radars can demonstrate what a real run would collect, even when provider is unavailable.
+- Acceptance criteria:
+  - A radar run can produce traceable found materials or a clear failed/empty result.
+- Risks:
+  - Provider instability and cost; v1 must be bounded and trace-visible.
+
+### Slice 2.17.4.7: Signal Extraction and Editorial Scoring
+
+- Status: Backlog
+- Goal: Convert found materials into reviewed `SourceSignal` candidates with explicit editorial scoring before they can feed post candidates.
+- User value:
+  - The user sees not just raw links, but why a material is promising, weak, duplicate, off-position, or worth turning into a post idea.
+- Scope:
+  - Add `SignalExtractionReport` and `SignalScore` contracts.
+  - Extract possible source signals from found materials using deterministic rules plus optional review-role JSON call where useful.
+  - Score novelty, source credibility, author fit, audience value, positioning fit, topic fit, evidence strength, and risk.
+  - Keep `SourceSignal` raw/reviewed: no final topic/fabula ownership yet.
+  - Add status: `candidate`, `approved`, `rejected`, `archived`, with explainable scoring metadata.
+- Out of scope:
+  - Draft text generation.
+  - Multi-platform planning.
+  - Long-term learning/promotion rules.
+- Implementation notes:
+  - Universal JSON retry policy applies to any LLM extraction/scoring call.
+  - Deterministic fallback can produce diagnostic scoring only where safe; no fake high-quality signal.
+- Architecture impact:
+  - Introduces the editorial judgment layer between retrieval and candidate assembly.
+- Tests:
+  - Extraction/scoring unit tests for good, duplicate, off-position, and weak-source materials.
+  - JSON retry/failure trace tests if LLM scoring is used.
+  - UI tests for score breakdown and review actions.
+- Docs:
+  - SAO, developer guide, user guide.
+- Demo impact:
+  - Benchmark blogs get scored signals that reflect their distinct editorial policies.
+- Acceptance criteria:
+  - A found material can become a scored signal with clear reasons and risks.
+- Risks:
+  - Scoring can become opaque; require visible dimension-level explanations.
+
+### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
+
+- Status: Backlog
+- Goal: Replace mechanical approved-signal ? topic/fabula pairing with explainable candidate assembly and ranking.
+- User value:
+  - The user receives fewer but stronger post candidates, each explaining why this signal fits this topic, fabula, audience value, and channel context.
+- Scope:
+  - Add `CandidateAssemblyReport`, `CandidateMatch`, and `CandidateRanking` contracts.
+  - Use signal scores, topic/fabula matrix, publisher rules, author memory, channel/default platform, and benchmark expectations.
+  - Generate multiple candidate angles only when justified; avoid blind Cartesian products.
+  - Explain accepted/rejected topic/fabula matches and candidate risks.
+  - Preserve manual edit/approve/reject flow for candidates.
+- Out of scope:
+  - DraftRun generation changes.
+  - Multi-target variants.
+  - Automatic plan scheduling.
+- Implementation notes:
+  - Candidate assembly may start deterministic with optional review-role ranking later.
+  - Candidate ids must remain stable enough for plan/workbench links.
+- Architecture impact:
+  - Moves editorial composition logic into `PostCandidateAssembly` rather than `Signals` UI or `Plan`.
+- Tests:
+  - Candidate assembly tests for one signal with multiple topics/fabulas.
+  - Tests preventing one-to-one topic/fabula coupling regressions.
+  - UI tests for candidate rationale and rejection reasons.
+- Docs:
+  - Developer guide, user guide, SAO.
+- Demo impact:
+  - Three benchmark blogs should show distinct candidate logic from the same upstream pattern.
+- Acceptance criteria:
+  - Candidate list is ranked and explainable; no hard `.slice(0, 3)` from blind pairing remains as the main logic.
+- Risks:
+  - Ranking can hide useful alternatives; keep rejected/alternative matches inspectable.
+
+### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
+
+- Status: Backlog
+- Goal: Make the upstream workspace usable: materials, signals, and post candidates become separate readable work surfaces with clear actions and diagnostics.
+- User value:
+  - The editor can inspect found material, approve/reject signals, compare post candidates, and send the chosen concept to the plan without guessing what happened.
+- Scope:
+  - Refine `???????` into explicit layers: `??????`, `?????????`, `???????`, `?????????`.
+  - Add compact/expanded states for found material, scored signal, and post candidate cards using the approved design-system card patterns.
+  - Show score/rationale, source provenance, topic/fabula match, risks, and next action.
+  - Add manual override/correction path that is trace-visible.
+  - Keep plan handoff compatible with current downstream flow.
+- Out of scope:
+  - New DraftRun behavior.
+  - Multi-platform variant workbench.
+  - Autoposting.
+- Implementation notes:
+  - Must use `ui-design-systems/START-HERE.md` and existing cabinet/card patterns.
+  - Do not put editing forms under action buttons; edit mode transforms fields in place.
+- Architecture impact:
+  - UI read models follow upstream domain boundaries instead of mixing raw signals and post concepts.
+- Tests:
+  - App-flow tests from radar run to material to signal to candidate to plan.
+  - Visual/design smoke for compact/expanded/edit states.
+  - Project isolation tests.
+- Docs:
+  - User guide, demo README, wiki/screenshots if applicable.
+- Demo impact:
+  - Demo portfolio can demonstrate upstream work before DraftRun quality is evaluated.
+- Acceptance criteria:
+  - A user can understand and operate the upstream flow end-to-end without opening DraftRun.
+- Risks:
+  - The section can become visually dense; prioritize progressive disclosure and two-column cabinet layout.
+
+### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+
+- Status: Backlog
 - Goal: Let one editorial idea target multiple publication channels while keeping a
   shared fabula/brief and separate platform variants.
 - User value:
@@ -6589,6 +6798,7 @@ Status:
 - Slice 2.17.4.2.2.1: Project Blueprint Creation Skill. Completed 2026-07-02.
 - Slice 2.17.4.2.3: Северная стена Topic/Fabula Matrix Calibration. Completed 2026-07-02.
 - Slice 2.17.4.3: Блог Главреда Project Rework. Completed 2026-07-03.
+- Slice 2.17.4.4: Upstream Search and Signal Architecture. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -6617,4 +6827,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.5: Multi-Target Planning and Variant Workbench`.
+Implement `Slice 2.17.4.5: Source Registry and Radar Run Contract`.

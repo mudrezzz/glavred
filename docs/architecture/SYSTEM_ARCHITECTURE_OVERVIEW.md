@@ -24,6 +24,11 @@ The external source and import-review concept is documented in
 The revised signal and broadcast planning concept is documented in
 `docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md`.
 
+The upstream search and signal boundary for Slice 2.17.4.4 is documented in
+`docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`. It defines how
+`SourceRegistry`, `RadarRun`, `FoundMaterial`, `SourceSignal`, `SignalScore`, and
+`PostCandidateAssembly` cooperate before a post reaches planning or DraftRun.
+
 The SaaS blog portfolio concept for Slice 2.17.x is documented in
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`. It defines
 `UserAccount`, `BlogProject`, `ProjectMembership`, `PublicationChannel`,
@@ -58,6 +63,13 @@ cache adapter.
 The durable model is:
 
 `AuthorMemory -> AuthorPositionModel -> EditorialSystem -> Signals -> ContentProduction -> Release -> Learning`
+
+Slice 2.17.4.4 expands the `Signals` part into an explicit upstream spine:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan -> DraftRun`
+
+`DraftRun` is downstream in this model. It may enrich evidence for an approved
+brief, but it is not the first discovery layer for what the author should write about.
 
 The next SaaS-ready model wraps that loop in a portfolio boundary:
 
@@ -103,6 +115,12 @@ The current implemented perimeter now starts with author memory and reaches a ca
 editorial learning note:
 
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
+
+This perimeter is still compatible, but it skips several upstream artifacts that now
+have an architecture target: `SourceRegistry`, `RadarRun`, `FoundMaterial`,
+`SignalExtractionReport`, `SignalScore`, and `CandidateAssemblyReport`. Until the
+2.17.4.x upstream implementation slices land, seeded source signals and deterministic
+candidate assembly remain compatibility behavior.
 
 `FinalText` and `ReleasePackage` are compatibility artifacts from the one-post manual
 export perimeter. The target editorial chain is now
@@ -229,8 +247,21 @@ approves editorial artifacts automatically.
   flows for structured entities without saving changes automatically.
 - `SignalsWorkspace`: reviews radar findings and manually supplied material before it
   can become a post concept.
+- `SourceRegistry`: project-owned set of internal and external source handles that
+  radars may inspect. It includes author memory, archive/import queue, previous posts,
+  manual notes, URL/open-web handles, documents, and future APIs. It must not leak
+  sources across `BlogProject` boundaries.
 - `EditorialRadar`: configurable source procedure inside `Сигналы`. Radar output is
   fuel for author memory and content production, not the only source of posts.
+- `RadarRun`: one executable attempt for a radar. It records status, budget, run
+  operations, found material ids, skipped sources, and errors.
+- `FoundMaterial`: retrieval output from an internal or external source, with source
+  and run provenance. It is not yet a reviewed source signal and does not own topic or
+  fabula.
+- `SignalExtraction` and `SignalScoring`: application-layer policies that turn found
+  material into reviewed source-signal candidates and explain novelty, source
+  credibility, author fit, audience value, positioning fit, topic affinity, evidence
+  strength, and risk.
 - Slice 1.5.1 correction: `EditorialRadar` owns atomic search rules and optional
   search sources. `SourceSignal` remains raw material with radar provenance, date,
   finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
@@ -255,9 +286,12 @@ approves editorial artifacts automatically.
   audience, value, goal, platform, thesis, evidence summary, confidence, and risks
   before a post concept is approved. It does not own `format`; fabula is the
   candidate's editorial shape, while format remains a broadcast-planning concern.
-  Candidate filtering, grouping, and inline edit state are UI/application concerns
-  under `src/features/signals`; edit/reject transitions remain domain-level
-  post-candidate operations.
+  Slice 2.17.4.4 marks blind approved-signal x topic/fabula pairing as legacy v1
+  fallback behavior. Future assembly must return accepted/rejected matches, ranking,
+  rationale, and risks before a candidate enters planning. Candidate filtering,
+  grouping, and inline edit state are UI/application concerns under
+  `src/features/signals`; edit/reject transitions remain domain-level post-candidate
+  operations.
 - `InsightScoring`: turns an approved candidate, or a reviewed source signal fallback,
   into an insight card with relevance, urgency, banality risk, fact gaps, topic, fabula,
   and suggested author position.
@@ -1946,6 +1980,10 @@ is unavailable.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
+- Upstream search adapters should populate `RadarRun` and `FoundMaterial` before
+  promoting anything into `SourceSignal`. OpenRouter search, URL reading, future RSS,
+  social, document, API, and MCP adapters belong in infrastructure; signal extraction,
+  scoring, and candidate assembly belong in application services.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
 - Context chat can open draft flows for structured entities, but should not bypass
@@ -2007,6 +2045,15 @@ For backend slices, add:
   forbidden provider imports, and `.env.example` drift.
 - No backend slice is complete until `npm run test:architecture` passes.
 
+For upstream search and signal slices, add:
+
+- Unit tests for source registry normalization, radar-run status, found-material
+  provenance, signal scoring dimensions, and candidate assembly decisions.
+- UI/app-flow tests that keep materials, reviewed signals, and post candidates as
+  separate work surfaces.
+- Architecture checks that provider search/extraction does not move into React or
+  provider-free domain modules.
+
 ## Known Trade-offs
 
 - Dev-password project switching gives a real backend boundary for local SaaS
@@ -2017,6 +2064,10 @@ For backend slices, add:
 - Multi-platform variants add real product value, but they increase DraftRun cost and
   trace volume. The first implementation should keep a shared brief/evidence base and
   transparent per-channel runs rather than hiding all variants inside one opaque call.
+- Upstream search adds real product value before multi-platform variants. If the
+  product cannot find and explain strong post candidates, platform variants only
+  multiply weak material. That is why 2.17.4.x upstream slices pause 2.17.5+
+  downstream work.
 - The current `EditorialModel` is too coarse for the revised concept. It should be
   migrated carefully into smaller entities without breaking the existing demo flow.
 - Author memory must stay loose enough for stream-of-consciousness input, while the

@@ -1,0 +1,155 @@
+# Upstream Search and Signal Architecture
+
+Current as of Slice 2.17.4.4.
+
+## Purpose
+
+Glavred already has a mature downstream drafting loop: an approved post concept can
+move through plan, workbench, DraftRun, validation, revision, HITL versions, and
+learning notes. The weaker part is upstream: how the product finds material worth
+writing about before a post candidate exists.
+
+This document defines the upstream spine:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan -> DraftRun`
+
+The goal is not to replace the current `Signals` UI in one step. The goal is to make
+the next implementation slices decision-complete: raw retrieval, signal review, and
+editorial candidate assembly must have separate ownership and trace.
+
+## Boundary Rules
+
+- `DraftRun` is downstream. It may enrich evidence for an approved brief, but it is
+  not the first place where Glavred discovers what to write about.
+- `FoundMaterial` is retrieval output. It can be a search result, URL read, archive
+  item, imported note, document excerpt, previous post, or manual research item.
+- `SourceSignal` is reviewed material. It answers: "what did we find, why might it
+  matter, what evidence/provenance does it carry, and what risks are visible?"
+- `SourceSignal` does not own topic, fabula, target audience, value, goal, platform,
+  format, or publication channel. Those belong to candidate assembly and planning.
+- `PostCandidate` is an editorial composition: `Signal x Topic x Fabula`, with
+  audience value, thesis, evidence summary, risks, and ranking rationale.
+- React feature code renders and edits upstream read models. It must not own provider
+  search, signal extraction, scoring, or candidate assembly policy.
+- Provider-backed search and extraction must live behind application/infrastructure
+  adapters. Domain contracts stay provider-free.
+
+## Core Contracts
+
+These contracts are architecture targets for the next slices. They do not have to be
+fully implemented in Slice 2.17.4.4.
+
+| Contract | Owns | Does Not Own |
+| --- | --- | --- |
+| `SourceHandle` | Project-owned source descriptor: type, title, locator, status, notes. | Search execution, scoring, post idea selection. |
+| `SourceRegistry` | The set of internal and external source handles available to a project. | Cross-project sources or global author memory. |
+| `RadarRun` | One execution attempt for a radar: status, budget, operations, found material ids, errors. | Final signal approval or post candidate approval. |
+| `RadarRunOperation` | One read/search/import operation inside a run. | Domain scoring or candidate ranking. |
+| `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, capturedAt, warnings. | Topic/fabula assignment or approval. |
+| `SignalExtractionReport` | Which materials produced signal candidates, which were rejected as noise, and why. | Final post candidate ranking. |
+| `SignalScore` | Dimension-level editorial fit: novelty, source credibility, author fit, audience value, positioning fit, topic affinity, evidence strength, risk. | Draft text quality. |
+| `CandidateAssemblyReport` | Accepted/rejected `Signal x Topic x Fabula` matches, candidate ranking, rationale, and risks. | DraftRun generation or publication variants. |
+
+## Data Flow
+
+1. **Source registry**
+   - Internal handles: author memory, archive/import queue, previous posts, manual
+     notes, accepted learning notes.
+   - External handles: URL, open-web query, social/profile handle, document/source
+     placeholder, future API/RSS/MCP handles.
+   - Project isolation is mandatory. A handle belongs to one `BlogProject` workspace
+     unless a later explicit sharing model is introduced.
+
+2. **Radar run**
+   - A `RadarDefinition` supplies trigger rules, source handles or source discovery
+     mode, editorial filters, execution mode, and budget caps.
+   - A `RadarRun` records what was attempted, skipped, failed, and found.
+   - Runs may be manual, scheduled later, or deficit-driven later. V1 should start
+     manual.
+
+3. **Found material**
+   - The runner normalizes heterogeneous retrieval output into `FoundMaterial`.
+   - Found material remains visible even when weak, duplicate, or failed-filter. It is
+     not silently promoted and not silently dropped.
+
+4. **Signal extraction and scoring**
+   - Extraction turns one or more found materials into candidate source signals.
+   - Scoring explains whether the material is promising for the project.
+   - A human or acceptance policy can approve, reject, archive, or correct signals.
+
+5. **Candidate assembly**
+   - Candidate assembly evaluates `approved SourceSignal x active Topic x active Fabula`.
+   - It should avoid blind Cartesian products as the main behavior.
+   - It should explain why a topic/fabula pair works, why another was rejected, and
+     what risks remain before planning.
+
+6. **Plan and DraftRun**
+   - Approved candidates can fill plan demand and create editorial work items.
+   - DraftRun consumes an approved candidate/brief and may perform post-local evidence
+     enrichment. It must not be treated as upstream discovery.
+
+## Project Settings Input
+
+- **Author memory** provides internal source material and author-position evidence.
+- **Editorial rules** provide author, audience, goals, positioning, style, forbidden
+  topics, and validator-ready project constraints. Upstream uses author/audience/
+  goals/positioning/forbidden/topic fit; style remains downstream drafting/review.
+- **Topics** define territories. Upstream may compute topic affinity, but the raw
+  signal does not own the topic.
+- **Fabulas** define reusable editorial forms. They are used in candidate assembly,
+  not in raw material retrieval.
+- **Publication channels** can influence candidate readiness and platform constraints,
+  but project audience must still come from editorial rules/post brief, not channel
+  metadata.
+- **Research depth and execution mode** cap upstream search breadth, number of source
+  operations, accepted materials, extracted signals, and candidate count.
+
+## Ownership Map
+
+| Layer | Future module owner | Responsibility |
+| --- | --- | --- |
+| Domain | `src/domain/upstream-search` and backend peer when needed | Provider-free DTOs, statuses, validation, transition rules. |
+| Application | `src/application/upstream*` and backend application services | Run orchestration, signal scoring policy, candidate assembly policy. |
+| Infrastructure | OpenRouter search, URL reader, future RSS/social/document adapters | Provider calls, IO, API errors, raw retrieval normalization. |
+| UI | `src/features/signals` | Render radar runs, found material, signals, scores, and candidates; collect human decisions. |
+| Persistence | Current workspace snapshot first, backend project snapshot later | Store project-scoped upstream artifacts without cross-project leakage. |
+| DraftRun | Existing DraftRun pipeline | Downstream generation from approved candidate/brief only. |
+
+## Compatibility With Current Implementation
+
+The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, and
+`Signals` tabs. The compatibility gaps are:
+
+- no first-class `SourceRegistry`, `RadarRun`, or `FoundMaterial`;
+- `sourceSignals` are seeded/demo-local rather than produced by executable radar runs;
+- `createPostCandidates` currently does approved-signal x topic/fabula pairing and
+  keeps the first three candidates;
+- some compatibility fields such as `suggestedTopicId` and `suggestedFabulaId` may
+  remain on `SourceSignal`, but UI and new services must not treat them as ownership.
+
+Until Slice 2.17.4.8 replaces candidate assembly, blind pairing is legacy behavior and
+must be kept working only as a fallback.
+
+## Trace Requirements
+
+Every future upstream run should make the handoff readable:
+
+- what sources were eligible;
+- what operations ran or were skipped by budget;
+- what material was found;
+- which materials became signals and which were rejected as noise;
+- how signal scoring dimensions were decided;
+- why a topic/fabula candidate was accepted or rejected;
+- what human correction or approval changed.
+
+## Implementation Slices
+
+- `2.17.4.5`: Source Registry and Radar Run Contract.
+- `2.17.4.6`: External Search Radar Runner v1.
+- `2.17.4.7`: Signal Extraction and Editorial Scoring.
+- `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
+- `2.17.4.9`: Signal Review and Candidate Workbench UX.
+
+Only after this upstream v1 is demonstrable should multi-target planning and
+multi-platform DraftRun work resume.
+

@@ -57,6 +57,12 @@ surface from editorial suitability: each radar has a source discovery mode and
 optional filters for author, audience, positioning, goals, forbidden topics, and
 topics. Filtered-out material stays visible for human review; style is checked later
 during drafting and editorial review, not during radar intake.
+Slice 2.17.4.4 fixes the upstream architecture target before more downstream
+multi-platform work: future radars produce `RadarRun` trace and `FoundMaterial`,
+review/scoring promotes material into `SourceSignal`, and explainable candidate
+assembly turns `Signal x Topic x Fabula` into `PostCandidate`. `DraftRun` stays
+downstream and should consume an approved candidate/brief rather than discover the
+first post idea itself.
 `Кандидаты постов` is now the first working candidate layer: approved signals become
 2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
 confidence, and risks. Candidate format was removed because fabula already owns the
@@ -456,6 +462,7 @@ npm run docs:wiki:publish
 - [Author position concept](docs/architecture/AUTHOR_POSITION_CONCEPT.md)
 - [External source import concept](docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md)
 - [Signals and broadcast planning concept](docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md)
+- [Upstream search and signal architecture](docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md)
 - [System architecture overview](docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md)
 - [DraftRun pipeline AS IS](docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md)
 - [DraftRun pipeline AS IS PDF](docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf)

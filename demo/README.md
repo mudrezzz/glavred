@@ -201,6 +201,14 @@ The calendar view marks publish dates, shows filtered candidate counts per date,
 opens the same slot cards under the selected date. Future slices can add candidate
 variant requests and then turn `План` into a real calendar with readiness statuses.
 
+Slice 2.17.4.4 documents the next upstream target for the demo portfolio. The visible
+demo still uses seeded signals, but the target benchmark path is now:
+
+`SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate`.
+
+Until those slices are implemented, seeded radars/signals remain fixture data rather
+than proof of live search.
+
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
 approve a plan slot and Glavred automatically creates the editorial work item plus
