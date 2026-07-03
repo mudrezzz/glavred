@@ -6434,6 +6434,215 @@ Status:
 - Risks:
   - Provider instability and cost; v1 must be bounded and trace-visible.
 
+### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
+
+- Status: Backlog
+- Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
+- User value:
+  - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
+- Scope:
+  - Add provider-free `SearchPlan`, `SearchIntent`, `SearchQuery`, and `SearchCampaignTrace` contracts.
+  - Derive query intents from radar definition, source handles, project language, topics, fabulas, publisher rules, research depth, and benchmark project profile.
+  - Generate multiple query families: broad discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, and freshness queries where relevant.
+  - Store generated queries, intent rationale, source strategy, and skipped intent reasons in `RadarRun`.
+- Out of scope:
+  - LLM query expansion.
+  - Signal extraction or scoring.
+  - Candidate assembly.
+  - Scheduled radar runs.
+- Implementation notes:
+  - Deterministic planner is the baseline for every later search layer.
+  - The planner must not assign final topic/fabula ownership to raw material.
+- Architecture impact:
+  - Introduces explicit search-planning contracts between `RadarRun` and provider retrieval.
+- Tests:
+  - Planner tests for the three benchmark projects.
+  - Tests for language-aware query generation and evidence-type coverage.
+  - Trace tests proving generated queries and rationale are persisted.
+- Docs:
+  - Update upstream architecture, developer guide, user guide, and demo README.
+- Demo impact:
+  - Benchmark radars show readable search plans before any provider call.
+- Acceptance criteria:
+  - A radar can produce a traceable search campaign without calling a provider.
+  - Each campaign has at least several typed intents or explicit skipped reasons.
+- Risks:
+  - Deterministic queries can become formulaic; later LLM expansion must improve breadth without replacing traceability.
+
+### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
+
+- Status: Backlog
+- Goal: Stop treating provider result order as quality by adding explainable pre-read triage, URL canonicalization, deduplication, diversity selection, and selective URL reading.
+- User value:
+  - The radar reads fewer but better materials and explains which links were selected, rejected, duplicated, or unreadable.
+- Scope:
+  - Add raw search result normalization before `FoundMaterial` creation.
+  - Canonicalize URLs, domains, titles, and duplicate groups.
+  - Score snippet-level relevance, evidence type, source credibility, novelty, project fit, and risk.
+  - Select diverse results across query intents and domains before URL reading.
+  - Store `selectedForRead`, `rejectedBeforeRead`, duplicate groups, and read failures in trace.
+- Out of scope:
+  - LLM extraction/scoring.
+  - Full source credibility database.
+  - Candidate generation.
+- Implementation notes:
+  - Search-result triage is diagnostic, not final editorial judgment.
+  - Failed URL reads must remain visible as warnings, not disappear.
+- Architecture impact:
+  - Adds the retrieval-quality layer between provider search and durable found material.
+- Tests:
+  - Dedupe tests for URL variants and repeated provider results.
+  - Triage tests for strong case materials, weak generic articles, duplicates, and unreadable URLs.
+  - UI/trace tests for selected/rejected/read-failed materials.
+- Docs:
+  - Update upstream architecture, diagnostics notes, developer guide, and user guide.
+- Demo impact:
+  - Demo radars show why some links were read and others were not.
+- Acceptance criteria:
+  - Provider results are not blindly promoted in search order.
+  - Read selection is diverse and trace-visible.
+- Risks:
+  - Triage can over-filter surprising materials; keep rejected-before-read inspectable.
+
+### Slice 2.17.4.6.3: Source Strategy Adapters and Domain-Aware Search
+
+- Status: Backlog
+- Goal: Make search behavior depend on source type and editorial intent instead of using one generic open-web query path for everything.
+- User value:
+  - Radars can deliberately search known domains, URLs, project documents, open web, OSS repositories, papers, and future feeds without mixing their responsibilities.
+- Scope:
+  - Add source strategy policy for `openWebQuery`, `knownUrl`, `domain`, `document`, `internal`, and future OSS/paper/feed adapters.
+  - Support site/domain-restricted search where applicable.
+  - Add direct URL read strategy for known URLs.
+  - Keep unsupported adapters explicit with `skipped/not-implemented` operations.
+  - Extend trace with source strategy, adapter used, and per-source skipped reasons.
+- Out of scope:
+  - Full RSS/social/crawler integrations.
+  - Provider credentials for external platform APIs.
+  - Signal extraction.
+- Implementation notes:
+  - `SourceHandle` remains project-owned; adapters are infrastructure/application concerns.
+  - Internal sources continue to run without provider calls.
+- Architecture impact:
+  - Separates source registry semantics from provider execution mechanics.
+- Tests:
+  - Strategy selection tests per source handle type.
+  - Domain-restricted query tests.
+  - Project isolation tests for source handles and runs.
+- Docs:
+  - Update upstream architecture, source registry docs, developer guide, and demo README.
+- Demo impact:
+  - Each benchmark project can show different source strategy mix.
+- Acceptance criteria:
+  - A radar run can explain how each source handle was executed or skipped.
+  - Open-web, known URL, and internal sources have distinct behavior.
+- Risks:
+  - Adapter matrix can grow too quickly; keep v1 policy small and explicit.
+
+### Slice 2.17.4.6.4: LLM-Assisted Query Expansion and Search Critic
+
+- Status: Backlog
+- Goal: Add a controlled LLM layer that improves search campaigns without hiding deterministic planner decisions or becoming the only search brain.
+- User value:
+  - Radars can find less obvious materials and alternative angles while keeping every generated query, assumption, and failure visible.
+- Scope:
+  - Add optional LLM-assisted query expansion after deterministic search plan creation.
+  - Use research/review role model with universal JSON retry policy.
+  - Ask the model for missing query intents, counter-queries, domain-specific vocabulary, source-type hints, and blind spots.
+  - Add a search critic pass that flags weak campaigns before execution when budget allows.
+  - Persist LLM attempts, selected model, generation params, accepted/rejected query suggestions, and fallback behavior.
+- Out of scope:
+  - Letting LLM directly approve signals or candidates.
+  - Hidden autonomous browsing loops.
+  - Unbounded query generation.
+- Implementation notes:
+  - Deterministic planner is always available as fallback.
+  - LLM expansion may improve breadth, but cannot erase deterministic trace.
+- Architecture impact:
+  - Adds an AI-assisted planning layer while preserving provider-free domain contracts.
+- Tests:
+  - JSON retry tests for malformed query expansion.
+  - Fallback tests when LLM is unavailable.
+  - Tests that deterministic queries remain present.
+- Docs:
+  - Update ADR/architecture notes about LLM search planning boundaries.
+  - Update developer/user diagnostics docs.
+- Demo impact:
+  - Benchmark radars can show deterministic vs AI-expanded query plans.
+- Acceptance criteria:
+  - LLM-expanded campaigns are trace-visible and bounded.
+  - Provider failure does not block deterministic search.
+- Risks:
+  - LLM may add noisy or over-broad queries; require accepted/rejected query suggestions in trace.
+
+### Slice 2.17.4.6.5: Radar Search Evaluation Harness and Benchmark Corpus
+
+- Status: Backlog
+- Goal: Make search quality measurable with benchmark radar scenarios before promoting the upstream search runner as reliable.
+- User value:
+  - The team can compare search algorithm changes on the three benchmark blogs instead of judging by screenshots or single lucky runs.
+- Scope:
+  - Add benchmark radar fixtures for `??????? ???`, `???????? ?????`, and `???? ????????`.
+  - Define expected evidence types, unacceptable noise, freshness expectations, diversity targets, and must-not-miss source categories.
+  - Add evaluation reports for recall proxies, precision proxies, duplicate rate, read success rate, source diversity, evidence-type coverage, and trace completeness.
+  - Add smoke-mode benchmark runs that do not require high spend.
+- Out of scope:
+  - Automatic quality approval.
+  - Full web-scale recall measurement.
+  - DraftRun text quality evaluation.
+- Implementation notes:
+  - Metrics are directional: enough to catch regressions and compare algorithms, not a scientific IR benchmark.
+- Architecture impact:
+  - Converts demo portfolio into an upstream-search evaluation harness.
+- Tests:
+  - Benchmark fixture tests.
+  - Evaluation report unit tests.
+  - Smoke benchmark command or documented manual workflow.
+- Docs:
+  - Update demo README, developer guide, and diagnostics docs.
+- Demo impact:
+  - Three benchmark blogs become repeatable upstream search scenarios.
+- Acceptance criteria:
+  - A benchmark run can say what improved, regressed, or remained unknown.
+  - Empty/low-quality search results produce actionable diagnostics.
+- Risks:
+  - Metrics can incentivize quantity over usefulness; keep editorial evidence-type expectations visible.
+
+### Slice 2.17.4.6.6: Search Memory, Refresh Policy, and Production Controls
+
+- Status: Backlog
+- Goal: Move radar search from useful prototype to production-ready operation with history, refresh rules, caching, rate limits, retries, and cost controls.
+- User value:
+  - Radars can be rerun safely without repeatedly surfacing the same stale links, burning budget unpredictably, or hiding provider instability.
+- Scope:
+  - Add project-scoped search memory for seen URLs, material fingerprints, duplicate groups, and previously rejected materials.
+  - Add freshness and recheck policy for changed/stale materials.
+  - Add cache boundaries for search results and URL reads.
+  - Add provider retry/backoff, timeout handling, rate and cost accounting, and production diagnostics.
+  - Distinguish empty, partial, failed, stale-only, and provider-limited runs.
+- Out of scope:
+  - Scheduled background jobs unless already available.
+  - Cross-user shared index.
+  - External publication or social APIs.
+- Implementation notes:
+  - This is the production-readiness gate before treating upstream search as a dependable product subsystem.
+- Architecture impact:
+  - Adds operational reliability around provider-backed upstream search while keeping project isolation.
+- Tests:
+  - Cache and refresh policy tests.
+  - Retry/backoff/failure tests with fake adapters.
+  - Budget/cost accounting tests.
+  - Regression tests proving reruns do not spam duplicate materials.
+- Docs:
+  - Update operations diagnostics, developer guide, user guide, and upstream architecture.
+- Demo impact:
+  - Demo runs can show seen/new/stale material distinctions.
+- Acceptance criteria:
+  - Repeated radar runs are bounded, explainable, and do not repeatedly surface the same material as new.
+  - Provider instability is visible and recoverable.
+- Risks:
+  - Search memory can hide useful rediscoveries; keep manual reset/reconsider path.
+
 ### Slice 2.17.4.7: Signal Extraction and Editorial Scoring
 
 - Status: Backlog
