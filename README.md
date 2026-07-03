@@ -471,6 +471,8 @@ npm run docs:wiki:publish
 - [External source import concept](docs/architecture/EXTERNAL_SOURCE_IMPORT_CONCEPT.md)
 - [Signals and broadcast planning concept](docs/architecture/SIGNALS_AND_BROADCAST_PLANNING_CONCEPT.md)
 - [Upstream search and signal architecture](docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md)
+- [Backend architecture AS IS](docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md)
+- [Backend architecture target](docs/architecture/BACKEND_ARCHITECTURE_TARGET.md)
 - [System architecture overview](docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md)
 - [DraftRun pipeline AS IS](docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md)
 - [DraftRun pipeline AS IS PDF](docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf)

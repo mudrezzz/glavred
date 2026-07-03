@@ -6435,9 +6435,9 @@ Status:
   - Provider instability and cost; v1 must be bounded and trace-visible.
 - Completed: 2026-07-03
 
-### Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Guardrails
+### Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Package Contract
 
-- Status: Ready
+- Status: Done
 - Goal: Stop backend architecture drift before adding more DraftRun or upstream runtime behavior by documenting the current state, target bounded-context layout, and enforceable guardrails.
 - User value:
   - Contributors can understand where backend code belongs before touching the drafting pipeline.
@@ -6445,7 +6445,7 @@ Status:
 - Scope:
   - Add `BACKEND_ARCHITECTURE_AS_IS.md` with a factual inventory of backend packages, draft-related files, high-risk modules, and current guardrail gaps.
   - Add `BACKEND_ARCHITECTURE_TARGET.md` with target bounded contexts: drafting, upstream, portfolio, ai-runs, roadmap, shared.
-  - Add ADR `backend-bounded-contexts-and-draft-step-contracts`.
+  - Add ADR `backend-bounded-contexts-and-operation-contracts`.
   - Add backend architecture smoke v1 for no-new-flat `backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` files outside an explicit legacy allowlist.
   - Add checks for module ownership docstrings, architecture anchors, top-level public function ceilings, and backend dependency direction.
   - Update developer docs and agent workflow rules so backend changes read the new architecture docs first.
@@ -6474,10 +6474,11 @@ Status:
   - The next Ready task remains in the backend recovery track.
 - Risks:
   - Overly strict checks can block useful work; start with legacy allowlists and tighten them slice by slice.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims
 
-- Status: Backlog
+- Status: Ready
 - Goal: Create the target `backend/app/drafting` package boundary without changing runtime behavior.
 - User value:
   - Developers get an obvious home for DraftRun code instead of adding another flat `draft_*` file.
@@ -7337,6 +7338,7 @@ Status:
 - Slice 2.17.4.5: Source Registry and Radar Run Contract. Completed 2026-07-03.
 - Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs. Completed 2026-07-03.
 - Slice 2.17.4.6: External Search Radar Runner v1. Completed 2026-07-03.
+- Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Package Contract. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -7365,4 +7367,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Guardrails`.
+Implement `Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims`.

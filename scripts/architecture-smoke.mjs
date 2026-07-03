@@ -1680,8 +1680,161 @@ const TEST_OWNERSHIP_ADR_PATH =
   "docs/adr/2026-06-18-app-flow-tests-follow-feature-ownership.md";
 const BACKEND_AI_EXECUTION_ADR_PATH =
   "docs/adr/2026-06-18-backend-starts-as-openrouter-ai-execution-layer.md";
+const BACKEND_ARCHITECTURE_AS_IS_PATH = "docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md";
+const BACKEND_ARCHITECTURE_TARGET_PATH = "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md";
+const BACKEND_BOUNDED_CONTEXTS_ADR_PATH =
+  "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md";
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 const ENV_EXAMPLE_PATH = ".env.example";
+
+const LEGACY_FLAT_DRAFT_APPLICATION_FILES = new Set([
+  "backend/app/application/draft_alternative_angle_audit.py",
+  "backend/app/application/draft_alternative_angle_candidate_service.py",
+  "backend/app/application/draft_alternative_angle_prompts.py",
+  "backend/app/application/draft_alternative_angle_route_service.py",
+  "backend/app/application/draft_alternative_angle_tournament_service.py",
+  "backend/app/application/draft_article_dossier_builder.py",
+  "backend/app/application/draft_article_memory_service.py",
+  "backend/app/application/draft_attribution_markers.py",
+  "backend/app/application/draft_attribution_requirements.py",
+  "backend/app/application/draft_candidate_audit.py",
+  "backend/app/application/draft_candidate_direction_service.py",
+  "backend/app/application/draft_candidate_generation_service.py",
+  "backend/app/application/draft_candidate_prompts.py",
+  "backend/app/application/draft_candidate_provider_service.py",
+  "backend/app/application/draft_candidate_publishability.py",
+  "backend/app/application/draft_candidate_result.py",
+  "backend/app/application/draft_candidate_selection_block.py",
+  "backend/app/application/draft_candidate_selection_service.py",
+  "backend/app/application/draft_context_pack_builder.py",
+  "backend/app/application/draft_directed_revision_prompts.py",
+  "backend/app/application/draft_directed_revision_service.py",
+  "backend/app/application/draft_editorial_critique_audit.py",
+  "backend/app/application/draft_editorial_critique_flow.py",
+  "backend/app/application/draft_editorial_critique_parser.py",
+  "backend/app/application/draft_editorial_critique_prompts.py",
+  "backend/app/application/draft_editorial_critique_service.py",
+  "backend/app/application/draft_editorial_revision_evaluator.py",
+  "backend/app/application/draft_editorial_revision_goals.py",
+  "backend/app/application/draft_feasibility_gate.py",
+  "backend/app/application/draft_feasibility_policy.py",
+  "backend/app/application/draft_final_quality_assessment.py",
+  "backend/app/application/draft_final_quality_attribution.py",
+  "backend/app/application/draft_final_quality_contract.py",
+  "backend/app/application/draft_final_quality_gate.py",
+  "backend/app/application/draft_final_quality_gate_evaluator.py",
+  "backend/app/application/draft_final_quality_gate_payloads.py",
+  "backend/app/application/draft_final_quality_repair_loop.py",
+  "backend/app/application/draft_final_quality_review_parser.py",
+  "backend/app/application/draft_final_quality_review_prompts.py",
+  "backend/app/application/draft_final_quality_review_service.py",
+  "backend/app/application/draft_generation_audit.py",
+  "backend/app/application/draft_generation_params.py",
+  "backend/app/application/draft_generation_service.py",
+  "backend/app/application/draft_human_comment_quality_service.py",
+  "backend/app/application/draft_human_comment_revision_service.py",
+  "backend/app/application/draft_llm_validation_audit.py",
+  "backend/app/application/draft_llm_validation_observations.py",
+  "backend/app/application/draft_llm_validation_parser.py",
+  "backend/app/application/draft_llm_validation_prompts.py",
+  "backend/app/application/draft_llm_validation_service.py",
+  "backend/app/application/draft_material_plan_service.py",
+  "backend/app/application/draft_model_role_resolver.py",
+  "backend/app/application/draft_pairwise_ranking_payloads.py",
+  "backend/app/application/draft_pairwise_ranking_prompts.py",
+  "backend/app/application/draft_pairwise_ranking_service.py",
+  "backend/app/application/draft_planning_audit.py",
+  "backend/app/application/draft_planning_prompts.py",
+  "backend/app/application/draft_planning_result.py",
+  "backend/app/application/draft_post_contract_builder.py",
+  "backend/app/application/draft_prompt_builder.py",
+  "backend/app/application/draft_provider_error_utils.py",
+  "backend/app/application/draft_public_evidence_step_service.py",
+  "backend/app/application/draft_quality_gate.py",
+  "backend/app/application/draft_ranking_revision_mapping.py",
+  "backend/app/application/draft_ranking_revision_result.py",
+  "backend/app/application/draft_ranking_revision_service.py",
+  "backend/app/application/draft_revision_acceptance_policy.py",
+  "backend/app/application/draft_revision_goal_evaluator.py",
+  "backend/app/application/draft_revision_instruction_builder.py",
+  "backend/app/application/draft_revision_loop_config.py",
+  "backend/app/application/draft_revision_loop_cycle_runner.py",
+  "backend/app/application/draft_revision_loop_policy.py",
+  "backend/app/application/draft_revision_loop_service.py",
+  "backend/app/application/draft_revision_regression.py",
+  "backend/app/application/draft_revision_rejected_moves.py",
+  "backend/app/application/draft_rhetorical_plan_audit.py",
+  "backend/app/application/draft_rhetorical_plan_prompts.py",
+  "backend/app/application/draft_rhetorical_plan_retry.py",
+  "backend/app/application/draft_rhetorical_plan_service.py",
+  "backend/app/application/draft_rule_pack_compiler.py",
+  "backend/app/application/draft_rule_pack_from_registry.py",
+  "backend/app/application/draft_rule_pack_sections.py",
+  "backend/app/application/draft_rule_registry_compiler.py",
+  "backend/app/application/draft_rule_registry_contract.py",
+  "backend/app/application/draft_rule_registry_sections.py",
+  "backend/app/application/draft_rule_registry_size.py",
+  "backend/app/application/draft_run_budget_resolver.py",
+  "backend/app/application/draft_run_context_builder.py",
+  "backend/app/application/draft_run_context_payloads.py",
+  "backend/app/application/draft_run_draft_step_service.py",
+  "backend/app/application/draft_run_payloads.py",
+  "backend/app/application/draft_run_pipeline.py",
+  "backend/app/application/draft_run_pipeline_ports.py",
+  "backend/app/application/draft_run_progress.py",
+  "backend/app/application/draft_run_service.py",
+  "backend/app/application/draft_run_staleness.py",
+  "backend/app/application/draft_run_step_progress.py",
+  "backend/app/application/draft_run_step_progress_payload.py",
+  "backend/app/application/draft_source_ledger_builder.py",
+  "backend/app/application/draft_source_ledger_sections.py",
+  "backend/app/application/draft_strategy_service.py",
+  "backend/app/application/draft_validation_alternative_flow.py",
+  "backend/app/application/draft_validation_evidence.py",
+  "backend/app/application/draft_validation_linter.py",
+  "backend/app/application/draft_validation_operation_safety.py",
+  "backend/app/application/draft_validation_ranking_bridge.py",
+  "backend/app/application/draft_validation_report_flow.py",
+  "backend/app/application/draft_validation_step.py",
+  "backend/app/application/draft_validation_step_service.py",
+  "backend/app/application/draft_validator_orchestrator.py",
+]);
+
+const LEGACY_FLAT_DRAFT_DOMAIN_FILES = new Set([
+  "backend/app/domain/draft_alternative_angle.py",
+  "backend/app/domain/draft_article_memory.py",
+  "backend/app/domain/draft_candidates.py",
+  "backend/app/domain/draft_editorial_critique.py",
+  "backend/app/domain/draft_evidence_interpretation.py",
+  "backend/app/domain/draft_evidence_synthesis.py",
+  "backend/app/domain/draft_feasibility.py",
+  "backend/app/domain/draft_generation.py",
+  "backend/app/domain/draft_human_revision.py",
+  "backend/app/domain/draft_llm_validation.py",
+  "backend/app/domain/draft_model_roles.py",
+  "backend/app/domain/draft_planning.py",
+  "backend/app/domain/draft_post_contract.py",
+  "backend/app/domain/draft_public_evidence.py",
+  "backend/app/domain/draft_ranking_revision.py",
+  "backend/app/domain/draft_revision_loop.py",
+  "backend/app/domain/draft_rhetorical_plan.py",
+  "backend/app/domain/draft_rule_pack.py",
+  "backend/app/domain/draft_rule_registry.py",
+  "backend/app/domain/draft_run.py",
+  "backend/app/domain/draft_run_budget.py",
+  "backend/app/domain/draft_run_context.py",
+  "backend/app/domain/draft_run_steps.py",
+  "backend/app/domain/draft_source_intent.py",
+  "backend/app/domain/draft_source_ledger.py",
+  "backend/app/domain/draft_validation.py",
+]);
+
+const LEGACY_FLAT_UPSTREAM_RADAR_APPLICATION_FILES = new Set([
+  "backend/app/application/upstream_radar_external_payloads.py",
+  "backend/app/application/upstream_radar_external_run_service.py",
+  "backend/app/application/upstream_radar_search_planner.py",
+  "backend/app/application/upstream_radar_search_triage.py",
+]);
 
 function readText(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
@@ -2281,6 +2434,16 @@ assert(
   "src/App.tsx must not import or instantiate LocalWorkspaceStore; use src/app/useWorkspaceController.ts."
 );
 
+assert(fileExists(BACKEND_ARCHITECTURE_AS_IS_PATH), `${BACKEND_ARCHITECTURE_AS_IS_PATH} is required.`);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_TARGET_PATH),
+  `${BACKEND_ARCHITECTURE_TARGET_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_BOUNDED_CONTEXTS_ADR_PATH),
+  `${BACKEND_BOUNDED_CONTEXTS_ADR_PATH} is required.`
+);
+
 const workspaceControllerSource = readText("src/app/useWorkspaceController.ts");
 const forbiddenWorkspaceControllerSymbols = [
   "sendContextChatMessage",
@@ -2484,6 +2647,26 @@ function importsForbiddenModule(importPath, forbiddenModule) {
   return importPath === forbiddenModule || importPath.startsWith(`${forbiddenModule}.`);
 }
 
+function publicPythonFunctionCount(source) {
+  return [...source.matchAll(/^def\s+([A-Za-z_]\w*)\s*\(/gm)].filter(
+    (match) => !match[1].startsWith("_")
+  ).length;
+}
+
+function classCount(source) {
+  return [...source.matchAll(/^class\s+[A-Za-z_]\w*/gm)].length;
+}
+
+function hasBackendOwnershipHeader(source) {
+  const firstBlock = source.slice(0, 700);
+  return (
+    firstBlock.includes("Owner:") &&
+    firstBlock.includes("Used by:") &&
+    firstBlock.includes("Does not own:") &&
+    firstBlock.includes("Architecture doc:")
+  );
+}
+
 const backendDomainForbiddenImports = [
   "fastapi",
   "httpx",
@@ -2509,6 +2692,63 @@ const backendApiForbiddenImports = [
   "langgraph_document_ai_platform",
   "langgraph",
 ];
+
+const flatDraftApplicationFiles = backendPythonFiles.filter(
+  (backendFile) =>
+    backendFile.startsWith("backend/app/application/draft_") && backendFile.endsWith(".py")
+);
+const flatDraftDomainFiles = backendPythonFiles.filter(
+  (backendFile) =>
+    backendFile.startsWith("backend/app/domain/draft_") && backendFile.endsWith(".py")
+);
+const flatUpstreamRadarApplicationFiles = backendPythonFiles.filter(
+  (backendFile) =>
+    backendFile.startsWith("backend/app/application/upstream_radar_") && backendFile.endsWith(".py")
+);
+
+for (const backendFile of flatDraftApplicationFiles) {
+  assert(
+    LEGACY_FLAT_DRAFT_APPLICATION_FILES.has(backendFile),
+    `${backendFile} is a new flat DraftRun application module. New drafting backend code must live under backend/app/drafting or be explicitly allowlisted as legacy debt.`
+  );
+}
+
+for (const backendFile of flatDraftDomainFiles) {
+  assert(
+    LEGACY_FLAT_DRAFT_DOMAIN_FILES.has(backendFile),
+    `${backendFile} is a new flat DraftRun domain module. New drafting domain code must live under backend/app/drafting or be explicitly allowlisted as legacy debt.`
+  );
+}
+
+for (const backendFile of flatUpstreamRadarApplicationFiles) {
+  assert(
+    LEGACY_FLAT_UPSTREAM_RADAR_APPLICATION_FILES.has(backendFile),
+    `${backendFile} is a new flat upstream radar application module. New upstream backend code must live under backend/app/upstream or be explicitly allowlisted as legacy debt.`
+  );
+}
+
+const boundedBackendContextFiles = backendPythonFiles.filter(
+  (backendFile) =>
+    (backendFile.startsWith("backend/app/drafting/") ||
+      backendFile.startsWith("backend/app/upstream/") ||
+      backendFile.startsWith("backend/app/shared/")) &&
+    !backendFile.endsWith("/__init__.py")
+);
+
+for (const backendFile of boundedBackendContextFiles) {
+  const source = readText(backendFile);
+  assert(
+    hasBackendOwnershipHeader(source),
+    `${backendFile} must start with backend ownership anchors: Owner, Used by, Does not own, Architecture doc.`
+  );
+
+  const publicFunctions = publicPythonFunctionCount(source);
+  const classes = classCount(source);
+  assert(
+    publicFunctions <= 4 || classes > 0,
+    `${backendFile} exposes ${publicFunctions} top-level public functions and no class owner. Add an owning service/policy/DTO or split the module.`
+  );
+}
 
 for (const backendFile of backendPythonFiles) {
   const imports = pythonImports(readText(backendFile));
@@ -2556,6 +2796,17 @@ const requiredSaoFragments = [
   "near-limit",
   "agent workflow",
   "## Backend AI Execution Architecture",
+  "docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md",
+  "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md",
+  "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md",
+  "backend/app/drafting",
+  "backend/app/upstream",
+  "backend/app/shared",
+  "flat `draft_*` and `upstream_radar_*`",
+  "Owner",
+  "Used by",
+  "Does not own",
+  "Architecture doc",
   "OpenRouter is the default LLM provider target",
   "langgraph-document-ai-platform",
   "no 2-3k line backend files",

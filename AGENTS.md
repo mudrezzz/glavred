@@ -104,6 +104,28 @@ Follow these principles:
 
 Use `$architecture-design` for new architectural decisions, major feature design, or module boundary changes.
 
+## Backend architecture recovery
+
+Before adding or changing backend runtime code, read:
+
+- `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`
+- `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`
+- `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`
+
+New DraftRun backend modules must live under `backend/app/drafting`, not the flat
+legacy `backend/app/application/draft_*.py` or `backend/app/domain/draft_*.py`
+namespaces. New upstream radar/search/signal modules must live under
+`backend/app/upstream`, not `backend/app/application/upstream_radar_*.py`.
+
+The flat legacy files are an explicit migration allowlist. Do not add new files there
+unless the roadmap slice explicitly records a temporary debt exception and
+architecture smoke is updated intentionally.
+
+New bounded-context backend modules must declare ownership in the module docstring:
+`Owner`, `Used by`, `Does not own`, and `Architecture doc`. Provider-heavy operations
+must expose typed results, attempts, safe errors, and trace-safe payloads instead of
+leaking raw provider exceptions across layers.
+
 ## Testing standards
 
 Maximize useful test coverage.

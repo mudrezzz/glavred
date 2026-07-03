@@ -56,6 +56,21 @@ npm run smoke
 When behavior, architecture, setup, commands, public APIs, demo behavior, or
 user-facing flows change, update the relevant documentation in the same slice.
 
+## Backend Architecture
+
+Backend work follows the recovery contract in:
+
+- `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`
+- `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`
+- `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`
+
+Do not add new DraftRun or Radar runtime modules to the flat legacy namespaces
+`backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
+`backend/app/application/upstream_radar_*.py`. Use `backend/app/drafting` or
+`backend/app/upstream` for new work. New bounded-context modules need ownership
+docstrings and must keep API, application, domain, infrastructure, and shared
+responsibilities separate.
+
 ## Git
 
 Create small commits with clear messages. Do not create or publish a GitHub repository

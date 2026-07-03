@@ -94,6 +94,33 @@ Use `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` as the implementatio
 contract for Slice 2.17.x. If code behavior diverges from that document, update the
 document in the same slice.
 
+## Backend Architecture Recovery
+
+Before adding or moving backend runtime code, read:
+
+- `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`;
+- `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`;
+- `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`.
+
+The recovery rule is strict:
+
+- new DraftRun backend modules go under `backend/app/drafting`, not the flat
+  `backend/app/application/draft_*.py` or `backend/app/domain/draft_*.py` legacy
+  namespace;
+- new radar/search/signal backend modules go under `backend/app/upstream`, not the
+  flat `backend/app/application/upstream_radar_*.py` legacy namespace;
+- cross-context provider-neutral helpers may go under `backend/app/shared` only when
+  they are genuinely shared;
+- new bounded-context modules must begin with a docstring containing `Owner`,
+  `Used by`, `Does not own`, and `Architecture doc`;
+- provider-heavy operations must return a typed result with attempts, safe errors,
+  and trace-safe payloads instead of leaking raw provider exceptions.
+
+Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
+target architecture. Editing them is allowed when preserving current behavior, but
+adding new flat files requires a deliberate debt exception and should normally be
+rejected in review.
+
 ## Roadmap Tracker
 
 Roadmap state is no longer edited directly in `ROADMAP.md`.

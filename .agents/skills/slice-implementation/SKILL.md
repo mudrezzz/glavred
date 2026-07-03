@@ -55,6 +55,14 @@ Implement one small, complete, tested, documented product increment.
   provider/library calls in infrastructure adapters.
 - Backend domain modules must not import OpenRouter, provider SDKs, HTTP clients,
   database sessions, queues, file systems, or `langgraph-document-ai-platform`.
+- Before backend runtime work, read `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`,
+  `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`, and
+  `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`.
+- New DraftRun backend modules must live under `backend/app/drafting`; new upstream
+  radar/search/signal modules must live under `backend/app/upstream`. Do not add new
+  flat `backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
+  `backend/app/application/upstream_radar_*.py` files unless the slice explicitly
+  records a temporary debt exception.
 - If a backend slice changes environment variables, update `.env.example`,
   developer docs, and architecture smoke checks. Never commit real `.env` secrets.
 - For drafting/backend slices, read ADRs

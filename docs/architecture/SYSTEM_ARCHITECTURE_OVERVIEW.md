@@ -41,6 +41,13 @@ in `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, with a generated quick-view 
 diagnostics, and roadmap work should use that document as the current pipeline source
 before changing or judging drafting behavior.
 
+Backend architecture recovery is documented in
+`docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md` and
+`docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`. The decision to stop adding new
+flat DraftRun/Radar modules and move new runtime work into bounded backend contexts
+is recorded in
+`docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`.
+
 Slice-level target designs can add a separate TO BE map before implementation. The
 target for Slice 2.15.3 is documented in
 `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_15_3.md`, with a generated PDF at
@@ -375,6 +382,18 @@ The target backend structure is:
 - `backend/app/settings.py`: typed environment configuration and secret-safe
   validation.
 - `backend/tests/`: unit, contract, and smoke tests that mirror backend ownership.
+
+Slice 2.17.4.6.0 adds the backend recovery package contract above that original
+generic structure. New DraftRun runtime code must live under `backend/app/drafting`;
+new source registry, radar run, search campaign, found material, signal extraction,
+or candidate assembly backend code must live under `backend/app/upstream`; reusable
+provider-neutral operation contracts may live under `backend/app/shared` only when
+they are genuinely cross-context. Existing flat `draft_*` and `upstream_radar_*`
+modules are legacy debt with an explicit architecture-smoke allowlist. Adding a new
+flat `backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
+`backend/app/application/upstream_radar_*.py` file fails architecture smoke unless the
+debt exception is deliberately added. New bounded-context modules must declare
+`Owner`, `Used by`, `Does not own`, and `Architecture doc` in their module docstring.
 
 Slice 2.1 implements the first concrete backend perimeter:
 
