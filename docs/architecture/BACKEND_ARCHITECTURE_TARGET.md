@@ -26,9 +26,10 @@ bounded context at a time while preserving behavior.
 
 ## Implemented Package Boundaries
 
-As of Slice 2.17.4.6.0.1, `backend/app/drafting` exists as the first target
+As of Slice 2.17.4.6.0.2, `backend/app/drafting` exists as the first target
 bounded-context package. It contains package markers, package-local documentation,
-and narrow compatibility shims only.
+narrow compatibility shims, and the first provider-free step/JSON operation
+contracts.
 
 Implemented documentation:
 
@@ -43,6 +44,21 @@ Implemented compatibility anchors:
 These anchors re-export selected legacy DraftRun entrypoints without moving runtime
 behavior. They must not become broad barrels for the whole legacy `draft_*`
 namespace.
+
+Implemented drafting contracts:
+
+- `backend.app.drafting.application.steps.contracts`
+  - `DraftStepContext`
+  - `DraftStepTrace`
+  - `DraftStepOutcome`
+  - `DraftStep`
+- `backend.app.drafting.application.steps.legacy_adapters`
+  - `DraftPlanningStepOutcomeAdapter`
+  - `DraftCandidateStepOutcomeAdapter`
+- `backend.app.drafting.application.operations.json_contracts`
+  - `JsonOperationAttempt`
+  - `JsonOperationResult`
+  - `JsonLlmOperation`
 
 ## Context Ownership
 
@@ -113,11 +129,23 @@ Minimum contract:
 DraftRun JSON LLM operations must keep using the universal JSON retry policy:
 primary, repair, optional backup, then explicit fallback, not-run, or failed outcome.
 
+The Drafting v1 implementation of this contract is:
+
+- new step implementations return `DraftStepOutcome`, not raw `dict[str, Any]`;
+- legacy result dataclasses are adapted through narrow adapters until their owning
+  runtime slices migrate;
+- JSON retry attempts from `json_step_retry_policy.py` are converted into
+  `JsonOperationAttempt`;
+- accepted, fallback, not-run, and failed JSON outcomes are represented by
+  `JsonOperationResult`;
+- architecture smoke rejects new step-like `execute(...) -> dict[...]` contracts in
+  `backend/app/drafting/application/steps`.
+
 ## Migration Sequence
 
 1. Add this contract and architecture smoke stop-line.
 2. Create `backend/app/drafting` skeleton and compatibility shims.
-3. Introduce shared `DraftStep` and JSON operation contracts.
+3. Introduce shared `DraftStep` and JSON operation contracts. Done.
 4. Refactor DraftRun orchestration into a workflow registry.
 5. Move context/evidence/planning clusters.
 6. Move candidate/validation/revision/final quality clusters.

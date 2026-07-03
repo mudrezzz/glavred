@@ -30,6 +30,20 @@ input, typed result, attempt trace, safe error, and secret-safe audit payloads. 
 provider exceptions, headers, tokens, and provider-specific response objects must not
 cross the infrastructure boundary.
 
+Slice 2.17.4.6.0.2 adds the first concrete Drafting contracts:
+
+- `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and `DraftStep` for new
+  DraftRun step code;
+- `JsonOperationAttempt`, `JsonOperationResult`, and `JsonLlmOperation` for DraftRun
+  JSON LLM operations;
+- narrow adapters from `DraftPlanningStepResult` and
+  `DraftCandidateGenerationResult` so migration can proceed without changing runtime
+  artifacts.
+
+New step-like code in `backend/app/drafting/application/steps` must return
+`DraftStepOutcome` rather than a raw dictionary. Legacy services may keep their
+current dataclasses until the owning migration slice moves them.
+
 ## Consequences
 
 - Backend package placement becomes an architecture decision, not a naming accident.

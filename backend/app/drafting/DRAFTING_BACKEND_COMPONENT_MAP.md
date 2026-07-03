@@ -12,15 +12,15 @@ been migrated.
 | --- | --- | --- |
 | `domain` | Provider-free DraftRun entities, step keys, artifact DTOs, validation DTOs. | `backend/app/domain/draft_*.py` |
 | `application/workflow` | Draft workflow sequencing, step registry, workflow state, progress handoff. | `draft_run_pipeline.py`, `draft_run_progress.py`, `draft_run_step_progress.py`, `draft_run_service.py` |
-| `application/steps` | Step-level use cases with stable input/output contracts. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
-| `application/operations` | Provider-neutral JSON and model operation contracts, attempts, safe errors, trace payloads. | `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
+| `application/steps` | Step-level use cases with stable input/output contracts. `contracts.py` defines `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. `legacy_adapters.py` converts the first legacy result shapes without changing runtime behavior. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
+| `application/operations` | Provider-neutral JSON and model operation contracts, attempts, safe errors, trace payloads. `json_contracts.py` defines `JsonOperationAttempt`, `JsonOperationResult`, and the `JsonLlmOperation` protocol. | `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
 | `application/artifacts` | Artifact serialization, payload mapping, compatibility readers. | `draft_run_payloads.py`, `draft_run_context_payloads.py`, step payload helpers |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
 ## Migration Order
 
 1. Keep this skeleton stable and add compatibility imports.
-2. Introduce `DraftStep` and JSON operation contracts.
+2. Introduce `DraftStep` and JSON operation contracts. Done in Slice 2.17.4.6.0.2.
 3. Move `DraftRunPipeline` behind `DraftWorkflow` and `DraftStepRegistry`.
 4. Move context, source ledger, feasibility, post contract, rule pack, and planning
    clusters.
@@ -36,3 +36,10 @@ Current shims:
 
 These shims re-export existing legacy objects. They must not add behavior, state,
 provider calls, persistence, or broad namespace mirroring.
+
+Current adapters:
+
+- `DraftPlanningStepOutcomeAdapter`: converts `DraftPlanningStepResult` to and from
+  `DraftStepOutcome`.
+- `DraftCandidateStepOutcomeAdapter`: converts `DraftCandidateGenerationResult` to
+  and from `DraftStepOutcome` while preserving `final_draft` in `result_payload`.

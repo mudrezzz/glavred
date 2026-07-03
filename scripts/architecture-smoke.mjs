@@ -2470,6 +2470,22 @@ for (const packagePath of DRAFTING_BACKEND_REQUIRED_PACKAGES) {
   );
 }
 
+const draftingReadmeSource = readText(DRAFTING_BACKEND_README_PATH);
+const draftingComponentMapSource = readText(DRAFTING_BACKEND_COMPONENT_MAP_PATH);
+const requiredDraftingContractFragments = [
+  "DraftStepContext",
+  "DraftStepOutcome",
+  "DraftStepTrace",
+  "JsonOperationAttempt",
+  "JsonOperationResult",
+];
+for (const fragment of requiredDraftingContractFragments) {
+  assert(
+    draftingReadmeSource.includes(fragment) || draftingComponentMapSource.includes(fragment),
+    `Drafting package docs must mention unified contract fragment: ${fragment}`
+  );
+}
+
 const workspaceControllerSource = readText("src/app/useWorkspaceController.ts");
 const forbiddenWorkspaceControllerSymbols = [
   "sendContextChatMessage",
@@ -2774,6 +2790,15 @@ for (const backendFile of boundedBackendContextFiles) {
     publicFunctions <= 4 || classes > 0,
     `${backendFile} exposes ${publicFunctions} top-level public functions and no class owner. Add an owning service/policy/DTO or split the module.`
   );
+
+  if (backendFile.startsWith("backend/app/drafting/application/steps/")) {
+    const hasStepLikeClass = /class\s+[A-Za-z_]\w*Step[A-Za-z_]\w*/.test(source);
+    const hasRawDictExecute = /def\s+execute\s*\([^)]*\)\s*->\s*(?:dict|Dict)\s*\[/.test(source);
+    assert(
+      !hasStepLikeClass || !hasRawDictExecute,
+      `${backendFile} defines a step-like execute(...) returning raw dict. New drafting steps must return DraftStepOutcome.`
+    );
+  }
 }
 
 for (const backendFile of backendPythonFiles) {

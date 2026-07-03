@@ -6510,7 +6510,7 @@ Status:
 
 ### Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts
 
-- Status: Ready
+- Status: Done
 - Goal: Introduce a shared DraftRun step contract and JSON LLM operation contract so new services stop inventing one-off payload/result shapes.
 - User value:
   - Pipeline behavior becomes easier to reason about because every step returns the same kind of outcome and trace metadata.
@@ -6538,10 +6538,11 @@ Status:
   - Architecture smoke can detect new public `dict[str, Any]` step contracts in the drafting package.
 - Risks:
   - Overgeneralizing too early; keep the contract small and based on existing artifacts.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn `draft_run_pipeline.py` from a long procedural scenario into a thin facade over `DraftWorkflow` and a step registry.
 - User value:
   - A developer can locate each pipeline step without reading one monolithic orchestration method.
@@ -7341,6 +7342,7 @@ Status:
 - Slice 2.17.4.6: External Search Radar Runner v1. Completed 2026-07-03.
 - Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Package Contract. Completed 2026-07-03.
 - Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims. Completed 2026-07-03.
+- Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -7369,4 +7371,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts`.
+Implement `Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor`.

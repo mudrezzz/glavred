@@ -122,6 +122,18 @@ adding a DraftRun module, read `backend/app/drafting/README.md` and
 the owning drafting subpackage. The current `legacy_pipeline` and `legacy_run`
 modules are compatibility anchors only; do not expand them into broad barrels.
 
+New DraftRun step code should use the unified contracts in
+`backend.app.drafting.application.steps.contracts`: `DraftStepContext`,
+`DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. Do not introduce
+new public step services whose `execute(...)` returns raw `dict[str, Any]`; use
+`DraftStepOutcome` or a narrow legacy adapter.
+
+New DraftRun JSON LLM operation code should use
+`backend.app.drafting.application.operations.json_contracts`: `JsonOperationAttempt`,
+`JsonOperationResult`, and `JsonLlmOperation`. During migration, reuse the existing
+universal retry sequence from `backend.app.application.json_step_retry_policy` and
+convert its attempts into the unified operation contract.
+
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but
 adding new flat files requires a deliberate debt exception and should normally be
