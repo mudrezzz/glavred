@@ -24,6 +24,26 @@ backend/app/
 The current code is not fully migrated to this shape. The recovery track moves one
 bounded context at a time while preserving behavior.
 
+## Implemented Package Boundaries
+
+As of Slice 2.17.4.6.0.1, `backend/app/drafting` exists as the first target
+bounded-context package. It contains package markers, package-local documentation,
+and narrow compatibility shims only.
+
+Implemented documentation:
+
+- `backend/app/drafting/README.md`
+- `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`
+
+Implemented compatibility anchors:
+
+- `backend.app.drafting.application.workflow.legacy_pipeline`
+- `backend.app.drafting.domain.legacy_run`
+
+These anchors re-export selected legacy DraftRun entrypoints without moving runtime
+behavior. They must not become broad barrels for the whole legacy `draft_*`
+namespace.
+
 ## Context Ownership
 
 | Context | Owns | Does not own |

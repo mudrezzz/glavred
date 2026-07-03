@@ -116,6 +116,12 @@ The recovery rule is strict:
 - provider-heavy operations must return a typed result with attempts, safe errors,
   and trace-safe payloads instead of leaking raw provider exceptions.
 
+`backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
+adding a DraftRun module, read `backend/app/drafting/README.md` and
+`backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`, then place the module in
+the owning drafting subpackage. The current `legacy_pipeline` and `legacy_run`
+modules are compatibility anchors only; do not expand them into broad barrels.
+
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but
 adding new flat files requires a deliberate debt exception and should normally be

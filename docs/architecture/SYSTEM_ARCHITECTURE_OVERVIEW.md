@@ -395,6 +395,12 @@ flat `backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
 debt exception is deliberately added. New bounded-context modules must declare
 `Owner`, `Used by`, `Does not own`, and `Architecture doc` in their module docstring.
 
+Slice 2.17.4.6.0.1 creates the `backend/app/drafting` package skeleton with package
+local docs at `backend/app/drafting/README.md` and
+`backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`. The current
+`legacy_pipeline` and `legacy_run` modules are compatibility shims only; they
+re-export selected legacy DraftRun entrypoints without changing runtime behavior.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

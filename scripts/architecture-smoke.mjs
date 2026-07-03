@@ -1684,6 +1684,20 @@ const BACKEND_ARCHITECTURE_AS_IS_PATH = "docs/architecture/BACKEND_ARCHITECTURE_
 const BACKEND_ARCHITECTURE_TARGET_PATH = "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md";
 const BACKEND_BOUNDED_CONTEXTS_ADR_PATH =
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md";
+const DRAFTING_BACKEND_README_PATH = "backend/app/drafting/README.md";
+const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
+  "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
+const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
+  "backend/app/drafting",
+  "backend/app/drafting/api",
+  "backend/app/drafting/domain",
+  "backend/app/drafting/application",
+  "backend/app/drafting/application/workflow",
+  "backend/app/drafting/application/steps",
+  "backend/app/drafting/application/operations",
+  "backend/app/drafting/application/artifacts",
+  "backend/app/drafting/infrastructure",
+];
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 const ENV_EXAMPLE_PATH = ".env.example";
 
@@ -2443,6 +2457,18 @@ assert(
   fileExists(BACKEND_BOUNDED_CONTEXTS_ADR_PATH),
   `${BACKEND_BOUNDED_CONTEXTS_ADR_PATH} is required.`
 );
+assert(fileExists(DRAFTING_BACKEND_README_PATH), `${DRAFTING_BACKEND_README_PATH} is required.`);
+assert(
+  fileExists(DRAFTING_BACKEND_COMPONENT_MAP_PATH),
+  `${DRAFTING_BACKEND_COMPONENT_MAP_PATH} is required.`
+);
+for (const packagePath of DRAFTING_BACKEND_REQUIRED_PACKAGES) {
+  assert(fileExists(packagePath), `${packagePath} package is required for Drafting backend boundary.`);
+  assert(
+    fileExists(`${packagePath}/__init__.py`),
+    `${packagePath}/__init__.py is required as a Drafting backend package marker.`
+  );
+}
 
 const workspaceControllerSource = readText("src/app/useWorkspaceController.ts");
 const forbiddenWorkspaceControllerSymbols = [
@@ -2800,6 +2826,8 @@ const requiredSaoFragments = [
   "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md",
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md",
   "backend/app/drafting",
+  "backend/app/drafting/README.md",
+  "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md",
   "backend/app/upstream",
   "backend/app/shared",
   "flat `draft_*` and `upstream_radar_*`",

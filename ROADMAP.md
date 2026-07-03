@@ -6478,7 +6478,7 @@ Status:
 
 ### Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims
 
-- Status: Ready
+- Status: Done
 - Goal: Create the target `backend/app/drafting` package boundary without changing runtime behavior.
 - User value:
   - Developers get an obvious home for DraftRun code instead of adding another flat `draft_*` file.
@@ -6506,10 +6506,11 @@ Status:
   - Legacy DraftRun tests pass through compatibility shims.
 - Risks:
   - Skeleton packages can become empty boilerplate; keep them minimal and tied to the migration plan.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts
 
-- Status: Backlog
+- Status: Ready
 - Goal: Introduce a shared DraftRun step contract and JSON LLM operation contract so new services stop inventing one-off payload/result shapes.
 - User value:
   - Pipeline behavior becomes easier to reason about because every step returns the same kind of outcome and trace metadata.
@@ -7339,6 +7340,7 @@ Status:
 - Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs. Completed 2026-07-03.
 - Slice 2.17.4.6: External Search Radar Runner v1. Completed 2026-07-03.
 - Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Package Contract. Completed 2026-07-03.
+- Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -7367,4 +7369,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims`.
+Implement `Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts`.
