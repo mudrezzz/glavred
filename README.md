@@ -61,9 +61,11 @@ Slice 2.17.4.5 adds the first executable upstream contract before more downstrea
 multi-platform work: project workspaces now contain `SourceRegistry`, `RadarRun`, and
 `FoundMaterial`. Expanding a radar and clicking `Запустить радар` records source
 handles, local operations, found internal material, and explicit skipped reasons for
-provider-backed search/URL/document handles. This does not create reviewed
-`SourceSignal` or `PostCandidate` records yet. `DraftRun` stays downstream and should
-consume an approved candidate/brief rather than discover the first post idea itself.
+provider-backed search/URL/document handles. The expanded radar keeps configuration
+under `Настройка` and diagnostics under `Трасса запуска`. This does not create
+reviewed `SourceSignal` or `PostCandidate` records yet. `DraftRun` stays downstream
+and should consume an approved candidate/brief rather than discover the first post
+idea itself.
 `Кандидаты постов` is now the first working candidate layer: approved signals become
 2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
 confidence, and risks. Candidate format was removed because fabula already owns the

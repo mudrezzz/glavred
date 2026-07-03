@@ -202,9 +202,10 @@ offered. Draft generation starts only after a candidate is approved.
 Current radar execution is a local deterministic contract run. In `Радары`, expand a
 radar and click `Запустить радар`: Glavred records which source handles were eligible,
 which operations ran or were skipped, what internal material was found, and why
-external search/URL/document operations are still skipped. This trace is shown in the
-radar card and stays separate from `Найденные сигналы`. It does not create new
-signals or post candidates yet.
+external search/URL/document operations are still skipped. The expanded radar has
+internal tabs: `Настройка` for rules/sources/filters and `Трасса запуска` for run
+diagnostics. This trace stays separate from `Найденные сигналы`. It does not create
+new signals or post candidates yet.
 
 The section has three internal tabs:
 

@@ -29,9 +29,17 @@ describe('Signals app flow', () => {
     expect(document.querySelector('.source-grid')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Sanitized author materials/i }));
+    const expandedRadar = screen.getAllByTestId('radar-row').find((row) => row.classList.contains('expanded')) as HTMLElement;
+    expect(within(expandedRadar).getByRole('tab', { name: /Настройка/i })).toHaveAttribute('aria-selected', 'true');
+    expect(within(expandedRadar).getByTestId('radar-settings-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('radar-upstream-trace')).not.toBeInTheDocument();
+    fireEvent.click(within(expandedRadar).getByRole('tab', { name: /Трасса запуска/i }));
     expect(screen.getByTestId('radar-upstream-trace')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Запустить радар/i }));
-    expect(screen.getAllByTestId('radar-upstream-trace').length).toBeGreaterThan(0);
+    fireEvent.click(within(expandedRadar).getByRole('tab', { name: /Настройка/i }));
+    fireEvent.click(within(expandedRadar).getByRole('button', { name: /Запустить радар/i }));
+    expect(within(expandedRadar).getByRole('tab', { name: /Трасса запуска/i })).toHaveAttribute('aria-selected', 'true');
+    expect(within(expandedRadar).getByTestId('radar-upstream-trace')).toBeInTheDocument();
+    fireEvent.click(within(expandedRadar).getByRole('tab', { name: /Настройка/i }));
     fireEvent.click(screen.getByRole('button', { name: /Открыть сигналы|РћС‚РєСЂС‹С‚СЊ СЃРёРіРЅР°Р»С‹/i }));
 
     const signalList = screen.getByTestId('source-signal-list');

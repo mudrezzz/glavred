@@ -6377,7 +6377,7 @@ Status:
 
 ### Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs
 
-- Status: Ready
+- Status: Done
 - Goal: Separate radar configuration from deterministic run diagnostics by adding internal tabs inside expanded radar rows.
 - User value: Radar settings stay readable while run trace and found material diagnostics move into a dedicated place.
 - Scope:
@@ -6397,10 +6397,11 @@ Status:
   - Agents can use CLI commands instead of manually editing ROADMAP.md.
   - ROADMAP.md renders from docs/roadmap/slices.export.jsonl.
   - Roadmap changes remain reviewable in git diff.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6: External Search Radar Runner v1
 
-- Status: Backlog
+- Status: Ready
 - Goal: Run a narrow, budgeted external search for selected radars and store normalized found materials instead of hand-seeded signals only.
 - User value:
   - The system can bring fresh external material into the editorial workflow for review.
@@ -6824,6 +6825,7 @@ Status:
 - Slice 2.17.4.3: Блог Главреда Project Rework. Completed 2026-07-03.
 - Slice 2.17.4.4: Upstream Search and Signal Architecture. Completed 2026-07-03.
 - Slice 2.17.4.5: Source Registry and Radar Run Contract. Completed 2026-07-03.
+- Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -6852,4 +6854,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs`.
+Implement `Slice 2.17.4.6: External Search Radar Runner v1`.

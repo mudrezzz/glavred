@@ -126,6 +126,8 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   snapshot and are visible in `Сигналы -> Радары`;
 - deterministic `Run radar` creates a contract run over active source handles, records
   operations, explicit skipped reasons, budget usage, and internal found material;
+- expanded radar rows keep configuration in an internal settings tab and run
+  diagnostics in an internal run-trace tab;
 - external URL/open-web/social/document handles are stored as execution targets but
   are skipped as `provider-not-implemented`, `url-reader-not-implemented`, or
   equivalent metadata-only reasons until 2.17.4.6;

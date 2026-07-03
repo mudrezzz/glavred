@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { RadarDefinition } from '../../domain/editorialWorkspace';
 import {
   formatDate,
@@ -14,6 +15,8 @@ import {
 import { RadarEditor } from './RadarEditor';
 import { RadarRunTraceSection } from './RadarRunTraceSection';
 import type { SignalsController } from './useSignalsController';
+
+type RadarDetailTab = 'settings' | 'trace';
 
 export function RadarCard({
   radar,
@@ -32,6 +35,7 @@ export function RadarCard({
 }) {
   const expanded = controller.expandedRadarId === radar.id;
   const editingThisRadar = controller.editingRadar?.id === radar.id && !controller.isNewRadar;
+  const [detailTab, setDetailTab] = useState<RadarDetailTab>('settings');
   const latestRun = controller.latestRunsByRadar[radar.id];
   const runSummary = controller.radarRunSummaries[radar.id];
   const sourceHandles = controller.sourceHandlesByRadar[radar.id] ?? [];
@@ -44,6 +48,7 @@ export function RadarCard({
         type="button"
         onClick={() => {
           if (editingThisRadar) return;
+          if (!expanded) setDetailTab('settings');
           controller.setExpandedRadarId(expanded ? '' : radar.id);
         }}
       >
@@ -85,49 +90,69 @@ export function RadarCard({
 
       {expanded && !editingThisRadar && (
         <div className="radar-details">
-          <p>{radar.scope}</p>
-          <RadarRulesSection radar={radar} />
-          <RadarSourcesSection radar={radar} />
-          <RadarRunTraceSection latestRun={latestRun} sourceHandles={sourceHandles} foundMaterials={foundMaterials} />
-          <RadarFiltersSection radar={radar} />
-          <dl className="meta-list">
-            <dt>Политика утверждения</dt>
-            <dd>{radarAcceptancePolicyLabel(radar.acceptancePolicy)}</dd>
-            <dt>Запуск</dt>
-            <dd>{radarTriggerModeLabel(radar.triggerMode)}</dd>
-          </dl>
-          <div className="row-actions radar-actions entity-actions-footer">
-            <button className="btn btn-sec btn-sm" type="button" onClick={() => controller.startRadarEdit(radar)}>
-              Редактировать
+          <div className="tabs compact-tabs radar-detail-tabs" role="tablist" aria-label="Разделы радара">
+            <button className={`tab ${detailTab === 'settings' ? 'active' : ''}`} type="button" role="tab" aria-selected={detailTab === 'settings'} onClick={() => setDetailTab('settings')}>
+              Настройка
             </button>
-            <button className="btn btn-sec btn-sm" type="button" onClick={() => onRunRadar(radar)}>
-              Запустить радар
-            </button>
-            <button className="btn btn-sec btn-sm" type="button" onClick={() => onToggleRadarStatus(radar)}>
-              {radar.status === 'paused' ? 'Запустить' : 'Остановить'}
-            </button>
-            <button
-              className="btn btn-ghost btn-sm"
-              type="button"
-              onClick={() => {
-                controller.setRadarFilter(radar.id);
-                controller.setTab('signals');
-              }}
-            >
-              Открыть сигналы
-            </button>
-            <button
-              className="btn btn-ghost btn-sm"
-              type="button"
-              onClick={() => {
-                if (window.confirm('Удалить радар? Найденные сигналы останутся в истории разбора.')) {
-                  onDeleteRadar(radar);
-                }
-              }}
-            >
-              Удалить
+            <button className={`tab ${detailTab === 'trace' ? 'active' : ''}`} type="button" role="tab" aria-selected={detailTab === 'trace'} onClick={() => setDetailTab('trace')}>
+              Трасса запуска
             </button>
           </div>
+          {detailTab === 'settings' ? (
+            <div className="radar-tab-panel" data-testid="radar-settings-panel">
+              <p>{radar.scope}</p>
+              <RadarRulesSection radar={radar} />
+              <RadarSourcesSection radar={radar} />
+              <RadarFiltersSection radar={radar} />
+              <dl className="meta-list">
+                <dt>Политика утверждения</dt>
+                <dd>{radarAcceptancePolicyLabel(radar.acceptancePolicy)}</dd>
+                <dt>Запуск</dt>
+                <dd>{radarTriggerModeLabel(radar.triggerMode)}</dd>
+              </dl>
+              <div className="row-actions radar-actions entity-actions-footer">
+                <button className="btn btn-sec btn-sm" type="button" onClick={() => controller.startRadarEdit(radar)}>
+                  Редактировать
+                </button>
+                <button
+                  className="btn btn-sec btn-sm"
+                  type="button"
+                  onClick={() => {
+                    setDetailTab('trace');
+                    onRunRadar(radar);
+                  }}
+                >
+                  Запустить радар
+                </button>
+                <button className="btn btn-sec btn-sm" type="button" onClick={() => onToggleRadarStatus(radar)}>
+                  {radar.status === 'paused' ? 'Запустить' : 'Остановить'}
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  type="button"
+                  onClick={() => {
+                    controller.setRadarFilter(radar.id);
+                    controller.setTab('signals');
+                  }}
+                >
+                  Открыть сигналы
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Удалить радар? Найденные сигналы останутся в истории разбора.')) {
+                      onDeleteRadar(radar);
+                    }
+                  }}
+                >
+                  Удалить
+                </button>
+              </div>
+            </div>
+          ) : (
+            <RadarRunTraceSection latestRun={latestRun} sourceHandles={sourceHandles} foundMaterials={foundMaterials} />
+          )}
         </div>
       )}
     </article>

@@ -202,10 +202,11 @@ opens the same slot cards under the selected date. Future slices can add candida
 variant requests and then turn `План` into a real calendar with readiness statuses.
 
 Slice 2.17.4.5 adds the first visible upstream contract run for the demo portfolio.
-Expand a radar and click `Запустить радар` to see project source handles, run
-operations, skipped provider placeholders, and found internal material. This trace is
-separate from `Найденные сигналы`: it does not create reviewed signals or candidates
-yet. The target benchmark path is now:
+Expand a radar and click `Запустить радар`; the row switches to its `Трасса запуска`
+tab, where you can see project source handles, run operations, skipped provider
+placeholders, and found internal material. This trace is separate from `Найденные
+сигналы`: it does not create reviewed signals or candidates yet. The target benchmark
+path is now:
 
 `SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate`.
 
