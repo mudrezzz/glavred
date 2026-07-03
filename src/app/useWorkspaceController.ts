@@ -48,7 +48,7 @@ export function useWorkspaceController() {
     setWorkspace,
     workspace
   });
-  const signalsActions = useSignalsWorkspaceActions({ setToast, setWorkspace });
+  const signalsActions = useSignalsWorkspaceActions({ setToast, setWorkspace, workspace });
   const postCandidateActions = usePostCandidateWorkspaceActions({ setToast, setWorkspace });
   const productionActions = useProductionFlowActions({ patchWorkspace, workspace });
 

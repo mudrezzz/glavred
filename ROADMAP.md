@@ -6350,7 +6350,7 @@ Status:
   - Support internal sources: author memory, archive/import queue, previous posts, manual notes.
   - Support configured external handles: URL, open-web query, social/profile handle as metadata, document/source placeholder.
   - Store run status, operation trace, budget/caps, found material ids, errors, skipped sources, and used search rules.
-  - Add local-first fixtures and UI trace/read model inside `???????`.
+  - Add local-first fixtures and UI trace/read model inside `Сигналы -> Радары`.
 - Out of scope:
   - Autonomous web crawling.
   - LLM extraction/scoring.
@@ -6401,7 +6401,7 @@ Status:
 
 ### Slice 2.17.4.6: External Search Radar Runner v1
 
-- Status: Ready
+- Status: Done
 - Goal: Run a narrow, budgeted external search for selected radars and store normalized found materials instead of hand-seeded signals only.
 - User value:
   - The system can bring fresh external material into the editorial workflow for review.
@@ -6410,7 +6410,7 @@ Status:
   - Reuse existing OpenRouter web search/URL reader infrastructure where practical.
   - Apply project/fabula research depth and execution budget caps to upstream search.
   - Normalize results into `FoundMaterial` with source title, URL, snippet/summary, capturedAt, operation provenance, and retrieval warnings.
-  - Show found materials under `???????` before they become source signals.
+  - Show found materials under `Сигналы -> Радары` before they become source signals.
 - Out of scope:
   - Full crawler/RSS/social API integrations.
   - Candidate generation.
@@ -6433,10 +6433,11 @@ Status:
   - A radar run can produce traceable found materials or a clear failed/empty result.
 - Risks:
   - Provider instability and cost; v1 must be bounded and trace-visible.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -6468,6 +6469,79 @@ Status:
   - Each campaign has at least several typed intents or explicit skipped reasons.
 - Risks:
   - Deterministic queries can become formulaic; later LLM expansion must improve breadth without replacing traceability.
+
+### Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario
+
+- Status: Backlog
+- Goal: Add one canonical radar benchmark scenario for `Опытный цех «Сборочная»` so upstream search changes can be evaluated against a stable diagnostic case.
+- User value:
+  - The team can test radar search quality on a concrete industrial AI scenario instead of judging by one-off screenshots or ad hoc live runs.
+- Scope:
+  - Add provider-free `RadarBenchmarkScenario` metadata for `benchmark-industrial-ai-maintenance-cases`.
+  - Bind it to project `project-ai-design-patterns` and the industrial AI cases radar.
+  - Define expected query intents, evidence types, minimum raw results, selected reads, found materials, source diversity, and unacceptable noise.
+  - Add recorded fixture adapters/results so the scenario runs without network or OpenRouter spend.
+  - Produce a deterministic benchmark report covering intent coverage, source diversity, read success, noise, and trace completeness.
+  - Ensure the benchmark proves no `SourceSignal`, `PostCandidate`, plan slot, or DraftRun is created.
+- Out of scope:
+  - Three-project benchmark corpus.
+  - Live provider quality approval.
+  - Signal extraction, scoring, candidate assembly, or DraftRun changes.
+  - New UI trace page.
+- Implementation notes:
+  - The scenario should exercise the mature search algorithm: search plan, query fan-out, raw results, dedupe, selective URL read, and normalized `FoundMaterial`.
+  - Use recorded fixture mode as the regression gate; live smoke mode can remain documented/manual until the broader harness slice.
+- Architecture impact:
+  - Introduces benchmark-scenario ownership as application/test support around upstream search, not inside React feature components.
+- Tests:
+  - Recorded benchmark test for `Опытный цех «Сборочная»` industrial AI cases.
+  - Assertions for expected intents, evidence-type coverage, read decisions, source diversity, and no downstream artifact creation.
+  - Regression with existing radar runner tests.
+- Docs:
+  - Update upstream architecture, developer guide, demo README, and roadmap artifacts.
+- Demo impact:
+  - The three-blog portfolio gets one explicit golden upstream-search diagnostic scenario before the full benchmark corpus.
+- Acceptance criteria:
+  - A single command/test can run the golden scenario without network access and produce a readable pass/warning/fail report.
+  - The report explains what the radar searched, what it found, what it rejected, and which expectations were not met.
+- Risks:
+  - Fixture quality can become too curated; keep recorded data realistic and include at least one noisy/duplicate result.
+
+### Slice 2.17.4.6.1.2: RadarRun Trace Page
+
+- Status: Backlog
+- Goal: Add a dedicated `RadarRun` trace page similar to DraftRun/AiRun trace inspection so search diagnostics are readable outside the compact radar card.
+- User value:
+  - The editor and developer can inspect exactly how a radar searched, selected, skipped, failed, and normalized material without digging through JSON or cramped inline panels.
+- Scope:
+  - Add route/page `/radar-runs?runId=<id>` or equivalent app route for one `RadarRun`.
+  - Show project, radar, run status, budget, mode, start/completion timestamps, and provider/config summary.
+  - Render search plan, source handles, operation timeline, raw results, selected-for-read, rejected-before-read, found materials, warnings, and errors.
+  - Add benchmark verdict section when a `RadarBenchmarkScenario` report is available.
+  - Link from `Сигналы -> Радары -> Трасса запуска` to the dedicated trace page.
+  - Keep old/minimal radar runs readable when they do not have `searchPlan`, `rawResults`, or benchmark metadata.
+- Out of scope:
+  - Editing radar configuration from the trace page.
+  - Signal approval, candidate assembly, or DraftRun trace changes.
+  - New backend persistence tables.
+- Implementation notes:
+  - Treat the page as a read model over existing workspace/backend snapshot data.
+  - Reuse the semantic trace approach from `/ai-runs?runId=...`, but keep upstream search concepts separate from DraftRun concepts.
+- Architecture impact:
+  - Separates diagnostic trace inspection from the operational radar card UI and prevents `RadarCard` from becoming a diagnostics god component.
+- Tests:
+  - UI tests for trace page rendering with full external run metadata.
+  - Compatibility tests for old deterministic/minimal runs.
+  - Link/navigation test from radar run tab to trace page.
+- Docs:
+  - Update user guide, developer guide, demo README, and upstream architecture.
+- Demo impact:
+  - Demo users can open a readable trace for the golden industrial AI benchmark run.
+- Acceptance criteria:
+  - A user can open one run id and understand search plan, operations, raw results, triage, found materials, and benchmark verdict.
+  - The compact radar card remains usable and does not duplicate the full diagnostic page.
+- Risks:
+  - Trace page can become too dense; use progressive disclosure and semantic sections rather than raw JSON dumps.
 
 ### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
 
@@ -6582,7 +6656,7 @@ Status:
 - User value:
   - The team can compare search algorithm changes on the three benchmark blogs instead of judging by screenshots or single lucky runs.
 - Scope:
-  - Add benchmark radar fixtures for `??????? ???`, `???????? ?????`, and `???? ????????`.
+  - Add benchmark radar fixtures for `Опытный цех`, `Северная стена`, and `Блог Главреда`.
   - Define expected evidence types, unacceptable noise, freshness expectations, diversity targets, and must-not-miss source categories.
   - Add evaluation reports for recall proxies, precision proxies, duplicate rate, read success rate, source diversity, evidence-type coverage, and trace completeness.
   - Add smoke-mode benchmark runs that do not require high spend.
@@ -6718,7 +6792,7 @@ Status:
 - User value:
   - The editor can inspect found material, approve/reject signals, compare post candidates, and send the chosen concept to the plan without guessing what happened.
 - Scope:
-  - Refine `???????` into explicit layers: `??????`, `?????????`, `???????`, `?????????`.
+  - Refine `Сигналы` into explicit layers: `Материалы`, `Сигналы`, `Кандидаты`, `Диагностика`.
   - Add compact/expanded states for found material, scored signal, and post candidate cards using the approved design-system card patterns.
   - Show score/rationale, source provenance, topic/fabula match, risks, and next action.
   - Add manual override/correction path that is trace-visible.
@@ -7035,6 +7109,7 @@ Status:
 - Slice 2.17.4.4: Upstream Search and Signal Architecture. Completed 2026-07-03.
 - Slice 2.17.4.5: Source Registry and Radar Run Contract. Completed 2026-07-03.
 - Slice 2.17.4.5.1: Radar Settings and Run Trace Tabs. Completed 2026-07-03.
+- Slice 2.17.4.6: External Search Radar Runner v1. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -7063,4 +7138,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6: External Search Radar Runner v1`.
+Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.

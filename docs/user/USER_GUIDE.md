@@ -199,13 +199,22 @@ That means a future radar should show what it searched, what it found, what beca
 signal, why the signal is promising or weak, and why a topic/fabula candidate was
 offered. Draft generation starts only after a candidate is approved.
 
-Current radar execution is a local deterministic contract run. In `Радары`, expand a
-radar and click `Запустить радар`: Glavred records which source handles were eligible,
-which operations ran or were skipped, what internal material was found, and why
-external search/URL/document operations are still skipped. The expanded radar has
-internal tabs: `Настройка` for rules/sources/filters and `Трасса запуска` for run
+Current radar execution has a first external-search mode. In `Радары`, expand a radar
+and click `Запустить радар`: Glavred tries the backend runner, builds a search plan,
+runs configured OpenRouter web-search queries, deduplicates raw results, chooses
+which URLs to read, and stores found material with warnings when reading fails. If
+the backend is unavailable, the same action falls back to the local deterministic
+contract run. The expanded radar has internal tabs: `Настройка` for rules/sources/
+filters and `Трасса запуска` for search plan, operations, triage, found material, and
 diagnostics. This trace stays separate from `Найденные сигналы`. It does not create
 new signals or post candidates yet.
+
+The next diagnostic layer will use one golden radar benchmark first:
+`Опытный цех «Сборочная»` / industrial AI maintenance cases. That scenario is meant
+to answer whether the radar searched the right evidence types, read diverse useful
+sources, rejected noise, and kept the result as found material. A separate RadarRun
+trace page is planned so this diagnostic can be opened from a run id, similar to the
+DraftRun/AiRun trace pages.
 
 The section has three internal tabs:
 

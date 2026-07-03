@@ -72,9 +72,21 @@ ready benchmark scenarios before the project is treated as demo-ready.
 Upstream source discovery now has its own boundary. Keep provider-free DTOs and
 normalization in `src/domain/upstream-search`, local deterministic orchestration in
 `src/application/upstreamRadarRunService.ts`, and UI/read-model rendering in
-`src/features/signals`. `Run radar` in Slice 2.17.4.5 is a contract run only: it may
-create `RadarRun` and `FoundMaterial`, but it must not create `SourceSignal`,
-`PostCandidate`, plan slots, DraftRuns, or provider calls.
+`src/features/signals`. `Run radar` now first calls the backend external runner
+through `src/infrastructure/radarRunClient.ts` and falls back to the local contract
+run if the backend is unavailable. The backend runner may create `RadarRun`,
+`searchPlan`, raw results, selected/rejected URL-read decisions, and `FoundMaterial`,
+but it must not create `SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
+Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
+URL reading belongs behind the public URL reader port.
+
+Before treating radar search as reliable, keep one golden upstream benchmark small
+and repeatable. The planned first scenario is
+`benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`: it should
+use recorded search/read fixtures, verify query-intent and evidence-type coverage,
+and prove the runner stops at `FoundMaterial`. Broader three-project evaluation
+belongs to the later benchmark corpus slice. A dedicated `RadarRun` trace page should
+be implemented before the upstream trace becomes too large for the inline radar card.
 
 See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.

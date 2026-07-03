@@ -117,10 +117,10 @@ editorial learning note:
 `AuthorNote -> AuthorMemoryEvent -> AuthorPositionAssertion -> RadarDefinition -> reviewed SourceSignal -> approved PostCandidate -> InsightCard -> ContentPlanItem -> EditorialWorkItem -> approved PostBrief -> PostDraft -> EditorialChecks -> approved FinalText -> ReleasePackage -> EditorialLearningNote`
 
 This perimeter is still compatible, but it skips several upstream artifacts that now
-have an architecture target. Slice 2.17.4.5 implements the first part:
-`SourceRegistry`, `RadarRun`, and `FoundMaterial` are project-scoped local workspace
-artifacts and `Сигналы -> Радары` can run a deterministic contract trace. The next
-gaps are still `SignalExtractionReport`, `SignalScore`, and
+have an architecture target. Slice 2.17.4.6 implements the first executable retrieval
+part: `SourceRegistry`, `RadarRun`, and `FoundMaterial` are project-scoped workspace
+artifacts, and `Сигналы -> Радары` can run a backend external search campaign with a
+local deterministic contract fallback. The next gaps are still `SignalExtractionReport`, `SignalScore`, and
 `CandidateAssemblyReport`; seeded source signals and deterministic candidate assembly
 remain compatibility behavior until the later upstream slices replace them.
 
@@ -257,6 +257,9 @@ approves editorial artifacts automatically.
   fuel for author memory and content production, not the only source of posts.
 - `RadarRun`: one executable attempt for a radar. It records status, budget, run
   operations, found material ids, skipped sources, and errors.
+- `RadarRunTrace`: planned read-model page for one run id. It should render the full
+  upstream search campaign and benchmark verdict without turning `RadarCard` into a
+  diagnostics god component.
 - `FoundMaterial`: retrieval output from an internal or external source, with source
   and run provenance. It is not yet a reviewed source signal and does not own topic or
   fabula.
@@ -1982,10 +1985,11 @@ is unavailable.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
-- Upstream search adapters should populate `RadarRun` and `FoundMaterial` before
-  promoting anything into `SourceSignal`. OpenRouter search, URL reading, future RSS,
-  social, document, API, and MCP adapters belong in infrastructure; signal extraction,
-  scoring, and candidate assembly belong in application services.
+- Upstream search adapters should populate `RadarRun`, `searchPlan`, raw results,
+  selected/rejected read decisions, and `FoundMaterial` before promoting anything
+  into `SourceSignal`. OpenRouter search, URL reading, future RSS, social, document,
+  API, and MCP adapters belong in infrastructure; signal extraction, scoring, and
+  candidate assembly belong in application services.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
 - Context chat can open draft flows for structured entities, but should not bypass

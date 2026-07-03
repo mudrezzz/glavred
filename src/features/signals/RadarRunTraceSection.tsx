@@ -14,6 +14,8 @@ export function RadarRunTraceSection({
       <h4>Трасса запуска</h4>
       <SourceHandleList sourceHandles={sourceHandles} />
       <LatestRunTrace latestRun={latestRun} />
+      <SearchPlanTrace latestRun={latestRun} />
+      <SearchResultTrace latestRun={latestRun} />
       <FoundMaterialList foundMaterials={foundMaterials} />
     </div>
   );
@@ -57,7 +59,76 @@ function LatestRunTrace({ latestRun }: { latestRun?: RadarRun }) {
             <p>
               <strong>{operation.label}</strong>
               <br />
-              {operation.skippedReason ?? operation.kind}
+              {operation.error ?? operation.skippedReason ?? operation.kind}
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SearchPlanTrace({ latestRun }: { latestRun?: RadarRun }) {
+  if (!latestRun?.searchPlan) return null;
+  return (
+    <>
+      <h4>Карта поиска</h4>
+      <p className="muted">
+        {latestRun.searchPlan.strategy} · {latestRun.searchPlan.language}
+      </p>
+      <div className="radar-object-list">
+        {latestRun.searchPlan.queries.map((query) => (
+          <div className="radar-object" key={query.id}>
+            <span className="sig">{query.intent}</span>
+            <p>
+              <strong>{query.label}</strong>
+              <br />
+              {query.query}
+              <br />
+              <span className="muted">{query.rationale}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SearchResultTrace({ latestRun }: { latestRun?: RadarRun }) {
+  if (!latestRun?.rawResults?.length) return null;
+  return (
+    <>
+      <h4>Отбор перед чтением</h4>
+      <dl className="meta-list upstream-run-meta">
+        <dt>Сырые результаты</dt>
+        <dd>{latestRun.rawResults.length}</dd>
+        <dt>Выбрано читать</dt>
+        <dd>{latestRun.selectedForRead?.length ?? 0}</dd>
+        <dt>Отклонено до чтения</dt>
+        <dd>{latestRun.rejectedBeforeRead?.length ?? 0}</dd>
+      </dl>
+      <div className="radar-object-list">
+        {(latestRun.selectedForRead ?? []).map((selection) => (
+          <div className="radar-object" key={selection.rawResultId}>
+            <span className="sig">read</span>
+            <p>
+              <strong>{selection.reason}</strong>
+              <br />
+              {selection.url}
+              <br />
+              <span className="muted">score {selection.score}</span>
+            </p>
+          </div>
+        ))}
+        {(latestRun.rejectedBeforeRead ?? []).slice(0, 4).map((rejection) => (
+          <div className="radar-object" key={rejection.rawResultId}>
+            <span className="sig">skip</span>
+            <p>
+              <strong>{rejection.reason}</strong>
+              <br />
+              {rejection.url}
+              <br />
+              <span className="muted">score {rejection.score}</span>
             </p>
           </div>
         ))}
@@ -69,17 +140,20 @@ function LatestRunTrace({ latestRun }: { latestRun?: RadarRun }) {
 function FoundMaterialList({ foundMaterials }: { foundMaterials: FoundMaterial[] }) {
   if (foundMaterials.length === 0) return null;
   return (
-    <div className="radar-object-list">
-      {foundMaterials.map((material) => (
-        <div className="radar-object" key={material.id}>
-          <span className="sig">{material.status}</span>
-          <p>
-            <strong>{material.title}</strong>
-            <br />
-            {material.snippet}
-          </p>
-        </div>
-      ))}
-    </div>
+    <>
+      <h4>Найденные материалы</h4>
+      <div className="radar-object-list">
+        {foundMaterials.map((material) => (
+          <div className="radar-object" key={material.id}>
+            <span className="sig">{material.status}</span>
+            <p>
+              <strong>{material.title}</strong>
+              <br />
+              {material.snippet}
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

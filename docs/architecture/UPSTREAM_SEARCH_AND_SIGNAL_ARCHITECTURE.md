@@ -1,6 +1,6 @@
 # Upstream Search and Signal Architecture
 
-Current as of Slice 2.17.4.5.
+Current as of Slice 2.17.4.6.
 
 ## Purpose
 
@@ -36,10 +36,11 @@ editorial candidate assembly must have separate ownership and trace.
 
 ## Core Contracts
 
-These contracts are the upstream boundary. Slice 2.17.4.5 implements the first
-local deterministic part: project-scoped `SourceRegistry`, `RadarRun`, run
-operations, and `FoundMaterial`. Provider-backed search, URL reading, extraction,
-scoring, and candidate assembly v2 remain later slices.
+These contracts are the upstream boundary. Slice 2.17.4.6 implements the first
+provider-backed retrieval pass: project-scoped `SourceRegistry`, `RadarRun`, typed
+search plan, OpenRouter web-search operations, selective URL reads, raw result
+triage, and normalized `FoundMaterial`. Signal extraction, scoring, and candidate
+assembly v2 remain later slices.
 
 | Contract | Owns | Does Not Own |
 | --- | --- | --- |
@@ -122,15 +123,19 @@ scoring, and candidate assembly v2 remain later slices.
 The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, and
 `Signals` tabs. The compatibility gaps are:
 
-- `SourceRegistry`, `RadarRun`, and `FoundMaterial` now exist in the local workspace
+- `SourceRegistry`, `RadarRun`, and `FoundMaterial` now exist in the workspace
   snapshot and are visible in `Сигналы -> Радары`;
-- deterministic `Run radar` creates a contract run over active source handles, records
-  operations, explicit skipped reasons, budget usage, and internal found material;
+- `Run radar` first tries the backend external runner and falls back to the local
+  deterministic contract run when the backend is unavailable;
+- the backend external runner builds a deterministic search campaign from radar
+  settings, source handles, project language, and budget mode;
+- each external run records `searchPlan`, query operations, raw search results,
+  pre-read triage, selected URL reads, rejected-before-read results, warnings, and
+  normalized found materials;
 - expanded radar rows keep configuration in an internal settings tab and run
   diagnostics in an internal run-trace tab;
-- external URL/open-web/social/document handles are stored as execution targets but
-  are skipped as `provider-not-implemented`, `url-reader-not-implemented`, or
-  equivalent metadata-only reasons until 2.17.4.6;
+- URL read failures are kept as `search-result-only` found material with warnings
+  when enough search-result metadata exists;
 - `sourceSignals` are still seeded/demo-local or manually reviewed compatibility data
   rather than produced by extraction from `FoundMaterial`;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
@@ -139,7 +144,7 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   remain on `SourceSignal`, but UI and new services must not treat them as ownership.
 
 Until Slice 2.17.4.8 replaces candidate assembly, blind pairing is legacy behavior and
-must be kept working only as a fallback. Running a radar in 2.17.4.5 must not create
+must be kept working only as a fallback. Running a radar in 2.17.4.6 must not create
 `SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
 
 ## Trace Requirements
@@ -147,18 +152,47 @@ must be kept working only as a fallback. Running a radar in 2.17.4.5 must not cr
 Every future upstream run should make the handoff readable:
 
 - what sources were eligible;
+- what search plan and query intents were built;
 - what operations ran or were skipped by budget;
+- what raw search results were returned;
+- which results were selected for URL reading and which were rejected before reading;
 - what material was found;
 - which materials became signals and which were rejected as noise;
 - how signal scoring dimensions were decided;
 - why a topic/fabula candidate was accepted or rejected;
 - what human correction or approval changed.
 
+## Benchmark And Trace Inspection Plan
+
+The first stable diagnostic scenario should be a single golden radar, not a broad
+benchmark corpus. The planned golden scenario is
+`benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`, bound to
+the industrial AI cases radar. It should run in recorded-fixture mode without network
+access and verify the search campaign against expected query intents, evidence types,
+source diversity, selected reads, found materials, unacceptable noise, and the rule
+that no `SourceSignal`, `PostCandidate`, plan slot, or DraftRun is created.
+
+The compact `Сигналы -> Радары -> Трасса запуска` panel remains the operational
+preview. A dedicated trace page should be added next so a single `RadarRun` can be
+inspected like DraftRun/AiRun traces: search plan, source handles, operation timeline,
+raw results, selected/rejected read decisions, found materials, warnings, errors, and
+benchmark verdict when available.
+
 ## Implementation Slices
 
 - `2.17.4.5`: Source Registry and Radar Run Contract. Done: deterministic local run
   only, no provider-backed search.
-- `2.17.4.6`: External Search Radar Runner v1.
+- `2.17.4.6`: External Search Radar Runner v1. Done: deterministic search campaign,
+  provider-backed web search when configured, selective URL reads, triage trace, and
+  normalized found material.
+- `2.17.4.6.1`: Search Intent Planner and Campaign Trace.
+- `2.17.4.6.1.1`: Golden Radar Benchmark Scenario.
+- `2.17.4.6.1.2`: RadarRun Trace Page.
+- `2.17.4.6.2`: Search Result Triage, Deduplication, and Selective Reading.
+- `2.17.4.6.3`: Source Strategy Adapters and Domain-Aware Search.
+- `2.17.4.6.4`: LLM-Assisted Query Expansion and Search Critic.
+- `2.17.4.6.5`: Radar Search Evaluation Harness and Benchmark Corpus.
+- `2.17.4.6.6`: Search Memory, Refresh Policy, and Production Controls.
 - `2.17.4.7`: Signal Extraction and Editorial Scoring.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
 - `2.17.4.9`: Signal Review and Candidate Workbench UX.

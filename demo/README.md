@@ -201,17 +201,26 @@ The calendar view marks publish dates, shows filtered candidate counts per date,
 opens the same slot cards under the selected date. Future slices can add candidate
 variant requests and then turn `План` into a real calendar with readiness statuses.
 
-Slice 2.17.4.5 adds the first visible upstream contract run for the demo portfolio.
-Expand a radar and click `Запустить радар`; the row switches to its `Трасса запуска`
-tab, where you can see project source handles, run operations, skipped provider
-placeholders, and found internal material. This trace is separate from `Найденные
-сигналы`: it does not create reviewed signals or candidates yet. The target benchmark
-path is now:
+Slice 2.17.4.6 adds the first visible external-search upstream run for the demo
+portfolio. Expand a radar and click `Запустить радар`; the row switches to its
+`Трасса запуска` tab, where you can see project source handles, deterministic search
+plan, query operations, raw results, selected/rejected URL-read decisions, warnings,
+and found material. If the backend or OpenRouter web search is unavailable, the UI
+falls back to the local contract run and records explicit skipped operations. This
+trace is separate from `Найденные сигналы`: it does not create reviewed signals or
+candidates yet. The target benchmark path is now:
 
 `SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate`.
 
 Until extraction/scoring slices are implemented, seeded reviewed signals remain
 fixture data rather than proof of live search.
+
+The planned first upstream benchmark is deliberately narrow: one golden scenario for
+`Опытный цех «Сборочная»` and the industrial AI maintenance-cases radar. It should run
+from recorded search/read fixtures, check expected evidence types and source
+diversity, and produce a readable benchmark verdict before the full three-project
+benchmark corpus is added. A dedicated RadarRun trace page is also planned so the
+demo can show the full search campaign outside the compact radar card.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:

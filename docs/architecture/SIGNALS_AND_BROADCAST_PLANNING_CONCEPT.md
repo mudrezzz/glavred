@@ -20,8 +20,9 @@ The revised planning flow is:
 
 `Редакционная модель -> Сигналы -> Кандидаты постов -> Сетка вещания -> Фабула поста -> Редактура -> Выпуск -> Аналитика`
 
-Slice 2.17.4.4 makes the upstream part explicit before more downstream work, and
-Slice 2.17.4.5 implements the first deterministic local contract run:
+Slice 2.17.4.4 makes the upstream part explicit before more downstream work,
+Slice 2.17.4.5 implements the deterministic local contract run, and Slice 2.17.4.6
+adds the first external-search runner:
 
 `SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> Plan -> DraftRun`
 
@@ -31,9 +32,11 @@ extraction, signal scoring, and then candidate assembly. `DraftRun` remains
 downstream and should receive an approved candidate/brief.
 
 In the current runtime, `SourceRegistry`, `RadarRun`, and `FoundMaterial` exist in the
-project workspace. A radar run records operations, budgets, found internal material,
-and explicit skipped reasons for provider-backed sources. It does not yet create
-reviewed source signals or post candidates.
+project workspace. A radar run first tries the backend external runner: it builds a
+typed search plan, runs OpenRouter web-search queries when configured, deduplicates
+raw results, selects diverse URLs for reading, and stores normalized found material
+with warnings. If the backend is unavailable, it falls back to the local deterministic
+contract run. It does not yet create reviewed source signals or post candidates.
 
 Roadmap correction after Slice 1.10.4: `Редактура` owns the full post-preparation
 chain `Фабула -> Драфт -> Визуал -> готов к выпуску`. `Выпуск` is not a preparation
@@ -89,7 +92,7 @@ The `Сигналы` section should have three internal tabs:
 Unapproved signals do not become active post concepts. Archive-only signals do not
 change author-position assertions unless explicitly accepted into memory.
 
-## Slice 2.17.4.4-2.17.4.5 Upstream Boundary
+## Slice 2.17.4.4-2.17.4.6 Upstream Boundary
 
 The upstream architecture separates these artifacts:
 
@@ -107,13 +110,14 @@ signals with active topic/fabula pairs and keeps the first few results. Slice 2.
 will replace that with candidate assembly that records accepted/rejected matches,
 ranking rationale, and risks.
 
-Provider-backed search, URL reading, extraction, and scoring belong to application
-and infrastructure services. React renders radar runs, found materials, signals,
-scores, and candidates, but does not own search or scoring policy.
+Provider-backed search and URL reading belong to backend application and
+infrastructure services. React renders radar runs, found materials, signals, scores,
+and candidates, but does not own search or scoring policy.
 
-Slice 2.17.4.5 keeps the legacy candidate path untouched. `Run radar` creates
-`RadarRun` and `FoundMaterial` only; `SourceSignal`, `PostCandidate`, plan slots, and
-DraftRuns remain unchanged until later extraction and assembly slices.
+Slice 2.17.4.6 keeps the legacy candidate path untouched. `Run radar` creates
+`RadarRun`, search trace, and `FoundMaterial` only; `SourceSignal`, `PostCandidate`,
+plan slots, and DraftRuns remain unchanged until later extraction and assembly
+slices.
 
 ## Broadcast Grid Settings
 

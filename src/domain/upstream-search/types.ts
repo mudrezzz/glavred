@@ -79,6 +79,49 @@ export interface RadarRunOperation {
   error?: string;
 }
 
+export interface RadarSearchQuery {
+  id: string;
+  sourceHandleId: string;
+  intent: string;
+  label: string;
+  query: string;
+  rationale: string;
+}
+
+export interface RadarSearchPlan {
+  strategy: string;
+  language: string;
+  queries: RadarSearchQuery[];
+  skippedIntents: string[];
+}
+
+export interface RadarRawSearchResult {
+  id: string;
+  sourceHandleId: string;
+  queryId: string;
+  title: string;
+  url: string;
+  snippet: string;
+  domain: string;
+  score: number;
+  duplicateKey: string;
+  provider: string;
+}
+
+export interface RadarReadSelection {
+  rawResultId: string;
+  url: string;
+  reason: string;
+  score: number;
+}
+
+export interface RadarReadRejection {
+  rawResultId: string;
+  url: string;
+  reason: string;
+  score: number;
+}
+
 export interface RadarRun {
   id: string;
   radarId: string;
@@ -91,6 +134,10 @@ export interface RadarRun {
   skippedReasons: string[];
   warnings: string[];
   errors: string[];
+  searchPlan?: RadarSearchPlan;
+  rawResults?: RadarRawSearchResult[];
+  selectedForRead?: RadarReadSelection[];
+  rejectedBeforeRead?: RadarReadRejection[];
 }
 
 export type FoundMaterialType =

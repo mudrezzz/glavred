@@ -1,0 +1,92 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { RadarRunTraceSection } from './RadarRunTraceSection';
+import type { FoundMaterial, RadarRun, SourceHandle } from '../../domain/editorialWorkspace';
+
+describe('RadarRunTraceSection', () => {
+  it('renders search plan, pre-read triage, and found materials separately', () => {
+    render(
+      <RadarRunTraceSection
+        latestRun={run}
+        sourceHandles={[handle]}
+        foundMaterials={[material]}
+      />
+    );
+
+    expect(screen.getByText('Карта поиска')).toBeInTheDocument();
+    expect(screen.getByText('industrial AI maintenance case study')).toBeInTheDocument();
+    expect(screen.getByText('Отбор перед чтением')).toBeInTheDocument();
+    expect(screen.getByText('best-diverse-result')).toBeInTheDocument();
+    expect(screen.getByText('duplicate-url')).toBeInTheDocument();
+    expect(screen.getByText('Найденные материалы')).toBeInTheDocument();
+    expect(screen.getByText('Read case')).toBeInTheDocument();
+  });
+});
+
+const handle: SourceHandle = {
+  id: 'source-open-web',
+  type: 'openWebQuery',
+  title: 'Industrial AI web',
+  locator: 'industrial AI',
+  status: 'active',
+  obligation: 'preferred',
+  capabilities: { canScanInternal: false, canSearch: true, canReadUrl: false, canImport: false, canVerify: true, broadDiscovery: true },
+  notes: '',
+  tags: []
+};
+
+const run: RadarRun = {
+  id: 'run-1',
+  radarId: 'radar-1',
+  status: 'succeeded',
+  startedAt: '2026-07-03T10:00:00.000Z',
+  completedAt: '2026-07-03T10:00:01.000Z',
+  budget: { maxOperations: 3, maxInternalItems: 0, maxExternalQueries: 1, maxUrlReads: 1, maxFoundMaterials: 1, usedOperations: 2, usedInternalItems: 0, usedExternalQueries: 1, usedUrlReads: 1, usedFoundMaterials: 1 },
+  operations: [],
+  foundMaterialIds: ['material-1'],
+  skippedReasons: [],
+  warnings: [],
+  errors: [],
+  searchPlan: {
+    strategy: 'deterministic-search-campaign-v1',
+    language: 'en',
+    skippedIntents: [],
+    queries: [{
+      id: 'query-1',
+      sourceHandleId: 'source-open-web',
+      intent: 'caseStudy',
+      label: 'case studies',
+      query: 'industrial AI maintenance case study',
+      rationale: 'Find implementation examples.'
+    }]
+  },
+  rawResults: [{
+    id: 'raw-1',
+    sourceHandleId: 'source-open-web',
+    queryId: 'query-1',
+    title: 'Case',
+    url: 'https://example.com/case',
+    snippet: 'Case',
+    domain: 'example.com',
+    score: 4,
+    duplicateKey: 'https://example.com/case',
+    provider: 'openrouter:web_search'
+  }],
+  selectedForRead: [{ rawResultId: 'raw-1', url: 'https://example.com/case', reason: 'best-diverse-result', score: 4 }],
+  rejectedBeforeRead: [{ rawResultId: 'raw-2', url: 'https://example.com/case', reason: 'duplicate-url', score: 2 }]
+};
+
+const material: FoundMaterial = {
+  id: 'material-1',
+  radarRunId: 'run-1',
+  sourceHandleId: 'source-open-web',
+  type: 'searchResult',
+  title: 'Read case',
+  locator: 'https://example.com/case',
+  snippet: 'Useful case',
+  summary: 'Useful case',
+  capturedAt: '2026-07-03T10:00:01.000Z',
+  status: 'found',
+  warnings: [],
+  provenanceLabel: 'openrouter'
+};

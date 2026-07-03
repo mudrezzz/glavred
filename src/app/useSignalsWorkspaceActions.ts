@@ -10,21 +10,24 @@ import {
   updateRadar,
   type AuthorNote,
   type RadarDefinition,
-  type SourceSignal
+  type SourceSignal,
+  type WorkspaceState
 } from '../domain/editorialWorkspace';
 import {
   createAuthorMemoryEvent,
   inferAuthorPositionAssertions
 } from '../application/editorialServices';
 import { runLocalRadar } from '../application/upstreamRadarRunService';
+import { runExternalRadar } from '../infrastructure/radarRunClient';
 import type { WorkspaceSetter } from './useWorkspacePersistence';
 
 type SignalsWorkspaceActionsParams = {
   setToast: (message: string) => void;
   setWorkspace: WorkspaceSetter;
+  workspace: WorkspaceState;
 };
 
-export function useSignalsWorkspaceActions({ setToast, setWorkspace }: SignalsWorkspaceActionsParams) {
+export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }: SignalsWorkspaceActionsParams) {
   function applySignalUpdate(nextSignal: SourceSignal, message: string, selectAsCurrent = false) {
     setWorkspace((current) => {
       const sourceSignals = current.sourceSignals.map((signal) =>
@@ -93,9 +96,21 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace }: SignalsWo
     setToast(nextRadar.status === 'paused' ? 'Радар остановлен' : 'Радар запущен');
   }
 
-  function runRadar(radar: RadarDefinition) {
-    setWorkspace((current) => runLocalRadar(current, radar.id));
-    setToast('Р Р°РґР°СЂ Р·Р°РїСѓС‰РµРЅ: upstream trace РѕР±РЅРѕРІР»РµРЅ');
+  async function runRadar(radar: RadarDefinition) {
+    try {
+      const result = await runExternalRadar(workspace, radar.id);
+      setWorkspace((current) => ({
+        ...current,
+        radars: current.radars.map((item) => (item.id === radar.id ? result.radar : item)),
+        radarRuns: [result.run, ...current.radarRuns],
+        foundMaterials: [...result.foundMaterials, ...current.foundMaterials],
+        updatedAt: new Date().toISOString()
+      }));
+      setToast('Радар запущен: внешний поиск добавлен в трассу');
+    } catch {
+      setWorkspace((current) => runLocalRadar(current, radar.id));
+      setToast('Backend-поиск недоступен: создан локальный contract-run');
+    }
   }
 
   function correctSourceSignal(signal: SourceSignal, patch: Partial<SourceSignal>) {
