@@ -6435,9 +6435,236 @@ Status:
   - Provider instability and cost; v1 must be bounded and trace-visible.
 - Completed: 2026-07-03
 
-### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
+### Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Guardrails
 
 - Status: Ready
+- Goal: Stop backend architecture drift before adding more DraftRun or upstream runtime behavior by documenting the current state, target bounded-context layout, and enforceable guardrails.
+- User value:
+  - Contributors can understand where backend code belongs before touching the drafting pipeline.
+  - New backend slices stop adding more flat `draft_*` modules and unowned helper functions.
+- Scope:
+  - Add `BACKEND_ARCHITECTURE_AS_IS.md` with a factual inventory of backend packages, draft-related files, high-risk modules, and current guardrail gaps.
+  - Add `BACKEND_ARCHITECTURE_TARGET.md` with target bounded contexts: drafting, upstream, portfolio, ai-runs, roadmap, shared.
+  - Add ADR `backend-bounded-contexts-and-draft-step-contracts`.
+  - Add backend architecture smoke v1 for no-new-flat `backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` files outside an explicit legacy allowlist.
+  - Add checks for module ownership docstrings, architecture anchors, top-level public function ceilings, and backend dependency direction.
+  - Update developer docs and agent workflow rules so backend changes read the new architecture docs first.
+- Out of scope:
+  - Moving existing runtime modules.
+  - Changing DraftRun behavior, step order, prompts, providers, or database schema.
+  - Solving every existing legacy violation immediately.
+- Implementation notes:
+  - This is the architecture stop-line slice: it prevents further deterioration before package migration starts.
+  - Legacy files should be captured in a baseline/allowlist with explicit debt labels rather than silently accepted as target architecture.
+- Architecture impact:
+  - Turns backend architecture from informal guidance into an enforced contract.
+  - Introduces bounded-context ownership as a required backend dimension, not only file-size limits.
+- Tests:
+  - `npm run test:architecture` includes backend architecture smoke v1.
+  - Targeted tests for the backend architecture checker fixtures if practical.
+  - `python -m backend.app.roadmap check`.
+- Docs:
+  - Add backend AS IS and TARGET architecture docs.
+  - Update SAO, developer guide, AGENTS/skills guidance, and roadmap artifacts.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - A new flat `backend/app/application/draft_new_thing.py` fails architecture smoke unless added to the explicit legacy allowlist.
+  - New backend modules without ownership/architecture docstrings fail architecture smoke.
+  - The next Ready task remains in the backend recovery track.
+- Risks:
+  - Overly strict checks can block useful work; start with legacy allowlists and tighten them slice by slice.
+
+### Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims
+
+- Status: Backlog
+- Goal: Create the target `backend/app/drafting` package boundary without changing runtime behavior.
+- User value:
+  - Developers get an obvious home for DraftRun code instead of adding another flat `draft_*` file.
+- Scope:
+  - Create `backend/app/drafting/` with subpackages for `api`, `domain`, `application/workflow`, `application/steps`, `application/operations`, `application/artifacts`, and `infrastructure` as needed.
+  - Add `backend/app/drafting/README.md` and `DRAFTING_BACKEND_COMPONENT_MAP.md` with component ownership and doc anchors.
+  - Add compatibility shims/re-export modules only where needed to keep imports stable during migration.
+  - Wire architecture smoke to require new DraftRun code to land under `backend/app/drafting`.
+- Out of scope:
+  - Moving complex logic into the new package.
+  - Changing provider calls, prompts, storage, or pipeline results.
+- Implementation notes:
+  - The skeleton must be useful, not boilerplate: each package needs an explicit owner and allowed dependency direction.
+- Architecture impact:
+  - Introduces the future bounded context while keeping legacy import compatibility.
+- Tests:
+  - Architecture smoke for package presence, doc anchors, and import boundaries.
+  - Existing backend DraftRun tests remain green.
+- Docs:
+  - Update backend target architecture and developer guide with the new package map.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - `backend/app/drafting` exists with documented responsibilities and no runtime behavior changes.
+  - Legacy DraftRun tests pass through compatibility shims.
+- Risks:
+  - Skeleton packages can become empty boilerplate; keep them minimal and tied to the migration plan.
+
+### Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts
+
+- Status: Backlog
+- Goal: Introduce a shared DraftRun step contract and JSON LLM operation contract so new services stop inventing one-off payload/result shapes.
+- User value:
+  - Pipeline behavior becomes easier to reason about because every step returns the same kind of outcome and trace metadata.
+- Scope:
+  - Add provider-free `DraftStep`, `DraftStepContext`, `DraftStepOutcome`, and `DraftStepTrace` contracts under the drafting package.
+  - Add `JsonLlmOperation` / `JsonOperationAttempt` contract using the existing universal JSON retry policy.
+  - Adapt one or two low-risk existing steps through adapters without changing artifacts.
+  - Document when top-level helper functions are allowed and when a class/service is required.
+- Out of scope:
+  - Migrating every DraftRun step.
+  - Changing JSON prompts or model portfolio.
+- Implementation notes:
+  - Use adapter wrappers first; avoid large rewrites until the contract is proven on small steps.
+- Architecture impact:
+  - Creates the common seam for the later workflow orchestrator refactor.
+- Tests:
+  - Contract tests for `DraftStepOutcome` serialization and error handling.
+  - JSON operation tests for primary, repair, backup, and failed/not-run outcomes.
+- Docs:
+  - Update component map and ADR with the step/operation contract.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - New DraftRun step code can implement one standard protocol instead of bespoke result dataclasses.
+  - Architecture smoke can detect new public `dict[str, Any]` step contracts in the drafting package.
+- Risks:
+  - Overgeneralizing too early; keep the contract small and based on existing artifacts.
+
+### Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor
+
+- Status: Backlog
+- Goal: Turn `draft_run_pipeline.py` from a long procedural scenario into a thin facade over `DraftWorkflow` and a step registry.
+- User value:
+  - A developer can locate each pipeline step without reading one monolithic orchestration method.
+- Scope:
+  - Add `DraftWorkflow`, `DraftStepRegistry`, and workflow state/context objects under `backend/app/drafting/application/workflow`.
+  - Move orchestration sequencing behind registered step objects while preserving existing step order and artifacts.
+  - Keep `backend/app/application/draft_run_pipeline.py` as a compatibility facade during migration.
+  - Preserve progress persistence, child AiRun id collection, finalDraft selection, and failure behavior.
+- Out of scope:
+  - Moving all individual step implementations.
+  - Changing DraftRun schema or public API.
+- Implementation notes:
+  - This is behavior-preserving: same inputs, same step artifacts, same trace contract.
+- Architecture impact:
+  - Separates workflow control from step implementation and prepares step-by-step package migration.
+- Tests:
+  - Existing DraftRun pipeline tests must remain green.
+  - Add workflow registry tests for step order and failure propagation.
+- Docs:
+  - Update DraftRun AS IS and backend component map if the runtime entrypoint changes.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - `draft_run_pipeline.py` becomes a thin compatibility entrypoint.
+  - Pipeline trace and finalDraft results are unchanged on existing tests.
+- Risks:
+  - Subtle progress/partial-artifact regressions; keep tests focused on stale/failure paths, not only happy path.
+
+### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
+
+- Status: Backlog
+- Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports.
+- User value:
+  - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
+- Scope:
+  - Migrate context, source intent, source ledger, public evidence, feasibility, post contract, rule pack, evidence interpretation, material plan, strategy, and rhetorical plan modules into drafting step/artifact packages in small sub-batches.
+  - Keep legacy imports working through shims until all call sites are updated.
+  - Update tests to target the new package paths where practical.
+  - Tighten allowlists so migrated legacy flat files cannot be reintroduced.
+- Out of scope:
+  - Candidate generation, validation, revision, final quality gate migration.
+  - Prompt redesign or evidence quality changes.
+- Implementation notes:
+  - Move by cohesive cluster and run targeted tests after each cluster in the implementation slice.
+- Architecture impact:
+  - Shrinks the flat `application/draft_*` surface and makes early pipeline responsibilities explicit.
+- Tests:
+  - Source ledger, source intent, public evidence, rule pack, material plan, strategy, and rhetorical plan tests.
+  - `npm run test:architecture` with tightened legacy allowlist.
+- Docs:
+  - Update component map and DraftRun AS IS module references.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Early DraftRun clusters live under `backend/app/drafting` or have documented temporary shims.
+  - No behavior change in DraftRun planning tests.
+- Risks:
+  - Large import churn; use compatibility shims and avoid mixing behavior changes with moves.
+
+### Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration
+
+- Status: Backlog
+- Goal: Move the late DraftRun clusters into the drafting bounded context and standardize candidate/validation/revision contracts.
+- User value:
+  - The quality-critical backend code becomes easier to audit, debug, and extend without breaking hidden contracts.
+- Scope:
+  - Migrate candidate generation/selection, LLM validation, editorial critique, alternative angle, ranking, revision loop, final quality gate, and human-comment revision quality modules into drafting packages.
+  - Normalize late-step result contracts onto `DraftStepOutcome` where feasible.
+  - Keep AiRun audit payload compatibility and old trace readability.
+  - Tighten architecture smoke against top-level public helper function sprawl in migrated packages.
+- Out of scope:
+  - Changing quality policy, prompts, ranking algorithm, or final draft selection semantics.
+  - New HITL learning behavior.
+- Implementation notes:
+  - This slice should be split internally into sub-batches if the diff becomes too large.
+- Architecture impact:
+  - Completes most DraftRun code movement into the drafting bounded context.
+- Tests:
+  - Candidate, validation, critic, alternative angle, ranking/revision, final quality gate, human revision tests.
+  - Backward-compat trace tests for old runs where available.
+- Docs:
+  - Update component map, DraftRun AS IS, developer guide, and migration notes.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Late DraftRun clusters live under `backend/app/drafting` or have explicit temporary shims.
+  - Architecture smoke rejects new flat late-stage `draft_*` files.
+- Risks:
+  - This is the highest-risk migration because it touches provider-heavy and trace-heavy code.
+
+### Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening
+
+- Status: Backlog
+- Goal: Make the new backend architecture durable for future agents and contributors.
+- User value:
+  - A new contributor can understand backend structure from docs and cannot accidentally add code in the old broken style without a failing check.
+- Scope:
+  - Finalize backend README, drafting README, component map, and migration notes.
+  - Update AGENTS.md and local skills so backend work must read the backend architecture docs and obey bounded-context placement.
+  - Add strict-mode architecture smoke for new modules and reduce legacy allowlists after migrations.
+  - Document a backend module template with `Architecture`, `Owner`, `Used by`, and `Does not own` anchors.
+  - Add checklist for reviewing provider-heavy services, JSON contracts, and trace payloads.
+- Out of scope:
+  - Further product features or search quality improvements.
+- Implementation notes:
+  - This is where the recovery track becomes the normal development contract.
+- Architecture impact:
+  - Turns the refactor into enforceable team practice instead of one-time cleanup.
+- Tests:
+  - Architecture smoke strict-mode checks.
+  - Docs presence checks for backend component anchors.
+  - Roadmap tracker check/render/export.
+- Docs:
+  - Update SAO, developer guide, contributor guide, AGENTS.md, and skills guidance.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - New backend modules without owner docs or correct package placement fail checks.
+  - Agents have explicit backend workflow instructions before future runtime work resumes.
+- Risks:
+  - Too much process can slow delivery; keep checks mechanical and actionable.
+
+### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
+
+- Status: Backlog
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -7138,4 +7365,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.
+Implement `Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Guardrails`.
