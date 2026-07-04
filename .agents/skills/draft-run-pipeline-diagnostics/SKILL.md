@@ -40,6 +40,8 @@ Do not diagnose from screenshots alone when a run id is available.
    - rule registry / material plan / strategy / rhetorical plans;
    - draft candidates / scoring / selection;
    - fallback behavior.
+   - shared LLM operation envelopes and inventory:
+     `backend.app.shared.llm_operations` and `CURRENT_LLM_OPERATION_INVENTORY`.
 6. Compare actual trace to `DRAFT_RUN_PIPELINE_AS_IS.md` first, then to expected
    slice behavior in `ROADMAP.md`.
 7. Decide one of:
@@ -57,6 +59,12 @@ Check these failure classes explicitly:
   optional `backup` attempts before accepting fallback/not-run/failed as expected.
   Inspect `generationParams` (`generationParamProfile`, `temperature`, `topP`) for
   writer, revision, JSON repair, and another-angle calls before judging model quality.
+  For migrated operations, inspect `operationEnvelope`, `incident`, `inputStats`,
+  `payloadStats`, `retryPolicy`, and `timeoutProfile`. Classify failures by
+  `incidentType`: `providerTimeout`, `networkError`, `provider4xx`, `provider5xx`,
+  `malformedJson`, `schemaFailure`, `payloadTooLarge`, `contextOverBudget`,
+  `deterministicFallback`, `backupAccepted`, `notConfigured`, `staleOperation`,
+  `cancelled`, `workerFailure`, or `unknownProviderFailure`.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched
@@ -80,6 +88,15 @@ Check these failure classes explicitly:
   `qualityCheck`, quality check is `notRun` without attempts, missed comment intents
   are hidden, source markers regressed, internal pipeline jargon leaked into the
   public version, or warnings are treated as blocking when they should be diagnostic.
+- **Incident blast radius**: if the same `incidentType` repeats across attempts,
+  candidates, or steps, scan `CURRENT_LLM_OPERATION_INVENTORY` for migrated and
+  allowlisted operations with the same expected incident coverage. Escalate an
+  architecture/guardrail slice when the pattern is systemic rather than isolated to
+  one prompt or provider response.
+- **Slow background vs stuck**: treat a run as slow-but-alive when timestamps,
+  progress operations, or child `AiRun` creation continue to advance. Treat it as
+  stuck only when the parent step has no progress past the expected operation budget
+  and no timeout/stale/cancelled incident or worker error explains the delay.
 
 ## Output Format
 
@@ -110,6 +127,18 @@ hide bad output behind polite abstractions.
   `2026-06-27-llm-json-steps-use-universal-retry-policy`: primary role model,
   repair prompt, optional backup model, then explicit domain-safe fallback/not-run/
   failed. A single malformed JSON response is not enough to declare a branch failed.
+- For migrated provider-heavy operations, never diagnose from `fallbackUsed` alone.
+  Read the shared `operationEnvelope`: operation status, attempts, child `AiRun` ids,
+  incident taxonomy, safe error, timeout profile, retry policy, and payload/input
+  stats. Fallback/not-run/failed/timeout/cancelled/stale without incident metadata is
+  a guardrail bug.
+- Backup success is not silent success. It is an accepted payload with
+  `backupAccepted` incident metadata and should trigger a blast-radius check if it
+  repeats.
+- Provider not configured should appear as `notRun` with `notConfigured` incident
+  unless the operation already owns a domain-safe deterministic fallback; in that
+  fallback case, verify the deterministic fallback incident and publication
+  guardrails.
 - If public prose contains internal names like `SourceLedger`, `publicEvidence`,
   `RuleRegistry`, `PostContract`, or `validators`, treat it as a writer/revision bug
   unless the text explicitly reframes the term for the reader.

@@ -23,6 +23,7 @@ from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_evidence_interpretation import evidence_interpretation_from_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
+from backend.app.shared.llm_operations import LlmOperationIncidentType, LlmOperationTimeoutProfile, build_operation_envelope, incident_from_safe_error
 from backend.app.settings import BackendSettings
 
 
@@ -289,7 +290,22 @@ class EvidenceInterpretationService:
             fallback_used=True,
             error=error,
         )
-        fallback_attempt = {"label": "deterministic-fallback", "model": model or "deterministic", "status": "fallback", "aiRunId": run.id, "backup": False, **selection.to_payload()}
+        fallback_attempt = {
+            "label": "deterministic-fallback",
+            "model": model or "deterministic",
+            "status": "fallback",
+            "aiRunId": run.id,
+            "backup": False,
+            **selection.to_payload(),
+            "incident": incident_from_safe_error(
+                safe_error=error,
+                probable_cause="deterministic-fallback",
+                incident_type=LlmOperationIncidentType.DETERMINISTIC_FALLBACK,
+                provider=provider.value,
+                model=model,
+                attempt_label="deterministic-fallback",
+            ).to_payload(),
+        }
         return DraftPlanningStepResult(
             artifact_payload=self._artifact("deterministicFallback", payload, run.id, True, error=error, attempts=[*attempts, fallback_attempt]),
             ai_run_id=run.id,
@@ -297,7 +313,25 @@ class EvidenceInterpretationService:
         )
 
     def _artifact(self, source: str, payload: dict[str, Any], ai_run_id: str, fallback_used: bool, *, attempts: list[dict[str, Any]], error: str | None = None) -> dict[str, Any]:
+        status = "fallback" if fallback_used else "accepted"
+        timeout_seconds = max(0.001, float(self._settings.draft_evidence_interpretation_timeout_seconds or 75))
         artifact = {"source": source, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "evidenceInterpretation": payload, "attempts": attempts}
+        artifact["operationEnvelope"] = build_operation_envelope(
+            operation_id="evidenceInterpretation",
+            operation_kind="evidenceInterpretation",
+            owner="backend.app.application.evidence_interpretation_service",
+            status=status,
+            attempts=attempts,
+            result_payload=payload,
+            safe_error=error,
+            failure_reason=error,
+            provider=AiRunProvider.DETERMINISTIC.value if fallback_used else AiRunProvider.OPENROUTER.value,
+            model=_last_model(attempts),
+            timeout_profile=LlmOperationTimeoutProfile(
+                profile="evidence-interpretation-provider-attempt",
+                attempt_timeout_seconds=timeout_seconds,
+            ),
+        )
         if error:
             artifact["error"] = error
         return artifact
@@ -349,4 +383,15 @@ def _attempt_record(
         record["timings"] = timings
     if error:
         record["error"] = error
+        record["incident"] = incident_from_safe_error(
+            safe_error=error,
+            probable_cause=status,
+            provider=AiRunProvider.OPENROUTER.value if status != "fallback" else AiRunProvider.DETERMINISTIC.value,
+            model=attempt.model,
+            attempt_label=attempt.label,
+        ).to_payload()
     return record
+
+
+def _last_model(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("model")) for item in reversed(attempts) if item.get("model")), None)

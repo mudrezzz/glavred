@@ -1,7 +1,7 @@
-"""Owner: drafting.application.operations
+"""Owner: shared.llm_operations
 
-Used by: legacy DraftRun JSON operation imports during the shared-envelope migration.
-Does not own: provider adapters, prompt text, API request parsing, SQLite persistence.
+Used by: DraftRun, HITL, future upstream radar/search/signal provider-heavy operations.
+Does not own: prompt text, provider adapters, persistence schemas, API response contracts.
 Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
@@ -26,6 +26,11 @@ from backend.app.shared.llm_operations.contracts import (
     build_operation_envelope,
     incident_from_safe_error,
 )
+from backend.app.shared.llm_operations.inventory import (
+    CURRENT_LLM_OPERATION_INVENTORY,
+    LlmOperationInventoryEntry,
+    operation_inventory_payload,
+)
 
 __all__ = [
     "JsonLlmOperation",
@@ -47,4 +52,7 @@ __all__ = [
     "LlmOperationTimeoutProfile",
     "build_operation_envelope",
     "incident_from_safe_error",
+    "CURRENT_LLM_OPERATION_INVENTORY",
+    "LlmOperationInventoryEntry",
+    "operation_inventory_payload",
 ]

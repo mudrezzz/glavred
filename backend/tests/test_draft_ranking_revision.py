@@ -260,6 +260,27 @@ def test_revision_loop_uses_alternative_angle_as_editorial_goal(tmp_path) -> Non
     assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is True
 
 
+def test_directed_revision_unconfigured_returns_not_run_envelope(tmp_path) -> None:
+    service = DraftDirectedRevisionService(
+        settings=settings(configured=False),
+        ai_run_service=ai_service(tmp_path),
+        openrouter_validator=OpenRouterConfigValidator(),
+        openrouter_adapter=SequenceAdapter([]),
+    )
+
+    result = service.revise(
+        candidate={"id": "candidate-1", "title": "Title", "body": "Body"},
+        instruction={"status": "created"},
+        context_artifact={},
+        rule_pack={},
+        material_plan={},
+    )
+
+    assert result["status"] == "not-run"
+    assert result["operationEnvelope"]["status"] == "notRun"
+    assert result["operationEnvelope"]["incident"]["incidentType"] == "notConfigured"
+
+
 def ranking_revision_service(tmp_path, adapter: SequenceAdapter, max_iterations: int = 1) -> DraftRankingRevisionService:
     ai = ai_service(tmp_path)
     return DraftRankingRevisionService(

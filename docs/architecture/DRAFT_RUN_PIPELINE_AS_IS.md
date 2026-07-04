@@ -889,6 +889,17 @@ Important AS IS rules:
 | all invalid candidates | run succeeds as quality-blocked; no local fallback |
 | revision regression | keep previous best candidate |
 
+Slice 2.17.4.6.0.3.2 adds shared `operationEnvelope` governance for representative
+provider-heavy operations. Migrated operations expose `operationId`, operation kind,
+owner, status, attempts, child `AiRun` ids, input/payload stats, retry policy,
+timeout profile where applicable, incident metadata, safe error, and result payload.
+Fallback, not-run, failed, timeout, cancelled, and stale outcomes require incident
+metadata. Backup success keeps the accepted payload but records `backupAccepted`.
+Representative migrated operations are `evidenceInterpretation`, `editorialCritique`,
+`directedRevision`, `humanCommentRevision`, and
+`humanCommentRevisionQualityCheck`; other current provider-heavy operations remain in
+`CURRENT_LLM_OPERATION_INVENTORY` until their owning migration slices.
+
 ## 9. How to read a run trace
 
 Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
@@ -903,17 +914,21 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 6. `postContract`: confirm thesis, CTA, size, allowed claims, and forbidden moves.
 7. `rulePack`: confirm rule registry exists and size/evidence rules are present.
 8. `evidenceInterpretation`: inside `rulePack`, confirm implications, examples,
-   limits, forbidden overclaims, rejected evidence uses, and attempts.
+   limits, forbidden overclaims, rejected evidence uses, attempts, `operationEnvelope`,
+   timeout profile, input stats, and incident taxonomy.
 9. `materialPlan`: confirm selected evidence and explicit rejection reasons.
 10. `strategy`: confirm the strategy does not change the contract.
 11. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
 12. `draft`: compare candidates, source/fallback status, publishability, scorecard.
 13. `validation`: inspect deterministic warnings, LLM findings, observations.
 14. `editorialCritiqueReport`: inspect idea strength, tension, author stance, source
-    integration, generic-prose risks, and recommended editorial moves.
+    integration, generic-prose risks, recommended editorial moves, candidate-level
+    `operationEnvelope`, malformed JSON/schema incidents, and not-run incidents.
 15. `alternativeAngleTournament`: inspect challenger route, candidate, model attempts,
     and why it entered or failed to enter final ranking.
 16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
+    Directed revision sub-results should include `operationEnvelope` for accepted,
+    failed, or not-run writer revisions.
 17. `finalQualityGate`: inspect the final quality contract, independent review
     attempts/model, final public-prose status, `attributionReview`,
     `actionableAttributionFindings`, `diagnosticAttributionNoise`, repair goals,
@@ -930,11 +945,16 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     `postDraft.versions[].qualityCheck` and child
     `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` to confirm
     matched/missed comment intents, source-marker preservation, public-prose status,
-    internal jargon leaks, and review attempts.
+    internal jargon leaks, review attempts, incident metadata, and nested
+    `operationEnvelope` on the revision/quality attempts.
 22. post-run learning note: inspect `authorNotes[]` for type `editorialLearning`.
     Pending and rejected notes should be visible but not used as author-position
     evidence. Accepted notes should flow through normal author-memory event and
     inference logic.
+23. incident blast radius: when the same `incidentType` repeats across a run, compare
+    it against `CURRENT_LLM_OPERATION_INVENTORY` to identify other migrated or
+    allowlisted operations with the same expected incident coverage before deciding
+    whether this is an isolated provider error or a systemic architecture issue.
 
 ## 10. Known AS IS limitations
 

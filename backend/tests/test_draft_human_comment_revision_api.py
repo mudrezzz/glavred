@@ -83,6 +83,7 @@ def test_revise_with_comment_creates_child_ai_run(tmp_path) -> None:
     assert payload["qualityCheck"]["matchedCommentIntents"] == ["author stance"]
     assert payload["aiRunId"]
     assert payload["attempts"][0]["modelRole"] == "writer"
+    assert payload["attempts"][0]["operationEnvelope"]["operationId"] == "humanCommentRevision"
     assert adapter.calls[0]["model"] == "writer-model"
     assert adapter.calls[1]["model"] == "default-model"
     ai_run = client.get(f"/api/ai-runs/{payload['aiRunId']}").json()
@@ -139,6 +140,8 @@ def test_revise_with_comment_returns_revision_when_quality_check_fails(tmp_path)
         "backup",
     ]
     assert payload["qualityCheck"]["attempts"][0]["modelRole"] == "review"
+    assert payload["qualityCheck"]["attempts"][0]["incident"]["incidentType"] == "malformedJson"
+    assert payload["qualityCheck"]["attempts"][-1]["operationEnvelope"]["operationId"] == "humanCommentRevisionQualityCheck"
 
 
 def test_quality_check_marks_internal_jargon_and_lost_source_marker(tmp_path) -> None:
@@ -234,3 +237,4 @@ def test_revise_with_comment_returns_503_when_provider_unconfigured(tmp_path) ->
 
     assert response.status_code == 503
     assert "OpenRouter is not configured" in response.text
+    assert response.json()["detail"]["attempts"][0]["operationEnvelope"]["incident"]["incidentType"] == "notConfigured"

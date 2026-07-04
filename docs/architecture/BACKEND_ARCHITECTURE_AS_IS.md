@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.
+Current as of Slice 2.17.4.6.0.3.2.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -70,6 +70,27 @@ The largest backend files are a useful smell list, not an automatic failure list
 The recovery goal is not to split every large file immediately. The goal is to stop
 adding new modules in the old locations, then migrate cohesive clusters.
 
+## Provider-Heavy Operation Inventory
+
+Slice 2.17.4.6.0.3.2 adds `backend/app/shared/llm_operations` as a factual AS IS
+contract layer while most DraftRun provider-heavy services still live in flat legacy
+modules. The shared package now owns `LlmOperationEnvelope`, `JsonOperationEnvelope`,
+attempt/result DTOs, incident taxonomy, input/payload stats, retry policy, timeout
+profile, and `CURRENT_LLM_OPERATION_INVENTORY`.
+
+Representative migrated operations now emit `operationEnvelope` or an equivalent
+nested shared envelope payload:
+
+- `evidenceInterpretation`;
+- `editorialCritique`;
+- `directedRevision`;
+- `humanCommentRevision`;
+- `humanCommentRevisionQualityCheck`.
+
+Other provider-heavy operations are still legacy debt, but they are explicitly
+listed in the inventory with owner, current module, operation kind, migration status,
+reason not migrated, removal slice, and expected incident coverage.
+
 ## Current Guardrails
 
 Already enforced:
@@ -78,15 +99,16 @@ Already enforced:
 - Backend line limits for selected known files.
 - Domain/API forbidden imports for provider, database, queue, and HTTP libraries.
 - SAO required-fragment checks.
+- Exact allowlists for existing flat DraftRun/Radar modules.
+- Required backend module ownership header for new bounded-context modules.
+- Shared LLM operation envelope, incident taxonomy, and operation inventory checks.
 
-Missing before this slice:
+Still missing after this slice:
 
-- No exact allowlist for flat DraftRun/Radar modules.
-- No stop-line preventing new `backend/app/application/draft_*.py`,
-  `backend/app/domain/draft_*.py`, or `backend/app/application/upstream_radar_*.py`.
-- No required backend module ownership header for new bounded-context modules.
-- No explicit package contract for `backend/app/drafting`, `backend/app/upstream`,
-  and `backend/app/shared`.
+- Full migration of every provider-heavy operation behind the shared envelope.
+- Upstream/radar bounded package migration.
+- Dedicated infrastructure watchdog for worker-level stalls outside protected
+  operation envelopes.
 
 ## Recovery Rule
 

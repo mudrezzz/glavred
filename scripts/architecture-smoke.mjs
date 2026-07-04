@@ -1684,9 +1684,15 @@ const BACKEND_ARCHITECTURE_AS_IS_PATH = "docs/architecture/BACKEND_ARCHITECTURE_
 const BACKEND_ARCHITECTURE_TARGET_PATH = "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md";
 const BACKEND_BOUNDED_CONTEXTS_ADR_PATH =
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md";
+const UNIVERSAL_LLM_OPERATION_GOVERNANCE_ADR_PATH =
+  "docs/adr/2026-07-04-universal-llm-operation-governance.md";
 const DRAFTING_BACKEND_README_PATH = "backend/app/drafting/README.md";
 const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
+const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/contracts.py";
+const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
+const DRAFTING_JSON_CONTRACT_COMPAT_PATH =
+  "backend/app/drafting/application/operations/json_contracts.py";
 const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting",
   "backend/app/drafting/api",
@@ -1697,6 +1703,8 @@ const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting/application/operations",
   "backend/app/drafting/application/artifacts",
   "backend/app/drafting/infrastructure",
+  "backend/app/shared",
+  "backend/app/shared/llm_operations",
 ];
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 const ENV_EXAMPLE_PATH = ".env.example";
@@ -1812,6 +1820,32 @@ const LEGACY_FLAT_DRAFT_APPLICATION_FILES = new Set([
   "backend/app/application/draft_validation_step.py",
   "backend/app/application/draft_validation_step_service.py",
   "backend/app/application/draft_validator_orchestrator.py",
+]);
+
+const LLM_OPERATION_INVENTORY_IDS = [
+  "sourceIntentAndResearchPlan",
+  "publicEvidenceSearch",
+  "publicEvidenceRead",
+  "evidenceSynthesis",
+  "evidenceInterpretation",
+  "materialPlan",
+  "draftStrategy",
+  "rhetoricalPlans",
+  "draftCandidate",
+  "llmValidation",
+  "editorialCritique",
+  "alternativeAngleRoute",
+  "alternativeAngleCandidate",
+  "pairwiseRanking",
+  "directedRevision",
+  "finalQualityReviewRepair",
+  "humanCommentRevision",
+  "humanCommentRevisionQualityCheck",
+];
+
+const RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES = new Set([
+  "backend/app/shared/llm_operations/contracts.py",
+  "backend/app/shared/llm_operations/inventory.py",
 ]);
 
 const LEGACY_FLAT_DRAFT_DOMAIN_FILES = new Set([
@@ -2799,7 +2833,64 @@ for (const backendFile of boundedBackendContextFiles) {
       `${backendFile} defines a step-like execute(...) returning raw dict. New drafting steps must return DraftStepOutcome.`
     );
   }
+
+  if (
+    !RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES.has(backendFile) &&
+    source.includes(".complete_json(")
+  ) {
+    assert(
+      false,
+      `${backendFile} calls complete_json(...) directly. New bounded-context provider-heavy operations must use the shared LLM operation envelope or an explicit legacy allowlist entry.`
+    );
+  }
+
+  if (
+    backendFile.startsWith("backend/app/shared/llm_operations/") &&
+    source.includes("fallbackUsed") &&
+    !source.includes("incident")
+  ) {
+    assert(
+      false,
+      `${backendFile} mentions fallbackUsed without incident metadata. Shared LLM operation contracts must attach incident taxonomy to fallback/notRun/failed outcomes.`
+    );
+  }
 }
+
+const sharedLlmContractSource = readText(SHARED_LLM_OPERATION_CONTRACT_PATH);
+const sharedLlmInventorySource = readText(SHARED_LLM_OPERATION_INVENTORY_PATH);
+const draftingJsonContractCompatSource = readText(DRAFTING_JSON_CONTRACT_COMPAT_PATH);
+
+for (const fragment of [
+  "LlmOperationEnvelope",
+  "JsonOperationEnvelope",
+  "LlmOperationIncident",
+  "LlmOperationInputStats",
+  "LlmOperationTimeoutProfile",
+  "LlmOperationRetryPolicy",
+  "providerTimeout",
+  "malformedJson",
+  "deterministicFallback",
+  "backupAccepted",
+  "notConfigured",
+  "build_operation_envelope",
+]) {
+  assert(
+    sharedLlmContractSource.includes(fragment),
+    `${SHARED_LLM_OPERATION_CONTRACT_PATH} is missing required universal LLM operation fragment: ${fragment}`
+  );
+}
+
+for (const operationId of LLM_OPERATION_INVENTORY_IDS) {
+  assert(
+    sharedLlmInventorySource.includes(`operation_id="${operationId}"`),
+    `${SHARED_LLM_OPERATION_INVENTORY_PATH} must explicitly inventory operationId ${operationId}.`
+  );
+}
+
+assert(
+  draftingJsonContractCompatSource.includes("backend.app.shared.llm_operations.contracts"),
+  `${DRAFTING_JSON_CONTRACT_COMPAT_PATH} must stay a thin compatibility re-export of shared LLM operation contracts.`
+);
 
 for (const backendFile of backendPythonFiles) {
   const imports = pythonImports(readText(backendFile));
@@ -2850,11 +2941,22 @@ const requiredSaoFragments = [
   "docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md",
   "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md",
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md",
+  "docs/adr/2026-07-04-universal-llm-operation-governance.md",
   "backend/app/drafting",
   "backend/app/drafting/README.md",
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md",
   "backend/app/upstream",
   "backend/app/shared",
+  "backend/app/shared/llm_operations",
+  "LlmOperationEnvelope",
+  "LlmOperationIncident",
+  "LlmOperationInputStats",
+  "CURRENT_LLM_OPERATION_INVENTORY",
+  "providerTimeout",
+  "malformedJson",
+  "deterministicFallback",
+  "backupAccepted",
+  "notConfigured",
   "flat `draft_*` and `upstream_radar_*`",
   "Owner",
   "Used by",

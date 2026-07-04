@@ -3,8 +3,8 @@
 `backend/app/drafting` is the target bounded context for DraftRun backend code.
 
 Current status: skeleton, compatibility shims, the first provider-free step and
-JSON operation contracts, a behavior-preserving workflow orchestration shell, and
-the first bounded provider-heavy operation safety helpers.
+JSON operation compatibility contracts, a behavior-preserving workflow
+orchestration shell, and the first bounded provider-heavy operation safety helpers.
 Most step implementations still live in the legacy flat modules under
 `backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` until the
 migration slices move cohesive clusters.
@@ -16,7 +16,7 @@ The drafting context owns:
 - DraftRun workflow and step registry;
 - provider-neutral DraftRun step contracts;
 - DraftRun artifacts and artifact mapping;
-- JSON LLM operation contracts used by drafting steps;
+- JSON LLM operation compatibility imports used by drafting steps;
 - drafting validation, ranking, revision, final quality gate, and HITL revision
   orchestration once migrated.
 
@@ -91,18 +91,32 @@ owning migration slice moves it.
 
 ## JSON Operation Contract
 
-Drafting JSON LLM operations should use
-`backend.app.drafting.application.operations.json_contracts`:
+Drafting JSON LLM operations should use the shared provider-neutral contract in
+`backend.app.shared.llm_operations`. The drafting import path
+`backend.app.drafting.application.operations.json_contracts` remains a thin
+compatibility re-export during migration:
 
-- `JsonOperationAttempt`: one primary, repair, backup, fallback, not-run, or failed
-  attempt with model, label, child `AiRun` id, safe error, and model-role metadata.
-- `JsonOperationResult`: one accepted, fallback, not-run, or failed operation result
-  with payload, attempts, child `AiRun` ids, safe error, and failure reason.
+- `LlmOperationEnvelope` / `JsonOperationEnvelope`: trace-safe operation result
+  payload with operation identity, owner, status, attempts, `AiRun` ids, input
+  stats, payload stats, retry policy, timeout profile, incident, safe error, and
+  result payload.
+- `LlmOperationAttempt` / `JsonOperationAttempt`: one primary, repair, backup,
+  fallback, not-run, failed, timeout, cancelled, or stale attempt with model, label,
+  child `AiRun` id, safe error, incident, and model-role metadata.
+- `LlmOperationResult` / `JsonOperationResult`: one accepted, repaired,
+  backup-accepted, fallback, not-run, failed, timeout, cancelled, or stale operation
+  result.
+- `LlmOperationIncident`: provider-neutral incident taxonomy covering
+  `providerTimeout`, `malformedJson`, `schemaFailure`, `deterministicFallback`,
+  `backupAccepted`, `notConfigured`, and related provider/worker failures.
 - `JsonLlmOperation`: protocol for future operation services.
 
 The existing `backend.app.application.json_step_retry_policy` remains the retry
 sequence source during migration. New operation code should convert those attempts
-into `JsonOperationAttempt` rather than inventing another trace shape.
+into the shared envelope rather than inventing another trace shape. Current
+provider-heavy operations must either be migrated or explicitly listed in
+`backend.app.shared.llm_operations.inventory.CURRENT_LLM_OPERATION_INVENTORY` with
+owner, reason, removal slice, and expected incident coverage.
 
 Provider-heavy operations must be bounded by operation-level timeouts when a stuck
 call would otherwise leave a DraftRun step running. `TimedOperationRunner` is the v1

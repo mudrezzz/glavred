@@ -114,7 +114,8 @@ The recovery rule is strict:
 - new bounded-context modules must begin with a docstring containing `Owner`,
   `Used by`, `Does not own`, and `Architecture doc`;
 - provider-heavy operations must return a typed result with attempts, safe errors,
-  and trace-safe payloads instead of leaking raw provider exceptions.
+  trace-safe payloads, and shared `LlmOperationIncident` metadata instead of leaking
+  raw provider exceptions.
 
 `backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
 adding a DraftRun module, read `backend/app/drafting/README.md` and
@@ -129,10 +130,23 @@ new public step services whose `execute(...)` returns raw `dict[str, Any]`; use
 `DraftStepOutcome` or a narrow legacy adapter.
 
 New DraftRun JSON LLM operation code should use
-`backend.app.drafting.application.operations.json_contracts`: `JsonOperationAttempt`,
-`JsonOperationResult`, and `JsonLlmOperation`. During migration, reuse the existing
-universal retry sequence from `backend.app.application.json_step_retry_policy` and
-convert its attempts into the unified operation contract.
+`backend.app.shared.llm_operations`: `LlmOperationEnvelope` /
+`JsonOperationEnvelope`, `LlmOperationAttempt`, `LlmOperationResult`,
+`LlmOperationIncident`, `LlmOperationInputStats`, `LlmOperationTimeoutProfile`, and
+`LlmOperationRetryPolicy`. The old drafting path
+`backend.app.drafting.application.operations.json_contracts` is compatibility-only
+and re-exports the shared contract. During migration, reuse the existing universal
+retry sequence from `backend.app.application.json_step_retry_policy` and convert its
+attempts into the shared operation envelope.
+
+Every provider-heavy operation must be either migrated or listed in
+`backend.app.shared.llm_operations.inventory.CURRENT_LLM_OPERATION_INVENTORY` with
+`operationId`, owner, current module, operation kind, migration status, reason not
+migrated, removal slice, and expected incident coverage. Fallback, not-run, failed,
+timeout, cancelled, and stale results must serialize incident metadata; backup
+success must carry `backupAccepted` incident metadata while preserving the accepted
+payload. Not-configured provider paths should return `notRun` unless the operation
+already has a domain-safe deterministic fallback.
 
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but

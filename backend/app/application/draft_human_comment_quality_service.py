@@ -11,6 +11,7 @@ from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_human_revision import HumanCommentRevisionQualityCheck, human_comment_revision_quality_not_run
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
+from backend.app.shared.llm_operations import build_operation_envelope, incident_from_safe_error
 from backend.app.settings import BackendSettings
 
 QUALITY_CHECK_KEYS = {
@@ -76,7 +77,10 @@ class DraftHumanCommentQualityService:
     ) -> HumanCommentRevisionQualityCheck:
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
-            return human_comment_revision_quality_not_run(reason="OpenRouter is not configured")
+            return human_comment_revision_quality_not_run(
+                reason="OpenRouter is not configured",
+                attempts=[_not_run_attempt("provider-unconfigured", safe_error="OpenRouter is not configured")],
+            )
 
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
@@ -98,6 +102,11 @@ class DraftHumanCommentQualityService:
             )
             attempts.append(result["attempt"])
             if result["accepted"]:
+                attempts[-1]["operationEnvelope"] = _operation_envelope(
+                    "accepted",
+                    attempts,
+                    payload=result["payload"],
+                )
                 return _apply_deterministic_overlay(
                     _normalize_quality_payload(result["payload"], attempts),
                     base_body=str(base_version.get("body") or ""),
@@ -108,6 +117,13 @@ class DraftHumanCommentQualityService:
                 "requiredShape": ", ".join(sorted(QUALITY_CHECK_KEYS)),
             }
 
+        if attempts:
+            attempts[-1]["operationEnvelope"] = _operation_envelope(
+                "notRun",
+                attempts,
+                safe_error=_last_error(attempts),
+                failure_reason="human-comment-revision-quality-provider-failed",
+            )
         return human_comment_revision_quality_not_run(
             reason="Human comment revision quality check failed after all JSON attempts",
             attempts=attempts,
@@ -321,7 +337,67 @@ def _attempt_record(
     }
     if validation:
         record["validation"] = validation
+        record["incident"] = incident_from_safe_error(
+            safe_error=validation,
+            probable_cause=status,
+            provider=AiRunProvider.OPENROUTER.value,
+            model=attempt.model,
+            attempt_label=attempt.label,
+        ).to_payload()
     return record
+
+
+def _not_run_attempt(reason: str, *, safe_error: str) -> dict[str, Any]:
+    attempt = {
+        "label": "not-run",
+        "model": "none",
+        "status": "notRun",
+        "aiRunId": None,
+        "backup": False,
+        "modelRole": DraftModelRole.REVIEW.value,
+        "selectedModel": None,
+        "modelSelectionSource": "unconfigured",
+        "incident": incident_from_safe_error(
+            safe_error=safe_error,
+            probable_cause=reason,
+            provider=AiRunProvider.OPENROUTER.value,
+            model=None,
+            attempt_label="not-run",
+        ).to_payload(),
+    }
+    attempt["operationEnvelope"] = _operation_envelope("notRun", [attempt], safe_error=safe_error, failure_reason=reason)
+    return attempt
+
+
+def _operation_envelope(
+    status: str,
+    attempts: list[dict[str, Any]],
+    *,
+    payload: dict[str, Any] | None = None,
+    safe_error: str | None = None,
+    failure_reason: str | None = None,
+) -> dict[str, Any]:
+    return build_operation_envelope(
+        operation_id="humanCommentRevisionQualityCheck",
+        operation_kind="hitlQualityCheck",
+        owner="backend.app.application.draft_human_comment_quality_service",
+        status=status,
+        attempts=attempts,
+        result_payload=payload or {},
+        safe_error=safe_error,
+        failure_reason=failure_reason,
+        provider=AiRunProvider.OPENROUTER.value,
+        model=_last_model(attempts),
+        input_stats={"candidateCount": 1, "modelRole": DraftModelRole.REVIEW.value},
+    )
+
+
+def _last_error(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
+
+
+def _last_model(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("model")) for item in reversed(attempts) if item.get("model")), None)
 
 
 def _status(value: Any) -> str:

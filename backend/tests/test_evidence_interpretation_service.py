@@ -77,6 +77,8 @@ def test_provider_interpretation_uses_strategy_role_model_and_writes_trace(tmp_p
     assert result.artifact_payload["evidenceInterpretation"]["implications"][0]["id"] == "implication-1"
     assert adapter.calls[0]["model"] == "strategy-model"
     assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
+    assert result.artifact_payload["operationEnvelope"]["operationId"] == "evidenceInterpretation"
+    assert result.artifact_payload["operationEnvelope"]["status"] == "accepted"
     assert result.ai_run_id
 
 
@@ -102,6 +104,8 @@ def test_provider_failures_use_backup_then_deterministic_fallback(tmp_path) -> N
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.artifact_payload["fallbackUsed"] is True
     assert result.artifact_payload["attempts"][2]["backup"] is True
+    assert result.artifact_payload["operationEnvelope"]["status"] == "fallback"
+    assert result.artifact_payload["operationEnvelope"]["incident"]["incidentType"] == "deterministicFallback"
     assert result.artifact_payload["evidenceInterpretation"]["implications"]
 
 
@@ -125,6 +129,8 @@ def test_provider_timeout_records_failed_attempt_and_continues_to_repair(tmp_pat
     assert result.artifact_payload["fallbackUsed"] is False
     assert [attempt["status"] for attempt in result.artifact_payload["attempts"]] == ["timeout", "accepted"]
     assert "OperationTimeoutError" in result.artifact_payload["attempts"][0]["error"]
+    assert result.artifact_payload["attempts"][0]["incident"]["incidentType"] == "providerTimeout"
+    assert result.artifact_payload["operationEnvelope"]["timeoutProfile"]["attemptTimeoutSeconds"] == 0.05
     assert len(result.ai_run_ids) == 2
     assert any(operation["status"] == "failed" and operation["id"] == "evidence-interpretation-primary" for operation in progress.operations)
     assert any(operation["status"] == "succeeded" and operation["id"] == "evidence-interpretation-primary-repair" for operation in progress.operations)
@@ -154,6 +160,7 @@ def test_unconfigured_provider_uses_deterministic_without_secret(tmp_path) -> No
 
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.artifact_payload["fallbackUsed"] is True
+    assert result.artifact_payload["operationEnvelope"]["incident"]["incidentType"] == "deterministicFallback"
     assert adapter.calls == []
 
 

@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.3.1.
+Current as of Slice 2.17.4.6.0.3.2.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -47,6 +47,16 @@ namespace.
 
 Implemented drafting contracts:
 
+- `backend.app.shared.llm_operations`
+  - `LlmOperationEnvelope`
+  - `JsonOperationEnvelope`
+  - `LlmOperationAttempt`
+  - `LlmOperationResult`
+  - `LlmOperationIncident`
+  - `LlmOperationInputStats`
+  - `LlmOperationTimeoutProfile`
+  - `LlmOperationRetryPolicy`
+  - `CURRENT_LLM_OPERATION_INVENTORY`
 - `backend.app.drafting.application.steps.contracts`
   - `DraftStepContext`
   - `DraftStepTrace`
@@ -56,9 +66,7 @@ Implemented drafting contracts:
   - `DraftPlanningStepOutcomeAdapter`
   - `DraftCandidateStepOutcomeAdapter`
 - `backend.app.drafting.application.operations.json_contracts`
-  - `JsonOperationAttempt`
-  - `JsonOperationResult`
-  - `JsonLlmOperation`
+  - thin compatibility re-export of `backend.app.shared.llm_operations`
 
 Implemented workflow orchestration:
 
@@ -87,6 +95,18 @@ Implemented operation safety repair:
 - `backend.app.drafting.application.operations.evidence_interpretation_payload`
   - compact payload builder for `EvidenceInterpretation`, keeping full artifacts in
     the parent run while sending a bounded provider request.
+- Universal LLM operation governance:
+  - shared envelope status taxonomy: `accepted`, `repaired`, `backupAccepted`,
+    `fallback`, `notRun`, `failed`, `timeout`, `cancelled`, `stale`;
+  - incident taxonomy: `providerTimeout`, `networkError`, `provider4xx`,
+    `provider5xx`, `malformedJson`, `schemaFailure`, `payloadTooLarge`,
+    `contextOverBudget`, `deterministicFallback`, `backupAccepted`,
+    `notConfigured`, `staleOperation`, `cancelled`, `workerFailure`,
+    `unknownProviderFailure`;
+  - representative migrated operations:
+    `evidenceInterpretation`, `editorialCritique`, `directedRevision`,
+    `humanCommentRevision`, and `humanCommentRevisionQualityCheck`;
+  - explicit inventory/allowlist for current unmigrated provider-heavy operations.
 
 ## Context Ownership
 
@@ -154,6 +174,21 @@ Minimum contract:
 - no secrets, headers, raw tokens, or provider-specific exceptions outside
   infrastructure.
 
+The universal operation envelope must serialize to trace-safe dict shape:
+`operationId`, `operationKind`, `owner`, `status`, `attempts[]`, `aiRunIds[]`,
+`inputStats`, `payloadStats`, `retryPolicy`, `timeoutProfile`, `incident`,
+`safeError`, and `resultPayload`.
+
+Fallback, deterministic fallback, backup-accepted, not-run, failed, timeout,
+cancelled, and stale outcomes must carry `LlmOperationIncident` metadata with
+incident type, severity, probable cause, follow-up flag, provider, model, attempt
+label, safe error, and payload stats where available. Payload/input stats should at
+least expose prompt character estimate, approximate token estimate when available,
+rule/evidence/claim/source/candidate counts, model/model role, timeout profile,
+retry policy, and generation parameters. Unknown exact counts must be explicit as
+`0`, `None`, or an empty object rather than silently omitted in new migrated
+operations.
+
 DraftRun JSON LLM operations must keep using the universal JSON retry policy:
 primary, repair, optional backup, then explicit fallback, not-run, or failed outcome.
 
@@ -167,12 +202,17 @@ The Drafting v1 implementation of this contract is:
 - new step implementations return `DraftStepOutcome`, not raw `dict[str, Any]`;
 - legacy result dataclasses are adapted through narrow adapters until their owning
   runtime slices migrate;
-- JSON retry attempts from `json_step_retry_policy.py` are converted into
-  `JsonOperationAttempt`;
-- accepted, fallback, not-run, and failed JSON outcomes are represented by
-  `JsonOperationResult`;
+- JSON retry attempts from `json_step_retry_policy.py` are converted into shared
+  `LlmOperationAttempt` / compatibility `JsonOperationAttempt`;
+- accepted, repaired, backup-accepted, fallback, not-run, failed, timeout,
+  cancelled, and stale JSON outcomes are represented by shared `LlmOperationResult`
+  / compatibility `JsonOperationResult`;
+- all current provider-heavy operations must be migrated or recorded in
+  `CURRENT_LLM_OPERATION_INVENTORY` with owner, module, operation kind, current
+  status, reason not migrated, removal slice, and expected incident coverage;
 - architecture smoke rejects new step-like `execute(...) -> dict[...]` contracts in
-  `backend/app/drafting/application/steps`.
+  `backend/app/drafting/application/steps`, new bounded-context raw
+  `complete_json(...)` calls, and missing shared operation governance docs.
 
 ## Migration Sequence
 
@@ -185,6 +225,8 @@ The Drafting v1 implementation of this contract is:
 7. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
 8. Tighten allowlists after each cluster migration.
+9. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
+   each provider-heavy operation behind the shared envelope.
 
 ## Review Checklist
 

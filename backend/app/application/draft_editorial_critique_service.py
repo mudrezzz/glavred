@@ -29,6 +29,7 @@ from backend.app.domain.draft_editorial_critique import (
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_validation import DraftValidatorStatus, validation_status_for
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
+from backend.app.shared.llm_operations import build_operation_envelope, incident_from_safe_error
 from backend.app.settings import BackendSettings
 
 
@@ -60,10 +61,21 @@ class DraftEditorialCritiqueService:
         candidates = [item for item in _list(draft_artifact.get("candidates")) if isinstance(item, dict)]
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
+            envelope = build_operation_envelope(
+                operation_id="editorialCritique",
+                operation_kind="reportOnlyValidator",
+                owner="backend.app.application.draft_editorial_critique_service",
+                status="notRun",
+                attempts=[],
+                safe_error="OpenRouter is not configured",
+                failure_reason="provider-unconfigured",
+                provider=AiRunProvider.OPENROUTER.value,
+                input_stats={"candidateCount": len(candidates), "modelRole": DraftModelRole.CRITIC.value},
+            )
             return DraftPlanningStepResult(
                 artifact_payload=EditorialCritiqueReport(
                     status=DraftValidatorStatus.NOT_RUN,
-                    metadata={"reason": "provider-unconfigured"},
+                    metadata={"reason": "provider-unconfigured", "operationEnvelope": envelope},
                 ).to_payload(),
                 ai_run_id=None,
                 ai_run_ids=[],
@@ -143,12 +155,21 @@ class DraftEditorialCritiqueService:
                     findings=tuple(findings),
                     observations=tuple(observations),
                     attempts=tuple(attempts),
+                    operation_envelope=_candidate_envelope(candidate_id, attempts, "accepted", payload=payload),
                 )
             repair_context = {"previousAttempt": result["attempt"].to_payload(), "requiredShape": "object with editorialRisk, findings[], observations[], and recommendedEditorialMove"}
+        safe_error = _last_attempt_error(attempts) or "Editorial critique attempts did not produce a usable report"
         return EditorialCandidateCritique(
             candidate_id=candidate_id,
             status=DraftValidatorStatus.NOT_RUN,
             attempts=tuple(attempts),
+            operation_envelope=_candidate_envelope(
+                candidate_id,
+                attempts,
+                "notRun",
+                safe_error=safe_error,
+                failure_reason="editorial-critique-provider-failed",
+            ),
         )
 
     def _try_attempt(
@@ -249,6 +270,15 @@ def _candidate_report(report: dict[str, Any], candidate_id: str) -> dict[str, An
 
 
 def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id: str | None, model_selection: dict[str, Any], validation: str | None = None) -> EditorialCriticAttempt:
+    metadata = dict(model_selection)
+    if validation:
+        metadata["incident"] = incident_from_safe_error(
+            safe_error=validation,
+            probable_cause=status,
+            provider=AiRunProvider.OPENROUTER.value,
+            model=attempt.model,
+            attempt_label=attempt.label,
+        ).to_payload()
     return EditorialCriticAttempt(
         label=attempt.label,
         model=attempt.model,
@@ -257,8 +287,40 @@ def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id
         ai_run_id=ai_run_id,
         backup=attempt.backup,
         validation=validation,
-        metadata=model_selection,
+        metadata=metadata,
     )
+
+
+def _candidate_envelope(
+    candidate_id: str,
+    attempts: list[EditorialCriticAttempt],
+    status: str,
+    *,
+    payload: dict[str, Any] | None = None,
+    safe_error: str | None = None,
+    failure_reason: str | None = None,
+) -> dict[str, Any]:
+    return build_operation_envelope(
+        operation_id=f"editorialCritique:{candidate_id}",
+        operation_kind="reportOnlyValidator",
+        owner="backend.app.application.draft_editorial_critique_service",
+        status=status,
+        attempts=[attempt.to_payload() for attempt in attempts],
+        result_payload=payload or {},
+        safe_error=safe_error,
+        failure_reason=failure_reason,
+        provider=AiRunProvider.OPENROUTER.value,
+        model=_last_attempt_model(attempts),
+        input_stats={"candidateCount": 1, "modelRole": DraftModelRole.CRITIC.value},
+    )
+
+
+def _last_attempt_error(attempts: list[EditorialCriticAttempt]) -> str | None:
+    return next((attempt.validation for attempt in reversed(attempts) if attempt.validation), None)
+
+
+def _last_attempt_model(attempts: list[EditorialCriticAttempt]) -> str | None:
+    return next((str(attempt.model) for attempt in reversed(attempts) if attempt.model), None)
 
 
 def _list(value: Any) -> list[Any]:

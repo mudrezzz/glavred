@@ -62,9 +62,10 @@ class EditorialCandidateCritique:
     findings: tuple[DraftValidatorFinding, ...] = ()
     observations: tuple[EditorialCritiqueObservation, ...] = ()
     attempts: tuple[EditorialCriticAttempt, ...] = ()
+    operation_envelope: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "candidateId": self.candidate_id,
             "status": self.status.value,
             "editorialRisk": self.editorial_risk,
@@ -78,6 +79,9 @@ class EditorialCandidateCritique:
             "observations": [observation.to_payload() for observation in self.observations],
             "attempts": [attempt.to_payload() for attempt in self.attempts],
         }
+        if self.operation_envelope:
+            payload["operationEnvelope"] = self.operation_envelope
+        return payload
 
 
 @dataclass(frozen=True)

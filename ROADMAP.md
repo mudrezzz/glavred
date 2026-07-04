@@ -6607,7 +6607,7 @@ Status:
 
 ### Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy
 
-- Status: Ready
+- Status: Done
 - Goal: Ввести сквозную governance-систему для всех provider-heavy LLM operations: единый operation envelope, retry/fallback policy, payload stats, incident taxonomy, blast-radius diagnostics и project-specific architecture guardrails.
 - User value: DraftRun перестает чиниться точечно: если одна LLM operation зависла, вернула malformed JSON, ушла в fallback или получила слишком большой payload, система показывает это как диагностируемый инцидент и не допускает повторения того же паттерна в других шагах.
 - Scope:
@@ -6650,10 +6650,11 @@ Status:
 - Risks:
   - Broad cross-cutting migration can create churn; mitigate with adapters, allowlist debt, and targeted representative tests.
   - Too strict timeouts can break legitimate background generation; timeout profiles must be explicit and workload-specific.
+- Completed: 2026-07-04
 
 ### Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies
 
-- Status: Backlog
+- Status: Ready
 - Goal: Формализовать payload budgets для DraftRun operations, чтобы каждая LLM operation получала ровно тот контекст, который ей нужен, а не весь accumulated artifact dump.
 - User value: Генерация становится дешевле, быстрее и стабильнее; качество диагностики растет, потому что видно не только что модель не ответила, но и почему payload был неоправданно тяжелым.
 - Scope:
@@ -7497,6 +7498,7 @@ Status:
 - Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts. Completed 2026-07-03.
 - Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor. Completed 2026-07-03.
 - Slice 2.17.4.6.0.3.1: Таймаут и сокращение payload для RulePack Evidence Interpretation. Completed 2026-07-04.
+- Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy. Completed 2026-07-04.
 
 
 ## Blocked Items
@@ -7525,4 +7527,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy`.
+Implement `Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies`.

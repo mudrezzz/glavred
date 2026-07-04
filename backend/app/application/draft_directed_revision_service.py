@@ -13,7 +13,10 @@ from backend.app.application.json_step_retry_policy import JsonStepAttempt, buil
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
+from backend.app.shared.llm_operations.legacy_payloads import legacy_attempt_record, legacy_not_run_result, legacy_operation_envelope
 from backend.app.settings import BackendSettings
+
+OPERATION_META = {"operation_id": "directedRevision", "operation_kind": "writerRevision", "owner": "backend.app.application.draft_directed_revision_service", "model_role": DraftModelRole.WRITER.value}
 
 
 class DraftDirectedRevisionService:
@@ -33,12 +36,12 @@ class DraftDirectedRevisionService:
         material_plan: dict[str, Any],
     ) -> dict[str, Any]:
         if not candidate:
-            return {"status": "not-run", "reason": "candidate-not-found", "attempts": [], "aiRunIds": []}
+            return legacy_not_run_result("candidate-not-found", **OPERATION_META)
         if instruction.get("status") != "created":
-            return {"status": "not-run", "reason": instruction.get("reason") or "no-actionable-findings", "attempts": [], "aiRunIds": []}
+            return legacy_not_run_result(str(instruction.get("reason") or "no-actionable-findings"), **OPERATION_META)
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
-            return {"status": "not-run", "reason": "provider-unconfigured", "attempts": [], "aiRunIds": []}
+            return legacy_not_run_result("provider-unconfigured", safe_error="OpenRouter is not configured", **OPERATION_META)
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.WRITER)
@@ -62,9 +65,29 @@ class DraftDirectedRevisionService:
                     "fallbackUsed": False,
                     "changeLog": _strings(result["payload"].get("changeLog")),
                 }
-                return {"status": "succeeded", "revisedCandidate": revised, "attempts": attempts, "aiRunIds": _ai_run_ids(attempts)}
+                return {
+                    "status": "succeeded",
+                    "revisedCandidate": revised,
+                    "attempts": attempts,
+                    "aiRunIds": [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
+                    "operationEnvelope": legacy_operation_envelope("accepted", attempts, payload=revised, **OPERATION_META),
+                }
             repair_context = {"previousAttempt": result["attempt"], "requiredShape": "title, body, changeLog[]"}
-        return {"status": "failed", "reason": "directed-revision-provider-failed", "error": _last_error(attempts), "attempts": attempts, "aiRunIds": _ai_run_ids(attempts)}
+        last_error = next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
+        return {
+            "status": "failed",
+            "reason": "directed-revision-provider-failed",
+            "error": last_error,
+            "attempts": attempts,
+            "aiRunIds": [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
+            "operationEnvelope": legacy_operation_envelope(
+                "failed",
+                attempts,
+                safe_error=last_error,
+                failure_reason="directed-revision-provider-failed",
+                **OPERATION_META,
+            ),
+        }
 
     def _try_attempt(self, attempt: JsonStepAttempt, primary_selection: Any, candidate: dict[str, Any], instruction: dict[str, Any], context_artifact: dict[str, Any], rule_pack: dict[str, Any], material_plan: dict[str, Any], repair_context: dict[str, Any] | None) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.WRITER, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
@@ -107,7 +130,7 @@ class DraftDirectedRevisionService:
                 result_payload={"draftRunStep": "directedRevision", "attempt": attempt_payload, "result": result.payload, "providerResponse": result.raw_response},
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
+            return {"accepted": True, "payload": result.payload, "attempt": legacy_attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, safe_provider_error(self._settings, exc), raw_response_excerpt(exc))
 
@@ -125,21 +148,7 @@ class DraftDirectedRevisionService:
             error=error,
         )
         selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", selection, error)}
-
-def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
-    record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
-    if validation:
-        record["validation"] = validation
-    return record
-
-
-def _ai_run_ids(attempts: list[dict[str, Any]]) -> list[str]:
-    return [str(attempt["aiRunId"]) for attempt in attempts if attempt.get("aiRunId")]
-
-
-def _last_error(attempts: list[dict[str, Any]]) -> str | None:
-    return next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
+        return {"accepted": False, "payload": {}, "attempt": legacy_attempt_record(attempt, run.id, "error", selection, error)}
 
 
 def _strings(value: Any) -> list[str]:

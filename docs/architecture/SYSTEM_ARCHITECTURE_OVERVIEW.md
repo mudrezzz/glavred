@@ -401,6 +401,24 @@ local docs at `backend/app/drafting/README.md` and
 `legacy_pipeline` and `legacy_run` modules are compatibility shims only; they
 re-export selected legacy DraftRun entrypoints without changing runtime behavior.
 
+Slice 2.17.4.6.0.3.2 adds universal provider-heavy operation governance in
+`backend/app/shared/llm_operations`. New LLM operations must use
+`LlmOperationEnvelope` / `JsonOperationEnvelope`, `LlmOperationAttempt`,
+`LlmOperationResult`, `LlmOperationIncident`, `LlmOperationInputStats`,
+`LlmOperationTimeoutProfile`, and `LlmOperationRetryPolicy`, or be explicitly listed
+in `CURRENT_LLM_OPERATION_INVENTORY` with owner, current module, operation kind,
+reason not migrated, removal slice, and expected incident coverage. The shared
+incident taxonomy includes `providerTimeout`, `networkError`, `provider4xx`,
+`provider5xx`, `malformedJson`, `schemaFailure`, `payloadTooLarge`,
+`contextOverBudget`, `deterministicFallback`, `backupAccepted`, `notConfigured`,
+`staleOperation`, `cancelled`, `workerFailure`, and `unknownProviderFailure`.
+Fallback/not-run/failed/timeout outcomes require incident metadata and trace-safe
+safe errors; backup success carries `backupAccepted` incident metadata while
+preserving the accepted payload.
+
+The governance decision is recorded in
+`docs/adr/2026-07-04-universal-llm-operation-governance.md`.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

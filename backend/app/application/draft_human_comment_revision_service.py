@@ -12,6 +12,7 @@ from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRun
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
+from backend.app.shared.llm_operations import build_operation_envelope, incident_from_safe_error
 from backend.app.settings import BackendSettings
 
 HUMAN_COMMENT_REVISION_KEYS = {"title", "body", "revisionSummary"}
@@ -81,7 +82,10 @@ class DraftHumanCommentRevisionService:
             raise HumanCommentRevisionUnavailable("Editor comment is required")
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
-            raise HumanCommentRevisionUnavailable("OpenRouter is not configured")
+            raise HumanCommentRevisionUnavailable(
+                "OpenRouter is not configured",
+                attempts=[_not_run_attempt("provider-unconfigured", safe_error="OpenRouter is not configured")],
+            )
 
         trace_context = self._compact_trace_context(draft_run_id)
         attempts: list[dict[str, Any]] = []
@@ -116,6 +120,11 @@ class DraftHumanCommentRevisionService:
                     editor_comment=comment,
                     trace_context=trace_context,
                 )
+                attempts[-1]["operationEnvelope"] = _operation_envelope(
+                    "accepted",
+                    attempts,
+                    payload=revised_version,
+                )
                 return HumanCommentRevisionResult(
                     title=revised_version["title"],
                     body=revised_version["body"],
@@ -130,6 +139,13 @@ class DraftHumanCommentRevisionService:
                 "requiredShape": "title, body, revisionSummary"
             }
 
+        if attempts:
+            attempts[-1]["operationEnvelope"] = _operation_envelope(
+                "failed",
+                attempts,
+                safe_error=_last_error(attempts),
+                failure_reason="human-comment-revision-provider-failed",
+            )
         raise HumanCommentRevisionUnavailable(
             "Human comment revision failed after all JSON attempts",
             attempts=attempts,
@@ -319,4 +335,64 @@ def _attempt_record(
     }
     if validation:
         record["validation"] = validation
+        record["incident"] = incident_from_safe_error(
+            safe_error=validation,
+            probable_cause=status,
+            provider=AiRunProvider.OPENROUTER.value,
+            model=attempt.model,
+            attempt_label=attempt.label,
+        ).to_payload()
     return record
+
+
+def _not_run_attempt(reason: str, *, safe_error: str) -> dict[str, Any]:
+    attempt = {
+        "label": "not-run",
+        "model": "none",
+        "status": "notRun",
+        "aiRunId": None,
+        "backup": False,
+        "modelRole": DraftModelRole.WRITER.value,
+        "selectedModel": None,
+        "modelSelectionSource": "unconfigured",
+        "incident": incident_from_safe_error(
+            safe_error=safe_error,
+            probable_cause=reason,
+            provider=AiRunProvider.OPENROUTER.value,
+            model=None,
+            attempt_label="not-run",
+        ).to_payload(),
+    }
+    attempt["operationEnvelope"] = _operation_envelope("notRun", [attempt], safe_error=safe_error, failure_reason=reason)
+    return attempt
+
+
+def _operation_envelope(
+    status: str,
+    attempts: list[dict[str, Any]],
+    *,
+    payload: dict[str, Any] | None = None,
+    safe_error: str | None = None,
+    failure_reason: str | None = None,
+) -> dict[str, Any]:
+    return build_operation_envelope(
+        operation_id="humanCommentRevision",
+        operation_kind="hitlWriterRevision",
+        owner="backend.app.application.draft_human_comment_revision_service",
+        status=status,
+        attempts=attempts,
+        result_payload=payload or {},
+        safe_error=safe_error,
+        failure_reason=failure_reason,
+        provider=AiRunProvider.OPENROUTER.value,
+        model=_last_model(attempts),
+        input_stats={"candidateCount": 1, "modelRole": DraftModelRole.WRITER.value},
+    )
+
+
+def _last_error(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
+
+
+def _last_model(attempts: list[dict[str, Any]]) -> str | None:
+    return next((str(item.get("model")) for item in reversed(attempts) if item.get("model")), None)

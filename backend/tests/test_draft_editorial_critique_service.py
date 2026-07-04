@@ -74,7 +74,9 @@ def test_editorial_critique_retries_malformed_json_and_uses_repair(tmp_path) -> 
     attempts = result.artifact_payload["candidateReports"][0]["attempts"]
     assert [attempt["label"] for attempt in attempts] == ["primary", "primary-repair"]
     assert attempts[0]["status"] == "error"
+    assert attempts[0]["incident"]["incidentType"] == "schemaFailure"
     assert attempts[1]["status"] == "accepted"
+    assert result.artifact_payload["candidateReports"][0]["operationEnvelope"]["status"] == "accepted"
     assert adapter.calls[0]["model"] == "critic-model"
 
 
@@ -97,6 +99,8 @@ def test_editorial_critique_provider_unconfigured_is_not_run(tmp_path) -> None:
 
     assert result.artifact_payload["status"] == "not-run"
     assert result.artifact_payload["metadata"]["reason"] == "provider-unconfigured"
+    assert result.artifact_payload["metadata"]["operationEnvelope"]["status"] == "notRun"
+    assert result.artifact_payload["metadata"]["operationEnvelope"]["incident"]["incidentType"] == "notConfigured"
     assert result.ai_run_ids == []
 
 
