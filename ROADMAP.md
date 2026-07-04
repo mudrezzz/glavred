@@ -6542,7 +6542,7 @@ Status:
 
 ### Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor
 
-- Status: Ready
+- Status: Done
 - Goal: Turn `draft_run_pipeline.py` from a long procedural scenario into a thin facade over `DraftWorkflow` and a step registry.
 - User value:
   - A developer can locate each pipeline step without reading one monolithic orchestration method.
@@ -6570,10 +6570,11 @@ Status:
   - Pipeline trace and finalDraft results are unchanged on existing tests.
 - Risks:
   - Subtle progress/partial-artifact regressions; keep tests focused on stale/failure paths, not only happy path.
+- Completed: 2026-07-03
 
 ### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports.
 - User value:
   - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
@@ -7343,6 +7344,7 @@ Status:
 - Slice 2.17.4.6.0: Backend Architecture Recovery Charter and Package Contract. Completed 2026-07-03.
 - Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims. Completed 2026-07-03.
 - Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts. Completed 2026-07-03.
+- Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor. Completed 2026-07-03.
 
 
 ## Blocked Items
@@ -7371,4 +7373,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor`.
+Implement `Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration`.

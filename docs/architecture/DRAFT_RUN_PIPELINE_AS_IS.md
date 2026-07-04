@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.16.1: Editorial Learning Notes in Author Memory.
+Current as of Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -42,18 +42,32 @@ python scripts/generate-draft-run-pipeline-pdf.py
 
 ## 2. Runtime topology
 
+Runtime entrypoints are compatibility-preserving:
+
+- the Celery/API path still enters the drafting runtime through
+  `backend.app.application.draft_run_pipeline.DraftRunPipeline`;
+- `DraftRunPipeline` is now a thin facade that keeps the previous constructor and
+  `execute(run_id)` method;
+- sequencing is delegated to
+  `backend.app.drafting.application.workflow.DraftWorkflow` through an ordered
+  `DraftStepRegistry`;
+- individual step services, prompts, provider calls, artifact payloads, progress
+  semantics, child `AiRun` persistence, and blocked/failure behavior are unchanged.
+
 ```mermaid
 sequenceDiagram
   participant UI as Frontend Workbench
   participant API as FastAPI
   participant DB as SQLite DraftRun DB
   participant Worker as Celery Worker
+  participant WF as DraftWorkflow
   participant OR as OpenRouter
 
   UI->>API: POST /api/draft-runs
   API->>DB: create queued DraftRun + pending steps
   UI->>API: poll GET /api/draft-runs/{id}
   Worker->>DB: set run running
+  Worker->>WF: DraftRunPipeline facade delegates execute(run_id)
   Worker->>DB: write step artifacts and progress
   Worker->>OR: child JSON/prose calls when configured
   OR-->>Worker: provider result
@@ -96,6 +110,9 @@ flowchart TD
 The backend enum is:
 
 `context -> sourceIntent -> publicEvidence -> feasibility -> postContract -> rulePack -> materialPlan -> strategy -> rhetoricalPlans -> draft -> validation -> complete`
+
+The ordered runtime registry uses the same sequence. It is a package-boundary
+refactor, not a semantic step change.
 
 ## 4. Step-by-step technical flow
 

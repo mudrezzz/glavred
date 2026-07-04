@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.
+Current as of Slice 2.17.4.6.0.3.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -26,10 +26,10 @@ bounded context at a time while preserving behavior.
 
 ## Implemented Package Boundaries
 
-As of Slice 2.17.4.6.0.2, `backend/app/drafting` exists as the first target
+As of Slice 2.17.4.6.0.3, `backend/app/drafting` exists as the first target
 bounded-context package. It contains package markers, package-local documentation,
-narrow compatibility shims, and the first provider-free step/JSON operation
-contracts.
+narrow compatibility shims, the first provider-free step/JSON operation contracts,
+and the behavior-preserving DraftRun workflow orchestration shell.
 
 Implemented documentation:
 
@@ -59,6 +59,25 @@ Implemented drafting contracts:
   - `JsonOperationAttempt`
   - `JsonOperationResult`
   - `JsonLlmOperation`
+
+Implemented workflow orchestration:
+
+- `backend.app.drafting.application.workflow.workflow`
+  - `DraftWorkflow`
+- `backend.app.drafting.application.workflow.state`
+  - `DraftWorkflowState`
+- `backend.app.drafting.application.workflow.registry`
+  - `DraftWorkflowPhase`
+  - `DraftStepRegistry`
+- `backend.app.drafting.application.workflow.legacy_workflow`
+  - thin factory that wires legacy DraftRun services into `DraftWorkflow`
+- `backend.app.drafting.application.workflow.legacy_services`
+  - migration-only dependency container preserving old default service wiring
+- `backend.app.drafting.application.workflow.legacy_phase_builder`
+  - behavior-preserving phase builder around the existing legacy DraftRun services
+- `backend.app.application.draft_run_pipeline`
+  - compatibility facade that keeps the previous public constructor and delegates to
+    `DraftWorkflow`
 
 ## Context Ownership
 
@@ -146,7 +165,7 @@ The Drafting v1 implementation of this contract is:
 1. Add this contract and architecture smoke stop-line.
 2. Create `backend/app/drafting` skeleton and compatibility shims.
 3. Introduce shared `DraftStep` and JSON operation contracts. Done.
-4. Refactor DraftRun orchestration into a workflow registry.
+4. Refactor DraftRun orchestration into a workflow registry. Done.
 5. Move context/evidence/planning clusters.
 6. Move candidate/validation/revision/final quality clusters.
 7. Move upstream radar/search into `backend/app/upstream` before expanding extraction

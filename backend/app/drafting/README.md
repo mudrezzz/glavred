@@ -2,10 +2,11 @@
 
 `backend/app/drafting` is the target bounded context for DraftRun backend code.
 
-Current status: skeleton, compatibility shims, and the first provider-free step and
-JSON operation contracts. Runtime behavior still lives in the legacy flat modules
-under `backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` until
-the migration slices move cohesive clusters.
+Current status: skeleton, compatibility shims, the first provider-free step and
+JSON operation contracts, and a behavior-preserving workflow orchestration shell.
+Most step implementations still live in the legacy flat modules under
+`backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` until the
+migration slices move cohesive clusters.
 
 ## Ownership
 
@@ -101,3 +102,23 @@ Drafting JSON LLM operations should use
 The existing `backend.app.application.json_step_retry_policy` remains the retry
 sequence source during migration. New operation code should convert those attempts
 into `JsonOperationAttempt` rather than inventing another trace shape.
+
+## Workflow Orchestration
+
+`backend.app.drafting.application.workflow` owns the new DraftRun orchestration
+shell:
+
+- `DraftWorkflow` executes an ordered registry of phases.
+- `DraftWorkflowState` carries the request, progress object, intermediate artifacts,
+  final draft, and stop flags between phases.
+- `DraftWorkflowPhase` wraps one behavior-preserving phase.
+- `DraftStepRegistry` keeps phase ordering explicit and rejects duplicate phase ids.
+- `LegacyDraftWorkflowServices` keeps old dependency defaults in one migration-only
+  container.
+- `LegacyDraftWorkflowPhaseBuilder` adapts the old step sequence into registered
+  phases while individual services are migrated later.
+
+The legacy `backend.app.application.draft_run_pipeline.DraftRunPipeline` class is
+still the runtime compatibility entrypoint. It keeps the old constructor and
+`execute(run_id)` method, then delegates to `DraftWorkflow`. Do not add new step
+logic to the facade.
