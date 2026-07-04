@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.0.3.1: RulePack Evidence Interpretation Timeout and Payload Repair.
+Current as of Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -34,6 +34,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `RevisionLoop` | Bounded editorial optimization loop: validator repair goals plus editorial goals, old-vs-new dimension scoring, accepted/rejected revisions, and rejected moves. | `validation.rankingRevision.revisionLoop` |
 | `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
+| `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
@@ -900,6 +901,19 @@ Representative migrated operations are `evidenceInterpretation`, `editorialCriti
 `humanCommentRevisionQualityCheck`; other current provider-heavy operations remain in
 `CURRENT_LLM_OPERATION_INVENTORY` until their owning migration slices.
 
+Slice 2.17.4.6.0.3.3 adds DraftRun provider-input payload budget governance. Full
+artifacts stay in parent DraftRun storage, but enforced provider calls receive a
+curated compact payload immediately before prompt messages are built. The enforced
+representative operations are `evidenceInterpretation`, `editorialCritique`,
+`directedRevision`, `humanCommentRevision`, and
+`humanCommentRevisionQualityCheck`. Each records `payloadBudget.profileId`,
+execution mode, limits, sent/trimmed counts, suppressed fields, semantic input
+contract, `qualityRisk`, `promptCharEstimate`, and `approxTokenEstimate` in child
+`AiRun.requestPayload`, attempts, and `operationEnvelope.payloadStats`. If compacted
+input still exceeds the profile cap, trace records `contextOverBudget`; hard-cap
+breaches record `payloadTooLarge`. Remaining provider-heavy operations are explicit
+payload-budget debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
+
 ## 9. How to read a run trace
 
 Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
@@ -915,7 +929,7 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 7. `rulePack`: confirm rule registry exists and size/evidence rules are present.
 8. `evidenceInterpretation`: inside `rulePack`, confirm implications, examples,
    limits, forbidden overclaims, rejected evidence uses, attempts, `operationEnvelope`,
-   timeout profile, input stats, and incident taxonomy.
+   timeout profile, input stats, `payloadBudget`, and incident taxonomy.
 9. `materialPlan`: confirm selected evidence and explicit rejection reasons.
 10. `strategy`: confirm the strategy does not change the contract.
 11. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
@@ -955,6 +969,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     it against `CURRENT_LLM_OPERATION_INVENTORY` to identify other migrated or
     allowlisted operations with the same expected incident coverage before deciding
     whether this is an isolated provider error or a systemic architecture issue.
+24. payload budget blast radius: when `qualityRisk`, `contextOverBudget`, or
+    `payloadTooLarge` repeats, compare `payloadBudget.profileId`, sent/trimmed
+    counts, and inventory `payloadBudgetStatus` before blaming prompt quality.
 
 ## 10. Known AS IS limitations
 

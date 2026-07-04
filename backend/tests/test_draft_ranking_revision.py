@@ -281,6 +281,30 @@ def test_directed_revision_unconfigured_returns_not_run_envelope(tmp_path) -> No
     assert result["operationEnvelope"]["incident"]["incidentType"] == "notConfigured"
 
 
+def test_directed_revision_success_records_payload_budget(tmp_path) -> None:
+    ai = ai_service(tmp_path)
+    service = DraftDirectedRevisionService(
+        settings=settings(configured=True, writer_model="writer-model"),
+        ai_run_service=ai,
+        openrouter_validator=OpenRouterConfigValidator(),
+        openrouter_adapter=SequenceAdapter([{"title": "Revised", "body": "Revised body", "changeLog": ["tightened"]}]),
+    )
+
+    result = service.revise(
+        candidate={"id": "candidate-1", "title": "Title", "body": "Body"},
+        instruction={"status": "created", "goals": ["tighten"]},
+        context_artifact=context_artifact(),
+        rule_pack={},
+        material_plan={},
+    )
+
+    assert result["status"] == "succeeded"
+    assert result["operationEnvelope"]["payloadStats"]["payloadBudget"]["profileId"] == "directedRevision"
+    run = ai.get_run(result["aiRunIds"][0])
+    assert run is not None
+    assert run.request_payload["payloadBudget"]["profileId"] == "directedRevision"
+
+
 def ranking_revision_service(tmp_path, adapter: SequenceAdapter, max_iterations: int = 1) -> DraftRankingRevisionService:
     ai = ai_service(tmp_path)
     return DraftRankingRevisionService(

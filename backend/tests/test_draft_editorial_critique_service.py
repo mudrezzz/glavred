@@ -53,6 +53,8 @@ def test_editorial_critique_success_stores_report_and_child_ai_run(tmp_path) -> 
     assert run.request_payload["draftRunStep"] == "editorialCritique"
     assert run.request_payload["modelRole"] == "critic"
     assert run.request_payload["selectedModel"] == "critic-model"
+    assert run.request_payload["payloadBudget"]["profileId"] == "editorialCritique"
+    assert report["operationEnvelope"]["payloadStats"]["payloadBudget"]["profileId"] == "editorialCritique"
 
 
 def test_editorial_critique_retries_malformed_json_and_uses_repair(tmp_path) -> None:

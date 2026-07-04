@@ -24,7 +24,11 @@ def legacy_operation_envelope(
     safe_error: str | None = None,
     failure_reason: str | None = None,
     provider: str = "openrouter",
+    input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    envelope_input_stats = {"candidateCount": 1, "modelRole": model_role}
+    envelope_input_stats.update(input_stats or {})
     return build_operation_envelope(
         operation_id=operation_id,
         operation_kind=operation_kind,
@@ -36,7 +40,8 @@ def legacy_operation_envelope(
         failure_reason=failure_reason,
         provider=provider,
         model=_last_model(attempts),
-        input_stats={"candidateCount": 1, "modelRole": model_role},
+        input_stats=envelope_input_stats,
+        payload_stats=payload_stats,
     )
 
 
@@ -94,6 +99,9 @@ def legacy_attempt_record(
     validation: Any | None = None,
     *,
     provider: str = "openrouter",
+    input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
+    generation_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     record = {
         "label": attempt.label,
@@ -103,6 +111,12 @@ def legacy_attempt_record(
         "backup": attempt.backup,
         **model_selection,
     }
+    if input_stats:
+        record["inputStats"] = input_stats
+    if payload_stats:
+        record["payloadStats"] = payload_stats
+    if generation_params:
+        record["generationParams"] = generation_params
     if validation:
         record["validation"] = validation
         record["incident"] = attempt_incident_payload(

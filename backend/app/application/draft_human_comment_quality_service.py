@@ -7,6 +7,7 @@ from backend.app.application.draft_generation_params import GenerationParamProfi
 from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
+from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, last_input_stats, last_payload_stats
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_human_revision import HumanCommentRevisionQualityCheck, human_comment_revision_quality_not_run
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -66,6 +67,7 @@ class DraftHumanCommentQualityService:
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
+        self._payload_budget_runtime = DraftRunPayloadBudgetRuntime()
 
     def check(
         self,
@@ -106,6 +108,8 @@ class DraftHumanCommentQualityService:
                     "accepted",
                     attempts,
                     payload=result["payload"],
+                    input_stats=last_input_stats(attempts),
+                    payload_stats=last_payload_stats(attempts),
                 )
                 return _apply_deterministic_overlay(
                     _normalize_quality_payload(result["payload"], attempts),
@@ -123,6 +127,8 @@ class DraftHumanCommentQualityService:
                 attempts,
                 safe_error=_last_error(attempts),
                 failure_reason="human-comment-revision-quality-provider-failed",
+                input_stats=last_input_stats(attempts),
+                payload_stats=last_payload_stats(attempts),
             )
         return human_comment_revision_quality_not_run(
             reason="Human comment revision quality check failed after all JSON attempts",
@@ -158,11 +164,25 @@ class DraftHumanCommentQualityService:
             "backup": attempt.backup,
             **selection.to_payload(),
         }
+        budget_input = self._payload_budget_runtime.compact(
+            "humanCommentRevisionQualityCheck",
+            {
+                "base_version": _compact_version(base_version),
+                "revised_version": _compact_version(revised_version),
+                "editor_comment": editor_comment,
+                "trace_context": trace_context,
+            },
+            execution_mode=self._settings.draft_run_execution_mode,
+            model=attempt.model,
+            model_role=DraftModelRole.REVIEW.value,
+            generation_params=generation_params.to_payload(),
+        )
+        compact_payload = budget_input.payload
         messages = build_human_comment_quality_messages(
-            base_version=base_version,
-            revised_version=revised_version,
+            base_version=compact_payload["base_version"],
+            revised_version=compact_payload["revised_version"],
             editor_comment=editor_comment,
-            trace_context=trace_context,
+            trace_context=compact_payload["trace_context"],
             repair_context=repair_context if attempt.repair else None,
         )
         request_payload = {
@@ -171,9 +191,12 @@ class DraftHumanCommentQualityService:
             "baseVersion": _compact_version(base_version),
             "revisedVersion": _compact_version(revised_version),
             "editorComment": editor_comment,
-            "traceContext": trace_context,
+            "traceContext": compact_payload["trace_context"],
             "messages": messages,
             "generationParams": generation_params.to_payload(),
+            "inputStats": budget_input.input_stats,
+            "payloadStats": budget_input.payload_stats,
+            "payloadBudget": budget_input.payload_budget,
             **selection.to_payload(),
         }
         try:
@@ -198,7 +221,19 @@ class DraftHumanCommentQualityService:
                 },
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
+            return {
+                "accepted": True,
+                "payload": result.payload,
+                "attempt": _attempt_record(
+                    attempt,
+                    run.id,
+                    "accepted",
+                    selection.to_payload(),
+                    input_stats=budget_input.input_stats,
+                    payload_stats=budget_input.payload_stats,
+                    generation_params=generation_params.to_payload(),
+                ),
+            }
         except Exception as exc:
             error = safe_provider_error(self._settings, exc)
             result_payload: dict[str, Any] = {
@@ -218,7 +253,20 @@ class DraftHumanCommentQualityService:
                 fallback_used=False,
                 error=error,
             )
-            return {"accepted": False, "payload": {}, "attempt": _attempt_record(attempt, run.id, "error", selection.to_payload(), error)}
+            return {
+                "accepted": False,
+                "payload": {},
+                "attempt": _attempt_record(
+                    attempt,
+                    run.id,
+                    "error",
+                    selection.to_payload(),
+                    error,
+                    input_stats=request_payload.get("inputStats"),
+                    payload_stats=request_payload.get("payloadStats"),
+                    generation_params=request_payload.get("generationParams"),
+                ),
+            }
 
 
 def build_human_comment_quality_messages(
@@ -326,6 +374,10 @@ def _attempt_record(
     status: str,
     model_selection: dict[str, Any],
     validation: str | None = None,
+    *,
+    input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
+    generation_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     record = {
         "label": attempt.label,
@@ -335,6 +387,12 @@ def _attempt_record(
         "backup": attempt.backup,
         **model_selection,
     }
+    if input_stats:
+        record["inputStats"] = input_stats
+    if payload_stats:
+        record["payloadStats"] = payload_stats
+    if generation_params:
+        record["generationParams"] = generation_params
     if validation:
         record["validation"] = validation
         record["incident"] = incident_from_safe_error(
@@ -376,6 +434,8 @@ def _operation_envelope(
     payload: dict[str, Any] | None = None,
     safe_error: str | None = None,
     failure_reason: str | None = None,
+    input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return build_operation_envelope(
         operation_id="humanCommentRevisionQualityCheck",
@@ -388,7 +448,8 @@ def _operation_envelope(
         failure_reason=failure_reason,
         provider=AiRunProvider.OPENROUTER.value,
         model=_last_model(attempts),
-        input_stats={"candidateCount": 1, "modelRole": DraftModelRole.REVIEW.value},
+        input_stats={"candidateCount": 1, "modelRole": DraftModelRole.REVIEW.value, **(input_stats or {})},
+        payload_stats=payload_stats,
     )
 
 

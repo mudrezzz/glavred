@@ -6654,7 +6654,7 @@ Status:
 
 ### Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies
 
-- Status: Ready
+- Status: Done
 - Goal: Формализовать payload budgets для DraftRun operations, чтобы каждая LLM operation получала ровно тот контекст, который ей нужен, а не весь accumulated artifact dump.
 - User value: Генерация становится дешевле, быстрее и стабильнее; качество диагностики растет, потому что видно не только что модель не ответила, но и почему payload был неоправданно тяжелым.
 - Scope:
@@ -6687,10 +6687,11 @@ Status:
   - Full artifact dumps are not sent to provider unless explicitly justified and budgeted.
 - Risks:
   - Over-trimming can degrade quality; policies must preserve `mustHave` fields and expose quality risks when context is removed.
+- Completed: 2026-07-04
 
 ### Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard
 
-- Status: Backlog
+- Status: Ready
 - Goal: Добавить runtime guard для `validation` / ranking-revision loop: long-running validation is allowed, but must be budgeted, trace-visible, and unable to spin indefinitely.
 - User value: Background DraftRun может работать 20-40 минут, но редактор и разработчик видят, какие validation/revision operations идут, сколько бюджета осталось, почему loop продолжается, and when it will stop.
 - Scope:
@@ -7499,6 +7500,7 @@ Status:
 - Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor. Completed 2026-07-03.
 - Slice 2.17.4.6.0.3.1: Таймаут и сокращение payload для RulePack Evidence Interpretation. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy. Completed 2026-07-04.
+- Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies. Completed 2026-07-04.
 
 
 ## Blocked Items
@@ -7527,4 +7529,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies`.
+Implement `Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard`.

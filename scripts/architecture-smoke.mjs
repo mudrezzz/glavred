@@ -1028,8 +1028,8 @@ const BACKEND_SOURCE_BASELINES = [
   },
   {
     path: "backend/app/application/draft_directed_revision_service.py",
-    limit: 160,
-    next: "Directed revision service should stay one-shot provider orchestration only; split retry plumbing before adding loops.",
+    limit: 210,
+    next: "Directed revision service should finish migrating provider input budgeting into backend/app/drafting before adding revision modes.",
   },
   {
     path: "backend/app/application/draft_revision_instruction_builder.py",
@@ -1686,6 +1686,8 @@ const BACKEND_BOUNDED_CONTEXTS_ADR_PATH =
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md";
 const UNIVERSAL_LLM_OPERATION_GOVERNANCE_ADR_PATH =
   "docs/adr/2026-07-04-universal-llm-operation-governance.md";
+const DRAFTRUN_PAYLOAD_BUDGET_ADR_PATH =
+  "docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md";
 const DRAFTING_BACKEND_README_PATH = "backend/app/drafting/README.md";
 const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
@@ -1693,6 +1695,15 @@ const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/co
 const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
 const DRAFTING_JSON_CONTRACT_COMPAT_PATH =
   "backend/app/drafting/application/operations/json_contracts.py";
+const DRAFTING_PAYLOAD_BUDGET_POLICY_PATH =
+  "backend/app/drafting/application/operations/payload_budget.py";
+const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
+  "backend/app/application/evidence_interpretation_service.py",
+  "backend/app/application/draft_editorial_critique_service.py",
+  "backend/app/application/draft_directed_revision_service.py",
+  "backend/app/application/draft_human_comment_revision_service.py",
+  "backend/app/application/draft_human_comment_quality_service.py",
+];
 const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting",
   "backend/app/drafting/api",
@@ -2892,6 +2903,39 @@ assert(
   `${DRAFTING_JSON_CONTRACT_COMPAT_PATH} must stay a thin compatibility re-export of shared LLM operation contracts.`
 );
 
+const draftingPayloadBudgetPolicySource = readText(DRAFTING_PAYLOAD_BUDGET_POLICY_PATH);
+for (const fragment of [
+  "PayloadBudgetProfile",
+  "SemanticInputContract",
+  "PayloadBudgetResult",
+  "DraftRunPayloadBudgetPolicy",
+  "contextOverBudget",
+  "payloadTooLarge",
+  "promptCharEstimate",
+  "approxTokenEstimate",
+]) {
+  assert(
+    draftingPayloadBudgetPolicySource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_POLICY_PATH} is missing required DraftRun payload budget fragment: ${fragment}`
+  );
+}
+
+for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not_budgeted", "payload_budget_removal_slice"]) {
+  assert(
+    sharedLlmInventorySource.includes(fragment),
+    `${SHARED_LLM_OPERATION_INVENTORY_PATH} must inventory payload budget status/debt field: ${fragment}`
+  );
+}
+
+for (const serviceFile of PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES) {
+  const serviceSource = readText(serviceFile);
+  assert(
+    (serviceSource.includes("payloadBudget") || serviceSource.includes("payload_budget")) &&
+      (serviceSource.includes("payloadStats") || serviceSource.includes("payload_stats")),
+    `${serviceFile} is an enforced representative LLM operation and must attach payloadBudget/payloadStats to child AiRun request payloads or operation envelopes.`
+  );
+}
+
 for (const backendFile of backendPythonFiles) {
   const imports = pythonImports(readText(backendFile));
   const forbiddenImports = backendFile.startsWith("backend/app/domain/")
@@ -2942,6 +2986,7 @@ const requiredSaoFragments = [
   "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md",
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md",
   "docs/adr/2026-07-04-universal-llm-operation-governance.md",
+  "docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md",
   "backend/app/drafting",
   "backend/app/drafting/README.md",
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md",
@@ -2952,6 +2997,11 @@ const requiredSaoFragments = [
   "LlmOperationIncident",
   "LlmOperationInputStats",
   "CURRENT_LLM_OPERATION_INVENTORY",
+  "PayloadBudgetProfile",
+  "SemanticInputContract",
+  "PayloadBudgetResult",
+  "payloadBudgetStatus",
+  "budgetPolicyId",
   "providerTimeout",
   "malformedJson",
   "deterministicFallback",

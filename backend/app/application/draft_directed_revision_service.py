@@ -10,6 +10,7 @@ from backend.app.application.draft_model_role_resolver import select_model_for_r
 from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
+from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, last_input_stats, last_payload_stats
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -25,6 +26,7 @@ class DraftDirectedRevisionService:
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
+        self._payload_budget_runtime = DraftRunPayloadBudgetRuntime()
 
     def revise(
         self,
@@ -70,7 +72,14 @@ class DraftDirectedRevisionService:
                     "revisedCandidate": revised,
                     "attempts": attempts,
                     "aiRunIds": [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
-                    "operationEnvelope": legacy_operation_envelope("accepted", attempts, payload=revised, **OPERATION_META),
+                    "operationEnvelope": legacy_operation_envelope(
+                        "accepted",
+                        attempts,
+                        payload=revised,
+                        input_stats=last_input_stats(attempts),
+                        payload_stats=last_payload_stats(attempts),
+                        **OPERATION_META,
+                    ),
                 }
             repair_context = {"previousAttempt": result["attempt"], "requiredShape": "title, body, changeLog[]"}
         last_error = next((str(item.get("validation")) for item in reversed(attempts) if item.get("validation")), None)
@@ -85,6 +94,8 @@ class DraftDirectedRevisionService:
                 attempts,
                 safe_error=last_error,
                 failure_reason="directed-revision-provider-failed",
+                input_stats=last_input_stats(attempts),
+                payload_stats=last_payload_stats(attempts),
                 **OPERATION_META,
             ),
         }
@@ -94,12 +105,27 @@ class DraftDirectedRevisionService:
         generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.REVISION, attempt=attempt)
         context_pack = context_pack_from_payload(context_artifact, DraftModelRole.WRITER)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
+        budget_input = self._payload_budget_runtime.compact(
+            "directedRevision",
+            {
+                "candidate": candidate,
+                "instruction": instruction,
+                "context_artifact": context_artifact,
+                "rule_pack": rule_pack,
+                "material_plan": material_plan,
+            },
+            execution_mode=self._settings.draft_run_execution_mode,
+            model=attempt.model,
+            model_role=DraftModelRole.WRITER.value,
+            generation_params=generation_params.to_payload(),
+        )
+        compact_payload = budget_input.payload
         messages = build_directed_revision_messages(
-            candidate=candidate,
-            instruction=instruction,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
+            candidate=compact_payload["candidate"],
+            instruction=compact_payload["instruction"],
+            context_artifact=compact_payload["context_artifact"],
+            rule_pack=compact_payload["rule_pack"],
+            material_plan=compact_payload["material_plan"],
             context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
@@ -109,6 +135,9 @@ class DraftDirectedRevisionService:
             "contextPack": context_pack,
             "messages": messages,
             "generationParams": generation_params.to_payload(),
+            "inputStats": budget_input.input_stats,
+            "payloadStats": budget_input.payload_stats,
+            "payloadBudget": budget_input.payload_budget,
             **selection.to_payload(),
         }
         try:
@@ -130,7 +159,19 @@ class DraftDirectedRevisionService:
                 result_payload={"draftRunStep": "directedRevision", "attempt": attempt_payload, "result": result.payload, "providerResponse": result.raw_response},
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": legacy_attempt_record(attempt, run.id, "accepted", selection.to_payload())}
+            return {
+                "accepted": True,
+                "payload": result.payload,
+                "attempt": legacy_attempt_record(
+                    attempt,
+                    run.id,
+                    "accepted",
+                    selection.to_payload(),
+                    input_stats=budget_input.input_stats,
+                    payload_stats=budget_input.payload_stats,
+                    generation_params=generation_params.to_payload(),
+                ),
+            }
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, safe_provider_error(self._settings, exc), raw_response_excerpt(exc))
 
@@ -148,7 +189,20 @@ class DraftDirectedRevisionService:
             error=error,
         )
         selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "attempt": legacy_attempt_record(attempt, run.id, "error", selection, error)}
+        return {
+            "accepted": False,
+            "payload": {},
+            "attempt": legacy_attempt_record(
+                attempt,
+                run.id,
+                "error",
+                selection,
+                error,
+                input_stats=request_payload.get("inputStats"),
+                payload_stats=request_payload.get("payloadStats"),
+                generation_params=request_payload.get("generationParams"),
+            ),
+        }
 
 
 def _strings(value: Any) -> list[str]:

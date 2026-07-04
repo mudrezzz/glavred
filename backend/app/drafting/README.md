@@ -129,6 +129,26 @@ It keeps full `rulePack` artifacts in the parent run but sends only the contract
 accepted evidence, external claims, synthesis, and relevant rule subset to the
 strategy model.
 
+## Payload Budget Policy
+
+DraftRun provider-heavy operations must cross the DraftRun payload budget layer
+before `build_*_messages(...)` creates provider messages. The current implementation
+lives in `backend.app.drafting.application.operations.payload_budget` and exposes:
+
+- `PayloadBudgetProfile`: per-operation, per-execution-mode caps for prompt chars,
+  approximate tokens, rules, claims, evidence, candidates, source snippets, and prior
+  drafts.
+- `SemanticInputContract`: `mustHave`, `shouldHave`, `diagnosticOnly`, and
+  `neverSendToProvider` fields.
+- `PayloadBudgetResult`: compact provider input plus `inputStats`, `payloadStats`,
+  trimmed/suppressed fields, quality risk, and optional `contextOverBudget` /
+  `payloadTooLarge` incident metadata.
+
+The full DraftRun artifacts remain in parent storage and trace. Only provider inputs
+are compacted. Child `AiRun.requestPayload`, attempts, and `operationEnvelope` must
+include `payloadBudget` metadata for every enforced operation. Operations not yet
+wired must stay explicit debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
+
 ## Workflow Orchestration
 
 `backend.app.drafting.application.workflow` owns the new DraftRun orchestration

@@ -20,6 +20,10 @@ class LlmOperationInventoryEntry:
     reason_not_migrated: str
     removal_slice: str
     expected_incident_coverage: tuple[str, ...]
+    payload_budget_status: str = "debtAllowlisted"
+    budget_policy_id: str = ""
+    reason_not_budgeted: str = ""
+    payload_budget_removal_slice: str = ""
 
     def to_payload(self) -> dict[str, object]:
         return {
@@ -31,6 +35,10 @@ class LlmOperationInventoryEntry:
             "reasonNotMigrated": self.reason_not_migrated,
             "removalSlice": self.removal_slice,
             "expectedIncidentCoverage": list(self.expected_incident_coverage),
+            "payloadBudgetStatus": self.payload_budget_status,
+            "budgetPolicyId": self.budget_policy_id or self.operation_id,
+            "reasonNotBudgeted": self.reason_not_budgeted or self.reason_not_migrated,
+            "payloadBudgetRemovalSlice": self.payload_budget_removal_slice or self.removal_slice,
         }
 
 
@@ -84,6 +92,8 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         reason_not_migrated="",
         removal_slice="",
         expected_incident_coverage=("providerTimeout", "deterministicFallback", "backupAccepted", "schemaFailure", "notConfigured"),
+        payload_budget_status="enforced",
+        budget_policy_id="evidenceInterpretation",
     ),
     LlmOperationInventoryEntry(
         operation_id="materialPlan",
@@ -144,6 +154,8 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         reason_not_migrated="",
         removal_slice="",
         expected_incident_coverage=("malformedJson", "schemaFailure", "notConfigured", "backupAccepted"),
+        payload_budget_status="enforced",
+        budget_policy_id="editorialCritique",
     ),
     LlmOperationInventoryEntry(
         operation_id="alternativeAngleRoute",
@@ -184,6 +196,8 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         reason_not_migrated="",
         removal_slice="",
         expected_incident_coverage=("malformedJson", "schemaFailure", "notConfigured", "backupAccepted"),
+        payload_budget_status="enforced",
+        budget_policy_id="directedRevision",
     ),
     LlmOperationInventoryEntry(
         operation_id="finalQualityReviewRepair",
@@ -204,6 +218,8 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         reason_not_migrated="",
         removal_slice="",
         expected_incident_coverage=("malformedJson", "schemaFailure", "notConfigured", "backupAccepted"),
+        payload_budget_status="enforced",
+        budget_policy_id="humanCommentRevision",
     ),
     LlmOperationInventoryEntry(
         operation_id="humanCommentRevisionQualityCheck",
@@ -214,6 +230,8 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         reason_not_migrated="",
         removal_slice="",
         expected_incident_coverage=("malformedJson", "schemaFailure", "notConfigured", "backupAccepted"),
+        payload_budget_status="enforced",
+        budget_policy_id="humanCommentRevisionQualityCheck",
     ),
 )
 

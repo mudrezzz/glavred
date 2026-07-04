@@ -16,6 +16,7 @@ def build_evidence_interpretation_request_trace(
     attempt: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
     input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "draftRunStep": "evidenceInterpretation",
@@ -28,6 +29,8 @@ def build_evidence_interpretation_request_trace(
             "ruleCount": len(_get(rule_pack, "ruleRegistrySnapshot", "rules") or []),
         },
         "inputStats": input_stats or {},
+        "payloadStats": payload_stats or {},
+        "payloadBudget": (payload_stats or {}).get("payloadBudget"),
         "capabilityInput": {
             "postContract": context_artifact.get("postContract"),
             "sourceLedger": context_artifact.get("sourceLedger"),

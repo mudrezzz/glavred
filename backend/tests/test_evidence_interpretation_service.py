@@ -79,6 +79,7 @@ def test_provider_interpretation_uses_strategy_role_model_and_writes_trace(tmp_p
     assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
     assert result.artifact_payload["operationEnvelope"]["operationId"] == "evidenceInterpretation"
     assert result.artifact_payload["operationEnvelope"]["status"] == "accepted"
+    assert result.artifact_payload["operationEnvelope"]["payloadStats"]["payloadBudget"]["profileId"] == "evidenceInterpretation"
     assert result.ai_run_id
 
 
@@ -150,6 +151,7 @@ def test_provider_interpretation_uses_compact_payload_and_records_input_stats(tm
     assert attempt_stats["originalRuleCount"] == 120
     assert attempt_stats["compactRuleCount"] == len(compact_rules)
     assert attempt_stats["promptCharEstimate"] > 0
+    assert result.artifact_payload["attempts"][0]["payloadStats"]["payloadBudget"]["trimmedCounts"]["rules"] > 0
 
 
 def test_unconfigured_provider_uses_deterministic_without_secret(tmp_path) -> None:

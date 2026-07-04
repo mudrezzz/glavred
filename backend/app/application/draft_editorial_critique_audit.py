@@ -13,6 +13,8 @@ def build_editorial_critique_request_trace(
     attempt: dict[str, Any],
     context_pack: dict[str, Any] | None = None,
     model_selection: dict[str, Any] | None = None,
+    input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "draftRunStep": "editorialCritique",
@@ -26,6 +28,9 @@ def build_editorial_critique_request_trace(
             "responseFormat": {"type": "json_object"},
         },
         "attempt": attempt,
+        "inputStats": input_stats or {},
+        "payloadStats": payload_stats or {},
+        "payloadBudget": (payload_stats or {}).get("payloadBudget"),
     }
     if context_pack is not None:
         payload["contextPack"] = context_pack

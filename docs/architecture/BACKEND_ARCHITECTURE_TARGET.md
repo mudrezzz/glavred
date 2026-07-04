@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.3.2.
+Current as of Slice 2.17.4.6.0.3.3.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -95,6 +95,16 @@ Implemented operation safety repair:
 - `backend.app.drafting.application.operations.evidence_interpretation_payload`
   - compact payload builder for `EvidenceInterpretation`, keeping full artifacts in
     the parent run while sending a bounded provider request.
+- DraftRun provider-input payload budgeting:
+  - `backend.app.drafting.application.operations.payload_budget`
+    owns `PayloadBudgetProfile`, `SemanticInputContract`, and
+    `PayloadBudgetResult`;
+  - `backend.app.drafting.application.operations.payload_budget_runtime`
+    provides migration helpers for legacy flat services;
+  - representative enforced operations attach `payloadBudget` metadata to child
+    `AiRun.requestPayload`, attempts, and `operationEnvelope.payloadStats`;
+  - over-budget compacted inputs map to `contextOverBudget` and hard cap breaches
+    map to `payloadTooLarge`.
 - Universal LLM operation governance:
   - shared envelope status taxonomy: `accepted`, `repaired`, `backupAccepted`,
     `fallback`, `notRun`, `failed`, `timeout`, `cancelled`, `stale`;
@@ -189,6 +199,17 @@ retry policy, and generation parameters. Unknown exact counts must be explicit a
 `0`, `None`, or an empty object rather than silently omitted in new migrated
 operations.
 
+DraftRun provider-heavy operations must also cross a provider-input budget boundary
+before prompt message construction. Full DraftRun artifacts may stay in parent
+storage and diagnostic trace, but provider request payloads must be compacted by a
+named `PayloadBudgetProfile`. Semantic contracts must distinguish `mustHave`,
+`shouldHave`, `diagnosticOnly`, and `neverSendToProvider` inputs. Child
+`AiRun.requestPayload`, attempts, and nested operation envelopes must expose
+`payloadBudget.profileId`, execution mode, limits, sent/trimmed counts, suppressed
+fields, semantic inputs, quality risk, prompt char estimate, and approx token
+estimate. Operations not yet wired must be explicitly debt-allowlisted in
+`CURRENT_LLM_OPERATION_INVENTORY` with a removal slice.
+
 DraftRun JSON LLM operations must keep using the universal JSON retry policy:
 primary, repair, optional backup, then explicit fallback, not-run, or failed outcome.
 
@@ -209,7 +230,8 @@ The Drafting v1 implementation of this contract is:
   / compatibility `JsonOperationResult`;
 - all current provider-heavy operations must be migrated or recorded in
   `CURRENT_LLM_OPERATION_INVENTORY` with owner, module, operation kind, current
-  status, reason not migrated, removal slice, and expected incident coverage;
+  status, reason not migrated, removal slice, expected incident coverage, payload
+  budget status, policy id, reason not budgeted, and payload-budget removal slice;
 - architecture smoke rejects new step-like `execute(...) -> dict[...]` contracts in
   `backend/app/drafting/application/steps`, new bounded-context raw
   `complete_json(...)` calls, and missing shared operation governance docs.
@@ -220,12 +242,13 @@ The Drafting v1 implementation of this contract is:
 2. Create `backend/app/drafting` skeleton and compatibility shims.
 3. Introduce shared `DraftStep` and JSON operation contracts. Done.
 4. Refactor DraftRun orchestration into a workflow registry. Done.
-5. Move context/evidence/planning clusters.
-6. Move candidate/validation/revision/final quality clusters.
-7. Move upstream radar/search into `backend/app/upstream` before expanding extraction
+5. Add DraftRun provider-input payload budget policies. Done.
+6. Move context/evidence/planning clusters.
+7. Move candidate/validation/revision/final quality clusters.
+8. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
-8. Tighten allowlists after each cluster migration.
-9. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
+9. Tighten allowlists after each cluster migration.
+10. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
    each provider-heavy operation behind the shared envelope.
 
 ## Review Checklist

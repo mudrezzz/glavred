@@ -11,6 +11,9 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from backend.app.drafting.application.operations.payload_budget import DraftRunPayloadBudgetPolicy
+from backend.app.shared.llm_operations import LlmOperationIncident
+
 
 MAX_RULES = 40
 MAX_EXTERNAL_CLAIMS = 24
@@ -24,6 +27,8 @@ class EvidenceInterpretationInput:
     context_artifact: dict[str, Any]
     rule_pack: dict[str, Any]
     input_stats: dict[str, Any]
+    payload_stats: dict[str, Any]
+    incident: LlmOperationIncident | None = None
 
 
 class EvidenceInterpretationPayloadCompactor:
@@ -33,6 +38,7 @@ class EvidenceInterpretationPayloadCompactor:
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         timeout_seconds: int,
+        execution_mode: str | None = None,
     ) -> EvidenceInterpretationInput:
         rules = _records(_record(rule_pack.get("ruleRegistrySnapshot")).get("rules"))
         compact_rules = _compact_rules(rules)
@@ -62,6 +68,12 @@ class EvidenceInterpretationPayloadCompactor:
             "contextArtifact": compact_context,
             "rulePack": compact_rule_pack,
         }, ensure_ascii=False))
+        budget_result = DraftRunPayloadBudgetPolicy().compact(
+            "evidenceInterpretation",
+            {"context_artifact": compact_context, "rule_pack": compact_rule_pack},
+            execution_mode=execution_mode,
+            model_role="strategy",
+        )
         return EvidenceInterpretationInput(
             context_artifact=compact_context,
             rule_pack=compact_rule_pack,
@@ -72,8 +84,12 @@ class EvidenceInterpretationPayloadCompactor:
                 "publicEvidenceItemCount": len(_records(public_evidence.get("items"))),
                 "evidenceSynthesisClaimCount": len(_records(evidence_synthesis.get("externalClaims"))),
                 "promptCharEstimate": prompt_estimate,
+                "approxTokenEstimate": max(1, (prompt_estimate + 3) // 4),
                 "timeoutSeconds": timeout_seconds,
+                "payloadBudget": budget_result.payload_budget,
             },
+            payload_stats=budget_result.payload_stats,
+            incident=budget_result.incident,
         )
 
 

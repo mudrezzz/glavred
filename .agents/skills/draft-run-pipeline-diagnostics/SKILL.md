@@ -65,6 +65,12 @@ Check these failure classes explicitly:
   `malformedJson`, `schemaFailure`, `payloadTooLarge`, `contextOverBudget`,
   `deterministicFallback`, `backupAccepted`, `notConfigured`, `staleOperation`,
   `cancelled`, `workerFailure`, or `unknownProviderFailure`.
+  When `payloadStats.payloadBudget` exists, verify `profileId`, execution mode,
+  prompt char estimate, approx token estimate, sent/trimmed counts, suppressed
+  fields, semantic inputs, and `qualityRisk` before blaming the model. If
+  `contextOverBudget` or `payloadTooLarge` repeats, scan the inventory for other
+  operations with the same `budgetPolicyId` or `payloadBudgetStatus=debtAllowlisted`
+  and escalate a payload-boundary slice when the pattern is systemic.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched
@@ -132,6 +138,11 @@ hide bad output behind polite abstractions.
   incident taxonomy, safe error, timeout profile, retry policy, and payload/input
   stats. Fallback/not-run/failed/timeout/cancelled/stale without incident metadata is
   a guardrail bug.
+- For enforced payload-budget operations, inspect `payloadBudget` in the child
+  `AiRun.requestPayload`, the attempt, and `operationEnvelope.payloadStats`. Full
+  `ruleRegistrySnapshot`, full `sourceLedger`, full validation reports, full
+  candidate pools, or full revision traces in provider messages without a matching
+  budget profile are architecture bugs.
 - Backup success is not silent success. It is an accepted payload with
   `backupAccepted` incident metadata and should trigger a blast-radius check if it
   repeats.

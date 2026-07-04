@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.3.2.
+Current as of Slice 2.17.4.6.0.3.3.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -91,6 +91,28 @@ Other provider-heavy operations are still legacy debt, but they are explicitly
 listed in the inventory with owner, current module, operation kind, migration status,
 reason not migrated, removal slice, and expected incident coverage.
 
+## DraftRun Provider-Input Payload Budgets
+
+Slice 2.17.4.6.0.3.3 adds the DraftRun-specific provider-input boundary in
+`backend/app/drafting/application/operations/payload_budget.py`. Rich parent
+DraftRun artifacts still remain available for storage and diagnostics, but enforced
+provider-heavy operations now pass compacted input into prompt builders and attach
+`payloadBudget` metadata to child `AiRun.requestPayload`, attempts, and
+`operationEnvelope.payloadStats`.
+
+The enforced representative operations are:
+
+- `evidenceInterpretation`;
+- `editorialCritique`;
+- `directedRevision`;
+- `humanCommentRevision`;
+- `humanCommentRevisionQualityCheck`.
+
+`CURRENT_LLM_OPERATION_INVENTORY` now also records `payloadBudgetStatus`,
+`budgetPolicyId`, `reasonNotBudgeted`, and `payloadBudgetRemovalSlice`. Operations
+not yet wired at runtime remain debt-allowlisted rather than silently sending full
+artifacts.
+
 ## Current Guardrails
 
 Already enforced:
@@ -102,10 +124,12 @@ Already enforced:
 - Exact allowlists for existing flat DraftRun/Radar modules.
 - Required backend module ownership header for new bounded-context modules.
 - Shared LLM operation envelope, incident taxonomy, and operation inventory checks.
+- DraftRun payload budget policy checks and representative runtime wiring checks.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
+- Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes.

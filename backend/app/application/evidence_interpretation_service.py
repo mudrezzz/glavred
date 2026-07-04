@@ -143,6 +143,7 @@ class EvidenceInterpretationService:
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 timeout_seconds=timeout_seconds,
+                execution_mode=self._settings.draft_run_execution_mode,
             )
             messages = build_evidence_interpretation_messages(
                 context_summary=context_summary,
@@ -163,7 +164,9 @@ class EvidenceInterpretationService:
                 attempt=attempt_payload,
                 model_selection=selection.to_payload(),
                 input_stats=compact_input.input_stats,
+                payload_stats=compact_input.payload_stats,
             )
+            request_payload["payloadBudget"] = compact_input.payload_stats.get("payloadBudget")
             timings["buildPromptMs"] = _elapsed_ms(build_start)
 
             def provider_operation() -> tuple[dict[str, Any], dict[str, Any] | None, int, int]:
@@ -208,7 +211,15 @@ class EvidenceInterpretationService:
                 "accepted": True,
                 "payload": payload,
                 "aiRunId": run.id,
-                "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload(), input_stats=compact_input.input_stats, timings=timings),
+                "attempt": _attempt_record(
+                    attempt,
+                    run.id,
+                    "accepted",
+                    selection.to_payload(),
+                    input_stats=compact_input.input_stats,
+                    payload_stats=compact_input.payload_stats,
+                    timings=timings,
+                ),
             }
         except Exception as exc:
             status = "timeout" if isinstance(exc, OperationTimeoutError) else "error"
@@ -252,6 +263,7 @@ class EvidenceInterpretationService:
                 model_selection,
                 error,
                 input_stats=request_payload.get("inputStats"),
+                payload_stats=request_payload.get("payloadStats"),
                 timings=timings,
             ),
         }
@@ -280,6 +292,8 @@ class EvidenceInterpretationService:
             context_pack=context_pack,
             attempt={"label": "deterministic-fallback", "model": model or "deterministic", "repair": False, "backup": False},
             model_selection=selection.to_payload(),
+            input_stats={},
+            payload_stats={},
         )
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
@@ -331,6 +345,8 @@ class EvidenceInterpretationService:
                 profile="evidence-interpretation-provider-attempt",
                 attempt_timeout_seconds=timeout_seconds,
             ),
+            input_stats=_last_input_stats(attempts),
+            payload_stats=_last_payload_stats(attempts),
         )
         if error:
             artifact["error"] = error
@@ -374,11 +390,14 @@ def _attempt_record(
     error: str | None = None,
     *,
     input_stats: dict[str, Any] | None = None,
+    payload_stats: dict[str, Any] | None = None,
     timings: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
     if input_stats:
         record["inputStats"] = input_stats
+    if payload_stats:
+        record["payloadStats"] = payload_stats
     if timings:
         record["timings"] = timings
     if error:
@@ -395,3 +414,11 @@ def _attempt_record(
 
 def _last_model(attempts: list[dict[str, Any]]) -> str | None:
     return next((str(item.get("model")) for item in reversed(attempts) if item.get("model")), None)
+
+
+def _last_input_stats(attempts: list[dict[str, Any]]) -> dict[str, Any]:
+    return next((dict(item.get("inputStats")) for item in reversed(attempts) if isinstance(item.get("inputStats"), dict)), {})
+
+
+def _last_payload_stats(attempts: list[dict[str, Any]]) -> dict[str, Any]:
+    return next((dict(item.get("payloadStats")) for item in reversed(attempts) if isinstance(item.get("payloadStats"), dict)), {})

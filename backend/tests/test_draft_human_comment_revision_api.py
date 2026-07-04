@@ -89,6 +89,8 @@ def test_revise_with_comment_creates_child_ai_run(tmp_path) -> None:
     ai_run = client.get(f"/api/ai-runs/{payload['aiRunId']}").json()
     assert ai_run["requestPayload"]["draftRunStep"] == "humanCommentRevision"
     assert ai_run["requestPayload"]["editorComment"] == "Make the author stance sharper."
+    assert ai_run["requestPayload"]["payloadBudget"]["profileId"] == "humanCommentRevision"
+    assert payload["attempts"][0]["operationEnvelope"]["payloadStats"]["payloadBudget"]["profileId"] == "humanCommentRevision"
     assert "secret-token" not in response.text
 
 
@@ -140,6 +142,7 @@ def test_revise_with_comment_returns_revision_when_quality_check_fails(tmp_path)
         "backup",
     ]
     assert payload["qualityCheck"]["attempts"][0]["modelRole"] == "review"
+    assert payload["qualityCheck"]["attempts"][0]["payloadStats"]["payloadBudget"]["profileId"] == "humanCommentRevisionQualityCheck"
     assert payload["qualityCheck"]["attempts"][0]["incident"]["incidentType"] == "malformedJson"
     assert payload["qualityCheck"]["attempts"][-1]["operationEnvelope"]["operationId"] == "humanCommentRevisionQualityCheck"
 
