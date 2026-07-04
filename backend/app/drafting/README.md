@@ -132,17 +132,23 @@ strategy model.
 ## Payload Budget Policy
 
 DraftRun provider-heavy operations must cross the DraftRun payload budget layer
-before `build_*_messages(...)` creates provider messages. The current implementation
-lives in `backend.app.drafting.application.operations.payload_budget` and exposes:
+before `build_*_messages(...)` creates provider messages. The implementation is
+split by role under `backend.app.drafting.application.operations`:
 
-- `PayloadBudgetProfile`: per-operation, per-execution-mode caps for prompt chars,
+- `payload_budget_contracts.py`: `PayloadBudgetProfile`,
+  `SemanticInputContract`, `PayloadBudgetResult`, and internal compaction DTOs.
+- `payload_budget_profiles.py`: per-operation, per-execution-mode caps for prompt chars,
   approximate tokens, rules, claims, evidence, candidates, source snippets, and prior
   drafts.
-- `SemanticInputContract`: `mustHave`, `shouldHave`, `diagnosticOnly`, and
+- `payload_semantic_contracts.py`: `mustHave`, `shouldHave`, `diagnosticOnly`, and
   `neverSendToProvider` fields.
-- `PayloadBudgetResult`: compact provider input plus `inputStats`, `payloadStats`,
+- `payload_compactors.py`: role-owned artifact compactors for rules, source ledger,
+  evidence, material plan, candidates, validation reports, and trace context.
+- `payload_budget_policy.py`: `DraftRunPayloadBudgetPolicy`, which returns compact
+  provider input plus `inputStats`, `payloadStats`,
   trimmed/suppressed fields, quality risk, and optional `contextOverBudget` /
   `payloadTooLarge` incident metadata.
+- `payload_budget.py`: compatibility facade for legacy imports only.
 
 The full DraftRun artifacts remain in parent storage and trace. Only provider inputs
 are compacted. Child `AiRun.requestPayload`, attempts, and `operationEnvelope` must

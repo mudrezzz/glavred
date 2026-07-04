@@ -13,7 +13,7 @@ been migrated.
 | `domain` | Provider-free DraftRun entities, step keys, artifact DTOs, validation DTOs. | `backend/app/domain/draft_*.py` |
 | `application/workflow` | Draft workflow sequencing, step registry, workflow state, progress handoff. `DraftWorkflow`, `DraftWorkflowState`, `DraftWorkflowPhase`, and `DraftStepRegistry` now own the behavior-preserving orchestration shell while legacy step services remain in place. | `draft_run_pipeline.py`, `draft_run_progress.py`, `draft_run_step_progress.py`, `draft_run_service.py` |
 | `application/steps` | Step-level use cases with stable input/output contracts. `contracts.py` defines `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. `legacy_adapters.py` converts the first legacy result shapes without changing runtime behavior. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
-| `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `timeout.py` and `evidence_interpretation_payload.py` protect the legacy evidence-interpretation operation during migration. `payload_budget.py` and `payload_budget_runtime.py` own DraftRun provider-input budgets and migration helpers. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
+| `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `timeout.py` and `evidence_interpretation_payload.py` protect the legacy evidence-interpretation operation during migration. DraftRun provider-input budgets are role-owned by `payload_budget_contracts.py`, `payload_budget_profiles.py`, `payload_semantic_contracts.py`, `payload_compactors.py`, `payload_budget_policy.py`, and `payload_budget_runtime.py`; `payload_budget.py` is compatibility-only. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
 | `application/artifacts` | Artifact serialization, payload mapping, compatibility readers. | `draft_run_payloads.py`, `draft_run_context_payloads.py`, step payload helpers |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
@@ -28,10 +28,12 @@ been migrated.
    operation inventory. Done in Slice 2.17.4.6.0.3.2.
 6. Add DraftRun provider-input payload budget policies. Done in Slice
    2.17.4.6.0.3.3.
-7. Move context, source ledger, feasibility, post contract, rule pack, and planning
+7. Split the initial payload budget policy surface into role-owned architecture.
+   Done in Slice 2.17.4.6.0.3.3.1.
+8. Move context, source ledger, feasibility, post contract, rule pack, and planning
    clusters.
-8. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
-9. Tighten architecture smoke allowlists after each cluster is moved.
+9. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
+10. Tighten architecture smoke allowlists after each cluster is moved.
 
 ## Compatibility Anchors
 

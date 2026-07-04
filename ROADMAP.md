@@ -6689,6 +6689,37 @@ Status:
   - Over-trimming can degrade quality; policies must preserve `mustHave` fields and expose quality risks when context is removed.
 - Completed: 2026-07-04
 
+### Slice 2.17.4.6.0.3.3.1: Payload Budget Policy Architecture Cleanup
+
+- Status: Done
+- Goal: ???????? DraftRun payload budget layer ? ????? ???/SRP-??????????? ??? ????????? runtime semantics.
+- User value: Payload budget governance ???????? ??????????? ? ???????????; ????? ???????? ????? ????????? ??? ????? ?????? ???????????? ?????.
+- Scope:
+  - Refactor-only cleanup: split `payload_budget.py` into role-owned contracts, profiles, semantic contracts, compactors, policy, and compatibility facade modules.
+  - Preserve runtime trace shape, budget caps, incident semantics, prompt text, API contracts, and SQLite schema.
+  - Add architecture smoke checks that keep the facade thin and require role-owned payload budget modules.
+  - Update backend architecture docs, DraftRun component map, SAO, drafting README, developer guide, and roadmap artifacts.
+- Out of scope:
+  - Prompt rewrite, model selection change, DraftRun step-order change, UI trace layout change, SQLite migration, or expanding runtime migration coverage.
+  - New payload budget caps or operation quality tuning.
+- Architecture impact:
+  - Turns the provider-input budget boundary from a procedural hotspot into explicit contracts, registries, compactors, and policy orchestration.
+  - Keeps `payload_budget.py` as a compatibility facade, not an implementation owner.
+  - Strengthens architecture smoke so future payload-budget changes cannot reintroduce a monolithic helper module silently.
+- Tests:
+  - Targeted payload budget and representative migrated-operation regression tests.
+  - Architecture smoke for role-owned payload budget modules and facade size.
+  - Full backend tests, npm architecture tests, npm smoke, roadmap check, and git diff whitespace check.
+- Docs:
+  - Update backend AS IS/TARGET architecture, SAO, drafting README/component map, developer guide, ROADMAP.md, and JSONL export.
+- Acceptance criteria:
+  - `payload_budget.py` is a thin compatibility import/re-export surface.
+  - Payload budget contracts, profiles, semantic contracts, compactors, and policy orchestration live in separate role-owned modules with ownership headers.
+  - Existing representative operation behavior and trace payload shape remain regression-tested.
+  - Architecture smoke fails if the facade grows back into a logic owner or public helper functions become the policy surface.
+  - Slice 2.17.4.6.0.3.4 is restored as the next Ready slice after cleanup.
+- Completed: 2026-07-04
+
 ### Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard
 
 - Status: Ready
@@ -7501,6 +7532,7 @@ Status:
 - Slice 2.17.4.6.0.3.1: Таймаут и сокращение payload для RulePack Evidence Interpretation. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies. Completed 2026-07-04.
+- Slice 2.17.4.6.0.3.3.1: Payload Budget Policy Architecture Cleanup. Completed 2026-07-04.
 
 
 ## Blocked Items

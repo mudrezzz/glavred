@@ -93,8 +93,13 @@ reason not migrated, removal slice, and expected incident coverage.
 
 ## DraftRun Provider-Input Payload Budgets
 
-Slice 2.17.4.6.0.3.3 adds the DraftRun-specific provider-input boundary in
-`backend/app/drafting/application/operations/payload_budget.py`. Rich parent
+Slice 2.17.4.6.0.3.3 adds the DraftRun-specific provider-input boundary under
+`backend/app/drafting/application/operations/`. Slice 2.17.4.6.0.3.3.1 splits the
+initial `payload_budget.py` surface into role-owned modules:
+`payload_budget_contracts.py`, `payload_budget_profiles.py`,
+`payload_semantic_contracts.py`, `payload_compactors.py`,
+`payload_budget_policy.py`, and `payload_budget_runtime.py`. The original
+`payload_budget.py` path is now a thin compatibility facade only. Rich parent
 DraftRun artifacts still remain available for storage and diagnostics, but enforced
 provider-heavy operations now pass compacted input into prompt builders and attach
 `payloadBudget` metadata to child `AiRun.requestPayload`, attempts, and
@@ -125,6 +130,9 @@ Already enforced:
 - Required backend module ownership header for new bounded-context modules.
 - Shared LLM operation envelope, incident taxonomy, and operation inventory checks.
 - DraftRun payload budget policy checks and representative runtime wiring checks.
+- DraftRun payload budget architecture checks that keep `payload_budget.py` thin
+  and require role-owned contract, profile, semantic contract, compactor, and policy
+  modules.
 
 Still missing after this slice:
 

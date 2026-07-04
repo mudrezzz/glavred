@@ -419,17 +419,19 @@ preserving the accepted payload.
 The governance decision is recorded in
 `docs/adr/2026-07-04-universal-llm-operation-governance.md`.
 
-Slice 2.17.4.6.0.3.3 adds DraftRun provider-input payload budgets in
-`backend/app/drafting/application/operations/payload_budget.py`.
-`PayloadBudgetProfile`, `SemanticInputContract`, and `PayloadBudgetResult` keep rich
-artifacts in DraftRun storage while compacting provider request payloads before
-`build_*_messages(...)`. Enforced operations attach `payloadBudget.profileId`,
-execution mode, limits, sent/trimmed counts, suppressed fields, semantic inputs,
-quality risk, `promptCharEstimate`, and `approxTokenEstimate` to child
-`AiRun.requestPayload`, attempts, and `operationEnvelope.payloadStats`. Remaining
-operations are tracked in `CURRENT_LLM_OPERATION_INVENTORY` with
-`payloadBudgetStatus`, `budgetPolicyId`, `reasonNotBudgeted`, and
-`payloadBudgetRemovalSlice`.
+Slice 2.17.4.6.0.3.3 adds DraftRun provider-input payload budgets under
+`backend/app/drafting/application/operations/`; Slice 2.17.4.6.0.3.3.1 splits that
+surface into role-owned contracts, profiles, semantic contracts, compactors, policy,
+and runtime helpers. `payload_budget.py` is compatibility-only. The budget layer
+uses `PayloadBudgetProfile`, `SemanticInputContract`, and `PayloadBudgetResult` to
+keep rich artifacts in DraftRun storage while compacting provider request payloads
+before `build_*_messages(...)`. Enforced operations attach
+`payloadBudget.profileId`, execution mode, limits, sent/trimmed counts, suppressed
+fields, semantic inputs, quality risk, `promptCharEstimate`, and
+`approxTokenEstimate` to child `AiRun.requestPayload`, attempts, and
+`operationEnvelope.payloadStats`. Remaining operations are tracked in
+`CURRENT_LLM_OPERATION_INVENTORY` with `payloadBudgetStatus`, `budgetPolicyId`,
+`reasonNotBudgeted`, and `payloadBudgetRemovalSlice`.
 
 The provider-input budget decision is recorded in
 `docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md`.

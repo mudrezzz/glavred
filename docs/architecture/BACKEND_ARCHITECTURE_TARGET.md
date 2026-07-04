@@ -96,9 +96,22 @@ Implemented operation safety repair:
   - compact payload builder for `EvidenceInterpretation`, keeping full artifacts in
     the parent run while sending a bounded provider request.
 - DraftRun provider-input payload budgeting:
-  - `backend.app.drafting.application.operations.payload_budget`
-    owns `PayloadBudgetProfile`, `SemanticInputContract`, and
-    `PayloadBudgetResult`;
+  - `backend.app.drafting.application.operations.payload_budget_contracts`
+    owns `PayloadBudgetProfile`, `SemanticInputContract`,
+    `PayloadBudgetResult`, and the internal compaction DTO;
+  - `backend.app.drafting.application.operations.payload_budget_profiles`
+    owns execution-mode caps and per-operation profile selection;
+  - `backend.app.drafting.application.operations.payload_semantic_contracts`
+    owns `mustHave`, `shouldHave`, `diagnosticOnly`, and
+    `neverSendToProvider` declarations;
+  - `backend.app.drafting.application.operations.payload_compactors`
+    owns role-specific artifact compaction classes for rules, ledgers,
+    evidence, plans, candidates, reports, and trace context;
+  - `backend.app.drafting.application.operations.payload_budget_policy`
+    orchestrates profile selection, semantic contracts, compaction, stats, and
+    budget incidents;
+  - `backend.app.drafting.application.operations.payload_budget` remains a thin
+    compatibility facade for legacy imports only;
   - `backend.app.drafting.application.operations.payload_budget_runtime`
     provides migration helpers for legacy flat services;
   - representative enforced operations attach `payloadBudget` metadata to child

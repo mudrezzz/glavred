@@ -1695,8 +1695,15 @@ const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/co
 const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
 const DRAFTING_JSON_CONTRACT_COMPAT_PATH =
   "backend/app/drafting/application/operations/json_contracts.py";
-const DRAFTING_PAYLOAD_BUDGET_POLICY_PATH =
+const DRAFTING_PAYLOAD_BUDGET_FACADE_PATH =
   "backend/app/drafting/application/operations/payload_budget.py";
+const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
+  contracts: "backend/app/drafting/application/operations/payload_budget_contracts.py",
+  profiles: "backend/app/drafting/application/operations/payload_budget_profiles.py",
+  semanticContracts: "backend/app/drafting/application/operations/payload_semantic_contracts.py",
+  compactors: "backend/app/drafting/application/operations/payload_compactors.py",
+  policy: "backend/app/drafting/application/operations/payload_budget_policy.py",
+};
 const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
   "backend/app/application/evidence_interpretation_service.py",
   "backend/app/application/draft_editorial_critique_service.py",
@@ -2903,7 +2910,7 @@ assert(
   `${DRAFTING_JSON_CONTRACT_COMPAT_PATH} must stay a thin compatibility re-export of shared LLM operation contracts.`
 );
 
-const draftingPayloadBudgetPolicySource = readText(DRAFTING_PAYLOAD_BUDGET_POLICY_PATH);
+const draftingPayloadBudgetFacadeSource = readText(DRAFTING_PAYLOAD_BUDGET_FACADE_PATH);
 for (const fragment of [
   "PayloadBudgetProfile",
   "SemanticInputContract",
@@ -2915,8 +2922,96 @@ for (const fragment of [
   "approxTokenEstimate",
 ]) {
   assert(
+    draftingPayloadBudgetFacadeSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_FACADE_PATH} is missing required DraftRun payload budget compatibility fragment: ${fragment}`
+  );
+}
+
+assert(
+  lineCount(draftingPayloadBudgetFacadeSource) <= 90 &&
+    draftingPayloadBudgetFacadeSource.includes("Compatibility surface") &&
+    !draftingPayloadBudgetFacadeSource.includes("def compact("),
+  `${DRAFTING_PAYLOAD_BUDGET_FACADE_PATH} must remain a thin compatibility facade; role-owned payload budget logic belongs in dedicated modules.`
+);
+
+const draftingPayloadBudgetContractsSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.contracts
+);
+for (const fragment of [
+  "class PayloadBudgetProfile",
+  "class SemanticInputContract",
+  "class PayloadBudgetResult",
+  "class PayloadCompactionResult",
+]) {
+  assert(
+    draftingPayloadBudgetContractsSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.contracts} is missing payload budget contract owner: ${fragment}`
+  );
+}
+
+const draftingPayloadBudgetProfilesSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.profiles
+);
+for (const fragment of [
+  "class PayloadBudgetProfileRegistry",
+  "DEFAULT_PROFILES",
+  "EXECUTION_MODES",
+  "OPERATION_FAMILIES",
+]) {
+  assert(
+    draftingPayloadBudgetProfilesSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.profiles} is missing profile registry fragment: ${fragment}`
+  );
+}
+
+const draftingPayloadSemanticContractsSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.semanticContracts
+);
+for (const fragment of [
+  "class SemanticInputContractRegistry",
+  "SEMANTIC_CONTRACTS",
+]) {
+  assert(
+    draftingPayloadSemanticContractsSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.semanticContracts} is missing semantic contract registry fragment: ${fragment}`
+  );
+}
+
+const draftingPayloadCompactorsSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors
+);
+for (const fragment of [
+  "class DraftRunPayloadCompactor",
+  "class RulePackCompactor",
+  "class SourceLedgerCompactor",
+  "class CandidatePayloadCompactor",
+  "class PayloadBudgetCounters",
+]) {
+  assert(
+    draftingPayloadCompactorsSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors} is missing role-owned compactor fragment: ${fragment}`
+  );
+}
+
+assert(
+  !/\ndef\s+(drop_empty|pick|record|records)\s*\(/.test(draftingPayloadCompactorsSource),
+  `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors} must not expose public helper functions as its policy surface.`
+);
+
+const draftingPayloadBudgetPolicySource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.policy
+);
+for (const fragment of [
+  "class DraftRunPayloadBudgetPolicy",
+  "PayloadBudgetProfileRegistry",
+  "SemanticInputContractRegistry",
+  "DraftRunPayloadCompactor",
+  "contextOverBudget",
+  "payloadTooLarge",
+]) {
+  assert(
     draftingPayloadBudgetPolicySource.includes(fragment),
-    `${DRAFTING_PAYLOAD_BUDGET_POLICY_PATH} is missing required DraftRun payload budget fragment: ${fragment}`
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.policy} is missing payload budget orchestration fragment: ${fragment}`
   );
 }
 

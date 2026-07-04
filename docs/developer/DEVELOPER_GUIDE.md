@@ -148,17 +148,21 @@ success must carry `backupAccepted` incident metadata while preserving the accep
 payload. Not-configured provider paths should return `notRun` unless the operation
 already has a domain-safe deterministic fallback.
 
-DraftRun provider-heavy operations must also use
-`backend.app.drafting.application.operations.payload_budget` before prompt message
-construction. A named `PayloadBudgetProfile` caps provider input by execution mode;
-`SemanticInputContract` identifies `mustHave`, `shouldHave`, `diagnosticOnly`, and
-`neverSendToProvider` fields; `PayloadBudgetResult` exposes compact input,
-`inputStats`, `payloadStats`, trimmed/suppressed counts, quality risk, and optional
-`contextOverBudget` / `payloadTooLarge` incident metadata. Full artifacts may remain
-in DraftRun storage, but child `AiRun.requestPayload`, attempts, and
-`operationEnvelope.payloadStats` must show the `payloadBudget` used by an enforced
-operation. Debt operations must keep `payloadBudgetStatus=debtAllowlisted` in the
-inventory with a removal slice.
+DraftRun provider-heavy operations must also use the payload budget layer before
+prompt message construction. The compatibility import
+`backend.app.drafting.application.operations.payload_budget` remains available for
+legacy callers, but new work should depend on the role-owned modules directly:
+`payload_budget_contracts`, `payload_budget_profiles`,
+`payload_semantic_contracts`, `payload_compactors`, and
+`payload_budget_policy`. A named `PayloadBudgetProfile` caps provider input by
+execution mode; `SemanticInputContract` identifies `mustHave`, `shouldHave`,
+`diagnosticOnly`, and `neverSendToProvider` fields; `PayloadBudgetResult` exposes
+compact input, `inputStats`, `payloadStats`, trimmed/suppressed counts, quality risk,
+and optional `contextOverBudget` / `payloadTooLarge` incident metadata. Full
+artifacts may remain in DraftRun storage, but child `AiRun.requestPayload`,
+attempts, and `operationEnvelope.payloadStats` must show the `payloadBudget` used by
+an enforced operation. Debt operations must keep
+`payloadBudgetStatus=debtAllowlisted` in the inventory with a removal slice.
 
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but
