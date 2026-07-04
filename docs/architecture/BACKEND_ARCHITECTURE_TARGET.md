@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.3.
+Current as of Slice 2.17.4.6.0.3.1.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -79,6 +79,15 @@ Implemented workflow orchestration:
   - compatibility facade that keeps the previous public constructor and delegates to
     `DraftWorkflow`
 
+Implemented operation safety repair:
+
+- `backend.app.drafting.application.operations.timeout`
+  - `TimedOperationRunner` and `OperationTimeoutError` for provider-heavy operation
+    containment when a legacy service can otherwise leave a DraftRun step running.
+- `backend.app.drafting.application.operations.evidence_interpretation_payload`
+  - compact payload builder for `EvidenceInterpretation`, keeping full artifacts in
+    the parent run while sending a bounded provider request.
+
 ## Context Ownership
 
 | Context | Owns | Does not own |
@@ -147,6 +156,11 @@ Minimum contract:
 
 DraftRun JSON LLM operations must keep using the universal JSON retry policy:
 primary, repair, optional backup, then explicit fallback, not-run, or failed outcome.
+
+Provider-heavy operations that can block the worker must also use an operation-level
+timeout envelope, not only an HTTP client timeout. A timeout must be visible as a
+failed attempt with a safe child `AiRun`, a failed nested operation, and a controlled
+retry/backup/fallback path.
 
 The Drafting v1 implementation of this contract is:
 

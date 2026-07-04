@@ -206,6 +206,10 @@ Required variables for the backend/AI track:
   review, then default.
 - `DRAFT_ANOTHER_ANGLE_MODEL`: optional model for the alternative-angle challenger
   route.
+- `DRAFT_EVIDENCE_INTERPRETATION_TIMEOUT_SECONDS`: operation-level timeout for the
+  provider-backed `rulePack` evidence interpretation attempt. Default `75`; timeout
+  must produce a failed child `AiRun`, a failed nested operation, and then continue
+  through repair/backup/deterministic fallback.
 - Recommended DraftRun role preset for local experiments:
   - writer: `openai/gpt-5.1`;
   - technical JSON backup: `openai/gpt-4.1-mini`;
@@ -1547,10 +1551,18 @@ The next artifacts must make candidate validation meaningful:
   overclaims, reader-value hooks, and rejected evidence uses. If provider attempts fail,
   deterministic interpretation fallback is explicit in trace. Prompt layers should use
   this artifact before raw public snippets.
+- Evidence interpretation is provider-heavy and must use a compact provider payload:
+  full `ruleRegistrySnapshot` remains in the parent artifact, but the provider request
+  receives the locked contract, accepted public evidence, external claims, evidence
+  synthesis, and relevant hard/critical/evidence/style/attribution/topic/fabula rules.
+  Its child `AiRun.requestPayload.inputStats` should show original/compact rule counts,
+  claim/evidence counts, prompt char estimate, selected model, and timeout seconds.
 - Because `EvidenceInterpretation` lives inside the `rulePack` step, the runner must
   mark `rulePack` as running before provider attempts and write nested progress
   operations for primary/repair/backup attempts. A long interpretation retry must not
-  appear as stale `postContract`.
+  appear as stale `postContract`. A timed-out interpretation attempt must not leave
+  `rulePack` stale: it must fail the nested operation and continue to repair, backup,
+  or deterministic fallback.
 - `DraftRunBudget` is resolved from `Fabula.researchDepth` plus
   `DRAFT_RUN_EXECUTION_MODE`. It lives in the `context` artifact and is consumed by
   `sourceIntent`, `publicEvidence`, external evidence merge, `materialPlan`, `draft`,

@@ -1,3 +1,4 @@
+from time import perf_counter
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -16,6 +17,8 @@ from backend.app.application.evidence_interpretation_prompts import (
 )
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
+from backend.app.drafting.application.operations.evidence_interpretation_payload import EvidenceInterpretationPayloadCompactor
+from backend.app.drafting.application.operations.timeout import OperationTimeoutError, TimedOperationRunner
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_evidence_interpretation import evidence_interpretation_from_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -32,12 +35,16 @@ class EvidenceInterpretationService:
         openrouter_validator: OpenRouterConfigValidator,
         openrouter_adapter: OpenRouterJsonStepAdapter,
         deterministic_service: DeterministicEvidenceInterpretationService | None = None,
+        timeout_runner: TimedOperationRunner | None = None,
+        payload_compactor: EvidenceInterpretationPayloadCompactor | None = None,
     ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._deterministic_service = deterministic_service or DeterministicEvidenceInterpretationService()
+        self._timeout_runner = timeout_runner or TimedOperationRunner()
+        self._payload_compactor = payload_compactor or EvidenceInterpretationPayloadCompactor()
 
     def create(
         self,
@@ -110,26 +117,9 @@ class EvidenceInterpretationService:
         repair_context: dict[str, Any] | None,
         progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
+        timeout_seconds = max(0.001, float(self._settings.draft_evidence_interpretation_timeout_seconds or 75))
         selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = build_evidence_interpretation_messages(
-            context_summary=context_summary,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            context_pack=context_pack,
-            repair_context=repair_context if attempt.repair else None,
-        )
-        request_payload = build_evidence_interpretation_request_trace(
-            provider=AiRunProvider.OPENROUTER,
-            model=attempt.model,
-            messages=messages,
-            context_summary=context_summary,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            context_pack=context_pack,
-            attempt=attempt_payload,
-            model_selection=selection.to_payload(),
-        )
         operation_id = f"evidence-interpretation-{attempt.label}"
         if progress:
             progress.start_operation(
@@ -139,17 +129,65 @@ class EvidenceInterpretationService:
                 target=attempt.model,
                 notes=["Interpreting accepted public/internal evidence before material planning."],
             )
+        timings: dict[str, int] = {}
+        request_payload: dict[str, Any] = {
+            "draftRunStep": "evidenceInterpretation",
+            "requestSummary": {"title": _get(context_summary, "brief", "title")},
+            "attempt": attempt_payload,
+            **selection.to_payload(),
+        }
         try:
-            result = self._openrouter_adapter.complete_json(
-                settings=self._settings,
-                messages=messages,
-                expected_keys=EVIDENCE_INTERPRETATION_KEYS,
-                temperature=EVIDENCE_INTERPRETATION_TEMPERATURE,
-                model=attempt.model,
+            build_start = perf_counter()
+            compact_input = self._payload_compactor.compact(
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                timeout_seconds=timeout_seconds,
             )
-            payload = evidence_interpretation_from_payload(result.payload).to_payload()
-            if not _has_interpretation_signal(payload):
-                raise ValueError("OpenRouter returned empty evidence interpretation")
+            messages = build_evidence_interpretation_messages(
+                context_summary=context_summary,
+                context_artifact=compact_input.context_artifact,
+                rule_pack=compact_input.rule_pack,
+                context_pack=context_pack,
+                repair_context=repair_context if attempt.repair else None,
+            )
+            compact_input.input_stats["selectedModel"] = attempt.model
+            request_payload = build_evidence_interpretation_request_trace(
+                provider=AiRunProvider.OPENROUTER,
+                model=attempt.model,
+                messages=messages,
+                context_summary=context_summary,
+                context_artifact=compact_input.context_artifact,
+                rule_pack=compact_input.rule_pack,
+                context_pack=context_pack,
+                attempt=attempt_payload,
+                model_selection=selection.to_payload(),
+                input_stats=compact_input.input_stats,
+            )
+            timings["buildPromptMs"] = _elapsed_ms(build_start)
+
+            def provider_operation() -> tuple[dict[str, Any], dict[str, Any] | None, int, int]:
+                provider_start = perf_counter()
+                provider_result = self._openrouter_adapter.complete_json(
+                    settings=self._settings,
+                    messages=messages,
+                    expected_keys=EVIDENCE_INTERPRETATION_KEYS,
+                    temperature=EVIDENCE_INTERPRETATION_TEMPERATURE,
+                    model=attempt.model,
+                )
+                provider_ms = _elapsed_ms(provider_start)
+                validation_start = perf_counter()
+                normalized_payload = evidence_interpretation_from_payload(provider_result.payload).to_payload()
+                if not _has_interpretation_signal(normalized_payload):
+                    raise ValueError("OpenRouter returned empty evidence interpretation")
+                return normalized_payload, provider_result.raw_response, provider_ms, _elapsed_ms(validation_start)
+
+            timed_result = self._timeout_runner.run(provider_operation, timeout_seconds=timeout_seconds)
+            payload, raw_response, provider_ms, validation_ms = timed_result.value
+            timings["providerRequestMs"] = provider_ms
+            timings["jsonParseAndShapeValidationMs"] = validation_ms
+            timings["timeoutEnvelopeMs"] = timed_result.elapsed_ms
+
+            persist_start = perf_counter()
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
@@ -157,21 +195,41 @@ class EvidenceInterpretationService:
                 request_payload=request_payload,
                 result_payload=build_evidence_interpretation_result_trace(
                     result_payload=payload,
-                    provider_response=result.raw_response,
+                    provider_response=raw_response,
                     attempt=attempt_payload,
                 ),
                 fallback_used=False,
             )
+            timings["aiRunPersistMs"] = _elapsed_ms(persist_start)
             if progress:
-                progress.complete_operation(operation_id, ai_run_id=run.id, notes=["Evidence interpretation accepted."])
-            return {"accepted": True, "payload": payload, "aiRunId": run.id, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
+                progress.complete_operation(operation_id, ai_run_id=run.id, notes=["Evidence interpretation accepted.", *_timing_notes(timings)])
+            return {
+                "accepted": True,
+                "payload": payload,
+                "aiRunId": run.id,
+                "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload(), input_stats=compact_input.input_stats, timings=timings),
+            }
         except Exception as exc:
-            result = self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
+            status = "timeout" if isinstance(exc, OperationTimeoutError) else "error"
+            result = self._record_attempt_error(attempt, request_payload, self._safe_error(exc), status=status, timings=timings)
             if progress:
-                progress.fail_operation(operation_id, result["attempt"].get("error") or "Evidence interpretation attempt failed.", ai_run_id=result["aiRunId"])
+                progress.fail_operation(
+                    operation_id,
+                    result["attempt"].get("error") or "Evidence interpretation attempt failed.",
+                    ai_run_id=result["aiRunId"],
+                    notes=_timing_notes(timings),
+                )
             return result
 
-    def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
+    def _record_attempt_error(
+        self,
+        attempt: JsonStepAttempt,
+        request_payload: dict[str, Any],
+        error: str,
+        *,
+        status: str = "error",
+        timings: dict[str, int] | None = None,
+    ) -> dict[str, Any]:
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
@@ -182,7 +240,20 @@ class EvidenceInterpretationService:
             error=error,
         )
         model_selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "aiRunId": run.id, "attempt": _attempt_record(attempt, run.id, "error", model_selection, error)}
+        return {
+            "accepted": False,
+            "payload": {},
+            "aiRunId": run.id,
+            "attempt": _attempt_record(
+                attempt,
+                run.id,
+                status,
+                model_selection,
+                error,
+                input_stats=request_payload.get("inputStats"),
+                timings=timings,
+            ),
+        }
 
     def _fallback(
         self,
@@ -240,12 +311,42 @@ class EvidenceInterpretationService:
         return f"{error.__class__.__name__}: {message[:180]}"
 
 
+def _get(payload: dict[str, Any], *path: str) -> Any:
+    current: Any = payload
+    for key in path:
+        current = current.get(key) if isinstance(current, dict) else None
+    return current
+
+
+def _elapsed_ms(start: float) -> int:
+    return int((perf_counter() - start) * 1000)
+
+
+def _timing_notes(timings: dict[str, int] | None) -> list[str]:
+    if not timings:
+        return []
+    return [f"{key}={value}ms" for key, value in timings.items()]
+
+
 def _has_interpretation_signal(payload: dict[str, Any]) -> bool:
     return any(payload.get(key) for key in ("implications", "tensions", "usableExamples", "limits", "forbiddenOverclaims", "rejectedEvidenceUses", "warnings"))
 
 
-def _attempt_record(attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], error: str | None = None) -> dict[str, Any]:
+def _attempt_record(
+    attempt: JsonStepAttempt,
+    ai_run_id: str,
+    status: str,
+    model_selection: dict[str, Any],
+    error: str | None = None,
+    *,
+    input_stats: dict[str, Any] | None = None,
+    timings: dict[str, int] | None = None,
+) -> dict[str, Any]:
     record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
+    if input_stats:
+        record["inputStats"] = input_stats
+    if timings:
+        record["timings"] = timings
     if error:
         record["error"] = error
     return record

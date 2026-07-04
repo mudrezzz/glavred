@@ -6572,10 +6572,161 @@ Status:
   - Subtle progress/partial-artifact regressions; keep tests focused on stale/failure paths, not only happy path.
 - Completed: 2026-07-03
 
-### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
+### Slice 2.17.4.6.0.3.1: Таймаут и сокращение payload для RulePack Evidence Interpretation
+
+- Status: Done
+- Goal: Защитить `rulePack.evidenceInterpretation`: provider-heavy операция получает timeout envelope, compact payload, safe failed operation trace и deterministic fallback.
+- User value: DraftRun не остается навсегда `running` на `rulePack`; диагностика показывает, сколько правил/evidence ушло в provider, где произошел timeout/error и какой fallback был использован.
+- Scope:
+  - Добавить `DRAFT_EVIDENCE_INTERPRETATION_TIMEOUT_SECONDS` с default `75`.
+  - Обернуть provider-backed `EvidenceInterpretation` попытку в operation-level timeout.
+  - Создавать failed child `AiRun`, вызывать `progress.fail_operation` и продолжать repair/backup/fallback после timeout.
+  - Сократить provider payload до post contract, accepted evidence, evidence synthesis, external claims and relevant rule subset.
+  - Записывать input stats и operation timings в trace.
+- Out of scope:
+  - Новые DraftRun step keys, SQLite schema changes, prompt-quality redesign, global JSON-operation timeout generalization.
+  - Изменение порядка `rulePack -> materialPlan` или выбор модели `DRAFT_STRATEGY_MODEL`.
+- Architecture impact:
+  - Первый runtime repair помещает `backend/app/drafting/application/operations` как bounded-context место для timeout and compact provider-input helpers.
+  - Legacy `EvidenceInterpretationService` остается на месте до package migration, но теперь использует reusable operation helper слой.
+- Tests:
+  - Backend tests for timeout continuation, failed child `AiRun`, compact payload, provider success, malformed/empty JSON retry/fallback, and settings default.
+  - DraftRun pipeline regression, architecture smoke, roadmap render/export/check, and smoke.
+- Docs:
+  - Update DraftRun AS IS Markdown/PDF, backend target architecture, drafting component map, developer guide, `.env.example`, tracker export and generated roadmap.
+- Demo impact:
+  - No demo fixture change; live verification should use a fresh DraftRun after implementation.
+- Acceptance criteria:
+  - A hung evidence interpretation attempt times out, records safe failure trace, and does not leave `rulePack` running.
+  - Provider request payload is compact and records original/compact counts.
+  - Successful evidence interpretation behavior remains unchanged.
+  - Deterministic fallback remains explicit if all provider attempts fail or time out.
+- Risks:
+  - Python cannot kill a blocked provider thread; the timeout envelope contains the DraftRun workflow but a broader worker watchdog remains future infrastructure work.
+- Completed: 2026-07-04
+
+### Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy
 
 - Status: Ready
-- Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports.
+- Goal: Ввести сквозную governance-систему для всех provider-heavy LLM operations: единый operation envelope, retry/fallback policy, payload stats, incident taxonomy, blast-radius diagnostics и project-specific architecture guardrails.
+- User value: DraftRun перестает чиниться точечно: если одна LLM operation зависла, вернула malformed JSON, ушла в fallback или получила слишком большой payload, система показывает это как диагностируемый инцидент и не допускает повторения того же паттерна в других шагах.
+- Scope:
+  - Провести inventory всех текущих DraftRun/HITL/Radar provider-heavy LLM operations: source intent, public evidence search/reader wrappers where applicable, evidence interpretation, material plan, strategy, rhetorical plans, draft candidate, LLM validation, editorial critique, alternative angle, directed revision, pairwise ranking, final quality gate, HITL revision and HITL quality check.
+  - Ввести единый `LlmOperationEnvelope`/`JsonOperationEnvelope` в bounded-context/shared layer с явными профилями: `interactive`, `background`, `longBackground`, `batch`.
+  - Разделить timeout semantics: provider HTTP timeout, whole-attempt timeout, step budget, run budget, stale watchdog; запретить трактовать один короткий timeout как универсальный SLA для ночной генерации.
+  - Сделать fallback инцидентом: каждый fallback/backup/not-run/deterministic result получает `incidentType`, `incidentSeverity`, `probableCause`, `needsFollowUp`, `model`, `provider`, `attemptLabel`, `payloadStats` and safe error.
+  - Добавить incident taxonomy: provider timeout, network error, provider 4xx/5xx, malformed JSON, schema/shape failure, payload too large, context over-budget, deterministic fallback, backup accepted, stale operation, cancellation/worker failure.
+  - Ввести обязательные `inputStats` для LLM calls: prompt char estimate, approximate token estimate where available, rule count, evidence count, claim count, source count, candidate count, model, timeout profile, retry policy, generation params.
+  - Обновить diagnostics skill: при повторяемом классе проблемы skill обязан делать blast-radius scan по всем LLM operations, отличать slow background execution от stuck operation, и эскалировать на architecture slice when the same failure pattern is systemic.
+  - Усилить architecture smoke/AST checks: новые provider-heavy calls не могут появляться вне operation envelope; новые JSON LLM operations не могут возвращать raw dict without `JsonOperationResult`; новые fallback paths должны иметь incident metadata.
+  - Обновить ADR/SAO/backend target docs: project-specific rule is that LLM runtime governance is a first-class architecture boundary, not an optional helper.
+- Out of scope:
+  - Prompt-quality rewrite, model portfolio experiments, DraftRun step order changes, SQLite schema changes, UI trace redesign, and full payload budget policy tuning.
+  - Changing every operation's business semantics; this slice standardizes execution envelope and incident reporting first.
+- Implementation notes:
+  - Start from a provider-neutral contract and migrate existing operations behind adapters where direct rewrite is too risky.
+  - Keep long-running background generation valid: the goal is bounded, explainable execution, not forcing all operations under 75 seconds.
+  - Preserve deterministic fallbacks only where domain-safe; unsafe fallback paths must return `not_run` or `failed` with incident metadata.
+- Architecture impact:
+  - Establishes a cross-cutting LLM operation boundary used by DraftRun, HITL, and future Radar extraction/scoring.
+  - Adds project-specific guardrails to architecture smoke, not just generic folder/package checks.
+  - Makes agent diagnostics responsible for systemic escalation, not only local root-cause notes.
+- Tests:
+  - Contract tests for all envelope statuses: accepted, repaired, backupAccepted, fallback, notRun, failed, timeout, cancelled/stale.
+  - AST/architecture smoke negative fixtures for raw provider calls, raw dict JSON results, fallback without incident metadata, and missing inputStats.
+  - Regression tests for representative migrated operations: evidence interpretation, draft candidate, editorial critique, directed revision, HITL quality check.
+  - Roadmap render/export/check and smoke.
+- Docs:
+  - ADR: universal LLM operation governance and incident taxonomy.
+  - Update SAO, backend target architecture, DraftRun AS IS, developer guide, diagnostics skill, slice implementation guidance, and relevant agent skills.
+- Demo impact:
+  - No demo content change; trace examples in docs should use recent run `d31addee-cdd5-473c-a930-2028e013293e` as evidence that slow background runs are not the same as stuck runs.
+- Acceptance criteria:
+  - Every current LLM JSON/provider-heavy operation is either behind the envelope or explicitly listed in a temporary debt allowlist with owner, reason and removal slice.
+  - Any fallback creates an incident record; fallback is never silently treated as normal success.
+  - Diagnostics can answer: what was sent, how large it was, which attempt failed, why fallback happened, and whether this is a systemic pattern.
+  - New raw LLM calls outside the envelope fail architecture smoke.
+  - The next `python -m backend.app.roadmap next` points here until this governance layer is implemented.
+- Risks:
+  - Broad cross-cutting migration can create churn; mitigate with adapters, allowlist debt, and targeted representative tests.
+  - Too strict timeouts can break legitimate background generation; timeout profiles must be explicit and workload-specific.
+
+### Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies
+
+- Status: Backlog
+- Goal: Формализовать payload budgets для DraftRun operations, чтобы каждая LLM operation получала ровно тот контекст, который ей нужен, а не весь accumulated artifact dump.
+- User value: Генерация становится дешевле, быстрее и стабильнее; качество диагностики растет, потому что видно не только что модель не ответила, но и почему payload был неоправданно тяжелым.
+- Scope:
+  - Описать per-operation input contracts: какие поля нужны source intent, evidence interpretation, material plan, strategy, rhetorical plans, writer, critic, revision, final gate, HITL revision and quality check.
+  - Ввести payload budget profiles by operation type and execution mode: max prompt chars/tokens, max rules, max claims, max evidence items, max candidates, max source snippets, max prior drafts.
+  - Разделить semantic inputs: `mustHave`, `shouldHave`, `diagnosticOnly`, `neverSendToProvider`.
+  - Сделать deterministic compactors/selectors per operation, not one generic truncation helper.
+  - Запретить отправку полного `ruleRegistrySnapshot`, full source ledger, full validation artifact, full candidate pool or full revision trace без явного budget policy.
+  - Сохранять trim/suppression metadata: what was sent, what was trimmed, why, and whether trimming changes quality risk.
+  - Подключить payload budget violations к incident taxonomy from `2.17.4.6.0.3.2`.
+- Out of scope:
+  - Changing model choices, prompt wording beyond input contracts, DraftRun step order, UI redesign, external search algorithms.
+- Implementation notes:
+  - EvidenceInterpretation compact builder from `2.17.4.6.0.3.1` becomes one instance of the general policy, not a special one-off.
+  - Budget defaults must respect background generation: slower is acceptable, unbounded or semantically noisy input is not.
+- Architecture impact:
+  - Creates a provider-input boundary between artifacts and prompts: artifacts may stay rich, provider payloads must be curated.
+  - Moves context shaping from ad hoc prompt builders into named application policies.
+- Tests:
+  - Unit tests for each operation compactor: preserves required fields, trims diagnostic noise, records stats.
+  - Regression tests proving large rule/evidence/candidate sets no longer inflate provider payloads beyond configured budgets.
+  - Architecture smoke for forbidden full-artifact provider payload patterns where statically detectable.
+- Docs:
+  - Update DraftRun AS IS, backend target architecture, developer guide and diagnostics checklist with per-operation payload budgets.
+- Demo impact:
+  - No fixture change; benchmark DraftRuns should report payload stats in trace.
+- Acceptance criteria:
+  - Every LLM operation has an explicit payload budget policy or debt allowlist entry.
+  - Trace includes sent/trimmed counts and prompt size estimates.
+  - Full artifact dumps are not sent to provider unless explicitly justified and budgeted.
+- Risks:
+  - Over-trimming can degrade quality; policies must preserve `mustHave` fields and expose quality risks when context is removed.
+
+### Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard
+
+- Status: Backlog
+- Goal: Добавить runtime guard для `validation` / ranking-revision loop: long-running validation is allowed, but must be budgeted, trace-visible, and unable to spin indefinitely.
+- User value: Background DraftRun может работать 20-40 минут, но редактор и разработчик видят, какие validation/revision operations идут, сколько бюджета осталось, почему loop продолжается, and when it will stop.
+- Scope:
+  - Ввести validation-loop budget profile: max wall-clock, max LLM calls, max revision cycles, max pairwise rounds, max final-gate repair cycles, max consecutive non-improving attempts.
+  - Разделить slow-but-healthy progress from stuck operation using heartbeat/current operation markers and operation-level envelope from `2.17.4.6.0.3.2`.
+  - Сделать revision loop stop reasons explicit: budgetExhausted, maxIterations, noImprovement, providerIncident, acceptedQuality, humanReviewRequired.
+  - Ensure every validation sub-operation records operation id, model role, attempt label, payload stats, incident metadata if fallback/backup/not-run happens.
+  - Add stale/long-operation diagnostics that do not mark healthy background run as failed solely because it exceeds a short interactive timeout.
+  - Update run diagnostics to show validation runtime breakdown: LLM validation, editorial critique, alternative angle, pairwise ranking, directed revision, final quality gate.
+- Out of scope:
+  - Quality scoring redesign, new critic model selection, new DraftRun steps, final prose quality changes.
+- Implementation notes:
+  - Use the universal operation envelope instead of another local timeout helper.
+  - Use background timeout profile by default; interactive UI polling should report progress, not kill the run prematurely.
+- Architecture impact:
+  - Converts validation/revision from a collection of nested calls into a budgeted loop with explicit runtime contract.
+  - Builds on incident taxonomy and payload budgets instead of duplicating error handling.
+- Tests:
+  - Fake provider tests for slow but progressing validation loop.
+  - Tests for max wall-clock/call/cycle budget stop reasons.
+  - Tests for stuck sub-operation creating incident and controlled loop termination.
+  - Regression tests for accepted final draft path and blocked human-review-required path.
+- Docs:
+  - Update DraftRun AS IS, diagnostics skill, developer guide and trace docs with validation-loop runtime budget semantics.
+- Demo impact:
+  - No demo fixture change; live DraftRun diagnostics can use `d31addee-cdd5-473c-a930-2028e013293e` as an example of long validation that eventually completed.
+- Acceptance criteria:
+  - Validation cannot run indefinitely without heartbeat/progress and budget accounting.
+  - Long background validation is not misreported as stuck if operations continue to complete.
+  - Stop reason is always present when validation exits without a normal accepted final draft.
+- Risks:
+  - Too aggressive guardrails can reduce quality by stopping useful revision cycles; defaults must distinguish smoke/interactive/background/full modes.
+
+### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
+
+- Status: Backlog
+- Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports after LLM operation governance is in place.
 - User value:
   - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
 - Scope:
@@ -7345,6 +7496,7 @@ Status:
 - Slice 2.17.4.6.0.1: Drafting Backend Package Skeleton and Compatibility Shims. Completed 2026-07-03.
 - Slice 2.17.4.6.0.2: Unified DraftStep and JsonOperation Contracts. Completed 2026-07-03.
 - Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor. Completed 2026-07-03.
+- Slice 2.17.4.6.0.3.1: Таймаут и сокращение payload для RulePack Evidence Interpretation. Completed 2026-07-04.
 
 
 ## Blocked Items
@@ -7373,4 +7525,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration`.
+Implement `Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy`.

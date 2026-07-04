@@ -245,6 +245,10 @@ Use these skills when available:
 - `$project-blueprint-creation` for turning an approved Glavred blog-project blueprint
   into project fixtures, docs, backend-visible demo snapshots, and validation checks.
 - `$project-onboarding` when entering an existing project, starting a new chat, or continuing from `ROADMAP.md`.
+- `$glavred-project-immersion` when the user asks to get immersed in Glavred, start a
+  new chat with a concise project briefing, explain what the product is, where to
+  look, which roadmap slice is current, which checks to run, and which architecture
+  guardrails matter before doing implementation.
 - `$roadmap-slice-planning` for turning requirements into iterations, slices, and actionable backlog items.
 - `$slice-implementation` for implementing the next small product increment.
 - `$docs-sync` for keeping README, architecture docs, ADRs, contributor docs, developer docs, user docs, and demo docs current.

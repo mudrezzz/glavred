@@ -3,7 +3,8 @@
 `backend/app/drafting` is the target bounded context for DraftRun backend code.
 
 Current status: skeleton, compatibility shims, the first provider-free step and
-JSON operation contracts, and a behavior-preserving workflow orchestration shell.
+JSON operation contracts, a behavior-preserving workflow orchestration shell, and
+the first bounded provider-heavy operation safety helpers.
 Most step implementations still live in the legacy flat modules under
 `backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` until the
 migration slices move cohesive clusters.
@@ -102,6 +103,17 @@ Drafting JSON LLM operations should use
 The existing `backend.app.application.json_step_retry_policy` remains the retry
 sequence source during migration. New operation code should convert those attempts
 into `JsonOperationAttempt` rather than inventing another trace shape.
+
+Provider-heavy operations must be bounded by operation-level timeouts when a stuck
+call would otherwise leave a DraftRun step running. `TimedOperationRunner` is the v1
+containment helper. It does not replace provider/http timeouts; it guarantees that
+the workflow can record a safe failed attempt and proceed to repair, backup, or
+fallback.
+
+`EvidenceInterpretationPayloadCompactor` is the first compact provider-input helper.
+It keeps full `rulePack` artifacts in the parent run but sends only the contract,
+accepted evidence, external claims, synthesis, and relevant rule subset to the
+strategy model.
 
 ## Workflow Orchestration
 

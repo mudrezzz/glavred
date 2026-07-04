@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.0.3: DraftRun Workflow Orchestrator Refactor.
+Current as of Slice 2.17.4.6.0.3.1: RulePack Evidence Interpretation Timeout and Payload Repair.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -134,7 +134,7 @@ Role-aware execution map:
 | `feasibility` | none | no model | enriched ledger and warnings | contract or blocked completion |
 | `postContract` | none | no model | brief, ledger, feasibility, size settings | rules, planning, validation |
 | `rulePack` | none | no model | contract, ledger, publisher/topic/fabula rules | evidence interpretation, validation, revision |
-| `evidenceInterpretation` inside `rulePack` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | enriched ledger, evidence synthesis, public evidence, contract, registry, strategy `ContextPack` | material plan, dossier, context packs |
+| `evidenceInterpretation` inside `rulePack` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | compact enriched ledger, evidence synthesis, accepted public evidence, contract, relevant rule subset, strategy `ContextPack`, timeout envelope | material plan, dossier, context packs |
 | `materialPlan` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy `ContextPack`, usable evidence candidates, evidence interpretation, contract, registry | draft strategy |
 | `strategy` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default | material plan, rules, contract, strategy `ContextPack` | rhetorical plans |
 | `rhetoricalPlans` | `strategy` | `DRAFT_STRATEGY_MODEL`, then default, repair, backup | strategy, material plan, claim/rule ids | writer candidates |
@@ -357,6 +357,13 @@ Processing:
   long JSON retry path is visible as `rulePack`, not as stale `postContract`;
 - `RuleRegistrySnapshot` is compiled first;
 - compatibility `RulePack` is derived from the registry;
+- the provider request is compacted before JSON generation: full `ruleRegistrySnapshot`
+  stays in the artifact, while the model receives relevant hard/critical/evidence/
+  style/attribution/topic/fabula rules, accepted public evidence summaries, external
+  ledger claims, evidence synthesis, and the locked contract;
+- each provider attempt runs inside `DRAFT_EVIDENCE_INTERPRETATION_TIMEOUT_SECONDS`
+  so a stuck strategy-model call can fail, write a child `AiRun`, and continue to
+  repair/backup/fallback instead of leaving `rulePack` running forever;
 - `EvidenceInterpretationService` converts accepted internal/external evidence into
   editorial implications, tensions, examples, limits, forbidden overclaims, reader
   value hooks, and rejected evidence uses before material planning.
@@ -388,6 +395,10 @@ Trace:
   interpretation runs;
 - `artifactPayload.progress.operations[]` contains `evidenceInterpretation`
   primary/repair/backup attempts while the step is running;
+- child `AiRun.requestPayload.inputStats` records original/compact rule counts, claim
+  counts, evidence counts, prompt char estimate, selected model, and timeout seconds;
+- attempt records may include `status=timeout` plus operation timing notes such as
+  prompt build, provider request, JSON/shape validation, and AiRun persistence;
 - `rulePack.evidenceInterpretation` readable section in `/ai-runs?runId=...`.
 
 ### 4.7 `materialPlan`
@@ -861,7 +872,7 @@ Important AS IS rules:
 | stale DraftRun | diagnostic state after no timestamp progress; not automatic fallback |
 | public search disabled | attempt is `notConfigured`; it is not proof |
 | malformed JSON planning | repair retry, optional backup model, then deterministic fallback |
-| malformed or empty evidence interpretation | repair retry, optional backup model, then deterministic interpretation fallback |
+| malformed, empty, or timed-out evidence interpretation | failed child `AiRun`, failed nested operation, repair retry, optional backup model, then deterministic interpretation fallback |
 | editorial critique provider missing | `editorialCritiqueReport.status=not-run`; no fake critique |
 | malformed editorial critique JSON | repair retry, optional backup model, then `not-run` for that candidate |
 | alternative-angle provider missing | `alternativeAngleTournament.status=not-run`; original candidates continue |
@@ -934,8 +945,9 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 - `ArticleDossier` is a local compact memory artifact, not a vector store or
   cross-run RAG system.
 - Failed late provider operations are safely finalized when the Python call returns or
-  raises; a separate infrastructure watchdog is still needed for externally stuck
-  Celery tasks that never return control to the worker.
+  raises. Evidence interpretation now has an operation-level timeout envelope; a
+  broader infrastructure watchdog is still needed for externally stuck Celery tasks
+  outside protected operation envelopes.
 - The pipeline has detailed traceability. The main editor UI receives one machine
   draft first, then manages post-run human versions locally. Cross-post learning is
   currently limited to reviewable `editorialLearning` author-memory notes; promotion

@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import json
+import time
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -24,6 +26,31 @@ class SequenceAdapter:
         self.calls.append(kwargs)
         payload = self.payloads.pop(0)
         return FakeOpenRouterResult(payload, {"id": f"or-{len(self.calls)}", "model": kwargs.get("model")})
+
+
+class SlowThenSuccessAdapter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
+        self.calls.append(kwargs)
+        if len(self.calls) == 1:
+            time.sleep(0.2)
+        return FakeOpenRouterResult(provider_payload(), {"id": f"or-{len(self.calls)}", "model": kwargs.get("model")})
+
+
+class FakeProgress:
+    def __init__(self) -> None:
+        self.operations: list[dict[str, Any]] = []
+
+    def start_operation(self, operation_id: str, **kwargs: Any) -> None:
+        self.operations.append({"id": operation_id, "status": "running", **kwargs})
+
+    def complete_operation(self, operation_id: str, **kwargs: Any) -> None:
+        self.operations.append({"id": operation_id, "status": "succeeded", **kwargs})
+
+    def fail_operation(self, operation_id: str, error: str, **kwargs: Any) -> None:
+        self.operations.append({"id": operation_id, "status": "failed", "error": error, **kwargs})
 
 
 def test_deterministic_interpretation_links_external_claims_to_implications() -> None:
@@ -78,6 +105,47 @@ def test_provider_failures_use_backup_then_deterministic_fallback(tmp_path) -> N
     assert result.artifact_payload["evidenceInterpretation"]["implications"]
 
 
+def test_provider_timeout_records_failed_attempt_and_continues_to_repair(tmp_path) -> None:
+    adapter = SlowThenSuccessAdapter()
+    progress = FakeProgress()
+    service = interpretation_service(
+        tmp_path,
+        adapter,
+        configured=True,
+        timeout_seconds=0.05,
+    )
+
+    result = service.create(
+        context_summary={},
+        context_artifact=context_artifact(),
+        rule_pack=rule_pack(),
+        progress=progress,  # type: ignore[arg-type]
+    )
+
+    assert result.artifact_payload["fallbackUsed"] is False
+    assert [attempt["status"] for attempt in result.artifact_payload["attempts"]] == ["timeout", "accepted"]
+    assert "OperationTimeoutError" in result.artifact_payload["attempts"][0]["error"]
+    assert len(result.ai_run_ids) == 2
+    assert any(operation["status"] == "failed" and operation["id"] == "evidence-interpretation-primary" for operation in progress.operations)
+    assert any(operation["status"] == "succeeded" and operation["id"] == "evidence-interpretation-primary-repair" for operation in progress.operations)
+
+
+def test_provider_interpretation_uses_compact_payload_and_records_input_stats(tmp_path) -> None:
+    adapter = SequenceAdapter([provider_payload()])
+    service = interpretation_service(tmp_path, adapter, configured=True)
+
+    result = service.create(context_summary={}, context_artifact=large_context_artifact(), rule_pack=large_rule_pack())
+
+    user_payload = json.loads(adapter.calls[0]["messages"][1]["content"])
+    compact_rules = user_payload["ruleRegistrySnapshot"]["rules"]
+    attempt_stats = result.artifact_payload["attempts"][0]["inputStats"]
+    assert len(compact_rules) < 120
+    assert len(compact_rules) <= 40
+    assert attempt_stats["originalRuleCount"] == 120
+    assert attempt_stats["compactRuleCount"] == len(compact_rules)
+    assert attempt_stats["promptCharEstimate"] > 0
+
+
 def test_unconfigured_provider_uses_deterministic_without_secret(tmp_path) -> None:
     adapter = SequenceAdapter([provider_payload()])
     service = interpretation_service(tmp_path, adapter, configured=False)
@@ -91,11 +159,12 @@ def test_unconfigured_provider_uses_deterministic_without_secret(tmp_path) -> No
 
 def interpretation_service(
     tmp_path,
-    adapter: SequenceAdapter,
+    adapter: Any,
     *,
     configured: bool,
     backup_model: str = "",
     strategy_model: str = "",
+    timeout_seconds: float = 75,
 ) -> EvidenceInterpretationService:
     return EvidenceInterpretationService(
         settings=BackendSettings(
@@ -104,6 +173,7 @@ def interpretation_service(
             OPENROUTER_DEFAULT_MODEL="test-model" if configured else "",
             OPENROUTER_BACKUP_MODEL=backup_model,
             DRAFT_STRATEGY_MODEL=strategy_model,
+            DRAFT_EVIDENCE_INTERPRETATION_TIMEOUT_SECONDS=timeout_seconds,
         ),
         ai_run_service=AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3")),
         openrouter_validator=OpenRouterConfigValidator(),
@@ -144,6 +214,58 @@ def context_artifact() -> dict[str, Any]:
 
 def rule_pack() -> dict[str, Any]:
     return {"ruleRegistrySnapshot": {"rules": [{"id": "rule-grounding", "severity": "hard"}]}}
+
+
+def large_rule_pack() -> dict[str, Any]:
+    rules = []
+    for index in range(120):
+        rules.append({
+            "id": f"rule-{index}",
+            "title": f"Rule {index}",
+            "severity": "soft",
+            "scope": "generic",
+        })
+    rules[5].update({"id": "rule-evidence-hard", "severity": "hard", "scope": "evidence"})
+    rules[6].update({"id": "rule-style", "scope": "style"})
+    rules[7].update({"id": "rule-attribution", "scope": "attribution"})
+    return {"ruleRegistrySnapshot": {"rules": rules, "metadata": {"version": "test"}}}
+
+
+def large_context_artifact() -> dict[str, Any]:
+    artifact = context_artifact()
+    artifact["sourceLedger"]["claims"] = [
+        {
+            "id": f"external-evidence-public-{index}",
+            "type": "externalEvidenceClaim",
+            "statement": f"External claim {index}",
+            "allowedUse": "needsQualification",
+            "confidence": "medium",
+            "provenance": {
+                "publicEvidenceItemId": f"public-{index}",
+                "sourceTitle": f"Report {index}",
+                "sourceUrl": f"https://example.com/report-{index}",
+                "snippet": f"Snippet {index}",
+            },
+        }
+        for index in range(40)
+    ]
+    artifact["sourceLedger"]["metadata"] = {"externalClaimCount": 40}
+    artifact["publicEvidence"]["items"] = [
+        {
+            "id": f"public-{index}",
+            "sourceTitle": f"Report {index}",
+            "sourceUrl": f"https://example.com/report-{index}",
+            "snippet": f"Snippet {index}",
+        }
+        for index in range(40)
+    ]
+    artifact["evidenceSynthesis"] = {
+        "externalClaims": [
+            {"id": f"synthesis-{index}", "statement": f"Synthesis claim {index}", "publicEvidenceItemId": f"public-{index}"}
+            for index in range(40)
+        ]
+    }
+    return artifact
 
 
 def provider_payload() -> dict[str, Any]:
