@@ -10,6 +10,7 @@ from backend.app.application.draft_final_quality_review_service import DraftFina
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_validator_orchestrator import DraftValidatorOrchestrator
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,12 @@ class DraftFinalQualityGateService:
     ) -> FinalQualityGateResult:
         if not final_candidate:
             return FinalQualityGateResult(not_run_payload("no-final-candidate"), None, [])
+        guard = progress.runtime_guard if progress else None
+        if guard and not guard.can_start_operation("finalQualityGate", "final-quality-gate"):
+            guard.record_stop(STOP_BUDGET_EXHAUSTED, detail="final-quality-gate-budget-denied")
+            payload = not_run_payload(STOP_BUDGET_EXHAUSTED)
+            payload["runtimeBudget"] = guard.snapshot()
+            return FinalQualityGateResult(payload, final_candidate, [])
         if progress:
             progress.start_operation("final-quality-gate", kind="finalQualityGate", label="Check final public prose")
         current_report = self._evaluator.validate_candidate(

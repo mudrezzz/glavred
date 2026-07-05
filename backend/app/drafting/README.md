@@ -155,6 +155,20 @@ are compacted. Child `AiRun.requestPayload`, attempts, and `operationEnvelope` m
 include `payloadBudget` metadata for every enforced operation. Operations not yet
 wired must stay explicit debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
 
+## Validation Runtime Budget
+
+DraftRun validation can be slow, but it must be bounded and trace-visible.
+`validation_runtime_budget.py` owns `ValidationRuntimeBudgetProfile`,
+`ValidationRuntimeBudgetPolicy`, `ValidationRuntimeGuard`,
+`ValidationRuntimeCounters`, and canonical validation stop reasons.
+
+The validation step writes `progress.runtimeBudget` into the existing step artifact.
+It tracks execution mode, wall-clock budget, LLM-call count, revision cycles,
+pairwise rounds, final-gate repair cycles, consecutive non-improving attempts,
+current operation, heartbeat, slow-but-healthy state, incidents, and stop reason.
+Canonical stop reasons are `acceptedQuality`, `humanReviewRequired`,
+`budgetExhausted`, `maxIterations`, `noImprovement`, and `providerIncident`.
+
 ## Workflow Orchestration
 
 `backend.app.drafting.application.workflow` owns the new DraftRun orchestration

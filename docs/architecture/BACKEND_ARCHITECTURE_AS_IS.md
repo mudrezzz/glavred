@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.3.3.
+Current as of Slice 2.17.4.6.0.3.4.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -133,6 +133,10 @@ Already enforced:
 - DraftRun payload budget architecture checks that keep `payload_budget.py` thin
   and require role-owned contract, profile, semantic contract, compactor, and policy
   modules.
+- DraftRun validation runtime budget checks requiring `ValidationRuntimeGuard`,
+  `ValidationRuntimeBudgetProfile`, `runtimeBudget`, and canonical stop reasons:
+  `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`, `maxIterations`,
+  `noImprovement`, and `providerIncident`.
 
 Still missing after this slice:
 
@@ -140,7 +144,7 @@ Still missing after this slice:
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
-  operation envelopes.
+  operation envelopes and validation runtime-budget heartbeats.
 
 ## Recovery Rule
 

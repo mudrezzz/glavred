@@ -164,6 +164,16 @@ attempts, and `operationEnvelope.payloadStats` must show the `payloadBudget` use
 an enforced operation. Debt operations must keep
 `payloadBudgetStatus=debtAllowlisted` in the inventory with a removal slice.
 
+Validation/revision loops must also use
+`backend.app.drafting.application.operations.validation_runtime_budget`.
+`ValidationRuntimeBudgetProfile` defines execution-mode runtime caps, and
+`ValidationRuntimeGuard` records `runtimeBudget` in the validation progress artifact.
+Use canonical stop reasons in `revisionLoop.stopReason` and
+`finalDecision.stopReason`: `acceptedQuality`, `humanReviewRequired`,
+`budgetExhausted`, `maxIterations`, `noImprovement`, and `providerIncident`.
+Preserve older local reasons such as `editorially-improved` or `no-fresh-angle` as
+`detailStopReason` only.
+
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but
 adding new flat files requires a deliberate debt exception and should normally be
@@ -1419,6 +1429,11 @@ DraftRun fallback discipline:
   with a progress-only object. Provider-heavy validation sub-operations mark nested
   operations `failed` with safe errors and keep the best available candidate when a
   previous best exists.
+- Validation progress includes `progress.runtimeBudget`. Treat a run as
+  slow-but-healthy while `runtimeBudget.currentOperationId` has a heartbeat/current
+  operation age inside `runtimeBudget.limits.staleAfterSeconds`. Treat it as stuck
+  only when the current validation operation exceeds that runtime stale budget or no
+  budget/operation metadata explains the lack of progress.
 - `/api/drafts/generate` and frontend local fallback are allowed only when the run was
   not created, the backend is unreachable, or the run fails explicitly according to
   the existing error path.

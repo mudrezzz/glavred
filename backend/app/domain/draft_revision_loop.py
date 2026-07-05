@@ -60,6 +60,8 @@ class RevisionLoopReport:
     stop_reason: str
     unresolved_goals: list[str] = field(default_factory=list)
     constraints: list[str] = field(default_factory=list)
+    detail_stop_reason: str | None = None
+    runtime_budget: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -69,6 +71,8 @@ class RevisionLoopReport:
             "finalCandidateId": self.final_candidate_id,
             "finalSource": self.final_source,
             "stopReason": self.stop_reason,
+            "detailStopReason": self.detail_stop_reason,
             "unresolvedGoals": self.unresolved_goals,
             "constraints": self.constraints,
+            "runtimeBudget": self.runtime_budget,
         }

@@ -7,6 +7,7 @@ from backend.app.application.draft_final_quality_gate_evaluator import FinalQual
 from backend.app.application.draft_final_quality_gate_payloads import final_decision, gate_improved, last, strings, unique
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,10 @@ class FinalQualityRepairLoop:
         reasons: list[str] = []
         for cycle in range(1, self._max_iterations + 1):
             if current_gate.get("status") == "passed":
+                break
+            if progress and progress.runtime_guard and not progress.runtime_guard.can_start_operation("directedRevision", f"final-quality-repair-cycle-{cycle}"):
+                progress.runtime_guard.record_stop(STOP_BUDGET_EXHAUSTED, detail="final-quality-repair-budget-denied")
+                reasons = [STOP_BUDGET_EXHAUSTED]
                 break
             repair, revised, cycle_ids = self._revise_cycle(
                 cycle, current_candidate, current_gate, context_artifact, rule_pack, material_plan, progress

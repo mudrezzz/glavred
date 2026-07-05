@@ -18,6 +18,7 @@ from backend.app.application.draft_revision_instruction_builder import DraftRevi
 from backend.app.application.draft_revision_loop_service import DraftRevisionLoopService
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.domain.draft_generation import DraftGenerationRequest
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, final_validation_stop_reason
 
 
 class DraftRankingRevisionService:
@@ -53,9 +54,15 @@ class DraftRankingRevisionService:
         material_plan: dict[str, Any],
         progress: DraftRunStepOperationSink | None = None,
     ) -> DraftRankingRevisionResult:
+        guard = progress.runtime_guard if progress else None
+        initial_pairwise_denied = bool(guard and not guard.can_start_operation("pairwiseRanking", "pairwise-ranking"))
+        if initial_pairwise_denied and guard:
+            guard.record_stop(STOP_BUDGET_EXHAUSTED, detail="initial-pairwise-budget-denied")
         if progress:
             progress.start_operation("pairwise-ranking", kind="pairwiseRanking", label="Rank draft candidates")
         try:
+            if initial_pairwise_denied:
+                raise RuntimeError(STOP_BUDGET_EXHAUSTED)
             ranking = self._ranking.rank(
                 draft_artifact=draft_artifact,
                 validation_report=validation_report,
@@ -65,7 +72,10 @@ class DraftRankingRevisionService:
             )
         except Exception as exc:
             if progress:
-                progress.fail_operation("pairwise-ranking", safe_error(exc))
+                if initial_pairwise_denied:
+                    progress.complete_operation("pairwise-ranking", notes=[STOP_BUDGET_EXHAUSTED])
+                else:
+                    progress.fail_operation("pairwise-ranking", safe_error(exc))
             ranking = DeterministicPairwiseRanker().rank(draft_artifact=draft_artifact, validation_report=validation_report)
         if progress:
             progress.complete_operation("pairwise-ranking", ai_run_id=last(ranking.ai_run_ids))
@@ -93,6 +103,15 @@ class DraftRankingRevisionService:
         )
         final_candidate = final_gate.final_candidate
         final_decision = final_gate.artifact_payload.get("finalDecision", {})
+        runtime_stop_reason = guard.stop_reason if guard and guard.stop_reason else None
+        final_stop_reason = final_validation_stop_reason(
+            final_candidate=final_candidate,
+            loop_stop_reason=loop.report.stop_reason,
+            runtime_stop_reason=runtime_stop_reason,
+            final_gate=final_gate.artifact_payload,
+        )
+        if guard:
+            guard.record_stop(final_stop_reason, detail=loop.report.detail_stop_reason)
         artifact = {
             "status": "succeeded" if final_candidate else "blocked",
             "pairwiseRanking": ranking.to_payload(),
@@ -102,11 +121,13 @@ class DraftRankingRevisionService:
             "revisionRegression": loop.last_regression,
             "revisionLoop": loop.report.to_payload(),
             "finalQualityGate": final_gate.artifact_payload,
+            "runtimeBudget": guard.snapshot() if guard else {},
             "finalDecision": {
                 "finalCandidateId": final_candidate.get("id") if final_candidate else None,
                 "baseCandidateId": winner_id,
                 "source": final_decision.get("source") or final_source if final_candidate else "none",
-                "stopReason": loop.report.stop_reason,
+                "stopReason": final_stop_reason,
+                "detailStopReason": loop.report.detail_stop_reason,
                 "reason": final_decision.get("reason") or final_reason(final_source, ranking.decision.reason, loop.report.stop_reason),
             },
         }

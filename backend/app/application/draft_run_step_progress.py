@@ -1,9 +1,13 @@
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_step_progress_payload import step_artifact, with_progress
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
+from backend.app.drafting.application.operations.validation_progress_runtime import attach_runtime_budget, runtime_progress_budget, start_runtime_operation
+
+if TYPE_CHECKING:
+    from backend.app.drafting.application.operations.validation_runtime_budget import ValidationRuntimeGuard
 
 
 class DraftRunStepOperationSink:
@@ -15,6 +19,7 @@ class DraftRunStepOperationSink:
         *,
         total_operations: int | None = None,
         on_ai_run_id: Callable[[str | None], None] | None = None,
+        runtime_guard: "ValidationRuntimeGuard | None" = None,
     ) -> None:
         self._repository = repository
         self._run_id = run_id
@@ -23,6 +28,11 @@ class DraftRunStepOperationSink:
         self._operations: list[dict[str, Any]] = []
         self._total_operations = total_operations
         self._on_ai_run_id = on_ai_run_id
+        self._runtime_guard = runtime_guard
+
+    @property
+    def runtime_guard(self) -> "ValidationRuntimeGuard | None":
+        return self._runtime_guard
 
     def start_operation(
         self,
@@ -34,14 +44,8 @@ class DraftRunStepOperationSink:
         notes: list[str] | None = None,
     ) -> None:
         operation = self._find_or_create(operation_id, kind=kind, label=label, target=target)
-        operation.update({
-            "status": "running",
-            "startedAt": operation.get("startedAt") or _now(),
-            "completedAt": None,
-        })
-        if notes:
-            operation["notes"] = notes
-        self._current_operation_id = operation_id
+        allowed = start_runtime_operation(self._runtime_guard, operation, operation_id=operation_id, kind=kind, notes=notes)
+        self._current_operation_id = operation_id if allowed else None
         self._persist("running")
 
     def complete_operation(
@@ -56,6 +60,8 @@ class DraftRunStepOperationSink:
             "status": "succeeded",
             "completedAt": _now(),
         })
+        if self._runtime_guard:
+            self._runtime_guard.complete_operation(operation_id)
         if ai_run_id:
             operation["aiRunId"] = ai_run_id
             self._record_ai_run_id(ai_run_id)
@@ -79,6 +85,8 @@ class DraftRunStepOperationSink:
             "completedAt": _now(),
             "error": _safe(error),
         })
+        if self._runtime_guard:
+            self._runtime_guard.fail_operation(operation_id, _safe(error))
         if ai_run_id:
             operation["aiRunId"] = ai_run_id
             self._record_ai_run_id(ai_run_id)
@@ -90,19 +98,16 @@ class DraftRunStepOperationSink:
 
     def payload(self, status: str | None = None) -> dict[str, Any]:
         progress_status = status or ("running" if self._current_operation_id else _aggregate_status(self._operations))
-        return {
+        return attach_runtime_budget({
             "status": progress_status,
             "currentOperationId": self._current_operation_id,
             "operations": [dict(operation) for operation in self._operations],
-            "budget": {
-                "staleAfterSeconds": 300,
-                "longOperationWarningSeconds": 120,
-                "operationCount": len(self._operations),
-                "expectedOperationCount": self._total_operations,
-            },
-        }
+            "budget": runtime_progress_budget(self._runtime_guard, operation_count=len(self._operations), expected_operation_count=self._total_operations),
+        }, self._runtime_guard)
 
     def merge_artifact(self, artifact_payload: dict[str, Any]) -> None:
+        if self._runtime_guard:
+            self._runtime_guard.heartbeat()
         self._persist("running", artifact_payload)
 
     def _find_or_create(self, operation_id: str, *, kind: str, label: str, target: str | None = None) -> dict[str, Any]:
@@ -136,8 +141,6 @@ class DraftRunStepOperationSink:
     def _record_ai_run_id(self, ai_run_id: str | None) -> None:
         if self._on_ai_run_id:
             self._on_ai_run_id(ai_run_id)
-
-
 def _aggregate_status(operations: list[dict[str, Any]]) -> str:
     if not operations:
         return "running"
@@ -146,11 +149,7 @@ def _aggregate_status(operations: list[dict[str, Any]]) -> str:
     if all(operation.get("status") == "succeeded" for operation in operations):
         return "succeeded"
     return "running"
-
-
 def _now() -> str:
     return datetime.now(UTC).isoformat()
-
-
 def _safe(value: str, limit: int = 500) -> str:
     return " ".join(str(value).split())[:limit]

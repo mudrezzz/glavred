@@ -436,6 +436,18 @@ fields, semantic inputs, quality risk, `promptCharEstimate`, and
 The provider-input budget decision is recorded in
 `docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md`.
 
+Slice 2.17.4.6.0.3.4 adds DraftRun validation runtime budgets in
+`backend/app/drafting/application/operations/validation_runtime_budget.py`.
+`ValidationRuntimeBudgetProfile` and `ValidationRuntimeGuard` keep long background
+validation visible without treating healthy work as stuck. Validation progress now
+records `runtimeBudget` with execution mode, limits, used counts, heartbeat,
+current operation, slow-but-healthy status, incidents, and canonical stop reasons:
+`acceptedQuality`, `humanReviewRequired`, `budgetExhausted`, `maxIterations`,
+`noImprovement`, and `providerIncident`.
+
+The validation runtime decision is recorded in
+`docs/adr/2026-07-05-draftrun-validation-runtime-budget.md`.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

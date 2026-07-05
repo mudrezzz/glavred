@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.3.3.
+Current as of Slice 2.17.4.6.0.3.4.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -130,6 +130,17 @@ Implemented operation safety repair:
     `evidenceInterpretation`, `editorialCritique`, `directedRevision`,
     `humanCommentRevision`, and `humanCommentRevisionQualityCheck`;
   - explicit inventory/allowlist for current unmigrated provider-heavy operations.
+- DraftRun validation runtime budgeting:
+  - `backend.app.drafting.application.operations.validation_runtime_budget`
+    owns `ValidationRuntimeBudgetProfile`, `ValidationRuntimeBudgetPolicy`,
+    `ValidationRuntimeGuard`, `ValidationRuntimeCounters`, and canonical validation
+    stop-reason normalization;
+  - validation progress records `runtimeBudget` inside the existing step artifact;
+  - canonical validation stop reasons are `acceptedQuality`,
+    `humanReviewRequired`, `budgetExhausted`, `maxIterations`, `noImprovement`, and
+    `providerIncident`;
+  - staleness inspection treats a validation step as slow-but-healthy while current
+    operation heartbeat age stays inside the validation runtime budget.
 
 ## Context Ownership
 
@@ -231,6 +242,13 @@ timeout envelope, not only an HTTP client timeout. A timeout must be visible as 
 failed attempt with a safe child `AiRun`, a failed nested operation, and a controlled
 retry/backup/fallback path.
 
+Validation and ranking/revision loops must additionally use the DraftRun validation
+runtime budget guard. The guard records `runtimeBudget` in validation progress,
+tracks wall-clock time, LLM calls, revision cycles, pairwise rounds, final-gate
+repair cycles, consecutive non-improving attempts, current operation, heartbeat, and
+incidents, and normalizes exit reasons to `acceptedQuality`, `humanReviewRequired`,
+`budgetExhausted`, `maxIterations`, `noImprovement`, or `providerIncident`.
+
 The Drafting v1 implementation of this contract is:
 
 - new step implementations return `DraftStepOutcome`, not raw `dict[str, Any]`;
@@ -256,12 +274,13 @@ The Drafting v1 implementation of this contract is:
 3. Introduce shared `DraftStep` and JSON operation contracts. Done.
 4. Refactor DraftRun orchestration into a workflow registry. Done.
 5. Add DraftRun provider-input payload budget policies. Done.
-6. Move context/evidence/planning clusters.
-7. Move candidate/validation/revision/final quality clusters.
-8. Move upstream radar/search into `backend/app/upstream` before expanding extraction
+6. Add validation/revision runtime guard and canonical stop reasons. Done.
+7. Move context/evidence/planning clusters.
+8. Move candidate/validation/revision/final quality clusters.
+9. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
-9. Tighten allowlists after each cluster migration.
-10. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
+10. Tighten allowlists after each cluster migration.
+11. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
    each provider-heavy operation behind the shared envelope.
 
 ## Review Checklist

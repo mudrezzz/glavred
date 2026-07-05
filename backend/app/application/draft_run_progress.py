@@ -1,9 +1,12 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_run import DraftRunStatus
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
+
+if TYPE_CHECKING:
+    from backend.app.drafting.application.operations.validation_runtime_budget import ValidationRuntimeGuard
 
 
 class DraftRunProgress:
@@ -50,6 +53,7 @@ class DraftRunProgress:
         key: DraftRunStepKey,
         *,
         total_operations: int | None = None,
+        runtime_guard: "ValidationRuntimeGuard | None" = None,
     ) -> DraftRunStepOperationSink:
         return DraftRunStepOperationSink(
             self._repository,
@@ -57,6 +61,7 @@ class DraftRunProgress:
             key,
             total_operations=total_operations,
             on_ai_run_id=self.add_ai_run_id,
+            runtime_guard=runtime_guard,
         )
 
     def fail_current(self, error: str) -> None:

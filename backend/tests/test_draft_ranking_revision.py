@@ -124,6 +124,8 @@ def test_ranking_revision_rejects_revision_that_breaks_hard_max(tmp_path) -> Non
     assert result.final_draft is not None
     assert result.final_draft.title == "Original"
     assert result.artifact_payload["finalDecision"]["source"] == "originalCandidate"
+    assert result.artifact_payload["revisionLoop"]["stopReason"] == "noImprovement"
+    assert result.artifact_payload["revisionLoop"]["detailStopReason"] == "no-fresh-angle"
     assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is False
     assert "revised-critical-count-increased" in result.artifact_payload["revisionLoop"]["cycles"][0]["rejectionReasons"]
 
@@ -234,7 +236,8 @@ def test_revision_loop_accepts_editorial_goal_without_validator_finding(tmp_path
     assert result.final_draft.title == "Revised"
     assert cycle["accepted"] is True
     assert cycle["resolvedEditorialGoals"]
-    assert result.artifact_payload["revisionLoop"]["stopReason"] == "editorially-improved"
+    assert result.artifact_payload["revisionLoop"]["stopReason"] == "acceptedQuality"
+    assert result.artifact_payload["revisionLoop"]["detailStopReason"] == "editorially-improved"
 
 
 def test_revision_loop_uses_alternative_angle_as_editorial_goal(tmp_path) -> None:
@@ -258,6 +261,28 @@ def test_revision_loop_uses_alternative_angle_as_editorial_goal(tmp_path) -> Non
     goals = result.artifact_payload["revisionLoop"]["cycles"][0]["editorialGoals"]
     assert any(goal["source"] == "alternativeAngleTournament" for goal in goals)
     assert result.artifact_payload["revisionLoop"]["cycles"][0]["accepted"] is True
+
+
+def test_revision_loop_provider_failure_records_provider_incident_stop_reason(tmp_path) -> None:
+    adapter = SequenceAdapter([
+        {"winnerCandidateId": "candidate-1", "reason": "winner", "comparisons": []},
+        RuntimeError("provider unavailable"),
+        RuntimeError("provider still unavailable"),
+    ])
+    service = ranking_revision_service(tmp_path, adapter)
+
+    result = service.run(
+        request=request(),
+        draft_artifact=draft_artifact(),
+        validation_report=validation_report(),
+        context_artifact=context_artifact(),
+        rule_pack={},
+        material_plan={},
+    )
+
+    assert result.artifact_payload["revisionLoop"]["stopReason"] == "providerIncident"
+    assert result.artifact_payload["revisionLoop"]["detailStopReason"] == "directed-revision-provider-failed"
+    assert result.artifact_payload["revisionLoop"]["cycles"][0]["stopReason"] == "provider-failed"
 
 
 def test_directed_revision_unconfigured_returns_not_run_envelope(tmp_path) -> None:

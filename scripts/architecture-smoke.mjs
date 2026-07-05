@@ -1704,6 +1704,12 @@ const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
   compactors: "backend/app/drafting/application/operations/payload_compactors.py",
   policy: "backend/app/drafting/application/operations/payload_budget_policy.py",
 };
+const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
+  "backend/app/drafting/application/operations/validation_runtime_budget.py";
+const DRAFT_RUN_PIPELINE_AS_IS_PATH =
+  "docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md";
+const DRAFT_RUN_DIAGNOSTICS_SKILL_PATH =
+  ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md";
 const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
   "backend/app/application/evidence_interpretation_service.py",
   "backend/app/application/draft_editorial_critique_service.py",
@@ -3022,6 +3028,56 @@ for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not
   );
 }
 
+const draftingValidationRuntimeBudgetSource = readText(DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH);
+for (const fragment of [
+  "class ValidationRuntimeBudgetProfile",
+  "class ValidationRuntimeBudgetPolicy",
+  "class ValidationRuntimeGuard",
+  "class ValidationRuntimeCounters",
+  "acceptedQuality",
+  "humanReviewRequired",
+  "budgetExhausted",
+  "maxIterations",
+  "noImprovement",
+  "providerIncident",
+]) {
+  assert(
+    draftingValidationRuntimeBudgetSource.includes(fragment),
+    `${DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH} is missing validation runtime guard fragment: ${fragment}`
+  );
+}
+
+const draftRunPipelineAsIsSource = readText(DRAFT_RUN_PIPELINE_AS_IS_PATH);
+for (const fragment of [
+  "ValidationRuntimeBudget",
+  "runtimeBudget",
+  "acceptedQuality",
+  "humanReviewRequired",
+  "budgetExhausted",
+  "maxIterations",
+  "noImprovement",
+  "providerIncident",
+]) {
+  assert(
+    draftRunPipelineAsIsSource.includes(fragment),
+    `${DRAFT_RUN_PIPELINE_AS_IS_PATH} must document validation runtime budget semantics: ${fragment}`
+  );
+}
+
+const draftRunDiagnosticsSkillSource = readText(DRAFT_RUN_DIAGNOSTICS_SKILL_PATH);
+for (const fragment of [
+  "runtimeBudget",
+  "acceptedQuality",
+  "humanReviewRequired",
+  "budgetExhausted",
+  "slow-but-alive",
+]) {
+  assert(
+    draftRunDiagnosticsSkillSource.includes(fragment),
+    `${DRAFT_RUN_DIAGNOSTICS_SKILL_PATH} must teach validation runtime-budget diagnostics: ${fragment}`
+  );
+}
+
 for (const serviceFile of PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES) {
   const serviceSource = readText(serviceFile);
   assert(
@@ -3097,6 +3153,15 @@ const requiredSaoFragments = [
   "PayloadBudgetResult",
   "payloadBudgetStatus",
   "budgetPolicyId",
+  "ValidationRuntimeGuard",
+  "ValidationRuntimeBudgetProfile",
+  "runtimeBudget",
+  "acceptedQuality",
+  "humanReviewRequired",
+  "budgetExhausted",
+  "maxIterations",
+  "noImprovement",
+  "providerIncident",
   "providerTimeout",
   "malformedJson",
   "deterministicFallback",

@@ -58,7 +58,8 @@ def test_revision_cycle_failure_keeps_previous_best_and_marks_operation_failed(t
     assert result.final_draft is not None
     assert result.final_draft.title == "Revised"
     assert result.artifact_payload["finalDecision"]["source"] == "revisionLoop"
-    assert result.artifact_payload["revisionLoop"]["stopReason"] == "provider-failed"
+    assert result.artifact_payload["revisionLoop"]["stopReason"] == "providerIncident"
+    assert result.artifact_payload["revisionLoop"]["detailStopReason"] == "directed-revision-provider-failed"
     assert result.artifact_payload["revisionLoop"]["cycles"][1]["accepted"] is False
     assert result.artifact_payload["revisionLoop"]["cycles"][1]["stopReason"] == "provider-failed"
     assert "directed-revision-provider-failed" in result.artifact_payload["revisionLoop"]["cycles"][1]["rejectionReasons"]

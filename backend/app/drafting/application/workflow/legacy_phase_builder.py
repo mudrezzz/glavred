@@ -17,9 +17,14 @@ from backend.app.application.draft_run_step_progress_payload import with_progres
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRunStatus
 from backend.app.domain.draft_run_steps import DraftRunStepKey
+from backend.app.drafting.application.operations.validation_runtime_budget import (
+    ValidationRuntimeBudgetPolicy,
+    ValidationRuntimeGuard,
+)
 from backend.app.drafting.application.workflow.legacy_services import LegacyDraftWorkflowServices
 from backend.app.drafting.application.workflow.registry import DraftStepRegistry, DraftWorkflowPhase
 from backend.app.drafting.application.workflow.state import DraftWorkflowState
+from backend.app.settings import get_settings
 
 
 class LegacyDraftWorkflowPhaseBuilder:
@@ -264,7 +269,18 @@ class LegacyDraftWorkflowPhaseBuilder:
 
     def validation(self, state: DraftWorkflowState) -> None:
         state.progress.start(DraftRunStepKey.VALIDATION)
-        validation_progress = state.progress.operation_sink(DraftRunStepKey.VALIDATION)
+        settings = get_settings()
+        validation_runtime_guard = ValidationRuntimeGuard(
+            ValidationRuntimeBudgetPolicy().profile_for(
+                state.context_artifact,
+                max_revision_iterations=settings.draft_revision_max_iterations,
+                max_final_repair_iterations=settings.draft_final_repair_max_iterations,
+            )
+        )
+        validation_progress = state.progress.operation_sink(
+            DraftRunStepKey.VALIDATION,
+            runtime_guard=validation_runtime_guard,
+        )
         state.validation_result = self._services.validation_step_service.validate(
             request=state.request,
             context_summary=state.context_summary,

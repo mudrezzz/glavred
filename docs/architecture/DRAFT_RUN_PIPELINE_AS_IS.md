@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies.
+Current as of Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -35,6 +35,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
+| `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
@@ -871,6 +872,8 @@ Important AS IS rules:
 | --- | --- |
 | live DraftRun | frontend keeps polling; no compatibility fallback while run is alive |
 | stale DraftRun | diagnostic state after no timestamp progress; not automatic fallback |
+| slow-but-healthy validation | validation has `runtimeBudget.currentOperationId` and heartbeat/current-operation age inside `runtimeBudget.limits.staleAfterSeconds`; do not classify as stuck |
+| over-budget validation operation | stale diagnostics report the current validation operation and runtime stale budget instead of the old generic five-minute message |
 | public search disabled | attempt is `notConfigured`; it is not proof |
 | malformed JSON planning | repair retry, optional backup model, then deterministic fallback |
 | malformed, empty, or timed-out evidence interpretation | failed child `AiRun`, failed nested operation, repair retry, optional backup model, then deterministic interpretation fallback |
@@ -914,6 +917,16 @@ input still exceeds the profile cap, trace records `contextOverBudget`; hard-cap
 breaches record `payloadTooLarge`. Remaining provider-heavy operations are explicit
 payload-budget debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
 
+Slice 2.17.4.6.0.3.4 adds `ValidationRuntimeBudget` governance for the validation
+stage. The runtime guard records `runtimeBudget.profileId`, execution mode, limits,
+used counters, `startedAt`, `lastHeartbeatAt`, `currentOperationId`,
+`currentOperationStartedAt`, `slowButHealthy`, `stopReason`, `exhausted`, and
+incidents in the existing validation progress artifact. It uses canonical stop
+reasons: `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`,
+`maxIterations`, `noImprovement`, and `providerIncident`; older internal reasons are
+kept as `detailStopReason` where useful. No endpoint contract or SQLite schema is
+changed.
+
 ## 9. How to read a run trace
 
 Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
@@ -943,6 +956,11 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 16. `rankingRevision`: inspect pairwise winner, revision cycles, accepted/rejected moves.
     Directed revision sub-results should include `operationEnvelope` for accepted,
     failed, or not-run writer revisions.
+    `revisionLoop.stopReason` is canonical; inspect `detailStopReason` for legacy
+    detail such as `editorially-improved`, `no-fresh-angle`, or provider failure
+    detail. Inspect `runtimeBudget` to see max wall-clock, LLM calls, revision
+    cycles, pairwise rounds, final repair cycles, non-improvement count, heartbeat,
+    and slow-but-healthy status.
 17. `finalQualityGate`: inspect the final quality contract, independent review
     attempts/model, final public-prose status, `attributionReview`,
     `actionableAttributionFindings`, `diagnosticAttributionNoise`, repair goals,

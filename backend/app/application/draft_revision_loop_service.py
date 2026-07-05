@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Any
 
 from backend.app.application.draft_directed_revision_service import DraftDirectedRevisionService
@@ -13,16 +12,10 @@ from backend.app.application.draft_revision_loop_policy import candidate_id, con
 from backend.app.application.draft_revision_rejected_moves import constraints_from_editorial_goals, constraints_from_rejected_moves, cycle_stop_reason, goal_messages, rejected_moves_from_cycle
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
-from backend.app.domain.draft_revision_loop import RevisionLoopCycle, RevisionLoopReport
+from backend.app.domain.draft_revision_loop import RevisionLoopCycle
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, finalize_revision_loop_stop, operation_denied_by_runtime_budget
+from backend.app.drafting.application.operations.validation_revision_loop_payloads import DraftRevisionLoopResult, revision_loop_report, successful_cycle
 
-@dataclass(frozen=True)
-class DraftRevisionLoopResult:
-    report: RevisionLoopReport
-    final_candidate: dict[str, Any] | None
-    first_instruction: dict[str, Any] | None
-    last_revision: dict[str, Any] | None
-    last_regression: dict[str, Any] | None
-    ai_run_ids: list[str]
 class DraftRevisionLoopService:
     def __init__(
         self,
@@ -64,8 +57,14 @@ class DraftRevisionLoopService:
         last_regression: dict[str, Any] | None = None
         rejected_moves: list[dict[str, Any]] = []
         stop_reason = "validator-clean"
+        detail_stop_reason: str | None = None
+        guard = progress.runtime_guard if progress else None
 
         for cycle_number in range(1, self._max_iterations + 1):
+            if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=f"directed-revision-cycle-{cycle_number}", detail="directed-revision-budget-denied"):
+                detail_stop_reason = guard.detail_stop_reason or "runtime-budget-exhausted"
+                stop_reason = STOP_BUDGET_EXHAUSTED
+                break
             current_id = candidate_id(current)
             instruction = self._instruction_builder.build(candidate_id=current_id, validation_report=current_validation).to_payload()
             if first_instruction is None:
@@ -100,6 +99,7 @@ class DraftRevisionLoopService:
             ai_run_ids.extend(revision_ids)
             revised = dict_or_empty(revision.get("revisedCandidate")) or None
             if revision.get("status") != "succeeded" or not revised:
+                detail_stop_reason = str(revision.get("reason") or revision.get("error") or "directed-revision-failed")
                 cycles.append(failed_cycle(
                     cycle_number=cycle_number,
                     base_id=current_id,
@@ -166,28 +166,26 @@ class DraftRevisionLoopService:
                 rejection_reasons=decision_reasons,
                 unresolved_editorial_goals=editorial_result["unresolvedEditorialGoals"],
             )
-            cycles.append(RevisionLoopCycle(
+            cycles.append(successful_cycle(
                 cycle_number=cycle_number,
-                base_candidate_id=current_id,
+                current_id=current_id,
                 repair_goals=repair_goals,
                 constraints=[*constraints],
-                revised_candidate=revised,
+                revised=revised,
                 validation_before=current_validation,
                 validation_after=validation_after,
-                pairwise_comparison=comparison,
-                resolved_goals=goal_result["resolved"],
-                unresolved_goals=goal_result["unresolved"],
+                comparison=comparison,
+                goal_result=goal_result,
                 editorial_goals=editorial_goals,
-                editorial_dimension_scores=editorial_result["editorialDimensionScores"],
-                resolved_editorial_goals=editorial_result["resolvedEditorialGoals"],
-                unresolved_editorial_goals=editorial_result["unresolvedEditorialGoals"],
+                editorial_result=editorial_result,
                 new_rejected_moves=new_rejected_moves,
-                acceptance_decision={"accepted": accepted, "reasons": decision_reasons},
                 stop_reason=cycle_stop_reason(accepted, goal_result["unresolved"], editorial_result["unresolvedEditorialGoals"]),
                 accepted=accepted,
-                rejection_reasons=[] if accepted else decision_reasons,
+                decision_reasons=decision_reasons,
                 ai_run_ids=[*revision_ids, *compare_ids],
             ))
+            if guard:
+                guard.record_revision_outcome(accepted=accepted)
             if accepted:
                 current = revised
                 current_validation = validation_after
@@ -205,15 +203,17 @@ class DraftRevisionLoopService:
 
         if cycles and len(cycles) >= self._max_iterations and stop_reason not in {"provider-failed", "no-fresh-angle"} and constraints:
             stop_reason = "max-iterations"
+            detail_stop_reason = detail_stop_reason or "max-iterations"
 
-        report = RevisionLoopReport(
-            status="succeeded" if current else "blocked",
-            max_iterations=self._max_iterations,
+        canonical_stop_reason, detail_stop_reason, runtime_budget = finalize_revision_loop_stop(guard, stop_reason, detail_stop_reason)
+
+        report = revision_loop_report(
+            current=current,
             cycles=cycles,
-            final_candidate_id=candidate_id(current),
-            final_source="revisionLoop" if any(cycle.accepted for cycle in cycles) else "originalCandidate",
-            stop_reason=stop_reason,
-            unresolved_goals=[*cycles[-1].unresolved_goals, *goal_messages(cycles[-1].unresolved_editorial_goals)] if cycles else [],
+            max_iterations=self._max_iterations,
+            stop_reason=canonical_stop_reason,
             constraints=constraints,
+            detail_stop_reason=detail_stop_reason,
+            runtime_budget=runtime_budget,
         )
         return DraftRevisionLoopResult(report, current, first_instruction, last_revision, last_regression, ai_run_ids)

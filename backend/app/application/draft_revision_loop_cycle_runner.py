@@ -6,15 +6,10 @@ from backend.app.application.draft_revision_loop_policy import candidate_id, com
 from backend.app.application.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_validation_operation_safety import failed_pairwise_result, failed_revision_result, safe_call
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, operation_denied_by_runtime_budget
 
 class DraftRevisionLoopCycleRunner:
-    def __init__(
-        self,
-        *,
-        ranking_service: DraftPairwiseRankingService,
-        revision_service: DraftDirectedRevisionService,
-        regression_guard: DraftRevisionRegressionGuard,
-    ) -> None:
+    def __init__(self, *, ranking_service: DraftPairwiseRankingService, revision_service: DraftDirectedRevisionService, regression_guard: DraftRevisionRegressionGuard) -> None:
         self._ranking = ranking_service
         self._revision = revision_service
         self._regression = regression_guard
@@ -31,6 +26,8 @@ class DraftRevisionLoopCycleRunner:
         progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
         operation_id = f"directed-revision-cycle-{cycle_number}"
+        if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
+            return failed_revision_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=candidate_id(candidate) or "none")
         revision = safe_call(
@@ -40,12 +37,11 @@ class DraftRevisionLoopCycleRunner:
             call=lambda: self._revision.revise(candidate=candidate, instruction=instruction, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan),
         )
         if progress:
-            if revision.get("status") == "failed":
+            if revision.get("status") != "succeeded":
                 progress.fail_operation(operation_id, str(revision.get("error") or revision.get("reason") or "revision failed"), ai_run_id=last_value(string_list(revision.get("aiRunIds"))))
             else:
                 progress.complete_operation(operation_id, ai_run_id=last_value(string_list(revision.get("aiRunIds"))), notes=[f"status={revision.get('status')}"])
         return revision
-
     def regress(
         self,
         *,
@@ -72,7 +68,6 @@ class DraftRevisionLoopCycleRunner:
         if progress:
             progress.complete_operation(operation_id, notes=[f"accepted={regression.accepted}"])
         return regression
-
     def compare(
         self,
         *,
@@ -87,6 +82,8 @@ class DraftRevisionLoopCycleRunner:
         progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
         operation_id = f"revision-pairwise-cycle-{cycle_number}"
+        if operation_denied_by_runtime_budget(progress, kind="pairwiseRanking", operation_id=operation_id, detail="pairwise-ranking-budget-denied"):
+            return failed_pairwise_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="pairwiseRanking", label=f"Compare revision cycle {cycle_number}")
         report = safe_call(

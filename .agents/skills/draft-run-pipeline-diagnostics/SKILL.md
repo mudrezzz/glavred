@@ -103,6 +103,18 @@ Check these failure classes explicitly:
   progress operations, or child `AiRun` creation continue to advance. Treat it as
   stuck only when the parent step has no progress past the expected operation budget
   and no timeout/stale/cancelled incident or worker error explains the delay.
+  For `validation`, inspect `progress.runtimeBudget`: profile id, execution mode,
+  limits, used counters, `lastHeartbeatAt`, `currentOperationId`,
+  `currentOperationStartedAt`, `slowButHealthy`, `stopReason`, `exhausted`, and
+  incidents. A validation run is slow-but-alive when the current operation age is
+  inside `runtimeBudget.limits.staleAfterSeconds`; it is stuck when that operation
+  exceeds the runtime stale budget without a `budgetExhausted`, `providerIncident`,
+  `staleOperation`, `cancelled`, or worker failure explanation.
+- **Validation stop reason**: read canonical `revisionLoop.stopReason` and
+  `finalDecision.stopReason` before judging outcome. Expected values are
+  `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`, `maxIterations`,
+  `noImprovement`, and `providerIncident`; use `detailStopReason` for legacy local
+  details such as `editorially-improved`, `no-fresh-angle`, or provider failure text.
 
 ## Output Format
 

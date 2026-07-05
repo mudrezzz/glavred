@@ -6722,7 +6722,7 @@ Status:
 
 ### Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard
 
-- Status: Ready
+- Status: Done
 - Goal: Добавить runtime guard для `validation` / ranking-revision loop: long-running validation is allowed, but must be budgeted, trace-visible, and unable to spin indefinitely.
 - User value: Background DraftRun может работать 20-40 минут, но редактор и разработчик видят, какие validation/revision operations идут, сколько бюджета осталось, почему loop продолжается, and when it will stop.
 - Scope:
@@ -6755,34 +6755,88 @@ Status:
   - Stop reason is always present when validation exits without a normal accepted final draft.
 - Risks:
   - Too aggressive guardrails can reduce quality by stopping useful revision cycles; defaults must distinguish smoke/interactive/background/full modes.
+- Completed: 2026-07-05
+
+### Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules
+
+- Status: Ready
+- Goal: Classify the remaining flat DraftRun application surface and define enforceable OOP migration rules before moving more modules.
+- User value:
+  - Backend migration becomes a real architecture cleanup rather than a cosmetic package move.
+  - Developers can see which legacy functions become services, policies, DTOs, private helpers, or compatibility shims.
+- Scope:
+  - Inventory every `backend/app/application/draft_*.py` and `backend/app/application/deterministic_*.py` module.
+  - Group modules by drafting ownership cluster: context/artifacts, source/evidence, planning, candidate generation, validation, ranking/revision, final quality, HITL, compatibility shell.
+  - For each module, record the migration disposition: `service`, `policy`, `component`, `DTO`, `privateHelper`, `compatibilityShim`, or `deleteAfterMigration`.
+  - For public top-level functions, decide whether they become private helpers, methods on an owning service/policy/component, typed DTO constructors, or compatibility-only re-exports.
+  - Define class/service documentation expectations: ownership header remains mandatory; migrated owner classes must document responsibility, collaborators, and non-ownership where the role is not obvious from the name.
+  - Define deterministic fallback placement: `deterministic_*` logic must move under named fallback policy/service owners inside `backend/app/drafting`, not remain a parallel flat naming convention.
+  - Add architecture smoke checks for migrated packages: no procedural public-function sprawl, no migrated modules without owner classes/policies when they own behavior, and no cosmetic package moves that preserve the old flat surface.
+  - Update slices `2.17.4.6.0.4` and `2.17.4.6.0.5` so they consume the migration map and tighten allowlists after each sub-batch.
+- Out of scope:
+  - Runtime behavior changes, prompt changes, provider/model selection changes, SQLite migrations, UI changes.
+  - Moving the modules themselves; this slice creates the migration map and enforceable rules.
+- Implementation notes:
+  - Do not require class wrappers for pure value objects or tiny private helpers; the rule is ownership clarity, not class boilerplate.
+  - Prefer cohesive policy/service/component classes when behavior has state, collaborators, trace semantics, provider semantics, or multiple public operations.
+  - Keep compatibility shims thin and documented; shims must not own behavior.
+- Architecture impact:
+  - Prevents the next package migration from becoming a cosmetic rename of the existing procedural flat surface.
+  - Turns legacy public helpers into explicitly classified debt with a target owner.
+  - Gives architecture smoke a concrete migration map to enforce against future additions.
+- Tests:
+  - Architecture smoke checks for the migration inventory, module ownership fields, public helper thresholds, and shim thinness.
+  - Roadmap render/export/check.
+  - No backend runtime pytest required unless smoke helpers touch Python runtime modules.
+- Docs:
+  - Update backend AS IS/TARGET docs, drafting component map, developer guide, and roadmap artifacts with the migration classification rules.
+  - Add or update ADR if the public-function/class ownership rule is not already captured precisely enough.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Every current flat DraftRun application module has a documented migration disposition and target bounded-context owner.
+  - Every public top-level helper in the migration scope is classified as private helper, service/policy/component method, DTO constructor, or compatibility export.
+  - `deterministic_*` modules have target fallback policy/service homes.
+  - Architecture smoke fails if a migrated bounded-context module preserves large public helper sprawl without an owner class/policy.
+  - Slice `2.17.4.6.0.4` is not Ready until this migration map exists.
+- Risks:
+  - Over-correcting into class boilerplate; mitigate by allowing private pure helpers and DTO factories where they are genuinely local and documented.
+  - Inventory can grow too broad; keep the output focused on DraftRun migration decisions, not product behavior redesign.
 
 ### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
 
 - Status: Backlog
-- Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports after LLM operation governance is in place.
+- Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports after the legacy surface triage map is in place.
 - User value:
   - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
+  - Migration removes procedural legacy shape instead of copying it into a new package.
 - Scope:
-  - Migrate context, source intent, source ledger, public evidence, feasibility, post contract, rule pack, evidence interpretation, material plan, strategy, and rhetorical plan modules into drafting step/artifact packages in small sub-batches.
-  - Keep legacy imports working through shims until all call sites are updated.
+  - Use the `2.17.4.6.0.4.0` migration map before moving files.
+  - Migrate context, source intent, source ledger, public evidence, feasibility, post contract, rule pack, evidence interpretation, material plan, strategy, and rhetorical plan modules into drafting step/artifact/operation packages in small sub-batches.
+  - Convert public top-level helpers according to their disposition: service/policy/component methods, DTO constructors, private helpers, or compatibility shims.
+  - Move `deterministic_*` fallback logic for early clusters under named fallback policy/service owners.
+  - Keep legacy imports working through thin shims until all call sites are updated.
   - Update tests to target the new package paths where practical.
-  - Tighten allowlists so migrated legacy flat files cannot be reintroduced.
+  - Tighten allowlists after each migrated sub-batch so legacy flat files cannot be reintroduced.
 - Out of scope:
   - Candidate generation, validation, revision, final quality gate migration.
   - Prompt redesign or evidence quality changes.
 - Implementation notes:
-  - Move by cohesive cluster and run targeted tests after each cluster in the implementation slice.
+  - Move by cohesive cluster and run targeted tests after each cluster.
+  - Do not create class wrappers solely for aesthetics; create owner classes where behavior has responsibility, collaborators, state, trace semantics, or public operations.
+  - Compatibility shims must stay thin and documented.
 - Architecture impact:
-  - Shrinks the flat `application/draft_*` surface and makes early pipeline responsibilities explicit.
+  - Shrinks the flat `application/draft_*` and `application/deterministic_*` surface and makes early pipeline responsibilities explicit.
 - Tests:
   - Source ledger, source intent, public evidence, rule pack, material plan, strategy, and rhetorical plan tests.
-  - `npm run test:architecture` with tightened legacy allowlist.
+  - `npm run test:architecture` with tightened legacy allowlist and migration-map checks.
 - Docs:
-  - Update component map and DraftRun AS IS module references.
+  - Update component map, DraftRun AS IS module references, backend AS IS/TARGET docs, and developer guide.
 - Demo impact:
   - No user-facing demo change.
 - Acceptance criteria:
   - Early DraftRun clusters live under `backend/app/drafting` or have documented temporary shims.
+  - Migrated modules follow the migration disposition map instead of preserving public helper sprawl.
   - No behavior change in DraftRun planning tests.
 - Risks:
   - Large import churn; use compatibility shims and avoid mixing behavior changes with moves.
@@ -6790,33 +6844,40 @@ Status:
 ### Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration
 
 - Status: Backlog
-- Goal: Move the late DraftRun clusters into the drafting bounded context and standardize candidate/validation/revision contracts.
+- Goal: Move the late DraftRun clusters into the drafting bounded context and standardize candidate/validation/revision contracts using the legacy surface triage map.
 - User value:
-  - The quality-critical backend code becomes easier to audit, debug, and extend without breaking hidden contracts.
+  - The quality-critical backend code becomes easier to audit, debug, and extend without hidden procedural contracts.
 - Scope:
+  - Use the `2.17.4.6.0.4.0` migration map before moving files.
   - Migrate candidate generation/selection, LLM validation, editorial critique, alternative angle, ranking, revision loop, final quality gate, and human-comment revision quality modules into drafting packages.
+  - Convert public top-level helpers according to their disposition: service/policy/component methods, DTO constructors, private helpers, or compatibility shims.
+  - Move late-stage `deterministic_*` fallback logic under named fallback policy/service owners.
   - Normalize late-step result contracts onto `DraftStepOutcome` where feasible.
   - Keep AiRun audit payload compatibility and old trace readability.
-  - Tighten architecture smoke against top-level public helper function sprawl in migrated packages.
+  - Tighten architecture smoke against top-level public helper sprawl in migrated packages.
 - Out of scope:
   - Changing quality policy, prompts, ranking algorithm, or final draft selection semantics.
   - New HITL learning behavior.
 - Implementation notes:
-  - This slice should be split internally into sub-batches if the diff becomes too large.
+  - Split internally into sub-batches if the diff becomes too large.
+  - This is the highest-risk migration because it touches provider-heavy and trace-heavy code; preserve behavior first.
 - Architecture impact:
   - Completes most DraftRun code movement into the drafting bounded context.
+  - Removes the late-stage procedural flat surface instead of relocating it unchanged.
 - Tests:
   - Candidate, validation, critic, alternative angle, ranking/revision, final quality gate, human revision tests.
   - Backward-compat trace tests for old runs where available.
+  - `npm run test:architecture` with stricter migrated-package checks.
 - Docs:
-  - Update component map, DraftRun AS IS, developer guide, and migration notes.
+  - Update component map, DraftRun AS IS, developer guide, backend AS IS/TARGET docs, and migration notes.
 - Demo impact:
   - No user-facing demo change.
 - Acceptance criteria:
   - Late DraftRun clusters live under `backend/app/drafting` or have explicit temporary shims.
-  - Architecture smoke rejects new flat late-stage `draft_*` files.
+  - Migrated modules follow the migration disposition map and do not preserve large public helper sprawl.
+  - Architecture smoke rejects new flat late-stage `draft_*` or `deterministic_*` files.
 - Risks:
-  - This is the highest-risk migration because it touches provider-heavy and trace-heavy code.
+  - Provider-heavy trace behavior can regress; use compatibility shims and focused regression tests for every sub-batch.
 
 ### Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening
 
@@ -7533,6 +7594,7 @@ Status:
 - Slice 2.17.4.6.0.3.2: Universal LLM Operation Envelope, Payload Budgets, and Incident Taxonomy. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.3.1: Payload Budget Policy Architecture Cleanup. Completed 2026-07-04.
+- Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7561,4 +7623,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard`.
+Implement `Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules`.
