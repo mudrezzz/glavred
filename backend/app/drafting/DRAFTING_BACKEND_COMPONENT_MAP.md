@@ -1,10 +1,12 @@
 # Drafting Backend Component Map
 
-Current status: migration map for the `backend/app/drafting` bounded context.
+Current status: migration map and first migrated runtime clusters for the
+`backend/app/drafting` bounded context.
 
 This file is the implementation guide for moving legacy DraftRun modules in small,
-behavior-preserving slices. It is not a promise that the listed modules have already
-been migrated.
+behavior-preserving slices. The context/artifact, source/evidence,
+evidence-contract, and planning clusters were migrated in Slice 2.17.4.6.0.4; later
+clusters remain legacy until their owning slices move them.
 
 ## Package Areas
 
@@ -13,9 +15,11 @@ been migrated.
 | `domain` | Provider-free DraftRun entities, step keys, artifact DTOs, validation DTOs. | `backend/app/domain/draft_*.py` |
 | `application/workflow` | Draft workflow sequencing, step registry, workflow state, progress handoff. `DraftWorkflow`, `DraftWorkflowState`, `DraftWorkflowPhase`, and `DraftStepRegistry` now own the behavior-preserving orchestration shell while legacy step services remain in place. | `draft_run_pipeline.py`, `draft_run_progress.py`, `draft_run_step_progress.py`, `draft_run_service.py` |
 | `application/steps` | Step-level use cases with stable input/output contracts. `contracts.py` defines `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. `legacy_adapters.py` converts the first legacy result shapes without changing runtime behavior. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
-| `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `timeout.py` and `evidence_interpretation_payload.py` protect the legacy evidence-interpretation operation during migration. DraftRun provider-input budgets are role-owned by `payload_budget_contracts.py`, `payload_budget_profiles.py`, `payload_semantic_contracts.py`, `payload_compactors.py`, `payload_budget_policy.py`, and `payload_budget_runtime.py`; `payload_budget.py` is compatibility-only. `validation_runtime_budget.py` owns validation-loop runtime caps, heartbeat snapshots, counters, and canonical stop reasons. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
+| `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `json_step_adapter.py` is the bounded JSON provider-call adapter for migrated services. `timeout.py` and `evidence_interpretation_payload.py` protect the evidence-interpretation operation during migration. DraftRun provider-input budgets are role-owned by `payload_budget_contracts.py`, `payload_budget_profiles.py`, `payload_semantic_contracts.py`, `payload_compactors.py`, `payload_budget_policy.py`, and `payload_budget_runtime.py`; `payload_budget.py` is compatibility-only. `validation_runtime_budget.py` owns validation-loop runtime caps, heartbeat snapshots, counters, and canonical stop reasons. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
 | `application/migration` | Planning-only migration inventories. `legacy_surface_inventory.py` records the Legacy DraftRun Surface, `moduleDisposition`, `publicHelperDisposition`, target owners, and the `no cosmetic package moves` rule for `draft_*` and `deterministic_*` modules. | `backend/app/application/draft_*.py`, `backend/app/application/deterministic_*.py` |
-| `application/artifacts` | Artifact serialization, payload mapping, compatibility readers. | `draft_run_payloads.py`, `draft_run_context_payloads.py`, step payload helpers |
+| `application/artifacts` | Context/run payloads, run budget resolution, source ledger assembly/sections, article dossier, article memory, and context pack building. | migrated context/source-ledger/article-memory modules |
+| `application/evidence` | Source intent and research planning, public evidence retrieval/merge/synthesis, feasibility, post contract, rule registry, rule pack, evidence interpretation, and deterministic evidence fallbacks. | migrated source/evidence/contract/rule modules |
+| `application/planning` | Material plan retry orchestration, material projection/accountability, strategy, rhetorical plans, planning audit/result/prompt helpers, and deterministic planning/rhetorical fallback owners. | migrated material/strategy/rhetorical modules |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
 ## Migration Order
@@ -38,7 +42,9 @@ been migrated.
    `deterministic_*` application module, every public helper, `moduleDisposition`,
    `publicHelperDisposition`, target owner, and migration slice.
 10. Move context, source ledger, feasibility, post contract, rule pack, and planning
-   clusters.
+   clusters. Done in Slice 2.17.4.6.0.4. Old paths remain thin shims and canonical
+   imports point to `application/artifacts`, `application/evidence`,
+   `application/planning`, and `application/operations`.
 11. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
 12. Tighten architecture smoke allowlists after each cluster is moved.
 
@@ -81,9 +87,10 @@ Implemented in Slice 2.17.4.6.0.3:
 - `backend.app.application.draft_run_pipeline.DraftRunPipeline`: compatibility facade
   with the previous constructor and `execute(run_id)` API, delegating to `DraftWorkflow`.
 
-This layer is a migration boundary only. Individual context, evidence, planning,
-candidate, validation, revision, final-gate, and HITL services still live in the
-legacy modules until their owning slices move them.
+This layer is a migration boundary only. Context, evidence, and planning services
+now have canonical owners under `backend.app.drafting.application`; candidate,
+validation, revision, final-gate, and HITL services still live in legacy modules
+until their owning slices move them.
 
 ## Evidence Interpretation Safety
 

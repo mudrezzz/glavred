@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from backend.app.application.draft_run_payloads import (
+from backend.app.drafting.application.artifacts.draft_run_payloads import (
     input_summary_from_request,
     request_to_payload,
 )

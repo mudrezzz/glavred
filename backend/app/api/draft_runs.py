@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from backend.app.api.dependencies import create_draft_run_service
 from backend.app.api.draft_generation_contracts import DraftGenerateRequest, to_draft_generation_request
-from backend.app.application.draft_run_context_payloads import context_from_payload
+from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
 from backend.app.application.draft_run_service import DraftRunService
 from backend.app.application.draft_run_staleness import inspect_draft_run_staleness
 from backend.app.domain.draft_run import DraftRun, DraftRunStep

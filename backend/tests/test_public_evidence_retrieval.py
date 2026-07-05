@@ -1,7 +1,7 @@
-from backend.app.application.public_evidence_retrieval_service import (
+from backend.app.drafting.application.evidence.public_evidence_retrieval_service import (
     PublicEvidenceRetrievalService,
 )
-from backend.app.application.public_evidence_ports import PublicEvidenceSearchResult, PublicEvidenceSearchTask, PublicUrlReadResult
+from backend.app.drafting.application.evidence.public_evidence_ports import PublicEvidenceSearchResult, PublicEvidenceSearchTask, PublicUrlReadResult
 from backend.app.domain.draft_public_evidence import PublicEvidenceAllowedUse, PublicEvidenceAttempt, PublicEvidenceAttemptStatus, PublicEvidenceItem
 
 

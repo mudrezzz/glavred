@@ -11,9 +11,9 @@ from backend.app.application.draft_llm_validation_prompts import (
     LLM_VALIDATION_TEMPERATURE,
     build_llm_validation_messages,
 )
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
-from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider

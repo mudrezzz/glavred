@@ -1,7 +1,7 @@
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_editorial_critique_audit import (
     build_editorial_critique_request_trace,
     build_editorial_critique_result_trace,
@@ -15,8 +15,8 @@ from backend.app.application.draft_editorial_critique_prompts import (
     EDITORIAL_CRITIQUE_TEMPERATURE,
     build_editorial_critique_messages,
 )
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime

@@ -1,17 +1,6 @@
-from typing import Any
+"""Compatibility shim for backend.app.drafting.application.operations.draft_provider_error_utils.
 
-from backend.app.settings import BackendSettings
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.4.
+"""
 
-
-def safe_provider_error(settings: BackendSettings, error: Exception, *, limit: int = 180) -> str:
-    message = str(error)
-    if settings.openrouter_api_key:
-        token = settings.openrouter_api_key.get_secret_value()
-        if token:
-            message = message.replace(token, "[redacted]")
-    return f"{error.__class__.__name__}: {message[:limit]}"
-
-
-def raw_response_excerpt(error: Exception) -> str | None:
-    value: Any = getattr(error, "raw_response_excerpt", None)
-    return str(value) if value else None
+from backend.app.drafting.application.operations.draft_provider_error_utils import *  # noqa: F401,F403

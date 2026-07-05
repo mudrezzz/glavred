@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
-from backend.app.application.draft_rhetorical_plan_service import DraftRhetoricalPlanService
+from backend.app.drafting.application.planning.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
+from backend.app.drafting.application.planning.draft_rhetorical_plan_service import DraftRhetoricalPlanService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings

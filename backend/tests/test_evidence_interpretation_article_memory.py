@@ -1,5 +1,5 @@
-from backend.app.application.draft_article_dossier_builder import ArticleDossierBuilder
-from backend.app.application.draft_context_pack_builder import ContextPackBuilder
+from backend.app.drafting.application.artifacts.draft_article_dossier_builder import ArticleDossierBuilder
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import ContextPackBuilder
 from backend.app.domain.draft_model_roles import DraftModelRole
 
 

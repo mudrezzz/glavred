@@ -1,6 +1,6 @@
 from typing import Any
 
-from backend.app.application.draft_run_payloads import draft_to_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import draft_to_payload
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 
 

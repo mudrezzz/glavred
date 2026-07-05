@@ -6,9 +6,9 @@ from backend.app.application.draft_directed_revision_prompts import (
     build_directed_revision_messages,
 )
 from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, last_input_stats, last_payload_stats
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider

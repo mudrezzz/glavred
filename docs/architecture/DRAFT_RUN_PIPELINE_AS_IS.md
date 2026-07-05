@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard.
+Current as of Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -53,8 +53,14 @@ Runtime entrypoints are compatibility-preserving:
 - sequencing is delegated to
   `backend.app.drafting.application.workflow.DraftWorkflow` through an ordered
   `DraftStepRegistry`;
-- individual step services, prompts, provider calls, artifact payloads, progress
-  semantics, child `AiRun` persistence, and blocked/failure behavior are unchanged.
+- context/artifact, source/evidence, evidence-contract, and planning services now
+  have canonical owners under `backend.app.drafting.application.artifacts`,
+  `backend.app.drafting.application.evidence`, and
+  `backend.app.drafting.application.planning`;
+- old `backend.app.application.*` imports for those migrated modules are thin
+  compatibility shims only;
+- prompt text, provider calls, artifact payloads, progress semantics, child `AiRun`
+  persistence, and blocked/failure behavior are unchanged.
 
 ```mermaid
 sequenceDiagram

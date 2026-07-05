@@ -1,7 +1,7 @@
-from backend.app.application.deterministic_external_evidence_synthesis import (
+from backend.app.drafting.application.evidence.deterministic_external_evidence_synthesis import (
     DeterministicExternalEvidenceSynthesisService,
 )
-from backend.app.application.source_ledger_external_evidence_merger import (
+from backend.app.drafting.application.evidence.source_ledger_external_evidence_merger import (
     SourceLedgerExternalEvidenceMerger,
 )
 

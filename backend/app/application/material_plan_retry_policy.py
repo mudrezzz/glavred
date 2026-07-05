@@ -1,19 +1,6 @@
-from dataclasses import dataclass
+"""Compatibility shim for backend.app.drafting.application.planning.material_plan_retry_policy.
 
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.4.
+"""
 
-@dataclass(frozen=True)
-class MaterialPlanAttempt:
-    label: str
-    model: str
-    repair: bool = False
-    backup: bool = False
-
-
-def build_material_plan_attempts(*, primary_model: str, backup_model: str | None) -> list[MaterialPlanAttempt]:
-    attempts = [
-        MaterialPlanAttempt(label="primary", model=primary_model, repair=False),
-        MaterialPlanAttempt(label="primary-repair", model=primary_model, repair=True),
-    ]
-    if backup_model and backup_model != primary_model:
-        attempts.append(MaterialPlanAttempt(label="backup", model=backup_model, repair=True, backup=True))
-    return attempts
+from backend.app.drafting.application.planning.material_plan_retry_policy import *  # noqa: F401,F403

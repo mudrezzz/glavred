@@ -2,9 +2,9 @@ from typing import Any
 
 from backend.app.application.deterministic_draft_service import DeterministicDraftService
 from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
-from backend.app.application.draft_planning_result import DraftPlanningStepResult
-from backend.app.application.draft_run_context_payloads import context_from_payload
-from backend.app.application.draft_run_payloads import request_to_payload
+from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import request_to_payload
 from backend.app.application.draft_run_pipeline import DraftRunPipeline
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 from backend.app.domain.draft_run import DraftRunStepStatus, create_queued_draft_run

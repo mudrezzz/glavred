@@ -1,4 +1,4 @@
-from backend.app.application.source_research_plan_sanitizer import sanitize_research_plan_for_source_intent
+from backend.app.drafting.application.evidence.source_research_plan_sanitizer import sanitize_research_plan_for_source_intent
 
 
 def test_research_plan_sanitizer_does_not_read_named_source_as_url() -> None:

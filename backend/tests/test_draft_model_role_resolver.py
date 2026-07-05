@@ -1,4 +1,4 @@
-from backend.app.application.draft_model_role_resolver import select_model_for_final_gate, select_model_for_role
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_final_gate, select_model_for_role
 from backend.app.domain.draft_model_roles import DraftModelRole, DraftModelSelectionSource
 from backend.app.settings import BackendSettings
 

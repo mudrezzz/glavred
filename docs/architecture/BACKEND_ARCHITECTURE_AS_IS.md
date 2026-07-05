@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.4.0.
+Current as of Slice 2.17.4.6.0.4.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -36,6 +36,16 @@ Current inventory:
 - Worker/runtime wiring lives in `backend/app/infrastructure/draft_run_*` modules.
 - Tests are numerous and useful, but mirror the flat module names rather than a bounded context.
 
+Slice 2.17.4.6.0.4 migrates 68 early DraftRun application modules into
+`backend/app/drafting/application/artifacts`,
+`backend/app/drafting/application/evidence`,
+`backend/app/drafting/application/planning`, and
+`backend/app/drafting/application/operations`. Their old `backend/app/application/*`
+paths remain compatibility shims only: import/re-export, no local `def`, no `class`,
+no provider calls, and no fallback logic. The flat counts above still include those
+shims because the compatibility files remain on disk until downstream call sites and
+external imports no longer need them.
+
 This is not acceptable as target architecture. The flat files are temporarily
 allowlisted as legacy debt so behavior can remain stable while the package migration
 is done slice by slice.
@@ -59,6 +69,12 @@ compatibility shims, or delete-after-migration leftovers. `deterministic_*` modu
 must target named fallback policy/service owners under `backend/app/drafting`; they
 must not become a parallel flat package. Future package moves follow the explicit
 `no cosmetic package moves` rule.
+
+Slice 2.17.4.6.0.4 applies that rule to the first runtime batch. Artifact/context,
+source/evidence acquisition, evidence contract, and planning modules now have
+owner-owned modules under `backend.app.drafting.application`. Architecture smoke
+enforces both sides: migrated legacy files must stay thin shims, while not-yet-moved
+legacy files must stay covered by the inventory.
 
 ## Upstream Radar Debt Inventory
 
@@ -162,6 +178,8 @@ Already enforced:
   `backend/app/application/draft_*.py` and `deterministic_*.py` module, and every
   public top-level helper in those modules, to be classified by owner and migration
   disposition.
+- Migrated DraftRun shim checks requiring moved `backend/app/application/*` files to
+  remain bounded import/re-export compatibility surfaces with no behavior.
 
 Still missing after this slice:
 

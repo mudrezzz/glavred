@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_draft_planning_service import DeterministicDraftPlanningService
-from backend.app.application.draft_rule_pack_compiler import DraftRulePackCompiler
-from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
-from backend.app.application.draft_run_context_payloads import context_from_payload
-from backend.app.application.draft_run_payloads import request_from_payload
-from backend.app.application.draft_strategy_service import DraftStrategyService
+from backend.app.drafting.application.planning.deterministic_draft_planning_service import DeterministicDraftPlanningService
+from backend.app.drafting.application.evidence.draft_rule_pack_compiler import DraftRulePackCompiler
+from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
+from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import request_from_payload
+from backend.app.drafting.application.planning.draft_strategy_service import DraftStrategyService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings

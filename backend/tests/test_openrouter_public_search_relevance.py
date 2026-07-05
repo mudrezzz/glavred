@@ -1,8 +1,8 @@
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.openrouter_public_search_service import OpenRouterPublicSearchService
-from backend.app.application.public_evidence_ports import PublicEvidenceSearchTask
+from backend.app.drafting.application.evidence.openrouter_public_search_service import OpenRouterPublicSearchService
+from backend.app.drafting.application.evidence.public_evidence_ports import PublicEvidenceSearchTask
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterWebSearchCitation, OpenRouterWebSearchResult
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository

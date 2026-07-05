@@ -2,7 +2,7 @@ from html.parser import HTMLParser
 
 import httpx
 
-from backend.app.application.public_evidence_ports import PublicUrlReadResult
+from backend.app.drafting.application.evidence.public_evidence_ports import PublicUrlReadResult
 
 
 class HtmlTextExtractor(HTMLParser):

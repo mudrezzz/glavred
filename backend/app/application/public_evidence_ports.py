@@ -1,48 +1,6 @@
-from dataclasses import dataclass, field
-from typing import Any, Protocol
+"""Compatibility shim for backend.app.drafting.application.evidence.public_evidence_ports.
 
-from backend.app.domain.draft_public_evidence import PublicEvidenceAttempt, PublicEvidenceItem, PublicEvidenceWarning
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.4.
+"""
 
-
-@dataclass(frozen=True)
-class PublicUrlReadResult:
-    url: str
-    title: str
-    text: str
-    final_url: str | None = None
-
-
-class PublicUrlReader(Protocol):
-    def read(self, url: str) -> PublicUrlReadResult: ...
-
-
-@dataclass(frozen=True)
-class PublicEvidenceSearchResult:
-    attempts: list[PublicEvidenceAttempt]
-    items: list[PublicEvidenceItem] = field(default_factory=list)
-    warnings: list[PublicEvidenceWarning] = field(default_factory=list)
-    ai_run_ids: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class PublicEvidenceSearchTask:
-    query: str
-    task_id: str | None
-    source_intent_item_id: str | None
-    kind: str
-    technical_target: str | None
-    instruction: str
-    source_target: dict[str, Any] | None = None
-    exclusions: list[str] = field(default_factory=list)
-    original_task: dict[str, Any] = field(default_factory=dict)
-    max_results: int | None = None
-
-
-class PublicSearchAdapter(Protocol):
-    def search(self, task: PublicEvidenceSearchTask) -> PublicEvidenceSearchResult: ...
-
-
-class DisabledPublicUrlReader:
-    def read(self, url: str) -> PublicUrlReadResult:
-        raise RuntimeError("Public URL reader is not configured")
+from backend.app.drafting.application.evidence.public_evidence_ports import *  # noqa: F401,F403

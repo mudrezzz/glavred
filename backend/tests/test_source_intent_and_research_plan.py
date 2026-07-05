@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.source_intent_normalizer import SourceIntentNormalizer
-from backend.app.application.source_research_plan_service import SourceResearchPlanService
+from backend.app.drafting.application.evidence.source_intent_normalizer import SourceIntentNormalizer
+from backend.app.drafting.application.evidence.source_research_plan_service import SourceResearchPlanService
 from backend.app.domain.draft_generation import DraftBriefContext, DraftEditorialModelContext, DraftGenerationRequest
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository

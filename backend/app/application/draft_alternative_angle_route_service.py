@@ -9,10 +9,10 @@ from backend.app.application.draft_alternative_angle_prompts import (
     ALTERNATIVE_ANGLE_KEYS,
     build_alternative_angle_messages,
 )
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
-from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.planning.draft_material_plan_service import OpenRouterJsonStepAdapter
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_alternative_angle import AlternativeAngleRoute, alternative_route_from_payload

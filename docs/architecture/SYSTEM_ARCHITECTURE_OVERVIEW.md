@@ -464,6 +464,17 @@ into fallback policy/service owners.
 The Legacy DraftRun Surface decision is recorded in
 `docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md`.
 
+Slice 2.17.4.6.0.4 applies that migration map to the early DraftRun runtime surface:
+context/artifact, source/evidence, evidence-contract, and planning modules now have
+canonical owners under `backend/app/drafting/application/artifacts`,
+`backend/app/drafting/application/evidence`,
+`backend/app/drafting/application/planning`, and
+`backend/app/drafting/application/operations`. The old
+`backend/app/application/*` files for this migrated batch are thin compatibility
+shims only. Architecture smoke checks both canonical ownership and shim thinness, so
+future work cannot silently reintroduce provider calls, fallback logic, classes, or
+public helper implementations into migrated legacy files.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

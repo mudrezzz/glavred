@@ -6806,7 +6806,7 @@ Status:
 
 ### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
 
-- Status: Ready
+- Status: Done
 - Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports after the legacy surface triage map is in place.
 - User value:
   - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
@@ -6841,10 +6841,11 @@ Status:
   - No behavior change in DraftRun planning tests.
 - Risks:
   - Large import churn; use compatibility shims and avoid mixing behavior changes with moves.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move the late DraftRun clusters into the drafting bounded context and standardize candidate/validation/revision contracts using the legacy surface triage map.
 - User value:
   - The quality-critical backend code becomes easier to audit, debug, and extend without hidden procedural contracts.
@@ -7597,6 +7598,7 @@ Status:
 - Slice 2.17.4.6.0.3.3.1: Payload Budget Policy Architecture Cleanup. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard. Completed 2026-07-05.
 - Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules. Completed 2026-07-05.
+- Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7625,4 +7627,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration`.
+Implement `Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration`.

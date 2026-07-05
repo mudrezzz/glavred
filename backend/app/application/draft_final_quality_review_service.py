@@ -7,8 +7,8 @@ from backend.app.application.draft_final_quality_review_prompts import (
     FINAL_QUALITY_REVIEW_TEMPERATURE,
     build_final_quality_review_messages,
 )
-from backend.app.application.draft_model_role_resolver import select_model_for_final_gate, selection_for_attempt
-from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_final_gate, selection_for_attempt
+from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole

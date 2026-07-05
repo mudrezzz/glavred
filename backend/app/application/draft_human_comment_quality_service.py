@@ -4,8 +4,8 @@ from typing import Any, Protocol
 
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.application.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, last_input_stats, last_payload_stats
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider

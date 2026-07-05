@@ -2,7 +2,7 @@ from typing import Any
 
 from backend.app.application.draft_alternative_angle_candidate_service import DraftAlternativeAngleCandidateService
 from backend.app.application.draft_alternative_angle_route_service import DraftAlternativeAngleRouteService
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.draft_validation_operation_safety import safe_call
 from backend.app.domain.draft_alternative_angle import AlternativeAngleTournament

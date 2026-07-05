@@ -1,6 +1,6 @@
 from typing import Any
 
-from backend.app.application.draft_run_payloads import request_to_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import request_to_payload
 from backend.app.domain.draft_run import DraftRunStatus, create_queued_draft_run
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
 from backend.app.drafting.application.workflow.registry import DraftStepRegistry, DraftWorkflowPhase

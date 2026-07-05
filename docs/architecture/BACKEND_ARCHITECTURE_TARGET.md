@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.4.0.
+Current as of Slice 2.17.4.6.0.4.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -150,6 +150,21 @@ Implemented operation safety repair:
     and notes;
   - each public top-level helper records `publicHelperDisposition`, target
     visibility, target owner, and rationale.
+- DraftRun context, evidence, and planning package migration:
+  - `backend.app.drafting.application.artifacts` owns context payloads, run budget
+    resolution, source ledger assembly/sections, article dossier, article memory,
+    and context pack building;
+  - `backend.app.drafting.application.evidence` owns source intent/research planning,
+    public evidence retrieval/merge/synthesis, feasibility, post contract, rule
+    registry, rule pack, evidence interpretation, and deterministic evidence
+    fallbacks;
+  - `backend.app.drafting.application.planning` owns material-plan retry
+    orchestration, strategy, rhetorical plans, planning audit/result/prompt helpers,
+    and deterministic planning/rhetorical fallback owners;
+  - `backend.app.drafting.application.operations.json_step_adapter` is the bounded
+    JSON provider-call adapter used by migrated provider-heavy services;
+  - old `backend.app.application.*` imports for this migrated batch are compatibility
+    shims only and architecture smoke rejects behavior reintroduced into them.
 
 ## Context Ownership
 
@@ -313,7 +328,7 @@ The Drafting v1 implementation of this contract is:
 4. Refactor DraftRun orchestration into a workflow registry. Done.
 5. Add DraftRun provider-input payload budget policies. Done.
 6. Add validation/revision runtime guard and canonical stop reasons. Done.
-7. Move context/evidence/planning clusters.
+7. Move context/evidence/planning clusters. Done.
 8. Move candidate/validation/revision/final quality clusters.
 9. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.

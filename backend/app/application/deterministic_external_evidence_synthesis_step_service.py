@@ -1,18 +1,6 @@
-from typing import Any
+"""Compatibility shim for backend.app.drafting.application.evidence.deterministic_external_evidence_synthesis_step_service.
 
-from backend.app.application.deterministic_external_evidence_synthesis import (
-    DeterministicExternalEvidenceSynthesisService,
-)
-from backend.app.application.draft_planning_result import DraftPlanningStepResult
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.4.
+"""
 
-
-class DeterministicExternalEvidenceSynthesisStepService:
-    def __init__(self, synthesis_service: DeterministicExternalEvidenceSynthesisService | None = None) -> None:
-        self._synthesis_service = synthesis_service or DeterministicExternalEvidenceSynthesisService()
-
-    def synthesize(self, *, context_artifact: dict[str, Any], public_evidence: dict[str, Any]) -> DraftPlanningStepResult:
-        payload = self._synthesis_service.synthesize(public_evidence, context_artifact).to_payload()
-        return DraftPlanningStepResult(
-            artifact_payload={"evidenceSynthesis": payload, "fallbackUsed": True},
-            ai_run_id=None,
-        )
+from backend.app.drafting.application.evidence.deterministic_external_evidence_synthesis_step_service import *  # noqa: F401,F403

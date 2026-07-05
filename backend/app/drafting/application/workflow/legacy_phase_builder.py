@@ -7,12 +7,12 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from __future__ import annotations
 
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_candidate_selection_block import candidate_selection_blocked_payload
-from backend.app.application.draft_run_context_builder import build_draft_run_context_summary
-from backend.app.application.draft_run_context_payloads import context_from_payload
-from backend.app.application.draft_run_payloads import draft_to_payload, payload_section
-from backend.app.application.draft_run_budget_resolver import resolve_draft_run_budget
+from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
+from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import draft_to_payload, payload_section
+from backend.app.drafting.application.artifacts.draft_run_budget_resolver import resolve_draft_run_budget
 from backend.app.application.draft_run_step_progress_payload import with_progress_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRunStatus

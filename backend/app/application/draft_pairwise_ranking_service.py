@@ -8,8 +8,8 @@ from backend.app.application.draft_pairwise_ranking_prompts import (
     build_pairwise_ranking_messages,
 )
 from backend.app.application.draft_pairwise_ranking_payloads import attempt_record, dimension_scores, report_from_payload, validate_pairwise_payload
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.application.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole

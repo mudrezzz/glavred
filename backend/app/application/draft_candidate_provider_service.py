@@ -5,8 +5,8 @@ from backend.app.application.deterministic_draft_candidate_service import Determ
 from backend.app.application.draft_candidate_audit import build_candidate_request_trace, build_candidate_result_trace
 from backend.app.application.draft_candidate_prompts import CANDIDATE_KEYS, build_draft_candidate_messages
 from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
-from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
-from backend.app.application.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
+from backend.app.drafting.application.planning.draft_material_plan_service import OpenRouterJsonStepAdapter
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_candidates import DraftCandidate, DraftCandidateDirection, candidate_from_payload

@@ -4,8 +4,8 @@ import time
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_evidence_interpretation import DeterministicEvidenceInterpretationService
-from backend.app.application.evidence_interpretation_service import EvidenceInterpretationService
+from backend.app.drafting.application.evidence.deterministic_evidence_interpretation import DeterministicEvidenceInterpretationService
+from backend.app.drafting.application.evidence.evidence_interpretation_service import EvidenceInterpretationService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings

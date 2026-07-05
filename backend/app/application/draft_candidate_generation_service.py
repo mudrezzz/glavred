@@ -7,9 +7,9 @@ from backend.app.application.draft_candidate_direction_service import DraftCandi
 from backend.app.application.draft_candidate_provider_service import DraftCandidateProviderService
 from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
 from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
-from backend.app.application.draft_run_budget_resolver import budget_from_context
+from backend.app.drafting.application.artifacts.draft_run_budget_resolver import budget_from_context
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
-from backend.app.application.draft_material_plan_service import OpenRouterJsonStepAdapter
+from backend.app.drafting.application.planning.draft_material_plan_service import OpenRouterJsonStepAdapter
 from backend.app.domain.draft_candidates import DraftCandidateDirection
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator

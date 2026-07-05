@@ -1715,7 +1715,7 @@ const DRAFT_RUN_PIPELINE_AS_IS_PATH =
 const DRAFT_RUN_DIAGNOSTICS_SKILL_PATH =
   ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md";
 const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
-  "backend/app/application/evidence_interpretation_service.py",
+  "backend/app/drafting/application/evidence/evidence_interpretation_service.py",
   "backend/app/application/draft_editorial_critique_service.py",
   "backend/app/application/draft_directed_revision_service.py",
   "backend/app/application/draft_human_comment_revision_service.py",
@@ -1730,6 +1730,8 @@ const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting/application/steps",
   "backend/app/drafting/application/operations",
   "backend/app/drafting/application/artifacts",
+  "backend/app/drafting/application/evidence",
+  "backend/app/drafting/application/planning",
   "backend/app/drafting/application/migration",
   "backend/app/drafting/infrastructure",
   "backend/app/shared",
@@ -1865,6 +1867,77 @@ const LEGACY_FLAT_DETERMINISTIC_DRAFT_APPLICATION_FILES = new Set([
   "backend/app/application/deterministic_rhetorical_plan_step_service.py",
   "backend/app/application/deterministic_source_research_plan_service.py",
   "backend/app/application/deterministic_source_research_step_service.py",
+]);
+
+const DRAFTING_MIGRATED_APPLICATION_SHIMS = new Set([
+  "backend/app/application/deterministic_draft_planning_service.py",
+  "backend/app/application/deterministic_draft_planning_step_services.py",
+  "backend/app/application/deterministic_evidence_interpretation.py",
+  "backend/app/application/deterministic_evidence_interpretation_step_service.py",
+  "backend/app/application/deterministic_external_evidence_synthesis.py",
+  "backend/app/application/deterministic_external_evidence_synthesis_step_service.py",
+  "backend/app/application/deterministic_rhetorical_plan_service.py",
+  "backend/app/application/deterministic_rhetorical_plan_step_service.py",
+  "backend/app/application/deterministic_source_research_plan_service.py",
+  "backend/app/application/deterministic_source_research_step_service.py",
+  "backend/app/application/disabled_public_search_adapter.py",
+  "backend/app/application/draft_article_dossier_builder.py",
+  "backend/app/application/draft_article_memory_service.py",
+  "backend/app/application/draft_context_pack_builder.py",
+  "backend/app/application/draft_feasibility_gate.py",
+  "backend/app/application/draft_feasibility_policy.py",
+  "backend/app/application/draft_material_plan_service.py",
+  "backend/app/application/draft_model_role_resolver.py",
+  "backend/app/application/draft_planning_audit.py",
+  "backend/app/application/draft_planning_prompts.py",
+  "backend/app/application/draft_planning_result.py",
+  "backend/app/application/draft_post_contract_builder.py",
+  "backend/app/application/draft_provider_error_utils.py",
+  "backend/app/application/draft_public_evidence_step_service.py",
+  "backend/app/application/draft_quality_gate.py",
+  "backend/app/application/draft_rhetorical_plan_audit.py",
+  "backend/app/application/draft_rhetorical_plan_prompts.py",
+  "backend/app/application/draft_rhetorical_plan_retry.py",
+  "backend/app/application/draft_rhetorical_plan_service.py",
+  "backend/app/application/draft_rule_pack_compiler.py",
+  "backend/app/application/draft_rule_pack_from_registry.py",
+  "backend/app/application/draft_rule_pack_sections.py",
+  "backend/app/application/draft_rule_registry_compiler.py",
+  "backend/app/application/draft_rule_registry_contract.py",
+  "backend/app/application/draft_rule_registry_sections.py",
+  "backend/app/application/draft_rule_registry_size.py",
+  "backend/app/application/draft_run_budget_resolver.py",
+  "backend/app/application/draft_run_context_builder.py",
+  "backend/app/application/draft_run_context_payloads.py",
+  "backend/app/application/draft_run_payloads.py",
+  "backend/app/application/draft_source_ledger_builder.py",
+  "backend/app/application/draft_source_ledger_sections.py",
+  "backend/app/application/draft_strategy_service.py",
+  "backend/app/application/evidence_interpretation_audit.py",
+  "backend/app/application/evidence_interpretation_context_cards.py",
+  "backend/app/application/evidence_interpretation_prompts.py",
+  "backend/app/application/evidence_interpretation_service.py",
+  "backend/app/application/external_evidence_synthesis_prompts.py",
+  "backend/app/application/external_evidence_synthesis_service.py",
+  "backend/app/application/material_plan_accountability.py",
+  "backend/app/application/material_plan_evidence_projection.py",
+  "backend/app/application/material_plan_retry_orchestrator.py",
+  "backend/app/application/material_plan_retry_policy.py",
+  "backend/app/application/openrouter_public_search_service.py",
+  "backend/app/application/public_evidence_budgeting.py",
+  "backend/app/application/public_evidence_ports.py",
+  "backend/app/application/public_evidence_query_builder.py",
+  "backend/app/application/public_evidence_relevance.py",
+  "backend/app/application/public_evidence_retrieval_service.py",
+  "backend/app/application/publication_size_contract_resolver.py",
+  "backend/app/application/source_intent_normalizer.py",
+  "backend/app/application/source_ledger_budgeting.py",
+  "backend/app/application/source_ledger_external_evidence_merger.py",
+  "backend/app/application/source_research_audit.py",
+  "backend/app/application/source_research_budgeting.py",
+  "backend/app/application/source_research_plan_sanitizer.py",
+  "backend/app/application/source_research_plan_service.py",
+  "backend/app/application/source_research_prompts.py",
 ]);
 
 const LLM_OPERATION_INVENTORY_IDS = [
@@ -2853,6 +2926,25 @@ for (const backendFile of flatDeterministicDraftApplicationFiles) {
   assert(
     LEGACY_FLAT_DETERMINISTIC_DRAFT_APPLICATION_FILES.has(backendFile),
     `${backendFile} is a new flat deterministic DraftRun module. Deterministic fallback code must move under backend/app/drafting as a named policy/service or be explicitly allowlisted as legacy debt.`
+  );
+}
+
+for (const backendFile of DRAFTING_MIGRATED_APPLICATION_SHIMS) {
+  assert(fileExists(backendFile), `${backendFile} is a required DraftRun migration compatibility shim.`);
+  const source = readText(backendFile);
+  assert(
+    source.includes("Compatibility shim") &&
+      source.includes("Behavior moved to the drafting bounded context") &&
+      source.includes("import *") &&
+      lineCount(source) <= 8,
+    `${backendFile} must stay a thin import-only compatibility shim after DraftRun package migration.`
+  );
+  assert(
+    !/^\s*(def|class)\s+/m.test(source) &&
+      !source.includes(".complete_json(") &&
+      !source.includes("fallbackUsed") &&
+      !source.includes("create_completed_run("),
+    `${backendFile} reintroduced behavior into a migrated legacy shim. Move behavior to backend/app/drafting instead.`
   );
 }
 

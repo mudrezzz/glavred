@@ -7,7 +7,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from __future__ import annotations
 
-from backend.app.application.draft_run_payloads import request_from_payload
+from backend.app.drafting.application.artifacts.draft_run_payloads import request_from_payload
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_progress import DraftRunProgress
 from backend.app.domain.draft_run import DraftRun, DraftRunStatus

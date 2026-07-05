@@ -124,6 +124,21 @@ adding a DraftRun module, read `backend/app/drafting/README.md` and
 the owning drafting subpackage. The current `legacy_pipeline` and `legacy_run`
 modules are compatibility anchors only; do not expand them into broad barrels.
 
+The first migrated DraftRun runtime clusters are canonical under:
+
+- `backend.app.drafting.application.artifacts` for context payloads, source ledger,
+  article dossier, article memory, and context packs;
+- `backend.app.drafting.application.evidence` for source intent, public evidence,
+  feasibility, post contract, rule registry, rule pack, evidence interpretation, and
+  deterministic evidence fallbacks;
+- `backend.app.drafting.application.planning` for material plan, strategy,
+  rhetorical plans, retry/audit collaborators, and deterministic planning fallbacks;
+- `backend.app.drafting.application.operations.json_step_adapter` for bounded JSON
+  provider calls from migrated services.
+
+Old migrated `backend.app.application.*` paths are compatibility shims only. They may
+keep old imports working, but they must not regain local behavior.
+
 New DraftRun step code should use the unified contracts in
 `backend.app.drafting.application.steps.contracts`: `DraftStepContext`,
 `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. Do not introduce

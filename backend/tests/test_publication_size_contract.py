@@ -1,5 +1,5 @@
-from backend.app.application.draft_rule_registry_size import publication_size_registry
-from backend.app.application.publication_size_contract_resolver import PublicationSizeContractResolver
+from backend.app.drafting.application.evidence.draft_rule_registry_size import publication_size_registry
+from backend.app.drafting.application.evidence.publication_size_contract_resolver import PublicationSizeContractResolver
 
 
 def test_publication_size_contract_uses_slot_profile_and_size_intent() -> None:

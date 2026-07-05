@@ -1,6 +1,6 @@
 from typing import Any
 
-from backend.app.application.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_validation_step_service import DraftValidationStepService
 
 

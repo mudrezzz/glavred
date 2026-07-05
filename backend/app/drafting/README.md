@@ -2,13 +2,13 @@
 
 `backend/app/drafting` is the target bounded context for DraftRun backend code.
 
-Current status: skeleton, compatibility shims, provider-free step and JSON operation
-compatibility contracts, a behavior-preserving workflow orchestration shell,
-bounded provider-heavy operation safety helpers, payload/runtime guardrails, and a
-Legacy DraftRun Surface migration inventory. Most step implementations still live
-in the legacy flat modules under `backend/app/application/draft_*.py`,
-`backend/app/application/deterministic_*.py`, and `backend/app/domain/draft_*.py`
-until the migration slices move cohesive clusters.
+Current status: behavior-preserving workflow orchestration shell, provider-free step
+and JSON operation contracts, payload/runtime guardrails, Legacy DraftRun Surface
+migration inventory, and the first runtime package migration. Context/artifact,
+source/evidence, evidence-contract, and planning behavior now lives under this
+bounded context. Candidate generation, validation, ranking/revision, final quality,
+HITL, and domain DTO clusters still have legacy flat modules until their migration
+slices move them.
 
 ## Ownership
 
@@ -17,6 +17,7 @@ The drafting context owns:
 - DraftRun workflow and step registry;
 - provider-neutral DraftRun step contracts;
 - DraftRun artifacts and artifact mapping;
+- source/evidence acquisition, evidence contracts, and planning services;
 - JSON LLM operation compatibility imports used by drafting steps;
 - drafting validation, ranking, revision, final quality gate, and HITL revision
   orchestration once migrated.
@@ -66,11 +67,13 @@ The header is part of the architecture contract and is enforced by
 
 ## Compatibility Shims
 
-Compatibility shims are intentionally narrow. They expose a small number of legacy
-entrypoints so later slices can start importing from `backend.app.drafting` without
-moving behavior and import call sites in the same diff.
+Compatibility shims are intentionally narrow. They expose legacy entrypoints while
+call sites migrate.
 
-Do not add broad barrels that mirror the entire legacy `draft_*` namespace.
+Old paths moved in Slice 2.17.4.6.0.4 under `backend/app/application/*` are thin
+import/re-export files only. They must not contain local functions, classes,
+provider calls, fallback logic, or trace decisions. Do not add broad barrels that
+mirror the entire legacy `draft_*` namespace.
 
 ## Legacy DraftRun Surface Migration
 
@@ -88,6 +91,18 @@ must become methods on named service, policy, or component owners. Small
 provider-free DTO/factory helpers may remain package-level only when explicitly
 listed and documented. `deterministic_*` modules must move into fallback
 policy/service owners, not into a new flat deterministic package.
+
+Slice 2.17.4.6.0.4 migrated 68 early modules into:
+
+- `application/artifacts`: run/context payloads, source ledger, article dossier,
+  article memory, and context packs;
+- `application/evidence`: source intent, research planning, public evidence,
+  synthesis, feasibility, post contract, rule registry, rule pack, and evidence
+  interpretation;
+- `application/planning`: material plan, strategy, rhetorical plans, retry/audit
+  collaborators, and deterministic planning/rhetorical fallback owners;
+- `application/operations/json_step_adapter.py`: bounded JSON provider adapter for
+  migrated provider-heavy services.
 
 ## Unified Step Contract
 
