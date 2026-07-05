@@ -9,13 +9,10 @@ from backend.app.drafting.application.operations.json_step_adapter import comple
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.drafting.application.validation.draft_alternative_angle_audit import (
-    build_alternative_angle_request_trace,
-    build_alternative_angle_result_trace,
-)
+from backend.app.drafting.application.validation.draft_alternative_angle_audit import AlternativeAngleTraceBuilder
 from backend.app.drafting.application.validation.draft_alternative_angle_prompts import (
     ALTERNATIVE_ANGLE_KEYS,
-    build_alternative_angle_messages,
+    AlternativeAnglePromptBuilder,
 )
 from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
@@ -42,6 +39,8 @@ class DraftAlternativeAngleRouteService:
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
+        self._prompts = AlternativeAnglePromptBuilder()
+        self._traces = AlternativeAngleTraceBuilder()
 
     def create(
         self,
@@ -84,7 +83,7 @@ class DraftAlternativeAngleRouteService:
         generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.ANOTHER_ANGLE, attempt=attempt)
         context_pack = context_pack_from_payload(context_artifact, DraftModelRole.ANOTHER_ANGLE)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = build_alternative_angle_messages(
+        messages = self._prompts.build_messages(
             draft_artifact=draft_artifact,
             validation_report=validation_report,
             context_artifact=context_artifact,
@@ -93,7 +92,7 @@ class DraftAlternativeAngleRouteService:
             context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = build_alternative_angle_request_trace(
+        request_payload = self._traces.request_trace(
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             messages=messages,
@@ -118,7 +117,7 @@ class DraftAlternativeAngleRouteService:
                 provider=AiRunProvider.OPENROUTER,
                 model=attempt.model,
                 request_payload=request_payload,
-                result_payload=build_alternative_angle_result_trace(result_payload=route.to_payload(), provider_response=result.raw_response, attempt=attempt_payload),
+                result_payload=self._traces.result_trace(result_payload=route.to_payload(), provider_response=result.raw_response, attempt=attempt_payload),
                 fallback_used=False,
             )
             return {"route": route, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
@@ -126,7 +125,7 @@ class DraftAlternativeAngleRouteService:
             return self._record_attempt_error(attempt, request_payload, self._safe_error(exc), _raw_excerpt(exc))
 
     def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str, raw_response_excerpt: str | None = None) -> dict[str, Any]:
-        result_payload = build_alternative_angle_result_trace(result_payload={}, provider_response=None, attempt=request_payload.get("attempt"))
+        result_payload = self._traces.result_trace(result_payload={}, provider_response=None, attempt=request_payload.get("attempt"))
         if raw_response_excerpt:
             result_payload["rawResponseExcerpt"] = raw_response_excerpt
         run = self._ai_run_service.create_completed_run(

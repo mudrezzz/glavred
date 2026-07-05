@@ -8,48 +8,52 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 import re
 from typing import Any
 
-from backend.app.drafting.application.validation.draft_attribution_markers import attribution_markers_for_claim
+from backend.app.drafting.application.validation.draft_attribution_markers import DraftAttributionMarkerMatcher
 
 
-def normalize_attribution_requirements(requirements: list[Any], claims: list[dict[str, Any]]) -> dict[str, Any]:
-    claims_by_id = {str(claim.get("id")): claim for claim in claims if claim.get("id")}
-    claim_markers = {
-        claim_id: attribution_markers_for_claim(claim)
-        for claim_id, claim in claims_by_id.items()
-    }
-    resolved: list[str] = []
-    unresolved: list[dict[str, Any]] = []
-    matches: list[dict[str, Any]] = []
+class AttributionRequirementResolver:
+    def __init__(self, marker_matcher: DraftAttributionMarkerMatcher | None = None) -> None:
+        self._marker_matcher = marker_matcher or DraftAttributionMarkerMatcher()
 
-    for requirement in requirements:
-        explicit_claim_id = _explicit_claim_id(requirement)
-        if explicit_claim_id:
-            if explicit_claim_id in claims_by_id:
-                resolved.append(explicit_claim_id)
-                matches.append({"requirement": _requirement_text(requirement), "claimIds": [explicit_claim_id], "reason": "explicit-claim-id"})
+    def normalize(self, requirements: list[Any], claims: list[dict[str, Any]]) -> dict[str, Any]:
+        claims_by_id = {str(claim.get("id")): claim for claim in claims if claim.get("id")}
+        claim_markers = {
+            claim_id: self._marker_matcher.markers_for_claim(claim)
+            for claim_id, claim in claims_by_id.items()
+        }
+        resolved: list[str] = []
+        unresolved: list[dict[str, Any]] = []
+        matches: list[dict[str, Any]] = []
+
+        for requirement in requirements:
+            explicit_claim_id = _explicit_claim_id(requirement)
+            if explicit_claim_id:
+                if explicit_claim_id in claims_by_id:
+                    resolved.append(explicit_claim_id)
+                    matches.append({"requirement": _requirement_text(requirement), "claimIds": [explicit_claim_id], "reason": "explicit-claim-id"})
+                else:
+                    unresolved.append({"requirement": _requirement_text(requirement), "claimId": explicit_claim_id, "reason": "claim-not-found"})
+                continue
+
+            text = _requirement_text(requirement)
+            if not text:
+                continue
+            matched_ids = _match_claims_by_marker(text, claim_markers)
+            if matched_ids:
+                resolved.extend(matched_ids)
+                matches.append({"requirement": text, "claimIds": matched_ids, "reason": "matched-source-marker"})
             else:
-                unresolved.append({"requirement": _requirement_text(requirement), "claimId": explicit_claim_id, "reason": "claim-not-found"})
-            continue
+                unresolved.append({
+                    "requirement": text,
+                    "expectedMarkers": _extract_requirement_markers(text),
+                    "reason": "unresolved-free-text-requirement",
+                })
 
-        text = _requirement_text(requirement)
-        if not text:
-            continue
-        matched_ids = _match_claims_by_marker(text, claim_markers)
-        if matched_ids:
-            resolved.extend(matched_ids)
-            matches.append({"requirement": text, "claimIds": matched_ids, "reason": "matched-source-marker"})
-        else:
-            unresolved.append({
-                "requirement": text,
-                "expectedMarkers": _extract_requirement_markers(text),
-                "reason": "unresolved-free-text-requirement",
-            })
-
-    return {
-        "resolvedClaimIds": _unique(resolved),
-        "requirementMatches": matches,
-        "unresolvedAttributionRequirements": unresolved,
-    }
+        return {
+            "resolvedClaimIds": _unique(resolved),
+            "requirementMatches": matches,
+            "unresolvedAttributionRequirements": unresolved,
+        }
 
 
 def _explicit_claim_id(requirement: Any) -> str | None:

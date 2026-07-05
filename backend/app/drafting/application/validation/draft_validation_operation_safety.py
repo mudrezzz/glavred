@@ -13,35 +13,35 @@ from backend.app.application.draft_run_step_progress import DraftRunStepOperatio
 T = TypeVar("T")
 
 
-def safe_call(
-    *,
-    progress: DraftRunStepOperationSink | None,
-    operation_id: str,
-    fallback: Callable[[str], T],
-    call: Callable[[], T],
-) -> T:
-    try:
-        return call()
-    except Exception as exc:
-        error = _safe_error(exc)
-        if progress:
-            progress.fail_operation(operation_id, error)
-        return fallback(error)
+class ValidationOperationFailureMapper:
+    def safe_call(
+        self,
+        *,
+        progress: DraftRunStepOperationSink | None,
+        operation_id: str,
+        fallback: Callable[[str], T],
+        call: Callable[[], T],
+    ) -> T:
+        try:
+            return call()
+        except Exception as exc:
+            error = _safe_error(exc)
+            if progress:
+                progress.fail_operation(operation_id, error)
+            return fallback(error)
 
+    def failed_revision_result(self, error: str) -> dict[str, Any]:
+        return {"status": "failed", "reason": "operation-failed", "error": error, "attempts": [], "aiRunIds": []}
 
-def failed_revision_result(error: str) -> dict[str, Any]:
-    return {"status": "failed", "reason": "operation-failed", "error": error, "attempts": [], "aiRunIds": []}
-
-
-def failed_pairwise_result(error: str) -> dict[str, Any]:
-    return {
-        "status": "failed",
-        "decision": {"winnerCandidateId": None, "reason": error, "source": "operationFailed"},
-        "comparisons": [],
-        "attempts": [],
-        "aiRunIds": [],
-        "error": error,
-    }
+    def failed_pairwise_result(self, error: str) -> dict[str, Any]:
+        return {
+            "status": "failed",
+            "decision": {"winnerCandidateId": None, "reason": error, "source": "operationFailed"},
+            "comparisons": [],
+            "attempts": [],
+            "aiRunIds": [],
+            "error": error,
+        }
 
 
 def _safe_error(error: Exception) -> str:

@@ -9,15 +9,13 @@ from backend.app.drafting.application.operations.json_step_adapter import comple
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.drafting.application.validation.draft_llm_validation_audit import (
-    build_llm_validation_request_trace,
-    build_llm_validation_result_trace,
-)
-from backend.app.drafting.application.validation.draft_llm_validation_parser import parse_llm_validation_report
+from backend.app.drafting.application.validation.draft_llm_validation_audit import LlmValidationTraceBuilder
+from backend.app.drafting.application.validation.draft_llm_validation_attempts import LlmValidationAttemptMapper
+from backend.app.drafting.application.validation.draft_llm_validation_parser import LlmValidationParser
 from backend.app.drafting.application.validation.draft_llm_validation_prompts import (
     LLM_VALIDATION_KEYS,
     LLM_VALIDATION_TEMPERATURE,
-    build_llm_validation_messages,
+    LlmValidationPromptBuilder,
 )
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
@@ -51,6 +49,10 @@ class DraftLlmValidationService:
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
+        self._parser = LlmValidationParser()
+        self._prompts = LlmValidationPromptBuilder()
+        self._traces = LlmValidationTraceBuilder()
+        self._attempts = LlmValidationAttemptMapper()
 
     def validate(
         self,
@@ -84,7 +86,7 @@ class DraftLlmValidationService:
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,
-                deterministic_report=_candidate_deterministic_report(deterministic_report, str(candidate.get("id") or "")),
+                deterministic_report=self._attempts.candidate_deterministic_report(deterministic_report, str(candidate.get("id") or "")),
             )
             reports.append(report)
             ai_run_id = next((attempt.ai_run_id for attempt in reversed(report.attempts) if attempt.ai_run_id), None)
@@ -129,7 +131,7 @@ class DraftLlmValidationService:
             )
             attempts.append(result["attempt"])
             if result["accepted"]:
-                findings, observations = parse_llm_validation_report(candidate_id=candidate_id, payload=result["payload"])
+                findings, observations = self._parser.parse_report(candidate_id=candidate_id, payload=result["payload"])
                 return LlmCandidateValidationReport(
                     candidate_id=candidate_id,
                     status=validation_status_for(findings),
@@ -160,7 +162,7 @@ class DraftLlmValidationService:
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         context_pack = context_pack_from_payload(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = build_llm_validation_messages(
+        messages = self._prompts.build_messages(
             candidate=candidate,
             context_artifact=context_artifact,
             rule_pack=rule_pack,
@@ -169,7 +171,7 @@ class DraftLlmValidationService:
             context_pack=context_pack,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = build_llm_validation_request_trace(
+        request_payload = self._traces.request_trace(
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             messages=messages,
@@ -194,10 +196,10 @@ class DraftLlmValidationService:
                 provider=AiRunProvider.OPENROUTER,
                 model=attempt.model,
                 request_payload=request_payload,
-                result_payload=build_llm_validation_result_trace(result_payload=result.payload, provider_response=result.raw_response, attempt=attempt_payload),
+                result_payload=self._traces.result_trace(result_payload=result.payload, provider_response=result.raw_response, attempt=attempt_payload),
                 fallback_used=False,
             )
-            return {"accepted": True, "payload": result.payload, "attempt": _attempt(attempt, candidate_id, "accepted", run.id, selection.to_payload())}
+            return {"accepted": True, "payload": result.payload, "attempt": self._attempts.attempt(attempt, candidate_id, "accepted", run.id, selection.to_payload())}
         except Exception as exc:
             return self._attempt_error(attempt, candidate_id, request_payload, self._safe_error(exc))
 
@@ -208,12 +210,12 @@ class DraftLlmValidationService:
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             request_payload=request_payload,
-            result_payload=build_llm_validation_result_trace(result_payload={"summary": "", "findings": []}, provider_response=None, attempt=attempt_payload),
+            result_payload=self._traces.result_trace(result_payload={"summary": "", "findings": []}, provider_response=None, attempt=attempt_payload),
             fallback_used=False,
             error=error,
         )
         selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "attempt": _attempt(attempt, candidate_id, "error", run.id, selection, error)}
+        return {"accepted": False, "payload": {}, "attempt": self._attempts.attempt(attempt, candidate_id, "error", run.id, selection, error)}
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)
@@ -222,27 +224,6 @@ class DraftLlmValidationService:
             if token:
                 message = message.replace(token, "[redacted]")
         return f"{error.__class__.__name__}: {message[:180]}"
-
-
-def _candidate_deterministic_report(report: dict[str, Any], candidate_id: str) -> dict[str, Any]:
-    for item in _list(report.get("candidateReports")):
-        if isinstance(item, dict) and item.get("candidateId") == candidate_id:
-            return item
-    return {}
-
-
-def _attempt(attempt: JsonStepAttempt, candidate_id: str, status: str, ai_run_id: str | None, model_selection: dict[str, Any], validation: str | None = None) -> LlmValidatorAttempt:
-    return LlmValidatorAttempt(
-        label=attempt.label,
-        model=attempt.model,
-        status=status,
-        candidate_id=candidate_id,
-        ai_run_id=ai_run_id,
-        backup=attempt.backup,
-        validation=validation,
-        metadata=model_selection,
-    )
-
 
 def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []

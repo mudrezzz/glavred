@@ -1,8 +1,8 @@
-from backend.app.drafting.application.validation.draft_llm_validation_parser import parse_llm_validation_report
+from backend.app.drafting.application.validation.draft_llm_validation_parser import LlmValidationParser
 
 
 def test_positive_no_repair_findings_are_observations() -> None:
-    findings, observations = parse_llm_validation_report(
+    findings, observations = LlmValidationParser().parse_report(
         candidate_id="candidate-1",
         payload={
             "summary": "Candidate passes editorial quality checks.",
@@ -27,7 +27,7 @@ def test_positive_no_repair_findings_are_observations() -> None:
 
 
 def test_actionable_warning_remains_finding() -> None:
-    findings, observations = parse_llm_validation_report(
+    findings, observations = LlmValidationParser().parse_report(
         candidate_id="candidate-1",
         payload={
             "summary": "Needs repair",
@@ -46,7 +46,7 @@ def test_actionable_warning_remains_finding() -> None:
 
 
 def test_critical_no_repair_marker_remains_finding() -> None:
-    findings, observations = parse_llm_validation_report(
+    findings, observations = LlmValidationParser().parse_report(
         candidate_id="candidate-1",
         payload={
             "summary": "Critical issue",

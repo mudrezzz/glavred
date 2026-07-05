@@ -7,7 +7,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from typing import Any
 
-from backend.app.drafting.application.validation.draft_attribution_requirements import normalize_attribution_requirements
+from backend.app.drafting.application.validation.draft_attribution_requirements import AttributionRequirementResolver
 
 
 def build_final_quality_contract(
@@ -101,7 +101,7 @@ def _claim_ids(payload: dict[str, Any], key: str) -> list[str]:
 def _attribution_requirements(context_artifact: dict[str, Any], material_plan: dict[str, Any]) -> dict[str, Any]:
     material = _dict(material_plan.get("materialPlan"))
     values = material.get("claimsRequiringAttribution") or material_plan.get("claimsRequiringAttribution") or []
-    return normalize_attribution_requirements(_list(values), _external_claims(context_artifact))
+    return AttributionRequirementResolver().normalize(_list(values), _external_claims(context_artifact))
 
 
 def _external_claims(context_artifact: dict[str, Any]) -> list[dict[str, Any]]:

@@ -3531,8 +3531,8 @@ assert(
   `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must have version 1.`
 );
 assert(
-  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.7",
-  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.7.`
+  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.8",
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.8.`
 );
 assert(
   Array.isArray(backendArchitectureDebtLedger.entries) &&

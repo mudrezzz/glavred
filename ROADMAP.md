@@ -6961,7 +6961,7 @@ Status:
 
 ### Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup
 
-- Status: Ready
+- Status: Done
 - Goal: Turn the migrated DraftRun validation package from a procedural legacy surface into role-owned services, policies, components, DTOs, and private helpers.
 - User value:
   - Validation code becomes navigable and future validator work has clear owners instead of another flat namespace.
@@ -6992,10 +6992,11 @@ Status:
   - `npm run test:architecture` fails if validation helper sprawl returns.
 - Risks:
   - Behavior-preserving refactor can accidentally alter trace payloads; keep targeted trace regression tests.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup
 
-- Status: Backlog
+- Status: Ready
 - Goal: Clean up revision and final-quality packages after migration using the audit ledger and role-owned component boundaries.
 - User value:
   - Revision/final gate development can continue without growing procedural helper surfaces.
@@ -7778,6 +7779,7 @@ Status:
 - Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration. Completed 2026-07-05.
 - Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening. Completed 2026-07-05.
 - Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger. Completed 2026-07-05.
+- Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7806,4 +7808,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup`.
+Implement `Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup`.

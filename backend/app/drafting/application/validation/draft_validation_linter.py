@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 import re
 from typing import Any
 
-from backend.app.drafting.application.validation.draft_validation_evidence import evidence_findings
+from backend.app.drafting.application.validation.draft_validation_evidence import ValidationEvidenceEvaluator
 from backend.app.domain.draft_validation import DraftValidatorFinding, DraftValidatorStatus
 
 
@@ -16,6 +16,9 @@ RAW_ARTIFACT_PATTERNS = ("{'id':", '{"id":', '"id":', "'type':", '"type":', "[{"
 
 
 class DeterministicDraftLinter:
+    def __init__(self, evidence_evaluator: ValidationEvidenceEvaluator | None = None) -> None:
+        self._evidence_evaluator = evidence_evaluator or ValidationEvidenceEvaluator()
+
     def lint(
         self,
         *,
@@ -32,7 +35,7 @@ class DeterministicDraftLinter:
         findings.extend(self._shape_findings(candidate_id, title, body))
         findings.extend(self._size_findings(candidate_id, body, context_artifact))
         findings.extend(self._contract_findings(candidate_id, body, context_artifact))
-        findings.extend(evidence_findings(candidate_id=candidate_id, body=body, candidate=candidate, context_artifact=context_artifact, material_plan=material_plan, finding_factory=_finding))
+        findings.extend(self._evidence_evaluator.findings(candidate_id=candidate_id, body=body, candidate=candidate, context_artifact=context_artifact, material_plan=material_plan, finding_factory=_finding))
         findings.extend(self._rule_findings(candidate_id, body, rule_pack))
         findings.extend(self._publishability_findings(candidate_id, candidate, score_row))
         return findings

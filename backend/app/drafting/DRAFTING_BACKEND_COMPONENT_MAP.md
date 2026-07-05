@@ -41,7 +41,7 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 | `application/evidence` | Source intent and research planning, public evidence retrieval/merge/synthesis, feasibility, post contract, rule registry, rule pack, evidence interpretation, and deterministic evidence fallbacks. | migrated source/evidence/contract/rule modules |
 | `application/planning` | Material plan retry orchestration, material projection/accountability, strategy, rhetorical plans, planning audit/result/prompt helpers, and deterministic planning/rhetorical fallback owners. | migrated material/strategy/rhetorical modules |
 | `application/generation` | Candidate direction, generation, provider execution, selection, publishability, candidate audit/prompts/results, alternative-angle challenger writing, deterministic candidate fallback, generation params, and prompt builder. | migrated candidate-generation modules |
-| `application/validation` | Deterministic linter/evidence/attribution checks, LLM validation, editorial critique, validation report and alternative-angle route/tournament orchestration, validation step service, and operation safety. | migrated validation and alternative-angle orchestration modules |
+| `application/validation` | Deterministic linter/evidence/attribution checks, LLM validation, editorial critique, validation report and alternative-angle route/tournament orchestration, validation step service, and operation safety. Slice 2.17.4.6.0.8 makes parser, prompt-builder, trace-builder, attribution/evidence, artifact, report-appender, failure-mapper, and attempt-mapper responsibilities class-owned. | migrated validation and alternative-angle orchestration modules |
 | `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. | migrated ranking/revision modules |
 | `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. | migrated final quality modules |
 | `application/hitl` | Human-comment revision and human-comment revision quality check services. | migrated HITL modules |
@@ -78,9 +78,12 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     moved DraftRun application clusters; remaining follow-up is retiring legacy
     shims when external compatibility is no longer needed.
 13. Add Backend Architecture Audit and Debt Ledger. Done in Slice 2.17.4.6.0.7.
-14. Clean migrated validation, revision/final-quality, HITL/provider, and remaining
-    backend surfaces according to the audit ledger. Planned in Slices
-    2.17.4.6.0.8 through 2.17.4.6.0.11.
+14. Clean migrated validation package public helper/god-service debt. Done in
+    Slice 2.17.4.6.0.8; residual validation debt is medium line-count/package
+    cleanup recorded in the audit ledger.
+15. Clean migrated revision/final-quality, HITL/provider, and remaining backend
+    surfaces according to the audit ledger. Planned in Slices 2.17.4.6.0.9
+    through 2.17.4.6.0.11.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

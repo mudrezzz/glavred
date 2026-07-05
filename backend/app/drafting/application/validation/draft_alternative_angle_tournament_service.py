@@ -11,7 +11,7 @@ from backend.app.drafting.application.generation.draft_alternative_angle_candida
 from backend.app.drafting.application.validation.draft_alternative_angle_route_service import DraftAlternativeAngleRouteService
 from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
-from backend.app.drafting.application.validation.draft_validation_operation_safety import safe_call
+from backend.app.drafting.application.validation.draft_validation_operation_safety import ValidationOperationFailureMapper
 from backend.app.domain.draft_alternative_angle import AlternativeAngleTournament
 from backend.app.domain.draft_generation import DraftGenerationRequest
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -23,9 +23,11 @@ class DraftAlternativeAngleTournamentService:
         *,
         route_service: DraftAlternativeAngleRouteService,
         candidate_service: DraftAlternativeAngleCandidateService,
+        failure_mapper: ValidationOperationFailureMapper | None = None,
     ) -> None:
         self._route_service = route_service
         self._candidate_service = candidate_service
+        self._failure_mapper = failure_mapper or ValidationOperationFailureMapper()
 
     def run(
         self,
@@ -42,7 +44,7 @@ class DraftAlternativeAngleTournamentService:
     ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
         if progress:
             progress.start_operation("alternative-angle-route", kind="alternativeAngle", label="Build alternative angle route")
-        route, attempts, route_ai_run_ids, route_error = safe_call(
+        route, attempts, route_ai_run_ids, route_error = self._failure_mapper.safe_call(
             progress=progress,
             operation_id="alternative-angle-route",
             fallback=lambda error: (None, [], [], error),
@@ -64,7 +66,7 @@ class DraftAlternativeAngleTournamentService:
 
         if progress:
             progress.start_operation("alternative-angle-candidate", kind="alternativeAngleCandidate", label="Generate alternative angle candidate", target=route.id)
-        candidate, candidate_ai_run_ids, candidate_error, candidate_attempts = safe_call(
+        candidate, candidate_ai_run_ids, candidate_error, candidate_attempts = self._failure_mapper.safe_call(
             progress=progress,
             operation_id="alternative-angle-candidate",
             fallback=lambda error: (None, [], error, []),

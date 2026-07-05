@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from dataclasses import dataclass
 from typing import Any
 
-from backend.app.drafting.application.validation.draft_editorial_critique_flow import append_editorial_critique
+from backend.app.drafting.application.validation.draft_editorial_critique_flow import EditorialCritiqueReportAppender
 from backend.app.drafting.application.validation.draft_editorial_critique_service import DraftEditorialCritiqueService
 from backend.app.drafting.application.validation.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
@@ -28,10 +28,12 @@ class DraftValidationReportFlow:
         deterministic_orchestrator: DraftValidatorOrchestrator | None = None,
         llm_validator: DraftLlmValidationService | None = None,
         editorial_critic: DraftEditorialCritiqueService | None = None,
+        editorial_appender: EditorialCritiqueReportAppender | None = None,
     ) -> None:
         self._deterministic = deterministic_orchestrator or DraftValidatorOrchestrator()
         self._llm_validator = llm_validator
         self._editorial_critic = editorial_critic
+        self._editorial_appender = editorial_appender or EditorialCritiqueReportAppender()
 
     def run(
         self,
@@ -73,7 +75,7 @@ class DraftValidationReportFlow:
             if progress:
                 progress.merge_artifact(artifact_payload)
 
-        critique_result = append_editorial_critique(
+        critique_result = self._editorial_appender.append(
             self._editorial_critic,
             artifact_payload=artifact_payload,
             ai_run_ids=ai_run_ids,

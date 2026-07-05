@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedForSlice": "2.17.4.6.0.7",
+  "updatedForSlice": "2.17.4.6.0.8",
   "policy": "Known backend architecture debt must have owner, target shape, guardrail, allowed-until slice, and repair slice. New unledgered critical/high findings fail architecture smoke.",
   "entries": [
     {
@@ -121,36 +121,6 @@
       "repairSlice": "2.17.4.6.0.11",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Large class module mixes responsibility markers: payload, fallback, trace, repair.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
-      "debtId": "bad-009-godservice-drafting-application-validation-draft-editorial-critique-service",
-      "findingKey": "godService:backend/app/drafting/application/validation/draft_editorial_critique_service.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_editorial_critique_service.py",
-      "smellType": "godService",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "Large class module mixes responsibility markers: parse_, payload, fallback, trace, repair, incident.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
-      "debtId": "bad-010-godservice-drafting-application-validation-draft-llm-validation-service",
-      "findingKey": "godService:backend/app/drafting/application/validation/draft_llm_validation_service.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_llm_validation_service.py",
-      "smellType": "godService",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "Large class module mixes responsibility markers: parse_, payload, fallback, trace, repair.",
       "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
     },
     {
@@ -294,14 +264,14 @@
       "package": "backend/app/drafting/application/validation",
       "module": "backend/app/drafting/application/validation/draft_editorial_critique_service.py",
       "smellType": "largeModule",
-      "severity": "high",
+      "severity": "medium",
       "owner": "drafting.application.validation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
+      "allowedUntilSlice": "2.17.4.6.0.11",
+      "repairSlice": "2.17.4.6.0.11",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "Module has 403 lines.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
+      "currentEvidence": "Module has 296 lines after Slice 2.17.4.6.0.8; service now delegates parsing, prompts, trace building, and attempt/envelope mapping to role-owned components.",
+      "notes": "Residual medium line-count debt only. No validation high godService or publicHelperSprawl findings remain after Slice 2.17.4.6.0.8."
     },
     {
       "debtId": "bad-021-largemodule-drafting-application-workflow-legacy-phase-builder",
@@ -409,21 +379,6 @@
       "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
     },
     {
-      "debtId": "bad-028-proceduralboundedpackage-drafting-application-planning",
-      "findingKey": "proceduralBoundedPackage:backend/app/drafting/application/planning",
-      "package": "backend/app/drafting/application/planning",
-      "module": "backend/app/drafting/application/planning",
-      "smellType": "proceduralBoundedPackage",
-      "severity": "high",
-      "owner": "drafting.application.planning",
-      "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.11",
-      "repairSlice": "2.17.4.6.0.11",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "18 modules, 0 public helper(s), 4 procedural naming marker(s), 1 large module(s).",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
       "debtId": "bad-029-proceduralboundedpackage-drafting-application-revision",
       "findingKey": "proceduralBoundedPackage:backend/app/drafting/application/revision",
       "package": "backend/app/drafting/application/revision",
@@ -444,14 +399,14 @@
       "package": "backend/app/drafting/application/validation",
       "module": "backend/app/drafting/application/validation",
       "smellType": "proceduralBoundedPackage",
-      "severity": "high",
+      "severity": "medium",
       "owner": "drafting.application.validation",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
+      "allowedUntilSlice": "2.17.4.6.0.11",
+      "repairSlice": "2.17.4.6.0.11",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "26 modules, 27 public helper(s), 8 procedural naming marker(s), 2 large module(s).",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
+      "currentEvidence": "28 modules, 0 public helper(s), 0 procedural naming marker(s), 2 medium-large service module(s).",
+      "notes": "Validation package is class-owned after Slice 2.17.4.6.0.8; residual package finding is caused by medium line-count services, not public helper sprawl."
     },
     {
       "debtId": "bad-031-publichelpersprawl-drafting-application-final-quality-draft-final-quality-assessment",
@@ -589,66 +544,6 @@
       "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
     },
     {
-      "debtId": "bad-040-publichelpersprawl-drafting-application-validation-draft-editorial-critique-parser",
-      "findingKey": "publicHelperSprawl:backend/app/drafting/application/validation/draft_editorial_critique_parser.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_editorial_critique_parser.py",
-      "smellType": "publicHelperSprawl",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "3 public top-level helper(s): parse_editorial_critique, critique_dimension, editorial_risk.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
-      "debtId": "bad-041-publichelpersprawl-drafting-application-validation-draft-llm-validation-observations",
-      "findingKey": "publicHelperSprawl:backend/app/drafting/application/validation/draft_llm_validation_observations.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_llm_validation_observations.py",
-      "smellType": "publicHelperSprawl",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "3 public top-level helper(s): normalize_llm_validator_id, is_llm_observation_like, llm_observation.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
-      "debtId": "bad-042-publichelpersprawl-drafting-application-validation-draft-llm-validation-parser",
-      "findingKey": "publicHelperSprawl:backend/app/drafting/application/validation/draft_llm_validation_parser.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_llm_validation_parser.py",
-      "smellType": "publicHelperSprawl",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "3 public top-level helper(s): parse_llm_validation_report, parse_llm_validation_findings, status_for_llm_payload.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
-      "debtId": "bad-043-publichelpersprawl-drafting-application-validation-draft-validation-operation-safety",
-      "findingKey": "publicHelperSprawl:backend/app/drafting/application/validation/draft_validation_operation_safety.py",
-      "package": "backend/app/drafting/application/validation",
-      "module": "backend/app/drafting/application/validation/draft_validation_operation_safety.py",
-      "smellType": "publicHelperSprawl",
-      "severity": "high",
-      "owner": "drafting.application.validation",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.8",
-      "repairSlice": "2.17.4.6.0.8",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "3 public top-level helper(s): safe_call, failed_revision_result, failed_pairwise_result.",
-      "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
-    },
-    {
       "debtId": "bad-044-rawdictcontract-drafting-application-artifacts-draft-article-memory-service",
       "findingKey": "rawDictContract:backend/app/drafting/application/artifacts/draft_article_memory_service.py",
       "package": "backend/app/drafting/application/artifacts",
@@ -692,6 +587,21 @@
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: build_human_comment_revision_messages.",
       "notes": "Baseline debt recorded by Slice 2.17.4.6.0.7; cleanup must preserve behavior and move toward role-owned service/policy/component/DTO shapes."
+    },
+    {
+      "debtId": "bad-047-largemodule-drafting-application-validation-draft-llm-validation-service",
+      "findingKey": "largeModule:backend/app/drafting/application/validation/draft_llm_validation_service.py",
+      "package": "backend/app/drafting/application/validation",
+      "module": "backend/app/drafting/application/validation/draft_llm_validation_service.py",
+      "smellType": "largeModule",
+      "severity": "medium",
+      "owner": "drafting.application.validation",
+      "targetShape": "service",
+      "allowedUntilSlice": "2.17.4.6.0.11",
+      "repairSlice": "2.17.4.6.0.11",
+      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
+      "currentEvidence": "Module has 229 lines after Slice 2.17.4.6.0.8; service delegates parsing, prompts, trace building, and attempt mapping to role-owned components.",
+      "notes": "Residual medium line-count debt only. No validation high godService or publicHelperSprawl findings remain after Slice 2.17.4.6.0.8."
     }
   ]
 }

@@ -143,6 +143,14 @@ Slice 2.17.4.6.0.5 migrated the late DraftRun modules into:
   final gate, independent review, payload helpers, and repair loop;
 - `application/hitl`: post-run human-comment revision and revision quality check.
 
+Slice 2.17.4.6.0.8 cleaned the validation package after migration. Validation
+prompt construction, LLM/editorial parsing, trace payloads, operation failure
+mapping, attribution requirement resolution, evidence evaluation, validation
+artifact creation, editorial report appending, and attempt/envelope mapping are now
+owned by named classes. Do not add new public top-level helper functions to
+`application/validation`; add behavior to the owning service, policy, or component
+and let `npm run test:architecture` enforce the audit ledger.
+
 ## Unified Step Contract
 
 New DraftRun step code should implement the provider-free contract in

@@ -12,14 +12,22 @@ from backend.app.drafting.application.revision.draft_pairwise_ranking_service im
 from backend.app.drafting.application.revision.draft_revision_loop_policy import candidate_id, combined_validation, last_value, string_list
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
-from backend.app.drafting.application.validation.draft_validation_operation_safety import failed_pairwise_result, failed_revision_result, safe_call
+from backend.app.drafting.application.validation.draft_validation_operation_safety import ValidationOperationFailureMapper
 from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, operation_denied_by_runtime_budget
 
 class DraftRevisionLoopCycleRunner:
-    def __init__(self, *, ranking_service: DraftPairwiseRankingService, revision_service: DraftDirectedRevisionService, regression_guard: DraftRevisionRegressionGuard) -> None:
+    def __init__(
+        self,
+        *,
+        ranking_service: DraftPairwiseRankingService,
+        revision_service: DraftDirectedRevisionService,
+        regression_guard: DraftRevisionRegressionGuard,
+        failure_mapper: ValidationOperationFailureMapper | None = None,
+    ) -> None:
         self._ranking = ranking_service
         self._revision = revision_service
         self._regression = regression_guard
+        self._failure_mapper = failure_mapper or ValidationOperationFailureMapper()
 
     def revise(
         self,
@@ -34,13 +42,13 @@ class DraftRevisionLoopCycleRunner:
     ) -> dict[str, Any]:
         operation_id = f"directed-revision-cycle-{cycle_number}"
         if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
-            return failed_revision_result(STOP_BUDGET_EXHAUSTED)
+            return self._failure_mapper.failed_revision_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=candidate_id(candidate) or "none")
-        revision = safe_call(
+        revision = self._failure_mapper.safe_call(
             progress=progress,
             operation_id=operation_id,
-            fallback=failed_revision_result,
+            fallback=self._failure_mapper.failed_revision_result,
             call=lambda: self._revision.revise(candidate=candidate, instruction=instruction, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan),
         )
         if progress:
@@ -90,13 +98,13 @@ class DraftRevisionLoopCycleRunner:
     ) -> dict[str, Any]:
         operation_id = f"revision-pairwise-cycle-{cycle_number}"
         if operation_denied_by_runtime_budget(progress, kind="pairwiseRanking", operation_id=operation_id, detail="pairwise-ranking-budget-denied"):
-            return failed_pairwise_result(STOP_BUDGET_EXHAUSTED)
+            return self._failure_mapper.failed_pairwise_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="pairwiseRanking", label=f"Compare revision cycle {cycle_number}")
-        report = safe_call(
+        report = self._failure_mapper.safe_call(
             progress=progress,
             operation_id=operation_id,
-            fallback=failed_pairwise_result,
+            fallback=self._failure_mapper.failed_pairwise_result,
             call=lambda: self._ranking.rank(
                 draft_artifact={"candidates": [item for item in [current, revised] if item], "selection": {"scorecard": []}},
                 validation_report=combined_validation(current_validation, revised_validation),

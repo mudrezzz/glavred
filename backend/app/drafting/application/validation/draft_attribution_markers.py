@@ -22,7 +22,7 @@ class DraftAttributionMarkerMatcher:
         unresolvable: list[str] = []
 
         for claim_id in claim_ids:
-            markers = attribution_markers_for_claim(claims_by_id.get(claim_id, {}))
+            markers = self.markers_for_claim(claims_by_id.get(claim_id, {}))
             expected[claim_id] = markers
             if not markers:
                 unresolvable.append(claim_id)
@@ -41,18 +41,18 @@ class DraftAttributionMarkerMatcher:
             "unresolvableClaimIds": unresolvable,
         }
 
-def attribution_markers_for_claim(claim: dict[str, Any]) -> list[str]:
-    provenance = _dict(claim.get("provenance"))
-    raw_markers = [
-        claim.get("source"),
-        provenance.get("source"),
-        provenance.get("sourceTitle"),
-        provenance.get("sourceUrl"),
-    ]
-    markers: list[str] = []
-    for marker in raw_markers:
-        markers.extend(_source_markers(str(marker or "")))
-    return _unique([marker for marker in markers if _is_useful_marker(marker)])
+    def markers_for_claim(self, claim: dict[str, Any]) -> list[str]:
+        provenance = _dict(claim.get("provenance"))
+        raw_markers = [
+            claim.get("source"),
+            provenance.get("source"),
+            provenance.get("sourceTitle"),
+            provenance.get("sourceUrl"),
+        ]
+        markers: list[str] = []
+        for marker in raw_markers:
+            markers.extend(_source_markers(str(marker or "")))
+        return _unique([marker for marker in markers if _is_useful_marker(marker)])
 
 def _source_markers(value: str) -> list[str]:
     if not value.strip():

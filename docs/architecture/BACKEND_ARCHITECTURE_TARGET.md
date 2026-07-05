@@ -188,6 +188,15 @@ Implemented operation safety repair:
   - old `backend.app.application.*` imports for this migrated batch are
     compatibility shims only, and provider-heavy migrated services use the bounded
     drafting JSON adapter instead of raw provider `.complete_json(...)`.
+- Drafting validation package OOP cleanup:
+  - Slice 2.17.4.6.0.8 turned validation parsing, prompts, trace payloads,
+    operation failure mapping, attribution/evidence evaluation, validation artifact
+    creation, editorial-critique report appending, and LLM/editorial attempt
+    mapping into named component or policy owners;
+  - validation services now keep orchestration responsibilities and delegate
+    parser/prompt/trace/envelope mapping to those owners;
+  - new high-severity validation public helper sprawl is an audit failure unless a
+    ledger entry explicitly records owner, reason, guardrail, and repair slice.
 - Backend documentation and agent guardrail hardening:
   - backend docs, `AGENTS.md`, and repo-local skills now describe the post-`0.5`
     canonical package owners;

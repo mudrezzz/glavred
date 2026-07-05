@@ -228,13 +228,20 @@ Already enforced:
   `backend-architecture-audit` skill. Architecture smoke runs the audit with
   `--fail-on-unledgered high`, so new unclassified `critical` / `high` backend debt
   fails even when ordinary tests pass.
+- Drafting validation package OOP cleanup from Slice 2.17.4.6.0.8:
+  `backend/app/drafting/application/validation` now exposes class-owned parser,
+  prompt-builder, trace-builder, failure-mapper, attribution/evidence, artifact,
+  report-appender, and attempt-mapper components instead of public helper sprawl.
+  The audit ledger records only medium residual line-count/package debt for this
+  package; validation high findings are closed.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- OOP cleanup of migrated validation, revision, final-quality, HITL, API,
-  application, infrastructure, and upstream surfaces flagged by the audit ledger.
+- OOP cleanup of migrated revision, final-quality, HITL, API, application,
+  infrastructure, upstream, and residual medium validation line-count surfaces
+  flagged by the audit ledger.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes and validation runtime-budget heartbeats.

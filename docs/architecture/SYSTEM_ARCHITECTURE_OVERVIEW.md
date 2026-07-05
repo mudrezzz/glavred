@@ -513,6 +513,14 @@ so new unclassified `critical` / `high` debt fails `npm run test:architecture`. 
 repo-local `backend-architecture-audit` skill is the workflow for running the audit
 and deciding whether to continue product work or add an intermediate cleanup slice.
 
+Slice 2.17.4.6.0.8 applies that audit to
+`backend/app/drafting/application/validation`. The validation package is now
+class-owned rather than a transferred procedural surface: LLM/editorial parsers,
+prompt builders, trace builders, attribution/evidence evaluation, operation failure
+mapping, validation artifact creation, editorial report appending, and attempt
+mapping are named components. Validation high findings are closed; only medium
+line-count/package cleanup remains in the debt ledger.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.
