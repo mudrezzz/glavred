@@ -88,6 +88,13 @@ Legacy backend files have three allowed statuses:
 - remaining explicit debt: listed in the migration inventory or LLM operation
   inventory with owner, reason, and removal slice.
 
+The next recovery layer is the Backend Architecture Audit and Debt Ledger planned
+for Slice 2.17.4.6.0.7. Package migration alone does not prove internal OOP/SRP
+quality. Use `.agents/skills/backend-architecture-audit/SKILL.md` when reviewing
+public helper sprawl, procedural bounded packages, raw `dict[str, Any]` contracts,
+provider boundary leaks, dependency-direction risks, migrated-shim behavior, or
+tests that still mirror legacy owners.
+
 ## Legacy DraftRun Surface Migration
 
 `backend.app.drafting.application.migration.legacy_surface_inventory` is the

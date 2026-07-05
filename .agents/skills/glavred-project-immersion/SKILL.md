@@ -83,6 +83,9 @@ Use this structure:
    - backend legacy paths must be called out as active compatibility facade,
      migrated thin shim, or remaining explicit debt; a migrated thin shim is not a
      behavior owner.
+   - backend structural debt should be checked with
+     `.agents/skills/backend-architecture-audit/SKILL.md` before broad backend
+     cleanup or package-quality claims.
    - new LLM/provider-heavy work must use the current operation governance rules or be tracked as debt.
    - frontend work must use `frontend-design-system` and `ui-design-systems/START-HERE.md`.
    - demo changes must stay realistic and project-scoped.

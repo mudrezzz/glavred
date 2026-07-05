@@ -102,6 +102,15 @@ shim, or remaining explicit debt. Architecture smoke verifies that the docs and
 skills keep this wording, so new contributor/agent workstreams cannot silently treat
 flat legacy paths as normal behavior owners.
 
+The next backend recovery gap is broader than one package. Migrated bounded packages
+can still contain procedural helper surfaces and repeated legacy naming patterns.
+Slice 2.17.4.6.0.7 introduces the Backend Architecture Audit and Debt Ledger to
+classify this debt across the whole backend before product work resumes. The first
+audit must cover public top-level functions, procedural bounded packages, large
+modules, raw `dict[str, Any]` contracts, provider boundary leaks, dependency
+direction risks, behavior inside migrated shims, and tests that mirror legacy
+owners instead of canonical owners.
+
 ## Upstream Radar Debt Inventory
 
 Upstream search has started to repeat the same shape:
@@ -213,6 +222,11 @@ Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
+- Backend Architecture Audit and Debt Ledger, including automated detection of
+  public helper sprawl, procedural bounded packages, raw dict contracts, provider
+  boundary leaks, and unclassified structural debt.
+- OOP cleanup of migrated validation, revision, final-quality, HITL, API,
+  application, infrastructure, and upstream surfaces flagged by the audit ledger.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes and validation runtime-budget heartbeats.

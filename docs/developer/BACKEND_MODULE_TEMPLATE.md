@@ -3,6 +3,13 @@
 Use this checklist before adding or moving backend code. It is enforced by
 `npm run test:architecture` for bounded-context packages.
 
+When the question is broader than one module, use
+`.agents/skills/backend-architecture-audit/SKILL.md`. Slice `2.17.4.6.0.7` adds the
+backend architecture audit command and
+`docs/architecture/backend-architecture-debt-ledger.json` so public helper sprawl,
+procedural bounded packages, raw dict contracts, provider boundary leaks,
+dependency-direction risks, and migrated-shim behavior are tracked systematically.
+
 ## Ownership Header
 
 Every non-`__init__.py` module under `backend/app/drafting`, `backend/app/upstream`,

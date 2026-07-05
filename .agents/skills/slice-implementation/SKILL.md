@@ -67,6 +67,10 @@ Implement one small, complete, tested, documented product increment.
 - Treat old DraftRun paths as active compatibility facade, migrated thin shim, or
   remaining explicit debt. Do not add behavior to a migrated thin shim; move behavior
   to the canonical package owner under `backend/app/drafting`.
+- For broad backend refactors or when package quality is questioned, run
+  `.agents/skills/backend-architecture-audit/SKILL.md` before implementing. Known
+  debt must be separated from new unclassified smells before the slice scope is
+  chosen.
 - Provider-heavy backend work must pass the Provider-Heavy Review Checklist in
   `docs/developer/BACKEND_MODULE_TEMPLATE.md`: shared operation governance,
   incidents, payload budget, timeout/runtime budget, safe errors, and no raw

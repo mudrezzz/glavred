@@ -36,6 +36,7 @@ Implemented documentation:
 - `backend/app/drafting/README.md`
 - `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`
 - `docs/developer/BACKEND_MODULE_TEMPLATE.md`
+- `docs/adr/2026-07-05-backend-architecture-audit-program.md`
 
 Implemented compatibility anchors:
 
@@ -239,6 +240,36 @@ They move into named fallback policy/service owners inside `backend/app/drafting
 The next `0.4` and `0.5` slices must follow the `no cosmetic package moves` rule:
 do not preserve the old flat public-helper surface under a new package path.
 
+## Backend Architecture Audit Program
+
+Architecture recovery is a recurring audit loop, not a completed one-time migration.
+Slice `2.17.4.6.0.7` adds an automated backend architecture audit and a
+machine-readable debt ledger. The audit must detect:
+
+- public top-level helper sprawl;
+- procedural bounded packages that mirror legacy flat files;
+- large modules and god services;
+- raw `dict[str, Any]` request/result seams where typed DTOs or operation envelopes
+  are expected;
+- provider boundary leaks and raw `.complete_json(` calls outside allowed adapters;
+- dependency-direction risks between API, application, domain, infrastructure, and
+  shared packages;
+- behavior inside migrated thin shims;
+- tests that keep importing legacy/procedural owners instead of canonical package
+  owners.
+
+Known debt may remain only when the debt ledger records `debtId`, package, module,
+smell type, severity, owner, target shape, allowed-until slice, repair slice,
+guardrail, and notes. New unclassified high-severity smells should fail
+`npm run test:architecture` once the audit command and ledger are implemented.
+
+The planned cleanup sequence after the audit is:
+
+1. `2.17.4.6.0.8`: Drafting validation package OOP cleanup.
+2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup.
+3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup.
+4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup.
+
 ## Dependency Direction
 
 Allowed direction:
@@ -376,10 +407,13 @@ The Drafting v1 implementation of this contract is:
 7. Move context/evidence/planning clusters. Done.
 8. Move candidate/validation/revision/final quality clusters. Done.
 9. Harden backend docs, agent guidance, and documentation smoke checks. Done.
-10. Move upstream radar/search into `backend/app/upstream` before expanding extraction
+10. Add Backend Architecture Audit and Debt Ledger.
+11. Clean migrated validation, revision/final-quality, HITL/provider, and remaining
+   backend surfaces according to the audit ledger.
+12. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
-11. Tighten allowlists after each cluster migration.
-12. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
+13. Tighten allowlists after each cluster migration.
+14. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
    each provider-heavy operation behind the shared envelope.
 
 ## Review Checklist

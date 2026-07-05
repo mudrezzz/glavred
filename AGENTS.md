@@ -131,6 +131,12 @@ in `docs/developer/BACKEND_MODULE_TEMPLATE.md`; shared operation governance,
 payload/runtime budgets, migrated-shim rules, and `npm run test:architecture` are
 mandatory backend guardrails.
 
+When backend package quality is questioned, when a backend slice may add structural
+debt, or before a broad backend refactor, use `$backend-architecture-audit`. The audit
+must distinguish known ledgered debt from new unclassified smells such as public
+helper sprawl, procedural bounded packages, raw dict contracts, provider boundary
+leaks, dependency-direction risks, and behavior inside migrated thin shims.
+
 ## Testing standards
 
 Maximize useful test coverage.
@@ -254,6 +260,10 @@ Use these skills when available:
   new chat with a concise project briefing, explain what the product is, where to
   look, which roadmap slice is current, which checks to run, and which architecture
   guardrails matter before doing implementation.
+- `$backend-architecture-audit` when reviewing backend package quality, checking
+  whether new backend work introduced structural debt, or planning cleanup for public
+  helper sprawl, procedural bounded packages, raw dict contracts, provider boundary
+  leaks, dependency-direction risks, or migrated-shim behavior.
 - `$roadmap-slice-planning` for turning requirements into iterations, slices, and actionable backlog items.
 - `$slice-implementation` for implementing the next small product increment.
 - `$docs-sync` for keeping README, architecture docs, ADRs, contributor docs, developer docs, user docs, and demo docs current.

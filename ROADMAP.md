@@ -6915,9 +6915,181 @@ Status:
   - Too much process can slow delivery; keep checks mechanical and actionable.
 - Completed: 2026-07-05
 
-### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
+### Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger
 
 - Status: Ready
+- Goal: Create a full backend architecture audit program and machine-readable debt ledger before further backend feature work.
+- User value:
+  - The team can see backend architectural debt systematically instead of discovering it by manual code review after the fact.
+  - Future backend slices can distinguish known debt, newly introduced debt, and intentionally accepted temporary exceptions.
+- Scope:
+  - Add `scripts/backend-architecture-audit.py` or `python -m backend.app.architecture audit` producing JSON and Markdown reports.
+  - Add `docs/architecture/backend-architecture-debt-ledger.json` as the reviewable source of known debt.
+  - Classify every backend smell by `debtId`, package, module, smell type, severity, owner, target shape, allowed-until slice, repair slice, guardrail, and notes.
+  - Detect public top-level functions, procedural bounded-package modules, large modules, raw `dict[str, Any]` contract surfaces, raw provider calls, missing/weak ownership, shim behavior, dependency direction risks, and tests mirroring bad architecture.
+  - Create `.agents/skills/backend-architecture-audit/SKILL.md` so agents can run the audit before backend slices and interpret new vs known debt.
+  - Add architecture smoke integration that fails when new unclassified backend debt appears or when the ledger/docs/skill are missing.
+- Out of scope:
+  - Refactoring validation, revision, HITL, API, repository, or upstream code.
+  - Changing runtime behavior, prompt text, provider semantics, trace shape, API contracts, SQLite schema, or UI layout.
+- Implementation notes:
+  - This slice is the audit and governance foundation, not the cleanup itself.
+  - The first report should include the current `validation` package helper sprawl as known debt with repair slices.
+  - Avoid brittle style policing; focus on ownership, dependency direction, public surface, provider safety, and bounded-context drift.
+- Architecture impact:
+  - Turns backend architecture recovery from one-time migration into a recurring audit loop.
+  - Creates a durable mechanism for finding blind spots not covered by existing architecture smoke rules.
+- Tests:
+  - Unit tests for audit parser/classifier on fixture modules.
+  - Smoke test proving new public helper debt fails unless listed in the ledger.
+  - Smoke test proving migrated shim behavior remains a guardrail failure.
+  - `npm run test:architecture`, `python -m backend.app.roadmap check`, `git diff --check`.
+- Docs:
+  - Add ADR for the backend architecture audit program.
+  - Update SAO, backend AS IS/TARGET, developer guide, contributor guide, AGENTS.md, and roadmap artifacts.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - One command produces a backend architecture audit report.
+  - The debt ledger covers current known backend debt, including migrated bounded-package helper sprawl.
+  - New backend smells fail architecture smoke unless they are explicitly classified with owner and repair slice.
+  - A repo-local skill tells future agents exactly how to run and interpret the audit.
+- Risks:
+  - Audit can become noisy; classify severity and keep failure thresholds focused on new/unclassified debt.
+  - Over-tight checks can block useful work; allow temporary debt only with owner, reason, and removal slice.
+
+### Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup
+
+- Status: Backlog
+- Goal: Turn the migrated DraftRun validation package from a procedural legacy surface into role-owned services, policies, components, DTOs, and private helpers.
+- User value:
+  - Validation code becomes navigable and future validator work has clear owners instead of another flat namespace.
+- Scope:
+  - Use the debt ledger from `2.17.4.6.0.7` as the source of truth.
+  - Refactor prompt builders, parsers, audit trace builders, validation artifact factories, attribution requirement resolution, alternative-angle route/tournament helpers, and operation failure mapping into named component/policy owners.
+  - Keep service/orchestrator classes as the public package surface; make local helpers private unless explicitly allowlisted with owner rationale.
+  - Add/extend architecture smoke to prevent new public top-level helper growth in `backend/app/drafting/application/validation`.
+- Out of scope:
+  - Prompt-quality rewrite, model selection change, DraftRun step order change, API/SQLite/UI changes.
+  - Migration of revision/final_quality/HITL packages.
+- Implementation notes:
+  - Preserve behavior and trace shape; this is an ownership refactor.
+  - Target owners may include `LlmValidationPromptBuilder`, `LlmValidationParser`, `EditorialCritiquePromptBuilder`, `EditorialCritiqueParser`, `EditorialCritiqueTraceBuilder`, `AlternativeAnglePromptBuilder`, `AlternativeAngleTraceBuilder`, `AttributionRequirementResolver`, `ValidationArtifactFactory`, and `ValidationOperationFailureMapper`.
+- Architecture impact:
+  - Converts the validation bounded package from legacy file grouping into real OOP/SRP ownership.
+- Tests:
+  - Existing validation, LLM validation, editorial critique, alternative-angle, ranking bridge, and package shim tests.
+  - Architecture audit regression proving validation public helper debt decreases and no new unclassified helper appears.
+  - Full backend regression when behavior-bearing modules are moved.
+- Docs:
+  - Update backend AS IS/TARGET, drafting component map, developer guide, and debt ledger.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Validation package public top-level helper surface is reduced to documented DTO/factory exceptions.
+  - Prompt/parser/audit/artifact/failure mapping behavior has named owners.
+  - `npm run test:architecture` fails if validation helper sprawl returns.
+- Risks:
+  - Behavior-preserving refactor can accidentally alter trace payloads; keep targeted trace regression tests.
+
+### Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup
+
+- Status: Backlog
+- Goal: Clean up revision and final-quality packages after migration using the audit ledger and role-owned component boundaries.
+- User value:
+  - Revision/final gate development can continue without growing procedural helper surfaces.
+- Scope:
+  - Refactor `revision` public helpers into ranking, mapping, rejected-move, loop-policy, regression, and directed-revision component/policy owners.
+  - Refactor `final_quality` public helpers into assessment, attribution, payload, review parser, review prompt, repair-loop, and final-decision owners.
+  - Preserve validation runtime budget, canonical stop reasons, operation envelopes, payload budgets, and trace shape.
+  - Update audit ledger and smoke thresholds for the reduced public surface.
+- Out of scope:
+  - Validation package cleanup.
+  - HITL/provider operation cleanup.
+  - Prompt/model/algorithm changes.
+- Implementation notes:
+  - Split only where ownership becomes clearer; do not wrap pure DTO helpers in empty classes.
+- Architecture impact:
+  - Prevents revision/final-quality packages from becoming the next flat procedural namespace.
+- Tests:
+  - Ranking/revision, revision acceptance, revision operation repair, final quality gate, validation runtime budget, and package-shim tests.
+  - Architecture audit regression for revision/final_quality debt entries.
+- Docs:
+  - Update backend docs, drafting component map, and debt ledger.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Public helper count in revision/final_quality drops to documented exceptions.
+  - New owners are represented in docs and audit ledger.
+  - Runtime behavior and trace snapshots remain compatible.
+- Risks:
+  - Revision loop and final gate are tightly coupled; preserve tests before moving helpers.
+
+### Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup
+
+- Status: Backlog
+- Goal: Clean up HITL and provider-heavy operation surfaces around message builders, operation envelopes, payload budgets, and runtime budgets.
+- User value:
+  - Human revision and provider operation code becomes safe to extend without duplicating ad hoc provider/result contracts.
+- Scope:
+  - Refactor HITL message builders and quality-check helpers into component owners.
+  - Review provider-heavy operation surfaces for shared envelope, incident taxonomy, payload budget, timeout/runtime budget, safe errors, and no raw provider calls.
+  - Reduce public helper sprawl in `hitl` and shared drafting operation helpers where the audit ledger flags debt.
+- Out of scope:
+  - Product behavior changes to HITL review semantics.
+  - New provider capabilities or UI workflows.
+- Implementation notes:
+  - Keep post-run human-comment revision API and trace payloads compatible.
+  - Domain-safe deterministic fallback remains allowed only where already present.
+- Architecture impact:
+  - Consolidates provider-heavy operation ownership after the bounded-package migration.
+- Tests:
+  - HITL revision API, human-comment quality checks, JSON operation contract tests, payload budget tests, package-shim tests, and architecture audit regression.
+- Docs:
+  - Update backend docs, developer guide, operation governance notes, and debt ledger.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - HITL/provider-heavy helpers have explicit component/service owners.
+  - No new raw provider or ad hoc JSON result contract appears.
+  - Audit ledger debt for HITL/provider operation surfaces is reduced or explicitly reclassified.
+- Risks:
+  - Provider-heavy tests can miss live-provider edge cases; keep deterministic/fake-provider proof as acceptance baseline.
+
+### Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup
+
+- Status: Backlog
+- Goal: Apply the audit program outside DraftRun validation/revision to API helpers, active application facades, upstream radar, repositories, and factories.
+- User value:
+  - The whole backend follows the same ownership rules, not only DraftRun bounded packages.
+- Scope:
+  - Classify and repair API public helper surfaces, active application facades, upstream radar active debt, roadmap tracker seams, repository factories, and raw dict boundaries flagged by the audit ledger.
+  - Decide which root `backend/app/application/*` modules remain active compatibility facades and which need bounded-context migration.
+  - Add or adjust smoke checks for API thinness, repository/factory ownership, and upstream package placement.
+- Out of scope:
+  - Search Intent Planner implementation unless it is needed to avoid adding to old upstream debt.
+  - Frontend UI refactors.
+- Implementation notes:
+  - This slice may split into smaller sub-slices if the audit ledger shows multiple high-risk clusters.
+  - Keep roadmap tracker CLI behavior stable.
+- Architecture impact:
+  - Extends backend ownership discipline beyond DraftRun packages to the rest of the backend.
+- Tests:
+  - API, repository, roadmap tracker, upstream radar, package-shim, architecture audit, and full backend regression as needed.
+- Docs:
+  - Update backend AS IS/TARGET, SAO, developer guide, contributor guide, and debt ledger.
+- Demo impact:
+  - No user-facing demo change unless upstream radar trace behavior is touched.
+- Acceptance criteria:
+  - No unclassified high-severity backend architecture debt remains outside planned product slices.
+  - Active compatibility facades are explicitly documented with owner and removal path.
+  - `2.17.4.6.1` can resume without building new upstream work on hidden legacy debt.
+- Risks:
+  - Scope can become broad; split by debt cluster if required.
+
+### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
+
+- Status: Backlog
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -6934,6 +7106,7 @@ Status:
 - Implementation notes:
   - Deterministic planner is the baseline for every later search layer.
   - The planner must not assign final topic/fabula ownership to raw material.
+  - This slice resumes after the backend architecture audit program is in place, unless the user explicitly accepts the architecture risk.
 - Architecture impact:
   - Introduces explicit search-planning contracts between `RadarRun` and provider retrieval.
 - Tests:
@@ -7631,4 +7804,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.
+Implement `Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger`.

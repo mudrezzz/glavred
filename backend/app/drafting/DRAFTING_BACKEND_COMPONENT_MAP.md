@@ -18,6 +18,12 @@ Legacy files are classified as active compatibility facade, migrated thin shim, 
 remaining explicit debt; there is no fourth informal status for behavior hidden in a
 legacy path.
 
+Package migration did not automatically remove all internal procedural debt. Slice
+2.17.4.6.0.7 adds the Backend Architecture Audit and Debt Ledger before more broad
+backend feature work. The audit must classify public helper sprawl, procedural
+bounded packages, raw dict contracts, provider boundary leaks, dependency-direction
+risks, migrated-shim behavior, and tests that still mirror legacy owners.
+
 ## Package Areas
 
 | Target area | Owns | Legacy source clusters |
@@ -67,6 +73,10 @@ legacy path.
 12. Tighten architecture smoke allowlists after each cluster is moved. Done for the
     moved DraftRun application clusters; remaining follow-up is retiring legacy
     shims when external compatibility is no longer needed.
+13. Add Backend Architecture Audit and Debt Ledger. Planned in Slice 2.17.4.6.0.7.
+14. Clean migrated validation, revision/final-quality, HITL/provider, and remaining
+    backend surfaces according to the audit ledger. Planned in Slices
+    2.17.4.6.0.8 through 2.17.4.6.0.11.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

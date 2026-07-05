@@ -498,6 +498,18 @@ rule. Legacy files are always described as active compatibility facade, migrated
 or remaining explicit debt. `AGENTS.md` and repo-local skills must point
 backend/DraftRun work to canonical package owners and `npm run test:architecture`.
 
+Slice 2.17.4.6.0.7 introduces the Backend Architecture Audit and Debt Ledger before
+the upstream search planner resumes. This is the recurring backend radar for smells
+that existing linters may miss: public top-level helper sprawl, procedural bounded
+packages, large/god modules, raw `dict[str, Any]` contracts, provider boundary leaks,
+dependency-direction risks, behavior inside migrated thin shims, and tests that keep
+legacy/procedural owners alive. Known debt must be listed in
+`docs/architecture/backend-architecture-debt-ledger.json` with owner, severity,
+target shape, guardrail, and repair slice; new unclassified high-severity debt should
+fail `npm run test:architecture` once the audit command is implemented. The
+repo-local `backend-architecture-audit` skill is the workflow for running the audit
+and deciding whether to continue product work or add an intermediate cleanup slice.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

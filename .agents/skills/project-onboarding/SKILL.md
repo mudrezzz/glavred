@@ -54,7 +54,9 @@ Instead:
 6. Before selecting a backend slice, account for OpenRouter environment requirements,
    OOP/SRP backend boundaries, file-size guardrails, and provider/library dependency
    hygiene. Distinguish active compatibility facade, migrated thin shim, and
-   remaining explicit debt before treating a legacy file as an owner.
+   remaining explicit debt before treating a legacy file as an owner. If backend
+   package quality or structural debt is part of the next task, use
+   `.agents/skills/backend-architecture-audit/SKILL.md`.
 
 ## Required output before implementation
 

@@ -121,10 +121,18 @@ The recovery rule is strict:
 Backend module templates and review checklists live in
 `docs/developer/BACKEND_MODULE_TEMPLATE.md`. Use that document before adding or
 moving backend modules. It defines the required ownership header, service/policy/
-component/DTO module roles, migrated-shim rules, and the Provider-Heavy Review
-Provider-Heavy Review Checklist for shared operation governance, incidents, payload budgets,
-timeout/runtime budgets, safe errors, and no raw provider calls in bounded
-application modules.
+component/DTO module roles, migrated-shim rules, and the Provider-Heavy Review Checklist
+for shared operation governance, incidents, payload budgets, timeout/runtime budgets,
+safe errors, and no raw provider calls in bounded application modules.
+
+Backend architecture audit is the next recovery layer after package migration.
+Use `.agents/skills/backend-architecture-audit/SKILL.md` when backend package quality
+is questioned, before broad backend refactors, or when a backend slice may introduce
+new public helper sprawl, procedural bounded packages, raw `dict[str, Any]` seams,
+provider boundary leaks, dependency-direction risks, or migrated-shim behavior. Slice
+`2.17.4.6.0.7` adds the automated audit command and
+`docs/architecture/backend-architecture-debt-ledger.json`; until then, manual AST
+audits should separate known debt from new unclassified smells.
 
 `backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
 adding a DraftRun module, read `backend/app/drafting/README.md` and

@@ -85,6 +85,13 @@ Before changing provider-heavy code, use the Provider-Heavy Review Checklist in
 payload budgets, timeout/runtime budgets, safe errors, and no raw provider calls in
 bounded application modules. Run `npm run test:architecture` for backend changes.
 
+When backend package quality is under review or a change may introduce new structural
+debt, run the backend architecture audit workflow in
+`.agents/skills/backend-architecture-audit/SKILL.md`. The audit separates known
+ledgered debt from new unclassified smells such as public helper sprawl, procedural
+bounded packages, raw dict contracts, provider boundary leaks, dependency-direction
+risks, and migrated-shim behavior.
+
 ## Git
 
 Create small commits with clear messages. Do not create or publish a GitHub repository
