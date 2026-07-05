@@ -40,6 +40,11 @@ Before the first run, inspect:
 - `git status --short --branch`;
 - `ROADMAP.md`;
 - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`;
+- `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`;
+- `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`;
+- `backend/app/drafting/README.md`;
+- `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`;
+- `docs/developer/BACKEND_MODULE_TEMPLATE.md`;
 - current backend health;
 - whether frontend/backend/worker/Redis are reachable.
 
@@ -109,6 +114,14 @@ When implementing small repairs:
 
 - Keep the patch scoped to the diagnosed defect.
 - Prefer role-owned modules over growing near-limit files.
+- Patch the canonical package owner under `backend/app/drafting`; do not add
+  behavior to a migrated thin shim. Treat legacy files as active compatibility
+  facade, migrated thin shim, or remaining explicit debt before editing.
+  Behavior in a migrated thin shim is a guardrail bug and should stop autofix unless
+  the patch moves that behavior to the canonical package owner.
+- Provider-heavy repairs must follow the Provider-Heavy Review Checklist: shared
+  operation governance, incidents, payload budget, timeout/runtime budget, safe
+  errors, no raw provider `.complete_json(` calls in bounded application modules.
 - Preserve current `DraftRun` contracts unless the user explicitly approved a new
   slice that changes them.
 - Update architecture smoke baselines only for real new files or intentional limits.

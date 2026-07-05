@@ -36,6 +36,7 @@ the repository rather than memory alone.
 6. Latest relevant ADRs in `docs/adr/`.
 7. Work guides:
    - `docs/developer/DEVELOPER_GUIDE.md`
+   - `docs/developer/BACKEND_MODULE_TEMPLATE.md` when backend/DraftRun work matters
    - `docs/user/USER_GUIDE.md`
    - `demo/README.md`
    - `docs/roadmap/README.md`
@@ -79,6 +80,9 @@ Use this structure:
 6. **Жесткие правила**:
    - `ROADMAP.md` is generated; use tracker/export/render.
    - backend code must follow bounded contexts: `drafting`, `upstream`, `ai-runs`, `portfolio`, `roadmap`, `shared`.
+   - backend legacy paths must be called out as active compatibility facade,
+     migrated thin shim, or remaining explicit debt; a migrated thin shim is not a
+     behavior owner.
    - new LLM/provider-heavy work must use the current operation governance rules or be tracked as debt.
    - frontend work must use `frontend-design-system` and `ui-design-systems/START-HERE.md`.
    - demo changes must stay realistic and project-scoped.
@@ -112,6 +116,8 @@ git diff --check
 - Do not hide dirty worktree status. Say what is already modified.
 - Do not start implementation during immersion unless the user explicitly asks.
 - If the next slice is backend/LLM/DraftRun work, call out LLM operation governance,
-  payload budgets, fallback incident handling, and architecture smoke obligations.
+  payload budgets, fallback incident handling, canonical package owners under
+  `backend/app/drafting`, migrated thin shim rules, and architecture smoke
+  obligations including `npm run test:architecture`.
 - If the next slice is UI work, call out design-system obligations before giving UI
   advice.

@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.4.
+Current as of Slice 2.17.4.6.0.6.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -35,6 +35,7 @@ Implemented documentation:
 
 - `backend/app/drafting/README.md`
 - `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`
+- `docs/developer/BACKEND_MODULE_TEMPLATE.md`
 
 Implemented compatibility anchors:
 
@@ -186,6 +187,15 @@ Implemented operation safety repair:
   - old `backend.app.application.*` imports for this migrated batch are
     compatibility shims only, and provider-heavy migrated services use the bounded
     drafting JSON adapter instead of raw provider `.complete_json(...)`.
+- Backend documentation and agent guardrail hardening:
+  - backend docs, `AGENTS.md`, and repo-local skills now describe the post-`0.5`
+    canonical package owners;
+  - legacy backend files are classified as active compatibility facade, migrated
+    thin shim, or remaining explicit debt;
+  - `docs/developer/BACKEND_MODULE_TEMPLATE.md` is the module template and
+    Provider-Heavy Review Checklist source;
+  - architecture smoke requires those docs/skills fragments and keeps migrated shims
+    import/re-export only through `npm run test:architecture`.
 
 ## Context Ownership
 
@@ -266,6 +276,20 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 The goal is not ceremony. The header lets a new contributor understand why the file
 exists and where it fits before editing it.
+
+Use `docs/developer/BACKEND_MODULE_TEMPLATE.md` before adding or moving backend
+modules. It defines service, policy, component, and DTO module roles; records the
+migrated thin shim rule; and contains the Provider-Heavy Review Checklist for shared
+operation governance, incident metadata, payload budget, timeout/runtime budget,
+safe errors, and no raw provider calls.
+
+Legacy backend files have three allowed statuses:
+
+- active compatibility facade: the old path still owns compatibility wiring;
+- migrated thin shim: import/re-export only, with no `def`, `class`, provider call,
+  fallback logic, or trace mutation;
+- remaining explicit debt: explicitly listed in the migration inventory or LLM
+  operation inventory with owner, reason, and removal slice.
 
 ## Operation Contract
 
@@ -351,10 +375,11 @@ The Drafting v1 implementation of this contract is:
 6. Add validation/revision runtime guard and canonical stop reasons. Done.
 7. Move context/evidence/planning clusters. Done.
 8. Move candidate/validation/revision/final quality clusters. Done.
-9. Move upstream radar/search into `backend/app/upstream` before expanding extraction
+9. Harden backend docs, agent guidance, and documentation smoke checks. Done.
+10. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
-10. Tighten allowlists after each cluster migration.
-11. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
+11. Tighten allowlists after each cluster migration.
+12. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
    each provider-heavy operation behind the shared envelope.
 
 ## Review Checklist
@@ -367,3 +392,6 @@ Before adding a backend module:
 - Is there an architecture doc anchor?
 - Does an existing service already own this responsibility?
 - Can the behavior be tested at the owning layer without crossing API/UI boundaries?
+
+Provider-heavy work must also pass the Provider-Heavy Review Checklist in
+`docs/developer/BACKEND_MODULE_TEMPLATE.md`.

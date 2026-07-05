@@ -488,6 +488,16 @@ paths remain thin shims, while architecture smoke requires the new packages, che
 shim thinness, forbids raw provider `.complete_json(...)` in migrated bounded
 services, and rejects large anonymous public-helper surfaces without a named owner.
 
+Slice 2.17.4.6.0.6 hardens that contract for contributors and agents.
+`docs/developer/BACKEND_MODULE_TEMPLATE.md` is the backend module template and
+Provider-Heavy Review Checklist source. It defines service, policy, component, and
+DTO module roles; the required `Owner`, `Used by`, `Does not own`, and
+`Architecture doc` header; shared operation governance expectations; payload budget
+and runtime budget checks; safe-error requirements; and the no raw provider calls
+rule. Legacy files are always described as active compatibility facade, migrated thin shim,
+or remaining explicit debt. `AGENTS.md` and repo-local skills must point
+backend/DraftRun work to canonical package owners and `npm run test:architecture`.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.
@@ -522,9 +532,9 @@ Slice 2.3 adds the first provider-backed production path:
 - `backend/app/api/drafts.py`: thin `POST /api/drafts/generate` route.
 - `backend/app/domain/draft_generation.py`: provider-free draft request/result
   contracts.
-- `backend/app/application/draft_generation_service.py`: OpenRouter-or-fallback
+- `backend/app/drafting/application/generation/draft_generation_service.py`: OpenRouter-or-fallback
   orchestration and AI run audit creation.
-- `backend/app/application/deterministic_draft_service.py`: deterministic fallback
+- `backend/app/drafting/application/generation/deterministic_draft_service.py`: deterministic fallback
   draft generation.
 - `backend/app/infrastructure/openrouter_draft_adapter.py`: OpenRouter chat
   completions HTTP call and provider response parsing.
@@ -547,7 +557,7 @@ not leak into React components, domain objects, or API route logic.
 
 Slice 2.15.1 adds role-based model selection for DraftRun without changing prompt
 semantics. `backend/app/domain/draft_model_roles.py` defines provider-free role and
-selection DTOs. `backend/app/application/draft_model_role_resolver.py` maps
+selection DTOs. `backend/app/drafting/application/operations/draft_model_role_resolver.py` maps
 `research`, `strategy`, `writer`, `review`, `critic`, and `anotherAngle` to configured
 environment models, falling back to `OPENROUTER_DEFAULT_MODEL` when a role is empty.
 Backup retries still use `OPENROUTER_BACKUP_MODEL`; public search still uses
@@ -712,36 +722,36 @@ a deterministic regression guard, and the final decision. The implementation is 
 across role-owned modules:
 
 - `backend/app/domain/draft_ranking_revision.py`: provider-free DTOs.
-- `backend/app/application/deterministic_pairwise_ranking.py`: local fallback ranking.
-- `backend/app/application/draft_pairwise_ranking_prompts.py` and
-  `backend/app/application/draft_pairwise_ranking_service.py`: OpenRouter JSON
+- `backend/app/drafting/application/revision/deterministic_pairwise_ranking.py`: local fallback ranking.
+- `backend/app/drafting/application/revision/draft_pairwise_ranking_prompts.py` and
+  `backend/app/drafting/application/revision/draft_pairwise_ranking_service.py`: OpenRouter JSON
   pairwise ranking with retry discipline.
-- `backend/app/application/draft_directed_revision_prompts.py` and
-  `backend/app/application/draft_directed_revision_service.py`: one-shot directed
+- `backend/app/drafting/application/revision/draft_directed_revision_prompts.py` and
+  `backend/app/drafting/application/revision/draft_directed_revision_service.py`: one-shot directed
   revision, without deterministic fake rewrites.
-- `backend/app/application/draft_revision_instruction_builder.py`: actionable
+- `backend/app/drafting/application/revision/draft_revision_instruction_builder.py`: actionable
   finding projection into repair goals.
-- `backend/app/application/draft_revision_regression.py`: deterministic regression
+- `backend/app/drafting/application/revision/draft_revision_regression.py`: deterministic regression
   checks before accepting a revised candidate.
-- `backend/app/application/draft_final_quality_assessment.py`: deterministic public
+- `backend/app/drafting/application/final_quality/draft_final_quality_assessment.py`: deterministic public
   prose heuristics for final-draft acceptance.
-- `backend/app/application/draft_final_quality_attribution.py`: deterministic split
+- `backend/app/drafting/application/final_quality/draft_final_quality_attribution.py`: deterministic split
   between actionable final-gate attribution findings and diagnostic attribution
   handoff noise.
-- `backend/app/application/draft_final_quality_gate.py`: final public-prose
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate.py`: final public-prose
   acceptance and one-shot repair handoff after the revision loop.
-- `backend/app/application/draft_ranking_revision_mapping.py`: small conversion and
+- `backend/app/drafting/application/revision/draft_ranking_revision_mapping.py`: small conversion and
   final-decision formatting helpers.
-- `backend/app/application/draft_ranking_revision_service.py`,
-  `backend/app/application/draft_ranking_revision_result.py`, and
-  `backend/app/application/draft_validation_ranking_bridge.py`: narrow orchestration
+- `backend/app/drafting/application/revision/draft_ranking_revision_service.py`,
+  `backend/app/drafting/application/revision/draft_ranking_revision_result.py`, and
+  `backend/app/drafting/application/validation/draft_validation_ranking_bridge.py`: narrow orchestration
   between validation, ranking, revision, final quality gate, and the final draft
   decision.
-- `backend/app/application/draft_model_role_resolver.py`: role-based model selection
+- `backend/app/drafting/application/operations/draft_model_role_resolver.py`: role-based model selection
   policy for research, strategy, writer, review, critic, and alternative-angle roles.
-- `backend/app/application/draft_generation_params.py`: role/attempt generation
+- `backend/app/drafting/application/generation/draft_generation_params.py`: role/attempt generation
   parameter normalization for writer, revision, JSON repair, and another-angle calls.
-- `backend/app/application/draft_provider_error_utils.py`: safe provider error and
+- `backend/app/drafting/application/operations/draft_provider_error_utils.py`: safe provider error and
   raw response excerpt extraction for child `AiRun` audit records.
 - `backend/app/infrastructure/draft_run_pipeline_validation_services.py`: wiring for
   validation, ranking, and directed revision dependencies.
@@ -783,23 +793,23 @@ rejected repair stays visible in trace.
 
 Final quality ownership is intentionally split:
 
-- `backend/app/application/draft_final_quality_contract.py`: provider-free
+- `backend/app/drafting/application/final_quality/draft_final_quality_contract.py`: provider-free
   `FinalQualityContract` assembly from editorial/fabula/post constraints.
-- `backend/app/application/draft_final_quality_gate.py`: thin final-gate composition
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate.py`: thin final-gate composition
   boundary between contract, evaluator, and repair loop.
-- `backend/app/application/draft_final_quality_gate_evaluator.py`: deterministic plus
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate_evaluator.py`: deterministic plus
   independent final-gate report assembly.
-- `backend/app/application/draft_final_quality_gate_payloads.py`: status, decision,
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate_payloads.py`: status, decision,
   and payload helper functions.
-- `backend/app/application/draft_final_quality_repair_loop.py`: bounded final repair
+- `backend/app/drafting/application/final_quality/draft_final_quality_repair_loop.py`: bounded final repair
   cycle orchestration.
-- `backend/app/application/draft_final_quality_review_prompts.py`: final-gate JSON
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_prompts.py`: final-gate JSON
   prompt shape.
-- `backend/app/application/draft_final_quality_review_parser.py`: final-gate JSON
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_parser.py`: final-gate JSON
   response normalization.
-- `backend/app/application/draft_final_quality_review_service.py`: provider-backed
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_service.py`: provider-backed
   independent final-gate review with universal JSON retry policy.
-- `backend/app/application/source_research_plan_sanitizer.py`: deterministic cleanup
+- `backend/app/drafting/application/evidence/source_research_plan_sanitizer.py`: deterministic cleanup
   that prevents non-URL named sources from becoming URL-read tasks.
 
 Slice 2.16 adds the post-machine editor loop after this final quality gate. It does
@@ -849,29 +859,29 @@ Revision-loop ownership is intentionally split:
 
 - `backend/app/domain/draft_revision_loop.py`: provider-free trace DTOs for loop
   cycles and final loop report.
-- `backend/app/application/draft_revision_loop_config.py`: settings normalization for
+- `backend/app/drafting/application/revision/draft_revision_loop_config.py`: settings normalization for
   the bounded iteration limit.
-- `backend/app/application/draft_revision_goal_evaluator.py`: deterministic comparison
+- `backend/app/drafting/application/revision/draft_revision_goal_evaluator.py`: deterministic comparison
   of repair goals against validation before/after.
-- `backend/app/application/draft_pairwise_ranking_payloads.py`: provider-response
+- `backend/app/drafting/application/revision/draft_pairwise_ranking_payloads.py`: provider-response
   normalization for pairwise ranking decisions, attempts, and editorial dimension
   scores.
-- `backend/app/application/draft_editorial_revision_goals.py`: deterministic projection
+- `backend/app/drafting/application/revision/draft_editorial_revision_goals.py`: deterministic projection
   of critique, evidence interpretation, alternative-angle lessons, and rejected moves
   into editorial improvement goals.
-- `backend/app/application/draft_editorial_revision_evaluator.py`: deterministic read
+- `backend/app/drafting/application/revision/draft_editorial_revision_evaluator.py`: deterministic read
   of pairwise editorial-dimension decisions into resolved/unresolved/regressed goals.
-- `backend/app/application/draft_revision_rejected_moves.py`: structured rejected-move
+- `backend/app/drafting/application/revision/draft_revision_rejected_moves.py`: structured rejected-move
   and anti-regression constraint projection for the next cycle.
-- `backend/app/application/draft_revision_loop_policy.py`: deterministic acceptance,
+- `backend/app/drafting/application/revision/draft_revision_loop_policy.py`: deterministic acceptance,
   stop-reason, failed-cycle, and constraint helpers.
-- `backend/app/application/draft_revision_loop_cycle_runner.py`: thin executor for one
+- `backend/app/drafting/application/revision/draft_revision_loop_cycle_runner.py`: thin executor for one
   revision, deterministic regression, and old-vs-new pairwise comparison operation.
-- `backend/app/application/draft_revision_loop_service.py`: bounded orchestration
+- `backend/app/drafting/application/revision/draft_revision_loop_service.py`: bounded orchestration
   across instruction building, directed revision, deterministic regression, old-vs-new
   pairwise comparison, editorial goal evaluation, rejected moves, and final best
   selection.
-- `backend/app/application/draft_validation_operation_safety.py`: safe mapping of
+- `backend/app/drafting/application/validation/draft_validation_operation_safety.py`: safe mapping of
   provider-heavy validation operation exceptions into failed operation trace results.
 - `backend/app/application/draft_run_step_progress_payload.py`: tiny artifact merge
   helpers used by progress writes that must preserve partial validation payloads.
@@ -921,12 +931,12 @@ Current ownership boundaries:
   interpreted implications, tensions, angle attempts, critique notes, rejected moves,
   open questions, and decisions. Slice 2.15.2 implements provider-free DTOs in
   `backend/app/domain/draft_article_memory.py` and deterministic extraction in
-  `backend/app/application/draft_article_dossier_builder.py`.
+  `backend/app/drafting/application/artifacts/draft_article_dossier_builder.py`.
 - `ContextPackBuilder`: application-owned selectors that build task-specific context
   for each role, such as researcher, strategist, writer, critic, reviewer, and
   another-angle generator. Slice 2.15.2 implements this in
-  `backend/app/application/draft_context_pack_builder.py`, with
-  `backend/app/application/draft_article_memory_service.py` as the thin pipeline
+  `backend/app/drafting/application/artifacts/draft_context_pack_builder.py`, with
+  `backend/app/drafting/application/artifacts/draft_article_memory_service.py` as the thin pipeline
   wrapper.
 - `ModelRoleConfig`: settings/application layer that maps role names to model ids.
   `DEFAULT` and `BACKUP` remain technical fallback concepts, while writer, critic,
@@ -952,7 +962,7 @@ Slice 2.15.6.2 adds a DraftRun budget contract. `Fabula.researchDepth`
 (`light`, `standard`, `deep`, `marketResearch`) expresses editorial research depth,
 while backend `DRAFT_RUN_EXECUTION_MODE` (`smoke`, `standard`, `full`) expresses the
 execution profile. `backend/app/domain/draft_run_budget.py` and
-`backend/app/application/draft_run_budget_resolver.py` resolve an effective
+`backend/app/drafting/application/artifacts/draft_run_budget_resolver.py` resolve an effective
 `DraftRunBudget` and store it in the `context` artifact. Downstream source planning,
 public evidence retrieval, external-ledger merge, material-plan projection, draft
 candidate generation, and smoke revision limits consume that budget. Skipped or
@@ -986,10 +996,10 @@ prompt blob.
 Rule-pack ownership is intentionally split:
 
 - `backend/app/domain/draft_rule_pack.py` defines provider-free DTOs only.
-- `backend/app/application/draft_rule_pack_compiler.py` orchestrates compilation.
-- `backend/app/application/draft_rule_pack_from_registry.py` maps selected registry
+- `backend/app/drafting/application/evidence/draft_rule_pack_compiler.py` orchestrates compilation.
+- `backend/app/drafting/application/evidence/draft_rule_pack_from_registry.py` maps selected registry
   rules back into the compatibility `RulePack` payload.
-- `backend/app/application/draft_rule_pack_sections.py` maps source context into
+- `backend/app/drafting/application/evidence/draft_rule_pack_sections.py` maps source context into
   rule-pack categories.
 - `backend/app/application/draft_run_pipeline.py` only calls the compiler and writes
   `steps[1].artifactPayload`.
@@ -1003,11 +1013,11 @@ that snapshot instead of anonymous prose constraints.
 Rule-registry ownership is intentionally split:
 
 - `backend/app/domain/draft_rule_registry.py` defines provider-free registry DTOs.
-- `backend/app/application/draft_rule_registry_compiler.py` orchestrates registry
+- `backend/app/drafting/application/evidence/draft_rule_registry_compiler.py` orchestrates registry
   compilation from context, SourceLedger, FeasibilityReport, and PostContract.
-- `backend/app/application/draft_rule_registry_contract.py` maps PostContract claims,
+- `backend/app/drafting/application/evidence/draft_rule_registry_contract.py` maps PostContract claims,
   obligations, CTA, thesis, and forbidden moves into rules.
-- `backend/app/application/draft_rule_registry_sections.py` maps brief, publisher,
+- `backend/app/drafting/application/evidence/draft_rule_registry_sections.py` maps brief, publisher,
   topic, fabula, source-ledger, candidate, and source-signal inputs into registry
   rules.
 
@@ -1061,21 +1071,21 @@ interpretation already use the same shared attempt policy.
 Planning ownership is split:
 
 - `backend/app/domain/draft_planning.py` defines provider-free planning DTOs.
-- `backend/app/application/draft_material_plan_service.py` owns material-plan step
+- `backend/app/drafting/application/planning/draft_material_plan_service.py` owns material-plan step
   orchestration.
-- `backend/app/application/material_plan_evidence_projection.py`,
-  `backend/app/application/material_plan_accountability.py`,
-  `backend/app/application/material_plan_retry_policy.py`, and
-  `backend/app/application/material_plan_retry_orchestrator.py` own material-plan
+- `backend/app/drafting/application/planning/material_plan_evidence_projection.py`,
+  `backend/app/drafting/application/planning/material_plan_accountability.py`,
+  `backend/app/drafting/application/planning/material_plan_retry_policy.py`, and
+  `backend/app/drafting/application/planning/material_plan_retry_orchestrator.py` own material-plan
   evidence handoff, accountability, and retry behavior.
-- `backend/app/application/draft_strategy_service.py` owns draft-strategy step
+- `backend/app/drafting/application/planning/draft_strategy_service.py` owns draft-strategy step
   orchestration.
-- `backend/app/application/draft_planning_prompts.py` owns prompt messages.
-- `backend/app/application/draft_planning_audit.py` owns sanitized child `AiRun`
+- `backend/app/drafting/application/planning/draft_planning_prompts.py` owns prompt messages.
+- `backend/app/drafting/application/planning/draft_planning_audit.py` owns sanitized child `AiRun`
   traces.
 - `backend/app/infrastructure/openrouter_json_adapter.py` owns generic provider JSON
   calls.
-- `backend/app/application/openrouter_public_search_service.py` owns public-evidence
+- `backend/app/drafting/application/evidence/openrouter_public_search_service.py` owns public-evidence
   search task orchestration and child `AiRun` audit.
 - `backend/app/infrastructure/openrouter_web_search_adapter.py` owns the OpenRouter
   `openrouter:web_search` server-tool HTTP call and citation parsing.
@@ -1099,19 +1109,19 @@ Candidate ownership is split:
 
 - `backend/app/domain/draft_candidates.py` defines provider-free candidate, score, and
   selection DTOs.
-- `backend/app/application/draft_candidate_direction_service.py` owns deterministic
+- `backend/app/drafting/application/generation/draft_candidate_direction_service.py` owns deterministic
   direction policy.
-- `backend/app/application/draft_candidate_generation_service.py` owns draft-candidate
+- `backend/app/drafting/application/generation/draft_candidate_generation_service.py` owns draft-candidate
   step orchestration and child `AiRun` creation.
-- `backend/app/application/draft_candidate_selection_service.py` owns deterministic v1
+- `backend/app/drafting/application/generation/draft_candidate_selection_service.py` owns deterministic v1
   candidate scoring.
-- `backend/app/application/draft_candidate_publishability.py` owns provider-free
+- `backend/app/drafting/application/generation/draft_candidate_publishability.py` owns provider-free
   publishability, fallback-exclusion, raw-artifact, mojibake, and rewrite-needed
   checks for candidate selection.
-- `backend/app/application/draft_candidate_prompts.py` owns candidate prompt messages.
-- `backend/app/application/draft_candidate_audit.py` owns sanitized child `AiRun`
+- `backend/app/drafting/application/generation/draft_candidate_prompts.py` owns candidate prompt messages.
+- `backend/app/drafting/application/generation/draft_candidate_audit.py` owns sanitized child `AiRun`
   traces.
-- `backend/app/application/deterministic_draft_candidate_service.py` owns candidate
+- `backend/app/drafting/application/generation/deterministic_draft_candidate_service.py` owns candidate
   fallback generation.
 - `backend/app/application/draft_run_draft_step_service.py` owns the legacy
   deterministic draft-step fallback when candidate generation is not wired.
@@ -1126,39 +1136,39 @@ Validation ownership is split:
   critique report, candidate critique, observation, and attempt DTOs.
 - `backend/app/domain/draft_model_roles.py` defines provider-free DraftRun model-role
   and model-selection DTOs.
-- `backend/app/application/draft_validation_linter.py` owns deterministic local
+- `backend/app/drafting/application/validation/draft_validation_linter.py` owns deterministic local
   checks for size, contract signals, evidence, rules, and publishability.
-- `backend/app/application/draft_attribution_markers.py` owns deterministic
+- `backend/app/drafting/application/validation/draft_attribution_markers.py` owns deterministic
   source-marker extraction and per-claim attribution matching for external ledger
   claims.
-- `backend/app/application/draft_attribution_requirements.py` owns deterministic
+- `backend/app/drafting/application/validation/draft_attribution_requirements.py` owns deterministic
   normalization of material-plan attribution requirements into source-backed claim
   ids and unresolved diagnostic handoff metadata.
-- `backend/app/application/draft_validation_evidence.py` owns deterministic
+- `backend/app/drafting/application/validation/draft_validation_evidence.py` owns deterministic
   evidence-use and attribution findings, keeping attribution handoff logic out of
   the main linter.
-- `backend/app/application/draft_validator_orchestrator.py` owns candidate iteration
+- `backend/app/drafting/application/validation/draft_validator_orchestrator.py` owns candidate iteration
   and report assembly.
-- `backend/app/application/draft_llm_validation_service.py` owns report-only
+- `backend/app/drafting/application/validation/draft_llm_validation_service.py` owns report-only
   provider-backed validation orchestration.
-- `backend/app/application/draft_llm_validation_prompts.py` owns validator prompt
+- `backend/app/drafting/application/validation/draft_llm_validation_prompts.py` owns validator prompt
   messages.
-- `backend/app/application/draft_llm_validation_audit.py` owns sanitized child
+- `backend/app/drafting/application/validation/draft_llm_validation_audit.py` owns sanitized child
   `AiRun` traces for validator attempts.
-- `backend/app/application/draft_llm_validation_parser.py` normalizes provider JSON
+- `backend/app/drafting/application/validation/draft_llm_validation_parser.py` normalizes provider JSON
   into standard validation findings.
-- `backend/app/application/draft_llm_validation_observations.py` owns positive/pass
+- `backend/app/drafting/application/validation/draft_llm_validation_observations.py` owns positive/pass
   observation detection so non-actionable LLM notes do not become warning findings.
-- `backend/app/application/draft_editorial_critique_service.py` owns report-only
+- `backend/app/drafting/application/validation/draft_editorial_critique_service.py` owns report-only
   provider-backed prosecutor/editor critique orchestration.
-- `backend/app/application/draft_editorial_critique_prompts.py`,
+- `backend/app/drafting/application/validation/draft_editorial_critique_prompts.py`,
   `draft_editorial_critique_parser.py`, and `draft_editorial_critique_audit.py` own
   critic prompt shape, provider JSON normalization, and sanitized child `AiRun`
   traces.
-- `backend/app/application/draft_validation_step_service.py` composes deterministic
+- `backend/app/drafting/application/validation/draft_validation_step_service.py` composes deterministic
   validation, LLM validation, editorial critique, and ranking/revision into the
   existing `validation` step artifact.
-- `backend/app/application/draft_validation_step.py` remains a compatibility bridge
+- `backend/app/drafting/application/validation/draft_validation_step.py` remains a compatibility bridge
   for older deterministic-only validation call sites.
 
 Slice 2.12 inserts `RhetoricalPlans` between `DraftStrategy` and `DraftCandidates`.
@@ -1169,18 +1179,18 @@ candidate must reference the `rhetoricalPlanId` it executes.
 Rhetorical-plan ownership is split:
 
 - `backend/app/domain/draft_rhetorical_plan.py` defines provider-free plan DTOs.
-- `backend/app/application/draft_rhetorical_plan_service.py` is the thin step facade.
-- `backend/app/application/draft_rhetorical_plan_retry.py` owns OpenRouter JSON retry
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_service.py` is the thin step facade.
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_retry.py` owns OpenRouter JSON retry
   attempts and deterministic fallback discipline.
 - `backend/app/application/json_step_retry_policy.py` owns the reusable attempt
   sequence for JSON-producing LLM steps.
-- `backend/app/application/draft_rhetorical_plan_prompts.py` owns plan prompt
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_prompts.py` owns plan prompt
   messages.
-- `backend/app/application/draft_rhetorical_plan_audit.py` owns sanitized child
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_audit.py` owns sanitized child
   `AiRun` traces.
-- `backend/app/application/deterministic_rhetorical_plan_service.py` owns fallback
+- `backend/app/drafting/application/planning/deterministic_rhetorical_plan_service.py` owns fallback
   plan generation.
-- `backend/app/application/deterministic_rhetorical_plan_step_service.py` owns the
+- `backend/app/drafting/application/planning/deterministic_rhetorical_plan_step_service.py` owns the
   compatibility step adapter used when provider-backed planning is not wired.
 
 Slice 2.12.1 fixes the orchestration discipline for long-running queued runs.
@@ -1289,43 +1299,43 @@ The public-evidence research layer has its own ownership boundary:
   `ResearchPlan` DTOs;
 - `backend/app/domain/draft_public_evidence.py` defines provider-free
   `PublicEvidenceBatch`, attempts, items, and warnings;
-- `backend/app/application/public_evidence_retrieval_service.py` executes the public
+- `backend/app/drafting/application/evidence/public_evidence_retrieval_service.py` executes the public
   evidence step through application ports and marks unconfigured search honestly;
-- `backend/app/application/public_evidence_query_builder.py` builds search queries
+- `backend/app/drafting/application/evidence/public_evidence_query_builder.py` builds search queries
   from human research instructions and post context instead of technical target ids;
-- `backend/app/application/public_evidence_relevance.py` applies deterministic
+- `backend/app/drafting/application/evidence/public_evidence_relevance.py` applies deterministic
   relevance filtering before citations become public evidence candidates;
-- `backend/app/application/public_evidence_ports.py` defines URL/search ports and
+- `backend/app/drafting/application/evidence/public_evidence_ports.py` defines URL/search ports and
   search result contracts for the public-evidence step;
-- `backend/app/application/disabled_public_search_adapter.py` owns the explicit
+- `backend/app/drafting/application/evidence/disabled_public_search_adapter.py` owns the explicit
   `notConfigured` fallback when search is disabled;
-- `backend/app/application/openrouter_public_search_service.py` executes configured
+- `backend/app/drafting/application/evidence/openrouter_public_search_service.py` executes configured
   OpenRouter search tasks and records child `AiRun` audit;
 - `backend/app/infrastructure/public_url_reader.py` owns direct URL HTTP reads and
   lightweight text extraction;
 - `backend/app/infrastructure/openrouter_web_search_adapter.py` owns OpenRouter
   `openrouter:web_search` HTTP calls and citation parsing;
-- `backend/app/application/source_intent_normalizer.py` owns deterministic
+- `backend/app/drafting/application/evidence/source_intent_normalizer.py` owns deterministic
   line-by-line classification;
-- `backend/app/application/source_research_plan_service.py` owns the OpenRouter /
+- `backend/app/drafting/application/evidence/source_research_plan_service.py` owns the OpenRouter /
   fallback research-plan step orchestration;
-- `backend/app/application/source_research_prompts.py` owns research-plan prompt
+- `backend/app/drafting/application/evidence/source_research_prompts.py` owns research-plan prompt
   messages;
-- `backend/app/application/source_research_audit.py` owns sanitized child `AiRun`
+- `backend/app/drafting/application/evidence/source_research_audit.py` owns sanitized child `AiRun`
   traces;
-- `backend/app/application/deterministic_source_research_plan_service.py` and
-  `backend/app/application/deterministic_source_research_step_service.py` own local
+- `backend/app/drafting/application/evidence/deterministic_source_research_plan_service.py` and
+  `backend/app/drafting/application/evidence/deterministic_source_research_step_service.py` own local
   fallback planning;
 - `backend/app/domain/draft_evidence_synthesis.py` defines provider-free
   `EvidenceSynthesis` and external evidence claim DTOs;
-- `backend/app/application/deterministic_external_evidence_synthesis.py`,
-  `backend/app/application/deterministic_external_evidence_synthesis_step_service.py`,
-  and `backend/app/application/external_evidence_synthesis_prompts.py` own fallback
+- `backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis.py`,
+  `backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis_step_service.py`,
+  and `backend/app/drafting/application/evidence/external_evidence_synthesis_prompts.py` own fallback
   synthesis and prompt construction;
-- `backend/app/application/external_evidence_synthesis_service.py` owns OpenRouter
-  synthesis, while `backend/app/application/draft_public_evidence_step_service.py`
+- `backend/app/drafting/application/evidence/external_evidence_synthesis_service.py` owns OpenRouter
+  synthesis, while `backend/app/drafting/application/evidence/draft_public_evidence_step_service.py`
   coordinates retrieval, synthesis, and merge for the `publicEvidence` step;
-- `backend/app/application/source_ledger_external_evidence_merger.py` merges accepted
+- `backend/app/drafting/application/evidence/source_ledger_external_evidence_merger.py` merges accepted
   public evidence into the enriched source ledger;
 - `backend/app/infrastructure/draft_run_pipeline_provider_services.py` owns
   provider-backed DraftRun dependency wiring for public evidence;
@@ -1352,70 +1362,70 @@ Concrete queued drafting files:
 - `backend/app/application/draft_run_step_progress.py`
 - `backend/app/application/draft_run_step_progress_payload.py`
 - `backend/app/application/draft_run_staleness.py`
-- `backend/app/application/draft_run_payloads.py`
-- `backend/app/application/draft_run_context_payloads.py`
-- `backend/app/application/draft_run_context_builder.py`
-- `backend/app/application/draft_source_ledger_builder.py`
-- `backend/app/application/draft_source_ledger_sections.py`
-- `backend/app/application/draft_public_evidence_step_service.py`
-- `backend/app/application/deterministic_external_evidence_synthesis.py`
-- `backend/app/application/deterministic_external_evidence_synthesis_step_service.py`
-- `backend/app/application/external_evidence_synthesis_prompts.py`
-- `backend/app/application/external_evidence_synthesis_service.py`
-- `backend/app/application/source_ledger_external_evidence_merger.py`
-- `backend/app/application/evidence_interpretation_service.py`
-- `backend/app/application/evidence_interpretation_prompts.py`
-- `backend/app/application/evidence_interpretation_audit.py`
-- `backend/app/application/deterministic_evidence_interpretation.py`
-- `backend/app/application/deterministic_evidence_interpretation_step_service.py`
-- `backend/app/application/evidence_interpretation_context_cards.py`
+- `backend/app/drafting/application/artifacts/draft_run_payloads.py`
+- `backend/app/drafting/application/artifacts/draft_run_context_payloads.py`
+- `backend/app/drafting/application/artifacts/draft_run_context_builder.py`
+- `backend/app/drafting/application/artifacts/draft_source_ledger_builder.py`
+- `backend/app/drafting/application/artifacts/draft_source_ledger_sections.py`
+- `backend/app/drafting/application/evidence/draft_public_evidence_step_service.py`
+- `backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis.py`
+- `backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis_step_service.py`
+- `backend/app/drafting/application/evidence/external_evidence_synthesis_prompts.py`
+- `backend/app/drafting/application/evidence/external_evidence_synthesis_service.py`
+- `backend/app/drafting/application/evidence/source_ledger_external_evidence_merger.py`
+- `backend/app/drafting/application/evidence/evidence_interpretation_service.py`
+- `backend/app/drafting/application/evidence/evidence_interpretation_prompts.py`
+- `backend/app/drafting/application/evidence/evidence_interpretation_audit.py`
+- `backend/app/drafting/application/evidence/deterministic_evidence_interpretation.py`
+- `backend/app/drafting/application/evidence/deterministic_evidence_interpretation_step_service.py`
+- `backend/app/drafting/application/evidence/evidence_interpretation_context_cards.py`
 - `backend/app/infrastructure/draft_run_pipeline_provider_services.py`
-- `backend/app/application/draft_feasibility_gate.py`
-- `backend/app/application/draft_feasibility_policy.py`
-- `backend/app/application/draft_post_contract_builder.py`
-- `backend/app/application/publication_size_contract_resolver.py`
-- `backend/app/application/draft_quality_gate.py`
-- `backend/app/application/draft_rule_pack_compiler.py`
-- `backend/app/application/draft_rule_pack_sections.py`
-- `backend/app/application/draft_rule_registry_size.py`
-- `backend/app/application/draft_material_plan_service.py`
-- `backend/app/application/draft_strategy_service.py`
-- `backend/app/application/draft_candidate_generation_service.py`
-- `backend/app/application/draft_candidate_direction_service.py`
-- `backend/app/application/draft_candidate_selection_service.py`
-- `backend/app/application/draft_candidate_publishability.py`
-- `backend/app/application/draft_validation_linter.py`
-- `backend/app/application/draft_attribution_markers.py`
-- `backend/app/application/draft_attribution_requirements.py`
-- `backend/app/application/draft_validation_evidence.py`
-- `backend/app/application/draft_validator_orchestrator.py`
-- `backend/app/application/draft_validation_step.py`
-- `backend/app/application/draft_planning_prompts.py`
-- `backend/app/application/draft_planning_audit.py`
-- `backend/app/application/draft_candidate_prompts.py`
-- `backend/app/application/draft_candidate_audit.py`
-- `backend/app/application/deterministic_draft_candidate_service.py`
+- `backend/app/drafting/application/evidence/draft_feasibility_gate.py`
+- `backend/app/drafting/application/evidence/draft_feasibility_policy.py`
+- `backend/app/drafting/application/evidence/draft_post_contract_builder.py`
+- `backend/app/drafting/application/evidence/publication_size_contract_resolver.py`
+- `backend/app/drafting/application/evidence/draft_quality_gate.py`
+- `backend/app/drafting/application/evidence/draft_rule_pack_compiler.py`
+- `backend/app/drafting/application/evidence/draft_rule_pack_sections.py`
+- `backend/app/drafting/application/evidence/draft_rule_registry_size.py`
+- `backend/app/drafting/application/planning/draft_material_plan_service.py`
+- `backend/app/drafting/application/planning/draft_strategy_service.py`
+- `backend/app/drafting/application/generation/draft_candidate_generation_service.py`
+- `backend/app/drafting/application/generation/draft_candidate_direction_service.py`
+- `backend/app/drafting/application/generation/draft_candidate_selection_service.py`
+- `backend/app/drafting/application/generation/draft_candidate_publishability.py`
+- `backend/app/drafting/application/validation/draft_validation_linter.py`
+- `backend/app/drafting/application/validation/draft_attribution_markers.py`
+- `backend/app/drafting/application/validation/draft_attribution_requirements.py`
+- `backend/app/drafting/application/validation/draft_validation_evidence.py`
+- `backend/app/drafting/application/validation/draft_validator_orchestrator.py`
+- `backend/app/drafting/application/validation/draft_validation_step.py`
+- `backend/app/drafting/application/planning/draft_planning_prompts.py`
+- `backend/app/drafting/application/planning/draft_planning_audit.py`
+- `backend/app/drafting/application/generation/draft_candidate_prompts.py`
+- `backend/app/drafting/application/generation/draft_candidate_audit.py`
+- `backend/app/drafting/application/generation/deterministic_draft_candidate_service.py`
 - `backend/app/application/draft_run_pipeline_ports.py`
 - `backend/app/application/draft_run_draft_step_service.py`
-- `backend/app/application/deterministic_draft_planning_service.py`
-- `backend/app/application/deterministic_draft_planning_step_services.py`
-- `backend/app/application/draft_llm_validation_service.py`
-- `backend/app/application/draft_llm_validation_prompts.py`
-- `backend/app/application/draft_llm_validation_audit.py`
-- `backend/app/application/draft_llm_validation_parser.py`
-- `backend/app/application/draft_validation_step_service.py`
-- `backend/app/application/draft_validation_alternative_flow.py`
-- `backend/app/application/draft_validation_operation_safety.py`
-- `backend/app/application/draft_final_quality_assessment.py`
-- `backend/app/application/draft_final_quality_attribution.py`
-- `backend/app/application/draft_final_quality_contract.py`
-- `backend/app/application/draft_final_quality_gate.py`
-- `backend/app/application/draft_final_quality_gate_evaluator.py`
-- `backend/app/application/draft_final_quality_gate_payloads.py`
-- `backend/app/application/draft_final_quality_repair_loop.py`
-- `backend/app/application/draft_final_quality_review_parser.py`
-- `backend/app/application/draft_final_quality_review_prompts.py`
-- `backend/app/application/draft_final_quality_review_service.py`
+- `backend/app/drafting/application/planning/deterministic_draft_planning_service.py`
+- `backend/app/drafting/application/planning/deterministic_draft_planning_step_services.py`
+- `backend/app/drafting/application/validation/draft_llm_validation_service.py`
+- `backend/app/drafting/application/validation/draft_llm_validation_prompts.py`
+- `backend/app/drafting/application/validation/draft_llm_validation_audit.py`
+- `backend/app/drafting/application/validation/draft_llm_validation_parser.py`
+- `backend/app/drafting/application/validation/draft_validation_step_service.py`
+- `backend/app/drafting/application/validation/draft_validation_alternative_flow.py`
+- `backend/app/drafting/application/validation/draft_validation_operation_safety.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_assessment.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_attribution.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_contract.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate_evaluator.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_gate_payloads.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_repair_loop.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_parser.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_prompts.py`
+- `backend/app/drafting/application/final_quality/draft_final_quality_review_service.py`
 - `backend/app/domain/draft_run_steps.py`
 - `backend/app/domain/draft_run_context.py`
 - `backend/app/domain/draft_source_ledger.py`
@@ -1427,9 +1437,9 @@ Concrete queued drafting files:
 - `backend/app/domain/draft_validation.py`
 - `backend/app/domain/draft_llm_validation.py`
 - `backend/app/domain/draft_model_roles.py`
-- `backend/app/application/draft_model_role_resolver.py`
-- `backend/app/application/draft_generation_params.py`
-- `backend/app/application/draft_provider_error_utils.py`
+- `backend/app/drafting/application/operations/draft_model_role_resolver.py`
+- `backend/app/drafting/application/generation/draft_generation_params.py`
+- `backend/app/drafting/application/operations/draft_provider_error_utils.py`
 - `backend/app/infrastructure/openrouter_json_adapter.py`
 - `backend/app/infrastructure/draft_run_pipeline_factory.py`
 - `backend/app/infrastructure/sqlite_draft_run_repository.py`

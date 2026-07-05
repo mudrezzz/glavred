@@ -17,6 +17,12 @@ For existing ids, use `$draft-run-pipeline-diagnostics` directly.
 
 1. **Preflight**
    - Run `git status --short --branch` and note uncommitted changes.
+   - When the evaluation may lead to backend/DraftRun architecture diagnosis, read
+     `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`,
+     `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`,
+     `backend/app/drafting/README.md`,
+     `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`, and
+     `docs/developer/BACKEND_MODULE_TEMPLATE.md`.
    - Check backend health: `Invoke-RestMethod http://localhost:8000/api/health`.
    - If the run will use the UI, confirm the frontend is reachable at the current app
      URL, usually `http://localhost:5176`.
@@ -51,6 +57,9 @@ For existing ids, use `$draft-run-pipeline-diagnostics` directly.
    - Then follow `$draft-run-pipeline-diagnostics` for the full analysis: inspect
      implicated code, compare with `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`
      and `ROADMAP.md`, and decide if the plan continues or needs a repair slice.
+     For backend fixes, distinguish canonical package owner under
+     `backend/app/drafting` from active compatibility facade, migrated thin shim, or
+     remaining explicit debt, and include `npm run test:architecture` in the proof.
 
 ## What to Report
 

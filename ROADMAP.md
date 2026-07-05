@@ -6884,7 +6884,7 @@ Status:
 
 ### Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening
 
-- Status: Ready
+- Status: Done
 - Goal: Make the new backend architecture durable for future agents and contributors.
 - User value:
   - A new contributor can understand backend structure from docs and cannot accidentally add code in the old broken style without a failing check.
@@ -6913,10 +6913,11 @@ Status:
   - Agents have explicit backend workflow instructions before future runtime work resumes.
 - Risks:
   - Too much process can slow delivery; keep checks mechanical and actionable.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -7601,6 +7602,7 @@ Status:
 - Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules. Completed 2026-07-05.
 - Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration. Completed 2026-07-05.
 - Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration. Completed 2026-07-05.
+- Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7629,4 +7631,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening`.
+Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.

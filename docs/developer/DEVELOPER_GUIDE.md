@@ -118,6 +118,14 @@ The recovery rule is strict:
   trace-safe payloads, and shared `LlmOperationIncident` metadata instead of leaking
   raw provider exceptions.
 
+Backend module templates and review checklists live in
+`docs/developer/BACKEND_MODULE_TEMPLATE.md`. Use that document before adding or
+moving backend modules. It defines the required ownership header, service/policy/
+component/DTO module roles, migrated-shim rules, and the Provider-Heavy Review
+Provider-Heavy Review Checklist for shared operation governance, incidents, payload budgets,
+timeout/runtime budgets, safe errors, and no raw provider calls in bounded
+application modules.
+
 `backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
 adding a DraftRun module, read `backend/app/drafting/README.md` and
 `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`, then place the module in
@@ -154,6 +162,14 @@ Migrated DraftRun runtime clusters are canonical under:
 
 Old migrated `backend.app.application.*` paths are compatibility shims only. They may
 keep old imports working, but they must not regain local behavior.
+
+Legacy backend files have three statuses:
+
+- active compatibility facade: an old entrypoint still owns compatibility wiring;
+- migrated thin shim: import/re-export only, with no `def`, `class`, provider call,
+  fallback logic, or trace mutation;
+- remaining explicit debt: explicitly listed in the migration inventory or operation
+  inventory with owner, reason, and removal slice.
 
 New DraftRun step code should use the unified contracts in
 `backend.app.drafting.application.steps.contracts`: `DraftStepContext`,
@@ -542,15 +558,15 @@ Current backend files:
   redaction, and repository port.
 - `backend/app/application/portfolio_service.py`: dev auth, session lookup, project
   access checks, and workspace snapshot use cases.
-- `backend/app/application/draft_generation_service.py`: OpenRouter/fallback
+- `backend/app/drafting/application/generation/draft_generation_service.py`: OpenRouter/fallback
   orchestration for draft generation.
-- `backend/app/application/draft_human_comment_revision_service.py`: post-run
+- `backend/app/drafting/application/hitl/draft_human_comment_revision_service.py`: post-run
   writer-role revision from active draft version plus editor comment and compact
   machine trace context.
-- `backend/app/application/draft_human_comment_quality_service.py`: post-run
+- `backend/app/drafting/application/hitl/draft_human_comment_quality_service.py`: post-run
   review-role diagnostic check for comment compliance, source-marker preservation,
   public-prose regression, internal jargon leaks, and attempt trace.
-- `backend/app/application/deterministic_draft_service.py`: deterministic backend
+- `backend/app/drafting/application/generation/deterministic_draft_service.py`: deterministic backend
   fallback draft generation.
 - `backend/app/application/draft_run_service.py`: durable run creation and dispatch
   orchestration.
@@ -562,10 +578,10 @@ Current backend files:
   sink for long-running step artifacts.
 - `backend/app/application/draft_run_staleness.py`: computed stale-state inspector for
   queued/running runs with no recent timestamp progress.
-- `backend/app/application/draft_run_payloads.py`: brief/model/draft payload mapping.
-- `backend/app/application/draft_run_context_payloads.py`: context snapshot payload
+- `backend/app/drafting/application/artifacts/draft_run_payloads.py`: brief/model/draft payload mapping.
+- `backend/app/drafting/application/artifacts/draft_run_context_payloads.py`: context snapshot payload
   mapping.
-- `backend/app/application/draft_run_context_builder.py`: normalized context summary
+- `backend/app/drafting/application/artifacts/draft_run_context_builder.py`: normalized context summary
   builder for the worker `context` step.
 - `backend/app/domain/health.py`: provider-free health value objects.
 - `backend/app/domain/ai_run.py`: provider-agnostic AI run entity and enums.
@@ -1320,7 +1336,7 @@ policy, forbidden inferences, and locked editorial invariants to judge generated
 After Slice 2.15 the quality direction shifts from defensive repair to an editorial
 lab that creates stronger post ideas. Slice 2.15.1 introduces the first boundary:
 `backend/app/domain/draft_model_roles.py` and
-`backend/app/application/draft_model_role_resolver.py` make model choice a role policy.
+`backend/app/drafting/application/operations/draft_model_role_resolver.py` make model choice a role policy.
 Empty role settings fall back to `OPENROUTER_DEFAULT_MODEL`; backup retry attempts use
 `OPENROUTER_BACKUP_MODEL`; public search uses `OPENROUTER_WEB_SEARCH_MODEL`.
 Keep the existing spine, but use these boundaries before expanding the loop further:
@@ -1333,11 +1349,11 @@ Keep the existing spine, but use these boundaries before expanding the loop furt
   tensions, angle options, critique, decisions, rejected moves, voice notes, and open
   questions. Implemented in Slice 2.15.2 with
   `backend/app/domain/draft_article_memory.py` and
-  `backend/app/application/draft_article_dossier_builder.py`.
+  `backend/app/drafting/application/artifacts/draft_article_dossier_builder.py`.
 - `ContextPackBuilder`: task-specific prompt context for each role. Model calls should
   receive a compact pack for the current job, not raw DraftRun JSON and not only the
   latest artifact. Implemented in Slice 2.15.2 with
-  `backend/app/application/draft_context_pack_builder.py` and the thin
+  `backend/app/drafting/application/artifacts/draft_context_pack_builder.py` and the thin
   `draft_article_memory_service.py` pipeline wrapper.
 - `EvidenceInterpretation`: public evidence becomes implications, limits, tensions,
   usable examples, reader-value hooks, and forbidden overclaims before it is used by
@@ -1433,7 +1449,7 @@ Slice 2.5 context contract:
 - The HTTP payload mapper in `src/infrastructure/draftRunRequestPayload.ts` sends
   `brief`, `editorialModel`, and optional `draftContext` to `POST /api/draft-runs`.
 - Backend stores the raw snapshot in `DraftRun.requestPayload` and normalizes it in
-  `backend/app/application/draft_run_context_builder.py`.
+  `backend/app/drafting/application/artifacts/draft_run_context_builder.py`.
 - The worker's `context` step artifact should show work item, plan slot, candidate
   if available, source signal, topic, fabula, publisher rule groups,
   author-position evidence, and `missingContext`.
@@ -1513,11 +1529,11 @@ machine-readable contract future validators and directed revisions must consume:
 Rule-registry ownership is split so near-limit modules stay stable:
 
 - `backend/app/domain/draft_rule_registry.py` defines provider-free DTOs.
-- `backend/app/application/draft_rule_registry_compiler.py` orchestrates compilation.
-- `backend/app/application/draft_rule_registry_contract.py` maps PostContract rules.
-- `backend/app/application/draft_rule_registry_sections.py` maps brief, publisher,
+- `backend/app/drafting/application/evidence/draft_rule_registry_compiler.py` orchestrates compilation.
+- `backend/app/drafting/application/evidence/draft_rule_registry_contract.py` maps PostContract rules.
+- `backend/app/drafting/application/evidence/draft_rule_registry_sections.py` maps brief, publisher,
   topic, fabula, source-ledger, candidate, and source-signal rules.
-- `backend/app/application/draft_rule_pack_from_registry.py` maps registry rules back
+- `backend/app/drafting/application/evidence/draft_rule_pack_from_registry.py` maps registry rules back
   to the compatibility RulePack.
 
 Slice 2.11.1 adds publication-size contracts:
@@ -1530,8 +1546,8 @@ Slice 2.11.1 adds publication-size contracts:
 - Frontend sends `draftContext.publicationSize` through
   `src/application/draftRunPublicationContext.ts`.
 - Backend resolves `PostContract.publicationSizeContract` in
-  `backend/app/application/publication_size_contract_resolver.py`.
-- `backend/app/application/draft_rule_registry_size.py` emits deterministic size rule
+  `backend/app/drafting/application/evidence/publication_size_contract_resolver.py`.
+- `backend/app/drafting/application/evidence/draft_rule_registry_size.py` emits deterministic size rule
   ids for hard max, target range, paragraphs, sections, and density.
 - Future validators must reference these rule ids; do not re-derive post size from
   free-text prompt instructions.
@@ -1578,17 +1594,17 @@ which plan was sent to the model. Do not add new candidate directions that bypas
 Rhetorical-plan ownership is split:
 
 - `backend/app/domain/draft_rhetorical_plan.py`: provider-free plan DTOs.
-- `backend/app/application/draft_rhetorical_plan_service.py`: thin facade for the
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_service.py`: thin facade for the
   rhetorical-plan step.
-- `backend/app/application/draft_rhetorical_plan_retry.py`: OpenRouter JSON retry and
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_retry.py`: OpenRouter JSON retry and
   fallback discipline for `rhetoricalPlans`.
 - `backend/app/application/json_step_retry_policy.py`: shared JSON attempt sequence
   helper.
-- `backend/app/application/draft_rhetorical_plan_service.py`: step orchestration.
-- `backend/app/application/draft_rhetorical_plan_prompts.py`: prompt messages.
-- `backend/app/application/draft_rhetorical_plan_audit.py`: sanitized child traces.
-- `backend/app/application/deterministic_rhetorical_plan_service.py`: fallback plans.
-- `backend/app/application/deterministic_rhetorical_plan_step_service.py`: default
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_service.py`: step orchestration.
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_prompts.py`: prompt messages.
+- `backend/app/drafting/application/planning/draft_rhetorical_plan_audit.py`: sanitized child traces.
+- `backend/app/drafting/application/planning/deterministic_rhetorical_plan_service.py`: fallback plans.
+- `backend/app/drafting/application/planning/deterministic_rhetorical_plan_step_service.py`: default
   pipeline adapter.
 
 To debug Slice 2.9, inspect `steps[0].artifactPayload.sourceLedger`. It is written

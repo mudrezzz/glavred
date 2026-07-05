@@ -1684,6 +1684,10 @@ const BACKEND_ARCHITECTURE_AS_IS_PATH = "docs/architecture/BACKEND_ARCHITECTURE_
 const BACKEND_ARCHITECTURE_TARGET_PATH = "docs/architecture/BACKEND_ARCHITECTURE_TARGET.md";
 const BACKEND_BOUNDED_CONTEXTS_ADR_PATH =
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md";
+const AGENTS_PATH = "AGENTS.md";
+const CONTRIBUTING_PATH = "docs/contributor/CONTRIBUTING.md";
+const DEVELOPER_GUIDE_PATH = "docs/developer/DEVELOPER_GUIDE.md";
+const BACKEND_MODULE_TEMPLATE_PATH = "docs/developer/BACKEND_MODULE_TEMPLATE.md";
 const UNIVERSAL_LLM_OPERATION_GOVERNANCE_ADR_PATH =
   "docs/adr/2026-07-04-universal-llm-operation-governance.md";
 const DRAFTRUN_PAYLOAD_BUDGET_ADR_PATH =
@@ -1714,6 +1718,14 @@ const DRAFT_RUN_PIPELINE_AS_IS_PATH =
   "docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md";
 const DRAFT_RUN_DIAGNOSTICS_SKILL_PATH =
   ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md";
+const PROJECT_ONBOARDING_SKILL_PATH = ".agents/skills/project-onboarding/SKILL.md";
+const SLICE_IMPLEMENTATION_SKILL_PATH = ".agents/skills/slice-implementation/SKILL.md";
+const GLAVRED_PROJECT_IMMERSION_SKILL_PATH =
+  ".agents/skills/glavred-project-immersion/SKILL.md";
+const DRAFT_RUN_EVALUATION_SKILL_PATH =
+  ".agents/skills/draft-run-pipeline-evaluation/SKILL.md";
+const DRAFT_RUN_AUTOFIX_SKILL_PATH =
+  ".agents/skills/draft-run-pipeline-autofix/SKILL.md";
 const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
   "backend/app/drafting/application/evidence/evidence_interpretation_service.py",
   "backend/app/drafting/application/validation/draft_editorial_critique_service.py",
@@ -3356,14 +3368,14 @@ for (const fragment of [
 
 const backendAsIsSource = readText(BACKEND_ARCHITECTURE_AS_IS_PATH);
 const backendTargetSource = readText(BACKEND_ARCHITECTURE_TARGET_PATH);
-const developerGuideSource = readText("docs/developer/DEVELOPER_GUIDE.md");
+const developerGuideSource = readText(DEVELOPER_GUIDE_PATH);
 const draftrunLegacySurfaceAdrSource = readText(DRAFTRUN_LEGACY_SURFACE_ADR_PATH);
 for (const [docPath, docSource] of [
   [BACKEND_ARCHITECTURE_AS_IS_PATH, backendAsIsSource],
   [BACKEND_ARCHITECTURE_TARGET_PATH, backendTargetSource],
   [DRAFTING_BACKEND_COMPONENT_MAP_PATH, draftingComponentMapSource],
   [DRAFTING_BACKEND_README_PATH, draftingReadmeSource],
-  ["docs/developer/DEVELOPER_GUIDE.md", developerGuideSource],
+  [DEVELOPER_GUIDE_PATH, developerGuideSource],
   [DRAFTRUN_LEGACY_SURFACE_ADR_PATH, draftrunLegacySurfaceAdrSource],
 ]) {
   for (const fragment of [
@@ -3376,6 +3388,90 @@ for (const [docPath, docSource] of [
     assert(
       docSource.includes(fragment),
       `${docPath} must document legacy DraftRun surface migration rule: ${fragment}`
+    );
+  }
+}
+
+const backendModuleTemplateSource = readText(BACKEND_MODULE_TEMPLATE_PATH);
+for (const fragment of [
+  "Backend Module Template",
+  "Owner",
+  "Used by",
+  "Does not own",
+  "Architecture doc",
+  "Service modules own",
+  "Policy modules own",
+  "Component modules own",
+  "DTO modules own",
+  "Compatibility shims are import/re-export only",
+  "Provider-Heavy Review Checklist",
+  "LlmOperationEnvelope",
+  "LlmOperationIncident",
+  "payloadBudgetStatus=debtAllowlisted",
+  "runtimeBudget",
+  ".complete_json(",
+  "npm run test:architecture",
+]) {
+  assert(
+    backendModuleTemplateSource.includes(fragment),
+    `${BACKEND_MODULE_TEMPLATE_PATH} must document backend module/review checklist fragment: ${fragment}`
+  );
+}
+
+for (const [docPath, docSource] of [
+  [AGENTS_PATH, readText(AGENTS_PATH)],
+  [CONTRIBUTING_PATH, readText(CONTRIBUTING_PATH)],
+  [DEVELOPER_GUIDE_PATH, developerGuideSource],
+  [BACKEND_ARCHITECTURE_AS_IS_PATH, backendAsIsSource],
+  [BACKEND_ARCHITECTURE_TARGET_PATH, backendTargetSource],
+  [SAO_PATH, readText(SAO_PATH)],
+  [DRAFTING_BACKEND_README_PATH, draftingReadmeSource],
+  [DRAFTING_BACKEND_COMPONENT_MAP_PATH, draftingComponentMapSource],
+]) {
+  for (const fragment of [
+    "docs/developer/BACKEND_MODULE_TEMPLATE.md",
+    "active compatibility facade",
+    "migrated thin shim",
+    "remaining explicit debt",
+    "Provider-Heavy Review Checklist",
+    "npm run test:architecture",
+  ]) {
+    assert(
+      docSource.includes(fragment),
+      `${docPath} must document backend documentation/agent guardrail fragment: ${fragment}`
+    );
+  }
+}
+
+for (const [skillPath, skillSource] of [
+  [PROJECT_ONBOARDING_SKILL_PATH, readText(PROJECT_ONBOARDING_SKILL_PATH)],
+  [SLICE_IMPLEMENTATION_SKILL_PATH, readText(SLICE_IMPLEMENTATION_SKILL_PATH)],
+  [GLAVRED_PROJECT_IMMERSION_SKILL_PATH, readText(GLAVRED_PROJECT_IMMERSION_SKILL_PATH)],
+  [DRAFT_RUN_DIAGNOSTICS_SKILL_PATH, draftRunDiagnosticsSkillSource],
+  [DRAFT_RUN_EVALUATION_SKILL_PATH, readText(DRAFT_RUN_EVALUATION_SKILL_PATH)],
+  [DRAFT_RUN_AUTOFIX_SKILL_PATH, readText(DRAFT_RUN_AUTOFIX_SKILL_PATH)],
+]) {
+  for (const fragment of [
+    "docs/developer/BACKEND_MODULE_TEMPLATE.md",
+    "backend/app/drafting",
+    "migrated thin shim",
+    "npm run test:architecture",
+  ]) {
+    assert(
+      skillSource.includes(fragment),
+      `${skillPath} must teach backend documentation/agent strict-mode fragment: ${fragment}`
+    );
+  }
+}
+
+for (const [skillPath, skillSource] of [
+  [DRAFT_RUN_DIAGNOSTICS_SKILL_PATH, draftRunDiagnosticsSkillSource],
+  [DRAFT_RUN_AUTOFIX_SKILL_PATH, readText(DRAFT_RUN_AUTOFIX_SKILL_PATH)],
+]) {
+  for (const fragment of ["canonical package owner", "guardrail bug"]) {
+    assert(
+      skillSource.includes(fragment),
+      `${skillPath} must distinguish canonical owners from migrated shims: ${fragment}`
     );
   }
 }
@@ -3487,108 +3583,108 @@ const requiredSaoFragments = [
   "backend/app/api/portfolio_contracts.py",
   "backend/app/application/health_service.py",
   "backend/app/application/ai_run_service.py",
-  "backend/app/application/draft_generation_service.py",
+  "backend/app/drafting/application/generation/draft_generation_service.py",
   "backend/app/application/portfolio_service.py",
   "backend/app/application/roadmap_tracker.py",
-  "backend/app/application/draft_run_service.py",
-  "backend/app/application/draft_run_pipeline.py",
-  "backend/app/application/draft_validation_linter.py",
-  "backend/app/application/draft_attribution_markers.py",
-  "backend/app/application/draft_attribution_requirements.py",
-  "backend/app/application/draft_validation_evidence.py",
-  "backend/app/application/draft_validator_orchestrator.py",
-  "backend/app/application/draft_llm_validation_service.py",
-  "backend/app/application/draft_llm_validation_prompts.py",
-  "backend/app/application/draft_llm_validation_audit.py",
-  "backend/app/application/draft_llm_validation_parser.py",
-  "backend/app/application/draft_llm_validation_observations.py",
-  "backend/app/application/draft_validation_step_service.py",
-  "backend/app/application/draft_validation_step.py",
-  "backend/app/application/deterministic_pairwise_ranking.py",
-  "backend/app/application/draft_pairwise_ranking_prompts.py",
-  "backend/app/application/draft_pairwise_ranking_service.py",
-  "backend/app/application/draft_pairwise_ranking_payloads.py",
-  "backend/app/application/draft_directed_revision_prompts.py",
-  "backend/app/application/draft_directed_revision_service.py",
-  "backend/app/application/draft_revision_instruction_builder.py",
-  "backend/app/application/draft_revision_regression.py",
-  "backend/app/application/draft_final_quality_assessment.py",
-  "backend/app/application/draft_final_quality_attribution.py",
-  "backend/app/application/draft_final_quality_contract.py",
-  "backend/app/application/draft_final_quality_gate.py",
-  "backend/app/application/draft_final_quality_gate_evaluator.py",
-  "backend/app/application/draft_final_quality_gate_payloads.py",
-  "backend/app/application/draft_final_quality_repair_loop.py",
-  "backend/app/application/draft_final_quality_review_parser.py",
-  "backend/app/application/draft_final_quality_review_prompts.py",
-  "backend/app/application/draft_final_quality_review_service.py",
-  "backend/app/application/draft_revision_loop_config.py",
-  "backend/app/application/draft_revision_goal_evaluator.py",
-  "backend/app/application/draft_editorial_revision_goals.py",
-  "backend/app/application/draft_editorial_revision_evaluator.py",
-  "backend/app/application/draft_revision_rejected_moves.py",
-  "backend/app/application/draft_revision_loop_policy.py",
-  "backend/app/application/draft_revision_loop_cycle_runner.py",
-  "backend/app/application/draft_revision_loop_service.py",
-  "backend/app/application/draft_ranking_revision_result.py",
-  "backend/app/application/draft_ranking_revision_mapping.py",
-  "backend/app/application/draft_ranking_revision_service.py",
-  "backend/app/application/draft_validation_ranking_bridge.py",
-  "backend/app/application/draft_validation_operation_safety.py",
-  "backend/app/application/draft_model_role_resolver.py",
-  "backend/app/application/draft_generation_params.py",
-  "backend/app/application/draft_provider_error_utils.py",
-  "backend/app/application/draft_article_dossier_builder.py",
-  "backend/app/application/draft_context_pack_builder.py",
-  "backend/app/application/draft_article_memory_service.py",
-  "backend/app/application/draft_run_context_builder.py",
-  "backend/app/application/draft_source_ledger_builder.py",
-  "backend/app/application/draft_source_ledger_sections.py",
-  "backend/app/application/draft_feasibility_gate.py",
-  "backend/app/application/draft_feasibility_policy.py",
-  "backend/app/application/draft_post_contract_builder.py",
-  "backend/app/application/draft_quality_gate.py",
-  "backend/app/application/draft_rule_pack_compiler.py",
-  "backend/app/application/draft_rule_pack_sections.py",
-  "backend/app/application/draft_rule_pack_from_registry.py",
-  "backend/app/application/draft_rule_registry_compiler.py",
-  "backend/app/application/draft_rule_registry_contract.py",
-  "backend/app/application/draft_rule_registry_sections.py",
-  "backend/app/application/draft_material_plan_service.py",
-  "backend/app/application/material_plan_evidence_projection.py",
-  "backend/app/application/material_plan_accountability.py",
-  "backend/app/application/material_plan_retry_policy.py",
-  "backend/app/application/material_plan_retry_orchestrator.py",
-  "backend/app/application/draft_strategy_service.py",
-  "backend/app/application/source_intent_normalizer.py",
-  "backend/app/application/source_research_plan_service.py",
-  "backend/app/application/source_research_plan_sanitizer.py",
-  "backend/app/application/source_research_prompts.py",
-  "backend/app/application/source_research_audit.py",
-    "backend/app/application/public_evidence_retrieval_service.py",
-    "backend/app/application/public_evidence_query_builder.py",
-    "backend/app/application/public_evidence_relevance.py",
-    "backend/app/application/draft_public_evidence_step_service.py",
-    "backend/app/application/deterministic_external_evidence_synthesis.py",
-    "backend/app/application/deterministic_external_evidence_synthesis_step_service.py",
-    "backend/app/application/external_evidence_synthesis_prompts.py",
-    "backend/app/application/external_evidence_synthesis_service.py",
-    "backend/app/application/source_ledger_external_evidence_merger.py",
-    "backend/app/application/openrouter_public_search_service.py",
-  "backend/app/application/public_evidence_ports.py",
-  "backend/app/application/disabled_public_search_adapter.py",
-  "backend/app/application/deterministic_source_research_plan_service.py",
-  "backend/app/application/draft_rhetorical_plan_service.py",
-  "backend/app/application/draft_rhetorical_plan_retry.py",
+  "backend/app/drafting/application/artifacts/draft_run_payloads.py",
+  "backend/app/drafting/application/generation/deterministic_draft_service.py",
+  "backend/app/drafting/application/validation/draft_validation_linter.py",
+  "backend/app/drafting/application/validation/draft_attribution_markers.py",
+  "backend/app/drafting/application/validation/draft_attribution_requirements.py",
+  "backend/app/drafting/application/validation/draft_validation_evidence.py",
+  "backend/app/drafting/application/validation/draft_validator_orchestrator.py",
+  "backend/app/drafting/application/validation/draft_llm_validation_service.py",
+  "backend/app/drafting/application/validation/draft_llm_validation_prompts.py",
+  "backend/app/drafting/application/validation/draft_llm_validation_audit.py",
+  "backend/app/drafting/application/validation/draft_llm_validation_parser.py",
+  "backend/app/drafting/application/validation/draft_llm_validation_observations.py",
+  "backend/app/drafting/application/validation/draft_validation_step_service.py",
+  "backend/app/drafting/application/validation/draft_validation_step.py",
+  "backend/app/drafting/application/revision/deterministic_pairwise_ranking.py",
+  "backend/app/drafting/application/revision/draft_pairwise_ranking_prompts.py",
+  "backend/app/drafting/application/revision/draft_pairwise_ranking_service.py",
+  "backend/app/drafting/application/revision/draft_pairwise_ranking_payloads.py",
+  "backend/app/drafting/application/revision/draft_directed_revision_prompts.py",
+  "backend/app/drafting/application/revision/draft_directed_revision_service.py",
+  "backend/app/drafting/application/revision/draft_revision_instruction_builder.py",
+  "backend/app/drafting/application/revision/draft_revision_regression.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_assessment.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_attribution.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_contract.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_gate.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_gate_evaluator.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_gate_payloads.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_repair_loop.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_review_parser.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_review_prompts.py",
+  "backend/app/drafting/application/final_quality/draft_final_quality_review_service.py",
+  "backend/app/drafting/application/revision/draft_revision_loop_config.py",
+  "backend/app/drafting/application/revision/draft_revision_goal_evaluator.py",
+  "backend/app/drafting/application/revision/draft_editorial_revision_goals.py",
+  "backend/app/drafting/application/revision/draft_editorial_revision_evaluator.py",
+  "backend/app/drafting/application/revision/draft_revision_rejected_moves.py",
+  "backend/app/drafting/application/revision/draft_revision_loop_policy.py",
+  "backend/app/drafting/application/revision/draft_revision_loop_cycle_runner.py",
+  "backend/app/drafting/application/revision/draft_revision_loop_service.py",
+  "backend/app/drafting/application/revision/draft_ranking_revision_result.py",
+  "backend/app/drafting/application/revision/draft_ranking_revision_mapping.py",
+  "backend/app/drafting/application/revision/draft_ranking_revision_service.py",
+  "backend/app/drafting/application/validation/draft_validation_ranking_bridge.py",
+  "backend/app/drafting/application/validation/draft_validation_operation_safety.py",
+  "backend/app/drafting/application/operations/draft_model_role_resolver.py",
+  "backend/app/drafting/application/generation/draft_generation_params.py",
+  "backend/app/drafting/application/operations/draft_provider_error_utils.py",
+  "backend/app/drafting/application/artifacts/draft_article_dossier_builder.py",
+  "backend/app/drafting/application/artifacts/draft_context_pack_builder.py",
+  "backend/app/drafting/application/artifacts/draft_article_memory_service.py",
+  "backend/app/drafting/application/artifacts/draft_run_context_builder.py",
+  "backend/app/drafting/application/artifacts/draft_source_ledger_builder.py",
+  "backend/app/drafting/application/artifacts/draft_source_ledger_sections.py",
+  "backend/app/drafting/application/evidence/draft_feasibility_gate.py",
+  "backend/app/drafting/application/evidence/draft_feasibility_policy.py",
+  "backend/app/drafting/application/evidence/draft_post_contract_builder.py",
+  "backend/app/drafting/application/evidence/draft_quality_gate.py",
+  "backend/app/drafting/application/evidence/draft_rule_pack_compiler.py",
+  "backend/app/drafting/application/evidence/draft_rule_pack_sections.py",
+  "backend/app/drafting/application/evidence/draft_rule_pack_from_registry.py",
+  "backend/app/drafting/application/evidence/draft_rule_registry_compiler.py",
+  "backend/app/drafting/application/evidence/draft_rule_registry_contract.py",
+  "backend/app/drafting/application/evidence/draft_rule_registry_sections.py",
+  "backend/app/drafting/application/planning/draft_material_plan_service.py",
+  "backend/app/drafting/application/planning/material_plan_evidence_projection.py",
+  "backend/app/drafting/application/planning/material_plan_accountability.py",
+  "backend/app/drafting/application/planning/material_plan_retry_policy.py",
+  "backend/app/drafting/application/planning/material_plan_retry_orchestrator.py",
+  "backend/app/drafting/application/planning/draft_strategy_service.py",
+  "backend/app/drafting/application/evidence/source_intent_normalizer.py",
+  "backend/app/drafting/application/evidence/source_research_plan_service.py",
+  "backend/app/drafting/application/evidence/source_research_plan_sanitizer.py",
+  "backend/app/drafting/application/evidence/source_research_prompts.py",
+  "backend/app/drafting/application/evidence/source_research_audit.py",
+    "backend/app/drafting/application/evidence/public_evidence_retrieval_service.py",
+    "backend/app/drafting/application/evidence/public_evidence_query_builder.py",
+    "backend/app/drafting/application/evidence/public_evidence_relevance.py",
+    "backend/app/drafting/application/evidence/draft_public_evidence_step_service.py",
+    "backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis.py",
+    "backend/app/drafting/application/evidence/deterministic_external_evidence_synthesis_step_service.py",
+    "backend/app/drafting/application/evidence/external_evidence_synthesis_prompts.py",
+    "backend/app/drafting/application/evidence/external_evidence_synthesis_service.py",
+    "backend/app/drafting/application/evidence/source_ledger_external_evidence_merger.py",
+    "backend/app/drafting/application/evidence/openrouter_public_search_service.py",
+  "backend/app/drafting/application/evidence/public_evidence_ports.py",
+  "backend/app/drafting/application/evidence/disabled_public_search_adapter.py",
+  "backend/app/drafting/application/evidence/deterministic_source_research_plan_service.py",
+  "backend/app/drafting/application/planning/draft_rhetorical_plan_service.py",
+  "backend/app/drafting/application/planning/draft_rhetorical_plan_retry.py",
   "backend/app/application/json_step_retry_policy.py",
-  "backend/app/application/draft_rhetorical_plan_prompts.py",
-  "backend/app/application/draft_rhetorical_plan_audit.py",
-  "backend/app/application/deterministic_rhetorical_plan_service.py",
-  "backend/app/application/deterministic_rhetorical_plan_step_service.py",
-  "backend/app/application/draft_candidate_generation_service.py",
-  "backend/app/application/draft_candidate_direction_service.py",
-  "backend/app/application/draft_candidate_selection_service.py",
-  "backend/app/application/draft_run_draft_step_service.py",
+  "backend/app/drafting/application/planning/draft_rhetorical_plan_prompts.py",
+  "backend/app/drafting/application/planning/draft_rhetorical_plan_audit.py",
+  "backend/app/drafting/application/planning/deterministic_rhetorical_plan_service.py",
+  "backend/app/drafting/application/planning/deterministic_rhetorical_plan_step_service.py",
+  "backend/app/drafting/application/generation/draft_candidate_generation_service.py",
+  "backend/app/drafting/application/generation/draft_candidate_direction_service.py",
+  "backend/app/drafting/application/generation/draft_candidate_selection_service.py",
+  "backend/app/drafting/application/artifacts/draft_run_payloads.py",
   "backend/app/application/draft_run_step_progress.py",
   "backend/app/application/draft_run_step_progress_payload.py",
   "backend/app/infrastructure/openrouter_config.py",

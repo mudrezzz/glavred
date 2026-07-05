@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.5.
+Current as of Slice 2.17.4.6.0.6.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -94,6 +94,14 @@ legacy shims, rejects raw provider `.complete_json(...)` in migrated bounded
 services, and fails bounded modules that expose large public-helper surfaces without
 a named service/policy/component/DTO owner.
 
+Slice 2.17.4.6.0.6 hardens the process surface around this migration. Backend docs,
+`AGENTS.md`, and repo-local skills now point to canonical package owners after the
+`0.4`/`0.5` migrations and to `docs/developer/BACKEND_MODULE_TEMPLATE.md`. Legacy
+files now have three explicit statuses: active compatibility facade, migrated thin
+shim, or remaining explicit debt. Architecture smoke verifies that the docs and
+skills keep this wording, so new contributor/agent workstreams cannot silently treat
+flat legacy paths as normal behavior owners.
+
 ## Upstream Radar Debt Inventory
 
 Upstream search has started to repeat the same shape:
@@ -115,7 +123,7 @@ The largest backend files are a useful smell list, not an automatic failure list
 | Lines | File | Risk |
 | ---: | --- | --- |
 | 417 | `backend/app/application/roadmap_tracker.py` | Large but bounded to one CLI/use-case area. |
-| 325 | `backend/app/application/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
+| 325 | `backend/app/drafting/application/planning/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
 | 291 | `backend/app/infrastructure/sqlite_portfolio_repository.py` | Persistence adapter may need split by table/use-case if it grows further. |
 | 235 | `backend/app/application/upstream_radar_external_run_service.py` | First upstream runner already large enough to justify a package boundary. |
 | 220+ | `backend/app/drafting/application/*` migrated DraftRun modules | Some owner modules remain intentionally large after behavior-preserving migration; follow-up refactors should split by service/policy/component role, not move behavior back to flat legacy paths. |
@@ -196,6 +204,10 @@ Already enforced:
   disposition.
 - Migrated DraftRun shim checks requiring moved `backend/app/application/*` files to
   remain bounded import/re-export compatibility surfaces with no behavior.
+- Backend documentation and agent strict-mode checks requiring the canonical package
+  map, backend module template, Provider-Heavy Review Checklist, migrated thin shim
+  wording, active compatibility facade wording, remaining explicit debt wording, and
+  `npm run test:architecture` obligations in docs, `AGENTS.md`, and relevant skills.
 
 Still missing after this slice:
 

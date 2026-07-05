@@ -65,6 +65,12 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 The header is part of the architecture contract and is enforced by
 `npm run test:architecture`.
 
+Use `docs/developer/BACKEND_MODULE_TEMPLATE.md` before adding or moving backend
+modules. It contains the service/policy/component/DTO module templates, migrated
+thin shim rules, and the Provider-Heavy Review Checklist for shared operation
+governance, incidents, payload budgets, timeout/runtime budgets, safe errors, and no
+raw provider calls in bounded application modules.
+
 ## Compatibility Shims
 
 Compatibility shims are intentionally narrow. They expose legacy entrypoints while
@@ -74,6 +80,13 @@ Old paths moved in Slice 2.17.4.6.0.4 under `backend/app/application/*` are thin
 import/re-export files only. They must not contain local functions, classes,
 provider calls, fallback logic, or trace decisions. Do not add broad barrels that
 mirror the entire legacy `draft_*` namespace.
+
+Legacy backend files have three allowed statuses:
+
+- active compatibility facade: the old path still owns compatibility wiring;
+- migrated thin shim: import/re-export only, no behavior;
+- remaining explicit debt: listed in the migration inventory or LLM operation
+  inventory with owner, reason, and removal slice.
 
 ## Legacy DraftRun Surface Migration
 

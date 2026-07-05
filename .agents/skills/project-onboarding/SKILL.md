@@ -29,8 +29,14 @@ Quickly understand the project state and select the next appropriate action from
 7. If backend work is present or planned, inspect:
    - `.env.example`;
    - backend ADRs;
+   - `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`;
+   - `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`;
+   - `backend/app/drafting/README.md`;
+   - `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`;
+   - `docs/developer/BACKEND_MODULE_TEMPLATE.md`;
    - backend sections in the SAO and developer guide;
-   - backend tests and architecture smoke backend baselines.
+   - backend tests and architecture smoke backend baselines, including
+     `npm run test:architecture`.
 8. Identify the current iteration, active slice, next ready task, blocked tasks, and open questions.
 
 ## When asked to "take the next task"
@@ -47,7 +53,8 @@ Instead:
    warnings, module ownership, and feature dependency guardrails.
 6. Before selecting a backend slice, account for OpenRouter environment requirements,
    OOP/SRP backend boundaries, file-size guardrails, and provider/library dependency
-   hygiene.
+   hygiene. Distinguish active compatibility facade, migrated thin shim, and
+   remaining explicit debt before treating a legacy file as an owner.
 
 ## Required output before implementation
 
@@ -62,6 +69,9 @@ Provide a short project state summary:
 - Architecture guardrails that affect the selected slice
 - For backend slices, the current `.env.example` contract and OpenRouter/provider
   boundary assumptions
+- For DraftRun/backend slices, the canonical package owner under
+  `backend/app/drafting`, whether any touched legacy file is a migrated thin shim,
+  and the expected `npm run test:architecture` obligation
 
 Then continue with the task unless the task is genuinely blocked.
 

@@ -3,11 +3,20 @@
 Current status: migration map and migrated runtime clusters for the
 `backend/app/drafting` bounded context.
 
+Use `docs/developer/BACKEND_MODULE_TEMPLATE.md` with this map. The template defines
+the ownership header, service/policy/component/DTO roles, migrated thin shim rule,
+and Provider-Heavy Review Checklist for shared operation governance, payload
+budgets, runtime budgets, safe errors, and no raw provider calls. Keep this map and
+`npm run test:architecture` aligned when package owners move.
+
 This file is the implementation guide for moving legacy DraftRun modules in small,
 behavior-preserving slices. The context/artifact, source/evidence,
 evidence-contract, and planning clusters were migrated in Slice 2.17.4.6.0.4.
 Candidate generation, validation, ranking/revision, final quality, and HITL were
 migrated in Slice 2.17.4.6.0.5. Old flat paths remain compatibility shims only.
+Legacy files are classified as active compatibility facade, migrated thin shim, or
+remaining explicit debt; there is no fourth informal status for behavior hidden in a
+legacy path.
 
 ## Package Areas
 

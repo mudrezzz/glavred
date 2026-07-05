@@ -29,6 +29,12 @@ Do not diagnose from screenshots alone when a run id is available.
    - note whether there are uncommitted pipeline changes that may affect the run.
 2. Read `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` to establish the current
    expected pipeline shape before judging the trace.
+   For backend/DraftRun architecture drift, also read
+   `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`,
+   `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`,
+   `backend/app/drafting/README.md`,
+   `backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md`, and
+   `docs/developer/BACKEND_MODULE_TEMPLATE.md`.
 3. Extract run trace with the helper script:
    - `python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py <DraftRun ID>`
 4. If the helper reports missing or ambiguous data, query SQLite directly:
@@ -42,6 +48,10 @@ Do not diagnose from screenshots alone when a run id is available.
    - fallback behavior.
    - shared LLM operation envelopes and inventory:
      `backend.app.shared.llm_operations` and `CURRENT_LLM_OPERATION_INVENTORY`.
+   Prefer the canonical package owner under `backend/app/drafting` for migrated
+   DraftRun code. A legacy `backend/app/application/*` file may be an active
+   compatibility facade, migrated thin shim, or remaining explicit debt; behavior in
+   a migrated thin shim is a guardrail bug, not the owner to patch.
 6. Compare actual trace to `DRAFT_RUN_PIPELINE_AS_IS.md` first, then to expected
    slice behavior in `ROADMAP.md`.
 7. Decide one of:
@@ -195,3 +205,7 @@ hide bad output behind polite abstractions.
   a fix.
 - If the issue is a roadmap gap, propose a small intermediate slice and keep the rest
   of the plan intact.
+- If diagnostics implicate backend architecture, distinguish canonical package owner
+  from legacy shim before recommending a fix. Behavior in a migrated thin shim,
+  missing shared operation governance, raw provider calls in bounded packages, or
+  missing `npm run test:architecture` coverage should be reported as a guardrail bug.

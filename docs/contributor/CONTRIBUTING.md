@@ -62,6 +62,7 @@ Backend work follows the recovery contract in:
 
 - `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`
 - `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`
+- `docs/developer/BACKEND_MODULE_TEMPLATE.md`
 - `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`
 
 Do not add new DraftRun or Radar runtime modules to the flat legacy namespaces
@@ -70,6 +71,19 @@ Do not add new DraftRun or Radar runtime modules to the flat legacy namespaces
 `backend/app/upstream` for new work. New bounded-context modules need ownership
 docstrings and must keep API, application, domain, infrastructure, and shared
 responsibilities separate.
+
+Legacy backend files have three allowed statuses:
+
+- active compatibility facade: old entrypoint still owns compatibility wiring;
+- migrated thin shim: import/re-export only, with no `def`, `class`, provider call,
+  fallback logic, or trace mutation;
+- remaining explicit debt: listed in the migration inventory or operation inventory
+  with owner, reason, and removal slice.
+
+Before changing provider-heavy code, use the Provider-Heavy Review Checklist in
+`docs/developer/BACKEND_MODULE_TEMPLATE.md`: shared operation governance, incidents,
+payload budgets, timeout/runtime budgets, safe errors, and no raw provider calls in
+bounded application modules. Run `npm run test:architecture` for backend changes.
 
 ## Git
 
