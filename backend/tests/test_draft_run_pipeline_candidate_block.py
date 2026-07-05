@@ -1,5 +1,5 @@
-from backend.app.application.deterministic_draft_service import DeterministicDraftService
-from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
+from backend.app.drafting.application.generation.deterministic_draft_service import DeterministicDraftService
+from backend.app.drafting.application.generation.draft_candidate_result import DraftCandidateGenerationResult
 from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
 from backend.app.drafting.application.artifacts.draft_run_payloads import request_to_payload
 from backend.app.application.draft_run_pipeline import DraftRunPipeline

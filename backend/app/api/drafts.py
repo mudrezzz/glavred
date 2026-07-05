@@ -12,8 +12,8 @@ from backend.app.api.draft_generation_contracts import (
     to_draft_generation_request,
 )
 from backend.app.api.draft_revision_dependencies import create_draft_human_comment_revision_service
-from backend.app.application.draft_generation_service import DraftGenerationService
-from backend.app.application.draft_human_comment_revision_service import DraftHumanCommentRevisionService, HumanCommentRevisionUnavailable
+from backend.app.drafting.application.generation.draft_generation_service import DraftGenerationService
+from backend.app.drafting.application.hitl.draft_human_comment_revision_service import DraftHumanCommentRevisionService, HumanCommentRevisionUnavailable
 
 router = APIRouter(prefix="/api/drafts")
 

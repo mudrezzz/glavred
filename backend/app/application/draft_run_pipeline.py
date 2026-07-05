@@ -1,14 +1,14 @@
 from typing import Any
 
-from backend.app.application.deterministic_draft_service import DeterministicDraftService
+from backend.app.drafting.application.generation.deterministic_draft_service import DeterministicDraftService
 from backend.app.drafting.application.artifacts.draft_article_memory_service import DraftArticleMemoryService
-from backend.app.application.draft_candidate_generation_service import DraftCandidateGenerationService
+from backend.app.drafting.application.generation.draft_candidate_generation_service import DraftCandidateGenerationService
 from backend.app.drafting.application.evidence.draft_public_evidence_step_service import PublicEvidenceStepService
 from backend.app.drafting.application.evidence.draft_quality_gate import DraftQualityGate
 from backend.app.drafting.application.evidence.draft_rule_pack_compiler import DraftRulePackCompiler
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.drafting.application.artifacts.draft_source_ledger_builder import SourceLedgerBuilder
-from backend.app.application.draft_validation_step_service import DraftValidationStepService
+from backend.app.drafting.application.validation.draft_validation_step_service import DraftValidationStepService
 from backend.app.domain.draft_run import DraftRun
 from backend.app.drafting.application.workflow.legacy_workflow import build_legacy_draft_workflow
 from backend.app.drafting.application.workflow.workflow import DraftWorkflow

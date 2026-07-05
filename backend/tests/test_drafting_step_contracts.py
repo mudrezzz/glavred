@@ -1,4 +1,4 @@
-from backend.app.application.draft_candidate_result import DraftCandidateGenerationResult
+from backend.app.drafting.application.generation.draft_candidate_result import DraftCandidateGenerationResult
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.domain.draft_generation import GeneratedDraft
 from backend.app.drafting.application.steps.contracts import (

@@ -1,46 +1,6 @@
-import json
+"""Compatibility shim for backend.app.drafting.application.generation.draft_prompt_builder.
 
-from backend.app.domain.draft_generation import DraftGenerationRequest
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.5.
+"""
 
-
-def build_draft_prompt_messages(request: DraftGenerationRequest) -> list[dict[str, str]]:
-    brief = request.brief
-    model = request.editorial_model
-    return [
-        {
-            "role": "system",
-            "content": (
-                "You are Glavred, an editorial drafting assistant. "
-                "Return strict JSON only with keys title and body. "
-                "Write in Russian unless the source material clearly requires another language."
-            ),
-        },
-        {
-            "role": "user",
-            "content": json.dumps(
-                {
-                    "brief": {
-                        "title": brief.title,
-                        "rubric": brief.rubric,
-                        "audience": brief.audience,
-                        "thesis": brief.thesis,
-                        "conflict": brief.conflict,
-                        "authorPosition": brief.author_position,
-                        "evidence": brief.evidence,
-                        "examples": brief.examples,
-                        "structure": brief.structure,
-                        "cta": brief.cta,
-                        "risks": brief.risks,
-                        "sources": brief.sources,
-                    },
-                    "editorialModel": {
-                        "audience": model.audience,
-                        "styleRules": model.style_rules,
-                        "forbiddenTopics": model.forbidden_topics,
-                        "goals": model.goals,
-                    },
-                },
-                ensure_ascii=False,
-            ),
-        },
-    ]
+from backend.app.drafting.application.generation.draft_prompt_builder import *  # noqa: F401,F403

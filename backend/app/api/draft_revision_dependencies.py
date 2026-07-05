@@ -1,8 +1,8 @@
 from fastapi import Request
 
 from backend.app.api.dependencies import create_ai_run_service, get_request_settings
-from backend.app.application.draft_human_comment_quality_service import DraftHumanCommentQualityService
-from backend.app.application.draft_human_comment_revision_service import DraftHumanCommentRevisionService
+from backend.app.drafting.application.hitl.draft_human_comment_quality_service import DraftHumanCommentQualityService
+from backend.app.drafting.application.hitl.draft_human_comment_revision_service import DraftHumanCommentRevisionService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_json_adapter import OpenRouterJsonAdapter
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository

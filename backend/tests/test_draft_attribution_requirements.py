@@ -1,4 +1,4 @@
-from backend.app.application.draft_attribution_requirements import normalize_attribution_requirements
+from backend.app.drafting.application.validation.draft_attribution_requirements import normalize_attribution_requirements
 
 
 def test_free_text_requirement_maps_to_external_claim_by_source_marker() -> None:

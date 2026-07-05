@@ -124,7 +124,7 @@ adding a DraftRun module, read `backend/app/drafting/README.md` and
 the owning drafting subpackage. The current `legacy_pipeline` and `legacy_run`
 modules are compatibility anchors only; do not expand them into broad barrels.
 
-The first migrated DraftRun runtime clusters are canonical under:
+Migrated DraftRun runtime clusters are canonical under:
 
 - `backend.app.drafting.application.artifacts` for context payloads, source ledger,
   article dossier, article memory, and context packs;
@@ -133,6 +133,22 @@ The first migrated DraftRun runtime clusters are canonical under:
   deterministic evidence fallbacks;
 - `backend.app.drafting.application.planning` for material plan, strategy,
   rhetorical plans, retry/audit collaborators, and deterministic planning fallbacks;
+- `backend.app.drafting.application.generation` for candidate direction,
+  generation/provider execution, selection, publishability, candidate audit/prompts,
+  alternative-angle challenger writing, deterministic candidate fallback, generation
+  params, and prompt builder;
+- `backend.app.drafting.application.validation` for deterministic validation,
+  attribution, LLM validation, editorial critique, validation report flow,
+  alternative-angle route/tournament orchestration, validation step service, and
+  operation safety;
+- `backend.app.drafting.application.revision` for pairwise ranking, directed
+  revision, ranking-revision orchestration, revision loop policy/cycles, regression
+  checks, rejected moves, and deterministic pairwise fallback;
+- `backend.app.drafting.application.final_quality` for final quality contracts,
+  deterministic assessment, final gate/evaluator/payloads, independent review,
+  parser/prompts/service, and repair loop;
+- `backend.app.drafting.application.hitl` for post-run human-comment revision and
+  human-comment revision quality check;
 - `backend.app.drafting.application.operations.json_step_adapter` for bounded JSON
   provider calls from migrated services.
 

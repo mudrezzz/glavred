@@ -1,11 +1,6 @@
-from dataclasses import dataclass
-from typing import Any
+"""Compatibility shim for backend.app.drafting.application.revision.draft_ranking_revision_result.
 
-from backend.app.domain.draft_generation import GeneratedDraft
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.5.
+"""
 
-
-@dataclass(frozen=True)
-class DraftRankingRevisionResult:
-    artifact_payload: dict[str, Any]
-    final_draft: GeneratedDraft | None
-    ai_run_ids: list[str]
+from backend.app.drafting.application.revision.draft_ranking_revision_result import *  # noqa: F401,F403

@@ -1,4 +1,4 @@
-from backend.app.application.draft_candidate_selection_service import DraftCandidateSelectionService
+from backend.app.drafting.application.generation.draft_candidate_selection_service import DraftCandidateSelectionService
 
 
 def test_candidate_selector_prefers_stronger_score() -> None:

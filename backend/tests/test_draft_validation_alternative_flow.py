@@ -1,7 +1,7 @@
 from typing import Any
 
-from backend.app.application.draft_validation_alternative_flow import DraftValidationAlternativeFlow
-from backend.app.application.draft_validation_report_flow import DraftValidationReportFlowResult
+from backend.app.drafting.application.validation.draft_validation_alternative_flow import DraftValidationAlternativeFlow
+from backend.app.drafting.application.validation.draft_validation_report_flow import DraftValidationReportFlowResult
 
 
 def test_alternative_flow_validates_only_challenger_after_merge() -> None:

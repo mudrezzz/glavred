@@ -1,4 +1,4 @@
-from backend.app.application.draft_validator_orchestrator import DraftValidatorOrchestrator
+from backend.app.drafting.application.validation.draft_validator_orchestrator import DraftValidatorOrchestrator
 
 
 def test_validator_checks_all_candidates_and_marks_selected() -> None:

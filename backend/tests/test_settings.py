@@ -1,4 +1,4 @@
-from backend.app.application.draft_revision_loop_config import revision_iteration_limit
+from backend.app.drafting.application.revision.draft_revision_loop_config import revision_iteration_limit
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 

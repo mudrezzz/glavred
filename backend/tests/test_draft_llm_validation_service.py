@@ -1,7 +1,7 @@
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.draft_llm_validation_service import DraftLlmValidationService
+from backend.app.drafting.application.validation.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings

@@ -1,4 +1,4 @@
-from backend.app.application.draft_generation_params import GenerationParamProfile, generation_params_for_profile
+from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_profile
 from backend.app.settings import BackendSettings
 
 

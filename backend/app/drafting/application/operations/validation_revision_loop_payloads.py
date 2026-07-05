@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from dataclasses import dataclass
 from typing import Any
 
-from backend.app.application.draft_revision_loop_policy import candidate_id
+from backend.app.drafting.application.revision.draft_revision_loop_policy import candidate_id
 from backend.app.domain.draft_revision_loop import RevisionLoopCycle, RevisionLoopReport
 
 

@@ -6845,7 +6845,7 @@ Status:
 
 ### Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration
 
-- Status: Ready
+- Status: Done
 - Goal: Move the late DraftRun clusters into the drafting bounded context and standardize candidate/validation/revision contracts using the legacy surface triage map.
 - User value:
   - The quality-critical backend code becomes easier to audit, debug, and extend without hidden procedural contracts.
@@ -6880,10 +6880,11 @@ Status:
   - Architecture smoke rejects new flat late-stage `draft_*` or `deterministic_*` files.
 - Risks:
   - Provider-heavy trace behavior can regress; use compatibility shims and focused regression tests for every sub-batch.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening
 
-- Status: Backlog
+- Status: Ready
 - Goal: Make the new backend architecture durable for future agents and contributors.
 - User value:
   - A new contributor can understand backend structure from docs and cannot accidentally add code in the old broken style without a failing check.
@@ -7599,6 +7600,7 @@ Status:
 - Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard. Completed 2026-07-05.
 - Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules. Completed 2026-07-05.
 - Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration. Completed 2026-07-05.
+- Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7627,4 +7629,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration`.
+Implement `Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening`.

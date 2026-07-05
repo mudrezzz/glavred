@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_pairwise_ranking import DeterministicPairwiseRanker
-from backend.app.application.draft_directed_revision_service import DraftDirectedRevisionService
-from backend.app.application.draft_pairwise_ranking_service import DraftPairwiseRankingService
-from backend.app.application.draft_ranking_revision_service import DraftRankingRevisionService
+from backend.app.drafting.application.revision.deterministic_pairwise_ranking import DeterministicPairwiseRanker
+from backend.app.drafting.application.revision.draft_directed_revision_service import DraftDirectedRevisionService
+from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
+from backend.app.drafting.application.revision.draft_ranking_revision_service import DraftRankingRevisionService
 from backend.app.domain.draft_generation import DraftBriefContext, DraftEditorialModelContext, DraftGenerationRequest
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository

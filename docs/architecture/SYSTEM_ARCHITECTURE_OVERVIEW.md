@@ -475,6 +475,19 @@ shims only. Architecture smoke checks both canonical ownership and shim thinness
 future work cannot silently reintroduce provider calls, fallback logic, classes, or
 public helper implementations into migrated legacy files.
 
+Slice 2.17.4.6.0.5 applies the same migration rule to the late DraftRun runtime
+surface. Candidate generation now lives under
+`backend/app/drafting/application/generation`; deterministic and LLM validation,
+editorial critique, alternative-angle route/tournament orchestration, and validation
+step orchestration live under `backend/app/drafting/application/validation`;
+pairwise ranking and revision loops live under
+`backend/app/drafting/application/revision`; final quality gate/review/repair lives
+under `backend/app/drafting/application/final_quality`; and post-run human-comment
+revision services live under `backend/app/drafting/application/hitl`. Legacy import
+paths remain thin shims, while architecture smoke requires the new packages, checks
+shim thinness, forbids raw provider `.complete_json(...)` in migrated bounded
+services, and rejects large anonymous public-helper surfaces without a named owner.
+
 Slice 2.1 implements the first concrete backend perimeter:
 
 - `backend/app/main.py`: FastAPI application factory.

@@ -1,45 +1,6 @@
-from typing import Any
+"""Compatibility shim for backend.app.drafting.application.validation.draft_llm_validation_audit.
 
-from backend.app.domain.ai_run import AiRunProvider
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.5.
+"""
 
-
-def build_llm_validation_request_trace(
-    *,
-    provider: AiRunProvider,
-    model: str,
-    messages: list[dict[str, str]],
-    candidate_id: str,
-    attempt: dict[str, Any],
-    deterministic_report: dict[str, Any],
-    context_pack: dict[str, Any] | None = None,
-    model_selection: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    payload = {
-        "draftRunStep": "llmValidation",
-        "candidateId": candidate_id,
-        "provider": provider.value,
-        "model": model,
-        "messages": messages,
-        "attempt": attempt,
-        "deterministicReport": deterministic_report,
-        "requestSummary": "LLM-assisted report-only validation for one draft candidate.",
-    }
-    if context_pack is not None:
-        payload["contextPack"] = context_pack
-    if model_selection is not None:
-        payload.update(model_selection)
-    return payload
-
-
-def build_llm_validation_result_trace(
-    *,
-    result_payload: dict[str, Any],
-    provider_response: dict[str, Any] | None,
-    attempt: dict[str, Any],
-) -> dict[str, Any]:
-    return {
-        "draftRunStep": "llmValidation",
-        "attempt": attempt,
-        "validationResult": result_payload,
-        "providerResponse": provider_response,
-    }
+from backend.app.drafting.application.validation.draft_llm_validation_audit import *  # noqa: F401,F403

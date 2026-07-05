@@ -1,7 +1,7 @@
 from typing import Any
 
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
-from backend.app.application.draft_validation_step_service import DraftValidationStepService
+from backend.app.drafting.application.validation.draft_validation_step_service import DraftValidationStepService
 
 
 def test_validation_step_attaches_editorial_critique_report() -> None:

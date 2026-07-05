@@ -1,12 +1,13 @@
 # Drafting Backend Component Map
 
-Current status: migration map and first migrated runtime clusters for the
+Current status: migration map and migrated runtime clusters for the
 `backend/app/drafting` bounded context.
 
 This file is the implementation guide for moving legacy DraftRun modules in small,
 behavior-preserving slices. The context/artifact, source/evidence,
-evidence-contract, and planning clusters were migrated in Slice 2.17.4.6.0.4; later
-clusters remain legacy until their owning slices move them.
+evidence-contract, and planning clusters were migrated in Slice 2.17.4.6.0.4.
+Candidate generation, validation, ranking/revision, final quality, and HITL were
+migrated in Slice 2.17.4.6.0.5. Old flat paths remain compatibility shims only.
 
 ## Package Areas
 
@@ -20,6 +21,11 @@ clusters remain legacy until their owning slices move them.
 | `application/artifacts` | Context/run payloads, run budget resolution, source ledger assembly/sections, article dossier, article memory, and context pack building. | migrated context/source-ledger/article-memory modules |
 | `application/evidence` | Source intent and research planning, public evidence retrieval/merge/synthesis, feasibility, post contract, rule registry, rule pack, evidence interpretation, and deterministic evidence fallbacks. | migrated source/evidence/contract/rule modules |
 | `application/planning` | Material plan retry orchestration, material projection/accountability, strategy, rhetorical plans, planning audit/result/prompt helpers, and deterministic planning/rhetorical fallback owners. | migrated material/strategy/rhetorical modules |
+| `application/generation` | Candidate direction, generation, provider execution, selection, publishability, candidate audit/prompts/results, alternative-angle challenger writing, deterministic candidate fallback, generation params, and prompt builder. | migrated candidate-generation modules |
+| `application/validation` | Deterministic linter/evidence/attribution checks, LLM validation, editorial critique, validation report and alternative-angle route/tournament orchestration, validation step service, and operation safety. | migrated validation and alternative-angle orchestration modules |
+| `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. | migrated ranking/revision modules |
+| `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. | migrated final quality modules |
+| `application/hitl` | Human-comment revision and human-comment revision quality check services. | migrated HITL modules |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
 ## Migration Order
@@ -46,7 +52,12 @@ clusters remain legacy until their owning slices move them.
    imports point to `application/artifacts`, `application/evidence`,
    `application/planning`, and `application/operations`.
 11. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
-12. Tighten architecture smoke allowlists after each cluster is moved.
+    Done in Slice 2.17.4.6.0.5. Old paths remain thin shims and canonical imports
+    point to `application/generation`, `application/validation`,
+    `application/revision`, `application/final_quality`, and `application/hitl`.
+12. Tighten architecture smoke allowlists after each cluster is moved. Done for the
+    moved DraftRun application clusters; remaining follow-up is retiring legacy
+    shims when external compatibility is no longer needed.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO
@@ -87,10 +98,10 @@ Implemented in Slice 2.17.4.6.0.3:
 - `backend.app.application.draft_run_pipeline.DraftRunPipeline`: compatibility facade
   with the previous constructor and `execute(run_id)` API, delegating to `DraftWorkflow`.
 
-This layer is a migration boundary only. Context, evidence, and planning services
-now have canonical owners under `backend.app.drafting.application`; candidate,
-validation, revision, final-gate, and HITL services still live in legacy modules
-until their owning slices move them.
+This layer is a migration boundary only. Context, evidence, planning, generation,
+validation, revision, final-gate, and HITL services now have canonical owners under
+`backend.app.drafting.application`. Legacy application paths for moved modules are
+thin import/re-export shims.
 
 ## Evidence Interpretation Safety
 

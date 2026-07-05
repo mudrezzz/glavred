@@ -1,6 +1,6 @@
-from backend.app.settings import BackendSettings
+"""Compatibility shim for backend.app.drafting.application.revision.draft_revision_loop_config.
 
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.5.
+"""
 
-def revision_iteration_limit(settings: BackendSettings) -> int:
-    configured = max(1, int(settings.draft_revision_max_iterations or 1))
-    return min(configured, 1) if settings.draft_run_execution_mode.strip() == "smoke" else configured
+from backend.app.drafting.application.revision.draft_revision_loop_config import *  # noqa: F401,F403

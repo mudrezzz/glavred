@@ -1,8 +1,8 @@
 from fastapi import Request
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.application.deterministic_draft_service import DeterministicDraftService
-from backend.app.application.draft_generation_service import DraftGenerationService
+from backend.app.drafting.application.generation.deterministic_draft_service import DeterministicDraftService
+from backend.app.drafting.application.generation.draft_generation_service import DraftGenerationService
 from backend.app.application.draft_run_service import DraftRunService
 from backend.app.application.health_service import BackendHealthService
 from backend.app.infrastructure.celery_draft_run_dispatcher import CeleryDraftRunDispatcher

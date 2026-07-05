@@ -1,4 +1,4 @@
-from backend.app.application.draft_revision_acceptance_policy import acceptance_decision
+from backend.app.drafting.application.revision.draft_revision_acceptance_policy import acceptance_decision
 
 
 def test_revision_acceptance_records_pairwise_reason_without_resolved_goals() -> None:

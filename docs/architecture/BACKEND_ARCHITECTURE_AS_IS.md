@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.4.
+Current as of Slice 2.17.4.6.0.5.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -46,6 +46,17 @@ no provider calls, and no fallback logic. The flat counts above still include th
 shims because the compatibility files remain on disk until downstream call sites and
 external imports no longer need them.
 
+Slice 2.17.4.6.0.5 migrates the late DraftRun application modules into
+`backend/app/drafting/application/generation`,
+`backend/app/drafting/application/validation`,
+`backend/app/drafting/application/revision`,
+`backend/app/drafting/application/final_quality`, and
+`backend/app/drafting/application/hitl`. Their old flat paths are also
+compatibility shims only. Candidate generation, LLM validation, editorial critique,
+alternative-angle routing/tournament, pairwise ranking, directed revision,
+revision-loop policy, final quality gate/review/repair, and human-comment revision
+behavior are no longer active behavior in the flat application namespace.
+
 This is not acceptable as target architecture. The flat files are temporarily
 allowlisted as legacy debt so behavior can remain stable while the package migration
 is done slice by slice.
@@ -76,6 +87,13 @@ owner-owned modules under `backend.app.drafting.application`. Architecture smoke
 enforces both sides: migrated legacy files must stay thin shims, while not-yet-moved
 legacy files must stay covered by the inventory.
 
+Slice 2.17.4.6.0.5 applies the same rule to candidate, validation,
+ranking/revision, final quality, and HITL modules. Architecture smoke now also
+requires the new late-stage packages, rejects behavior reintroduced into migrated
+legacy shims, rejects raw provider `.complete_json(...)` in migrated bounded
+services, and fails bounded modules that expose large public-helper surfaces without
+a named service/policy/component/DTO owner.
+
 ## Upstream Radar Debt Inventory
 
 Upstream search has started to repeat the same shape:
@@ -97,12 +115,10 @@ The largest backend files are a useful smell list, not an automatic failure list
 | Lines | File | Risk |
 | ---: | --- | --- |
 | 417 | `backend/app/application/roadmap_tracker.py` | Large but bounded to one CLI/use-case area. |
-| 348 | `backend/app/application/draft_human_comment_quality_service.py` | Provider-heavy quality logic in flat DraftRun namespace. |
 | 325 | `backend/app/application/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
-| 322 | `backend/app/application/draft_human_comment_revision_service.py` | Post-run writer workflow in flat DraftRun namespace. |
 | 291 | `backend/app/infrastructure/sqlite_portfolio_repository.py` | Persistence adapter may need split by table/use-case if it grows further. |
-| 265 | `backend/app/application/draft_editorial_critique_service.py` | Provider-heavy critique step in flat DraftRun namespace. |
 | 235 | `backend/app/application/upstream_radar_external_run_service.py` | First upstream runner already large enough to justify a package boundary. |
+| 220+ | `backend/app/drafting/application/*` migrated DraftRun modules | Some owner modules remain intentionally large after behavior-preserving migration; follow-up refactors should split by service/policy/component role, not move behavior back to flat legacy paths. |
 
 The recovery goal is not to split every large file immediately. The goal is to stop
 adding new modules in the old locations, then migrate cohesive clusters.

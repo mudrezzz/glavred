@@ -165,6 +165,27 @@ Implemented operation safety repair:
     JSON provider-call adapter used by migrated provider-heavy services;
   - old `backend.app.application.*` imports for this migrated batch are compatibility
     shims only and architecture smoke rejects behavior reintroduced into them.
+- DraftRun candidate, validation, revision, final quality, and HITL package
+  migration:
+  - `backend.app.drafting.application.generation` owns candidate direction,
+    generation/provider execution, selection, publishability, candidate
+    audit/prompts/results, alternative-angle challenger writing, deterministic
+    candidate fallback, generation params, and prompt builder;
+  - `backend.app.drafting.application.validation` owns deterministic validation,
+    attribution requirements, LLM validation, editorial critique, validation report
+    flow, alternative-angle route/tournament orchestration, validation step service,
+    and operation safety;
+  - `backend.app.drafting.application.revision` owns pairwise ranking, directed
+    revision, ranking-revision orchestration, revision-loop policy/cycle execution,
+    regression checks, rejected moves, and deterministic pairwise fallback;
+  - `backend.app.drafting.application.final_quality` owns final quality contracts,
+    deterministic assessment, final gate/evaluator/payloads, independent review,
+    parser/prompts/service, and final repair loop;
+  - `backend.app.drafting.application.hitl` owns post-run human-comment revision and
+    human-comment revision quality check;
+  - old `backend.app.application.*` imports for this migrated batch are
+    compatibility shims only, and provider-heavy migrated services use the bounded
+    drafting JSON adapter instead of raw provider `.complete_json(...)`.
 
 ## Context Ownership
 
@@ -329,7 +350,7 @@ The Drafting v1 implementation of this contract is:
 5. Add DraftRun provider-input payload budget policies. Done.
 6. Add validation/revision runtime guard and canonical stop reasons. Done.
 7. Move context/evidence/planning clusters. Done.
-8. Move candidate/validation/revision/final quality clusters.
+8. Move candidate/validation/revision/final quality clusters. Done.
 9. Move upstream radar/search into `backend/app/upstream` before expanding extraction
    and scoring.
 10. Tighten allowlists after each cluster migration.

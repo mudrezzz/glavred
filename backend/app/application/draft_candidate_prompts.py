@@ -1,50 +1,6 @@
-import json
-from typing import Any
+"""Compatibility shim for backend.app.drafting.application.generation.draft_candidate_prompts.
 
-from backend.app.domain.draft_candidates import DraftCandidateDirection
+Behavior moved to the drafting bounded context in Slice 2.17.4.6.0.5.
+"""
 
-CANDIDATE_TEMPERATURE = 0.55
-CANDIDATE_KEYS = {"title", "body", "rationale", "usedEvidence", "ruleCoverage", "risks", "weaknesses"}
-
-
-def build_draft_candidate_messages(
-    *,
-    context_summary: dict[str, Any],
-    rule_pack: dict[str, Any],
-    material_plan: dict[str, Any],
-    draft_strategy: dict[str, Any],
-    direction: DraftCandidateDirection,
-    context_pack: dict[str, Any] | None = None,
-    repair_context: dict[str, Any] | None = None,
-) -> list[dict[str, str]]:
-    return [
-        {
-            "role": "system",
-            "content": (
-                "You are Glavred's draft-writing agent. Return only valid JSON with keys: "
-                "title, body, rationale, usedEvidence, ruleCoverage, risks, weaknesses. "
-                "The draft must obey hard constraints and stay grounded in evidence. "
-                "Use evidenceInterpretation implications, examples, limits, and forbidden overclaims "
-                "when present; do not paste raw citations as decoration. "
-                "Do not mechanically expose internal pipeline artifact names as dev-jargon, such as SourceLedger, "
-                "publicEvidence, validators, RuleRegistry, or PostContract in public prose. "
-                "Use them only if you intentionally frame and explain them as reader-facing concepts."
-            ),
-        },
-        {
-            "role": "user",
-            "content": json.dumps(
-                {
-                    "direction": direction.to_payload(),
-                    "contextSummary": context_summary,
-                    "rulePack": rule_pack,
-                    "materialPlan": material_plan,
-                    "draftStrategy": draft_strategy,
-                    "contextPack": context_pack or {},
-                    "repairContext": repair_context,
-                    "outputLanguage": "ru",
-                },
-                ensure_ascii=False,
-            ),
-        },
-    ]
+from backend.app.drafting.application.generation.draft_candidate_prompts import *  # noqa: F401,F403

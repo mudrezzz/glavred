@@ -1,6 +1,6 @@
 from typing import Any
 
-from backend.app.application.draft_final_quality_gate import DraftFinalQualityGateService
+from backend.app.drafting.application.final_quality.draft_final_quality_gate import DraftFinalQualityGateService
 
 
 class FakeRevisionService:

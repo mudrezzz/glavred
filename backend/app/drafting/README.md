@@ -4,11 +4,11 @@
 
 Current status: behavior-preserving workflow orchestration shell, provider-free step
 and JSON operation contracts, payload/runtime guardrails, Legacy DraftRun Surface
-migration inventory, and the first runtime package migration. Context/artifact,
-source/evidence, evidence-contract, and planning behavior now lives under this
-bounded context. Candidate generation, validation, ranking/revision, final quality,
-HITL, and domain DTO clusters still have legacy flat modules until their migration
-slices move them.
+migration inventory, and the main DraftRun application package migrations. Context,
+source/evidence, planning, candidate generation, validation, ranking/revision, final
+quality, and HITL behavior now live under this bounded context. Old flat
+`backend/app/application/*` paths for migrated runtime modules are compatibility
+shims only.
 
 ## Ownership
 
@@ -103,6 +103,21 @@ Slice 2.17.4.6.0.4 migrated 68 early modules into:
   collaborators, and deterministic planning/rhetorical fallback owners;
 - `application/operations/json_step_adapter.py`: bounded JSON provider adapter for
   migrated provider-heavy services.
+
+Slice 2.17.4.6.0.5 migrated the late DraftRun modules into:
+
+- `application/generation`: candidate direction/generation/provider/selection,
+  candidate audit/prompts/results, publishability, deterministic candidate fallback,
+  alternative-angle challenger writing, generation params, and prompt builder;
+- `application/validation`: deterministic validation, attribution requirements,
+  LLM validation, editorial critique, validation report flow, alternative-angle
+  route/tournament orchestration, validation step service, and operation safety;
+- `application/revision`: pairwise ranking, directed revision, ranking-revision
+  orchestration, revision loop, revision policies, regression checks, rejected
+  moves, and deterministic pairwise fallback;
+- `application/final_quality`: final quality contract, deterministic assessment,
+  final gate, independent review, payload helpers, and repair loop;
+- `application/hitl`: post-run human-comment revision and revision quality check.
 
 ## Unified Step Contract
 

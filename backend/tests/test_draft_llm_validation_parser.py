@@ -1,4 +1,4 @@
-from backend.app.application.draft_llm_validation_parser import parse_llm_validation_report
+from backend.app.drafting.application.validation.draft_llm_validation_parser import parse_llm_validation_report
 
 
 def test_positive_no_repair_findings_are_observations() -> None:

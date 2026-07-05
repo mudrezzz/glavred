@@ -1,4 +1,4 @@
-from backend.app.application.draft_revision_loop_config import revision_iteration_limit
+from backend.app.drafting.application.revision.draft_revision_loop_config import revision_iteration_limit
 from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import budget_from_context, resolve_draft_run_budget
 from backend.app.drafting.application.evidence.public_evidence_budgeting import budget_public_evidence_tasks, trim_public_evidence_items

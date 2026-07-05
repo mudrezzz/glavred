@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from __future__ import annotations
 
 from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
-from backend.app.application.draft_candidate_selection_block import candidate_selection_blocked_payload
+from backend.app.drafting.application.generation.draft_candidate_selection_block import candidate_selection_blocked_payload
 from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
 from backend.app.drafting.application.artifacts.draft_run_payloads import draft_to_payload, payload_section
