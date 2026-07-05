@@ -151,6 +151,15 @@ owned by named classes. Do not add new public top-level helper functions to
 `application/validation`; add behavior to the owning service, policy, or component
 and let `npm run test:architecture` enforce the audit ledger.
 
+Slice 2.17.4.6.0.9 cleaned the revision and final-quality packages after migration.
+Revision pairwise payload mapping, candidate mapping, loop policy, rejected-move
+policy, prompt builders, acceptance policy, and config caps are class-owned.
+Final-quality assessment, attribution classification, final-gate payloads, contract
+building, review parsing, and review prompts are class-owned. Do not add new public
+top-level helper functions to `application/revision` or `application/final_quality`;
+residual revision debt is medium service-size cleanup, not permission to restore
+procedural helpers.
+
 ## Unified Step Contract
 
 New DraftRun step code should implement the provider-free contract in

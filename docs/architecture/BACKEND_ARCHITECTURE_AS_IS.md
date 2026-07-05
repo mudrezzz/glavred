@@ -234,14 +234,23 @@ Already enforced:
   report-appender, and attempt-mapper components instead of public helper sprawl.
   The audit ledger records only medium residual line-count/package debt for this
   package; validation high findings are closed.
+- Drafting revision and final-quality package OOP cleanup from Slice 2.17.4.6.0.9:
+  `backend/app/drafting/application/revision` now routes pairwise payload mapping,
+  ranking/revision candidate mapping, revision-loop policy, rejected-move policy,
+  prompt building, acceptance, and config caps through class-owned components.
+  `backend/app/drafting/application/final_quality` now routes deterministic
+  assessment, attribution classification, final-gate payloads, contract building,
+  review parsing, and review prompt construction through class-owned components.
+  Final-quality audit findings for this package are closed; revision keeps only
+  medium line-count/package debt for future service-size cleanup.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- OOP cleanup of migrated revision, final-quality, HITL, API, application,
-  infrastructure, upstream, and residual medium validation line-count surfaces
-  flagged by the audit ledger.
+- OOP cleanup of migrated HITL, operations/provider, API, application,
+  infrastructure, upstream, and residual medium validation/revision line-count
+  surfaces flagged by the audit ledger.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes and validation runtime-budget heartbeats.

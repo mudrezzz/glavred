@@ -1,4 +1,4 @@
-from backend.app.drafting.application.revision.draft_revision_loop_config import revision_iteration_limit
+from backend.app.drafting.application.revision.draft_revision_loop_config import RevisionLoopConfigPolicy
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 
@@ -84,4 +84,4 @@ def test_revision_iteration_limit_normalizes_zero() -> None:
         DRAFT_REVISION_MAX_ITERATIONS=0,
     )
 
-    assert revision_iteration_limit(settings) == 1
+    assert RevisionLoopConfigPolicy().revision_iteration_limit(settings) == 1

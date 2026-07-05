@@ -11,12 +11,12 @@ from backend.app.drafting.application.revision.draft_directed_revision_service i
 from backend.app.drafting.application.revision.draft_editorial_revision_evaluator import DraftEditorialRevisionEvaluator
 from backend.app.drafting.application.revision.draft_editorial_revision_goals import DraftEditorialRevisionGoalBuilder
 from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
-from backend.app.drafting.application.revision.draft_revision_acceptance_policy import acceptance_decision
+from backend.app.drafting.application.revision.draft_revision_acceptance_policy import RevisionAcceptancePolicy
 from backend.app.drafting.application.revision.draft_revision_goal_evaluator import DraftRevisionGoalEvaluator
 from backend.app.drafting.application.revision.draft_revision_instruction_builder import DraftRevisionInstructionBuilder
 from backend.app.drafting.application.revision.draft_revision_loop_cycle_runner import DraftRevisionLoopCycleRunner
-from backend.app.drafting.application.revision.draft_revision_loop_policy import candidate_id, constraints_from_rejection, constraints_from_unresolved, dict_or_empty, failed_cycle, pairwise_winner, string_list
-from backend.app.drafting.application.revision.draft_revision_rejected_moves import constraints_from_editorial_goals, constraints_from_rejected_moves, cycle_stop_reason, goal_messages, rejected_moves_from_cycle
+from backend.app.drafting.application.revision.draft_revision_loop_policy import RevisionLoopPolicy
+from backend.app.drafting.application.revision.draft_revision_rejected_moves import RevisionRejectedMovePolicy
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_revision_loop import RevisionLoopCycle
@@ -34,6 +34,9 @@ class DraftRevisionLoopService:
         goal_evaluator: DraftRevisionGoalEvaluator | None = None,
         editorial_goal_builder: DraftEditorialRevisionGoalBuilder | None = None,
         editorial_evaluator: DraftEditorialRevisionEvaluator | None = None,
+        acceptance_policy: RevisionAcceptancePolicy | None = None,
+        loop_policy: RevisionLoopPolicy | None = None,
+        rejected_move_policy: RevisionRejectedMovePolicy | None = None,
         max_iterations: int = 3,
     ) -> None:
         self._instruction_builder = instruction_builder or DraftRevisionInstructionBuilder()
@@ -41,6 +44,9 @@ class DraftRevisionLoopService:
         self._goals = goal_evaluator or DraftRevisionGoalEvaluator()
         self._editorial_goals = editorial_goal_builder or DraftEditorialRevisionGoalBuilder()
         self._editorial = editorial_evaluator or DraftEditorialRevisionEvaluator()
+        self._acceptance = acceptance_policy or RevisionAcceptancePolicy()
+        self._policy = loop_policy or RevisionLoopPolicy()
+        self._rejected_moves = rejected_move_policy or RevisionRejectedMovePolicy()
         self._cycles = DraftRevisionLoopCycleRunner(ranking_service=ranking_service, revision_service=revision_service, regression_guard=self._regression)
         self._max_iterations = max(1, max_iterations)
 
@@ -72,11 +78,11 @@ class DraftRevisionLoopService:
                 detail_stop_reason = guard.detail_stop_reason or "runtime-budget-exhausted"
                 stop_reason = STOP_BUDGET_EXHAUSTED
                 break
-            current_id = candidate_id(current)
+            current_id = self._policy.candidate_id(current)
             instruction = self._instruction_builder.build(candidate_id=current_id, validation_report=current_validation).to_payload()
             if first_instruction is None:
                 first_instruction = instruction
-            repair_goals = string_list(instruction.get("repairGoals"))
+            repair_goals = self._policy.string_list(instruction.get("repairGoals"))
             editorial_goals = self._editorial_goals.build(
                 candidate_id=current_id,
                 repair_goals=repair_goals,
@@ -102,15 +108,15 @@ class DraftRevisionLoopService:
                 progress=progress,
             )
             last_revision = revision
-            revision_ids = string_list(revision.get("aiRunIds"))
+            revision_ids = self._policy.string_list(revision.get("aiRunIds"))
             ai_run_ids.extend(revision_ids)
-            revised = dict_or_empty(revision.get("revisedCandidate")) or None
+            revised = self._policy.dict_or_empty(revision.get("revisedCandidate")) or None
             if revision.get("status") != "succeeded" or not revised:
                 detail_stop_reason = str(revision.get("reason") or revision.get("error") or "directed-revision-failed")
-                cycles.append(failed_cycle(
+                cycles.append(self._policy.failed_cycle(
                     cycle_number=cycle_number,
                     base_id=current_id,
-                    goals=repair_goals or goal_messages(editorial_goals),
+                    goals=repair_goals or self._rejected_moves.goal_messages(editorial_goals),
                     editorial_goals=editorial_goals,
                     constraints=constraints,
                     revision=revision,
@@ -137,7 +143,7 @@ class DraftRevisionLoopService:
                 validation_before=current_validation,
                 validation_after=validation_after,
                 base_candidate_id=current_id,
-                revised_candidate_id=candidate_id(revised),
+                revised_candidate_id=self._policy.candidate_id(revised),
             )
             comparison = self._cycles.compare(
                 cycle_number=cycle_number,
@@ -150,24 +156,24 @@ class DraftRevisionLoopService:
                 material_plan=material_plan,
                 progress=progress,
             )
-            compare_ids = string_list(comparison.get("aiRunIds"))
+            compare_ids = self._policy.string_list(comparison.get("aiRunIds"))
             ai_run_ids.extend(compare_ids)
             editorial_result = self._editorial.evaluate(
                 editorial_goals=editorial_goals,
                 pairwise_comparison=comparison,
                 current_id=current_id,
-                revised_id=candidate_id(revised),
+                revised_id=self._policy.candidate_id(revised),
             )
-            accepted, decision_reasons = acceptance_decision(
+            accepted, decision_reasons = self._acceptance.acceptance_decision(
                 current_id=current_id,
-                revised_id=candidate_id(revised),
+                revised_id=self._policy.candidate_id(revised),
                 regression_reasons=regression.reasons,
                 resolved_goals=goal_result["resolved"],
                 resolved_editorial_goals=editorial_result["resolvedEditorialGoals"],
                 regressed_editorial_dimensions=editorial_result["regressedEditorialDimensions"],
-                pairwise_winner=pairwise_winner(comparison),
+                pairwise_winner=self._policy.pairwise_winner(comparison),
             )
-            new_rejected_moves = [] if accepted else rejected_moves_from_cycle(
+            new_rejected_moves = [] if accepted else self._rejected_moves.rejected_moves_from_cycle(
                 cycle_number=cycle_number,
                 revised_candidate=revised,
                 rejection_reasons=decision_reasons,
@@ -186,7 +192,7 @@ class DraftRevisionLoopService:
                 editorial_goals=editorial_goals,
                 editorial_result=editorial_result,
                 new_rejected_moves=new_rejected_moves,
-                stop_reason=cycle_stop_reason(accepted, goal_result["unresolved"], editorial_result["unresolvedEditorialGoals"]),
+                stop_reason=self._rejected_moves.cycle_stop_reason(accepted, goal_result["unresolved"], editorial_result["unresolvedEditorialGoals"]),
                 accepted=accepted,
                 decision_reasons=decision_reasons,
                 ai_run_ids=[*revision_ids, *compare_ids],
@@ -197,15 +203,15 @@ class DraftRevisionLoopService:
                 current = revised
                 current_validation = validation_after
                 constraints = [
-                    *constraints_from_unresolved(goal_result["unresolved"]),
-                    *constraints_from_editorial_goals(editorial_result["unresolvedEditorialGoals"]),
+                    *self._policy.constraints_from_unresolved(goal_result["unresolved"]),
+                    *self._rejected_moves.constraints_from_editorial_goals(editorial_result["unresolvedEditorialGoals"]),
                 ]
                 stop_reason = "editorially-improved" if editorial_result["resolvedEditorialGoals"] else "validator-clean"
                 if not constraints:
                     break
                 continue
             rejected_moves.extend(new_rejected_moves)
-            constraints.extend([*constraints_from_rejection(decision_reasons, goal_result["unresolved"]), *constraints_from_rejected_moves(new_rejected_moves)])
+            constraints.extend([*self._policy.constraints_from_rejection(decision_reasons, goal_result["unresolved"]), *self._rejected_moves.constraints_from_rejected_moves(new_rejected_moves)])
             stop_reason = "no-fresh-angle"
 
         if cycles and len(cycles) >= self._max_iterations and stop_reason not in {"provider-failed", "no-fresh-angle"} and constraints:

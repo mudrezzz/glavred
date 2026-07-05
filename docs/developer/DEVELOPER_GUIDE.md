@@ -249,6 +249,18 @@ Validation package code must stay class-owned after Slice 2.17.4.6.0.8. Use
 `LlmValidationAttemptMapper`, and `EditorialCritiqueAttemptMapper` instead of
 adding public top-level helpers in `backend/app/drafting/application/validation`.
 
+Revision and final-quality package code must stay class-owned after Slice
+2.17.4.6.0.9. Use `PairwiseRankingPayloadMapper`,
+`RankingRevisionCandidateMapper`, `RevisionLoopPolicy`,
+`RevisionRejectedMovePolicy`, `DirectedRevisionPromptBuilder`,
+`PairwiseRankingPromptBuilder`, `RevisionAcceptancePolicy`,
+`RevisionLoopConfigPolicy`, `FinalQualityAssessmentPolicy`,
+`FinalQualityAttributionPolicy`, `FinalQualityGatePayloadFactory`,
+`FinalQualityContractBuilder`, `FinalQualityReviewParser`, and
+`FinalQualityReviewPromptBuilder` instead of adding public top-level helpers in
+`backend/app/drafting/application/revision` or
+`backend/app/drafting/application/final_quality`.
+
 The Legacy DraftRun Surface is classified in
 `backend.app.drafting.application.migration.legacy_surface_inventory`. Before
 moving a legacy `backend/app/application/draft_*.py` or `deterministic_*.py` module,

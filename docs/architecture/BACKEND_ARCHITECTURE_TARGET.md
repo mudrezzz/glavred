@@ -197,6 +197,15 @@ Implemented operation safety repair:
     parser/prompt/trace/envelope mapping to those owners;
   - new high-severity validation public helper sprawl is an audit failure unless a
     ledger entry explicitly records owner, reason, guardrail, and repair slice.
+- Drafting revision and final-quality package OOP cleanup:
+  - Slice 2.17.4.6.0.9 turned revision pairwise payload mapping, ranking/revision
+    candidate mapping, revision-loop policy, rejected-move policy, prompt building,
+    acceptance decisions, and revision-loop config into named class owners;
+  - final-quality deterministic assessment, attribution classification, final-gate
+    payload construction, contract building, review parsing, and review prompt
+    construction are also class-owned;
+  - final-quality high findings are closed, and revision retains only medium
+    service-size/package debt recorded in the audit ledger.
 - Backend documentation and agent guardrail hardening:
   - backend docs, `AGENTS.md`, and repo-local skills now describe the post-`0.5`
     canonical package owners;
@@ -286,7 +295,7 @@ guardrail, and notes. New unclassified high-severity smells should fail
 The planned cleanup sequence after the audit is:
 
 1. `2.17.4.6.0.8`: Drafting validation package OOP cleanup.
-2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup.
+2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup. Done.
 3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup.
 4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup.
 

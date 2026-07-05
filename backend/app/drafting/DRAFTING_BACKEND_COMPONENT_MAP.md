@@ -42,8 +42,8 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 | `application/planning` | Material plan retry orchestration, material projection/accountability, strategy, rhetorical plans, planning audit/result/prompt helpers, and deterministic planning/rhetorical fallback owners. | migrated material/strategy/rhetorical modules |
 | `application/generation` | Candidate direction, generation, provider execution, selection, publishability, candidate audit/prompts/results, alternative-angle challenger writing, deterministic candidate fallback, generation params, and prompt builder. | migrated candidate-generation modules |
 | `application/validation` | Deterministic linter/evidence/attribution checks, LLM validation, editorial critique, validation report and alternative-angle route/tournament orchestration, validation step service, and operation safety. Slice 2.17.4.6.0.8 makes parser, prompt-builder, trace-builder, attribution/evidence, artifact, report-appender, failure-mapper, and attempt-mapper responsibilities class-owned. | migrated validation and alternative-angle orchestration modules |
-| `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. | migrated ranking/revision modules |
-| `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. | migrated final quality modules |
+| `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. Slice 2.17.4.6.0.9 makes payload mapping, candidate mapping, revision-loop policy, rejected-move policy, prompts, acceptance, and config caps class-owned. | migrated ranking/revision modules |
+| `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. Slice 2.17.4.6.0.9 makes assessment, attribution, payload, contract, parser, and prompt responsibilities class-owned. | migrated final quality modules |
 | `application/hitl` | Human-comment revision and human-comment revision quality check services. | migrated HITL modules |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
@@ -81,9 +81,11 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 14. Clean migrated validation package public helper/god-service debt. Done in
     Slice 2.17.4.6.0.8; residual validation debt is medium line-count/package
     cleanup recorded in the audit ledger.
-15. Clean migrated revision/final-quality, HITL/provider, and remaining backend
-    surfaces according to the audit ledger. Planned in Slices 2.17.4.6.0.9
-    through 2.17.4.6.0.11.
+15. Clean migrated revision/final-quality package public helper debt. Done in Slice
+    2.17.4.6.0.9; final-quality high findings are closed and revision keeps only
+    medium line-count/package debt in the audit ledger.
+16. Clean migrated HITL/provider and remaining backend surfaces according to the
+    audit ledger. Planned in Slices 2.17.4.6.0.10 through 2.17.4.6.0.11.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

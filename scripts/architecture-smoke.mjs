@@ -3531,8 +3531,8 @@ assert(
   `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must have version 1.`
 );
 assert(
-  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.8",
-  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.8.`
+  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.9",
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.9.`
 );
 assert(
   Array.isArray(backendArchitectureDebtLedger.entries) &&
@@ -3568,7 +3568,7 @@ for (const fragment of [
   "publicHelperSprawl",
   "proceduralBoundedPackage",
   "rawDictContract",
-  "2.17.4.6.0.8",
+  "2.17.4.6.0.9",
   "Unledgered `critical` and `high` findings fail architecture smoke",
 ]) {
   assert(

@@ -6996,7 +6996,7 @@ Status:
 
 ### Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup
 
-- Status: Ready
+- Status: Done
 - Goal: Clean up revision and final-quality packages after migration using the audit ledger and role-owned component boundaries.
 - User value:
   - Revision/final gate development can continue without growing procedural helper surfaces.
@@ -7026,10 +7026,11 @@ Status:
   - Runtime behavior and trace snapshots remain compatible.
 - Risks:
   - Revision loop and final gate are tightly coupled; preserve tests before moving helpers.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup
 
-- Status: Backlog
+- Status: Ready
 - Goal: Clean up HITL and provider-heavy operation surfaces around message builders, operation envelopes, payload budgets, and runtime budgets.
 - User value:
   - Human revision and provider operation code becomes safe to extend without duplicating ad hoc provider/result contracts.
@@ -7780,6 +7781,7 @@ Status:
 - Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening. Completed 2026-07-05.
 - Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger. Completed 2026-07-05.
 - Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup. Completed 2026-07-05.
+- Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7808,4 +7810,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup`.
+Implement `Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup`.

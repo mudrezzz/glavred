@@ -6,7 +6,7 @@ from backend.app.drafting.application.final_quality.draft_final_quality_review_s
 from backend.app.drafting.application.validation.draft_llm_validation_service import DraftLlmValidationService
 from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.drafting.application.revision.draft_ranking_revision_service import DraftRankingRevisionService
-from backend.app.drafting.application.revision.draft_revision_loop_config import revision_iteration_limit
+from backend.app.drafting.application.revision.draft_revision_loop_config import RevisionLoopConfigPolicy
 from backend.app.drafting.application.validation.draft_validation_step_service import DraftValidationStepService
 from backend.app.infrastructure.draft_run_pipeline_alternative_services import build_alternative_angle_tournament_service
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -39,6 +39,6 @@ def build_validation_step_service(
                 review_service=DraftFinalQualityReviewService(**provider_kwargs),
                 max_repair_iterations=max(1, int(settings.draft_final_repair_max_iterations or 1)),
             ),
-            max_iterations=revision_iteration_limit(settings),
+            max_iterations=RevisionLoopConfigPolicy().revision_iteration_limit(settings),
         ),
     )

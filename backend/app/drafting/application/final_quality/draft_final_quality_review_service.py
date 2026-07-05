@@ -9,11 +9,11 @@ from backend.app.drafting.application.operations.json_step_adapter import comple
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.drafting.application.final_quality.draft_final_quality_review_parser import normalize_final_quality_review
+from backend.app.drafting.application.final_quality.draft_final_quality_review_parser import FinalQualityReviewParser
 from backend.app.drafting.application.final_quality.draft_final_quality_review_prompts import (
     FINAL_QUALITY_REVIEW_KEYS,
     FINAL_QUALITY_REVIEW_TEMPERATURE,
-    build_final_quality_review_messages,
+    FinalQualityReviewPromptBuilder,
 )
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_final_gate, selection_for_attempt
 from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
@@ -32,11 +32,15 @@ class DraftFinalQualityReviewService:
         ai_run_service: AiRunService,
         openrouter_validator: OpenRouterConfigValidator,
         openrouter_adapter: Any,
+        parser: FinalQualityReviewParser | None = None,
+        prompt_builder: FinalQualityReviewPromptBuilder | None = None,
     ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
+        self._parser = parser or FinalQualityReviewParser()
+        self._prompt_builder = prompt_builder or FinalQualityReviewPromptBuilder()
 
     def review(
         self,
@@ -78,7 +82,7 @@ class DraftFinalQualityReviewService:
             )
             attempts.append(result["attempt"])
             if result["accepted"]:
-                review = normalize_final_quality_review(result["payload"], candidate_id=str(candidate.get("id") or "final"))
+                review = self._parser.normalize(result["payload"], candidate_id=str(candidate.get("id") or "final"))
                 return {
                     **review,
                     "attempts": attempts,
@@ -111,7 +115,7 @@ class DraftFinalQualityReviewService:
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.FINAL_GATE, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = build_final_quality_review_messages(
+        messages = self._prompt_builder.build_messages(
             candidate=candidate,
             contract=contract,
             deterministic_gate=deterministic_gate,

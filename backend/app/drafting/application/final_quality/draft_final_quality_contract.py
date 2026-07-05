@@ -10,46 +10,50 @@ from typing import Any
 from backend.app.drafting.application.validation.draft_attribution_requirements import AttributionRequirementResolver
 
 
-def build_final_quality_contract(
-    *,
-    context_artifact: dict[str, Any],
-    rule_pack: dict[str, Any],
-    material_plan: dict[str, Any],
-) -> dict[str, Any]:
-    post_contract = _dict(context_artifact.get("postContract")) or _dict(context_artifact.get("post_contract"))
-    if not post_contract:
-        post_contract = _dict(context_artifact.get("postContractArtifact"))
-    fabula = _dict(context_artifact.get("fabula")) or _dict(_dict(context_artifact.get("draftContext")).get("fabula"))
-    size_contract = _dict(post_contract.get("publicationSizeContract"))
-    publication_kind = str(size_contract.get("publicationKind") or _dict(context_artifact.get("publicationSizeProfile")).get("publicationKind") or "post")
-    research_depth = str(fabula.get("researchDepth") or "standard")
-    source_policy = _source_policy(research_depth, publication_kind)
-    attribution = _attribution_requirements(context_artifact, material_plan)
-    return {
-        "version": "final-quality-contract-v1",
-        "researchDepth": research_depth,
-        "publicationKind": publication_kind,
-        "fabulaSizeIntent": str(fabula.get("sizeIntent") or "standard"),
-        "thesis": str(post_contract.get("thesis") or _dict(context_artifact.get("brief")).get("thesis") or ""),
-        "audience": str(post_contract.get("audience") or ""),
-        "cta": str(post_contract.get("cta") or ""),
-        "sourceIntegrationPolicy": source_policy,
-        "authorVoicePolicy": _author_voice_policy(fabula, post_contract),
-        "examplePolicy": _example_policy(research_depth),
-        "forbiddenPublicTerms": ["SourceLedger", "publicEvidence", "validators", "PostContract", "RuleRegistry"],
-        "sourceAttributionRequired": attribution["resolvedClaimIds"],
-        "unresolvedAttributionRequirements": attribution["unresolvedAttributionRequirements"],
-        "attributionRequirementMatches": attribution["requirementMatches"],
-        "qualifiedClaimIds": _claim_ids(material_plan, "qualifiedClaims"),
-        "hardRuleIds": _hard_rule_ids(rule_pack),
-        "acceptanceCriteria": [
-            "The final text must satisfy the locked thesis, audience, value, and CTA.",
-            "Source references must support author interpretation, not replace it.",
-            "Concrete examples must be source-backed or explicitly marked as hypothetical.",
-            "Internal pipeline terms must not appear as public prose.",
-            "The allowed source density depends on researchDepth and publicationKind.",
-        ],
-    }
+class FinalQualityContractBuilder:
+    """Owns final-quality contract assembly from DraftRun artifacts."""
+
+    def build(
+        self,
+        *,
+        context_artifact: dict[str, Any],
+        rule_pack: dict[str, Any],
+        material_plan: dict[str, Any],
+    ) -> dict[str, Any]:
+        post_contract = _dict(context_artifact.get("postContract")) or _dict(context_artifact.get("post_contract"))
+        if not post_contract:
+            post_contract = _dict(context_artifact.get("postContractArtifact"))
+        fabula = _dict(context_artifact.get("fabula")) or _dict(_dict(context_artifact.get("draftContext")).get("fabula"))
+        size_contract = _dict(post_contract.get("publicationSizeContract"))
+        publication_kind = str(size_contract.get("publicationKind") or _dict(context_artifact.get("publicationSizeProfile")).get("publicationKind") or "post")
+        research_depth = str(fabula.get("researchDepth") or "standard")
+        source_policy = _source_policy(research_depth, publication_kind)
+        attribution = _attribution_requirements(context_artifact, material_plan)
+        return {
+            "version": "final-quality-contract-v1",
+            "researchDepth": research_depth,
+            "publicationKind": publication_kind,
+            "fabulaSizeIntent": str(fabula.get("sizeIntent") or "standard"),
+            "thesis": str(post_contract.get("thesis") or _dict(context_artifact.get("brief")).get("thesis") or ""),
+            "audience": str(post_contract.get("audience") or ""),
+            "cta": str(post_contract.get("cta") or ""),
+            "sourceIntegrationPolicy": source_policy,
+            "authorVoicePolicy": _author_voice_policy(fabula, post_contract),
+            "examplePolicy": _example_policy(research_depth),
+            "forbiddenPublicTerms": ["SourceLedger", "publicEvidence", "validators", "PostContract", "RuleRegistry"],
+            "sourceAttributionRequired": attribution["resolvedClaimIds"],
+            "unresolvedAttributionRequirements": attribution["unresolvedAttributionRequirements"],
+            "attributionRequirementMatches": attribution["requirementMatches"],
+            "qualifiedClaimIds": _claim_ids(material_plan, "qualifiedClaims"),
+            "hardRuleIds": _hard_rule_ids(rule_pack),
+            "acceptanceCriteria": [
+                "The final text must satisfy the locked thesis, audience, value, and CTA.",
+                "Source references must support author interpretation, not replace it.",
+                "Concrete examples must be source-backed or explicitly marked as hypothetical.",
+                "Internal pipeline terms must not appear as public prose.",
+                "The allowed source density depends on researchDepth and publicationKind.",
+            ],
+        }
 
 
 def _source_policy(research_depth: str, publication_kind: str) -> dict[str, Any]:

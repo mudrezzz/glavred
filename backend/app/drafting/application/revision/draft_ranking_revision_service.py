@@ -12,14 +12,7 @@ from backend.app.drafting.application.revision.deterministic_pairwise_ranking im
 from backend.app.drafting.application.revision.draft_directed_revision_service import DraftDirectedRevisionService
 from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
 from backend.app.drafting.application.final_quality.draft_final_quality_gate import DraftFinalQualityGateService
-from backend.app.drafting.application.revision.draft_ranking_revision_mapping import (
-    candidate_by_id,
-    candidate_to_draft,
-    final_reason,
-    last,
-    last_revised,
-    safe_error,
-)
+from backend.app.drafting.application.revision.draft_ranking_revision_mapping import RankingRevisionCandidateMapper
 from backend.app.drafting.application.revision.draft_ranking_revision_result import DraftRankingRevisionResult
 from backend.app.drafting.application.revision.draft_revision_instruction_builder import DraftRevisionInstructionBuilder
 from backend.app.drafting.application.revision.draft_revision_loop_service import DraftRevisionLoopService
@@ -38,8 +31,10 @@ class DraftRankingRevisionService:
         regression_guard: DraftRevisionRegressionGuard | None = None,
         final_quality_gate: DraftFinalQualityGateService | None = None,
         max_iterations: int = 3,
+        candidate_mapper: RankingRevisionCandidateMapper | None = None,
     ) -> None:
         self._ranking = ranking_service
+        self._candidates = candidate_mapper or RankingRevisionCandidateMapper()
         guard = regression_guard or DraftRevisionRegressionGuard()
         self._loop = DraftRevisionLoopService(
             ranking_service=ranking_service,
@@ -82,12 +77,12 @@ class DraftRankingRevisionService:
                 if initial_pairwise_denied:
                     progress.complete_operation("pairwise-ranking", notes=[STOP_BUDGET_EXHAUSTED])
                 else:
-                    progress.fail_operation("pairwise-ranking", safe_error(exc))
+                    progress.fail_operation("pairwise-ranking", self._candidates.safe_error(exc))
             ranking = DeterministicPairwiseRanker().rank(draft_artifact=draft_artifact, validation_report=validation_report)
         if progress:
-            progress.complete_operation("pairwise-ranking", ai_run_id=last(ranking.ai_run_ids))
+            progress.complete_operation("pairwise-ranking", ai_run_id=self._candidates.last(ranking.ai_run_ids))
         winner_id = ranking.decision.winner_candidate_id
-        winner = candidate_by_id(draft_artifact, winner_id)
+        winner = self._candidates.candidate_by_id(draft_artifact, winner_id)
         loop = self._loop.run(
             winner=winner,
             validation_report=validation_report,
@@ -123,7 +118,7 @@ class DraftRankingRevisionService:
             "status": "succeeded" if final_candidate else "blocked",
             "pairwiseRanking": ranking.to_payload(),
             "revisionInstruction": loop.first_instruction,
-            "revisedCandidate": last_revised(loop.report.to_payload()),
+            "revisedCandidate": self._candidates.last_revised(loop.report.to_payload()),
             "revision": loop.last_revision,
             "revisionRegression": loop.last_regression,
             "revisionLoop": loop.report.to_payload(),
@@ -135,12 +130,12 @@ class DraftRankingRevisionService:
                 "source": final_decision.get("source") or final_source if final_candidate else "none",
                 "stopReason": final_stop_reason,
                 "detailStopReason": loop.report.detail_stop_reason,
-                "reason": final_decision.get("reason") or final_reason(final_source, ranking.decision.reason, loop.report.stop_reason),
+                "reason": final_decision.get("reason") or self._candidates.final_reason(final_source, ranking.decision.reason, loop.report.stop_reason),
             },
         }
         ai_run_ids = [*ranking.ai_run_ids, *loop.ai_run_ids, *final_gate.ai_run_ids]
         return DraftRankingRevisionResult(
             artifact_payload=artifact,
-            final_draft=candidate_to_draft(request, final_candidate) if final_candidate else None,
+            final_draft=self._candidates.candidate_to_draft(request, final_candidate) if final_candidate else None,
             ai_run_ids=ai_run_ids,
         )

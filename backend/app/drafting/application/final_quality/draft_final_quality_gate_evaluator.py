@@ -7,8 +7,8 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from typing import Any
 
-from backend.app.drafting.application.final_quality.draft_final_quality_assessment import gate_payload
-from backend.app.drafting.application.final_quality.draft_final_quality_gate_payloads import dedupe, dict_value, list_value, strings, worst_status
+from backend.app.drafting.application.final_quality.draft_final_quality_assessment import FinalQualityAssessmentPolicy
+from backend.app.drafting.application.final_quality.draft_final_quality_gate_payloads import FinalQualityGatePayloadFactory
 from backend.app.drafting.application.final_quality.draft_final_quality_review_service import DraftFinalQualityReviewService
 from backend.app.drafting.application.validation.draft_validator_orchestrator import DraftValidatorOrchestrator
 
@@ -19,9 +19,13 @@ class FinalQualityGateEvaluator:
         *,
         validator: DraftValidatorOrchestrator | None = None,
         review_service: DraftFinalQualityReviewService | None = None,
+        assessment_policy: FinalQualityAssessmentPolicy | None = None,
+        payloads: FinalQualityGatePayloadFactory | None = None,
     ) -> None:
         self._validator = validator or DraftValidatorOrchestrator()
         self._review = review_service
+        self._assessment = assessment_policy or FinalQualityAssessmentPolicy()
+        self._payloads = payloads or FinalQualityGatePayloadFactory()
 
     def validate_candidate(
         self,
@@ -54,7 +58,7 @@ class FinalQualityGateEvaluator:
         revision_loop_stop_reason: str,
         contract: dict[str, Any],
     ) -> dict[str, Any]:
-        deterministic = gate_payload(candidate, validation_report, context_artifact, revision_loop_stop_reason)
+        deterministic = self._assessment.gate_payload(candidate, validation_report, context_artifact, revision_loop_stop_reason)
         independent = self._independent_review(candidate, contract, deterministic, validation_report)
         combined = dict(deterministic)
         combined["deterministicGate"] = deterministic
@@ -62,11 +66,11 @@ class FinalQualityGateEvaluator:
         combined["independentReview"] = independent
         combined["modelIndependence"] = independent.get("modelIndependence", "unknown")
         combined["attributionReview"] = self._attribution_review(deterministic, independent)
-        combined["status"] = worst_status(deterministic.get("status"), independent.get("status"))
-        combined["publicProseStatus"] = worst_status(deterministic.get("publicProseStatus"), independent.get("publicProseStatus"))
-        combined["sourceIntegrationStatus"] = worst_status(deterministic.get("sourceIntegrationStatus"), independent.get("sourceIntegrationStatus"))
-        combined["authorVoiceStrength"] = worst_status(deterministic.get("authorVoiceStrength"), independent.get("authorVoiceStrength"))
-        combined["readerValueClarity"] = worst_status(deterministic.get("readerValueClarity"), independent.get("readerValueClarity"))
+        combined["status"] = self._payloads.worst_status(deterministic.get("status"), independent.get("status"))
+        combined["publicProseStatus"] = self._payloads.worst_status(deterministic.get("publicProseStatus"), independent.get("publicProseStatus"))
+        combined["sourceIntegrationStatus"] = self._payloads.worst_status(deterministic.get("sourceIntegrationStatus"), independent.get("sourceIntegrationStatus"))
+        combined["authorVoiceStrength"] = self._payloads.worst_status(deterministic.get("authorVoiceStrength"), independent.get("authorVoiceStrength"))
+        combined["readerValueClarity"] = self._payloads.worst_status(deterministic.get("readerValueClarity"), independent.get("readerValueClarity"))
         combined["finalRepairGoals"] = self._repair_goals(deterministic, independent)
         return combined
 
@@ -87,16 +91,16 @@ class FinalQualityGateEvaluator:
         )
 
     def _repair_goals(self, deterministic: dict[str, Any], independent: dict[str, Any]) -> list[str]:
-        goals = [*strings(deterministic.get("finalRepairGoals")), *strings(independent.get("repairGoals"))]
-        for finding in list_value(independent.get("findings")):
-            guidance = dict_value(finding).get("repairGuidance")
+        goals = [*self._payloads.strings(deterministic.get("finalRepairGoals")), *self._payloads.strings(independent.get("repairGoals"))]
+        for finding in self._payloads.list_value(independent.get("findings")):
+            guidance = self._payloads.dict_value(finding).get("repairGuidance")
             if guidance:
                 goals.append(str(guidance))
-        return dedupe(goals)[:10]
+        return self._payloads.dedupe(goals)[:10]
 
     def _attribution_review(self, deterministic: dict[str, Any], independent: dict[str, Any]) -> dict[str, Any]:
-        actionable = list_value(deterministic.get("actionableAttributionFindings"))
-        diagnostic = list_value(deterministic.get("diagnosticAttributionNoise"))
+        actionable = self._payloads.list_value(deterministic.get("actionableAttributionFindings"))
+        diagnostic = self._payloads.list_value(deterministic.get("diagnosticAttributionNoise"))
         independent_source_status = str(independent.get("sourceIntegrationStatus") or independent.get("status") or "unknown")
         return {
             "actionableCount": len(actionable),

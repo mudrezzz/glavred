@@ -1,8 +1,8 @@
-from backend.app.drafting.application.revision.draft_revision_acceptance_policy import acceptance_decision
+from backend.app.drafting.application.revision.draft_revision_acceptance_policy import RevisionAcceptancePolicy
 
 
 def test_revision_acceptance_records_pairwise_reason_without_resolved_goals() -> None:
-    accepted, reasons = acceptance_decision(
+    accepted, reasons = RevisionAcceptancePolicy().acceptance_decision(
         current_id="candidate-1",
         revised_id="revised-candidate-1",
         regression_reasons=["revision-preserves-or-improves-deterministic-validation"],
@@ -18,7 +18,7 @@ def test_revision_acceptance_records_pairwise_reason_without_resolved_goals() ->
 
 
 def test_revision_without_goals_or_pairwise_win_is_rejected() -> None:
-    accepted, reasons = acceptance_decision(
+    accepted, reasons = RevisionAcceptancePolicy().acceptance_decision(
         current_id="candidate-1",
         revised_id="revised-candidate-1",
         regression_reasons=["revision-preserves-or-improves-deterministic-validation"],
@@ -34,7 +34,7 @@ def test_revision_without_goals_or_pairwise_win_is_rejected() -> None:
 
 
 def test_revision_with_regression_is_rejected_even_if_pairwise_wins() -> None:
-    accepted, reasons = acceptance_decision(
+    accepted, reasons = RevisionAcceptancePolicy().acceptance_decision(
         current_id="candidate-1",
         revised_id="revised-candidate-1",
         regression_reasons=["critical-count-increased"],

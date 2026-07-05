@@ -58,8 +58,8 @@ DRAFTING_BOUNDED_APP_PACKAGES = {
 
 PROCEDURAL_PACKAGE_REPAIR_SLICES = {
     "backend/app/drafting/application/validation": "2.17.4.6.0.11",
-    "backend/app/drafting/application/revision": "2.17.4.6.0.9",
-    "backend/app/drafting/application/final_quality": "2.17.4.6.0.9",
+    "backend/app/drafting/application/revision": "2.17.4.6.0.11",
+    "backend/app/drafting/application/final_quality": "2.17.4.6.0.11",
     "backend/app/drafting/application/hitl": "2.17.4.6.0.10",
     "backend/app/drafting/application/operations": "2.17.4.6.0.10",
     "backend/app/shared/llm_operations": "2.17.4.6.0.10",
@@ -649,10 +649,10 @@ def render_markdown(report: dict[str, Any]) -> str:
             "## Completed Cleanup Slices",
             "",
             "- `2.17.4.6.0.8`: Drafting validation package OOP cleanup closed validation high findings; residual validation debt is medium line-count/package cleanup tracked in the ledger.",
+            "- `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup closed public helper sprawl in both packages; final-quality findings are closed, and residual revision debt is medium line-count/package cleanup tracked in the ledger.",
             "",
             "## Next Repair Slices",
             "",
-            "- `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup.",
             "- `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup.",
             "- `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup.",
             "",

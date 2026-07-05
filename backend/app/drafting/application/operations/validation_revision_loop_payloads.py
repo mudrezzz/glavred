@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from dataclasses import dataclass
 from typing import Any
 
-from backend.app.drafting.application.revision.draft_revision_loop_policy import candidate_id
+from backend.app.drafting.application.revision.draft_revision_loop_policy import RevisionLoopPolicy
 from backend.app.domain.draft_revision_loop import RevisionLoopCycle, RevisionLoopReport
 
 
@@ -79,7 +79,7 @@ def revision_loop_report(
         status="succeeded" if current else "blocked",
         max_iterations=max_iterations,
         cycles=cycles,
-        final_candidate_id=candidate_id(current),
+        final_candidate_id=RevisionLoopPolicy().candidate_id(current),
         final_source="revisionLoop" if any(cycle.accepted for cycle in cycles) else "originalCandidate",
         stop_reason=stop_reason,
         unresolved_goals=_unresolved_goals(cycles),

@@ -11,23 +11,26 @@ from typing import Any
 VALID_STATUSES = {"passed", "warning", "critical"}
 
 
-def normalize_final_quality_review(payload: dict[str, Any], *, candidate_id: str) -> dict[str, Any]:
-    findings = [_finding(item, index, candidate_id) for index, item in enumerate(_list(payload.get("findings")), start=1)]
-    findings = [item for item in findings if item]
-    observations = [_observation(item) for item in _list(payload.get("observations"))]
-    status = _status(payload.get("status") or _status_from_findings(findings))
-    return {
-        "status": status,
-        "summary": str(payload.get("summary") or ""),
-        "candidateId": candidate_id,
-        "publicProseStatus": _status(payload.get("publicProseStatus") or status),
-        "sourceIntegrationStatus": _status(payload.get("sourceIntegrationStatus") or status),
-        "authorVoiceStrength": _status(payload.get("authorVoiceStrength") or "passed"),
-        "readerValueClarity": _status(payload.get("readerValueClarity") or "passed"),
-        "findings": findings,
-        "observations": observations,
-        "repairGoals": _strings(payload.get("repairGoals"))[:8],
-    }
+class FinalQualityReviewParser:
+    """Owns normalization of provider final-quality review payloads."""
+
+    def normalize(self, payload: dict[str, Any], *, candidate_id: str) -> dict[str, Any]:
+        findings = [_finding(item, index, candidate_id) for index, item in enumerate(_list(payload.get("findings")), start=1)]
+        findings = [item for item in findings if item]
+        observations = [_observation(item) for item in _list(payload.get("observations"))]
+        status = _status(payload.get("status") or _status_from_findings(findings))
+        return {
+            "status": status,
+            "summary": str(payload.get("summary") or ""),
+            "candidateId": candidate_id,
+            "publicProseStatus": _status(payload.get("publicProseStatus") or status),
+            "sourceIntegrationStatus": _status(payload.get("sourceIntegrationStatus") or status),
+            "authorVoiceStrength": _status(payload.get("authorVoiceStrength") or "passed"),
+            "readerValueClarity": _status(payload.get("readerValueClarity") or "passed"),
+            "findings": findings,
+            "observations": observations,
+            "repairGoals": _strings(payload.get("repairGoals"))[:8],
+        }
 
 
 def _finding(value: Any, index: int, candidate_id: str) -> dict[str, Any] | None:

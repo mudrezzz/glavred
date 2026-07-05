@@ -11,7 +11,7 @@ from typing import Any
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.drafting.application.revision.draft_directed_revision_prompts import (
     DIRECTED_REVISION_KEYS,
-    build_directed_revision_messages,
+    DirectedRevisionPromptBuilder,
 )
 from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
@@ -29,12 +29,21 @@ OPERATION_META = {"operation_id": "directedRevision", "operation_kind": "writerR
 
 
 class DraftDirectedRevisionService:
-    def __init__(self, *, settings: BackendSettings, ai_run_service: AiRunService, openrouter_validator: OpenRouterConfigValidator, openrouter_adapter: Any) -> None:
+    def __init__(
+        self,
+        *,
+        settings: BackendSettings,
+        ai_run_service: AiRunService,
+        openrouter_validator: OpenRouterConfigValidator,
+        openrouter_adapter: Any,
+        prompt_builder: DirectedRevisionPromptBuilder | None = None,
+    ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._payload_budget_runtime = DraftRunPayloadBudgetRuntime()
+        self._prompt_builder = prompt_builder or DirectedRevisionPromptBuilder()
 
     def revise(
         self,
@@ -128,7 +137,7 @@ class DraftDirectedRevisionService:
             generation_params=generation_params.to_payload(),
         )
         compact_payload = budget_input.payload
-        messages = build_directed_revision_messages(
+        messages = self._prompt_builder.build_messages(
             candidate=compact_payload["candidate"],
             instruction=compact_payload["instruction"],
             context_artifact=compact_payload["context_artifact"],

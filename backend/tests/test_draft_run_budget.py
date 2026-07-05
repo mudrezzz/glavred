@@ -1,4 +1,4 @@
-from backend.app.drafting.application.revision.draft_revision_loop_config import revision_iteration_limit
+from backend.app.drafting.application.revision.draft_revision_loop_config import RevisionLoopConfigPolicy
 from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import budget_from_context, resolve_draft_run_budget
 from backend.app.drafting.application.evidence.public_evidence_budgeting import budget_public_evidence_tasks, trim_public_evidence_items
@@ -42,7 +42,7 @@ def test_smoke_mode_applies_hard_caps_and_revision_limit() -> None:
     assert budget.caps.max_accepted_evidence_items == 3
     assert budget.caps.max_external_claims == 5
     assert budget.caps.max_draft_candidates == 2
-    assert revision_iteration_limit(settings) == 1
+    assert RevisionLoopConfigPolicy().revision_iteration_limit(settings) == 1
 
 
 def test_source_research_budget_caps_tasks_and_records_skips() -> None:

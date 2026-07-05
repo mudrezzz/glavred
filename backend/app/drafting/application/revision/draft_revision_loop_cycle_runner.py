@@ -9,7 +9,7 @@ from typing import Any
 
 from backend.app.drafting.application.revision.draft_directed_revision_service import DraftDirectedRevisionService
 from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
-from backend.app.drafting.application.revision.draft_revision_loop_policy import candidate_id, combined_validation, last_value, string_list
+from backend.app.drafting.application.revision.draft_revision_loop_policy import RevisionLoopPolicy
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.drafting.application.validation.draft_validation_operation_safety import ValidationOperationFailureMapper
@@ -23,11 +23,13 @@ class DraftRevisionLoopCycleRunner:
         revision_service: DraftDirectedRevisionService,
         regression_guard: DraftRevisionRegressionGuard,
         failure_mapper: ValidationOperationFailureMapper | None = None,
+        loop_policy: RevisionLoopPolicy | None = None,
     ) -> None:
         self._ranking = ranking_service
         self._revision = revision_service
         self._regression = regression_guard
         self._failure_mapper = failure_mapper or ValidationOperationFailureMapper()
+        self._policy = loop_policy or RevisionLoopPolicy()
 
     def revise(
         self,
@@ -44,7 +46,7 @@ class DraftRevisionLoopCycleRunner:
         if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
             return self._failure_mapper.failed_revision_result(STOP_BUDGET_EXHAUSTED)
         if progress:
-            progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=candidate_id(candidate) or "none")
+            progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=self._policy.candidate_id(candidate) or "none")
         revision = self._failure_mapper.safe_call(
             progress=progress,
             operation_id=operation_id,
@@ -53,9 +55,9 @@ class DraftRevisionLoopCycleRunner:
         )
         if progress:
             if revision.get("status") != "succeeded":
-                progress.fail_operation(operation_id, str(revision.get("error") or revision.get("reason") or "revision failed"), ai_run_id=last_value(string_list(revision.get("aiRunIds"))))
+                progress.fail_operation(operation_id, str(revision.get("error") or revision.get("reason") or "revision failed"), ai_run_id=self._policy.last_value(self._policy.string_list(revision.get("aiRunIds"))))
             else:
-                progress.complete_operation(operation_id, ai_run_id=last_value(string_list(revision.get("aiRunIds"))), notes=[f"status={revision.get('status')}"])
+                progress.complete_operation(operation_id, ai_run_id=self._policy.last_value(self._policy.string_list(revision.get("aiRunIds"))), notes=[f"status={revision.get('status')}"])
         return revision
     def regress(
         self,
@@ -107,7 +109,7 @@ class DraftRevisionLoopCycleRunner:
             fallback=self._failure_mapper.failed_pairwise_result,
             call=lambda: self._ranking.rank(
                 draft_artifact={"candidates": [item for item in [current, revised] if item], "selection": {"scorecard": []}},
-                validation_report=combined_validation(current_validation, revised_validation),
+                validation_report=self._policy.combined_validation(current_validation, revised_validation),
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,
@@ -115,7 +117,7 @@ class DraftRevisionLoopCycleRunner:
         )
         if progress:
             if report.get("status") == "failed":
-                progress.fail_operation(operation_id, str(report.get("error") or "pairwise failed"), ai_run_id=last_value(string_list(report.get("aiRunIds"))))
+                progress.fail_operation(operation_id, str(report.get("error") or "pairwise failed"), ai_run_id=self._policy.last_value(self._policy.string_list(report.get("aiRunIds"))))
             else:
-                progress.complete_operation(operation_id, ai_run_id=last_value(string_list(report.get("aiRunIds"))), notes=[f"winner={report.get('decision', {}).get('winnerCandidateId')}"])
+                progress.complete_operation(operation_id, ai_run_id=self._policy.last_value(self._policy.string_list(report.get("aiRunIds"))), notes=[f"winner={report.get('decision', {}).get('winnerCandidateId')}"])
         return report
