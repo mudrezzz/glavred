@@ -88,9 +88,12 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     HITL services are orchestration-only, operations/provider helpers are
     class-owned, shared LLM contracts are split by role, and the audit ledger has
     no stale or high `repairSlice=2.17.4.6.0.10` debt.
-17. Clean remaining backend API/application/infrastructure/upstream and residual
-    medium package surfaces according to the audit ledger. Planned in Slice
-    2.17.4.6.0.11.
+17. Clean remaining backend API/application/infrastructure/upstream high debt. Done
+    in Slice 2.17.4.6.0.11; roadmap behavior moved to `backend.app.roadmap`,
+    upstream radar behavior moved to `backend.app.upstream.application`, and the
+    audit ledger has no high, stale, or unledgered findings.
+18. Clean remaining medium backend architecture debt. Backlog in Slice
+    2.17.4.6.0.12.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

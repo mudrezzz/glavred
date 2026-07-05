@@ -7062,7 +7062,7 @@ Status:
 
 ### Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup
 
-- Status: Ready
+- Status: Done
 - Goal: Apply the audit program outside DraftRun validation/revision to API helpers, active application facades, upstream radar, repositories, and factories.
 - User value:
   - The whole backend follows the same ownership rules, not only DraftRun bounded packages.
@@ -7090,10 +7090,33 @@ Status:
   - `2.17.4.6.1` can resume without building new upstream work on hidden legacy debt.
 - Risks:
   - Scope can become broad; split by debt cluster if required.
+- Completed: 2026-07-05
+
+### Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up
+
+- Status: Backlog
+- Goal: Repair medium backend architecture findings that remain after high-debt cleanup.
+- User value: Medium debt remains visible and scheduled instead of silently accumulating while product work resumes.
+- Scope:
+  - Review ledgered medium findings from `docs/architecture/backend-architecture-debt-ledger.json`.
+  - Split generation, test-import, infrastructure, API, and residual drafting medium cleanup into owner-owned batches.
+  - Keep product behavior stable and avoid reintroducing public helper sprawl.
+- Out of scope:
+  - Product runtime behavior changes.
+  - Search Intent Planner feature work.
+- Architecture impact:
+  - Keeps medium backend debt explicit after Slice 2.17.4.6.0.11 closes high findings.
+- Tests:
+  - Backend architecture audit, targeted owner tests, `npm run test:architecture`, and roadmap check.
+- Docs:
+  - Backend architecture audit snapshot, debt ledger, and relevant backend docs.
+- Acceptance criteria:
+  - Medium findings selected for the slice are fixed or re-ledgered with a later owner.
+  - No new high or stale architecture audit findings are introduced.
 
 ### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -7784,6 +7807,7 @@ Status:
 - Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup. Completed 2026-07-05.
+- Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7812,4 +7836,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup`.
+Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.

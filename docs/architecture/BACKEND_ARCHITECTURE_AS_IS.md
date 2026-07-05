@@ -17,10 +17,12 @@ The backend currently uses four broad packages:
 | `backend/app/application` | Use cases, orchestration, prompt builders, parsing, fallbacks, and many helper modules. | This is the main pressure point: DraftRun and upstream radar code are mixed in one flat namespace. |
 | `backend/app/infrastructure` | SQLite repositories, OpenRouter adapters, Celery worker wiring, URL reader, and provider edges. | Some workflow wiring is still draft-specific and will need a drafting boundary. |
 
-The roadmap tracker already has a better split:
-`backend/app/domain/roadmap_tracker.py`, `backend/app/application/roadmap_tracker.py`,
-and `backend/app/infrastructure/sqlite_roadmap_repository.py`. That split is the
-model for future bounded contexts.
+The roadmap tracker now has a bounded split:
+`backend/app/domain/roadmap_tracker.py` owns provider-free DTOs,
+`backend/app/roadmap/*` owns parsing/rendering/JSONL/service behavior, and
+`backend/app/infrastructure/sqlite_roadmap_repository.py` owns the local SQLite
+cache adapter. The old `backend/app/application/roadmap_tracker.py` path is a
+compatibility shim only.
 
 ## DraftRun Debt Inventory
 
@@ -117,17 +119,21 @@ canonical owners.
 
 ## Upstream Radar Debt Inventory
 
-Upstream search has started to repeat the same shape:
+Upstream search previously started to repeat the same flat shape:
 
-- 4 flat `backend/app/application/upstream_radar_*.py` modules.
+- 4 legacy `backend/app/application/upstream_radar_*.py` paths remain as
+  compatibility shims only.
+- Active upstream radar behavior now lives under
+  `backend/app/upstream/application`.
 - The API entrypoint is `backend/app/api/radar_runs.py`.
 - Provider search uses existing OpenRouter/web-search and URL-reader infrastructure.
 - The product boundary is documented in
-  `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`, but the backend
-  package boundary is not yet implemented.
+  `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`, and the backend
+  package boundary is implemented at the first application-service level.
 
-Radar/upstream must move into its own bounded context before more search, extraction,
-scoring, benchmark, or trace runtime is added.
+Radar/upstream medium debt remains ledgered, but new search, extraction, scoring,
+benchmark, or trace runtime must build on `backend/app/upstream`, not the legacy
+application shims.
 
 ## High-Risk Modules
 
@@ -135,10 +141,9 @@ The largest backend files are a useful smell list, not an automatic failure list
 
 | Lines | File | Risk |
 | ---: | --- | --- |
-| 417 | `backend/app/application/roadmap_tracker.py` | Large but bounded to one CLI/use-case area. |
 | 325 | `backend/app/drafting/application/planning/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
 | 291 | `backend/app/infrastructure/sqlite_portfolio_repository.py` | Persistence adapter may need split by table/use-case if it grows further. |
-| 235 | `backend/app/application/upstream_radar_external_run_service.py` | First upstream runner already large enough to justify a package boundary. |
+| 350+ | `backend/app/upstream/application/external_run_service.py` | First upstream runner has a package boundary; medium line-count debt is ledgered. |
 | 220+ | `backend/app/drafting/application/*` migrated DraftRun modules | Some owner modules remain intentionally large after behavior-preserving migration; follow-up refactors should split by service/policy/component role, not move behavior back to flat legacy paths. |
 
 The recovery goal is not to split every large file immediately. The goal is to stop
@@ -255,15 +260,21 @@ Already enforced:
   attempts, result policy, result incidents, envelope factory, and inventory
   exporter modules with compatibility re-exports. The audit ledger no longer has
   stale or high `repairSlice=2.17.4.6.0.10` debt.
+- Backend API/application/infrastructure surface cleanup from Slice 2.17.4.6.0.11:
+  roadmap tracker behavior now lives in `backend/app/roadmap`, upstream radar
+  behavior now lives in `backend/app/upstream/application`, API route/dependency
+  facades are treated separately from public helper sprawl, and the audit ledger
+  reports `0` high findings, `0` unledgered findings, and `0` stale keys. Remaining
+  medium debt is explicit in `docs/architecture/backend-architecture-debt-ledger.json`
+  and assigned to `2.17.4.6.0.12`.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- OOP cleanup of API, root application, infrastructure, upstream, generation,
-  artifacts/evidence/planning, and residual medium validation/revision line-count
-  surfaces flagged by the audit ledger.
-- Upstream/radar bounded package migration.
+- OOP cleanup of medium API, infrastructure, upstream, generation,
+  artifacts/evidence/planning, and residual validation/revision line-count surfaces
+  flagged by the audit ledger.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes and validation runtime-budget heartbeats.
 

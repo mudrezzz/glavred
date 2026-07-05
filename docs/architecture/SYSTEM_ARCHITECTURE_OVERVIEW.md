@@ -61,9 +61,10 @@ The decision is recorded in
 `docs/adr/2026-07-01-roadmap-tracker-source-of-truth.md`.
 The tracker is split by backend ownership:
 `backend/app/domain/roadmap_tracker.py` owns provider-free roadmap DTOs,
-`backend/app/application/roadmap_tracker.py` owns import/export/render/check logic,
+`backend/app/roadmap/*` owns import/export/render/check logic,
 and `backend/app/infrastructure/sqlite_roadmap_repository.py` owns the local SQLite
-cache adapter.
+cache adapter. The old `backend/app/application/roadmap_tracker.py` path is a
+compatibility shim only.
 
 ## Strategic Product Model
 
@@ -388,9 +389,10 @@ generic structure. New DraftRun runtime code must live under `backend/app/drafti
 new source registry, radar run, search campaign, found material, signal extraction,
 or candidate assembly backend code must live under `backend/app/upstream`; reusable
 provider-neutral operation contracts may live under `backend/app/shared` only when
-they are genuinely cross-context. Existing flat `draft_*`, `deterministic_*`, and
-`upstream_radar_*` modules are legacy debt with an explicit architecture-smoke
-allowlist. Adding a new flat `backend/app/application/draft_*.py`,
+they are genuinely cross-context. Existing flat `draft_*` and `deterministic_*`
+modules remain explicit legacy debt, while old `upstream_radar_*` application paths
+are compatibility shims for `backend/app/upstream/application`. Adding a new flat
+`backend/app/application/draft_*.py`,
 `backend/app/application/deterministic_*.py`,
 `backend/app/domain/draft_*.py`, or `backend/app/application/upstream_radar_*.py`
 file fails architecture smoke unless the debt exception is deliberately added. New

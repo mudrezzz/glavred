@@ -17,7 +17,7 @@ from backend.app.drafting.application.revision.draft_pairwise_ranking_prompts im
 )
 from backend.app.drafting.application.revision.draft_pairwise_ranking_payloads import PairwiseRankingPayloadMapper
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -86,7 +86,7 @@ class DraftPairwiseRankingService:
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
-        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.REVIEW)
+        context_pack = context_pack_for_role(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = self._prompt_builder.build_messages(
             draft_artifact=draft_artifact,

@@ -18,7 +18,7 @@ from backend.app.drafting.application.validation.draft_llm_validation_prompts im
     LlmValidationPromptBuilder,
 )
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -160,7 +160,7 @@ class DraftLlmValidationService:
     ) -> dict[str, Any]:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
-        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.REVIEW)
+        context_pack = context_pack_for_role(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = self._prompts.build_messages(
             candidate=candidate,

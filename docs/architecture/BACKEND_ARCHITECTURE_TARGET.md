@@ -237,6 +237,15 @@ Implemented operation safety repair:
   - `npm run test:architecture` runs
     `python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`;
   - unledgered `critical` / `high` findings fail architecture smoke.
+- Backend API/application/infrastructure surface cleanup:
+  - Slice 2.17.4.6.0.11 moves roadmap tracker parsing/rendering/JSONL/service
+    behavior behind `backend.app.roadmap` while preserving the old
+    `backend.app.application.roadmap_tracker` compatibility import path;
+  - upstream radar search planning, triage, payload construction, and external-run
+    orchestration now live under `backend.app.upstream.application`; old
+    `backend.app.application.upstream_radar_*` paths are compatibility shims only;
+  - architecture audit distinguishes FastAPI route/dependency facades from public
+    helper sprawl, and the current ledger has no high or stale findings.
 
 ## Context Ownership
 
@@ -308,7 +317,8 @@ The planned cleanup sequence after the audit is:
 1. `2.17.4.6.0.8`: Drafting validation package OOP cleanup.
 2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup. Done.
 3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup. Done.
-4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup.
+4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup. Done.
+5. `2.17.4.6.0.12`: Backend medium architecture debt follow-up. Backlog.
 
 ## Dependency Direction
 

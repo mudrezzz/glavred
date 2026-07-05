@@ -109,7 +109,8 @@ The recovery rule is strict:
   `backend/app/application/draft_*.py` or `backend/app/domain/draft_*.py` legacy
   namespace;
 - new radar/search/signal backend modules go under `backend/app/upstream`, not the
-  flat `backend/app/application/upstream_radar_*.py` legacy namespace;
+  flat `backend/app/application/upstream_radar_*.py` legacy namespace; those old
+  paths are compatibility shims after Slice 2.17.4.6.0.11;
 - cross-context provider-neutral helpers may go under `backend/app/shared` only when
   they are genuinely shared;
 - new bounded-context modules must begin with a docstring containing `Owner`,

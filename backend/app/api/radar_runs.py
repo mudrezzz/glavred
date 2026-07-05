@@ -3,10 +3,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from backend.app.application.upstream_radar_external_run_service import UpstreamRadarExternalRunService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterWebSearchAdapter
 from backend.app.infrastructure.public_url_reader import HttpxPublicUrlReader
+from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
 
 router = APIRouter(prefix="/api/radar-runs")
 

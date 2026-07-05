@@ -7,7 +7,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from __future__ import annotations
 
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.generation.draft_candidate_selection_block import candidate_selection_blocked_payload
 from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
 from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
@@ -145,7 +145,7 @@ class LegacyDraftWorkflowPhaseBuilder:
             context_summary=state.context_summary,
             context_artifact=state.context_artifact,
             rule_pack=state.rule_pack,
-            context_pack=context_pack_from_payload(state.context_artifact, DraftModelRole.STRATEGY),
+            context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
             progress=rule_progress,
         )
         state.progress.add_ai_run_ids(
@@ -196,7 +196,7 @@ class LegacyDraftWorkflowPhaseBuilder:
             context_summary=state.context_summary,
             rule_pack=state.rule_pack,
             material_plan=state.material_plan,
-            context_pack=context_pack_from_payload(state.context_artifact, DraftModelRole.STRATEGY),
+            context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
         )
         state.progress.add_ai_run_id(result.ai_run_id)
         state.draft_strategy = payload_section(result.artifact_payload, "draftStrategy")
@@ -246,7 +246,7 @@ class LegacyDraftWorkflowPhaseBuilder:
             material_plan=state.material_plan,
             draft_strategy=state.draft_strategy,
             rhetorical_plans=state.rhetorical_plans,
-            context_pack=context_pack_from_payload(state.context_artifact, DraftModelRole.WRITER),
+            context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.WRITER),
             progress=draft_progress,
         )
         state.progress.add_ai_run_ids(state.draft_result.ai_run_ids)

@@ -68,7 +68,8 @@ Backend work follows the recovery contract in:
 Do not add new DraftRun or Radar runtime modules to the flat legacy namespaces
 `backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
 `backend/app/application/upstream_radar_*.py`. Use `backend/app/drafting` or
-`backend/app/upstream` for new work. New bounded-context modules need ownership
+`backend/app/upstream` for new work; old `upstream_radar_*` application paths are
+compatibility shims only after Slice 2.17.4.6.0.11. New bounded-context modules need ownership
 docstrings and must keep API, application, domain, infrastructure, and shared
 responsibilities separate.
 

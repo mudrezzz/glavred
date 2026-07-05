@@ -9,7 +9,7 @@ from typing import Any
 
 from backend.app.drafting.application.generation.draft_alternative_angle_candidate_service import DraftAlternativeAngleCandidateService
 from backend.app.drafting.application.validation.draft_alternative_angle_route_service import DraftAlternativeAngleRouteService
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.drafting.application.validation.draft_validation_operation_safety import ValidationOperationFailureMapper
 from backend.app.domain.draft_alternative_angle import AlternativeAngleTournament
@@ -77,7 +77,7 @@ class DraftAlternativeAngleTournamentService:
                 rule_pack=rule_pack,
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
-                context_pack=context_pack_from_payload(context_artifact, DraftModelRole.WRITER),
+                context_pack=context_pack_for_role(context_artifact, DraftModelRole.WRITER),
             ),
         )
         ai_run_ids = [*route_ai_run_ids, *candidate_ai_run_ids]

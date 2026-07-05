@@ -14,7 +14,7 @@ from backend.app.drafting.application.validation.draft_alternative_angle_prompts
     ALTERNATIVE_ANGLE_KEYS,
     AlternativeAnglePromptBuilder,
 )
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.drafting.application.operations.json_step_adapter import OpenRouterJsonStepAdapter
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
@@ -81,7 +81,7 @@ class DraftAlternativeAngleRouteService:
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.ANOTHER_ANGLE, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.ANOTHER_ANGLE, attempt=attempt)
-        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.ANOTHER_ANGLE)
+        context_pack = context_pack_for_role(context_artifact, DraftModelRole.ANOTHER_ANGLE)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         messages = self._prompts.build_messages(
             draft_artifact=draft_artifact,

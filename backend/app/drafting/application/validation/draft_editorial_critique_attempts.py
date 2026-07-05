@@ -8,7 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from typing import Any
 
 from backend.app.application.json_step_retry_policy import JsonStepAttempt
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.domain.ai_run import AiRunProvider
 from backend.app.domain.draft_editorial_critique import EditorialCriticAttempt
 from backend.app.domain.draft_model_roles import DraftModelRole
@@ -31,7 +31,7 @@ class EditorialCritiqueAttemptMapper:
 
     def critic_context_pack(self, *payloads: dict[str, Any]) -> dict[str, Any] | None:
         for payload in payloads:
-            pack = context_pack_from_payload(payload, DraftModelRole.CRITIC)
+            pack = context_pack_for_role(payload, DraftModelRole.CRITIC)
             if pack:
                 return pack
         return None

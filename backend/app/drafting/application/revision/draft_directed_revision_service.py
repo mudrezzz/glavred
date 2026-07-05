@@ -16,7 +16,7 @@ from backend.app.drafting.application.revision.draft_directed_revision_prompts i
 from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, PayloadBudgetAttemptStatsExtractor
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
@@ -121,7 +121,7 @@ class DraftDirectedRevisionService:
     def _try_attempt(self, attempt: JsonStepAttempt, primary_selection: Any, candidate: dict[str, Any], instruction: dict[str, Any], context_artifact: dict[str, Any], rule_pack: dict[str, Any], material_plan: dict[str, Any], repair_context: dict[str, Any] | None) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.WRITER, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.REVISION, attempt=attempt)
-        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.WRITER)
+        context_pack = context_pack_for_role(context_artifact, DraftModelRole.WRITER)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
         budget_input = self._payload_budget_runtime.compact(
             "directedRevision",

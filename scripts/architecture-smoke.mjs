@@ -3567,8 +3567,8 @@ assert(
   `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must have version 1.`
 );
 assert(
-  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.10",
-  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.10.`
+  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.11",
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.11.`
 );
 assert(
   Array.isArray(backendArchitectureDebtLedger.entries) &&
@@ -3604,7 +3604,8 @@ for (const fragment of [
   "publicHelperSprawl",
   "proceduralBoundedPackage",
   "rawDictContract",
-  "2.17.4.6.0.10",
+  "2.17.4.6.0.11",
+  "2.17.4.6.0.12",
   "Unledgered `critical` and `high` findings fail architecture smoke",
 ]) {
   assert(
@@ -3756,7 +3757,8 @@ const requiredSaoFragments = [
   "deterministicFallback",
   "backupAccepted",
   "notConfigured",
-  "Existing flat `draft_*`, `deterministic_*`, and",
+  "Existing flat `draft_*` and `deterministic_*`",
+  "old `upstream_radar_*` application paths",
   "Owner",
   "Used by",
   "Does not own",
@@ -3775,7 +3777,7 @@ const requiredSaoFragments = [
   "backend/app/application/ai_run_service.py",
   "backend/app/drafting/application/generation/draft_generation_service.py",
   "backend/app/application/portfolio_service.py",
-  "backend/app/application/roadmap_tracker.py",
+  "backend/app/roadmap",
   "backend/app/drafting/application/artifacts/draft_run_payloads.py",
   "backend/app/drafting/application/generation/deterministic_draft_service.py",
   "backend/app/drafting/application/validation/draft_validation_linter.py",

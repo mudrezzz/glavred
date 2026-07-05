@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from backend.app.application.roadmap_tracker import (
+from backend.app.roadmap.tracker import (
     add_slice,
     document_from_jsonl,
     document_to_jsonl,
@@ -202,4 +202,3 @@ def _repository() -> SQLiteRoadmapRepository:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

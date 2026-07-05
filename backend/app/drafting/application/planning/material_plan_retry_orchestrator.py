@@ -17,7 +17,7 @@ from backend.app.drafting.application.planning.draft_planning_audit import (
 from backend.app.drafting.application.planning.draft_planning_prompts import build_material_plan_messages
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt, unconfigured_model_selection
-from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
+from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.planning.material_plan_accountability import evaluate_material_plan_accountability
 from backend.app.drafting.application.planning.material_plan_evidence_projection import build_usable_evidence_candidates
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import budget_from_context
@@ -65,7 +65,7 @@ class MaterialPlanRetryOrchestrator:
     ) -> DraftPlanningStepResult:
         budget = budget_from_context(context_artifact)
         usable_candidates = build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack, limit=budget.caps.max_usable_evidence_candidates)
-        context_pack = context_pack_from_payload(context_artifact, DraftModelRole.STRATEGY)
+        context_pack = context_pack_for_role(context_artifact, DraftModelRole.STRATEGY)
         attempt_records: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY)
