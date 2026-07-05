@@ -20,9 +20,13 @@ legacy path.
 
 Package migration did not automatically remove all internal procedural debt. Slice
 2.17.4.6.0.7 adds the Backend Architecture Audit and Debt Ledger before more broad
-backend feature work. The audit must classify public helper sprawl, procedural
-bounded packages, raw dict contracts, provider boundary leaks, dependency-direction
-risks, migrated-shim behavior, and tests that still mirror legacy owners.
+backend feature work. The audit classifies public helper sprawl, procedural bounded
+packages, raw dict contracts, provider boundary leaks, dependency-direction risks,
+migrated-shim behavior, and tests that still mirror legacy owners. Run
+`python scripts/backend-architecture-audit.py --format json --ledger
+docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`.
+Known debt is in `docs/architecture/backend-architecture-debt-ledger.json`; the
+current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 
 ## Package Areas
 
@@ -73,7 +77,7 @@ risks, migrated-shim behavior, and tests that still mirror legacy owners.
 12. Tighten architecture smoke allowlists after each cluster is moved. Done for the
     moved DraftRun application clusters; remaining follow-up is retiring legacy
     shims when external compatibility is no longer needed.
-13. Add Backend Architecture Audit and Debt Ledger. Planned in Slice 2.17.4.6.0.7.
+13. Add Backend Architecture Audit and Debt Ledger. Done in Slice 2.17.4.6.0.7.
 14. Clean migrated validation, revision/final-quality, HITL/provider, and remaining
     backend surfaces according to the audit ledger. Planned in Slices
     2.17.4.6.0.8 through 2.17.4.6.0.11.

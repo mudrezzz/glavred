@@ -6917,7 +6917,7 @@ Status:
 
 ### Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger
 
-- Status: Ready
+- Status: Done
 - Goal: Create a full backend architecture audit program and machine-readable debt ledger before further backend feature work.
 - User value:
   - The team can see backend architectural debt systematically instead of discovering it by manual code review after the fact.
@@ -6957,10 +6957,11 @@ Status:
 - Risks:
   - Audit can become noisy; classify severity and keep failure thresholds focused on new/unclassified debt.
   - Over-tight checks can block useful work; allow temporary debt only with owner, reason, and removal slice.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup
 
-- Status: Backlog
+- Status: Ready
 - Goal: Turn the migrated DraftRun validation package from a procedural legacy surface into role-owned services, policies, components, DTOs, and private helpers.
 - User value:
   - Validation code becomes navigable and future validator work has clear owners instead of another flat namespace.
@@ -7776,6 +7777,7 @@ Status:
 - Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration. Completed 2026-07-05.
 - Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration. Completed 2026-07-05.
 - Slice 2.17.4.6.0.6: Backend Documentation and Agent Guardrail Hardening. Completed 2026-07-05.
+- Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7804,4 +7806,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger`.
+Implement `Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup`.

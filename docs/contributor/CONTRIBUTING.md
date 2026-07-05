@@ -90,7 +90,11 @@ debt, run the backend architecture audit workflow in
 `.agents/skills/backend-architecture-audit/SKILL.md`. The audit separates known
 ledgered debt from new unclassified smells such as public helper sprawl, procedural
 bounded packages, raw dict contracts, provider boundary leaks, dependency-direction
-risks, and migrated-shim behavior.
+risks, and migrated-shim behavior. The blocking command is:
+
+```bash
+python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high
+```
 
 ## Git
 

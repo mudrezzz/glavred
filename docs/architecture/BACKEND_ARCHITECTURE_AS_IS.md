@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.6.
+Current as of Slice 2.17.4.6.0.7.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -104,12 +104,16 @@ flat legacy paths as normal behavior owners.
 
 The next backend recovery gap is broader than one package. Migrated bounded packages
 can still contain procedural helper surfaces and repeated legacy naming patterns.
-Slice 2.17.4.6.0.7 introduces the Backend Architecture Audit and Debt Ledger to
-classify this debt across the whole backend before product work resumes. The first
-audit must cover public top-level functions, procedural bounded packages, large
-modules, raw `dict[str, Any]` contracts, provider boundary leaks, dependency
-direction risks, behavior inside migrated shims, and tests that mirror legacy
-owners instead of canonical owners.
+Slice 2.17.4.6.0.7 implements the Backend Architecture Audit and Debt Ledger to
+classify this debt across the whole backend before product work resumes. The audit
+command is `python scripts/backend-architecture-audit.py --format json --ledger
+docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`.
+Its human-readable snapshot lives in
+`docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`. The first audit covers public
+top-level functions, procedural bounded packages, large modules, raw
+`dict[str, Any]` contracts, provider boundary leaks, dependency-direction risks,
+behavior inside migrated shims, and tests that mirror legacy owners instead of
+canonical owners.
 
 ## Upstream Radar Debt Inventory
 
@@ -217,14 +221,18 @@ Already enforced:
   map, backend module template, Provider-Heavy Review Checklist, migrated thin shim
   wording, active compatibility facade wording, remaining explicit debt wording, and
   `npm run test:architecture` obligations in docs, `AGENTS.md`, and relevant skills.
+- Backend Architecture Audit and Debt Ledger checks requiring
+  `scripts/backend-architecture-audit.py`,
+  `docs/architecture/backend-architecture-debt-ledger.json`,
+  `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`, the audit ADR, and the
+  `backend-architecture-audit` skill. Architecture smoke runs the audit with
+  `--fail-on-unledgered high`, so new unclassified `critical` / `high` backend debt
+  fails even when ordinary tests pass.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- Backend Architecture Audit and Debt Ledger, including automated detection of
-  public helper sprawl, procedural bounded packages, raw dict contracts, provider
-  boundary leaks, and unclassified structural debt.
 - OOP cleanup of migrated validation, revision, final-quality, HITL, API,
   application, infrastructure, and upstream surfaces flagged by the audit ledger.
 - Upstream/radar bounded package migration.

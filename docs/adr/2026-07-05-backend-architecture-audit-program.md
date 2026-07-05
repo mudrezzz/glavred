@@ -39,6 +39,23 @@ The audit program is introduced as roadmap Slice `2.17.4.6.0.7`. Cleanup is then
 split into focused slices for validation, revision/final-quality, HITL/provider
 operations, and the remaining API/application/infrastructure surface.
 
+The implemented command surface is:
+
+```bash
+python scripts/backend-architecture-audit.py --format json
+python scripts/backend-architecture-audit.py --format markdown
+python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high
+```
+
+The committed artifacts are:
+
+- `scripts/backend-architecture-audit.py`;
+- `docs/architecture/backend-architecture-debt-ledger.json`;
+- `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
+
+`npm run test:architecture` executes the ledger-gated command and fails on
+unledgered `critical` / `high` findings.
+
 ## Consequences
 
 - Passing tests is no longer treated as proof of acceptable backend architecture.

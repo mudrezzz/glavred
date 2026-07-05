@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import childProcess from "node:child_process";
 
 const ROOT = process.cwd();
 
@@ -1694,6 +1695,13 @@ const DRAFTRUN_PAYLOAD_BUDGET_ADR_PATH =
   "docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md";
 const DRAFTRUN_LEGACY_SURFACE_ADR_PATH =
   "docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md";
+const BACKEND_ARCHITECTURE_AUDIT_ADR_PATH =
+  "docs/adr/2026-07-05-backend-architecture-audit-program.md";
+const BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH = "scripts/backend-architecture-audit.py";
+const BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH =
+  "docs/architecture/backend-architecture-debt-ledger.json";
+const BACKEND_ARCHITECTURE_AUDIT_SNAPSHOT_PATH =
+  "docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md";
 const DRAFTING_BACKEND_README_PATH = "backend/app/drafting/README.md";
 const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
@@ -1726,6 +1734,8 @@ const DRAFT_RUN_EVALUATION_SKILL_PATH =
   ".agents/skills/draft-run-pipeline-evaluation/SKILL.md";
 const DRAFT_RUN_AUTOFIX_SKILL_PATH =
   ".agents/skills/draft-run-pipeline-autofix/SKILL.md";
+const BACKEND_ARCHITECTURE_AUDIT_SKILL_PATH =
+  ".agents/skills/backend-architecture-audit/SKILL.md";
 const PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES = [
   "backend/app/drafting/application/evidence/evidence_interpretation_service.py",
   "backend/app/drafting/application/validation/draft_editorial_critique_service.py",
@@ -2094,6 +2104,10 @@ const LEGACY_FLAT_UPSTREAM_RADAR_APPLICATION_FILES = new Set([
 
 function readText(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+}
+
+function readJson(relativePath) {
+  return JSON.parse(readText(relativePath));
 }
 
 function lineCount(text) {
@@ -2702,6 +2716,26 @@ assert(
 assert(
   fileExists(DRAFTRUN_LEGACY_SURFACE_ADR_PATH),
   `${DRAFTRUN_LEGACY_SURFACE_ADR_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_AUDIT_ADR_PATH),
+  `${BACKEND_ARCHITECTURE_AUDIT_ADR_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH),
+  `${BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH),
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_AUDIT_SNAPSHOT_PATH),
+  `${BACKEND_ARCHITECTURE_AUDIT_SNAPSHOT_PATH} is required.`
+);
+assert(
+  fileExists(BACKEND_ARCHITECTURE_AUDIT_SKILL_PATH),
+  `${BACKEND_ARCHITECTURE_AUDIT_SKILL_PATH} is required.`
 );
 assert(fileExists(DRAFTING_BACKEND_README_PATH), `${DRAFTING_BACKEND_README_PATH} is required.`);
 assert(
@@ -3474,6 +3508,126 @@ for (const [skillPath, skillSource] of [
       `${skillPath} must distinguish canonical owners from migrated shims: ${fragment}`
     );
   }
+}
+
+const backendArchitectureAuditScriptSource = readText(BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH);
+for (const fragment of [
+  "publicHelperSprawl",
+  "proceduralBoundedPackage",
+  "rawDictContract",
+  "providerBoundaryLeak",
+  "shimBehavior",
+  "--fail-on-unledgered",
+]) {
+  assert(
+    backendArchitectureAuditScriptSource.includes(fragment),
+    `${BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH} must implement audit smell/CLI fragment: ${fragment}`
+  );
+}
+
+const backendArchitectureDebtLedger = readJson(BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH);
+assert(
+  backendArchitectureDebtLedger.version === 1,
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must have version 1.`
+);
+assert(
+  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.7",
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.7.`
+);
+assert(
+  Array.isArray(backendArchitectureDebtLedger.entries) &&
+    backendArchitectureDebtLedger.entries.length > 0,
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must contain debt entries.`
+);
+for (const [index, entry] of (backendArchitectureDebtLedger.entries || []).entries()) {
+  for (const fragment of [
+    "debtId",
+    "findingKey",
+    "package",
+    "module",
+    "smellType",
+    "severity",
+    "owner",
+    "targetShape",
+    "allowedUntilSlice",
+    "repairSlice",
+    "guardrail",
+    "currentEvidence",
+    "notes",
+  ]) {
+    assert(
+      Boolean(entry[fragment]),
+      `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} entry ${index} is missing ${fragment}.`
+    );
+  }
+}
+
+const backendArchitectureAuditSnapshotSource = readText(BACKEND_ARCHITECTURE_AUDIT_SNAPSHOT_PATH);
+for (const fragment of [
+  "Backend Architecture Audit",
+  "publicHelperSprawl",
+  "proceduralBoundedPackage",
+  "rawDictContract",
+  "2.17.4.6.0.8",
+  "Unledgered `critical` and `high` findings fail architecture smoke",
+]) {
+  assert(
+    backendArchitectureAuditSnapshotSource.includes(fragment),
+    `${BACKEND_ARCHITECTURE_AUDIT_SNAPSHOT_PATH} must document audit fragment: ${fragment}`
+  );
+}
+
+const backendArchitectureAuditSkillSource = readText(BACKEND_ARCHITECTURE_AUDIT_SKILL_PATH);
+for (const fragment of [
+  "python scripts/backend-architecture-audit.py --format json",
+  "docs/architecture/backend-architecture-debt-ledger.json",
+  "fail-on-unledgered high",
+  "known debt",
+  "new debt",
+]) {
+  assert(
+    backendArchitectureAuditSkillSource.includes(fragment),
+    `${BACKEND_ARCHITECTURE_AUDIT_SKILL_PATH} must teach audit command/ledger semantics: ${fragment}`
+  );
+}
+
+try {
+  const auditJson = childProcess.execFileSync(
+    "python",
+    [
+      BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH,
+      "--format",
+      "json",
+      "--ledger",
+      BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH,
+      "--fail-on-unledgered",
+      "high",
+    ],
+    { cwd: ROOT, encoding: "utf8", windowsHide: true }
+  );
+  const auditReport = JSON.parse(auditJson);
+  const highUnledgered = auditReport.unledgeredFindings.filter((finding) =>
+    ["critical", "high"].includes(finding.severity)
+  );
+  assert(
+    highUnledgered.length === 0,
+    `${BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH} reported unledgered critical/high findings.`
+  );
+  assert(
+    auditReport.summary.ledgeredFindings > 0,
+    `${BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH} must match at least one ledgered finding.`
+  );
+  assert(
+    auditReport.summary.ledgerErrors.length === 0,
+    `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must validate without ledger errors.`
+  );
+} catch (error) {
+  assert(
+    false,
+    `${BACKEND_ARCHITECTURE_AUDIT_SCRIPT_PATH} failed with ledger gate: ${
+      error.stderr || error.message
+    }`
+  );
 }
 
 for (const serviceFile of PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES) {

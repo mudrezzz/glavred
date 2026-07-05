@@ -125,14 +125,23 @@ component/DTO module roles, migrated-shim rules, and the Provider-Heavy Review C
 for shared operation governance, incidents, payload budgets, timeout/runtime budgets,
 safe errors, and no raw provider calls in bounded application modules.
 
-Backend architecture audit is the next recovery layer after package migration.
+Backend architecture audit is the recurring recovery layer after package migration.
 Use `.agents/skills/backend-architecture-audit/SKILL.md` when backend package quality
 is questioned, before broad backend refactors, or when a backend slice may introduce
 new public helper sprawl, procedural bounded packages, raw `dict[str, Any]` seams,
-provider boundary leaks, dependency-direction risks, or migrated-shim behavior. Slice
-`2.17.4.6.0.7` adds the automated audit command and
-`docs/architecture/backend-architecture-debt-ledger.json`; until then, manual AST
-audits should separate known debt from new unclassified smells.
+provider boundary leaks, dependency-direction risks, or migrated-shim behavior.
+Run:
+
+```bash
+python scripts/backend-architecture-audit.py --format json
+python scripts/backend-architecture-audit.py --format markdown
+python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high
+```
+
+Known debt is committed in
+`docs/architecture/backend-architecture-debt-ledger.json`; the human-readable
+snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`. New unledgered
+`critical` / `high` findings fail `npm run test:architecture`.
 
 `backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
 adding a DraftRun module, read `backend/app/drafting/README.md` and

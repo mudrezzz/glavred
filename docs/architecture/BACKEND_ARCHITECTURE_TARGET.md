@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.6.
+Current as of Slice 2.17.4.6.0.7.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -197,6 +197,17 @@ Implemented operation safety repair:
     Provider-Heavy Review Checklist source;
   - architecture smoke requires those docs/skills fragments and keeps migrated shims
     import/re-export only through `npm run test:architecture`.
+- Backend Architecture Audit and Debt Ledger:
+  - `scripts/backend-architecture-audit.py` scans `backend/app` and `backend/tests`
+    with Python AST and emits JSON or Markdown reports;
+  - `docs/architecture/backend-architecture-debt-ledger.json` is the committed
+    source of known backend debt with owner, severity, target shape, allowed-until
+    slice, repair slice, guardrail, and evidence;
+  - `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md` is the current human-readable
+    audit snapshot;
+  - `npm run test:architecture` runs
+    `python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`;
+  - unledgered `critical` / `high` findings fail architecture smoke.
 
 ## Context Ownership
 
@@ -244,7 +255,7 @@ do not preserve the old flat public-helper surface under a new package path.
 
 Architecture recovery is a recurring audit loop, not a completed one-time migration.
 Slice `2.17.4.6.0.7` adds an automated backend architecture audit and a
-machine-readable debt ledger. The audit must detect:
+machine-readable debt ledger. The audit detects:
 
 - public top-level helper sprawl;
 - procedural bounded packages that mirror legacy flat files;
@@ -261,7 +272,7 @@ machine-readable debt ledger. The audit must detect:
 Known debt may remain only when the debt ledger records `debtId`, package, module,
 smell type, severity, owner, target shape, allowed-until slice, repair slice,
 guardrail, and notes. New unclassified high-severity smells should fail
-`npm run test:architecture` once the audit command and ledger are implemented.
+`npm run test:architecture`.
 
 The planned cleanup sequence after the audit is:
 
@@ -407,7 +418,7 @@ The Drafting v1 implementation of this contract is:
 7. Move context/evidence/planning clusters. Done.
 8. Move candidate/validation/revision/final quality clusters. Done.
 9. Harden backend docs, agent guidance, and documentation smoke checks. Done.
-10. Add Backend Architecture Audit and Debt Ledger.
+10. Add Backend Architecture Audit and Debt Ledger. Done.
 11. Clean migrated validation, revision/final-quality, HITL/provider, and remaining
    backend surfaces according to the audit ledger.
 12. Move upstream radar/search into `backend/app/upstream` before expanding extraction

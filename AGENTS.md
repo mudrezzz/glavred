@@ -135,7 +135,10 @@ When backend package quality is questioned, when a backend slice may add structu
 debt, or before a broad backend refactor, use `$backend-architecture-audit`. The audit
 must distinguish known ledgered debt from new unclassified smells such as public
 helper sprawl, procedural bounded packages, raw dict contracts, provider boundary
-leaks, dependency-direction risks, and behavior inside migrated thin shims.
+leaks, dependency-direction risks, and behavior inside migrated thin shims. The
+blocking command is `python scripts/backend-architecture-audit.py --format json
+--ledger docs/architecture/backend-architecture-debt-ledger.json
+--fail-on-unledgered high`.
 
 ## Testing standards
 

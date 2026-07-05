@@ -36,9 +36,10 @@ unless the user explicitly asks to implement a selected repair slice.
 
 ## Audit Workflow
 
-1. Run the automated audit command when available:
-   - `python scripts/backend-architecture-audit.py`
-   - or `python -m backend.app.architecture audit`
+1. Run the automated audit command:
+   - `python scripts/backend-architecture-audit.py --format json`
+   - `python scripts/backend-architecture-audit.py --format markdown`
+   - `python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`
 2. If the command is not available yet, run a temporary AST scan for:
    - public top-level functions;
    - large modules;
@@ -49,10 +50,12 @@ unless the user explicitly asks to implement a selected repair slice.
    - raw `dict[str, Any]` result contracts crossing service boundaries;
    - behavior inside migrated thin shims;
    - API/application/domain/infrastructure dependency direction risks.
-3. Compare findings with the debt ledger:
+3. Compare findings with `docs/architecture/backend-architecture-debt-ledger.json`:
    - known debt: already listed with owner, severity, repair slice, and guardrail;
    - changed debt: listed but severity/count/surface changed;
-   - new debt: not listed and must become a ledger entry or immediate fix.
+   - new debt: not listed and must become a ledger entry or immediate fix;
+   - unledgered `critical` / `high` findings fail the `fail-on-unledgered high`
+     command and therefore fail `npm run test:architecture`.
 4. For each high-severity finding, identify the target owner shape:
    - service;
    - policy;
