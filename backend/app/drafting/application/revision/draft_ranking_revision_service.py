@@ -18,7 +18,7 @@ from backend.app.drafting.application.revision.draft_revision_instruction_builde
 from backend.app.drafting.application.revision.draft_revision_loop_service import DraftRevisionLoopService
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.domain.draft_generation import DraftGenerationRequest
-from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, final_validation_stop_reason
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, ValidationStopReasonPolicy
 
 
 class DraftRankingRevisionService:
@@ -35,6 +35,7 @@ class DraftRankingRevisionService:
     ) -> None:
         self._ranking = ranking_service
         self._candidates = candidate_mapper or RankingRevisionCandidateMapper()
+        self._stop_reason_policy = ValidationStopReasonPolicy()
         guard = regression_guard or DraftRevisionRegressionGuard()
         self._loop = DraftRevisionLoopService(
             ranking_service=ranking_service,
@@ -106,7 +107,7 @@ class DraftRankingRevisionService:
         final_candidate = final_gate.final_candidate
         final_decision = final_gate.artifact_payload.get("finalDecision", {})
         runtime_stop_reason = guard.stop_reason if guard and guard.stop_reason else None
-        final_stop_reason = final_validation_stop_reason(
+        final_stop_reason = self._stop_reason_policy.final_validation_stop_reason(
             final_candidate=final_candidate,
             loop_stop_reason=loop.report.stop_reason,
             runtime_stop_reason=runtime_stop_reason,

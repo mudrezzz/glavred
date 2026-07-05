@@ -7,7 +7,7 @@ from backend.app.drafting.application.operations.validation_runtime_budget impor
     STOP_PROVIDER_INCIDENT,
     ValidationRuntimeBudgetPolicy,
     ValidationRuntimeGuard,
-    normalize_validation_stop_reason,
+    ValidationStopReasonPolicy,
 )
 
 
@@ -61,7 +61,8 @@ def test_validation_runtime_guard_records_non_improving_stop() -> None:
 
 
 def test_validation_stop_reason_normalization_maps_legacy_and_incident_reasons() -> None:
-    assert normalize_validation_stop_reason("editorially-improved") == "acceptedQuality"
-    assert normalize_validation_stop_reason("max-iterations") == STOP_MAX_ITERATIONS
-    assert normalize_validation_stop_reason("provider-failed") == STOP_PROVIDER_INCIDENT
-    assert normalize_validation_stop_reason("no-fresh-angle") == STOP_NO_IMPROVEMENT
+    policy = ValidationStopReasonPolicy()
+    assert policy.normalize("editorially-improved") == "acceptedQuality"
+    assert policy.normalize("max-iterations") == STOP_MAX_ITERATIONS
+    assert policy.normalize("provider-failed") == STOP_PROVIDER_INCIDENT
+    assert policy.normalize("no-fresh-angle") == STOP_NO_IMPROVEMENT

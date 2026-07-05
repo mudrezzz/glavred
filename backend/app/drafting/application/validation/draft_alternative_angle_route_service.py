@@ -5,7 +5,7 @@ Does not own: API routing, SQLite persistence, provider transport, or UI trace l
 Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
-from backend.app.drafting.application.operations.json_step_adapter import complete_drafting_json
+from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -102,7 +102,7 @@ class DraftAlternativeAngleRouteService:
             generation_params=generation_params.to_payload(),
         )
         try:
-            result = complete_drafting_json(self._openrouter_adapter,
+            result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
                 messages=messages,
                 expected_keys=ALTERNATIVE_ANGLE_KEYS,

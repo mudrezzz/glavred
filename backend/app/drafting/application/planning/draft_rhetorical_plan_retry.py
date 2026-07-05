@@ -25,7 +25,7 @@ from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_rhetorical_plan import rhetorical_plan_set_from_payload
 from backend.app.settings import BackendSettings
-from backend.app.drafting.application.operations.json_step_adapter import complete_drafting_json
+from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 
 
 class DraftRhetoricalPlanRetryOrchestrator:
@@ -107,7 +107,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             model_selection=selection.to_payload(),
         )
         try:
-            result = complete_drafting_json(self._openrouter_adapter,
+            result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
                 messages=messages,
                 expected_keys=RHETORICAL_PLAN_KEYS,

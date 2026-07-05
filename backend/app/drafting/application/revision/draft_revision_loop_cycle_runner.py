@@ -13,7 +13,7 @@ from backend.app.drafting.application.revision.draft_revision_loop_policy import
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.drafting.application.validation.draft_validation_operation_safety import ValidationOperationFailureMapper
-from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, operation_denied_by_runtime_budget
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, ValidationRuntimeBudgetIncidentFactory
 
 class DraftRevisionLoopCycleRunner:
     def __init__(
@@ -30,6 +30,7 @@ class DraftRevisionLoopCycleRunner:
         self._regression = regression_guard
         self._failure_mapper = failure_mapper or ValidationOperationFailureMapper()
         self._policy = loop_policy or RevisionLoopPolicy()
+        self._runtime_budget_incidents = ValidationRuntimeBudgetIncidentFactory()
 
     def revise(
         self,
@@ -43,7 +44,7 @@ class DraftRevisionLoopCycleRunner:
         progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
         operation_id = f"directed-revision-cycle-{cycle_number}"
-        if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
+        if self._runtime_budget_incidents.operation_denied(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
             return self._failure_mapper.failed_revision_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=self._policy.candidate_id(candidate) or "none")
@@ -99,7 +100,7 @@ class DraftRevisionLoopCycleRunner:
         progress: DraftRunStepOperationSink | None,
     ) -> dict[str, Any]:
         operation_id = f"revision-pairwise-cycle-{cycle_number}"
-        if operation_denied_by_runtime_budget(progress, kind="pairwiseRanking", operation_id=operation_id, detail="pairwise-ranking-budget-denied"):
+        if self._runtime_budget_incidents.operation_denied(progress, kind="pairwiseRanking", operation_id=operation_id, detail="pairwise-ranking-budget-denied"):
             return self._failure_mapper.failed_pairwise_result(STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="pairwiseRanking", label=f"Compare revision cycle {cycle_number}")

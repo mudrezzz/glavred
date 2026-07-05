@@ -206,6 +206,17 @@ Implemented operation safety repair:
     construction are also class-owned;
   - final-quality high findings are closed, and revision retains only medium
     service-size/package debt recorded in the audit ledger.
+- Drafting HITL and provider operation surface cleanup:
+  - Slice 2.17.4.6.0.10 keeps HITL services as orchestration owners and moves
+    prompt building, version compaction, trace context, attempt records,
+    provider-attempt execution, quality payload parsing, and deterministic quality
+    overlay into named HITL components;
+  - drafting operation support is split into `DraftingJsonOperationClient`,
+    payload budget stats/profile owners, validation runtime progress/stop/incident
+    policies, revision-loop payload factory, and role-owned payload compactors;
+  - shared LLM operation governance is split into status/stat/incident/attempt/
+    result/envelope/inventory owners while legacy import paths remain
+    compatibility re-exports.
 - Backend documentation and agent guardrail hardening:
   - backend docs, `AGENTS.md`, and repo-local skills now describe the post-`0.5`
     canonical package owners;
@@ -296,7 +307,7 @@ The planned cleanup sequence after the audit is:
 
 1. `2.17.4.6.0.8`: Drafting validation package OOP cleanup.
 2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup. Done.
-3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup.
+3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup. Done.
 4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup.
 
 ## Dependency Direction

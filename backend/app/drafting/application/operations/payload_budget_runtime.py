@@ -53,9 +53,9 @@ class DraftRunPayloadBudgetRuntime:
         )
 
 
-def last_input_stats(attempts: list[dict[str, Any]]) -> dict[str, Any]:
-    return next((dict(item.get("inputStats")) for item in reversed(attempts) if isinstance(item.get("inputStats"), dict)), {})
+class PayloadBudgetAttemptStatsExtractor:
+    def last_input_stats(self, attempts: list[dict[str, Any]]) -> dict[str, Any]:
+        return next((dict(item.get("inputStats")) for item in reversed(attempts) if isinstance(item.get("inputStats"), dict)), {})
 
-
-def last_payload_stats(attempts: list[dict[str, Any]]) -> dict[str, Any]:
-    return next((dict(item.get("payloadStats")) for item in reversed(attempts) if isinstance(item.get("payloadStats"), dict)), {})
+    def last_payload_stats(self, attempts: list[dict[str, Any]]) -> dict[str, Any]:
+        return next((dict(item.get("payloadStats")) for item in reversed(attempts) if isinstance(item.get("payloadStats"), dict)), {})

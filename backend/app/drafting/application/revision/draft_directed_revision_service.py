@@ -5,7 +5,7 @@ Does not own: API routing, SQLite persistence, provider transport, or UI trace l
 Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
-from backend.app.drafting.application.operations.json_step_adapter import complete_drafting_json
+from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -18,7 +18,7 @@ from backend.app.drafting.application.operations.draft_model_role_resolver impor
 from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.drafting.application.artifacts.draft_article_memory_service import context_pack_from_payload
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
-from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, last_input_stats, last_payload_stats
+from backend.app.drafting.application.operations.payload_budget_runtime import DraftRunPayloadBudgetRuntime, PayloadBudgetAttemptStatsExtractor
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -43,6 +43,7 @@ class DraftDirectedRevisionService:
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._payload_budget_runtime = DraftRunPayloadBudgetRuntime()
+        self._attempt_stats = PayloadBudgetAttemptStatsExtractor()
         self._prompt_builder = prompt_builder or DirectedRevisionPromptBuilder()
 
     def revise(
@@ -93,8 +94,8 @@ class DraftDirectedRevisionService:
                         "accepted",
                         attempts,
                         payload=revised,
-                        input_stats=last_input_stats(attempts),
-                        payload_stats=last_payload_stats(attempts),
+                        input_stats=self._attempt_stats.last_input_stats(attempts),
+                        payload_stats=self._attempt_stats.last_payload_stats(attempts),
                         **OPERATION_META,
                     ),
                 }
@@ -111,8 +112,8 @@ class DraftDirectedRevisionService:
                 attempts,
                 safe_error=last_error,
                 failure_reason="directed-revision-provider-failed",
-                input_stats=last_input_stats(attempts),
-                payload_stats=last_payload_stats(attempts),
+                input_stats=self._attempt_stats.last_input_stats(attempts),
+                payload_stats=self._attempt_stats.last_payload_stats(attempts),
                 **OPERATION_META,
             ),
         }
@@ -158,7 +159,7 @@ class DraftDirectedRevisionService:
             **selection.to_payload(),
         }
         try:
-            result = complete_drafting_json(self._openrouter_adapter,
+            result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
                 messages=messages,
                 expected_keys=DIRECTED_REVISION_KEYS,

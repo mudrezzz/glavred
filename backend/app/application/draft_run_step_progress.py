@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
 from backend.app.application.draft_run_step_progress_payload import step_artifact, with_progress
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
-from backend.app.drafting.application.operations.validation_progress_runtime import attach_runtime_budget, runtime_progress_budget, start_runtime_operation
+from backend.app.drafting.application.operations.validation_progress_runtime import ValidationProgressRuntimePresenter
 
 if TYPE_CHECKING:
     from backend.app.drafting.application.operations.validation_runtime_budget import ValidationRuntimeGuard
@@ -29,6 +29,7 @@ class DraftRunStepOperationSink:
         self._total_operations = total_operations
         self._on_ai_run_id = on_ai_run_id
         self._runtime_guard = runtime_guard
+        self._runtime_presenter = ValidationProgressRuntimePresenter()
 
     @property
     def runtime_guard(self) -> "ValidationRuntimeGuard | None":
@@ -44,7 +45,7 @@ class DraftRunStepOperationSink:
         notes: list[str] | None = None,
     ) -> None:
         operation = self._find_or_create(operation_id, kind=kind, label=label, target=target)
-        allowed = start_runtime_operation(self._runtime_guard, operation, operation_id=operation_id, kind=kind, notes=notes)
+        allowed = self._runtime_presenter.start_runtime_operation(self._runtime_guard, operation, operation_id=operation_id, kind=kind, notes=notes)
         self._current_operation_id = operation_id if allowed else None
         self._persist("running")
 
@@ -98,11 +99,11 @@ class DraftRunStepOperationSink:
 
     def payload(self, status: str | None = None) -> dict[str, Any]:
         progress_status = status or ("running" if self._current_operation_id else _aggregate_status(self._operations))
-        return attach_runtime_budget({
+        return self._runtime_presenter.attach_runtime_budget({
             "status": progress_status,
             "currentOperationId": self._current_operation_id,
             "operations": [dict(operation) for operation in self._operations],
-            "budget": runtime_progress_budget(self._runtime_guard, operation_count=len(self._operations), expected_operation_count=self._total_operations),
+            "budget": self._runtime_presenter.runtime_progress_budget(self._runtime_guard, operation_count=len(self._operations), expected_operation_count=self._total_operations),
         }, self._runtime_guard)
 
     def merge_artifact(self, artifact_payload: dict[str, Any]) -> None:

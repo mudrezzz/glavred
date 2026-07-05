@@ -25,19 +25,32 @@ class OpenRouterJsonStepAdapter(Protocol):
     ) -> Any: ...
 
 
-def complete_drafting_json(
-    adapter: Any,
-    *,
-    settings: BackendSettings,
-    messages: list[dict[str, str]],
-    expected_keys: set[str],
-    temperature: float,
-    top_p: float | None = None,
-    model: str | None = None,
-) -> Any:
-    complete_operation = getattr(adapter, "complete_operation_json", None)
-    if callable(complete_operation):
-        return complete_operation(
+class DraftingJsonOperationClient:
+    def __init__(self, adapter: Any) -> None:
+        self._adapter = adapter
+
+    def complete(
+        self,
+        *,
+        settings: BackendSettings,
+        messages: list[dict[str, str]],
+        expected_keys: set[str],
+        temperature: float,
+        top_p: float | None = None,
+        model: str | None = None,
+    ) -> Any:
+        complete_operation = getattr(self._adapter, "complete_operation_json", None)
+        if callable(complete_operation):
+            return complete_operation(
+                settings=settings,
+                messages=messages,
+                expected_keys=expected_keys,
+                temperature=temperature,
+                top_p=top_p,
+                model=model,
+            )
+        complete_legacy = getattr(self._adapter, "complete_json")
+        return complete_legacy(
             settings=settings,
             messages=messages,
             expected_keys=expected_keys,
@@ -45,15 +58,6 @@ def complete_drafting_json(
             top_p=top_p,
             model=model,
         )
-    complete_legacy = getattr(adapter, "complete_json")
-    return complete_legacy(
-        settings=settings,
-        messages=messages,
-        expected_keys=expected_keys,
-        temperature=temperature,
-        top_p=top_p,
-        model=model,
-    )
 
 
 class DraftingJsonStepAdapter:
@@ -70,8 +74,7 @@ class DraftingJsonStepAdapter:
         top_p: float | None = None,
         model: str | None = None,
     ) -> Any:
-        return complete_drafting_json(
-            self._provider_adapter,
+        return DraftingJsonOperationClient(self._provider_adapter).complete(
             settings=settings,
             messages=messages,
             expected_keys=expected_keys,
@@ -100,4 +103,4 @@ class DraftingJsonStepAdapter:
         )
 
 
-__all__ = ("DraftingJsonStepAdapter", "OpenRouterJsonStepAdapter", "complete_drafting_json")
+__all__ = ("DraftingJsonOperationClient", "DraftingJsonStepAdapter", "OpenRouterJsonStepAdapter")

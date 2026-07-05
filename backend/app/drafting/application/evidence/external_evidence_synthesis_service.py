@@ -26,7 +26,7 @@ from backend.app.domain.draft_evidence_synthesis import (
 )
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
-from backend.app.drafting.application.operations.json_step_adapter import complete_drafting_json
+from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 
 SYNTHESIS_KEYS = {"externalClaims", "warnings", "decisions"}
 SYNTHESIS_TEMPERATURE = 0.1
@@ -65,7 +65,7 @@ class ExternalEvidenceSynthesisService:
         if not status.configured:
             return self._fallback(public_evidence, request_payload, provider, model, "OpenRouter is not configured")
         try:
-            result = complete_drafting_json(self._openrouter_adapter,
+            result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
                 messages=messages,
                 expected_keys=SYNTHESIS_KEYS,

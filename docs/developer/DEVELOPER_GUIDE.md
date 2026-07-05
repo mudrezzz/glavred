@@ -600,11 +600,13 @@ Current backend files:
 - `backend/app/drafting/application/generation/draft_generation_service.py`: OpenRouter/fallback
   orchestration for draft generation.
 - `backend/app/drafting/application/hitl/draft_human_comment_revision_service.py`: post-run
-  writer-role revision from active draft version plus editor comment and compact
-  machine trace context.
+  writer-role revision orchestration. Prompt construction, version/context
+  compaction, attempt trace records, and provider-attempt execution are owned by
+  HITL components/runners.
 - `backend/app/drafting/application/hitl/draft_human_comment_quality_service.py`: post-run
-  review-role diagnostic check for comment compliance, source-marker preservation,
-  public-prose regression, internal jargon leaks, and attempt trace.
+  review-role quality-check orchestration. Prompt construction, provider-attempt
+  execution, payload parsing, source-marker/public-prose/internal-jargon overlay,
+  and attempt trace are owned by HITL components/runners.
 - `backend/app/drafting/application/generation/deterministic_draft_service.py`: deterministic backend
   fallback draft generation.
 - `backend/app/application/draft_run_service.py`: durable run creation and dispatch

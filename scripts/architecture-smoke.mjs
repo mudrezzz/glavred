@@ -1707,6 +1707,23 @@ const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
 const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/contracts.py";
 const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
+const SHARED_LLM_OPERATION_OWNER_PATHS = [
+  SHARED_LLM_OPERATION_CONTRACT_PATH,
+  "backend/app/shared/llm_operations/statuses.py",
+  "backend/app/shared/llm_operations/stats.py",
+  "backend/app/shared/llm_operations/incidents.py",
+  "backend/app/shared/llm_operations/attempts.py",
+  "backend/app/shared/llm_operations/operation_results.py",
+  "backend/app/shared/llm_operations/operation_result_policy.py",
+  "backend/app/shared/llm_operations/operation_result_incidents.py",
+  "backend/app/shared/llm_operations/envelope_factory.py",
+];
+const SHARED_LLM_OPERATION_INVENTORY_OWNER_PATHS = [
+  SHARED_LLM_OPERATION_INVENTORY_PATH,
+  "backend/app/shared/llm_operations/inventory_entry.py",
+  "backend/app/shared/llm_operations/drafting_inventory_data.py",
+  "backend/app/shared/llm_operations/inventory_payload.py",
+];
 const DRAFTING_JSON_CONTRACT_COMPAT_PATH =
   "backend/app/drafting/application/operations/json_contracts.py";
 const DRAFTING_PAYLOAD_BUDGET_FACADE_PATH =
@@ -1716,10 +1733,21 @@ const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
   profiles: "backend/app/drafting/application/operations/payload_budget_profiles.py",
   semanticContracts: "backend/app/drafting/application/operations/payload_semantic_contracts.py",
   compactors: "backend/app/drafting/application/operations/payload_compactors.py",
+  compactorCommon: "backend/app/drafting/application/operations/payload_compactor_common.py",
+  compactorRecords: "backend/app/drafting/application/operations/payload_record_compactors.py",
+  compactorEvidence: "backend/app/drafting/application/operations/payload_evidence_compactors.py",
+  compactorArtifacts: "backend/app/drafting/application/operations/payload_artifact_compactors.py",
+  compactorOrchestrator: "backend/app/drafting/application/operations/payload_compactor_orchestrator.py",
   policy: "backend/app/drafting/application/operations/payload_budget_policy.py",
 };
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
   "backend/app/drafting/application/operations/validation_runtime_budget.py";
+const DRAFTING_VALIDATION_RUNTIME_BUDGET_OWNER_PATHS = [
+  DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH,
+  "backend/app/drafting/application/operations/validation_runtime_budget_contracts.py",
+  "backend/app/drafting/application/operations/validation_runtime_guard.py",
+  "backend/app/drafting/application/operations/validation_runtime_stop_policy.py",
+];
 const DRAFTING_LEGACY_SURFACE_INVENTORY_PATH =
   "backend/app/drafting/application/migration/legacy_surface_inventory.py";
 const DRAFT_RUN_PIPELINE_AS_IS_PATH =
@@ -3202,8 +3230,8 @@ for (const backendFile of boundedBackendContextFiles) {
   }
 }
 
-const sharedLlmContractSource = readText(SHARED_LLM_OPERATION_CONTRACT_PATH);
-const sharedLlmInventorySource = readText(SHARED_LLM_OPERATION_INVENTORY_PATH);
+const sharedLlmContractSource = SHARED_LLM_OPERATION_OWNER_PATHS.map((path) => readText(path)).join("\n");
+const sharedLlmInventorySource = SHARED_LLM_OPERATION_INVENTORY_OWNER_PATHS.map((path) => readText(path)).join("\n");
 const draftingJsonContractCompatSource = readText(DRAFTING_JSON_CONTRACT_COMPAT_PATH);
 
 for (const fragment of [
@@ -3308,6 +3336,14 @@ for (const fragment of [
 const draftingPayloadCompactorsSource = readText(
   DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors
 );
+const draftingPayloadCompactorOwnerSource = [
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors,
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactorCommon,
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactorRecords,
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactorEvidence,
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactorArtifacts,
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactorOrchestrator,
+].map((path) => readText(path)).join("\n");
 for (const fragment of [
   "class DraftRunPayloadCompactor",
   "class RulePackCompactor",
@@ -3316,7 +3352,7 @@ for (const fragment of [
   "class PayloadBudgetCounters",
 ]) {
   assert(
-    draftingPayloadCompactorsSource.includes(fragment),
+    draftingPayloadCompactorOwnerSource.includes(fragment),
     `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors} is missing role-owned compactor fragment: ${fragment}`
   );
 }
@@ -3350,7 +3386,7 @@ for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not
   );
 }
 
-const draftingValidationRuntimeBudgetSource = readText(DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH);
+const draftingValidationRuntimeBudgetSource = DRAFTING_VALIDATION_RUNTIME_BUDGET_OWNER_PATHS.map((path) => readText(path)).join("\n");
 for (const fragment of [
   "class ValidationRuntimeBudgetProfile",
   "class ValidationRuntimeBudgetPolicy",
@@ -3531,8 +3567,8 @@ assert(
   `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must have version 1.`
 );
 assert(
-  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.9",
-  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.9.`
+  backendArchitectureDebtLedger.updatedForSlice === "2.17.4.6.0.10",
+  `${BACKEND_ARCHITECTURE_DEBT_LEDGER_PATH} must be updated for Slice 2.17.4.6.0.10.`
 );
 assert(
   Array.isArray(backendArchitectureDebtLedger.entries) &&
@@ -3568,7 +3604,7 @@ for (const fragment of [
   "publicHelperSprawl",
   "proceduralBoundedPackage",
   "rawDictContract",
-  "2.17.4.6.0.9",
+  "2.17.4.6.0.10",
   "Unledgered `critical` and `high` findings fail architecture smoke",
 ]) {
   assert(

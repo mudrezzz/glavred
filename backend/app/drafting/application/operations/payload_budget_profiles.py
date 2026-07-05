@@ -47,36 +47,38 @@ class PayloadBudgetProfileRegistry:
         normalized = str(value or "standard").strip().lower()
         return normalized if normalized in EXECUTION_MODES else "standard"
 
-
-def build_profile(operation_id: str, operation_kind: str, family: str, mode: str) -> PayloadBudgetProfile:
-    caps = {
-        "research": (6000, 12000, 22000),
-        "evidence": (10000, 18000, 30000),
-        "writer": (12000, 24000, 40000),
-        "validator": (12000, 22000, 36000),
-    }[family]
-    index = EXECUTION_MODES.index(mode)
-    max_prompt_chars = caps[index]
-    scale = (1, 2, 3)[index]
-    return PayloadBudgetProfile(
-        operation_id=operation_id,
-        operation_kind=operation_kind,
-        execution_mode=mode,
-        max_prompt_chars=max_prompt_chars,
-        # This is deliberately approximate and trace-facing only; provider tokenizers
-        # stay outside the application policy layer.
-        approx_token_budget=math.ceil(max_prompt_chars / 4),
-        max_rules=20 * scale,
-        max_claims=12 * scale,
-        max_evidence_items=12 * scale,
-        max_candidates=2 * scale,
-        max_source_snippets=12 * scale,
-        max_prior_drafts=1 * scale,
-    )
+    @classmethod
+    def build_profile(cls, operation_id: str, operation_kind: str, family: str, mode: str) -> PayloadBudgetProfile:
+        caps = {
+            "research": (6000, 12000, 22000),
+            "evidence": (10000, 18000, 30000),
+            "writer": (12000, 24000, 40000),
+            "validator": (12000, 22000, 36000),
+        }[family]
+        index = EXECUTION_MODES.index(mode)
+        max_prompt_chars = caps[index]
+        scale = (1, 2, 3)[index]
+        return PayloadBudgetProfile(
+            operation_id=operation_id,
+            operation_kind=operation_kind,
+            execution_mode=mode,
+            max_prompt_chars=max_prompt_chars,
+            # This is deliberately approximate and trace-facing only; provider tokenizers
+            # stay outside the application policy layer.
+            approx_token_budget=math.ceil(max_prompt_chars / 4),
+            max_rules=20 * scale,
+            max_claims=12 * scale,
+            max_evidence_items=12 * scale,
+            max_candidates=2 * scale,
+            max_source_snippets=12 * scale,
+            max_prior_drafts=1 * scale,
+        )
 
 
 DEFAULT_PROFILES: dict[tuple[str, str], PayloadBudgetProfile] = {
-    (operation_id, mode): build_profile(operation_id, operation_kind, family, mode)
+    (operation_id, mode): PayloadBudgetProfileRegistry.build_profile(operation_id, operation_kind, family, mode)
     for operation_id, (operation_kind, family) in OPERATION_FAMILIES.items()
     for mode in EXECUTION_MODES
 }
+
+build_profile = PayloadBudgetProfileRegistry.build_profile

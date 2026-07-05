@@ -160,6 +160,17 @@ top-level helper functions to `application/revision` or `application/final_quali
 residual revision debt is medium service-size cleanup, not permission to restore
 procedural helpers.
 
+Slice 2.17.4.6.0.10 cleaned the HITL and provider-operation support packages.
+Human-comment revision and quality services now own orchestration only; prompt
+builders, version compaction, trace context, attempt trace records,
+provider-attempt runners, quality payload parsing, and deterministic quality
+overlay are class-owned components. Drafting operation support now uses
+`DraftingJsonOperationClient`, `PayloadBudgetAttemptStatsExtractor`,
+`PayloadBudgetProfileRegistry`, `ValidationProgressRuntimePresenter`,
+`ValidationStopReasonPolicy`, `ValidationRuntimeBudgetIncidentFactory`,
+`ValidationRevisionLoopPayloadFactory`, and split payload compactor modules
+instead of public helper sprawl.
+
 ## Unified Step Contract
 
 New DraftRun step code should implement the provider-free contract in
@@ -181,7 +192,9 @@ owning migration slice moves it.
 ## JSON Operation Contract
 
 Drafting JSON LLM operations should use the shared provider-neutral contract in
-`backend.app.shared.llm_operations`. The drafting import path
+`backend.app.shared.llm_operations`. The shared package is split into role-owned
+status, stat, incident, attempt, result, envelope factory, and inventory exporter
+modules. The drafting import path
 `backend.app.drafting.application.operations.json_contracts` remains a thin
 compatibility re-export during migration:
 
@@ -231,8 +244,9 @@ split by role under `backend.app.drafting.application.operations`:
   drafts.
 - `payload_semantic_contracts.py`: `mustHave`, `shouldHave`, `diagnosticOnly`, and
   `neverSendToProvider` fields.
-- `payload_compactors.py`: role-owned artifact compactors for rules, source ledger,
-  evidence, material plan, candidates, validation reports, and trace context.
+- `payload_compactors.py`: compatibility facade over role-owned compactors for
+  common counters, record projections, evidence/rules, artifacts/reports, and the
+  DraftRun payload compactor orchestrator.
 - `payload_budget_policy.py`: `DraftRunPayloadBudgetPolicy`, which returns compact
   provider input plus `inputStats`, `payloadStats`,
   trimmed/suppressed fields, quality risk, and optional `contextOverBudget` /
@@ -247,7 +261,9 @@ wired must stay explicit debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
 ## Validation Runtime Budget
 
 DraftRun validation can be slow, but it must be bounded and trace-visible.
-`validation_runtime_budget.py` owns `ValidationRuntimeBudgetProfile`,
+`validation_runtime_budget.py` is a compatibility facade over validation runtime
+budget contracts, the runtime guard, stop-reason policy, incident factory, and
+progress presenter. These owners expose `ValidationRuntimeBudgetProfile`,
 `ValidationRuntimeBudgetPolicy`, `ValidationRuntimeGuard`,
 `ValidationRuntimeCounters`, and canonical validation stop reasons.
 

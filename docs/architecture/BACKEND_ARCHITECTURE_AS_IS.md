@@ -243,13 +243,25 @@ Already enforced:
   review parsing, and review prompt construction through class-owned components.
   Final-quality audit findings for this package are closed; revision keeps only
   medium line-count/package debt for future service-size cleanup.
+- Drafting HITL and provider operation surface cleanup from Slice 2.17.4.6.0.10:
+  `backend/app/drafting/application/hitl` now keeps human-comment revision and
+  quality services as orchestration owners while prompt building, version
+  compaction, trace context, attempt records, provider-attempt execution, quality
+  parsing, and deterministic quality overlay live in named components. Drafting
+  operation helpers are split into class-owned JSON client, payload budget stats,
+  profile registry, runtime progress presenter, stop-reason/incident policies,
+  revision-loop payload factory, and role-owned payload compactors. Shared
+  `backend/app/shared/llm_operations` is split into statuses, stats, incidents,
+  attempts, result policy, result incidents, envelope factory, and inventory
+  exporter modules with compatibility re-exports. The audit ledger no longer has
+  stale or high `repairSlice=2.17.4.6.0.10` debt.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- OOP cleanup of migrated HITL, operations/provider, API, application,
-  infrastructure, upstream, and residual medium validation/revision line-count
+- OOP cleanup of API, root application, infrastructure, upstream, generation,
+  artifacts/evidence/planning, and residual medium validation/revision line-count
   surfaces flagged by the audit ledger.
 - Upstream/radar bounded package migration.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected

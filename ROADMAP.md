@@ -7030,7 +7030,7 @@ Status:
 
 ### Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup
 
-- Status: Ready
+- Status: Done
 - Goal: Clean up HITL and provider-heavy operation surfaces around message builders, operation envelopes, payload budgets, and runtime budgets.
 - User value:
   - Human revision and provider operation code becomes safe to extend without duplicating ad hoc provider/result contracts.
@@ -7058,10 +7058,11 @@ Status:
   - Audit ledger debt for HITL/provider operation surfaces is reduced or explicitly reclassified.
 - Risks:
   - Provider-heavy tests can miss live-provider edge cases; keep deterministic/fake-provider proof as acceptance baseline.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup
 
-- Status: Backlog
+- Status: Ready
 - Goal: Apply the audit program outside DraftRun validation/revision to API helpers, active application facades, upstream radar, repositories, and factories.
 - User value:
   - The whole backend follows the same ownership rules, not only DraftRun bounded packages.
@@ -7782,6 +7783,7 @@ Status:
 - Slice 2.17.4.6.0.7: Backend Architecture Audit and Debt Ledger. Completed 2026-07-05.
 - Slice 2.17.4.6.0.8: Drafting Validation Package OOP Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup. Completed 2026-07-05.
+- Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7810,4 +7812,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup`.
+Implement `Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup`.

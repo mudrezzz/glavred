@@ -20,8 +20,8 @@ from backend.app.drafting.application.revision.draft_revision_rejected_moves imp
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_revision_loop import RevisionLoopCycle
-from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, finalize_revision_loop_stop, operation_denied_by_runtime_budget
-from backend.app.drafting.application.operations.validation_revision_loop_payloads import DraftRevisionLoopResult, revision_loop_report, successful_cycle
+from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, ValidationRuntimeBudgetIncidentFactory, ValidationStopReasonPolicy
+from backend.app.drafting.application.operations.validation_revision_loop_payloads import DraftRevisionLoopResult, ValidationRevisionLoopPayloadFactory
 
 class DraftRevisionLoopService:
     def __init__(
@@ -48,6 +48,9 @@ class DraftRevisionLoopService:
         self._policy = loop_policy or RevisionLoopPolicy()
         self._rejected_moves = rejected_move_policy or RevisionRejectedMovePolicy()
         self._cycles = DraftRevisionLoopCycleRunner(ranking_service=ranking_service, revision_service=revision_service, regression_guard=self._regression)
+        self._runtime_budget_incidents = ValidationRuntimeBudgetIncidentFactory()
+        self._stop_reason_policy = ValidationStopReasonPolicy()
+        self._loop_payloads = ValidationRevisionLoopPayloadFactory(self._policy)
         self._max_iterations = max(1, max_iterations)
 
     def run(
@@ -74,7 +77,7 @@ class DraftRevisionLoopService:
         guard = progress.runtime_guard if progress else None
 
         for cycle_number in range(1, self._max_iterations + 1):
-            if operation_denied_by_runtime_budget(progress, kind="directedRevision", operation_id=f"directed-revision-cycle-{cycle_number}", detail="directed-revision-budget-denied"):
+            if self._runtime_budget_incidents.operation_denied(progress, kind="directedRevision", operation_id=f"directed-revision-cycle-{cycle_number}", detail="directed-revision-budget-denied"):
                 detail_stop_reason = guard.detail_stop_reason or "runtime-budget-exhausted"
                 stop_reason = STOP_BUDGET_EXHAUSTED
                 break
@@ -179,7 +182,7 @@ class DraftRevisionLoopService:
                 rejection_reasons=decision_reasons,
                 unresolved_editorial_goals=editorial_result["unresolvedEditorialGoals"],
             )
-            cycles.append(successful_cycle(
+            cycles.append(self._loop_payloads.successful_cycle(
                 cycle_number=cycle_number,
                 current_id=current_id,
                 repair_goals=repair_goals,
@@ -218,9 +221,9 @@ class DraftRevisionLoopService:
             stop_reason = "max-iterations"
             detail_stop_reason = detail_stop_reason or "max-iterations"
 
-        canonical_stop_reason, detail_stop_reason, runtime_budget = finalize_revision_loop_stop(guard, stop_reason, detail_stop_reason)
+        canonical_stop_reason, detail_stop_reason, runtime_budget = self._stop_reason_policy.finalize_revision_loop_stop(guard, stop_reason, detail_stop_reason)
 
-        report = revision_loop_report(
+        report = self._loop_payloads.revision_loop_report(
             current=current,
             cycles=cycles,
             max_iterations=self._max_iterations,

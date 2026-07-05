@@ -32,7 +32,7 @@ from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.shared.llm_operations import LlmOperationIncidentType, LlmOperationTimeoutProfile, build_operation_envelope, incident_from_safe_error
 from backend.app.settings import BackendSettings
-from backend.app.drafting.application.operations.json_step_adapter import complete_drafting_json
+from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 
 
 class EvidenceInterpretationService:
@@ -179,7 +179,7 @@ class EvidenceInterpretationService:
 
             def provider_operation() -> tuple[dict[str, Any], dict[str, Any] | None, int, int]:
                 provider_start = perf_counter()
-                provider_result = complete_drafting_json(self._openrouter_adapter,
+                provider_result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                     settings=self._settings,
                     messages=messages,
                     expected_keys=EVIDENCE_INTERPRETATION_KEYS,
