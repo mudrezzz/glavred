@@ -14,6 +14,7 @@ been migrated.
 | `application/workflow` | Draft workflow sequencing, step registry, workflow state, progress handoff. `DraftWorkflow`, `DraftWorkflowState`, `DraftWorkflowPhase`, and `DraftStepRegistry` now own the behavior-preserving orchestration shell while legacy step services remain in place. | `draft_run_pipeline.py`, `draft_run_progress.py`, `draft_run_step_progress.py`, `draft_run_service.py` |
 | `application/steps` | Step-level use cases with stable input/output contracts. `contracts.py` defines `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. `legacy_adapters.py` converts the first legacy result shapes without changing runtime behavior. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
 | `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `timeout.py` and `evidence_interpretation_payload.py` protect the legacy evidence-interpretation operation during migration. DraftRun provider-input budgets are role-owned by `payload_budget_contracts.py`, `payload_budget_profiles.py`, `payload_semantic_contracts.py`, `payload_compactors.py`, `payload_budget_policy.py`, and `payload_budget_runtime.py`; `payload_budget.py` is compatibility-only. `validation_runtime_budget.py` owns validation-loop runtime caps, heartbeat snapshots, counters, and canonical stop reasons. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
+| `application/migration` | Planning-only migration inventories. `legacy_surface_inventory.py` records the Legacy DraftRun Surface, `moduleDisposition`, `publicHelperDisposition`, target owners, and the `no cosmetic package moves` rule for `draft_*` and `deterministic_*` modules. | `backend/app/application/draft_*.py`, `backend/app/application/deterministic_*.py` |
 | `application/artifacts` | Artifact serialization, payload mapping, compatibility readers. | `draft_run_payloads.py`, `draft_run_context_payloads.py`, step payload helpers |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
@@ -32,10 +33,18 @@ been migrated.
    Done in Slice 2.17.4.6.0.3.3.1.
 8. Add validation/revision runtime budget guard and canonical stop reasons. Done in
    Slice 2.17.4.6.0.3.4.
-9. Move context, source ledger, feasibility, post contract, rule pack, and planning
+9. Classify the Legacy DraftRun Surface before package moves. Done in Slice
+   2.17.4.6.0.4.0. The inventory covers every current flat `draft_*` and
+   `deterministic_*` application module, every public helper, `moduleDisposition`,
+   `publicHelperDisposition`, target owner, and migration slice.
+10. Move context, source ledger, feasibility, post contract, rule pack, and planning
    clusters.
-10. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
-11. Tighten architecture smoke allowlists after each cluster is moved.
+11. Move candidate, validation, ranking, revision, final quality, and HITL clusters.
+12. Tighten architecture smoke allowlists after each cluster is moved.
+
+Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
+Behavior becomes service, policy, or component methods; small provider-free DTO
+factory helpers may remain package-level only when explicitly listed.
 
 ## Compatibility Anchors
 

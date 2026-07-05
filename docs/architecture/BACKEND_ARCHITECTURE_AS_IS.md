@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.3.4.
+Current as of Slice 2.17.4.6.0.4.0.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -30,6 +30,7 @@ layout is no longer navigable.
 Current inventory:
 
 - 110 flat `backend/app/application/draft_*.py` modules.
+- 13 flat `backend/app/application/deterministic_*.py` modules.
 - 26 flat `backend/app/domain/draft_*.py` modules.
 - DraftRun orchestration still enters through `backend/app/application/draft_run_pipeline.py`.
 - Worker/runtime wiring lives in `backend/app/infrastructure/draft_run_*` modules.
@@ -38,6 +39,26 @@ Current inventory:
 This is not acceptable as target architecture. The flat files are temporarily
 allowlisted as legacy debt so behavior can remain stable while the package migration
 is done slice by slice.
+
+## Legacy DraftRun Surface
+
+Slice 2.17.4.6.0.4.0 adds a decision-complete migration inventory at
+`backend/app/drafting/application/migration/legacy_surface_inventory.py`. The
+inventory is the source of truth for the flat DraftRun application surface before
+runtime module moves begin.
+
+Each current `draft_*` and `deterministic_*` module is classified by closed
+`cluster`, target package, `moduleDisposition`, target owner, migration slice,
+compatibility strategy, and notes. Each public top-level helper is listed with
+`publicHelperDisposition`, target visibility, target owner, and rationale.
+
+The factual AS IS rule is: legacy public functions are not accepted as anonymous
+package API. They are migration debt that must become private helpers, methods on
+service/policy/component owners, provider-free DTO/factory helpers, thin
+compatibility shims, or delete-after-migration leftovers. `deterministic_*` modules
+must target named fallback policy/service owners under `backend/app/drafting`; they
+must not become a parallel flat package. Future package moves follow the explicit
+`no cosmetic package moves` rule.
 
 ## Upstream Radar Debt Inventory
 
@@ -137,6 +158,10 @@ Already enforced:
   `ValidationRuntimeBudgetProfile`, `runtimeBudget`, and canonical stop reasons:
   `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`, `maxIterations`,
   `noImprovement`, and `providerIncident`.
+- Legacy DraftRun Surface inventory checks requiring every current
+  `backend/app/application/draft_*.py` and `deterministic_*.py` module, and every
+  public top-level helper in those modules, to be classified by owner and migration
+  disposition.
 
 Still missing after this slice:
 

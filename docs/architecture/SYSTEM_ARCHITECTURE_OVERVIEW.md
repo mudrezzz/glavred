@@ -388,11 +388,13 @@ generic structure. New DraftRun runtime code must live under `backend/app/drafti
 new source registry, radar run, search campaign, found material, signal extraction,
 or candidate assembly backend code must live under `backend/app/upstream`; reusable
 provider-neutral operation contracts may live under `backend/app/shared` only when
-they are genuinely cross-context. Existing flat `draft_*` and `upstream_radar_*`
-modules are legacy debt with an explicit architecture-smoke allowlist. Adding a new
-flat `backend/app/application/draft_*.py`, `backend/app/domain/draft_*.py`, or
-`backend/app/application/upstream_radar_*.py` file fails architecture smoke unless the
-debt exception is deliberately added. New bounded-context modules must declare
+they are genuinely cross-context. Existing flat `draft_*`, `deterministic_*`, and
+`upstream_radar_*` modules are legacy debt with an explicit architecture-smoke
+allowlist. Adding a new flat `backend/app/application/draft_*.py`,
+`backend/app/application/deterministic_*.py`,
+`backend/app/domain/draft_*.py`, or `backend/app/application/upstream_radar_*.py`
+file fails architecture smoke unless the debt exception is deliberately added. New
+bounded-context modules must declare
 `Owner`, `Used by`, `Does not own`, and `Architecture doc` in their module docstring.
 
 Slice 2.17.4.6.0.1 creates the `backend/app/drafting` package skeleton with package
@@ -447,6 +449,20 @@ current operation, slow-but-healthy status, incidents, and canonical stop reason
 
 The validation runtime decision is recorded in
 `docs/adr/2026-07-05-draftrun-validation-runtime-budget.md`.
+
+Slice 2.17.4.6.0.4.0 adds the Legacy DraftRun Surface migration inventory in
+`backend/app/drafting/application/migration/legacy_surface_inventory.py`. The
+inventory covers every current flat `backend/app/application/draft_*.py` and
+`deterministic_*.py` module, records `moduleDisposition`, target package, target
+owner, migration slice, compatibility strategy, and lists every public helper with
+`publicHelperDisposition`. This is the guardrail for `no cosmetic package moves`:
+runtime migration must turn behavior into named service, policy, component, DTO,
+private helper, shim, or delete-after-migration ownership, not preserve the old flat
+public-helper surface under `backend/app/drafting`. `deterministic_*` logic moves
+into fallback policy/service owners.
+
+The Legacy DraftRun Surface decision is recorded in
+`docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md`.
 
 Slice 2.1 implements the first concrete backend perimeter:
 

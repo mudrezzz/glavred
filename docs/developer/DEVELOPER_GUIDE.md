@@ -100,7 +100,8 @@ Before adding or moving backend runtime code, read:
 
 - `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`;
 - `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`;
-- `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`.
+- `docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md`;
+- `docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md`.
 
 The recovery rule is strict:
 
@@ -173,6 +174,18 @@ Use canonical stop reasons in `revisionLoop.stopReason` and
 `budgetExhausted`, `maxIterations`, `noImprovement`, and `providerIncident`.
 Preserve older local reasons such as `editorially-improved` or `no-fresh-angle` as
 `detailStopReason` only.
+
+The Legacy DraftRun Surface is classified in
+`backend.app.drafting.application.migration.legacy_surface_inventory`. Before
+moving a legacy `backend/app/application/draft_*.py` or `deterministic_*.py` module,
+consume its inventory entry: `moduleDisposition` defines whether the target is a
+service, policy, component, DTO, private helper, compatibility shim, or
+delete-after-migration remnant. Every public top-level helper has a
+`publicHelperDisposition`; do not preserve that helper as anonymous package API
+unless the inventory explicitly allows a provider-free DTO/factory surface.
+`deterministic_*` modules must move into fallback policy/service owners. The rule is
+`no cosmetic package moves`: moving a file into `backend/app/drafting` while keeping
+the old procedural public-helper shape is not architecture progress.
 
 Existing flat DraftRun/Radar files are an explicit migration allowlist, not the
 target architecture. Editing them is allowed when preserving current behavior, but

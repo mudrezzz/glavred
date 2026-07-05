@@ -1,6 +1,6 @@
 # Backend Architecture Target
 
-Current as of Slice 2.17.4.6.0.3.4.
+Current as of Slice 2.17.4.6.0.4.0.
 
 This document is the target package contract for backend work. New backend runtime
 code should follow this contract unless a roadmap slice explicitly records a
@@ -141,6 +141,15 @@ Implemented operation safety repair:
     `providerIncident`;
   - staleness inspection treats a validation step as slow-but-healthy while current
     operation heartbeat age stays inside the validation runtime budget.
+- Legacy DraftRun Surface migration inventory:
+  - `backend.app.drafting.application.migration.legacy_surface_inventory`
+    classifies every current flat `backend/app/application/draft_*.py` and
+    `deterministic_*.py` module before runtime migration;
+  - each entry records `cluster`, `targetPackage`, `moduleDisposition`,
+    `targetOwner`, `migrationSlice`, `compatibilityStrategy`, `publicHelpers`,
+    and notes;
+  - each public top-level helper records `publicHelperDisposition`, target
+    visibility, target owner, and rationale.
 
 ## Context Ownership
 
@@ -154,6 +163,35 @@ Implemented operation safety repair:
 | `roadmap` | Tracker CLI/domain/application/repository. | Product runtime, DraftRun, radar execution. |
 | `shared` | Cross-context provider-neutral operation contracts, safe errors, retry metadata, trace helpers. | Domain-specific prompts, provider-specific adapters, one-context convenience helpers. |
 | `infrastructure` | OpenRouter, SQLite repositories, Celery, URL reader, filesystem/network adapters. | Domain invariants, use-case decisions, API request parsing. |
+
+## Legacy DraftRun Surface OOP Migration Rule
+
+Runtime migration from the Legacy DraftRun Surface is not a file move. It is an
+ownership move.
+
+Allowed `moduleDisposition` values are:
+
+- `service`: a use-case or orchestration class.
+- `policy`: a deterministic decision, fallback, gate, scoring, or safety rule
+  owner.
+- `component`: a builder, parser, mapper, compiler, resolver, evaluator, or trace
+  collaborator.
+- `dto`: provider-free result, contract, value object, or small factory surface.
+- `privateHelper`: a helper that must become private to an owning module.
+- `compatibilityShim`: a thin re-export only.
+- `deleteAfterMigration`: no target behavior owner remains after call sites move.
+
+Public top-level functions in migrated DraftRun code are not a default API shape.
+Each legacy helper must have a `publicHelperDisposition`. Behavioral helpers with
+collaborators, trace semantics, provider semantics, domain decisions, or multiple
+callers become methods on a service, policy, or component. DTO/factory helpers are
+allowed only when provider-free, small, documented, and explicitly listed. Pure
+local helpers should be private.
+
+The `deterministic_*` modules are fallback behavior, not a second package style.
+They move into named fallback policy/service owners inside `backend/app/drafting`.
+The next `0.4` and `0.5` slices must follow the `no cosmetic package moves` rule:
+do not preserve the old flat public-helper surface under a new package path.
 
 ## Dependency Direction
 

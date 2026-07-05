@@ -6759,7 +6759,7 @@ Status:
 
 ### Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules
 
-- Status: Ready
+- Status: Done
 - Goal: Classify the remaining flat DraftRun application surface and define enforceable OOP migration rules before moving more modules.
 - User value:
   - Backend migration becomes a real architecture cleanup rather than a cosmetic package move.
@@ -6802,10 +6802,11 @@ Status:
 - Risks:
   - Over-correcting into class boilerplate; mitigate by allowing private pure helpers and DTO factories where they are genuinely local and documented.
   - Inventory can grow too broad; keep the output focused on DraftRun migration decisions, not product behavior redesign.
+- Completed: 2026-07-05
 
 ### Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move the early DraftRun clusters into the drafting bounded context with documented owners and stable compatibility imports after the legacy surface triage map is in place.
 - User value:
   - The research and planning half of DraftRun becomes navigable by pipeline stage rather than by a flat filename prefix.
@@ -7595,6 +7596,7 @@ Status:
 - Slice 2.17.4.6.0.3.3: DraftRun Payload Budget Policies. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.3.1: Payload Budget Policy Architecture Cleanup. Completed 2026-07-04.
 - Slice 2.17.4.6.0.3.4: Validation and Revision Loop Runtime Guard. Completed 2026-07-05.
+- Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules. Completed 2026-07-05.
 
 
 ## Blocked Items
@@ -7623,4 +7625,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.0.4.0: Legacy DraftRun Surface Triage and OOP Migration Rules`.
+Implement `Slice 2.17.4.6.0.4: Drafting Context, Evidence, and Planning Package Migration`.

@@ -1688,6 +1688,8 @@ const UNIVERSAL_LLM_OPERATION_GOVERNANCE_ADR_PATH =
   "docs/adr/2026-07-04-universal-llm-operation-governance.md";
 const DRAFTRUN_PAYLOAD_BUDGET_ADR_PATH =
   "docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md";
+const DRAFTRUN_LEGACY_SURFACE_ADR_PATH =
+  "docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md";
 const DRAFTING_BACKEND_README_PATH = "backend/app/drafting/README.md";
 const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
@@ -1706,6 +1708,8 @@ const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
 };
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
   "backend/app/drafting/application/operations/validation_runtime_budget.py";
+const DRAFTING_LEGACY_SURFACE_INVENTORY_PATH =
+  "backend/app/drafting/application/migration/legacy_surface_inventory.py";
 const DRAFT_RUN_PIPELINE_AS_IS_PATH =
   "docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md";
 const DRAFT_RUN_DIAGNOSTICS_SKILL_PATH =
@@ -1726,6 +1730,7 @@ const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting/application/steps",
   "backend/app/drafting/application/operations",
   "backend/app/drafting/application/artifacts",
+  "backend/app/drafting/application/migration",
   "backend/app/drafting/infrastructure",
   "backend/app/shared",
   "backend/app/shared/llm_operations",
@@ -1844,6 +1849,22 @@ const LEGACY_FLAT_DRAFT_APPLICATION_FILES = new Set([
   "backend/app/application/draft_validation_step.py",
   "backend/app/application/draft_validation_step_service.py",
   "backend/app/application/draft_validator_orchestrator.py",
+]);
+
+const LEGACY_FLAT_DETERMINISTIC_DRAFT_APPLICATION_FILES = new Set([
+  "backend/app/application/deterministic_draft_candidate_service.py",
+  "backend/app/application/deterministic_draft_planning_service.py",
+  "backend/app/application/deterministic_draft_planning_step_services.py",
+  "backend/app/application/deterministic_draft_service.py",
+  "backend/app/application/deterministic_evidence_interpretation.py",
+  "backend/app/application/deterministic_evidence_interpretation_step_service.py",
+  "backend/app/application/deterministic_external_evidence_synthesis.py",
+  "backend/app/application/deterministic_external_evidence_synthesis_step_service.py",
+  "backend/app/application/deterministic_pairwise_ranking.py",
+  "backend/app/application/deterministic_rhetorical_plan_service.py",
+  "backend/app/application/deterministic_rhetorical_plan_step_service.py",
+  "backend/app/application/deterministic_source_research_plan_service.py",
+  "backend/app/application/deterministic_source_research_step_service.py",
 ]);
 
 const LLM_OPERATION_INVENTORY_IDS = [
@@ -2515,6 +2536,10 @@ assert(
   fileExists(BACKEND_BOUNDED_CONTEXTS_ADR_PATH),
   `${BACKEND_BOUNDED_CONTEXTS_ADR_PATH} is required.`
 );
+assert(
+  fileExists(DRAFTRUN_LEGACY_SURFACE_ADR_PATH),
+  `${DRAFTRUN_LEGACY_SURFACE_ADR_PATH} is required.`
+);
 assert(fileExists(DRAFTING_BACKEND_README_PATH), `${DRAFTING_BACKEND_README_PATH} is required.`);
 assert(
   fileExists(DRAFTING_BACKEND_COMPONENT_MAP_PATH),
@@ -2753,6 +2778,12 @@ function publicPythonFunctionCount(source) {
   ).length;
 }
 
+function publicPythonFunctionNames(source) {
+  return [...source.matchAll(/^def\s+([A-Za-z_]\w*)\s*\(/gm)]
+    .map((match) => match[1])
+    .filter((name) => !name.startsWith("_"));
+}
+
 function classCount(source) {
   return [...source.matchAll(/^class\s+[A-Za-z_]\w*/gm)].length;
 }
@@ -2797,6 +2828,11 @@ const flatDraftApplicationFiles = backendPythonFiles.filter(
   (backendFile) =>
     backendFile.startsWith("backend/app/application/draft_") && backendFile.endsWith(".py")
 );
+const flatDeterministicDraftApplicationFiles = backendPythonFiles.filter(
+  (backendFile) =>
+    backendFile.startsWith("backend/app/application/deterministic_") &&
+    backendFile.endsWith(".py")
+);
 const flatDraftDomainFiles = backendPythonFiles.filter(
   (backendFile) =>
     backendFile.startsWith("backend/app/domain/draft_") && backendFile.endsWith(".py")
@@ -2811,6 +2847,76 @@ for (const backendFile of flatDraftApplicationFiles) {
     LEGACY_FLAT_DRAFT_APPLICATION_FILES.has(backendFile),
     `${backendFile} is a new flat DraftRun application module. New drafting backend code must live under backend/app/drafting or be explicitly allowlisted as legacy debt.`
   );
+}
+
+for (const backendFile of flatDeterministicDraftApplicationFiles) {
+  assert(
+    LEGACY_FLAT_DETERMINISTIC_DRAFT_APPLICATION_FILES.has(backendFile),
+    `${backendFile} is a new flat deterministic DraftRun module. Deterministic fallback code must move under backend/app/drafting as a named policy/service or be explicitly allowlisted as legacy debt.`
+  );
+}
+
+assert(
+  fileExists(DRAFTING_LEGACY_SURFACE_INVENTORY_PATH),
+  `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} is required for Legacy DraftRun Surface migration governance.`
+);
+
+const draftingLegacySurfaceInventorySource = readText(DRAFTING_LEGACY_SURFACE_INVENTORY_PATH);
+assert(
+  hasBackendOwnershipHeader(draftingLegacySurfaceInventorySource),
+  `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} must start with backend ownership anchors.`
+);
+
+for (const fragment of [
+  "class LegacyMigrationCluster",
+  "class LegacyDraftRunModuleDisposition",
+  "class LegacyPublicHelperDisposition",
+  "LEGACY_DRAFT_RUN_SURFACE_INVENTORY",
+  "legacy_surface_inventory_payload",
+  "compatibilityShell",
+  "contextArtifacts",
+  "sourceEvidence",
+  "planning",
+  "candidateGeneration",
+  "validation",
+  "rankingRevision",
+  "finalQuality",
+  "hitl",
+  "sharedOperationSupport",
+  "module_disposition",
+  "helper_disposition",
+  "target_owner",
+  "migration_slice",
+]) {
+  assert(
+    draftingLegacySurfaceInventorySource.includes(fragment),
+    `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} is missing legacy surface inventory fragment: ${fragment}`
+  );
+}
+
+assert(
+  !draftingLegacySurfaceInventorySource.includes('"unknown"') &&
+    !draftingLegacySurfaceInventorySource.includes('target_owner=""') &&
+    !draftingLegacySurfaceInventorySource.includes('migration_slice=""'),
+  `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} must not contain unknown or empty target ownership decisions.`
+);
+
+const legacyDraftSurfaceFiles = [
+  ...flatDraftApplicationFiles,
+  ...flatDeterministicDraftApplicationFiles,
+].sort();
+for (const backendFile of legacyDraftSurfaceFiles) {
+  assert(
+    draftingLegacySurfaceInventorySource.includes(`"${backendFile}"`),
+    `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} must inventory ${backendFile}.`
+  );
+
+  for (const functionName of publicPythonFunctionNames(readText(backendFile))) {
+    assert(
+      draftingLegacySurfaceInventorySource.includes(`"${functionName}"`),
+      `${DRAFTING_LEGACY_SURFACE_INVENTORY_PATH} must classify public helper ${functionName} from ${backendFile}.`
+    );
+  }
 }
 
 for (const backendFile of flatDraftDomainFiles) {
@@ -3078,6 +3184,32 @@ for (const fragment of [
   );
 }
 
+const backendAsIsSource = readText(BACKEND_ARCHITECTURE_AS_IS_PATH);
+const backendTargetSource = readText(BACKEND_ARCHITECTURE_TARGET_PATH);
+const developerGuideSource = readText("docs/developer/DEVELOPER_GUIDE.md");
+const draftrunLegacySurfaceAdrSource = readText(DRAFTRUN_LEGACY_SURFACE_ADR_PATH);
+for (const [docPath, docSource] of [
+  [BACKEND_ARCHITECTURE_AS_IS_PATH, backendAsIsSource],
+  [BACKEND_ARCHITECTURE_TARGET_PATH, backendTargetSource],
+  [DRAFTING_BACKEND_COMPONENT_MAP_PATH, draftingComponentMapSource],
+  [DRAFTING_BACKEND_README_PATH, draftingReadmeSource],
+  ["docs/developer/DEVELOPER_GUIDE.md", developerGuideSource],
+  [DRAFTRUN_LEGACY_SURFACE_ADR_PATH, draftrunLegacySurfaceAdrSource],
+]) {
+  for (const fragment of [
+    "Legacy DraftRun Surface",
+    "moduleDisposition",
+    "publicHelperDisposition",
+    "deterministic_*",
+    "no cosmetic package moves",
+  ]) {
+    assert(
+      docSource.includes(fragment),
+      `${docPath} must document legacy DraftRun surface migration rule: ${fragment}`
+    );
+  }
+}
+
 for (const serviceFile of PAYLOAD_BUDGET_ENFORCED_SERVICE_FILES) {
   const serviceSource = readText(serviceFile);
   assert(
@@ -3138,6 +3270,7 @@ const requiredSaoFragments = [
   "docs/adr/2026-07-03-backend-bounded-contexts-and-operation-contracts.md",
   "docs/adr/2026-07-04-universal-llm-operation-governance.md",
   "docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md",
+  "docs/adr/2026-07-05-draftrun-legacy-surface-oop-migration.md",
   "backend/app/drafting",
   "backend/app/drafting/README.md",
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md",
@@ -3167,7 +3300,7 @@ const requiredSaoFragments = [
   "deterministicFallback",
   "backupAccepted",
   "notConfigured",
-  "flat `draft_*` and `upstream_radar_*`",
+  "Existing flat `draft_*`, `deterministic_*`, and",
   "Owner",
   "Used by",
   "Does not own",

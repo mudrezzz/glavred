@@ -2,12 +2,13 @@
 
 `backend/app/drafting` is the target bounded context for DraftRun backend code.
 
-Current status: skeleton, compatibility shims, the first provider-free step and
-JSON operation compatibility contracts, a behavior-preserving workflow
-orchestration shell, and the first bounded provider-heavy operation safety helpers.
-Most step implementations still live in the legacy flat modules under
-`backend/app/application/draft_*.py` and `backend/app/domain/draft_*.py` until the
-migration slices move cohesive clusters.
+Current status: skeleton, compatibility shims, provider-free step and JSON operation
+compatibility contracts, a behavior-preserving workflow orchestration shell,
+bounded provider-heavy operation safety helpers, payload/runtime guardrails, and a
+Legacy DraftRun Surface migration inventory. Most step implementations still live
+in the legacy flat modules under `backend/app/application/draft_*.py`,
+`backend/app/application/deterministic_*.py`, and `backend/app/domain/draft_*.py`
+until the migration slices move cohesive clusters.
 
 ## Ownership
 
@@ -70,6 +71,23 @@ entrypoints so later slices can start importing from `backend.app.drafting` with
 moving behavior and import call sites in the same diff.
 
 Do not add broad barrels that mirror the entire legacy `draft_*` namespace.
+
+## Legacy DraftRun Surface Migration
+
+`backend.app.drafting.application.migration.legacy_surface_inventory` is the
+planning source for moving the flat Legacy DraftRun Surface. It lists every current
+`backend/app/application/draft_*.py` and `deterministic_*.py` module with a target
+cluster, target package, `moduleDisposition`, target owner, migration slice, and
+compatibility strategy. It also lists every public top-level helper with
+`publicHelperDisposition`, target visibility, and rationale.
+
+The migration rule is `no cosmetic package moves`: do not move a procedural flat
+module into this package while preserving anonymous public helper sprawl. Behavior
+with collaborators, trace semantics, provider semantics, state, or repeated callers
+must become methods on named service, policy, or component owners. Small
+provider-free DTO/factory helpers may remain package-level only when explicitly
+listed and documented. `deterministic_*` modules must move into fallback
+policy/service owners, not into a new flat deterministic package.
 
 ## Unified Step Contract
 
