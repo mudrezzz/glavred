@@ -10,6 +10,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[4]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from backend.app.drafting.application.quality import DraftRunQualityFidelityReporter
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
@@ -71,6 +77,12 @@ def build_summary(run_id: str, draft_db: Path, ai_db: Path) -> dict[str, Any]:
     public_evidence_step = next((step for step in steps if step["key"] == "publicEvidence"), None)
     validation_step = next((step for step in steps if step["key"] == "validation"), None)
     source_intent_step = next((step for step in steps if step["key"] == "sourceIntent"), None)
+    quality_fidelity = DraftRunQualityFidelityReporter().build(
+        run_status=run["status"],
+        steps=steps,
+        final_draft=final_draft,
+        ai_runs=ai_runs,
+    )
     findings = build_findings(steps, ai_runs, draft_step, public_evidence_step, final_draft)
     return {
         "found": True,
@@ -86,6 +98,7 @@ def build_summary(run_id: str, draft_db: Path, ai_db: Path) -> dict[str, Any]:
         "materialPlan": material_plan_summary(material_plan_step),
         "draft": draft_summary(draft_step),
         "validation": validation_summary(validation_step),
+        "qualityFidelity": quality_fidelity,
         "aiRuns": ai_runs,
         "findings": findings,
     }
@@ -341,6 +354,7 @@ def print_markdown(summary: dict[str, Any]) -> None:
     findings = summary.get("findings") or ["No obvious failure signals detected by helper."]
     for finding in findings:
         print(f"- {finding}")
+    print_quality_fidelity(summary.get("qualityFidelity") or {})
     print("\n## Steps")
     for step in summary["steps"]:
         print(f"- {step['key']}: {step['status']}" + (f" ({step['error']})" if step.get("error") else ""))
@@ -388,6 +402,45 @@ def print_markdown(summary: dict[str, Any]) -> None:
         print(f"- title: {summary['finalDraft']['title']}")
         print(f"- chars: {summary['finalDraft']['chars']}")
         print(f"- head: {summary['finalDraft']['bodyHead']}")
+
+
+def print_quality_fidelity(report: dict[str, Any]) -> None:
+    print("\n## Technical health")
+    print(
+        f"- technicalStatus: {report.get('technicalStatus')}; "
+        f"overallVerdict: {report.get('overallVerdict')}"
+    )
+    print("\n## Provider recovery")
+    print(f"- providerRecoveryStatus: {report.get('providerRecoveryStatus')}")
+    stages = report.get("stageSummaries") if isinstance(report.get("stageSummaries"), list) else []
+    notable = [
+        stage
+        for stage in stages
+        if stage.get("retryPath") not in {None, "clean"} or stage.get("incidentTypes")
+    ][:12]
+    if not notable:
+        print("- clean: no retry/backup/fallback/provider incidents detected")
+    for stage in notable:
+        print(
+            f"- {stage.get('stepKey')}:{stage.get('operationId')}: "
+            f"retryPath={stage.get('retryPath')}; impact={stage.get('resultImpact')}; "
+            f"attempts={stage.get('attemptCount')}; model={stage.get('model')}; "
+            f"incidents={','.join(stage.get('incidentTypes') or [])}"
+        )
+    print("\n## Evidence fidelity")
+    evidence = report.get("evidenceFidelity") if isinstance(report.get("evidenceFidelity"), dict) else {}
+    print(
+        f"- coverage: {evidence.get('coverageVerdict')}; found={evidence.get('foundEvidenceCount')}; "
+        f"accepted={evidence.get('acceptedEvidenceCount')}; interpreted={evidence.get('interpretedEvidenceCount')}; "
+        f"fallbackInterpreted={evidence.get('fallbackInterpretedEvidenceCount')}; rejected={evidence.get('rejectedEvidenceCount')}"
+    )
+    print("\n## Editorial verdict")
+    lifecycle = report.get("issueLifecycle") if isinstance(report.get("issueLifecycle"), dict) else {}
+    print(
+        f"- editorialStatus: {report.get('editorialStatus')}; "
+        f"openCritical={lifecycle.get('openCriticalCount')}; openWarning={lifecycle.get('openWarningCount')}; "
+        f"suppressed={lifecycle.get('suppressedCount')}; acceptedRisk={lifecycle.get('acceptedRiskCount')}"
+    )
 
 
 def safe_json(value: Any, fallback: Any) -> Any:

@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.0.5: Drafting Candidate, Validation, and Revision Package Migration.
+Current as of Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -36,6 +36,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
+| `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
@@ -864,6 +865,7 @@ Important AS IS rules:
 | `AlternativeAngleTournament` | validation | final validation/ranking, trace | `validation.alternativeAngleTournament` |
 | `RankingRevision` | validation | final draft selection, trace | `validation.rankingRevision` |
 | `FinalQualityGate` | validation | final draft selection, trace | `validation.rankingRevision.finalQualityGate` |
+| `QualityFidelityReport` | workflow completion | diagnostics, editor-facing risk summary, future reliability analytics | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity` |
 | `ArticleDossier` | article memory service | context pack builder, trace | selected step artifacts |
 | `ContextPack` | article memory service | child LLM services | step artifacts and child `AiRun.requestPayload` |
 | `DraftVersion` | frontend/editor actions | editor version list, final selection | local workspace `postDraft.versions[]` |
@@ -932,6 +934,18 @@ reasons: `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`,
 kept as `detailStopReason` where useful. No endpoint contract or SQLite schema is
 changed.
 
+Slice 2.17.4.6.1.0 adds `QualityFidelityReport` as a trace-only DraftRun artifact.
+It does not change step order, prompts, provider selection, API, or SQLite schema.
+The report separates `technicalStatus`, `providerRecoveryStatus`,
+`editorialStatus`, and `overallVerdict`. Successful primary repair/retry on the same
+model is normal recovery, not a quality failure. Backup success is accepted but
+diagnostic. Domain-safe deterministic fallback lowers fidelity. Step-level quality
+problems are tracked separately: evidence coverage, unresolved critical/warning
+findings, final-gate warning/critical status, rejected final repair, and
+size/over-budget risks. Cross-run provider reliability analytics is a later backlog
+slice; this report stores one-run signals so analytics will not need to parse prose
+diagnostics.
+
 ## 9. How to read a run trace
 
 Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
@@ -970,29 +984,32 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
     attempts/model, final public-prose status, `attributionReview`,
     `actionableAttributionFindings`, `diagnosticAttributionNoise`, repair goals,
     accepted or rejected repair cycles, and final draft source.
-18. `validation.progress`: inspect nested operations; failed late operations should show
+18. `qualityFidelity`: inspect `technicalStatus`, `providerRecoveryStatus`,
+    `evidenceFidelity`, `issueLifecycle`, `editorialStatus`, and `overallVerdict`
+    before equating `DraftRun.status=succeeded` with publication-ready output.
+19. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
-19. child `AiRun` detail: inspect prompt messages, role model, generation params,
+20. child `AiRun` detail: inspect prompt messages, role model, generation params,
     context pack, provider result, and sanitized raw response excerpt on JSON failures.
-20. post-run editor state: inspect local `postDraft.versions[]` and
+21. post-run editor state: inspect local `postDraft.versions[]` and
     `finalText.editorDecisionSnapshot` to see which version the human selected,
     which comments created new versions, and whether machine trace context was
     available when the final text was approved.
-21. post-run quality check: for human-comment revisions, inspect
+22. post-run quality check: for human-comment revisions, inspect
     `postDraft.versions[].qualityCheck` and child
     `AiRun.requestPayload.draftRunStep = humanCommentRevisionQualityCheck` to confirm
     matched/missed comment intents, source-marker preservation, public-prose status,
     internal jargon leaks, review attempts, incident metadata, and nested
     `operationEnvelope` on the revision/quality attempts.
-22. post-run learning note: inspect `authorNotes[]` for type `editorialLearning`.
+23. post-run learning note: inspect `authorNotes[]` for type `editorialLearning`.
     Pending and rejected notes should be visible but not used as author-position
     evidence. Accepted notes should flow through normal author-memory event and
     inference logic.
-23. incident blast radius: when the same `incidentType` repeats across a run, compare
+24. incident blast radius: when the same `incidentType` repeats across a run, compare
     it against `CURRENT_LLM_OPERATION_INVENTORY` to identify other migrated or
     allowlisted operations with the same expected incident coverage before deciding
     whether this is an isolated provider error or a systemic architecture issue.
-24. payload budget blast radius: when `qualityRisk`, `contextOverBudget`, or
+25. payload budget blast radius: when `qualityRisk`, `contextOverBudget`, or
     `payloadTooLarge` repeats, compare `payloadBudget.profileId`, sent/trimmed
     counts, and inventory `payloadBudgetStatus` before blaming prompt quality.
 

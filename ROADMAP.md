@@ -7151,6 +7151,32 @@ Status:
   - Deterministic queries can become formulaic; later LLM expansion must improve breadth without replacing traceability.
 - Completed: 2026-07-06
 
+### Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening
+
+- Status: Done
+- Goal: Add a trace-only DraftRun quality/fidelity verdict that separates technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, and editorial publishability.
+- User value: A completed DraftRun can be judged honestly as clean, recovered, degraded, needing attention, or failed instead of treating `status=succeeded` as publication-ready.
+- Scope:
+  - Add `qualityFidelity` to validation and complete artifacts without API or SQLite schema changes.
+  - Classify technicalStatus, providerRecoveryStatus, editorialStatus, overallVerdict, per-stage retry paths, evidence fidelity, and warning/critical lifecycle.
+  - Update diagnostics output to print Technical health, Provider recovery, Evidence fidelity, and Editorial verdict separately.
+  - Treat successful retry/repair as normal recovery, backup success as diagnostic, and deterministic fallback as fidelity degradation.
+  - Add future backlog slice for cross-run provider reliability analytics.
+- Out of scope:
+  - Prompt rewrite, model selection change, provider adapter behavior change, UI layout change, SQLite migration, and cross-run analytics implementation.
+- Architecture impact:
+  - Adds `backend.app.drafting.application.quality` with class-owned reporter/components/policies and no raw provider calls.
+  - Keeps quality/fidelity as trace-safe JSON owned by DraftRun workflow and diagnostics tooling.
+- Tests:
+  - Unit tests for retryRecovered, backupRecovered, fallbackRecovered, open critical, suppressed warning, and pipeline artifact attachment.
+  - Regression over final quality gate, validation runtime budget, full backend suite, architecture smoke, smoke build, roadmap, and diff whitespace gates.
+- Docs:
+  - Update DraftRun pipeline AS IS/PDF, backend AS IS/TARGET, SAO, drafting README/component map, developer guide, diagnostics skill, ROADMAP, and roadmap export.
+- Acceptance criteria:
+  - Clean provider path, retry-only recovery, backup recovery, deterministic fallback, open critical, and final gate warning map to distinct verdicts.
+  - Diagnostics says whether a run works cleanly, works recovered/degraded, or requires attention before trusting editorial quality.
+  - Future reliability analytics has enough structured per-run signals and a backlog slice.
+
 ### Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario
 
 - Status: Ready
@@ -7223,6 +7249,30 @@ Status:
   - The compact radar card remains usable and does not duplicate the full diagnostic page.
 - Risks:
   - Trace page can become too dense; use progressive disclosure and semantic sections rather than raw JSON dumps.
+
+### Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics
+
+- Status: Backlog
+- Goal: Measure retry, repair, backup, fallback, timeout, malformed JSON, schema failure, and provider incident frequency across multiple DraftRuns by operation, provider, model, and execution mode.
+- User value: The team can distinguish an isolated successful retry from a systemic provider/model/prompt reliability problem before changing prompts or model policy.
+- Scope:
+  - Aggregate stored `qualityFidelity`, `operationEnvelope`, `payloadBudget`, `runtimeBudget`, and child `AiRun` traces across runs.
+  - Add operation/model reliability summaries and trend-safe counters for retryRecovered, backupRecovered, fallbackRecovered, degraded, failed, and open critical outcomes.
+  - Keep per-run diagnostics as the source signal; cross-run analytics must not parse arbitrary prose.
+- Out of scope:
+  - Prompt rewrites, model selection changes, provider adapter changes, or UI redesign.
+- Architecture impact:
+  - Analytics must live under canonical backend owners and reuse quality/fidelity contracts rather than adding ad hoc trace parsing helpers.
+- Tests:
+  - Unit tests for aggregation semantics and retry-vs-degradation classification.
+  - Integration tests over fixture DraftRuns/AiRuns with clean, retryRecovered, backupRecovered, fallbackRecovered, and failed paths.
+  - Architecture smoke, roadmap check, and regression gates appropriate to touched code.
+- Docs:
+  - Update diagnostics skill, developer guide, backend architecture docs, and roadmap artifacts.
+- Acceptance criteria:
+  - Cross-run report shows operation/model counts for clean, retryRecovered, backupRecovered, fallbackRecovered, degraded, failed, timeout, malformedJson, schemaFailure, and open critical outcomes.
+  - A step that usually succeeds after retry is visible as reliability signal but not mislabeled as failed quality.
+  - Analytics identifies systemic patterns without requiring manual comparison of individual DraftRun traces.
 
 ### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
 
@@ -7810,6 +7860,7 @@ Status:
 - Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace. Completed 2026-07-06.
+- Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening. Completed 2026-07-06.
 
 
 ## Blocked Items

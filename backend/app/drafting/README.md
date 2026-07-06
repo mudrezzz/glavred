@@ -142,6 +142,10 @@ Slice 2.17.4.6.0.5 migrated the late DraftRun modules into:
 - `application/final_quality`: final quality contract, deterministic assessment,
   final gate, independent review, payload helpers, and repair loop;
 - `application/hitl`: post-run human-comment revision and revision quality check.
+- `application/quality`: trace-only DraftRun quality/fidelity reporting. It
+  distinguishes technical completion from provider retry/backup/fallback recovery,
+  evidence coverage, unresolved validation/final-gate issues, editorial status, and
+  the final clean/degraded/attention verdict.
 
 Slice 2.17.4.6.0.8 cleaned the validation package after migration. Validation
 prompt construction, LLM/editorial parsing, trace payloads, operation failure
@@ -273,6 +277,20 @@ pairwise rounds, final-gate repair cycles, consecutive non-improving attempts,
 current operation, heartbeat, slow-but-healthy state, incidents, and stop reason.
 Canonical stop reasons are `acceptedQuality`, `humanReviewRequired`,
 `budgetExhausted`, `maxIterations`, `noImprovement`, and `providerIncident`.
+
+## Quality/Fidelity Report
+
+`backend.app.drafting.application.quality` owns the per-run
+`QualityFidelityReport`. The workflow stores it in
+`validation.rankingRevision.qualityFidelity` and `complete.qualityFidelity` without
+changing the public API, SQLite schema, prompts, or provider selection.
+
+The report treats successful primary repair/retry as normal recovery. Backup model
+success is accepted but diagnostic. Deterministic fallback is safe only where the
+owning step already has a domain-safe fallback, and it lowers fidelity. Step-level
+quality issues such as weak evidence coverage, open critical findings, final-gate
+warnings, rejected final repair, or over-size final prose are evaluated separately
+from LLM/provider incidents.
 
 ## Workflow Orchestration
 

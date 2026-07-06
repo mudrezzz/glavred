@@ -854,6 +854,15 @@ versions. The editor can approve any saved version, including an older one, and
 counts, compact machine trace summaries, and unresolved risks. Cross-post learning
 from those snapshots remains Slice 2.16.1.
 
+Slice 2.17.4.6.1.0 adds a trace-only `QualityFidelityReport` after validation/final
+quality. The workflow writes it into `validation.rankingRevision.qualityFidelity` and
+`complete.qualityFidelity`. It separates technical completion from provider recovery
+and editorial quality: retry-recovered provider calls are normal, backup-recovered
+calls are diagnostic, deterministic fallback lowers fidelity, and unresolved
+critical/warning findings or final-gate warnings move the editorial verdict to
+`publishableWithCaution` or `needsHumanReview` without changing HTTP or SQLite
+contracts.
+
 Slice 2.16.0.1 adds a diagnostic review after each successful human-comment
 revision. The same endpoint runs a lightweight review-role
 `HumanCommentRevisionQualityCheck` and stores it on the created `DraftVersion`.

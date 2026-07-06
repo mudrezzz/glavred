@@ -179,6 +179,10 @@ Migrated DraftRun runtime clusters are canonical under:
   parser/prompts/service, and repair loop;
 - `backend.app.drafting.application.hitl` for post-run human-comment revision and
   human-comment revision quality check;
+- `backend.app.drafting.application.quality` for per-run quality/fidelity reports
+  that distinguish technical completion, provider retry/backup/fallback recovery,
+  evidence fidelity, validation/final-gate issue lifecycle, editorial status, and
+  clean/degraded/attention verdicts;
 - `backend.app.drafting.application.operations.json_step_adapter` for bounded JSON
   provider calls from migrated services.
 
@@ -243,6 +247,14 @@ Use canonical stop reasons in `revisionLoop.stopReason` and
 `budgetExhausted`, `maxIterations`, `noImprovement`, and `providerIncident`.
 Preserve older local reasons such as `editorially-improved` or `no-fresh-angle` as
 `detailStopReason` only.
+
+Live DraftRun diagnostics should read `qualityFidelity` before judging whether a
+completed run is usable. `DraftRun.status=succeeded` means the worker finished, not
+that the text is publishable. Successful repair retry on the same model is normal
+recovery; backup model success is diagnostic; deterministic fallback lowers
+fidelity. Open critical findings, final-gate warning/critical status, weak evidence
+coverage, rejected final repair, or over-size final prose should produce
+`publishableWithCaution`, `needsHumanReview`, or a degraded overall verdict.
 
 Validation package code must stay class-owned after Slice 2.17.4.6.0.8. Use
 `LlmValidationParser`, `EditorialCritiqueParser`, `LlmValidationPromptBuilder`,

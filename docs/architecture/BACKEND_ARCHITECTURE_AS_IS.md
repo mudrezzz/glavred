@@ -260,6 +260,12 @@ Already enforced:
   attempts, result policy, result incidents, envelope factory, and inventory
   exporter modules with compatibility re-exports. The audit ledger no longer has
   stale or high `repairSlice=2.17.4.6.0.10` debt.
+- Live DraftRun quality/fidelity reporting from Slice 2.17.4.6.1.0:
+  `backend/app/drafting/application/quality` now writes trace-only verdicts into
+  `validation.rankingRevision.qualityFidelity` and `complete.qualityFidelity`.
+  The report separates technical completion from provider retry/backup/fallback
+  recovery and editorial quality so diagnostics no longer treats
+  `DraftRun.status=succeeded` as proof of publishable output.
 - Backend API/application/infrastructure surface cleanup from Slice 2.17.4.6.0.11:
   roadmap tracker behavior now lives in `backend/app/roadmap`, upstream radar
   behavior now lives in `backend/app/upstream/application`, API route/dependency

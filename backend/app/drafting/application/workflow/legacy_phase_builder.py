@@ -13,6 +13,7 @@ from backend.app.drafting.application.artifacts.draft_run_context_builder import
 from backend.app.drafting.application.artifacts.draft_run_context_payloads import context_from_payload
 from backend.app.drafting.application.artifacts.draft_run_payloads import draft_to_payload, payload_section
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import resolve_draft_run_budget
+from backend.app.drafting.application.quality import DraftRunQualityFidelityReporter
 from backend.app.application.draft_run_step_progress_payload import with_progress_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRunStatus
@@ -30,6 +31,7 @@ from backend.app.settings import get_settings
 class LegacyDraftWorkflowPhaseBuilder:
     def __init__(self, services: LegacyDraftWorkflowServices) -> None:
         self._services = services
+        self._quality_fidelity = DraftRunQualityFidelityReporter()
 
     def build_registry(self) -> DraftStepRegistry:
         return DraftStepRegistry(
@@ -122,9 +124,13 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.complete(DraftRunStepKey.FEASIBILITY, result.feasibility_report)
         state.progress.complete(DraftRunStepKey.POST_CONTRACT, result.post_contract)
         if result.blocked:
+            quality_fidelity = self._quality_fidelity.build_from_run(
+                self._services.repository.get(state.run_id),
+                final_draft=None,
+            )
             state.progress.complete(
                 DraftRunStepKey.COMPLETE,
-                result.complete_payload or {"status": "blocked"},
+                {**(result.complete_payload or {"status": "blocked"}), "qualityFidelity": quality_fidelity},
             )
             self._services.repository.set_run_status(
                 state.run_id,
@@ -313,9 +319,13 @@ class LegacyDraftWorkflowPhaseBuilder:
 
     def complete(self, state: DraftWorkflowState) -> None:
         if state.final_draft is None:
+            quality_fidelity = self._quality_fidelity.build_from_run(
+                self._services.repository.get(state.run_id),
+                final_draft=None,
+            )
             state.progress.complete(
                 DraftRunStepKey.COMPLETE,
-                candidate_selection_blocked_payload(state.draft_artifact),
+                {**candidate_selection_blocked_payload(state.draft_artifact), "qualityFidelity": quality_fidelity},
             )
             self._services.repository.set_run_status(
                 state.run_id,
@@ -323,10 +333,31 @@ class LegacyDraftWorkflowPhaseBuilder:
                 ai_run_ids=state.progress.ai_run_ids,
             )
             return
-        state.progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded"})
+        final_payload = draft_to_payload(state.final_draft)
+        quality_fidelity = self._quality_fidelity.build_from_run(
+            self._services.repository.get(state.run_id),
+            final_draft=final_payload,
+        )
+        self._attach_validation_quality_fidelity(state, quality_fidelity)
+        state.progress.complete(DraftRunStepKey.COMPLETE, {"status": "succeeded", "qualityFidelity": quality_fidelity})
         self._services.repository.set_run_status(
             state.run_id,
             DraftRunStatus.SUCCEEDED,
-            final_draft=draft_to_payload(state.final_draft),
+            final_draft=final_payload,
             ai_run_ids=state.progress.ai_run_ids,
         )
+
+    def _attach_validation_quality_fidelity(self, state: DraftWorkflowState, quality_fidelity: dict[str, object]) -> None:
+        loaded = self._services.repository.get(state.run_id)
+        validation_payload = next(
+            (
+                dict(step.artifact_payload or {})
+                for step in (loaded.steps if loaded else [])
+                if step.key == DraftRunStepKey.VALIDATION
+            ),
+            {},
+        )
+        ranking_revision = dict(validation_payload.get("rankingRevision") or {})
+        ranking_revision["qualityFidelity"] = quality_fidelity
+        validation_payload["rankingRevision"] = ranking_revision
+        state.progress.succeed(DraftRunStepKey.VALIDATION, validation_payload)

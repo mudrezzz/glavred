@@ -67,6 +67,10 @@ Check these failure classes explicitly:
 - **Provider**: OpenRouter error, malformed JSON, timeout, fallbackUsed, partial branch
   failure. For JSON-producing LLM steps, verify `primary`, `primary-repair`, and
   optional `backup` attempts before accepting fallback/not-run/failed as expected.
+  A successful same-model retry or repair attempt is normal recovery, not a result
+  quality failure. Backup model success is accepted but diagnostic. Deterministic
+  fallback lowers fidelity only where the owning step already has a domain-safe
+  fallback.
   Inspect `generationParams` (`generationParamProfile`, `temperature`, `topP`) for
   writer, revision, JSON repair, and another-angle calls before judging model quality.
   For migrated operations, inspect `operationEnvelope`, `incident`, `inputStats`,
@@ -87,6 +91,11 @@ Check these failure classes explicitly:
   `SourceLedger`.
 - **Quality spine**: SourceLedger missing usable claims, feasibility incorrectly blocked
   or passed, PostContract too weak, RuleRegistry lacks enforceable rules.
+- **Quality/Fidelity verdict**: inspect `qualityFidelity` in
+  `validation.rankingRevision` and `complete`. Treat `DraftRun.status=succeeded` as
+  technical completion only. Use `technicalStatus`, `providerRecoveryStatus`,
+  `evidenceFidelity`, `issueLifecycle`, `editorialStatus`, and `overallVerdict` to
+  decide whether the result is clean, recovered, degraded, or needs attention.
 - **Planning**: material plan ignores public evidence, `usableEvidenceCandidates`
   missing, `availableEvidence` empty without `rejectionReasons`, repair/backup attempts
   absent, emergency fallback used too early, strategy is generic, rhetorical plans do
@@ -181,6 +190,10 @@ hide bad output behind polite abstractions.
   goals, bounded repair cycles, accepted/rejected decisions, and final source. It
   shows whether the delivered final draft passed public-prose checks, whether a final
   repair ran, and why that repair was accepted or rejected.
+- When a run has `qualityFidelity.providerRecoveryStatus=retryRecovered`, do not
+  recommend prompt/model fixes from that single run unless the accepted payload is
+  itself bad. Repeated retry/backup/fallback patterns across many runs belong to the
+  provider reliability analytics backlog, not one-run quality diagnosis.
 - For attribution issues, distinguish actionable missing-source findings from
   diagnostic handoff noise. Inspect `finalQualityGate.attributionReview`,
   `actionableAttributionFindings`, `diagnosticAttributionNoise`, and finding metadata

@@ -45,6 +45,7 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 | `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. Slice 2.17.4.6.0.9 makes payload mapping, candidate mapping, revision-loop policy, rejected-move policy, prompts, acceptance, and config caps class-owned. | migrated ranking/revision modules |
 | `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. Slice 2.17.4.6.0.9 makes assessment, attribution, payload, contract, parser, and prompt responsibilities class-owned. | migrated final quality modules |
 | `application/hitl` | Human-comment revision and human-comment revision quality check services. Slice 2.17.4.6.0.10 keeps services orchestration-only and makes prompt builders, version/context compactors, attempt trace builders, provider-attempt runners, quality parser, and quality overlay policy class-owned. | migrated HITL modules |
+| `application/quality` | Per-run DraftRun quality/fidelity reporting: technical status, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial status, and overall verdict. | completion diagnostics and future reliability analytics |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
 ## Migration Order
@@ -94,6 +95,10 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     audit ledger has no high, stale, or unledgered findings.
 18. Clean remaining medium backend architecture debt. Backlog in Slice
     2.17.4.6.0.12.
+19. Add live DraftRun quality/fidelity reporting. Done in Slice 2.17.4.6.1.0;
+    `application/quality` writes trace-only verdicts into validation and complete
+    artifacts and keeps retry-recovered, backup-recovered, fallback-recovered, and
+    step-level quality issues distinct.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

@@ -185,6 +185,10 @@ Implemented operation safety repair:
     parser/prompts/service, and final repair loop;
   - `backend.app.drafting.application.hitl` owns post-run human-comment revision and
     human-comment revision quality check;
+  - `backend.app.drafting.application.quality` owns trace-only per-run quality and
+    fidelity reporting across technical completion, provider recovery, evidence
+    fidelity, validation/final-gate issue lifecycle, editorial status, and
+    clean/degraded/attention verdicts;
   - old `backend.app.application.*` imports for this migrated batch are
     compatibility shims only, and provider-heavy migrated services use the bounded
     drafting JSON adapter instead of raw provider `.complete_json(...)`.
@@ -430,6 +434,14 @@ Provider-heavy operations that can block the worker must also use an operation-l
 timeout envelope, not only an HTTP client timeout. A timeout must be visible as a
 failed attempt with a safe child `AiRun`, a failed nested operation, and a controlled
 retry/backup/fallback path.
+
+Live DraftRun quality/fidelity reporting must not collapse provider recovery into
+editorial quality. A successful primary repair retry is normal recovery. Backup
+success is accepted but diagnostic. Deterministic fallback lowers fidelity.
+Unresolved critical findings, final-gate warning/critical status, weak evidence
+coverage, rejected final repair, and size/over-budget problems are step-level quality
+issues and must be visible in `qualityFidelity`, not inferred from
+`DraftRun.status` alone.
 
 Validation and ranking/revision loops must additionally use the DraftRun validation
 runtime budget guard. The guard records `runtimeBudget` in validation progress,
