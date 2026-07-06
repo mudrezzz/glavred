@@ -12,12 +12,14 @@ import {
   type TraceStepOperation,
   type TraceTimelineStep
 } from './runTraceViewModel';
+import { buildQualityFidelityViewModel, type QualityFidelityViewModel } from './qualityFidelityViewModel';
 
 type MainTab = 'trace' | 'semantic';
 type DetailTab = 'readable' | 'json' | 'raw';
 
 export function AiRunTraceDetails({ trace }: { trace: RunTraceBundle }) {
   const viewModel = useMemo(() => buildRunTraceViewModel(trace), [trace]);
+  const qualityFidelity = useMemo(() => buildQualityFidelityViewModel(trace), [trace]);
   const [mainTab, setMainTab] = useState<MainTab>('trace');
   const [selectedDetailId, setSelectedDetailId] = useState(viewModel.initialDetailId);
   const selectedDetail = viewModel.details.find((detail) => detail.id === selectedDetailId) ?? viewModel.details[0];
@@ -25,6 +27,7 @@ export function AiRunTraceDetails({ trace }: { trace: RunTraceBundle }) {
   return (
     <section className="ai-run-details" aria-label="Run trace details">
       <AiRunTraceSummary viewModel={viewModel} />
+      {qualityFidelity ? <AiRunQualityFidelityPanel quality={qualityFidelity} /> : null}
       <div className="tabs ai-run-main-tabs" role="tablist" aria-label="Trace view tabs">
         <TraceTab active={mainTab === 'trace'} onClick={() => setMainTab('trace')}>Трейс</TraceTab>
         <TraceTab active={mainTab === 'semantic'} onClick={() => setMainTab('semantic')}>Смысловой результат</TraceTab>
@@ -41,6 +44,44 @@ export function AiRunTraceDetails({ trace }: { trace: RunTraceBundle }) {
       ) : (
         <AiRunSemanticSections sections={viewModel.semanticSections} />
       )}
+    </section>
+  );
+}
+
+function AiRunQualityFidelityPanel({ quality }: { quality: QualityFidelityViewModel }) {
+  return (
+    <section className={`card ai-run-quality-panel ${quality.tone}`} data-testid="ai-run-quality-fidelity">
+      <div className="ai-run-panel-head">
+        <div>
+          <span className="rub">Quality/fidelity</span>
+          <h2>{quality.overallVerdict}</h2>
+          <p>Technical, provider, evidence and editorial verdicts are separated for this run.</p>
+        </div>
+        <span className={`ai-run-status ${quality.tone}`}>{quality.editorialStatus}</span>
+      </div>
+      <div className="ai-run-quality-grid">
+        <article>
+          <span>Technical health</span>
+          <strong>{quality.technicalStatus}</strong>
+        </article>
+        <article>
+          <span>Provider recovery</span>
+          <strong>{quality.providerRecoveryStatus}</strong>
+        </article>
+        <article>
+          <span>Evidence fidelity</span>
+          <strong>{quality.evidenceCoverage}</strong>
+        </article>
+        <article>
+          <span>Editorial verdict</span>
+          <strong>{quality.editorialStatus}</strong>
+        </article>
+      </div>
+      <div className="ai-run-quality-columns">
+        <TraceFields fields={quality.providerFields} />
+        <TraceFields fields={quality.evidenceFields} />
+        <TraceFields fields={quality.editorialFields} />
+      </div>
     </section>
   );
 }
@@ -256,40 +297,39 @@ function AiRunScorecardTable({ scorecard }: { scorecard: TraceScorecardModel }) 
         <span>{scorecard.rows.length} candidates</span>
         <span>Winner spread {scorecard.scoreSpread || 'n/a'}</span>
       </div>
-      <div className="ai-run-scorecard-table" role="table" aria-label="Draft candidate scorecard">
-        <div className="ai-run-scorecard-row head" role="row">
-          <span role="columnheader">Candidate</span>
-          <span role="columnheader">Status</span>
-          <span role="columnheader">Penalty</span>
-          <span role="columnheader">Total</span>
-          <span role="columnheader">Hard</span>
-          <span role="columnheader">Evidence</span>
-          <span role="columnheader">Topic</span>
-          <span role="columnheader">Fabula</span>
-          <span role="columnheader">Value</span>
-          <span role="columnheader">Risk</span>
-        </div>
+      <div className="ai-run-scorecard-list" aria-label="Draft candidate scorecard">
         {scorecard.rows.map((row) => (
-          <div className={`ai-run-scorecard-row${row.selected ? ' selected' : ''}`} role="row" key={row.candidateId}>
-            <span className="ai-run-scorecard-candidate" role="cell" data-label="Candidate">
+          <article className={`ai-run-scorecard-card${row.selected ? ' selected' : ''}`} key={row.candidateId}>
+            <div className="ai-run-scorecard-candidate">
               <strong>{row.title}</strong>
               <code>{row.candidateId}</code>
               {row.selected ? <em>selected</em> : null}
               {row.selectionReasons ? <small>{row.selectionReasons}</small> : null}
-            </span>
-            <span role="cell" data-label="Status">{row.selectionStatus || 'legacy'}</span>
-            <span role="cell" data-label="Penalty">{row.selectionPenalty}</span>
-            <span className="total" role="cell" data-label="Total">{row.total}</span>
-            <span role="cell" data-label="Hard">{row.hardConstraintFit}</span>
-            <span role="cell" data-label="Evidence">{row.evidenceGrounding}</span>
-            <span role="cell" data-label="Topic">{row.topicFit}</span>
-            <span role="cell" data-label="Fabula">{row.fabulaFit}</span>
-            <span role="cell" data-label="Value">{row.audienceValue}</span>
-            <span role="cell" data-label="Risk">{row.riskPenalty}</span>
-          </div>
+            </div>
+            <div className="ai-run-scorecard-metrics">
+              <ScoreMetric label="Status" value={row.selectionStatus || 'legacy'} />
+              <ScoreMetric label="Penalty" value={row.selectionPenalty} />
+              <ScoreMetric label="Total" value={row.total} strong />
+              <ScoreMetric label="Hard" value={row.hardConstraintFit} />
+              <ScoreMetric label="Evidence" value={row.evidenceGrounding} />
+              <ScoreMetric label="Topic" value={row.topicFit} />
+              <ScoreMetric label="Fabula" value={row.fabulaFit} />
+              <ScoreMetric label="Value" value={row.audienceValue} />
+              <ScoreMetric label="Risk" value={row.riskPenalty} />
+            </div>
+          </article>
         ))}
       </div>
     </div>
+  );
+}
+
+function ScoreMetric({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <span className={strong ? 'primary' : ''}>
+      <small>{label}</small>
+      <b>{value || 'n/a'}</b>
+    </span>
   );
 }
 

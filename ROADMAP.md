@@ -7177,6 +7177,38 @@ Status:
   - Diagnostics says whether a run works cleanly, works recovered/degraded, or requires attention before trusting editorial quality.
   - Future reliability analytics has enough structured per-run signals and a backlog slice.
 
+### Slice 2.17.4.6.1.0.1: AiRun Trace UX and Quality Verdict Panel
+
+- Status: Done
+- Goal: Make the `/ai-runs` diagnostics page usable for DraftRun review: independent timeline/detail scrolling, visible quality/fidelity verdict, and readable scorecard layout.
+- User value: Editors and developers can inspect a run without JSON hunting, synchronized scroll traps, or horizontally overflowing score tables.
+- Scope:
+  - Add a `Quality/fidelity` panel for DraftRun traces that contain `qualityFidelity`.
+  - Show technical health, provider recovery, evidence fidelity, and editorial verdict as first-class UI blocks.
+  - Give the logical-step timeline and selected-step details independent desktop scroll containers.
+  - Replace the wide candidate scorecard table with compact candidate cards.
+  - Preserve existing readable/JSON/raw detail tabs and old-run compatibility.
+- Out of scope:
+  - Backend runtime behavior changes.
+  - HTTP API, SQLite, DraftRun trace shape, prompt, model, provider, or UI routing changes.
+- Architecture impact:
+  - Adds `qualityFidelityViewModel` as a small frontend read-model builder instead of mixing quality extraction into the main trace model.
+  - Keeps quality/fidelity display optional: old DraftRuns without the artifact render the existing trace page.
+  - Keeps scorecard rendering a frontend projection over existing `draft.artifactPayload` data.
+- Tests:
+  - Focused AiRun trace/view-model tests.
+  - TypeScript compile.
+  - Full frontend Vitest suite.
+  - Architecture, design, visual, smoke, roadmap, and diff checks.
+- Docs:
+  - User guide and developer guide document the quality panel, independent trace scrolling, and scorecard card layout.
+- Acceptance criteria:
+  - `/ai-runs?runId=<DraftRun ID>` shows the quality/fidelity verdict block when the run has `qualityFidelity`.
+  - Timeline and details scroll independently on desktop and collapse to normal page flow on mobile.
+  - Candidate scoring no longer overflows horizontally as a wide table.
+  - JSON and raw payload inspection remain available.
+- Completed: 2026-07-06
+
 ### Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario
 
 - Status: Ready
@@ -7861,6 +7893,7 @@ Status:
 - Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace. Completed 2026-07-06.
 - Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening. Completed 2026-07-06.
+- Slice 2.17.4.6.1.0.1: AiRun Trace UX and Quality Verdict Panel. Completed 2026-07-06.
 
 
 ## Blocked Items

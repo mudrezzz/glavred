@@ -540,6 +540,13 @@ form with prefilled fields. The author still reviews, edits, and clicks `Сох�
   the reader a clear takeaway. The gate combines deterministic checks with an
   independent final-gate model review. If needed, Glavred runs bounded targeted final
   repair cycles and accepts a repair only when it improves without regression.
+- The `/ai-runs?runId=...` diagnostic page also shows a visible
+  `Quality/fidelity` verdict when the run contains that artifact. It separates
+  technical health, provider recovery, evidence fidelity, and editorial verdict, so a
+  completed DraftRun can still be marked as requiring attention when quality signals
+  are weak. On desktop, the logical-step list and the selected-step details scroll
+  independently; candidate scorecards render as compact candidate cards instead of a
+  wide horizontal table.
 - When the machine draft reaches the editor, it becomes version `v1`. You can switch
   between saved versions, write a comment in `Что улучшить в этой версии`, and click
   `Улучшить по комментарию` to ask the writer model for `v2`, `v3`, and later

@@ -5969,7 +5969,10 @@ select:focus {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
+  height: calc(100vh - 260px);
+  min-height: 560px;
+  overflow: hidden;
 }
 
 .ai-run-main-tabs,
@@ -6035,56 +6038,32 @@ select:focus {
   text-transform: uppercase;
 }
 
-.ai-run-scorecard-table {
+.ai-run-scorecard-list {
   display: grid;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
 }
 
-.ai-run-scorecard-row {
+.ai-run-scorecard-card {
   display: grid;
-  grid-template-columns: minmax(180px, 1.8fr) minmax(76px, 0.65fr) minmax(58px, 0.5fr) repeat(7, minmax(42px, 0.45fr));
-  gap: 8px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: start;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
-  padding: 10px 12px;
+  padding: 14px;
 }
 
-.ai-run-scorecard-row.head {
-  background: transparent;
-  border-color: transparent;
-  padding-block: 0;
-  color: var(--muted);
-  font: var(--label);
-  text-transform: uppercase;
-}
-
-.ai-run-scorecard-row.selected {
+.ai-run-scorecard-card.selected {
   border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
-}
-
-.ai-run-scorecard-row > span {
-  min-width: 0;
-  color: var(--ink);
-  font: 800 14px/1.25 var(--font-sans);
-  overflow-wrap: anywhere;
-}
-
-.ai-run-scorecard-row.head > span {
-  color: var(--muted);
-  font: var(--label);
-}
-
-.ai-run-scorecard-row .total {
-  font: 900 18px/1.1 var(--font-sans);
 }
 
 .ai-run-scorecard-candidate {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .ai-run-scorecard-candidate strong {
@@ -6114,6 +6093,39 @@ select:focus {
   white-space: pre-wrap;
 }
 
+.ai-run-scorecard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-run-scorecard-metrics span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 8px 9px;
+}
+
+.ai-run-scorecard-metrics small {
+  color: var(--muted);
+  font: var(--label);
+  text-transform: uppercase;
+}
+
+.ai-run-scorecard-metrics b {
+  color: var(--ink);
+  font: 800 14px/1.2 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.ai-run-scorecard-metrics .primary b {
+  font-size: 18px;
+}
+
 .ai-run-fields {
   display: grid;
   gap: 12px;
@@ -6141,6 +6153,9 @@ select:focus {
 
 .ai-run-timeline {
   align-self: start;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .ai-run-timeline-list {
@@ -6196,6 +6211,21 @@ select:focus {
 .ai-run-status.succeeded {
   border-color: rgba(45, 128, 82, 0.28);
   color: #2d8052;
+}
+
+.ai-run-status.ok {
+  border-color: color-mix(in srgb, var(--ok) 28%, var(--line));
+  color: var(--ok);
+}
+
+.ai-run-status.warn {
+  border-color: color-mix(in srgb, var(--warn) 34%, var(--line));
+  color: var(--warn);
+}
+
+.ai-run-status.danger {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  color: var(--danger);
 }
 
 .ai-run-status.selected,
@@ -6357,8 +6387,59 @@ select:focus {
 }
 
 .ai-run-detail-panel {
-  position: sticky;
-  top: 18px;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ai-run-quality-panel {
+  display: grid;
+  gap: 16px;
+  border-left: 3px solid var(--line);
+}
+
+.ai-run-quality-panel.ok {
+  border-left-color: var(--ok);
+}
+
+.ai-run-quality-panel.warn {
+  border-left-color: var(--warn);
+}
+
+.ai-run-quality-panel.danger {
+  border-left-color: var(--danger);
+}
+
+.ai-run-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-run-quality-grid article {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0 0;
+  min-width: 0;
+}
+
+.ai-run-quality-grid span {
+  color: var(--muted);
+  font: var(--label);
+  text-transform: uppercase;
+}
+
+.ai-run-quality-grid strong {
+  color: var(--ink);
+  font: 900 18px/1.2 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.ai-run-quality-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .ai-run-readable-detail {
@@ -6518,6 +6599,9 @@ select:focus {
 
   .ai-run-workbench {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
   }
 
   .ai-run-message-rows button,
@@ -6532,25 +6616,19 @@ select:focus {
   }
 
   .ai-run-detail-panel {
-    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
-  .ai-run-scorecard-row,
-  .ai-run-scorecard-row.head {
+  .ai-run-timeline {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .ai-run-scorecard-card,
+  .ai-run-quality-grid,
+  .ai-run-quality-columns {
     grid-template-columns: 1fr;
-  }
-
-  .ai-run-scorecard-row.head {
-    display: none;
-  }
-
-  .ai-run-scorecard-row > span:not(.ai-run-scorecard-candidate)::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 3px;
-    color: var(--muted);
-    font: var(--label);
-    text-transform: uppercase;
   }
 }
 

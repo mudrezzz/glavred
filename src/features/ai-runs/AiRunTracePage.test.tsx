@@ -32,6 +32,9 @@ describe('AiRunTracePage', () => {
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-material');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-strategy');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('ai-candidate');
+    expect(screen.getByTestId('ai-run-quality-fidelity')).toHaveTextContent('needsAttention');
+    expect(screen.getByTestId('ai-run-quality-fidelity')).toHaveTextContent('Provider recovery');
+    expect(document.querySelector('.ai-run-workbench')).toBeInTheDocument();
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Кандидат 1');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Скоринг кандидатов');
     expect(screen.getByTestId('ai-run-timeline')).toHaveTextContent('Выбор итогового драфта');
@@ -100,6 +103,8 @@ describe('AiRunTracePage', () => {
     expect(scorecard).toHaveTextContent('eligible');
     expect(scorecard).toHaveTextContent('excluded');
     expect(scorecard).toHaveTextContent('fallback-candidate-provider-alternative');
+    expect(scorecard.querySelector('.ai-run-scorecard-list')).toBeInTheDocument();
+    expect(scorecard.querySelector('.ai-run-scorecard-table')).not.toBeInTheDocument();
     expect(screen.getByTestId('ai-run-detail-panel')).not.toHaveTextContent('Score rows');
 
     fireEvent.click(screen.getByText('Выбор итогового драфта'));
@@ -325,7 +330,33 @@ const draftRunResponse = {
       }
     }),
     makeStep('validation', { status: 'placeholder-passed' }),
-    makeStep('complete', { status: 'succeeded' })
+    makeStep('complete', {
+      status: 'succeeded',
+      qualityFidelity: {
+        technicalStatus: 'succeeded',
+        providerRecoveryStatus: 'degraded',
+        editorialStatus: 'needsHumanReview',
+        overallVerdict: 'needsAttention',
+        stageSummaries: [
+          { retryPath: 'fallbackRecovered', resultImpact: 'fallbackRecovered' },
+          { retryPath: 'providerError', resultImpact: 'stepDegraded' }
+        ],
+        evidenceFidelity: {
+          coverageVerdict: 'weak',
+          foundEvidenceCount: 24,
+          acceptedEvidenceCount: 20,
+          interpretedEvidenceCount: 18,
+          fallbackInterpretedEvidenceCount: 1,
+          rejectedEvidenceCount: 6
+        },
+        issueLifecycle: {
+          openCriticalCount: 2,
+          openWarningCount: 5,
+          suppressedCount: 1,
+          acceptedRiskCount: 1
+        }
+      }
+    })
   ],
   finalDraft: { title: 'Selected title', body: 'Selected body', version: 1, status: 'draft' },
   error: null,

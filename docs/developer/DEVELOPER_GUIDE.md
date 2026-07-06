@@ -724,14 +724,22 @@ Frontend debug page:
   shown as errors and are not masked as another id type.
 - In parent `DraftRun` mode, the `Трейс` tab shows logical steps and all child LLM
   calls under their owning step. Click a step or child `AiRun` to inspect details.
+- When a parent DraftRun contains `qualityFidelity`, the trace page renders a
+  `Quality/fidelity` panel above the workbench. It separates technical health,
+  provider recovery, evidence fidelity, and editorial verdict; missing
+  `qualityFidelity` keeps old runs compatible and simply hides the panel.
+- On desktop, the logical-step timeline and selected-step detail panel are separate
+  scroll containers. Keep future trace UI changes inside those containers instead of
+  returning to one synchronized long page.
 - The `draft` step is expanded with derived read-model nodes for each candidate,
   deterministic scorecard, and selected draft. These nodes come from the existing
   `draft.artifactPayload`; they do not change backend step order or SQLite schema.
-- Draft candidate scorecards render as comparison tables in the trace workbench:
+- Draft candidate scorecards render as stacked candidate cards in the trace
+  workbench:
   candidate title/id, total score, hard constraints, evidence, topic, fabula,
   audience value, risk penalty, publishability status, selection penalty, exclusion
-  reasons, and selected/winner state. Do not fall back to generic long `Score rows`
-  text for scorecard analysis.
+  reasons, and selected/winner state. Do not reintroduce a horizontally overflowing
+  table or fall back to generic long `Score rows` text for scorecard analysis.
 - Emergency `deterministicFallback` candidates are diagnostic unless they pass the
   publishability guard. If a publishable provider candidate exists, fallback rows must
   be `excluded` or heavily penalized. If every candidate is invalid, the parent
