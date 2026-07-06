@@ -70,16 +70,47 @@ function LatestRunTrace({ latestRun }: { latestRun?: RadarRun }) {
 
 function SearchPlanTrace({ latestRun }: { latestRun?: RadarRun }) {
   if (!latestRun?.searchPlan) return null;
+  const intents = latestRun.searchPlan.intents ?? [];
+  const skipped = latestRun.searchPlan.skippedIntentDetails ?? [];
   return (
     <>
       <h4>Карта поиска</h4>
       <p className="muted">
         {latestRun.searchPlan.strategy} · {latestRun.searchPlan.language}
       </p>
+      {latestRun.searchPlan.trace ? (
+        <dl className="meta-list upstream-run-meta">
+          <dt>Версия планера</dt>
+          <dd>{latestRun.searchPlan.trace.plannerVersion}</dd>
+          <dt>Intent coverage</dt>
+          <dd>{latestRun.searchPlan.trace.intentCoverage.length}</dd>
+          <dt>Граница владения</dt>
+          <dd>{latestRun.searchPlan.trace.ownershipBoundary}</dd>
+        </dl>
+      ) : null}
+      {intents.length > 0 ? (
+        <>
+          <h4>Поисковые intent'ы</h4>
+          <div className="radar-object-list">
+            {intents.map((intent) => (
+              <div className="radar-object" key={intent.id}>
+                <span className="sig">{intent.family}</span>
+                <p>
+                  <strong>{intent.label}</strong>
+                  <br />
+                  {intent.evidenceType} · {intent.sourceHandleTitle}
+                  <br />
+                  <span className="muted">{intent.rationale}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
       <div className="radar-object-list">
         {latestRun.searchPlan.queries.map((query) => (
           <div className="radar-object" key={query.id}>
-            <span className="sig">{query.intent}</span>
+            <span className="sig">{query.family ?? query.intent}</span>
             <p>
               <strong>{query.label}</strong>
               <br />
@@ -90,6 +121,23 @@ function SearchPlanTrace({ latestRun }: { latestRun?: RadarRun }) {
           </div>
         ))}
       </div>
+      {skipped.length > 0 ? (
+        <>
+          <h4>Пропущенные intent'ы</h4>
+          <div className="radar-object-list">
+            {skipped.map((item) => (
+              <div className="radar-object" key={item.id}>
+                <span className="sig">{item.reason}</span>
+                <p>
+                  <strong>{item.family ?? item.intentType ?? item.sourceHandleId ?? item.id}</strong>
+                  <br />
+                  <span className="muted">{item.rationale}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
     </>
   );
 }

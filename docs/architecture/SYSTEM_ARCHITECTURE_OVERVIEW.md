@@ -128,7 +128,10 @@ This perimeter is still compatible, but it skips several upstream artifacts that
 have an architecture target. Slice 2.17.4.6 implements the first executable retrieval
 part: `SourceRegistry`, `RadarRun`, and `FoundMaterial` are project-scoped workspace
 artifacts, and `Сигналы -> Радары` can run a backend external search campaign with a
-local deterministic contract fallback. The next gaps are still `SignalExtractionReport`, `SignalScore`, and
+local deterministic contract fallback. Slice 2.17.4.6.1 makes that campaign typed:
+`SearchIntentPlanner` builds provider-free `SearchPlan`, `SearchIntent`,
+`SearchQuery`, skipped-intent, source-strategy, and `SearchCampaignTrace` payloads
+before provider search runs. The next gaps are still `SignalExtractionReport`, `SignalScore`, and
 `CandidateAssemblyReport`; seeded source signals and deterministic candidate assembly
 remain compatibility behavior until the later upstream slices replace them.
 
@@ -265,6 +268,9 @@ approves editorial artifacts automatically.
   fuel for author memory and content production, not the only source of posts.
 - `RadarRun`: one executable attempt for a radar. It records status, budget, run
   operations, found material ids, skipped sources, and errors.
+- `SearchCampaignTrace`: provider-free explanation of the radar's query intents,
+  query families, evidence types, source eligibility, budget skips, and the boundary
+  that raw material does not own topic/fabula decisions.
 - `RadarRunTrace`: planned read-model page for one run id. It should render the full
   upstream search campaign and benchmark verdict without turning `RadarCard` into a
   diagnostics god component.

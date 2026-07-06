@@ -127,8 +127,9 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   snapshot and are visible in `Сигналы -> Радары`;
 - `Run radar` first tries the backend external runner and falls back to the local
   deterministic contract run when the backend is unavailable;
-- the backend external runner builds a deterministic search campaign from radar
-  settings, source handles, project language, and budget mode;
+- the backend external runner builds a deterministic typed search campaign from
+  radar settings, source handles, project language, topic/fabula context, publisher
+  rules, benchmark profile, research depth, and budget mode;
 - each external run records `searchPlan`, query operations, raw search results,
   pre-read triage, selected URL reads, rejected-before-read results, warnings, and
   normalized found materials;
@@ -152,7 +153,9 @@ must be kept working only as a fallback. Running a radar in 2.17.4.6 must not cr
 Every future upstream run should make the handoff readable:
 
 - what sources were eligible;
-- what search plan and query intents were built;
+- what search plan, query families, query intents, evidence types, and source
+  strategy were built;
+- what query intents were skipped and why;
 - what operations ran or were skipped by budget;
 - what raw search results were returned;
 - which results were selected for URL reading and which were rejected before reading;
@@ -185,7 +188,12 @@ benchmark verdict when available.
 - `2.17.4.6`: External Search Radar Runner v1. Done: deterministic search campaign,
   provider-backed web search when configured, selective URL reads, triage trace, and
   normalized found material.
-- `2.17.4.6.1`: Search Intent Planner and Campaign Trace.
+- `2.17.4.6.1`: Search Intent Planner and Campaign Trace. Done: provider-free
+  `SearchPlan`, `SearchIntent`, `SearchQuery`, `SearchCampaignTrace`, and
+  `SkippedSearchIntent` contracts; deterministic query families for broad
+  discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, and
+  freshness; inline RadarRun trace coverage for intents, source strategy, budget
+  skips, and the rule that raw material does not own topic/fabula decisions.
 - `2.17.4.6.1.1`: Golden Radar Benchmark Scenario.
 - `2.17.4.6.1.2`: RadarRun Trace Page.
 - `2.17.4.6.2`: Search Result Triage, Deduplication, and Selective Reading.

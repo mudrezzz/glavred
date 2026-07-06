@@ -1,7 +1,7 @@
 """Owner: upstream.application
 
-Used by: upstream radar external run service.
-Does not own: API routing, SQLite persistence, provider transport, or DraftRun.
+Used by: upstream radar external run service and legacy search-plan imports.
+Does not own: provider transport, API routing, UI rendering, signal scoring, or candidate assembly.
 Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
@@ -9,8 +9,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from backend.app.upstream.application.search_intent_planner import SearchIntentPlanner
+
 
 class UpstreamSearchPlanBuilder:
+    """Compatibility builder preserving the previous dict payload boundary."""
+
+    def __init__(self, *, planner: SearchIntentPlanner | None = None) -> None:
+        self._planner = planner or SearchIntentPlanner()
+
     def build(
         self,
         *,
@@ -19,82 +26,12 @@ class UpstreamSearchPlanBuilder:
         budget: dict[str, int],
         workspace: dict[str, Any],
     ) -> dict[str, Any]:
-        language = self._workspace_language(workspace)
-        queries: list[dict[str, str]] = []
-        skipped: list[str] = []
-        max_queries = max(1, int(budget.get("maxExternalQueries", 1)))
-        for handle in handles:
-            if str(handle.get("status") or "active") != "active":
-                skipped.append(f"{handle.get('id')}:source-inactive")
-                continue
-            if not self._can_search(handle):
-                continue
-            base = self._base_query(radar, handle)
-            for intent, label, suffix in self._intent_templates(language):
-                if len(queries) >= max_queries:
-                    skipped.append("budget-max-external-queries")
-                    break
-                query = self._clean_query(f"{base} {suffix}")
-                queries.append(
-                    {
-                        "id": f"query-{len(queries) + 1}",
-                        "sourceHandleId": str(handle.get("id") or ""),
-                        "intent": intent,
-                        "label": label,
-                        "query": query,
-                        "rationale": f"Ищем {label.lower()} для радара «{radar.get('title') or radar.get('id')}».",
-                    }
-                )
-        return {
-            "strategy": "deterministic-search-campaign-v1",
-            "language": language,
-            "queries": queries,
-            "skippedIntents": self._unique(skipped),
-        }
-
-    def _can_search(self, handle: dict[str, Any]) -> bool:
-        capabilities = handle.get("capabilities") if isinstance(handle.get("capabilities"), dict) else {}
-        return bool(capabilities.get("canSearch")) or str(handle.get("type") or "") in {
-            "openWebQuery",
-            "socialProfile",
-        }
-
-    def _base_query(self, radar: dict[str, Any], handle: dict[str, Any]) -> str:
-        parts = [
-            str(handle.get("locator") or ""),
-            str(handle.get("title") or ""),
-            str(radar.get("title") or ""),
-            str(radar.get("scope") or ""),
-        ]
-        rules = radar.get("rules") if isinstance(radar.get("rules"), list) else []
-        parts.extend(str(rule.get("statement") or "") for rule in rules if isinstance(rule, dict))
-        return self._clean_query(" ".join(part for part in parts if part))
-
-    def _intent_templates(self, language: str) -> list[tuple[str, str, str]]:
-        if language == "ru":
-            return [
-                ("caseStudy", "кейсы применения", "кейс внедрения пример практика"),
-                ("benchmark", "исследования и цифры", "исследование benchmark метрики результаты"),
-                ("tooling", "инструменты и OSS", "github open source framework инструмент"),
-                ("limitations", "ограничения и провалы", "риски ограничения провал lessons learned"),
-            ]
-        return [
-            ("caseStudy", "case studies", "case study implementation example"),
-            ("benchmark", "benchmarks and papers", "benchmark paper metrics results"),
-            ("tooling", "tools and OSS", "github open source framework tool"),
-            ("limitations", "limitations and failures", "risks limitations failure lessons learned"),
-        ]
-
-    def _workspace_language(self, workspace: dict[str, Any]) -> str:
-        profile = workspace.get("projectProfile") if isinstance(workspace.get("projectProfile"), dict) else {}
-        language = str(profile.get("language") or workspace.get("language") or "ru").lower()
-        return "en" if language.startswith("en") else "ru"
-
-    def _clean_query(self, value: str) -> str:
-        return " ".join(value.split())[:240]
-
-    def _unique(self, items: list[str]) -> list[str]:
-        return list(dict.fromkeys(item for item in items if item))
+        return self._planner.build(
+            radar=radar,
+            handles=handles,
+            budget=budget,
+            workspace=workspace,
+        ).to_payload()
 
 
 def build_search_plan(
@@ -112,4 +49,4 @@ def build_search_plan(
     )
 
 
-__all__ = ("UpstreamSearchPlanBuilder", "build_search_plan")
+__all__ = ("SearchIntentPlanner", "UpstreamSearchPlanBuilder", "build_search_plan")

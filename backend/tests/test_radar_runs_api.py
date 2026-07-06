@@ -33,6 +33,8 @@ def test_external_radar_run_api_returns_trace_contract() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["run"]["searchPlan"]["queries"]
+    assert payload["run"]["searchPlan"]["intents"]
+    assert payload["run"]["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v2"
     assert payload["run"]["selectedForRead"]
     assert payload["foundMaterials"][0]["title"] == "Read case"
 

@@ -212,6 +212,11 @@ candidates yet. The target benchmark path is now:
 
 `SourceRegistry -> RadarRun -> FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate`.
 
+Slice 2.17.4.6.1 enriches that run trace before provider search starts. The backend
+now records typed search intents, query families, evidence types, source strategy,
+campaign-trace rationale, and skipped-intent details while preserving the existing
+`searchPlan.queries[]` payload used by query operations.
+
 Until extraction/scoring slices are implemented, seeded reviewed signals remain
 fixture data rather than proof of live search.
 

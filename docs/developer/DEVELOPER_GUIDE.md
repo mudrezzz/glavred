@@ -77,6 +77,10 @@ through `src/infrastructure/radarRunClient.ts` and falls back to the local contr
 run if the backend is unavailable. The backend runner may create `RadarRun`,
 `searchPlan`, raw results, selected/rejected URL-read decisions, and `FoundMaterial`,
 but it must not create `SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
+`searchPlan` is now an enriched provider-free campaign payload: old `queries[]` and
+`skippedIntents[]` remain compatible, while `intents[]`, `sourceStrategy`,
+`trace`, and `skippedIntentDetails[]` explain query families, evidence coverage,
+source eligibility, and budget skips before provider search runs.
 Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
 URL reading belongs behind the public URL reader port.
 

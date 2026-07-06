@@ -86,6 +86,51 @@ export interface RadarSearchQuery {
   label: string;
   query: string;
   rationale: string;
+  intentId?: string;
+  family?: string;
+  evidenceType?: string;
+  priority?: number;
+}
+
+export interface RadarSearchIntent {
+  id: string;
+  intentType: string;
+  family: string;
+  evidenceType: string;
+  label: string;
+  sourceHandleId: string;
+  sourceHandleTitle: string;
+  rationale: string;
+  priority: number;
+  queryTerms: string[];
+}
+
+export interface RadarSkippedSearchIntent {
+  id: string;
+  reason: string;
+  rationale: string;
+  sourceHandleId?: string;
+  intentId?: string;
+  intentType?: string;
+  family?: string;
+}
+
+export interface RadarSearchCampaignTrace {
+  plannerVersion: string;
+  inputSummary: Record<string, unknown>;
+  intentCoverage: Array<{
+    intentId: string;
+    family: string;
+    evidenceType: string;
+    sourceHandleId: string;
+    queryCount: number;
+    skippedCount: number;
+    status: string;
+  }>;
+  budgetLimits: Record<string, unknown>;
+  sourceEligibility: Array<Record<string, unknown>>;
+  skippedReasons: string[];
+  ownershipBoundary: string;
 }
 
 export interface RadarSearchPlan {
@@ -93,6 +138,15 @@ export interface RadarSearchPlan {
   language: string;
   queries: RadarSearchQuery[];
   skippedIntents: string[];
+  intents?: RadarSearchIntent[];
+  sourceStrategy?: {
+    searchableSourceHandleIds: string[];
+    directReadSourceHandleIds: string[];
+    skippedSources: Array<Record<string, unknown>>;
+    strategy: string;
+  };
+  trace?: RadarSearchCampaignTrace;
+  skippedIntentDetails?: RadarSkippedSearchIntent[];
 }
 
 export interface RadarRawSearchResult {

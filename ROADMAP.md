@@ -7116,7 +7116,7 @@ Status:
 
 ### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
 
-- Status: Ready
+- Status: Done
 - Goal: Turn a radar configuration into a typed search campaign with query intents, source strategy, and traceable rationale before provider search runs.
 - User value:
   - The user can see not only search results, but what the radar decided to look for, which evidence types it tried to cover, and why.
@@ -7149,10 +7149,11 @@ Status:
   - Each campaign has at least several typed intents or explicit skipped reasons.
 - Risks:
   - Deterministic queries can become formulaic; later LLM expansion must improve breadth without replacing traceability.
+- Completed: 2026-07-06
 
 ### Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario
 
-- Status: Backlog
+- Status: Ready
 - Goal: Add one canonical radar benchmark scenario for `Опытный цех «Сборочная»` so upstream search changes can be evaluated against a stable diagnostic case.
 - User value:
   - The team can test radar search quality on a concrete industrial AI scenario instead of judging by one-off screenshots or ad hoc live runs.
@@ -7808,6 +7809,7 @@ Status:
 - Slice 2.17.4.6.0.9: Drafting Revision and Final Quality OOP Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.10: Drafting HITL and Provider Operation Surface Cleanup. Completed 2026-07-05.
 - Slice 2.17.4.6.0.11: Backend API Application Infrastructure Surface Cleanup. Completed 2026-07-05.
+- Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace. Completed 2026-07-06.
 
 
 ## Blocked Items
@@ -7836,4 +7838,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace`.
+Implement `Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario`.

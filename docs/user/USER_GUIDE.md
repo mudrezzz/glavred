@@ -200,12 +200,13 @@ signal, why the signal is promising or weak, and why a topic/fabula candidate wa
 offered. Draft generation starts only after a candidate is approved.
 
 Current radar execution has a first external-search mode. In `Радары`, expand a radar
-and click `Запустить радар`: Glavred tries the backend runner, builds a search plan,
-runs configured OpenRouter web-search queries, deduplicates raw results, chooses
-which URLs to read, and stores found material with warnings when reading fails. If
+and click `Запустить радар`: Glavred tries the backend runner, builds a typed search
+campaign with query intents, evidence types, source strategy, and skipped-intent
+reasons, runs configured OpenRouter web-search queries, deduplicates raw results,
+chooses which URLs to read, and stores found material with warnings when reading fails. If
 the backend is unavailable, the same action falls back to the local deterministic
 contract run. The expanded radar has internal tabs: `Настройка` for rules/sources/
-filters and `Трасса запуска` for search plan, operations, triage, found material, and
+filters and `Трасса запуска` for search intents, search plan, operations, triage, found material, and
 diagnostics. This trace stays separate from `Найденные сигналы`. It does not create
 new signals or post candidates yet.
 

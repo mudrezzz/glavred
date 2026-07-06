@@ -14,6 +14,11 @@ describe('RadarRunTraceSection', () => {
     );
 
     expect(screen.getByText('Карта поиска')).toBeInTheDocument();
+    expect(screen.getByText("Поисковые intent'ы")).toBeInTheDocument();
+    expect(screen.getByText('deterministic-search-campaign-v2')).toBeInTheDocument();
+    expect(screen.getByText('benchmarkPaper · Industrial AI web')).toBeInTheDocument();
+    expect(screen.getByText("Пропущенные intent'ы")).toBeInTheDocument();
+    expect(screen.getByText('budget-max-external-queries')).toBeInTheDocument();
     expect(screen.getByText('industrial AI maintenance case study')).toBeInTheDocument();
     expect(screen.getByText('Отбор перед чтением')).toBeInTheDocument();
     expect(screen.getByText('best-diverse-result')).toBeInTheDocument();
@@ -48,13 +53,60 @@ const run: RadarRun = {
   warnings: [],
   errors: [],
   searchPlan: {
-    strategy: 'deterministic-search-campaign-v1',
+    strategy: 'deterministic-search-campaign-v2',
     language: 'en',
-    skippedIntents: [],
+    skippedIntents: ['budget-max-external-queries'],
+    intents: [{
+      id: 'intent-1',
+      intentType: 'caseStudy',
+      family: 'caseExample',
+      evidenceType: 'benchmarkPaper',
+      label: 'case studies',
+      sourceHandleId: 'source-open-web',
+      sourceHandleTitle: 'Industrial AI web',
+      rationale: 'Find implementation examples.',
+      priority: 1,
+      queryTerms: ['industrial', 'AI']
+    }],
+    sourceStrategy: {
+      searchableSourceHandleIds: ['source-open-web'],
+      directReadSourceHandleIds: [],
+      skippedSources: [],
+      strategy: 'search-active-handles-read-readable-handles'
+    },
+    trace: {
+      plannerVersion: 'deterministic-search-campaign-v2',
+      inputSummary: { radarId: 'radar-1' },
+      intentCoverage: [{
+        intentId: 'intent-1',
+        family: 'caseExample',
+        evidenceType: 'benchmarkPaper',
+        sourceHandleId: 'source-open-web',
+        queryCount: 1,
+        skippedCount: 0,
+        status: 'queryPlanned'
+      }],
+      budgetLimits: { maxExternalQueries: 1 },
+      sourceEligibility: [],
+      skippedReasons: ['budget-max-external-queries'],
+      ownershipBoundary: 'Search campaign may use topics and fabulas as context, but raw FoundMaterial does not own topic or fabula decisions.'
+    },
+    skippedIntentDetails: [{
+      id: 'skip-intent-1',
+      reason: 'budget-max-external-queries',
+      rationale: 'Budget exhausted.',
+      intentId: 'intent-2',
+      intentType: 'benchmark',
+      family: 'benchmarkPaper'
+    }],
     queries: [{
       id: 'query-1',
       sourceHandleId: 'source-open-web',
       intent: 'caseStudy',
+      intentId: 'intent-1',
+      family: 'caseExample',
+      evidenceType: 'benchmarkPaper',
+      priority: 1,
       label: 'case studies',
       query: 'industrial AI maintenance case study',
       rationale: 'Find implementation examples.'

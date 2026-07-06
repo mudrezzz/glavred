@@ -246,6 +246,16 @@ Implemented operation safety repair:
     `backend.app.application.upstream_radar_*` paths are compatibility shims only;
   - architecture audit distinguishes FastAPI route/dependency facades from public
     helper sprawl, and the current ledger has no high or stale findings.
+- Upstream search intent planning:
+  - Slice 2.17.4.6.1 adds provider-free upstream domain contracts for `SearchPlan`,
+    `SearchIntent`, `SearchQuery`, `SearchCampaignTrace`, and skipped search intents;
+  - `backend.app.upstream.application.SearchIntentPlanner` owns deterministic query
+    intent generation before provider search, while provider execution remains behind
+    infrastructure adapters;
+  - `RadarRun.searchPlan` stays backward-compatible through `queries[]` and
+    `skippedIntents[]`, and adds campaign trace fields for source strategy, intent
+    coverage, budget skips, and the rule that raw found material does not own
+    topic/fabula decisions.
 
 ## Context Ownership
 

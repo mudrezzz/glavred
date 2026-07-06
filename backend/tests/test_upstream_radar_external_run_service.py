@@ -1,10 +1,10 @@
 from typing import Any
 
 from backend.app.application.public_evidence_ports import PublicUrlReadResult
-from backend.app.application.upstream_radar_external_run_service import UpstreamRadarExternalRunService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterWebSearchCitation, OpenRouterWebSearchResult
 from backend.app.settings import BackendSettings
+from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
 
 
 class FakeWebSearchAdapter:
@@ -37,6 +37,9 @@ def test_external_radar_run_builds_search_plan_and_found_materials() -> None:
     run = result["run"]
 
     assert run["searchPlan"]["queries"]
+    assert run["searchPlan"]["intents"]
+    assert run["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v2"
+    assert run["searchPlan"]["sourceStrategy"]["searchableSourceHandleIds"] == ["source-open-web"]
     assert run["rawResults"]
     assert run["selectedForRead"]
     assert run["rejectedBeforeRead"]
@@ -60,6 +63,8 @@ def test_external_radar_run_records_provider_not_configured() -> None:
     run = result["run"]
 
     assert run["foundMaterialIds"] == []
+    assert run["searchPlan"]["intents"]
+    assert run["searchPlan"]["trace"]["intentCoverage"]
     assert run["operations"][0]["status"] == "skipped"
     assert run["operations"][0]["skippedReason"] == "openrouter-web-tools-disabled"
     assert "no-raw-search-results" in run["warnings"]
