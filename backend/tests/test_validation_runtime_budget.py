@@ -5,6 +5,7 @@ from backend.app.drafting.application.operations.validation_runtime_budget impor
     STOP_MAX_ITERATIONS,
     STOP_NO_IMPROVEMENT,
     STOP_PROVIDER_INCIDENT,
+    ValidationRuntimeBudgetIncidentFactory,
     ValidationRuntimeBudgetPolicy,
     ValidationRuntimeGuard,
     ValidationStopReasonPolicy,
@@ -58,6 +59,27 @@ def test_validation_runtime_guard_records_non_improving_stop() -> None:
     guard.record_revision_outcome(accepted=False)
 
     assert guard.stop_reason == STOP_NO_IMPROVEMENT
+    assert guard.can_start_operation("directedRevision", "directed-revision-cycle-2") is False
+    assert guard.can_start_operation("finalQualityGate", "final-quality-gate") is True
+
+
+def test_non_improving_operation_denial_preserves_no_improvement_stop() -> None:
+    guard = ValidationRuntimeGuard(ValidationRuntimeBudgetPolicy().profile_for({"draftRunBudget": {"executionMode": "smoke"}}))
+    progress = type("Progress", (), {"runtime_guard": guard})()
+
+    guard.record_revision_outcome(accepted=False)
+
+    denied = ValidationRuntimeBudgetIncidentFactory().operation_denied(
+        progress,
+        kind="directedRevision",
+        operation_id="directed-revision-cycle-2",
+        detail="directed-revision-budget-denied",
+    )
+
+    assert denied is True
+    assert guard.stop_reason == STOP_NO_IMPROVEMENT
+    assert guard.detail_stop_reason == "max-consecutive-non-improving-attempts"
+    assert guard.snapshot()["exhausted"] is False
 
 
 def test_validation_stop_reason_normalization_maps_legacy_and_incident_reasons() -> None:
@@ -66,3 +88,4 @@ def test_validation_stop_reason_normalization_maps_legacy_and_incident_reasons()
     assert policy.normalize("max-iterations") == STOP_MAX_ITERATIONS
     assert policy.normalize("provider-failed") == STOP_PROVIDER_INCIDENT
     assert policy.normalize("no-fresh-angle") == STOP_NO_IMPROVEMENT
+    assert policy.normalize("max-consecutive-non-improving-attempts") == STOP_NO_IMPROVEMENT

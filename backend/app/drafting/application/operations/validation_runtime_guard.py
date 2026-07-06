@@ -40,7 +40,10 @@ class ValidationRuntimeGuard:
         self.incidents: list[dict[str, Any]] = []
 
     def can_start_operation(self, kind: str, operation_id: str | None = None) -> bool:
-        return self._denial_reason(kind, operation_id) is None
+        return self.denial_reason(kind, operation_id) is None
+
+    def denial_reason(self, kind: str, operation_id: str | None = None) -> str | None:
+        return self._denial_reason(kind, operation_id)
 
     def start_operation(self, operation_id: str, kind: str) -> bool:
         denial = self._denial_reason(kind, operation_id)
@@ -123,7 +126,11 @@ class ValidationRuntimeGuard:
             return "max-revision-cycles"
         if kind == "directedRevision" and str(operation_id or "").startswith("final-quality-repair-cycle") and self.counters.final_gate_repair_cycles >= self.profile.max_final_gate_repair_cycles:
             return "max-final-gate-repair-cycles"
-        if self.counters.consecutive_non_improving_attempts >= self.profile.max_consecutive_non_improving_attempts:
+        if (
+            kind == "directedRevision"
+            and str(operation_id or "").startswith("directed-revision-cycle")
+            and self.counters.consecutive_non_improving_attempts >= self.profile.max_consecutive_non_improving_attempts
+        ):
             return "max-consecutive-non-improving-attempts"
         return None
 

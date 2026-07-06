@@ -29,7 +29,7 @@ class ValidationStopReasonPolicy:
             return STOP_ACCEPTED_QUALITY
         if value in {"max-iterations"}:
             return STOP_MAX_ITERATIONS
-        if value in {"no-fresh-angle", "consecutive-non-improving-attempts"}:
+        if value in {"no-fresh-angle", "consecutive-non-improving-attempts", "max-consecutive-non-improving-attempts"}:
             return STOP_NO_IMPROVEMENT
         if value in {"provider-failed", "operation-failed", "provider-unconfigured", "not-run"}:
             return STOP_PROVIDER_INCIDENT
@@ -81,7 +81,12 @@ class ValidationRuntimeBudgetIncidentFactory:
         detail: str,
     ) -> bool:
         guard = getattr(progress, "runtime_guard", None) if progress else None
-        if guard and not guard.can_start_operation(kind, operation_id):
-            guard.record_stop(STOP_BUDGET_EXHAUSTED, detail=detail)
+        if guard:
+            denial_reason = guard.denial_reason(kind, operation_id)
+            if not denial_reason:
+                return False
+            stop_reason = ValidationStopReasonPolicy().normalize(denial_reason)
+            stop_detail = denial_reason if stop_reason != STOP_BUDGET_EXHAUSTED else detail
+            guard.record_stop(stop_reason, detail=stop_detail)
             return True
         return False

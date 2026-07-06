@@ -45,7 +45,8 @@ class DraftRevisionLoopCycleRunner:
     ) -> dict[str, Any]:
         operation_id = f"directed-revision-cycle-{cycle_number}"
         if self._runtime_budget_incidents.operation_denied(progress, kind="directedRevision", operation_id=operation_id, detail="directed-revision-budget-denied"):
-            return self._failure_mapper.failed_revision_result(STOP_BUDGET_EXHAUSTED)
+            guard = progress.runtime_guard if progress else None
+            return self._failure_mapper.failed_revision_result(guard.stop_reason if guard and guard.stop_reason else STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Revision cycle {cycle_number}", target=self._policy.candidate_id(candidate) or "none")
         revision = self._failure_mapper.safe_call(
@@ -101,7 +102,8 @@ class DraftRevisionLoopCycleRunner:
     ) -> dict[str, Any]:
         operation_id = f"revision-pairwise-cycle-{cycle_number}"
         if self._runtime_budget_incidents.operation_denied(progress, kind="pairwiseRanking", operation_id=operation_id, detail="pairwise-ranking-budget-denied"):
-            return self._failure_mapper.failed_pairwise_result(STOP_BUDGET_EXHAUSTED)
+            guard = progress.runtime_guard if progress else None
+            return self._failure_mapper.failed_pairwise_result(guard.stop_reason if guard and guard.stop_reason else STOP_BUDGET_EXHAUSTED)
         if progress:
             progress.start_operation(operation_id, kind="pairwiseRanking", label=f"Compare revision cycle {cycle_number}")
         report = self._failure_mapper.safe_call(

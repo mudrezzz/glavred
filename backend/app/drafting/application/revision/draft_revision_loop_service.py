@@ -79,7 +79,7 @@ class DraftRevisionLoopService:
         for cycle_number in range(1, self._max_iterations + 1):
             if self._runtime_budget_incidents.operation_denied(progress, kind="directedRevision", operation_id=f"directed-revision-cycle-{cycle_number}", detail="directed-revision-budget-denied"):
                 detail_stop_reason = guard.detail_stop_reason or "runtime-budget-exhausted"
-                stop_reason = STOP_BUDGET_EXHAUSTED
+                stop_reason = guard.stop_reason if guard and guard.stop_reason else STOP_BUDGET_EXHAUSTED
                 break
             current_id = self._policy.candidate_id(current)
             instruction = self._instruction_builder.build(candidate_id=current_id, validation_report=current_validation).to_payload()
