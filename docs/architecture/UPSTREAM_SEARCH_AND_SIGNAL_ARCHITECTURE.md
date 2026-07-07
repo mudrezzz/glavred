@@ -167,19 +167,27 @@ Every future upstream run should make the handoff readable:
 
 ## Benchmark And Trace Inspection Plan
 
-The first stable diagnostic scenario should be a single golden radar, not a broad
-benchmark corpus. The planned golden scenario is
-`benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`, bound to
-the industrial AI cases radar. It should run in recorded-fixture mode without network
-access and verify the search campaign against expected query intents, evidence types,
-source diversity, selected reads, found materials, unacceptable noise, and the rule
-that no `SourceSignal`, `PostCandidate`, plan slot, or DraftRun is created.
+The first stable diagnostic scenario is a single golden radar, not a broad benchmark
+corpus. `benchmark-industrial-ai-maintenance-cases` is implemented for `Опытный цех
+«Сборочная»`, bound to the industrial AI cases radar. It runs in recorded-fixture
+mode without network access and verifies the search campaign against expected query
+intents, evidence types, source diversity, selected reads, found materials,
+unacceptable noise, and the rule that no `SourceSignal`, `PostCandidate`, plan slot,
+or DraftRun is created.
+
+Run the backend benchmark regression with:
+
+```powershell
+python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py
+```
 
 The compact `Сигналы -> Радары -> Трасса запуска` panel remains the operational
-preview. A dedicated trace page should be added next so a single `RadarRun` can be
-inspected like DraftRun/AiRun traces: search plan, source handles, operation timeline,
-raw results, selected/rejected read decisions, found materials, warnings, errors, and
-benchmark verdict when available.
+preview. A dedicated `/radar-runs?runId=<id>` trace page now lets a single
+`RadarRun` be inspected like DraftRun/AiRun traces, while keeping upstream concepts
+separate: search plan, source handles, operation timeline, raw results,
+selected/rejected read decisions, found materials, warnings, errors, and benchmark
+verdict when available. The page is a frontend read model over existing workspace
+snapshots; it does not add backend tables or provider calls.
 
 ## Implementation Slices
 
@@ -194,8 +202,14 @@ benchmark verdict when available.
   discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, and
   freshness; inline RadarRun trace coverage for intents, source strategy, budget
   skips, and the rule that raw material does not own topic/fabula decisions.
-- `2.17.4.6.1.1`: Golden Radar Benchmark Scenario.
-- `2.17.4.6.1.2`: RadarRun Trace Page.
+- `2.17.4.6.1.1`: Golden Radar Benchmark Scenario. Done: recorded benchmark runner,
+  synthetic search/read fixture, report payload, trace completeness checks, source
+  diversity checks, duplicate/noise rejection checks, and downstream-leak guard.
+- `2.17.4.6.1.2`: RadarRun Trace Page. Done: standalone `/radar-runs?runId=<id>`
+  diagnostics page over local/backend portfolio snapshots, compact-card trace link,
+  enriched and legacy run compatibility, raw JSON fallback, and passive benchmark
+  verdict display when present.
+- `2.17.4.6.1.2.1`: Live Radar Golden Evaluation Harness.
 - `2.17.4.6.2`: Search Result Triage, Deduplication, and Selective Reading.
 - `2.17.4.6.3`: Source Strategy Adapters and Domain-Aware Search.
 - `2.17.4.6.4`: LLM-Assisted Query Expansion and Search Critic.

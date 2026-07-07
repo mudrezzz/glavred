@@ -7092,28 +7092,6 @@ Status:
   - Scope can become broad; split by debt cluster if required.
 - Completed: 2026-07-05
 
-### Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up
-
-- Status: Backlog
-- Goal: Repair medium backend architecture findings that remain after high-debt cleanup.
-- User value: Medium debt remains visible and scheduled instead of silently accumulating while product work resumes.
-- Scope:
-  - Review ledgered medium findings from `docs/architecture/backend-architecture-debt-ledger.json`.
-  - Split generation, test-import, infrastructure, API, and residual drafting medium cleanup into owner-owned batches.
-  - Keep product behavior stable and avoid reintroducing public helper sprawl.
-- Out of scope:
-  - Product runtime behavior changes.
-  - Search Intent Planner feature work.
-- Architecture impact:
-  - Keeps medium backend debt explicit after Slice 2.17.4.6.0.11 closes high findings.
-- Tests:
-  - Backend architecture audit, targeted owner tests, `npm run test:architecture`, and roadmap check.
-- Docs:
-  - Backend architecture audit snapshot, debt ledger, and relevant backend docs.
-- Acceptance criteria:
-  - Medium findings selected for the slice are fixed or re-ledgered with a later owner.
-  - No new high or stale architecture audit findings are introduced.
-
 ### Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace
 
 - Status: Done
@@ -7211,7 +7189,7 @@ Status:
 
 ### Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario
 
-- Status: Ready
+- Status: Done
 - Goal: Add one canonical radar benchmark scenario for `Опытный цех «Сборочная»` so upstream search changes can be evaluated against a stable diagnostic case.
 - User value:
   - The team can test radar search quality on a concrete industrial AI scenario instead of judging by one-off screenshots or ad hoc live runs.
@@ -7245,10 +7223,11 @@ Status:
   - The report explains what the radar searched, what it found, what it rejected, and which expectations were not met.
 - Risks:
   - Fixture quality can become too curated; keep recorded data realistic and include at least one noisy/duplicate result.
+- Completed: 2026-07-06
 
 ### Slice 2.17.4.6.1.2: RadarRun Trace Page
 
-- Status: Backlog
+- Status: Done
 - Goal: Add a dedicated `RadarRun` trace page similar to DraftRun/AiRun trace inspection so search diagnostics are readable outside the compact radar card.
 - User value:
   - The editor and developer can inspect exactly how a radar searched, selected, skipped, failed, and normalized material without digging through JSON or cramped inline panels.
@@ -7281,6 +7260,82 @@ Status:
   - The compact radar card remains usable and does not duplicate the full diagnostic page.
 - Risks:
   - Trace page can become too dense; use progressive disclosure and semantic sections rather than raw JSON dumps.
+- Completed: 2026-07-06
+
+### Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness
+
+- Status: Ready
+- Goal: Add a live Radar golden evaluation harness that grades real provider-backed radar runs against stable expectations instead of subjective one-off judgment.
+- User value: The team can tell whether live upstream search is good enough, noisy, inconclusive, or failing without changing the quality bar every run.
+- Scope:
+  - Extend the golden benchmark scenario with live expectations for `Sborochnaya` / industrial AI cases.
+  - Add a live evaluation report over an existing or freshly executed `RadarRun`: `passed`, `warning`, `failed`, or `inconclusive`.
+  - Evaluate campaign coverage, raw result count, selected reads, found materials, source diversity, evidence categories, accepted noise, read failures, and trace completeness.
+  - Keep exact URLs optional/reference-only; use durable expectations such as evidence type, domain diversity, and forbidden noise patterns.
+  - Surface the live verdict in the RadarRun trace page added by the preceding slice.
+- Out of scope:
+  - Changing provider search execution.
+  - LLM query expansion.
+  - Signal extraction, scoring, candidate assembly, or DraftRun changes.
+  - Treating live provider availability as a deterministic regression gate.
+- Implementation notes:
+  - Recorded benchmark remains the deterministic regression baseline.
+  - Live evaluation is a quality diagnostic and may return `inconclusive` for provider/rate-limit/network problems.
+  - The evaluation must distinguish provider failure from poor search quality.
+- Architecture impact:
+  - Reuses benchmark scenario expectations while keeping live provider results separate from recorded fixtures.
+  - Adds evaluation ownership under upstream benchmark/diagnostics, not inside React card components.
+- Tests:
+  - Unit tests for live expectation scoring over fixture RadarRun payloads.
+  - Tests for `passed`, `warning`, `failed`, and `inconclusive` outcomes.
+  - UI/read-model test on the RadarRun trace page if the verdict is rendered there.
+  - `npm run test:architecture`, relevant backend tests, smoke, and roadmap check.
+- Docs:
+  - Upstream architecture doc, developer guide, demo README, and roadmap artifacts.
+- Demo impact:
+  - The industrial AI radar can show a stable live-quality verdict in addition to raw trace data.
+- Acceptance criteria:
+  - Live radar quality is graded by explicit expectations, not subjective review.
+  - A live run with enough relevant diverse sources passes or warns with clear reasons.
+  - Provider-disabled, rate-limited, or network-failed runs are `inconclusive`, not false quality failures.
+  - Accepted generic AI news, vendor pricing, or model leaderboard noise fails or warns the run.
+- Risks:
+  - Live web results drift; avoid mandatory exact URL matches and keep expected evidence categories explicit.
+
+### Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up
+
+- Status: Backlog
+- Goal: Repair medium backend architecture findings that remain after high-debt cleanup, after upstream benchmark and RadarRun trace observability are in place.
+- User value: Medium debt remains visible and scheduled instead of silently accumulating while product work resumes.
+- Placement decision:
+  - Run after `2.17.4.6.1.1 - Golden Radar Benchmark Scenario`, `2.17.4.6.1.2 - RadarRun Trace Page`, and `2.17.4.6.1.2.1 - Live Radar Golden Evaluation Harness`.
+  - Run before `2.17.4.6.1.3 - DraftRun Provider Reliability Analytics`, `2.17.4.6.2`, and later backend-heavy search slices.
+  - Rationale: recorded benchmark, RadarRun trace, and live evaluation first give observability; cleanup before analytics/search growth prevents building new backend layers on known medium debt.
+- Scope:
+  - Review ledgered medium findings from `docs/architecture/backend-architecture-debt-ledger.json`.
+  - Prioritize medium debt that affects upcoming analytics/search work: upstream owners, API/read-model boundaries, infrastructure factories/repositories, test-import drift, and residual drafting/shared surfaces.
+  - Split generation, test-import, infrastructure, API, and residual drafting medium cleanup into owner-owned batches where needed.
+  - Keep product behavior stable and avoid reintroducing public helper sprawl.
+- Out of scope:
+  - Product runtime behavior changes.
+  - Search Intent Planner feature work.
+  - Radar benchmark or RadarRun trace UI work, which are owned by preceding slices.
+- Architecture impact:
+  - Keeps medium backend debt explicit after Slice `2.17.4.6.0.11` closes high findings.
+  - Creates a cleaner backend base before cross-run reliability analytics and deeper upstream search layers.
+- Tests:
+  - Backend architecture audit.
+  - Targeted owner tests for changed packages.
+  - `npm run test:architecture`.
+  - Roadmap `render`, `export`, and `check`.
+- Docs:
+  - Backend architecture audit snapshot, debt ledger, and relevant backend docs.
+- Acceptance criteria:
+  - Medium findings selected for the slice are fixed or re-ledgered with a later owner.
+  - No new high or stale architecture audit findings are introduced.
+  - Upcoming analytics/search slices have no known medium blocker in their direct backend dependency path.
+- Risks:
+  - If treated as broad cleanup, the slice can sprawl; keep it targeted to debt that blocks or weakens the next backend-heavy slices.
 
 ### Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics
 
@@ -7894,6 +7949,8 @@ Status:
 - Slice 2.17.4.6.1: Search Intent Planner and Campaign Trace. Completed 2026-07-06.
 - Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening. Completed 2026-07-06.
 - Slice 2.17.4.6.1.0.1: AiRun Trace UX and Quality Verdict Panel. Completed 2026-07-06.
+- Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario. Completed 2026-07-06.
+- Slice 2.17.4.6.1.2: RadarRun Trace Page. Completed 2026-07-06.
 
 
 ## Blocked Items
@@ -7922,4 +7979,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario`.
+Implement `Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness`.

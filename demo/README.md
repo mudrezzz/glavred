@@ -220,12 +220,16 @@ campaign-trace rationale, and skipped-intent details while preserving the existi
 Until extraction/scoring slices are implemented, seeded reviewed signals remain
 fixture data rather than proof of live search.
 
-The planned first upstream benchmark is deliberately narrow: one golden scenario for
-`Опытный цех «Сборочная»` and the industrial AI maintenance-cases radar. It should run
-from recorded search/read fixtures, check expected evidence types and source
-diversity, and produce a readable benchmark verdict before the full three-project
-benchmark corpus is added. A dedicated RadarRun trace page is also planned so the
-demo can show the full search campaign outside the compact radar card.
+The first upstream benchmark is deliberately narrow: one golden scenario for
+`Опытный цех «Сборочная»` and the industrial AI maintenance-cases radar. It runs from
+recorded search/read fixtures, checks expected evidence types, selected/rejected
+reads, source diversity, duplicate/noise handling, and produces a readable benchmark
+verdict before the full three-project benchmark corpus is added. Run it with
+`python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py`. The compact
+radar card keeps a short `Трасса запуска` preview; use `Открыть трассу` or
+`/radar-runs?runId=<id>` to show the full search campaign outside the card, including
+source strategy, operations, raw results, selected/rejected reads, found materials,
+warnings/errors, and any benchmark verdict stored on the run.
 
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:

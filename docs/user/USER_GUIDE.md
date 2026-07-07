@@ -206,16 +206,19 @@ reasons, runs configured OpenRouter web-search queries, deduplicates raw results
 chooses which URLs to read, and stores found material with warnings when reading fails. If
 the backend is unavailable, the same action falls back to the local deterministic
 contract run. The expanded radar has internal tabs: `Настройка` for rules/sources/
-filters and `Трасса запуска` for search intents, search plan, operations, triage, found material, and
-diagnostics. This trace stays separate from `Найденные сигналы`. It does not create
-new signals or post candidates yet.
+filters and `Трасса запуска` for a compact preview of search intents, search plan,
+operations, triage, found material, and diagnostics. Use `Открыть трассу` or open
+`/radar-runs?runId=<id>` to inspect the full run page with source strategy, raw
+results, selected/rejected reads, warnings/errors, raw JSON fallback, and benchmark
+verdict when the run carries one. This trace stays separate from `Найденные сигналы`.
+It does not create new signals or post candidates yet.
 
 The next diagnostic layer will use one golden radar benchmark first:
 `Опытный цех «Сборочная»` / industrial AI maintenance cases. That scenario is meant
 to answer whether the radar searched the right evidence types, read diverse useful
-sources, rejected noise, and kept the result as found material. A separate RadarRun
-trace page is planned so this diagnostic can be opened from a run id, similar to the
-DraftRun/AiRun trace pages.
+sources, rejected noise, and kept the result as found material. The separate
+RadarRun trace page can already be opened from a run id, similar to the DraftRun/AiRun
+trace pages; live scoring of that page is the next quality slice.
 
 The section has three internal tabs:
 

@@ -12,6 +12,13 @@ export function RadarRunTraceSection({
   return (
     <div className="radar-config-section" data-testid="radar-upstream-trace">
       <h4>Трасса запуска</h4>
+      {latestRun ? (
+        <div className="row-actions radar-trace-actions">
+          <a className="btn btn-sec btn-sm" href={`/radar-runs?runId=${encodeURIComponent(latestRun.id)}`}>
+            Открыть трассу
+          </a>
+        </div>
+      ) : null}
       <SourceHandleList sourceHandles={sourceHandles} />
       <LatestRunTrace latestRun={latestRun} />
       <SearchPlanTrace latestRun={latestRun} />

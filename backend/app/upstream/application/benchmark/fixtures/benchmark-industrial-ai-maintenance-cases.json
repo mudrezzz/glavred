@@ -1,0 +1,76 @@
+{
+  "searchResultsByFamily": {
+    "broadDiscovery": [
+      {
+        "title": "Industrial AI maintenance workbench patterns",
+        "url": "https://industrial-ai.example/maintenance-workbench",
+        "snippet": "Overview of predictive maintenance decision workbenches with reliability teams, asset data, and human review boundaries."
+      },
+      {
+        "title": "Generic AI news roundup",
+        "url": "https://news.example/generic-ai-news",
+        "snippet": "Generic AI news about model launches and industry buzz without industrial implementation evidence."
+      }
+    ],
+    "caseExample": [
+      {
+        "title": "Predictive maintenance case with EAM integration",
+        "url": "https://cases.example/predictive-maintenance-eam?utm=recorded",
+        "snippet": "Implementation case: sensor history, EAM work orders, engineer feedback, measurable downtime reduction, and rollback path."
+      },
+      {
+        "title": "Predictive maintenance case duplicate",
+        "url": "https://cases.example/predictive-maintenance-eam",
+        "snippet": "Duplicate implementation case with the same EAM evidence and maintenance workflow."
+      },
+      {
+        "title": "Vendor pricing for AI maintenance suite",
+        "url": "https://vendor.example/pricing",
+        "snippet": "Vendor pricing page with buy now language and no operational proof."
+      }
+    ],
+    "benchmarkPaper": [
+      {
+        "title": "Maintenance benchmark report for anomaly detection",
+        "url": "https://benchmark.example/maintenance-anomaly-report",
+        "snippet": "Benchmark paper with metrics, failure modes, data quality constraints, and asset-class limits for industrial anomaly detection."
+      },
+      {
+        "title": "Model leaderboard without industrial context",
+        "url": "https://leaderboard.example/models",
+        "snippet": "Model leaderboard scores without EAM, asset, or maintenance workflow constraints."
+      }
+    ],
+    "limitationCritique": [
+      {
+        "title": "Lessons learned from failed predictive maintenance pilots",
+        "url": "https://ops.example/predictive-maintenance-lessons",
+        "snippet": "Limitations and failure lessons: missing labels, drifting sensor baselines, unclear operator ownership, and unsafe automation promises."
+      }
+    ],
+    "ossTooling": [
+      {
+        "title": "Open source maintenance analytics toolkit",
+        "url": "https://github.example/maintenance-analytics",
+        "snippet": "Open source tool for industrial time-series diagnostics, alert review, and reliability engineering workflows."
+      }
+    ]
+  },
+  "urlReads": {
+    "https://industrial-ai.example/maintenance-workbench": {
+      "title": "Industrial AI maintenance workbench patterns",
+      "finalUrl": "https://industrial-ai.example/maintenance-workbench",
+      "text": "A synthetic recorded article describing an industrial AI maintenance decision workbench. It combines asset hierarchy, sensor history, EAM work orders, fault codes, maintenance logs, engineer feedback, confidence boundaries, and rollback rules. The workflow keeps the reliability engineer responsible for final decisions and documents when the model should defer."
+    },
+    "https://cases.example/predictive-maintenance-eam": {
+      "title": "Predictive maintenance case with EAM integration",
+      "finalUrl": "https://cases.example/predictive-maintenance-eam",
+      "text": "A synthetic recorded implementation case for predictive maintenance. The project connected vibration sensor history, CMMS/EAM work orders, failure reports, and operator notes. The useful pattern is not autonomous repair, but a decision support workbench that recommends inspection priorities, explains confidence, and records human overrides."
+    },
+    "https://benchmark.example/maintenance-anomaly-report": {
+      "title": "Maintenance benchmark report for anomaly detection",
+      "finalUrl": "https://benchmark.example/maintenance-anomaly-report",
+      "text": "A synthetic benchmark report about anomaly detection for rotating equipment. It reports precision and recall under asset-class drift, label scarcity, and incomplete maintenance logs. The report warns that generic leaderboard metrics are insufficient without site-specific acceptance tests."
+    }
+  }
+}

@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { RadarCard } from './RadarCard';
 import { RadarRunTraceSection } from './RadarRunTraceSection';
 import type { FoundMaterial, RadarRun, SourceHandle } from '../../domain/editorialWorkspace';
+import { createRadarTracePortfolio } from './radarRunTraceTestFixtures';
 
 describe('RadarRunTraceSection', () => {
   it('renders search plan, pre-read triage, and found materials separately', () => {
@@ -25,6 +28,42 @@ describe('RadarRunTraceSection', () => {
     expect(screen.getByText('duplicate-url')).toBeInTheDocument();
     expect(screen.getByText('Найденные материалы')).toBeInTheDocument();
     expect(screen.getByText('Read case')).toBeInTheDocument();
+  });
+
+  it('links the compact radar trace tab to the dedicated RadarRun trace page', () => {
+    const portfolio = createRadarTracePortfolio();
+    const workspace = portfolio.workspacesByProjectId[portfolio.projects[0].id];
+    const radar = workspace.radars[0];
+    const latestRun = workspace.radarRuns[0];
+    render(
+      <RadarCard
+        radar={radar}
+        controller={{
+          expandedRadarId: radar.id,
+          editingRadar: null,
+          isNewRadar: false,
+          latestRunsByRadar: { [radar.id]: latestRun },
+          radarRunSummaries: { [radar.id]: { found: 1, skipped: 0, status: 'succeeded' } },
+          sourceHandlesByRadar: { [radar.id]: workspace.sourceRegistry.handles },
+          foundMaterialsByRun: { [latestRun.id]: workspace.foundMaterials },
+          setExpandedRadarId: () => undefined,
+          setRadarFilter: () => undefined,
+          setTab: () => undefined,
+          startRadarEdit: () => undefined
+        } as never}
+        signalCount={0}
+        onDeleteRadar={() => undefined}
+        onRunRadar={() => undefined}
+        onToggleRadarStatus={() => undefined}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole('tab')[1]);
+
+    expect(screen.getByRole('link', { name: 'Открыть трассу' })).toHaveAttribute(
+      'href',
+      '/radar-runs?runId=radar-run-industrial-1'
+    );
   });
 });
 

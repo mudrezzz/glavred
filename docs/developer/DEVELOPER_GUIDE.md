@@ -85,12 +85,19 @@ Provider search belongs behind `backend/app/infrastructure/openrouter_web_search
 URL reading belongs behind the public URL reader port.
 
 Before treating radar search as reliable, keep one golden upstream benchmark small
-and repeatable. The planned first scenario is
-`benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`: it should
-use recorded search/read fixtures, verify query-intent and evidence-type coverage,
-and prove the runner stops at `FoundMaterial`. Broader three-project evaluation
-belongs to the later benchmark corpus slice. A dedicated `RadarRun` trace page should
-be implemented before the upstream trace becomes too large for the inline radar card.
+and repeatable. The first scenario is
+`benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`: it uses
+recorded search/read fixtures, verifies query-intent and evidence-type coverage,
+checks selected/rejected reads and source diversity, and proves the runner stops at
+`FoundMaterial`. Run it with
+`python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py`. Broader
+three-project evaluation belongs to the later benchmark corpus slice. Use
+`/radar-runs?runId=<id>` for full upstream diagnostics: the page resolves the run
+from local portfolio state first and backend portfolio snapshots second, then renders
+campaign plan, source strategy, operations, raw results, selected/rejected reads,
+found materials, warnings/errors, and any passive benchmark verdict. Keep the
+inline radar-card trace compact; do not reintroduce full diagnostics into
+`RadarCard`.
 
 See ADRs `docs/adr/2026-06-29-blog-project-portfolio-saas-boundary.md` and
 `docs/adr/2026-06-30-dev-password-session-auth-boundary.md`.

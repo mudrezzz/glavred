@@ -23,6 +23,10 @@ description: Use for any Power Web OS frontend work: building or modifying scree
 ## Non-Negotiable Rules
 
 - Import or include `ui-design-systems/colors_and_type.css` before app styles.
+- On Windows/PowerShell, Cyrillic shown as mojibake (`Р...`, `С...`, `вЂ...`) is not
+  evidence that the source file is corrupted. Do not patch localized UI copy from
+  that terminal rendering. Use browser-rendered text, stable ASCII selectors/ids, or
+  a UTF-8-aware file read before changing Russian copy or tests that assert it.
 - Do not hardcode hex colors, shadows, radii, spacing, or font styles when tokens exist.
 - Use CSS variables from the design system.
 - Keep cobalt rare: active route, one primary button per screen, active nav, links, and focus ring.

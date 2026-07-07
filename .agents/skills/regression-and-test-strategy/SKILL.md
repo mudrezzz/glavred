@@ -24,6 +24,9 @@ Consider:
 2. Identify affected components.
 3. Identify existing tests.
 4. Add or update tests for changed behavior.
+   - On Windows/PowerShell, avoid deriving localized expected strings from mojibake
+     terminal output. Prefer stable ASCII ids/statuses, semantic DOM queries, or
+     UTF-8-aware reads for Russian UI text assertions.
    - Keep `src/App.test.tsx` for app shell/navigation only.
    - Put feature user-flow coverage in the owning feature as `*AppFlow.test.tsx`.
    - Put domain/application/storage coverage beside the owning domain/application/

@@ -6392,6 +6392,84 @@ select:focus {
   overscroll-behavior: contain;
 }
 
+.radar-trace-actions {
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.radar-run-page .ai-run-header h1,
+.radar-run-page .ai-run-header p {
+  max-width: 760px;
+}
+
+.radar-run-workbench {
+  height: calc(100vh - 252px);
+  min-height: 520px;
+}
+
+.radar-run-timeline,
+.radar-run-detail-panel {
+  overscroll-behavior: contain;
+}
+
+.radar-run-detail-panel .ai-run-detail-tabs {
+  align-self: start;
+  justify-self: start;
+  display: inline-flex;
+  width: max-content;
+  min-height: 0;
+}
+
+.radar-run-detail-panel .ai-run-detail-tabs .tab {
+  flex: 0 0 auto;
+}
+
+.radar-run-timeline-meta {
+  margin: 0;
+  color: var(--muted);
+  font: var(--body-sm);
+}
+
+.radar-run-item-list {
+  display: grid;
+  gap: 12px;
+}
+
+.radar-run-item {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  padding: 14px;
+}
+
+.radar-run-item > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.radar-run-item strong {
+  color: var(--ink);
+  font: 900 16px/1.25 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+
+.radar-run-item p {
+  margin: 0;
+  color: var(--ink);
+  font: var(--body-md);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.radar-run-empty-detail {
+  margin: 0;
+}
+
 .ai-run-quality-panel {
   display: grid;
   gap: 16px;

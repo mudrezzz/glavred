@@ -34,6 +34,11 @@ Implement one small, complete, tested, documented product increment.
 
 - Keep changes localized.
 - Preserve existing functionality.
+- On Windows/PowerShell, do not trust terminal-rendered Cyrillic when it appears as
+  mojibake (`Р...`, `С...`, `вЂ...`). Treat it as a console encoding artifact until
+  proven otherwise. Do not rewrite localized UI/test strings from mojibake output;
+  use stable ASCII anchors, JSON/AST-aware reads, browser/UI assertions, or an
+  explicit UTF-8-aware read path before editing localized text.
 - Follow OOP and single-responsibility principles.
 - Comment non-obvious code and tests.
 - Do not expand scope unless required for the slice to work.

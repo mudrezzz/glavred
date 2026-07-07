@@ -14,6 +14,9 @@ Keep documentation accurate, useful, and GitHub-ready.
 1. Inspect changed files.
 2. Identify documentation affected by the change.
 3. Update the minimum necessary docs.
+   - On Windows/PowerShell, treat Cyrillic mojibake in command output as an encoding
+     display issue, not source corruption. Verify docs through UTF-8-aware reads
+     before changing Russian text.
 4. Add ADRs for meaningful architectural decisions.
 5. Ensure `README.md` remains the project entry point.
 6. Ensure tracker state reflects completed or new work, then regenerate `ROADMAP.md` and `docs/roadmap/slices.export.jsonl`.

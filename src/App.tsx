@@ -12,11 +12,15 @@ import { PortfolioLoginPanel } from './features/portfolio/PortfolioLoginPanel';
 import { ProjectDashboardView } from './features/portfolio/ProjectDashboardView';
 import { SidebarPortfolioSwitcher } from './features/portfolio/SidebarPortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
+import { RadarRunTracePage } from './features/signals/RadarRunTracePage';
 import { SignalsView } from './features/signals/SignalsView';
 
 export function App() {
   if (window.location.pathname.startsWith('/ai-runs')) {
     return <AiRunTracePage />;
+  }
+  if (window.location.pathname.startsWith('/radar-runs')) {
+    return <RadarRunTracePage />;
   }
 
   return <CabinetApp />;
