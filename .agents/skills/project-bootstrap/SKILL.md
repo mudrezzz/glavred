@@ -5,6 +5,12 @@ description: Use when creating a new project from scratch or initializing an exi
 
 # Project Bootstrap Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Create the initial project structure so development can proceed through documented, tested, iterative slices.

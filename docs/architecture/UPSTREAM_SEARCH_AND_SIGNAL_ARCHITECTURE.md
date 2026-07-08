@@ -181,6 +181,33 @@ Run the backend benchmark regression with:
 python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py
 ```
 
+Live provider-backed runs for the same industrial AI radar are evaluated with the
+same scenario expectations, but not by exact URL matching. The live evaluator checks
+durable evidence instead: planned coverage, actually executed query families,
+evidence types represented by executed queries, raw result count, selected reads,
+found materials, domain diversity, unacceptable noise, and trace completeness. It
+writes `run.benchmarkReport` when the project/radar match the golden scenario.
+`coverage` remains a compatibility summary; `plannedCoverage`, `executedCoverage`,
+and `skippedRequiredCoverage` explain whether a verdict is based on execution or only
+on planned-but-skipped intents. The status vocabulary is:
+
+Backend ownership after Slice `2.17.4.6.0.12` is intentionally split: the external
+run service orchestrates the campaign, `OpenWebQueryOperationRunner` owns one
+provider-backed web query operation, `RadarRunBenchmarkReporter` owns scenario
+matching and report attachment, and benchmark evaluation delegates status,
+expectations, coverage, and trace/provider-health rules to separate policy classes.
+
+- `passed`: required search/evidence coverage was actually executed, trace is
+  complete, no noise was accepted, and the provider path was usable;
+- `warning`: provider was usable and produced material, but there are non-blocking
+  coverage or read-quality gaps, including required directions that were planned but
+  skipped by the current query budget;
+- `failed`: provider was usable, but required coverage/material/diversity checks fail
+  or accepted material contains known noise;
+- `inconclusive`: provider/runtime state prevents a fair quality verdict, for example
+  disabled search, missing provider configuration, rate-limit/network failure, or no
+  executed search trace.
+
 The compact `Сигналы -> Радары -> Трасса запуска` panel remains the operational
 preview. A dedicated `/radar-runs?runId=<id>` trace page now lets a single
 `RadarRun` be inspected like DraftRun/AiRun traces, while keeping upstream concepts
@@ -209,7 +236,14 @@ snapshots; it does not add backend tables or provider calls.
   diagnostics page over local/backend portfolio snapshots, compact-card trace link,
   enriched and legacy run compatibility, raw JSON fallback, and passive benchmark
   verdict display when present.
-- `2.17.4.6.1.2.1`: Live Radar Golden Evaluation Harness.
+- `2.17.4.6.1.2.1`: Live Radar Golden Evaluation Harness. Done: recorded benchmark
+  runner and live radar runs share a reusable evaluator, matching industrial AI live
+  runs attach `benchmarkReport`, live verdicts include evaluation mode, provider
+  health, coverage, and inconclusive reasons, and `/radar-runs` renders the report.
+- `2.17.4.6.1.2.2`: Live Radar Executed Coverage Gate. Done: live verdicts now
+  separate planned coverage from executed coverage, expose skipped required coverage,
+  and prevent a planned-but-budget-skipped required direction from producing a clean
+  `passed` verdict.
 - `2.17.4.6.2`: Search Result Triage, Deduplication, and Selective Reading.
 - `2.17.4.6.3`: Source Strategy Adapters and Domain-Aware Search.
 - `2.17.4.6.4`: LLM-Assisted Query Expansion and Search Critic.

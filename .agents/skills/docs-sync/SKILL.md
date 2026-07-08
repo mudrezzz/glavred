@@ -5,6 +5,12 @@ description: Use when code, architecture, setup, public behavior, demo behavior,
 
 # Docs Sync Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Keep documentation accurate, useful, and GitHub-ready.

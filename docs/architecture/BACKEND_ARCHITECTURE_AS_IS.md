@@ -131,9 +131,11 @@ Upstream search previously started to repeat the same flat shape:
   `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`, and the backend
   package boundary is implemented at the first application-service level.
 
-Radar/upstream medium debt remains ledgered, but new search, extraction, scoring,
-benchmark, or trace runtime must build on `backend/app/upstream`, not the legacy
-application shims.
+Slice 2.17.4.6.0.12 closes the direct upstream medium blocker on the next
+radar/search path: live benchmark evaluation, one-query execution, benchmark report
+attachment, and run-result status now have separate owner components. New search,
+extraction, scoring, benchmark, or trace runtime must keep building on
+`backend/app/upstream`, not the legacy application shims.
 
 ## High-Risk Modules
 
@@ -143,7 +145,7 @@ The largest backend files are a useful smell list, not an automatic failure list
 | ---: | --- | --- |
 | 325 | `backend/app/drafting/application/planning/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
 | 291 | `backend/app/infrastructure/sqlite_portfolio_repository.py` | Persistence adapter may need split by table/use-case if it grows further. |
-| 350+ | `backend/app/upstream/application/external_run_service.py` | First upstream runner has a package boundary; medium line-count debt is ledgered. |
+| 216 | `backend/app/upstream/application/external_run_service.py` | First upstream runner is now below the large-module audit threshold after search operation, benchmark-report, and result-status owners were extracted. |
 | 220+ | `backend/app/drafting/application/*` migrated DraftRun modules | Some owner modules remain intentionally large after behavior-preserving migration; follow-up refactors should split by service/policy/component role, not move behavior back to flat legacy paths. |
 
 The recovery goal is not to split every large file immediately. The goal is to stop
@@ -272,15 +274,19 @@ Already enforced:
   facades are treated separately from public helper sprawl, and the audit ledger
   reports `0` high findings, `0` unledgered findings, and `0` stale keys. Remaining
   medium debt is explicit in `docs/architecture/backend-architecture-debt-ledger.json`
-  and assigned to `2.17.4.6.0.12`.
+- Backend medium architecture debt follow-up from Slice 2.17.4.6.0.12:
+  the direct upstream/radar blocker is closed. The audit now reports `56` medium
+  findings, all ledgered, with `0` unledgered findings and `0` stale keys. Remaining
+  medium debt is assigned to explicit follow-up slices:
+  `2.17.4.6.0.12.1` for API/infrastructure, `2.17.4.6.0.12.2` for residual
+  Drafting packages, and `2.17.4.6.0.12.3` for backend test canonical imports.
 
 Still missing after this slice:
 
 - Full migration of every provider-heavy operation behind the shared envelope.
 - Runtime payload-budget wiring for the remaining legacy provider-heavy operations.
-- OOP cleanup of medium API, infrastructure, upstream, generation,
-  artifacts/evidence/planning, and residual validation/revision line-count surfaces
-  flagged by the audit ledger.
+- OOP cleanup of medium API, infrastructure, generation, artifacts/evidence/planning,
+  and residual validation/revision line-count surfaces flagged by the audit ledger.
 - Dedicated infrastructure watchdog for worker-level stalls outside protected
   operation envelopes and validation runtime-budget heartbeats.
 

@@ -5,6 +5,12 @@ description: Use when implementing a selected tracker-backed roadmap slice. Keep
 
 # Slice Implementation Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Implement one small, complete, tested, documented product increment.
@@ -82,6 +88,11 @@ Implement one small, complete, tested, documented product increment.
   provider `.complete_json(` calls in bounded application modules.
 - If a backend slice changes environment variables, update `.env.example`,
   developer docs, and architecture smoke checks. Never commit real `.env` secrets.
+- For live provider proof in this repo, use `.env` as the source of OpenRouter
+  configuration without printing secret values. Check presence/behavior, not the key
+  text. If Glavred is not running in Docker, start `docker compose up -d --build`;
+  other projects already running in Docker are not a reason to skip the Glavred
+  compose stack.
 - For drafting/backend slices, read ADRs
   `2026-06-19-drafting-uses-queued-agentic-runs` and
   `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` before

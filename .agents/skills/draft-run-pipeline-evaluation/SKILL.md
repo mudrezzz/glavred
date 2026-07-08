@@ -5,6 +5,12 @@ description: Use when asked to run a fresh Glavred DraftRun end-to-end, generate
 
 # Draft Run Pipeline Evaluation Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Run one real drafting attempt and evaluate it. This skill changes product state and
@@ -12,6 +18,11 @@ may call OpenRouter/web search through the backend. Use it only when the user as
 for a fresh run, not when they only provide an existing `DraftRun ID`.
 
 For existing ids, use `$draft-run-pipeline-diagnostics` directly.
+
+Live-run environment rule: take OpenRouter configuration from the repo `.env` without
+printing secret values. If Glavred is not already running in Docker, start it with
+`docker compose up -d --build`. Other running Docker projects are irrelevant; they do
+not replace the Glavred compose stack and are not a reason to skip Docker validation.
 
 ## Workflow
 

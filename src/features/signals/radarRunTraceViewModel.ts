@@ -288,6 +288,7 @@ function foundMaterialsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
 }
 
 function benchmarkDetail(report: NonNullable<RadarRunTraceBundle['benchmarkReport']>): RadarTraceDetail {
+  const skippedRequired = report.skippedRequiredCoverage ?? [];
   return {
     id: 'benchmark',
     title: 'Benchmark verdict',
@@ -295,12 +296,26 @@ function benchmarkDetail(report: NonNullable<RadarRunTraceBundle['benchmarkRepor
     fields: compactFields([
         ['Status', report.status],
         ['Scenario', report.scenarioId],
+        ['Evaluation mode', report.evaluationMode],
+        ['Provider health', report.providerHealth],
+        ['Planned coverage', coverageSummary(report.plannedCoverage ?? report.coverage)],
+        ['Executed coverage', coverageSummary(report.executedCoverage)],
+        ['Skipped required coverage', skippedCoverageSummary(skippedRequired)],
+        ['Verdict impact', verdictImpact(report)],
         ['Trace complete', report.traceComplete],
         ['Missing expectations', report.missingExpectations?.join(', ')],
+        ['Inconclusive reasons', report.inconclusiveReasons?.join(', ')],
         ['Noise hits', report.unacceptableNoiseHits?.join(', ')],
         ['Warnings', report.warnings?.join(', ')]
       ]),
-    items: [],
+    items: skippedRequired.map((item, index) => ({
+      id: `skipped-required-${index}`,
+      label: String(item.kind ?? 'skipped'),
+      title: String(item.value ?? 'required coverage'),
+      body: String(item.reason ?? ''),
+      status: 'skipped',
+      meta: compactFields([['Intent', item.intentId]])
+    })),
     jsonPayload: report
   };
 }
@@ -363,4 +378,46 @@ function displayValue(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) return value.map((item) => displayValue(item)).filter(Boolean).join('\n');
   return JSON.stringify(value, null, 2);
+}
+
+function coverageSummary(value: unknown): string {
+  if (!value || typeof value !== 'object') return '';
+  const coverage = value as Record<string, unknown>;
+  const queryFamilies = coverage.queryFamilies as Record<string, unknown> | undefined;
+  const evidenceTypes = coverage.evidenceTypes as Record<string, unknown> | undefined;
+  return [
+    `families ${coverageCount(queryFamilies)}`,
+    `evidence ${coverageCount(evidenceTypes)}`,
+    missingSummary(queryFamilies, 'missing families'),
+    missingSummary(evidenceTypes, 'missing evidence')
+  ].filter(Boolean).join('\n');
+}
+
+function coverageCount(value: Record<string, unknown> | undefined): string {
+  const covered = Array.isArray(value?.covered) ? value.covered.length : 0;
+  const expected = Array.isArray(value?.expected) ? value.expected.length : 0;
+  return `${covered}/${expected}`;
+}
+
+function missingSummary(value: Record<string, unknown> | undefined, label: string): string {
+  const missing = Array.isArray(value?.missing) ? value.missing.map((item) => String(item)).filter(Boolean) : [];
+  return missing.length > 0 ? `${label}: ${missing.join(', ')}` : '';
+}
+
+function skippedCoverageSummary(items: Array<Record<string, unknown>>): string {
+  if (items.length === 0) return '';
+  return items
+    .map((item) => [item.kind, item.value, item.reason].filter(Boolean).join(' / '))
+    .join('\n');
+}
+
+function verdictImpact(report: NonNullable<RadarRunTraceBundle['benchmarkReport']>): string {
+  const skipped = report.skippedRequiredCoverage ?? [];
+  if (report.status === 'warning' && skipped.length > 0) {
+    return 'Required coverage was planned but not executed.';
+  }
+  if (report.status === 'passed') return 'Required coverage was executed.';
+  if (report.status === 'failed') return 'Required quality expectations were missed.';
+  if (report.status === 'inconclusive') return 'Provider/runtime state prevents a fair quality verdict.';
+  return '';
 }

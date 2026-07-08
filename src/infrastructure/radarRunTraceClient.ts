@@ -7,10 +7,17 @@ import { LocalPortfolioStore } from './localPortfolioStore';
 export type RadarBenchmarkTraceReport = {
   status: string;
   scenarioId?: string;
+  evaluationMode?: string;
+  providerHealth?: string;
+  coverage?: Record<string, unknown>;
+  plannedCoverage?: Record<string, unknown>;
+  executedCoverage?: Record<string, unknown>;
+  skippedRequiredCoverage?: Array<Record<string, unknown>>;
   counters?: Record<string, unknown>;
   missingExpectations?: string[];
   warnings?: string[];
   unacceptableNoiseHits?: string[];
+  inconclusiveReasons?: string[];
   traceComplete?: boolean;
 };
 

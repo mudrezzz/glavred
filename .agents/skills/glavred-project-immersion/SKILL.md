@@ -5,6 +5,12 @@ description: Use when the user asks to get immersed in the Glavred project, star
 
 # Glavred Project Immersion
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Build a compact, current, repository-grounded onboarding brief for Glavred so a new
@@ -87,6 +93,10 @@ Use this structure:
      `.agents/skills/backend-architecture-audit/SKILL.md` before broad backend
      cleanup or package-quality claims.
    - new LLM/provider-heavy work must use the current operation governance rules or be tracked as debt.
+   - live provider checks must take OpenRouter configuration from `.env` without
+     printing secrets; if Glavred is not running in Docker, start the Glavred
+     `docker compose up -d --build` stack even when unrelated Docker projects are
+     already running.
    - frontend work must use `frontend-design-system` and `ui-design-systems/START-HERE.md`.
    - demo changes must stay realistic and project-scoped.
 7. **Проверки**: relevant commands for the current slice.

@@ -56,6 +56,14 @@ describe('radarRunTraceViewModel', () => {
       benchmarkReport: {
         status: 'passed',
         scenarioId: 'benchmark-industrial-ai-maintenance-cases',
+        plannedCoverage: {
+          queryFamilies: { expected: ['caseExample'], covered: ['caseExample'], missing: [] },
+          evidenceTypes: { expected: ['caseExample'], covered: ['caseExample'], missing: [] }
+        },
+        executedCoverage: {
+          queryFamilies: { expected: ['caseExample'], covered: ['caseExample'], missing: [] },
+          evidenceTypes: { expected: ['caseExample'], covered: ['caseExample'], missing: [] }
+        },
         traceComplete: true
       }
     });
@@ -63,7 +71,66 @@ describe('radarRunTraceViewModel', () => {
     expect(viewModel.details.find((detail) => detail.id === 'benchmark')?.fields).toEqual(
       expect.arrayContaining([
         { label: 'Status', value: 'passed' },
-        { label: 'Scenario', value: 'benchmark-industrial-ai-maintenance-cases' }
+        { label: 'Scenario', value: 'benchmark-industrial-ai-maintenance-cases' },
+        { label: 'Planned coverage', value: 'families 1/1\nevidence 1/1' },
+        { label: 'Executed coverage', value: 'families 1/1\nevidence 1/1' },
+        { label: 'Verdict impact', value: 'Required coverage was executed.' }
+      ])
+    );
+  });
+
+  it('renders live benchmark provider and inconclusive fields', () => {
+    const viewModel = buildRadarRunTraceViewModel({
+      ...traceBundle(),
+      benchmarkReport: {
+        status: 'inconclusive',
+        scenarioId: 'benchmark-industrial-ai-maintenance-cases',
+        evaluationMode: 'live',
+        providerHealth: 'unavailable',
+        coverage: { traceComplete: false },
+        plannedCoverage: {
+          queryFamilies: { expected: ['limitationCritique'], covered: ['limitationCritique'], missing: [] },
+          evidenceTypes: { expected: ['limitationCritique'], covered: ['limitationCritique'], missing: [] }
+        },
+        executedCoverage: {
+          queryFamilies: { expected: ['limitationCritique'], covered: [], missing: ['limitationCritique'] },
+          evidenceTypes: { expected: ['limitationCritique'], covered: [], missing: ['limitationCritique'] }
+        },
+        skippedRequiredCoverage: [
+          {
+            kind: 'queryFamily',
+            value: 'limitationCritique',
+            reason: 'budget-max-external-queries',
+            intentId: 'intent-limits'
+          }
+        ],
+        inconclusiveReasons: ['openrouter-not-configured'],
+        traceComplete: false
+      }
+    });
+
+    const benchmark = viewModel.details.find((detail) => detail.id === 'benchmark');
+
+    expect(benchmark?.fields).toEqual(
+      expect.arrayContaining([
+        { label: 'Status', value: 'inconclusive' },
+        { label: 'Evaluation mode', value: 'live' },
+        { label: 'Provider health', value: 'unavailable' },
+        {
+          label: 'Skipped required coverage',
+          value: 'queryFamily / limitationCritique / budget-max-external-queries'
+        },
+        { label: 'Inconclusive reasons', value: 'openrouter-not-configured' }
+      ])
+    );
+    expect(benchmark?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'queryFamily',
+          title: 'limitationCritique',
+          body: 'budget-max-external-queries',
+          status: 'skipped'
+        })
       ])
     );
   });

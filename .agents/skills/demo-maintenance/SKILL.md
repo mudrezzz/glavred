@@ -5,6 +5,12 @@ description: Use when creating, updating, or validating the project demo. Ensure
 
 # Demo Maintenance Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Keep a realistic demo that shows the current working product clearly and convincingly.

@@ -19,11 +19,13 @@ from backend.app.upstream.application.external_payloads import (
     material_from_read,
     now_iso,
     operation,
-    raw_result,
     safe_error,
     stable_slug,
     warnings_for,
 )
+from backend.app.upstream.application.external_run_result_policy import ExternalRunResultPolicy
+from backend.app.upstream.application.external_search_operations import OpenWebQueryOperationRunner
+from backend.app.upstream.application.radar_benchmark_reporter import RadarRunBenchmarkReporter
 from backend.app.upstream.application.search_planner import build_search_plan
 from backend.app.upstream.application.search_triage import select_results_for_read
 
@@ -38,9 +40,14 @@ class UpstreamRadarExternalRunService:
         openrouter_validator: OpenRouterConfigValidator,
     ) -> None:
         self._settings = settings
-        self._web_search_adapter = web_search_adapter
         self._url_reader = url_reader
-        self._openrouter_validator = openrouter_validator
+        self._result_policy = ExternalRunResultPolicy()
+        self._search_runner = OpenWebQueryOperationRunner(
+            settings=settings,
+            web_search_adapter=web_search_adapter,
+            openrouter_validator=openrouter_validator,
+        )
+        self._benchmark_reporter = RadarRunBenchmarkReporter()
 
     def run(self, *, workspace: dict[str, Any], radar_id: str) -> dict[str, Any]:
         radar = _find_by_id(workspace.get("radars"), radar_id)
@@ -69,20 +76,26 @@ class UpstreamRadarExternalRunService:
         run = {
             "id": run_id,
             "radarId": radar_id,
-            "status": _status(found_ids, operations, errors),
+            "status": self._result_policy.status(found_ids=found_ids, operations=operations, errors=errors),
             "startedAt": started_at,
             "completedAt": completed_at,
             "budget": budget,
             "operations": [{key: value for key, value in item.items() if key != "_rawResults"} for item in operations],
             "foundMaterialIds": found_ids,
-            "skippedReasons": _unique(skipped_reasons + search_plan.get("skippedIntents", [])),
+            "skippedReasons": self._result_policy.unique(skipped_reasons + search_plan.get("skippedIntents", [])),
             "warnings": warnings_for(raw_results, found_materials),
-            "errors": _unique(errors),
+            "errors": self._result_policy.unique(errors),
             "searchPlan": search_plan,
             "rawResults": raw_results,
             "selectedForRead": selected,
             "rejectedBeforeRead": rejected,
         }
+        self._benchmark_reporter.attach_if_matching(
+            workspace=workspace,
+            radar_id=radar_id,
+            run=run,
+            found_materials=found_materials,
+        )
         return {"radar": {**radar, "lastRunAt": completed_at}, "run": run, "foundMaterials": found_materials}
 
     def _read_direct_handles(
@@ -119,7 +132,7 @@ class UpstreamRadarExternalRunService:
         errors: list[str],
     ) -> None:
         for query in search_plan["queries"]:
-            search_operation = self._search_operation(run_id, query, started_at)
+            search_operation = self._search_runner.search(run_id=run_id, query=query, started_at=started_at)
             operations.append(search_operation)
             if search_operation["status"] == "succeeded":
                 raw_results.extend(search_operation.pop("_rawResults"))
@@ -168,20 +181,6 @@ class UpstreamRadarExternalRunService:
             error = safe_error(exc)
             return None, operation(operation_id=operation_id, run_id=run_id, source_handle_id=str(handle["id"]), kind="readUrl", label=title, status="failed", started_at=started_at, target=target, error=error)
 
-    def _search_operation(self, run_id: str, query: dict[str, Any], started_at: str) -> dict[str, Any]:
-        operation_id = f"{run_id}-search-{query['id']}"
-        if not self._settings.openrouter_web_tools_enabled:
-            return _search_skip(operation_id, run_id, query, started_at, "openrouter-web-tools-disabled")
-        if not self._openrouter_validator.evaluate(self._settings).configured:
-            return _search_skip(operation_id, run_id, query, started_at, "openrouter-not-configured")
-        try:
-            result = self._web_search_adapter.search(settings=self._settings, query=query["query"], messages=_search_messages(query["query"]), max_results=int(self._settings.openrouter_web_search_max_results or 5))
-            payload = _search_success(operation_id, run_id, query, started_at)
-            payload["_rawResults"] = [raw_result(run_id, query, citation, index) for index, citation in enumerate(result.citations)]
-            return payload
-        except Exception as exc:
-            return {**_search_fail(operation_id, run_id, query, started_at, safe_error(exc)), "_rawResults": []}
-
     def _read_selection(self, run_id: str, selection: dict[str, Any], raw_results: list[dict[str, Any]], started_at: str) -> tuple[dict[str, Any], dict[str, Any]]:
         raw = next(item for item in raw_results if item["id"] == selection["rawResultId"])
         material_id = f"{run_id}-material-{stable_slug(raw['duplicateKey'])}"
@@ -192,22 +191,6 @@ class UpstreamRadarExternalRunService:
         except Exception as exc:
             material = material_from_raw(material_id=material_id, run_id=run_id, raw=raw, warning=f"url-read-failed:{safe_error(exc)}")
         return material, operation(operation_id=operation_id, run_id=run_id, source_handle_id=raw["sourceHandleId"], kind="readUrl", label=raw["title"], status="succeeded", started_at=started_at, target=raw["url"], found_material_ids=[material_id])
-
-
-def _search_messages(query: str) -> list[dict[str, str]]:
-    return [{"role": "system", "content": "Use web search to find public source material. Return citations. Do not invent sources."}, {"role": "user", "content": query}]
-
-
-def _search_success(operation_id: str, run_id: str, query: dict[str, Any], started_at: str) -> dict[str, Any]:
-    return operation(operation_id=operation_id, run_id=run_id, source_handle_id=query["sourceHandleId"], kind="openWebQuery", label=query["label"], status="succeeded", started_at=started_at, target=query["query"])
-
-
-def _search_skip(operation_id: str, run_id: str, query: dict[str, Any], started_at: str, reason: str) -> dict[str, Any]:
-    return {**operation(operation_id=operation_id, run_id=run_id, source_handle_id=query["sourceHandleId"], kind="openWebQuery", label=query["label"], status="skipped", started_at=started_at, target=query["query"], skipped_reason=reason), "_rawResults": []}
-
-
-def _search_fail(operation_id: str, run_id: str, query: dict[str, Any], started_at: str, error: str) -> dict[str, Any]:
-    return operation(operation_id=operation_id, run_id=run_id, source_handle_id=query["sourceHandleId"], kind="openWebQuery", label=query["label"], status="failed", started_at=started_at, target=query["query"], error=error)
 
 
 def _resolve_handles(workspace: dict[str, Any], radar: dict[str, Any]) -> list[dict[str, Any]]:
@@ -228,18 +211,6 @@ def _find_by_id(items: Any, item_id: str) -> dict[str, Any] | None:
 def _run_id(workspace: dict[str, Any], radar_id: str) -> str:
     existing_runs = [run for run in workspace.get("radarRuns", []) if isinstance(run, dict) and run.get("radarId") == radar_id]
     return f"radar-run-{radar_id}-{len(existing_runs) + 1}"
-
-
-def _status(found_ids: list[str], operations: list[dict[str, Any]], errors: list[str]) -> str:
-    if found_ids and not errors:
-        return "succeeded"
-    if found_ids or operations:
-        return "partial"
-    return "failed"
-
-
-def _unique(items: list[str]) -> list[str]:
-    return list(dict.fromkeys(item for item in items if item))
 
 
 __all__ = ("UpstreamRadarExternalRunService",)

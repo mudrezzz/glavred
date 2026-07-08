@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedForSlice": "2.17.4.6.0.11",
-  "policy": "Known backend architecture debt must have owner, target shape, guardrail, allowed-until slice, and repair slice. New unledgered critical/high findings fail architecture smoke; medium findings are reported and should be ledgered before product work builds on them.",
+  "updatedForSlice": "2.17.4.6.0.12",
+  "policy": "Known backend architecture debt must have owner, target shape, guardrail, allowed-until slice, and repair slice. Slice 2.17.4.6.0.12 closed the direct upstream/radar medium blocker and re-ledgered remaining medium debt into explicit follow-up cleanup slices before it becomes a product-development dependency.",
   "entries": [
     {
       "debtId": "bad-001-largemodule-backend-app-drafting-application-artifacts-draft-article-dossier-builder-py",
@@ -12,11 +12,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.artifacts",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 241 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-002-largemodule-backend-app-drafting-application-artifacts-draft-source-ledger-sections-py",
@@ -27,11 +27,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.artifacts",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 297 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-003-largemodule-backend-app-drafting-application-evidence-deterministic-evidence-interpretatio",
@@ -42,11 +42,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.evidence",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 238 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-004-largemodule-backend-app-drafting-application-evidence-draft-rule-registry-sections-py",
@@ -57,11 +57,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.evidence",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 301 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-005-largemodule-backend-app-drafting-application-evidence-evidence-interpretation-service-py",
@@ -72,11 +72,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.evidence",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 437 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-006-largemodule-backend-app-drafting-application-generation-draft-candidate-provider-service-p",
@@ -87,11 +87,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 220 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-007-largemodule-backend-app-drafting-application-migration-legacy-surface-inventory-py",
@@ -102,11 +102,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.migration",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 258 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-008-largemodule-backend-app-drafting-application-planning-material-plan-retry-orchestrator-py",
@@ -117,11 +117,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.planning",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 339 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-009-largemodule-backend-app-drafting-application-revision-draft-directed-revision-service-py",
@@ -132,11 +132,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.revision",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 227 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-010-largemodule-backend-app-drafting-application-revision-draft-revision-loop-service-py",
@@ -147,11 +147,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.revision",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 235 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-011-largemodule-backend-app-drafting-application-validation-draft-editorial-critique-service-p",
@@ -162,11 +162,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.validation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 296 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-012-largemodule-backend-app-drafting-application-validation-draft-llm-validation-service-py",
@@ -177,11 +177,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.validation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 229 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-013-largemodule-backend-app-drafting-application-workflow-legacy-phase-builder-py",
@@ -192,11 +192,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.workflow",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 332 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-014-largemodule-backend-app-infrastructure-sqlite-draft-run-repository-py",
@@ -207,11 +207,11 @@
       "severity": "medium",
       "owner": "backend.app.infrastructure",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 224 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-015-largemodule-backend-app-infrastructure-sqlite-portfolio-repository-py",
@@ -222,26 +222,11 @@
       "severity": "medium",
       "owner": "backend.app.infrastructure",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Module has 291 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
-    },
-    {
-      "debtId": "bad-016-largemodule-backend-app-upstream-application-external-run-service-py",
-      "findingKey": "largeModule:backend/app/upstream/application/external_run_service.py",
-      "package": "backend/app/upstream",
-      "module": "backend/app/upstream/application/external_run_service.py",
-      "smellType": "largeModule",
-      "severity": "medium",
-      "owner": "backend.app.upstream",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "Module has 246 lines.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-017-proceduralboundedpackage-backend-app-api",
@@ -252,11 +237,11 @@
       "severity": "medium",
       "owner": "backend.app.api",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "14 modules, 11 public helper(s), 0 procedural naming marker(s), 0 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-018-proceduralboundedpackage-backend-app-drafting-application-artifacts",
@@ -267,11 +252,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.artifacts",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "11 modules, 0 public helper(s), 0 procedural naming marker(s), 2 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-019-proceduralboundedpackage-backend-app-drafting-application-evidence",
@@ -282,11 +267,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.evidence",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "40 modules, 0 public helper(s), 0 procedural naming marker(s), 3 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-020-proceduralboundedpackage-backend-app-drafting-application-generation",
@@ -297,11 +282,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "17 modules, 9 public helper(s), 3 procedural naming marker(s), 1 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-021-proceduralboundedpackage-backend-app-drafting-application-revision",
@@ -312,11 +297,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.revision",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "21 modules, 0 public helper(s), 0 procedural naming marker(s), 2 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-022-proceduralboundedpackage-backend-app-drafting-application-validation",
@@ -327,11 +312,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.validation",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "28 modules, 0 public helper(s), 0 procedural naming marker(s), 2 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-023-proceduralboundedpackage-backend-app-infrastructure",
@@ -342,11 +327,11 @@
       "severity": "medium",
       "owner": "backend.app.infrastructure",
       "targetShape": "service",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "18 modules, 8 public helper(s), 0 procedural naming marker(s), 2 large module(s).",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-024-publichelpersprawl-backend-app-drafting-application-generation-draft-candidate-audit-py",
@@ -357,11 +342,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "2 public top-level helper(s): build_candidate_request_trace, build_candidate_result_trace.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-025-publichelpersprawl-backend-app-drafting-application-generation-draft-candidate-prompts-py",
@@ -372,11 +357,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "1 public top-level helper(s): build_draft_candidate_messages.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-026-publichelpersprawl-backend-app-drafting-application-generation-draft-candidate-selection-b",
@@ -387,11 +372,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "1 public top-level helper(s): candidate_selection_blocked_payload.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-027-publichelpersprawl-backend-app-drafting-application-generation-draft-generation-audit-py",
@@ -402,11 +387,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "2 public top-level helper(s): build_draft_request_trace, build_draft_result_trace.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-028-publichelpersprawl-backend-app-drafting-application-generation-draft-generation-params-py",
@@ -417,11 +402,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "2 public top-level helper(s): generation_params_for_profile, generation_params_for_attempt.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-029-publichelpersprawl-backend-app-drafting-application-generation-draft-prompt-builder-py",
@@ -432,11 +417,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "1 public top-level helper(s): build_draft_prompt_messages.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-030-publichelpersprawl-backend-app-drafting-application-migration-legacy-surface-inventory-py",
@@ -447,11 +432,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.migration",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "1 public top-level helper(s): legacy_surface_inventory_payload.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-031-publichelpersprawl-backend-app-drafting-application-workflow-legacy-workflow-py",
@@ -462,11 +447,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.workflow",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "1 public top-level helper(s): build_legacy_draft_workflow.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-032-rawdictcontract-backend-app-api-health-py",
@@ -477,11 +462,11 @@
       "severity": "medium",
       "owner": "backend.app.api",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: health, api_health.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-033-rawdictcontract-backend-app-api-portfolio-auth-py",
@@ -492,11 +477,11 @@
       "severity": "medium",
       "owner": "backend.app.api",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: login, logout, me.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-034-rawdictcontract-backend-app-api-portfolio-projects-py",
@@ -507,11 +492,11 @@
       "severity": "medium",
       "owner": "backend.app.api",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: projects, create_project, project, update_project, workspace, save_workspace.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-035-rawdictcontract-backend-app-application-draft-run-step-progress-payload-py",
@@ -522,11 +507,11 @@
       "severity": "medium",
       "owner": "backend.app.application",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.1",
+      "repairSlice": "2.17.4.6.0.12.1",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: step_artifact, with_progress, with_progress_payload.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the API/infrastructure medium cleanup follow-up."
     },
     {
       "debtId": "bad-036-rawdictcontract-backend-app-drafting-application-generation-draft-candidate-audit-py",
@@ -537,11 +522,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: build_candidate_request_trace, build_candidate_result_trace.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-037-rawdictcontract-backend-app-drafting-application-generation-draft-candidate-prompts-py",
@@ -552,11 +537,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: build_draft_candidate_messages.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-038-rawdictcontract-backend-app-drafting-application-generation-draft-candidate-selection-bloc",
@@ -567,11 +552,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: candidate_selection_blocked_payload.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-039-rawdictcontract-backend-app-drafting-application-generation-draft-generation-audit-py",
@@ -582,11 +567,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: build_draft_request_trace, build_draft_result_trace.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-040-rawdictcontract-backend-app-drafting-application-generation-draft-prompt-builder-py",
@@ -597,11 +582,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.generation",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: build_draft_prompt_messages.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-041-rawdictcontract-backend-app-drafting-application-migration-legacy-surface-inventory-py",
@@ -612,11 +597,11 @@
       "severity": "medium",
       "owner": "backend.app.drafting.application.migration",
       "targetShape": "dto",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.2",
+      "repairSlice": "2.17.4.6.0.12.2",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Public function annotations expose raw dict/Mapping contract: legacy_surface_inventory_payload.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
       "debtId": "bad-042-testmirrorsbadarchitecture-backend-tests-test-draft-revision-operation-repair-py",
@@ -627,11 +612,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_progress.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-043-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-py",
@@ -642,11 +627,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-044-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-alternative-rescue-py",
@@ -657,11 +642,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-045-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-article-memory-py",
@@ -672,11 +657,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-046-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-candidate-block-py",
@@ -687,11 +672,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-047-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-candidates-py",
@@ -702,11 +687,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-048-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-external-evidence-py",
@@ -717,11 +702,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-049-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-planning-steps-py",
@@ -732,11 +717,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-050-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-progress-py",
@@ -747,11 +732,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-051-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-quality-gate-py",
@@ -762,11 +747,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-052-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-rule-pack-py",
@@ -777,11 +762,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-053-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-source-ledger-py",
@@ -792,11 +777,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-054-testmirrorsbadarchitecture-backend-tests-test-draft-run-pipeline-validation-step-py",
@@ -807,11 +792,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-055-testmirrorsbadarchitecture-backend-tests-test-draft-run-step-progress-py",
@@ -822,11 +807,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_progress.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-056-testmirrorsbadarchitecture-backend-tests-test-draft-run-validation-progress-py",
@@ -837,11 +822,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_progress.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     },
     {
       "debtId": "bad-057-testmirrorsbadarchitecture-backend-tests-test-drafting-package-shims-py",
@@ -852,11 +837,11 @@
       "severity": "medium",
       "owner": "backend.tests",
       "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12",
-      "repairSlice": "2.17.4.6.0.12",
+      "allowedUntilSlice": "2.17.4.6.0.12.3",
+      "repairSlice": "2.17.4.6.0.12.3",
       "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
       "currentEvidence": "Test imports legacy DraftRun owners: backend.app.application.draft_run_pipeline, backend.app.application.draft_run_service.",
-      "notes": "Current medium debt baseline after Slice 2.17.4.6.0.11. High debt for this slice is closed; this entry keeps the remaining medium surface explicit for follow-up cleanup."
+      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the backend test canonical import cleanup follow-up."
     }
   ]
 }

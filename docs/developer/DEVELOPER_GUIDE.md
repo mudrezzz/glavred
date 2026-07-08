@@ -90,12 +90,22 @@ and repeatable. The first scenario is
 recorded search/read fixtures, verifies query-intent and evidence-type coverage,
 checks selected/rejected reads and source diversity, and proves the runner stops at
 `FoundMaterial`. Run it with
-`python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py`. Broader
-three-project evaluation belongs to the later benchmark corpus slice. Use
+`python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py`. Live runs
+for the same project/radar attach `run.benchmarkReport` opportunistically after
+provider execution. Treat `inconclusive` as provider/runtime evidence, not as a
+search-quality failure; treat `failed` as usable provider output that missed required
+golden expectations or accepted known noise. The targeted live-evaluator regression is
+`python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py backend/tests/test_upstream_live_radar_benchmark_evaluator.py`.
+Live reports must distinguish `plannedCoverage` from `executedCoverage`. A required
+family or evidence type that appears only in planned intents but is skipped by the
+query budget is a diagnostic `warning`, not a clean `passed`; `skippedRequiredCoverage`
+records the skipped value and reason. Keep `coverage` as a compatibility summary, but
+do not use it alone as the live quality gate.
+Broader three-project evaluation belongs to the later benchmark corpus slice. Use
 `/radar-runs?runId=<id>` for full upstream diagnostics: the page resolves the run
 from local portfolio state first and backend portfolio snapshots second, then renders
 campaign plan, source strategy, operations, raw results, selected/rejected reads,
-found materials, warnings/errors, and any passive benchmark verdict. Keep the
+found materials, warnings/errors, and any passive/live benchmark verdict. Keep the
 inline radar-card trace compact; do not reintroduce full diagnostics into
 `RadarCard`.
 
@@ -154,6 +164,16 @@ Known debt is committed in
 `docs/architecture/backend-architecture-debt-ledger.json`; the human-readable
 snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`. New unledgered
 `critical` / `high` findings fail `npm run test:architecture`.
+
+After Slice `2.17.4.6.0.12`, the direct upstream/radar medium blocker is closed:
+`external_run_service.py` is below the large-module threshold, and live benchmark
+evaluation is split by status, expectation, coverage, and trace ownership. Remaining
+medium debt is intentionally re-ledgered into explicit follow-ups:
+`2.17.4.6.0.12.1` for API/infrastructure, `2.17.4.6.0.12.2` for residual Drafting
+packages, and `2.17.4.6.0.12.3` for backend tests that still import legacy owners.
+Before starting a backend-heavy product slice, check whether it touches one of those
+debt clusters; if it does, repair the cluster first or record a narrower exception in
+the ledger.
 
 `backend/app/drafting` is now the DraftRun bounded-context package boundary. Before
 adding a DraftRun module, read `backend/app/drafting/README.md` and

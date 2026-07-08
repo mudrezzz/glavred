@@ -28,6 +28,8 @@ def test_golden_radar_benchmark_passes_with_recorded_fixture() -> None:
     assert payload["counters"]["selectedReadCount"] >= 2
     assert payload["counters"]["foundMaterialCount"] >= 2
     assert payload["counters"]["distinctSelectedDomainCount"] >= 2
+    assert payload["plannedCoverage"]["queryFamilies"]["missing"] == []
+    assert "limitationCritique" in payload["executedCoverage"]["queryFamilies"]["missing"]
 
 
 def test_golden_radar_benchmark_reports_campaign_trace_and_rejections() -> None:
@@ -58,4 +60,3 @@ def test_golden_radar_benchmark_does_not_create_downstream_artifacts() -> None:
     assert "draftRuns" not in report.run
     assert "SourceSignal" not in payload_text
     assert "DraftRun" not in payload_text
-

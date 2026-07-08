@@ -5,6 +5,12 @@ description: Use at the start of a new Codex chat or when asked to continue an e
 
 # Project Onboarding Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Quickly understand the project state and select the next appropriate action from repository context.
@@ -57,6 +63,10 @@ Instead:
    remaining explicit debt before treating a legacy file as an owner. If backend
    package quality or structural debt is part of the next task, use
    `.agents/skills/backend-architecture-audit/SKILL.md`.
+7. For live provider checks, use `.env` as the authoritative local OpenRouter source
+   without printing secret values. If Glavred is not running in Docker, start the
+   Glavred compose stack with `docker compose up -d --build`; unrelated running
+   Docker projects do not block or replace that step.
 
 ## Required output before implementation
 

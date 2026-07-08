@@ -54,6 +54,51 @@ describe('RadarRunTracePage', () => {
     expect(screen.getByTestId('radar-run-timeline')).not.toHaveTextContent('raw results');
   });
 
+  it('renders live benchmark verdict payload when present', async () => {
+    setRadarRunTracePortfolioLoadersForTests(
+      () => createRadarTracePortfolio({
+        benchmarkReport: {
+          status: 'inconclusive',
+          scenarioId: 'benchmark-industrial-ai-maintenance-cases',
+          evaluationMode: 'live',
+          providerHealth: 'unavailable',
+          coverage: { traceComplete: false },
+          plannedCoverage: {
+            queryFamilies: { expected: ['limitationCritique'], covered: ['limitationCritique'], missing: [] },
+            evidenceTypes: { expected: ['limitationCritique'], covered: ['limitationCritique'], missing: [] }
+          },
+          executedCoverage: {
+            queryFamilies: { expected: ['limitationCritique'], covered: [], missing: ['limitationCritique'] },
+            evidenceTypes: { expected: ['limitationCritique'], covered: [], missing: ['limitationCritique'] }
+          },
+          skippedRequiredCoverage: [
+            {
+              kind: 'queryFamily',
+              value: 'limitationCritique',
+              reason: 'budget-max-external-queries',
+              intentId: 'intent-limits'
+            }
+          ],
+          inconclusiveReasons: ['openrouter-not-configured'],
+          traceComplete: false
+        }
+      }),
+      null
+    );
+
+    const { container } = render(<RadarRunTracePage />);
+
+    fireEvent.change(screen.getByLabelText('RadarRun ID'), { target: { value: 'radar-run-industrial-1' } });
+    fireEvent.click(container.querySelector('.ai-run-search button') as HTMLButtonElement);
+    fireEvent.click(await screen.findByText('Benchmark verdict'));
+
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('inconclusive');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('unavailable');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('openrouter-not-configured');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('limitationCritique');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('budget-max-external-queries');
+  });
+
   it('reports missing run ids clearly', async () => {
     setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio(), () => createRadarTracePortfolio());
 

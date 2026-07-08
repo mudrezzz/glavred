@@ -5,6 +5,12 @@ description: Use before implementing a Glavred DraftRun or drafting-pipeline sli
 
 # DraftRun TO BE Planning Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Prepare an implementation-ready TO BE document before a DraftRun pipeline slice is

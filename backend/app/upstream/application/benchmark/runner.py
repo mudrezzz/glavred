@@ -16,6 +16,7 @@ from backend.app.upstream.application.benchmark.recorded_adapters import (
     RecordedRadarSearchAdapter,
     RecordedUrlReader,
 )
+from backend.app.upstream.application.benchmark.evaluator import RadarBenchmarkEvaluator
 from backend.app.upstream.application.benchmark.scenarios import (
     RadarBenchmarkReport,
     RadarBenchmarkScenario,
@@ -25,6 +26,9 @@ from backend.app.upstream.application.external_run_service import UpstreamRadarE
 
 
 class RadarBenchmarkRunner:
+    def __init__(self) -> None:
+        self._evaluator = RadarBenchmarkEvaluator()
+
     def run(self, scenario: RadarBenchmarkScenario) -> RadarBenchmarkReport:
         fixture = RecordedRadarFixture.load(f"{scenario.id}.json")
         workspace = scenario.workspace()
@@ -51,127 +55,14 @@ class RadarBenchmarkRunner:
         workspace: dict[str, Any],
         result: dict[str, Any],
     ) -> RadarBenchmarkReport:
-        run = result["run"]
-        found_materials = result["foundMaterials"]
-        search_plan = run.get("searchPlan", {})
-        raw_results = run.get("rawResults", [])
-        selected = run.get("selectedForRead", [])
-        rejected = run.get("rejectedBeforeRead", [])
-        intent_families = {str(item.get("family")) for item in search_plan.get("intents", [])}
-        evidence_types = {str(item.get("evidenceType")) for item in search_plan.get("intents", [])}
-        selected_domains = {self._domain(str(item.get("url") or "")) for item in selected}
-        missing = self._missing_expectations(
+        return self._evaluator.evaluate(
             scenario=scenario,
-            intent_families=intent_families,
-            evidence_types=evidence_types,
-            raw_results=raw_results,
-            selected=selected,
-            found_materials=found_materials,
-            selected_domains=selected_domains,
+            run=result["run"],
+            found_materials=result["foundMaterials"],
+            workspace=workspace,
+            result=result,
+            evaluation_mode="recorded",
         )
-        trace_complete = self._trace_complete(run)
-        if not trace_complete:
-            missing.append("trace-completeness")
-        noise_hits = self._accepted_noise_hits(scenario=scenario, found_materials=found_materials)
-        leaks = self._downstream_leaks(workspace=workspace, result=result)
-        counters = {
-            "intentCount": len(search_plan.get("intents", [])),
-            "queryCount": len(search_plan.get("queries", [])),
-            "rawResultCount": len(raw_results),
-            "selectedReadCount": len(selected),
-            "rejectedBeforeReadCount": len(rejected),
-            "foundMaterialCount": len(found_materials),
-            "distinctSelectedDomainCount": len(selected_domains),
-        }
-        status = "passed" if not missing and not noise_hits and not leaks else "failed"
-        warnings = []
-        if scenario.optional_intent_families and not set(scenario.optional_intent_families).issubset(intent_families):
-            warnings.append("optional-intent-family-not-covered")
-        return RadarBenchmarkReport(
-            scenario_id=scenario.id,
-            status=status,
-            counters=counters,
-            missing_expectations=missing,
-            warnings=warnings,
-            unacceptable_noise_hits=noise_hits,
-            downstream_leaks=leaks,
-            trace_complete=trace_complete,
-            run=run,
-            found_materials=found_materials,
-        )
-
-    def _missing_expectations(
-        self,
-        *,
-        scenario: RadarBenchmarkScenario,
-        intent_families: set[str],
-        evidence_types: set[str],
-        raw_results: list[dict[str, Any]],
-        selected: list[dict[str, Any]],
-        found_materials: list[dict[str, Any]],
-        selected_domains: set[str],
-    ) -> list[str]:
-        missing = [
-            f"intent-family:{family}"
-            for family in scenario.expected_intent_families
-            if family not in intent_families
-        ]
-        missing.extend(
-            f"evidence-type:{evidence_type}"
-            for evidence_type in scenario.expected_evidence_types
-            if evidence_type not in evidence_types
-        )
-        thresholds = {
-            "raw-results": (len(raw_results), scenario.minimum_raw_results),
-            "selected-reads": (len(selected), scenario.minimum_selected_reads),
-            "found-materials": (len(found_materials), scenario.minimum_found_materials),
-            "distinct-domains": (len(selected_domains), scenario.minimum_distinct_domains),
-        }
-        missing.extend(f"{name}:{actual}/{expected}" for name, (actual, expected) in thresholds.items() if actual < expected)
-        return missing
-
-    def _accepted_noise_hits(
-        self,
-        *,
-        scenario: RadarBenchmarkScenario,
-        found_materials: list[dict[str, Any]],
-    ) -> list[str]:
-        hits = []
-        for material in found_materials:
-            text = f"{material.get('title', '')} {material.get('snippet', '')} {material.get('summary', '')}".lower()
-            if any(term in text for term in scenario.unacceptable_noise_terms):
-                hits.append(str(material.get("id") or material.get("title") or "found-material"))
-        return hits
-
-    def _downstream_leaks(self, *, workspace: dict[str, Any], result: dict[str, Any]) -> list[str]:
-        leaks = []
-        if result.get("sourceSignals"):
-            leaks.append("sourceSignals")
-        if result.get("postCandidates"):
-            leaks.append("postCandidates")
-        if result.get("draftRuns"):
-            leaks.append("draftRuns")
-        for key in ("sourceSignals", "postCandidates", "contentPlanItems", "draftRuns"):
-            if workspace.get(key):
-                leaks.append(f"workspace-input:{key}")
-        return leaks
-
-    def _trace_complete(self, run: dict[str, Any]) -> bool:
-        plan = run.get("searchPlan", {})
-        return all(
-            [
-                bool(plan.get("intents")),
-                bool(plan.get("queries")),
-                bool(plan.get("trace", {}).get("intentCoverage")),
-                bool(run.get("rawResults")),
-                bool(run.get("selectedForRead")),
-                "rejectedBeforeRead" in run,
-                bool(run.get("foundMaterialIds")),
-            ]
-        )
-
-    def _domain(self, url: str) -> str:
-        return url.split("/")[2] if "://" in url else url
 
 
 def run_radar_benchmark(scenario_id: str) -> RadarBenchmarkReport:

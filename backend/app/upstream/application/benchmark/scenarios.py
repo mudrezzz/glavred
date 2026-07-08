@@ -11,7 +11,9 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 
-BenchmarkStatus = Literal["passed", "warning", "failed"]
+BenchmarkStatus = Literal["passed", "warning", "failed", "inconclusive"]
+BenchmarkEvaluationMode = Literal["recorded", "live"]
+BenchmarkProviderHealth = Literal["ok", "degraded", "unavailable"]
 
 
 @dataclass(frozen=True)
@@ -79,9 +81,16 @@ class RadarBenchmarkReport:
     scenario_id: str
     status: BenchmarkStatus
     counters: dict[str, int]
+    evaluation_mode: BenchmarkEvaluationMode = "recorded"
+    provider_health: BenchmarkProviderHealth = "ok"
+    coverage: dict[str, Any] = field(default_factory=dict)
+    planned_coverage: dict[str, Any] = field(default_factory=dict)
+    executed_coverage: dict[str, Any] = field(default_factory=dict)
+    skipped_required_coverage: list[dict[str, Any]] = field(default_factory=list)
     missing_expectations: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     unacceptable_noise_hits: list[str] = field(default_factory=list)
+    inconclusive_reasons: list[str] = field(default_factory=list)
     downstream_leaks: list[str] = field(default_factory=list)
     trace_complete: bool = False
     run: dict[str, Any] = field(default_factory=dict)
@@ -91,14 +100,19 @@ class RadarBenchmarkReport:
         return {
             "scenarioId": self.scenario_id,
             "status": self.status,
+            "evaluationMode": self.evaluation_mode,
+            "providerHealth": self.provider_health,
+            "coverage": self.coverage,
+            "plannedCoverage": self.planned_coverage,
+            "executedCoverage": self.executed_coverage,
+            "skippedRequiredCoverage": self.skipped_required_coverage,
             "counters": self.counters,
             "missingExpectations": self.missing_expectations,
             "warnings": self.warnings,
             "unacceptableNoiseHits": self.unacceptable_noise_hits,
+            "inconclusiveReasons": self.inconclusive_reasons,
             "downstreamLeaks": self.downstream_leaks,
             "traceComplete": self.trace_complete,
-            "run": self.run,
-            "foundMaterials": self.found_materials,
         }
 
 
@@ -123,10 +137,24 @@ def get_golden_radar_benchmark_scenarios() -> list[RadarBenchmarkScenario]:
     return list(GOLDEN_RADAR_BENCHMARK_SCENARIOS)
 
 
+def find_golden_radar_benchmark_scenario(*, project_id: str | None, radar_id: str) -> RadarBenchmarkScenario | None:
+    return next(
+        (
+            scenario
+            for scenario in GOLDEN_RADAR_BENCHMARK_SCENARIOS
+            if scenario.radar_id == radar_id and (project_id is None or scenario.project_id == project_id)
+        ),
+        None,
+    )
+
+
 __all__ = (
     "BenchmarkStatus",
+    "BenchmarkEvaluationMode",
+    "BenchmarkProviderHealth",
     "GOLDEN_RADAR_BENCHMARK_SCENARIOS",
     "RadarBenchmarkReport",
     "RadarBenchmarkScenario",
+    "find_golden_radar_benchmark_scenario",
     "get_golden_radar_benchmark_scenarios",
 )

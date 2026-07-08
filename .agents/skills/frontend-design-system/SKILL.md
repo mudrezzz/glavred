@@ -1,9 +1,15 @@
 ---
 name: frontend-design-system
-description: Use for any Power Web OS frontend work: building or modifying screens, components, layout, styling, UI copy, visual QA, responsive behavior, or frontend design review. Always use the local design system in ui-design-systems/, starting from START-HERE.md, and enforce its tokens, components, visual rules, prototype references, and checklist.
+description: "Use for any Power Web OS frontend work: building or modifying screens, components, layout, styling, UI copy, visual QA, responsive behavior, or frontend design review. Always use the local design system in ui-design-systems/, starting from START-HERE.md, and enforce its tokens, components, visual rules, prototype references, and checklist."
 ---
 
 # Frontend Design System
+
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
 
 ## Mandatory Workflow
 

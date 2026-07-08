@@ -250,6 +250,15 @@ Implemented operation safety repair:
     `backend.app.application.upstream_radar_*` paths are compatibility shims only;
   - architecture audit distinguishes FastAPI route/dependency facades from public
     helper sprawl, and the current ledger has no high or stale findings.
+- Backend medium architecture debt follow-up:
+  - Slice 2.17.4.6.0.12 keeps the product runtime unchanged while closing the
+    upstream/radar medium blocker that would otherwise affect the next search slices;
+  - live benchmark evaluation is split into status, expectation, coverage, trace,
+    and evaluator owners;
+  - external radar runs delegate one-query execution, benchmark report attachment,
+    and result status/unique policy to named components;
+  - remaining medium debt is re-ledgered into explicit follow-up slices instead of
+    staying attached to the completed `0.12` slice.
 - Upstream search intent planning:
   - Slice 2.17.4.6.1 adds provider-free upstream domain contracts for `SearchPlan`,
     `SearchIntent`, `SearchQuery`, `SearchCampaignTrace`, and skipped search intents;
@@ -332,7 +341,10 @@ The planned cleanup sequence after the audit is:
 2. `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup. Done.
 3. `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup. Done.
 4. `2.17.4.6.0.11`: Backend API/application/infrastructure/upstream surface cleanup. Done.
-5. `2.17.4.6.0.12`: Backend medium architecture debt follow-up. Backlog.
+5. `2.17.4.6.0.12`: Backend medium architecture debt follow-up. Done.
+6. `2.17.4.6.0.12.1`: Backend API and infrastructure medium debt cleanup.
+7. `2.17.4.6.0.12.2`: Drafting residual medium debt cleanup.
+8. `2.17.4.6.0.12.3`: Backend test canonical import cleanup.
 
 ## Dependency Direction
 

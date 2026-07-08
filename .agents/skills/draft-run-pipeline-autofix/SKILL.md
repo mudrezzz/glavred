@@ -5,6 +5,12 @@ description: Use when asked to run a Glavred DraftRun, diagnose it against the c
 
 # Draft Run Pipeline Autofix Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Run a bounded quality loop for the Glavred drafting pipeline:
@@ -29,6 +35,9 @@ For an existing run id, use `$draft-run-pipeline-diagnostics`.
   correction proposal instead.
 - Do not call `/api/drafts/generate` as a timeout fallback for a live `DraftRun`.
 - Do not commit or push unless the user explicitly asks.
+- For live provider runs, use OpenRouter configuration from `.env` without printing
+  secret values. If Glavred is not running in Docker, start `docker compose up -d
+  --build`; unrelated Docker projects already running do not block this.
 
 ## Required Inputs
 

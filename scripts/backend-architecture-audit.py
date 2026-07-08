@@ -57,15 +57,12 @@ DRAFTING_BOUNDED_APP_PACKAGES = {
 }
 
 PROCEDURAL_PACKAGE_REPAIR_SLICES = {
-    "backend/app/drafting/application/validation": "2.17.4.6.0.11",
-    "backend/app/drafting/application/revision": "2.17.4.6.0.11",
-    "backend/app/drafting/application/final_quality": "2.17.4.6.0.11",
-    "backend/app/drafting/application/hitl": "2.17.4.6.0.10",
-    "backend/app/drafting/application/operations": "2.17.4.6.0.10",
-    "backend/app/shared/llm_operations": "2.17.4.6.0.10",
-    "backend/app/application": "2.17.4.6.0.11",
-    "backend/app/api": "2.17.4.6.0.11",
-    "backend/app/infrastructure": "2.17.4.6.0.11",
+    "backend/app/api": "2.17.4.6.0.12.1",
+    "backend/app/application": "2.17.4.6.0.12.1",
+    "backend/app/infrastructure": "2.17.4.6.0.12.1",
+    "backend/app/drafting/application": "2.17.4.6.0.12.2",
+    "backend/app/shared/llm_operations": "2.17.4.6.0.12.2",
+    "backend/tests": "2.17.4.6.0.12.3",
 }
 
 RAW_PROVIDER_ALLOWED_PREFIXES = (
@@ -239,7 +236,7 @@ def repair_slice_for(package: str) -> str:
     for prefix, repair_slice in PROCEDURAL_PACKAGE_REPAIR_SLICES.items():
         if package.startswith(prefix):
             return repair_slice
-    return "2.17.4.6.0.11"
+    return "2.17.4.6.0.12.2"
 
 
 def detect_shim_behavior(facts: ModuleFacts) -> list[Finding]:
@@ -698,10 +695,13 @@ def render_markdown(report: dict[str, Any]) -> str:
             "- `2.17.4.6.0.9`: Drafting revision and final-quality OOP cleanup closed public helper sprawl in both packages; final-quality findings are closed, and residual revision debt is medium line-count/package cleanup tracked in the ledger.",
             "- `2.17.4.6.0.10`: Drafting HITL and provider operation surface cleanup closed HITL/service high debt, split drafting operation helper surfaces into class-owned modules, and split shared LLM operation contracts/inventory/results by role.",
             "- `2.17.4.6.0.11`: Backend API/application/infrastructure surface cleanup closed remaining high findings, moved roadmap tracker behavior behind `backend.app.roadmap`, moved upstream radar behavior behind `backend.app.upstream`, and ledgered the remaining medium debt.",
+            "- `2.17.4.6.0.12`: Backend medium architecture debt follow-up closed the direct upstream/radar medium blocker and re-ledgered the remaining medium debt into explicit follow-up slices.",
             "",
             "## Next Repair Slices",
             "",
-            "- `2.17.4.6.0.12`: Backend medium architecture debt follow-up.",
+            "- `2.17.4.6.0.12.1`: Backend API and infrastructure medium debt cleanup.",
+            "- `2.17.4.6.0.12.2`: Drafting residual medium debt cleanup.",
+            "- `2.17.4.6.0.12.3`: Backend test canonical import cleanup.",
             "",
             "## Smoke Enforcement",
             "",

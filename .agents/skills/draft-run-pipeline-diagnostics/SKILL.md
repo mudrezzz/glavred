@@ -5,6 +5,12 @@ description: Use when diagnosing a Glavred DraftRun or AI drafting pipeline resu
 
 # Draft Run Pipeline Diagnostics Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Diagnose one Glavred drafting run with the same method every time, using local
@@ -71,6 +77,10 @@ Check these failure classes explicitly:
   quality failure. Backup model success is accepted but diagnostic. Deterministic
   fallback lowers fidelity only where the owning step already has a domain-safe
   fallback.
+  For local live diagnostics, take OpenRouter configuration from `.env` without
+  printing secret values. Do not report "missing key" merely because Docker was not
+  running or another project's containers were active; start the Glavred compose stack
+  when needed and diagnose the actual provider/runtime response.
   Inspect `generationParams` (`generationParamProfile`, `temperature`, `topP`) for
   writer, revision, JSON repair, and another-angle calls before judging model quality.
   For migrated operations, inspect `operationEnvelope`, `incident`, `inputStats`,

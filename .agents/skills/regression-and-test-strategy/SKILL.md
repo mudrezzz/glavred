@@ -5,6 +5,12 @@ description: Use when deciding which tests to add or run for a slice, when a cha
 
 # Regression and Test Strategy Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Choose and execute the right validation scope for the current change.

@@ -5,6 +5,12 @@ description: Use when creating or reworking a Glavred blog project from an appro
 
 # Project Blueprint Creation
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Overview
 
 Turn an approved blog-project blueprint into consistent Glavred project data. Keep the blueprint as the planning source, write UTF-8 fixtures/docs first, then refresh backend-visible snapshots through safe application paths.

@@ -213,12 +213,15 @@ results, selected/rejected reads, warnings/errors, raw JSON fallback, and benchm
 verdict when the run carries one. This trace stays separate from `Найденные сигналы`.
 It does not create new signals or post candidates yet.
 
-The next diagnostic layer will use one golden radar benchmark first:
-`Опытный цех «Сборочная»` / industrial AI maintenance cases. That scenario is meant
-to answer whether the radar searched the right evidence types, read diverse useful
-sources, rejected noise, and kept the result as found material. The separate
-RadarRun trace page can already be opened from a run id, similar to the DraftRun/AiRun
-trace pages; live scoring of that page is the next quality slice.
+The first diagnostic layer uses one golden radar benchmark:
+`Опытный цех «Сборочная»` / industrial AI maintenance cases. For matching live runs,
+the backend attaches a benchmark verdict to the run. `passed` means the live search met
+the required golden expectations through actually executed queries, not merely planned
+search directions. `warning` means the run produced useful material with non-blocking
+gaps, including a required direction that was planned but skipped by budget. `failed`
+means the provider worked but the search quality missed required expectations or
+accepted known noise, and `inconclusive` means provider/runtime conditions made a fair
+quality verdict impossible.
 
 The section has three internal tabs:
 

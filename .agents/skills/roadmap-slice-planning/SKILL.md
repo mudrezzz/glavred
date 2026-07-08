@@ -5,6 +5,12 @@ description: Use when turning requirements, user ideas, or architecture into tra
 
 # Roadmap Slice Planning Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Maintain the tracker-backed roadmap as the project control center. `ROADMAP.md` is a generated report; the committed source artifact is `docs/roadmap/slices.export.jsonl`.

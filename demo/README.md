@@ -231,6 +231,16 @@ radar card keeps a short `Трасса запуска` preview; use `Откры�
 source strategy, operations, raw results, selected/rejected reads, found materials,
 warnings/errors, and any benchmark verdict stored on the run.
 
+Live provider-backed runs for that same radar now reuse the golden expectations without
+requiring exact URL matches. The live report is attached as `benchmarkReport` on the
+run and separates quality from provider availability: `passed`/`warning`/`failed`
+describe the search output, while `inconclusive` means the provider/runtime path did
+not produce enough fair evidence to grade.
+`passed` is based on `executedCoverage`, not only on planned search intents. When the
+planner created a required direction but the query budget skipped it, the report
+stores the reason in `skippedRequiredCoverage` and the verdict should be `warning`
+unless another hard quality failure is present.
+
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
 approve a plan slot and Glavred automatically creates the editorial work item plus

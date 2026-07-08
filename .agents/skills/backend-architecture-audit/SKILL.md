@@ -5,6 +5,12 @@ description: Use before backend architecture/refactor slices, when backend packa
 
 # Backend Architecture Audit Skill
 
+## Language Rule
+
+When communicating with the user, write in clear Russian. Do not mix English and
+Russian in explanatory prose. Keep English only for literal code, commands, file
+paths, API fields, identifiers, commit messages, and exact status values.
+
 ## Goal
 
 Run a repeatable backend architecture audit so structural debt is found by process,

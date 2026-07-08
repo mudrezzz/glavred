@@ -7264,7 +7264,7 @@ Status:
 
 ### Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness
 
-- Status: Ready
+- Status: Done
 - Goal: Add a live Radar golden evaluation harness that grades real provider-backed radar runs against stable expectations instead of subjective one-off judgment.
 - User value: The team can tell whether live upstream search is good enough, noisy, inconclusive, or failing without changing the quality bar every run.
 - Scope:
@@ -7301,16 +7301,59 @@ Status:
   - Accepted generic AI news, vendor pricing, or model leaderboard noise fails or warns the run.
 - Risks:
   - Live web results drift; avoid mandatory exact URL matches and keep expected evidence categories explicit.
+- Completed: 2026-07-07
+
+### Slice 2.17.4.6.1.2.2: Live Radar Executed Coverage Gate
+
+- Status: Done
+- Goal: Make live Radar golden evaluation distinguish planned search coverage from actually executed provider queries, so a skipped required direction cannot produce a clean `passed` verdict.
+- User value: The team can trust live Radar verdicts as quality diagnostics instead of accepting optimistic passes caused by planned-but-skipped search intents.
+- Scope:
+  - Add explicit `plannedCoverage` and `executedCoverage` blocks to `RadarBenchmarkReport` payloads.
+  - Derive planned coverage from `searchPlan.intents[]` and executed coverage from `searchPlan.queries[]`, provider operations, raw results, selected reads, and found materials.
+  - Treat required families or evidence types that were planned but skipped by budget as at least `warning`; use `failed` when provider was usable and required executed coverage is materially missing.
+  - Preserve `inconclusive` for provider-disabled, not-configured, rate-limit, network, or trace-insufficient cases.
+  - Update live evaluator tests for the observed industrial AI run shape where `limitationCritique` was planned but skipped by `budget-max-external-queries`.
+  - Update the RadarRun trace page benchmark block to show planned versus executed coverage separately.
+  - Document the stricter quality gate and when `passed`, `warning`, `failed`, and `inconclusive` apply.
+- Out of scope:
+  - Changing provider execution, query generation, source selection, URL reading, signal extraction, candidate assembly, DraftRun, SQLite, or HTTP API contracts.
+  - Building persistent search memory or reuse policy.
+  - Making live provider availability a deterministic CI gate.
+- Implementation notes:
+  - This slice is a correction to the evaluator, not a search-quality rewrite.
+  - The live proof from `2026-07-07` showed a technically successful run with only three executed query families while five intents were planned; this slice makes that distinction machine-visible.
+  - Keep backward compatibility for old `benchmarkReport` payloads that do not yet contain split coverage fields.
+- Architecture impact:
+  - Keeps benchmark quality policy under upstream benchmark ownership.
+  - Prevents React from computing quality verdicts; frontend only renders backend-provided coverage and reasons.
+- Tests:
+  - Backend evaluator tests for planned-only coverage, executed coverage, skipped required families, provider-inconclusive cases, and exact-URL drift.
+  - External run service test proving attached live reports contain split coverage.
+  - RadarRun trace page/view-model tests for planned versus executed coverage rendering and old-report compatibility.
+  - `npm run test:architecture`, `npm run smoke`, roadmap `render`, `export`, `check`, and `git diff --check`.
+- Docs:
+  - Update upstream architecture, developer guide, user guide, demo README, and roadmap artifacts.
+- Demo impact:
+  - The industrial AI radar demo can explain whether a `warning` is caused by skipped search directions rather than poor found materials.
+- Acceptance criteria:
+  - A required family that is only planned but not actually executed no longer yields clean `passed`.
+  - The report shows which families/evidence types were planned, executed, skipped by budget, and represented in accepted materials.
+  - Existing recorded benchmark behavior remains deterministic and backward-compatible.
+  - `/radar-runs?runId=...` shows the stricter verdict and split coverage without computing it client-side.
+- Risks:
+  - If strict executed coverage is too harsh for low-budget runs, the policy should return `warning` with clear budget reasons rather than hiding the gap.
+- Completed: 2026-07-07
 
 ### Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up
 
-- Status: Backlog
+- Status: Done
 - Goal: Repair medium backend architecture findings that remain after high-debt cleanup, after upstream benchmark and RadarRun trace observability are in place.
 - User value: Medium debt remains visible and scheduled instead of silently accumulating while product work resumes.
 - Placement decision:
-  - Run after `2.17.4.6.1.1 - Golden Radar Benchmark Scenario`, `2.17.4.6.1.2 - RadarRun Trace Page`, and `2.17.4.6.1.2.1 - Live Radar Golden Evaluation Harness`.
+  - Run after `2.17.4.6.1.1 - Golden Radar Benchmark Scenario`, `2.17.4.6.1.2 - RadarRun Trace Page`, `2.17.4.6.1.2.1 - Live Radar Golden Evaluation Harness`, and `2.17.4.6.1.2.2 - Live Radar Executed Coverage Gate`.
   - Run before `2.17.4.6.1.3 - DraftRun Provider Reliability Analytics`, `2.17.4.6.2`, and later backend-heavy search slices.
-  - Rationale: recorded benchmark, RadarRun trace, and live evaluation first give observability; cleanup before analytics/search growth prevents building new backend layers on known medium debt.
+  - Rationale: recorded benchmark, RadarRun trace, live evaluation, and executed-coverage gating first give observability; cleanup before analytics/search growth prevents building new backend layers on known medium debt.
 - Scope:
   - Review ledgered medium findings from `docs/architecture/backend-architecture-debt-ledger.json`.
   - Prioritize medium debt that affects upcoming analytics/search work: upstream owners, API/read-model boundaries, infrastructure factories/repositories, test-import drift, and residual drafting/shared surfaces.
@@ -7336,10 +7379,66 @@ Status:
   - Upcoming analytics/search slices have no known medium blocker in their direct backend dependency path.
 - Risks:
   - If treated as broad cleanup, the slice can sprawl; keep it targeted to debt that blocks or weakens the next backend-heavy slices.
+- Completed: 2026-07-08
+
+### Slice 2.17.4.6.0.12.1: Backend API and Infrastructure Medium Debt Cleanup
+
+- Status: Backlog
+- Goal: Repair remaining medium architecture debt in API and infrastructure surfaces after the upstream direct blocker is closed.
+- User value: Backend API and persistence code stays maintainable before product work adds more read models and analytics.
+- Scope:
+  - Reduce API raw dict contracts in health/auth/project routes through typed response builders without changing HTTP JSON shape.
+  - Split repository/factory mapper surfaces in infrastructure where the audit still reports medium large-module or procedural package debt.
+  - Keep route handlers thin and storage adapters behavior-compatible.
+- Out of scope:
+  - HTTP contract changes, SQLite migrations, provider behavior changes, or UI changes.
+- Architecture impact:
+  - Moves remaining API/infrastructure medium debt out of the direct path for analytics and search work.
+- Tests:
+  - API route tests, repository/factory tests, backend architecture audit, `npm run test:architecture`, roadmap check.
+- Acceptance criteria:
+  - Ledger entries assigned to `2.17.4.6.0.12.1` are fixed or re-ledgered with a narrower owner and later slice.
+  - No unledgered or stale audit findings are introduced.
+
+### Slice 2.17.4.6.0.12.2: Drafting Residual Medium Debt Cleanup
+
+- Status: Backlog
+- Goal: Repair residual medium architecture debt in drafting packages that is not on the immediate radar/search path.
+- User value: DraftRun backend remains navigable while product work resumes, without forcing unrelated drafting refactors into radar slices.
+- Scope:
+  - Clean remaining medium large-module, procedural-package, public-helper, and raw-dict surfaces in drafting artifacts, evidence, generation, planning, migration, revision, validation, and workflow owners.
+  - Preserve DraftRun runtime behavior, prompts, trace shape, provider semantics, and SQLite schema.
+- Out of scope:
+  - DraftRun quality changes, prompt rewrites, provider model policy, UI changes, or new DraftRun features.
+- Architecture impact:
+  - Keeps residual drafting cleanup explicit without blocking upstream product slices that do not touch DraftRun internals.
+- Tests:
+  - Targeted DraftRun package tests, backend architecture audit, `npm run test:architecture`, roadmap check.
+- Acceptance criteria:
+  - Ledger entries assigned to `2.17.4.6.0.12.2` are fixed or re-ledgered with a narrower owner and later slice.
+  - No behavior reappears in migrated legacy shims.
+
+### Slice 2.17.4.6.0.12.3: Backend Test Canonical Import Cleanup
+
+- Status: Backlog
+- Goal: Move backend tests away from legacy DraftRun imports where canonical owners exist.
+- User value: Tests stop preserving old architecture by importing compatibility shims as if they were behavior owners.
+- Scope:
+  - Update tests flagged by `testMirrorsBadArchitecture` to import canonical drafting owners or explicit compatibility facades.
+  - Preserve existing behavior assertions and avoid test-only production code.
+- Out of scope:
+  - Runtime behavior changes, prompt changes, provider behavior changes, or broad test rewrites unrelated to legacy imports.
+- Architecture impact:
+  - Prevents tests from keeping old flat DraftRun owners alive after the runtime migration.
+- Tests:
+  - Targeted DraftRun pipeline tests, package shim tests, backend architecture audit, `npm run test:architecture`, roadmap check.
+- Acceptance criteria:
+  - Ledger entries assigned to `2.17.4.6.0.12.3` are fixed or re-ledgered with a narrower owner and later slice.
+  - Tests still prove old compatibility imports work only where that is the explicit subject of the test.
 
 ### Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics
 
-- Status: Backlog
+- Status: Ready
 - Goal: Measure retry, repair, backup, fallback, timeout, malformed JSON, schema failure, and provider incident frequency across multiple DraftRuns by operation, provider, model, and execution mode.
 - User value: The team can distinguish an isolated successful retry from a systemic provider/model/prompt reliability problem before changing prompts or model policy.
 - Scope:
@@ -7503,37 +7602,47 @@ Status:
 ### Slice 2.17.4.6.6: Search Memory, Refresh Policy, and Production Controls
 
 - Status: Backlog
-- Goal: Move radar search from useful prototype to production-ready operation with history, refresh rules, caching, rate limits, retries, and cost controls.
+- Goal: Move radar search from useful prototype to production-ready operation with history, accumulated search memory, refresh rules, caching, rate limits, retries, and cost controls.
 - User value:
-  - Radars can be rerun safely without repeatedly surfacing the same stale links, burning budget unpredictably, or hiding provider instability.
+  - Radars can be rerun safely without losing useful discovered sources, repeatedly surfacing the same stale links, burning budget unpredictably, or hiding provider instability.
 - Scope:
-  - Add project-scoped search memory for seen URLs, material fingerprints, duplicate groups, and previously rejected materials.
+  - Add project-scoped search memory for every discovered source candidate: raw provider hits, duplicate URLs, unread candidates, selected reads, rejected-before-read links, accepted materials, and previously rejected materials.
+  - Preserve enough provenance to reuse or re-evaluate a source later: radar id, query id, query family, evidence type, source handle, title, URL, domain, snippet, first seen, last seen, decision history, rejection reason, read status, and material fingerprint when available.
+  - Define the first reuse policy for the accumulated cache: what may be reused, what must be re-read, what stays diagnostic-only, and how manual reconsider/reset works.
   - Add freshness and recheck policy for changed/stale materials.
   - Add cache boundaries for search results and URL reads.
   - Add provider retry/backoff, timeout handling, rate and cost accounting, and production diagnostics.
-  - Distinguish empty, partial, failed, stale-only, and provider-limited runs.
+  - Distinguish empty, partial, failed, stale-only, duplicate-heavy, cache-heavy, and provider-limited runs.
 - Out of scope:
   - Scheduled background jobs unless already available.
   - Cross-user shared index.
   - External publication or social APIs.
+  - Automatic promotion of cached rejected sources into accepted materials without a trace-visible policy.
 - Implementation notes:
   - This is the production-readiness gate before treating upstream search as a dependable product subsystem.
+  - The cache is not a hidden quality shortcut: every reused or suppressed source must remain visible in trace.
+  - The first version may define the cache and write to it before using it aggressively for ranking.
 - Architecture impact:
   - Adds operational reliability around provider-backed upstream search while keeping project isolation.
+  - Creates a durable boundary between ephemeral provider search output and editorially accepted `FoundMaterial`.
 - Tests:
   - Cache and refresh policy tests.
+  - Tests proving unread/rejected/duplicate candidates are retained with provenance and do not become accepted materials silently.
   - Retry/backoff/failure tests with fake adapters.
   - Budget/cost accounting tests.
   - Regression tests proving reruns do not spam duplicate materials.
 - Docs:
   - Update operations diagnostics, developer guide, user guide, and upstream architecture.
 - Demo impact:
-  - Demo runs can show seen/new/stale material distinctions.
+  - Demo runs can show seen/new/stale/rejected/unread material distinctions.
 - Acceptance criteria:
   - Repeated radar runs are bounded, explainable, and do not repeatedly surface the same material as new.
+  - Found source candidates are not lost merely because the current run did not read or accept them.
+  - Cache reuse and suppression decisions are trace-visible and reversible by a future manual reconsider path.
   - Provider instability is visible and recoverable.
 - Risks:
   - Search memory can hide useful rediscoveries; keep manual reset/reconsider path.
+  - Persisting too much raw provider output can create noise; keep retention policy explicit and project-scoped.
 
 ### Slice 2.17.4.7: Signal Extraction and Editorial Scoring
 
@@ -7951,6 +8060,9 @@ Status:
 - Slice 2.17.4.6.1.0.1: AiRun Trace UX and Quality Verdict Panel. Completed 2026-07-06.
 - Slice 2.17.4.6.1.1: Golden Radar Benchmark Scenario. Completed 2026-07-06.
 - Slice 2.17.4.6.1.2: RadarRun Trace Page. Completed 2026-07-06.
+- Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness. Completed 2026-07-07.
+- Slice 2.17.4.6.1.2.2: Live Radar Executed Coverage Gate. Completed 2026-07-07.
+- Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up. Completed 2026-07-08.
 
 
 ## Blocked Items
@@ -7979,4 +8091,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness`.
+Implement `Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics`.
