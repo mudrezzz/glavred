@@ -45,7 +45,8 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 | `application/revision` | Pairwise ranking, directed revision, ranking-revision orchestration, revision loop, revision policies, regression checks, rejected moves, and deterministic pairwise fallback. Slice 2.17.4.6.0.9 makes payload mapping, candidate mapping, revision-loop policy, rejected-move policy, prompts, acceptance, and config caps class-owned. | migrated ranking/revision modules |
 | `application/final_quality` | Final quality contract, deterministic assessment, final gate/evaluator/payloads, independent review, final repair loop, and parser/prompts/service. Slice 2.17.4.6.0.9 makes assessment, attribution, payload, contract, parser, and prompt responsibilities class-owned. | migrated final quality modules |
 | `application/hitl` | Human-comment revision and human-comment revision quality check services. Slice 2.17.4.6.0.10 keeps services orchestration-only and makes prompt builders, version/context compactors, attempt trace builders, provider-attempt runners, quality parser, and quality overlay policy class-owned. | migrated HITL modules |
-| `application/quality` | Per-run DraftRun quality/fidelity reporting: technical status, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial status, and overall verdict. | completion diagnostics and future reliability analytics |
+| `application/quality` | Per-run DraftRun quality/fidelity reporting: technical status, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial status, and overall verdict. | completion diagnostics |
+| `application/reliability` | Cross-run DraftRun provider reliability analytics: retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns with remediation decisions. The report also owns `signalCoverage`, which audits raw child `AiRun`, operation-envelope, retry/backup/fallback, and budget signals so analytics gaps are visible. | diagnostics CLI and reliability follow-up planning |
 | `infrastructure` | Drafting-specific infrastructure wiring and adapters when they cannot stay in root infrastructure. | Celery DraftRun wiring and provider factory wiring after ports exist |
 
 ## Migration Order
@@ -99,6 +100,13 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     `application/quality` writes trace-only verdicts into validation and complete
     artifacts and keeps retry-recovered, backup-recovered, fallback-recovered, and
     step-level quality issues distinct.
+20. Add cross-run DraftRun provider reliability analytics. Done in Slice
+    2.17.4.6.1.3; `application/reliability` aggregates stored quality/fidelity
+    reports, operation envelopes, budgets, and child `AiRun` records into operation
+    summaries, raw signal coverage, and remediation decisions.
+21. Repair reliability issues found by five live DraftRuns. Ready in Slice
+    2.17.4.6.1.3.1, then follow-up slices cover validation/final gate warnings,
+    provider JSON/fallback repair, and queue/staleness reliability.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

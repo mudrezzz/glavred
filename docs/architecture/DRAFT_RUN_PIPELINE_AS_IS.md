@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.1.0: Live DraftRun Quality/Fidelity Hardening.
+Current as of Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -37,6 +37,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
 | `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
+| `ProviderReliabilityReport` | Cross-run provider reliability summary and remediation map for retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns. | `python scripts/analyze_draft_run_reliability.py --run-id ...` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
 | `HumanCommentRevisionQualityCheck` | Diagnostic review of one human-comment revision: comment compliance, source-marker preservation, public-prose health, internal jargon leaks, and base-version regression risks. It never blocks saving the version. | local workspace `postDraft.versions[].qualityCheck`, child `AiRun` trace |
@@ -942,9 +943,22 @@ model is normal recovery, not a quality failure. Backup success is accepted but
 diagnostic. Domain-safe deterministic fallback lowers fidelity. Step-level quality
 problems are tracked separately: evidence coverage, unresolved critical/warning
 findings, final-gate warning/critical status, rejected final repair, and
-size/over-budget risks. Cross-run provider reliability analytics is a later backlog
-slice; this report stores one-run signals so analytics will not need to parse prose
-diagnostics.
+size/over-budget risks.
+
+Slice 2.17.4.6.1.3 adds `ProviderReliabilityReport` as a developer diagnostics
+artifact over multiple stored DraftRuns. It reads structured `qualityFidelity`,
+operation envelopes, payload/runtime budgets, and child `AiRun` records; it does not
+parse prose diagnostics and does not change runtime behavior. One run is reported as
+`insufficientData` for systemic conclusions. Every non-clean signal must become a
+remediation decision such as `noActionExpected`, `watchWithMoreRuns`,
+`fixBacklogSlice`, or `fixBeforeTrustingQuality`.
+
+The report also includes `signalCoverage`. This is the audit layer for the analytics
+itself: it records raw child `AiRun` records, operation-envelope incidents,
+retry/backup/fallback signals, payload/runtime budget incidents, and ignored
+stats-only budget payloads with reasons. `fixBacklogSlice` and
+`fixBeforeTrustingQuality` remediation decisions must point to concrete roadmap
+slices.
 
 ## 9. How to read a run trace
 
@@ -987,6 +1001,10 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
 18. `qualityFidelity`: inspect `technicalStatus`, `providerRecoveryStatus`,
     `evidenceFidelity`, `issueLifecycle`, `editorialStatus`, and `overallVerdict`
     before equating `DraftRun.status=succeeded` with publication-ready output.
+18a. Cross-run reliability: when comparing multiple runs, use
+    `python scripts/analyze_draft_run_reliability.py --run-id <id> --run-id <id>`
+    and inspect operation/model counters, `signalCoverage`, plus the remediation
+    ledger. Do not infer a systemic provider/model problem from one successful retry.
 19. `validation.progress`: inspect nested operations; failed late operations should show
     safe errors and the final previous-best decision when available.
 20. child `AiRun` detail: inspect prompt messages, role model, generation params,

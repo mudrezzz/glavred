@@ -455,6 +455,18 @@ coverage, rejected final repair, and size/over-budget problems are step-level qu
 issues and must be visible in `qualityFidelity`, not inferred from
 `DraftRun.status` alone.
 
+Cross-run DraftRun provider reliability analytics must reuse structured
+`qualityFidelity`, operation envelopes, payload/runtime budgets, and child `AiRun`
+records. It must not parse prose diagnostics. A same-model retry that later accepts
+is a reliability counter, not a failed quality result. Repeated backup, fallback,
+timeout, malformed JSON, schema failure, open critical, or budget incidents must be
+mapped to an explicit remediation decision: no action, watch with more runs, covered
+by an existing slice, backlog fix, fix before trusting quality, or manual review.
+The report must also expose `signalCoverage` so every raw child `AiRun`,
+operation-envelope incident, retry, backup, fallback, and payload/runtime budget
+incident is either counted or ignored with a concrete reason. Remediation decisions
+that require fixes must reference concrete roadmap slices.
+
 Validation and ranking/revision loops must additionally use the DraftRun validation
 runtime budget guard. The guard records `runtimeBudget` in validation progress,
 tracks wall-clock time, LLM calls, revision cycles, pairwise rounds, final-gate

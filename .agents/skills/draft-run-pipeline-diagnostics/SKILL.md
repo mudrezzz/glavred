@@ -106,6 +106,18 @@ Check these failure classes explicitly:
   technical completion only. Use `technicalStatus`, `providerRecoveryStatus`,
   `evidenceFidelity`, `issueLifecycle`, `editorialStatus`, and `overallVerdict` to
   decide whether the result is clean, recovered, degraded, or needs attention.
+- **Cross-run provider reliability**: when the question is whether retries, backup,
+  fallback, malformed JSON, timeout, schema failure, payload-budget, or open critical
+  signals are systemic, run
+  `python scripts/analyze_draft_run_reliability.py --run-id <DraftRun ID> --run-id <DraftRun ID>`.
+  One run can prove what happened, but it is `insufficientData` for systemic
+  conclusions. The report's remediation ledger must map every non-clean signal to
+  no action, watch, existing slice, backlog fix, fix before trusting quality, or
+  manual review. Also inspect `signalCoverage`: every child `AiRun`, operation
+  envelope incident, retry, backup, fallback, payload/runtime budget incident, or
+  stats-only ignored budget payload must be covered or ignored with a concrete
+  reason. `fixBacklogSlice` and `fixBeforeTrustingQuality` entries must point to
+  concrete roadmap slices, not placeholders.
 - **Planning**: material plan ignores public evidence, `usableEvidenceCandidates`
   missing, `availableEvidence` empty without `rejectionReasons`, repair/backup attempts
   absent, emergency fallback used too early, strategy is generic, rhetorical plans do
@@ -203,7 +215,7 @@ hide bad output behind polite abstractions.
 - When a run has `qualityFidelity.providerRecoveryStatus=retryRecovered`, do not
   recommend prompt/model fixes from that single run unless the accepted payload is
   itself bad. Repeated retry/backup/fallback patterns across many runs belong to the
-  provider reliability analytics backlog, not one-run quality diagnosis.
+  provider reliability analytics report, not one-run quality diagnosis.
 - For attribution issues, distinguish actionable missing-source findings from
   diagnostic handoff noise. Inspect `finalQualityGate.attributionReview`,
   `actionableAttributionFindings`, `diagnosticAttributionNoise`, and finding metadata

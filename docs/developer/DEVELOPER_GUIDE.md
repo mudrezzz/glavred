@@ -210,6 +210,8 @@ Migrated DraftRun runtime clusters are canonical under:
   that distinguish technical completion, provider retry/backup/fallback recovery,
   evidence fidelity, validation/final-gate issue lifecycle, editorial status, and
   clean/degraded/attention verdicts;
+- `backend.app.drafting.application.reliability` for cross-run provider reliability
+  analytics over stored DraftRuns and child `AiRun` records;
 - `backend.app.drafting.application.operations.json_step_adapter` for bounded JSON
   provider calls from migrated services.
 
@@ -282,6 +284,24 @@ recovery; backup model success is diagnostic; deterministic fallback lowers
 fidelity. Open critical findings, final-gate warning/critical status, weak evidence
 coverage, rejected final repair, or over-size final prose should produce
 `publishableWithCaution`, `needsHumanReview`, or a degraded overall verdict.
+
+For cross-run provider reliability, use:
+
+```powershell
+python scripts/analyze_draft_run_reliability.py --run-id <DraftRun ID> --run-id <DraftRun ID> --format markdown
+```
+
+The report groups retry, backup, fallback, degraded, failed, timeout, malformed
+JSON, schema failure, payload-budget, runtime-budget, and open-critical signals by
+operation, provider, model, model role, and execution mode. A single run produces
+`insufficientData` for systemic conclusions; it is still useful for checking whether
+every non-clean signal has a remediation decision.
+
+For live proof or release decisions, inspect the report's `signalCoverage` block.
+It must show every child `AiRun`, operation-envelope incident, retry, backup,
+fallback, payload/runtime budget incident, and stats-only ignored budget payload with
+a reason. A `fixBacklogSlice` or `fixBeforeTrustingQuality` remediation item is not
+complete until it points to a concrete roadmap slice.
 
 Validation package code must stay class-owned after Slice 2.17.4.6.0.8. Use
 `LlmValidationParser`, `EditorialCritiqueParser`, `LlmValidationPromptBuilder`,

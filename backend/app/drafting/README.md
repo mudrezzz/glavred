@@ -146,6 +146,11 @@ Slice 2.17.4.6.0.5 migrated the late DraftRun modules into:
   distinguishes technical completion from provider retry/backup/fallback recovery,
   evidence coverage, unresolved validation/final-gate issues, editorial status, and
   the final clean/degraded/attention verdict.
+- `application/reliability`: cross-run provider reliability analytics. It reads
+  existing `qualityFidelity`, `operationEnvelope`, `payloadBudget`, `runtimeBudget`,
+  and child `AiRun` records to count retry, backup, fallback, degradation, failure,
+  timeout, malformed JSON, schema failure, and open critical patterns without
+  parsing prose diagnostics.
 
 Slice 2.17.4.6.0.8 cleaned the validation package after migration. Validation
 prompt construction, LLM/editorial parsing, trace payloads, operation failure
@@ -291,6 +296,34 @@ owning step already has a domain-safe fallback, and it lowers fidelity. Step-lev
 quality issues such as weak evidence coverage, open critical findings, final-gate
 warnings, rejected final repair, or over-size final prose are evaluated separately
 from LLM/provider incidents.
+
+## Provider Reliability Analytics
+
+`backend.app.drafting.application.reliability` owns cross-run DraftRun provider
+reliability analytics. It does not change DraftRun execution. It aggregates
+structured signals already present in `qualityFidelity`, operation envelopes,
+payload/runtime budgets, and child `AiRun` records.
+
+Use:
+
+```powershell
+python scripts/analyze_draft_run_reliability.py --run-id <DraftRun ID> --run-id <DraftRun ID> --format markdown
+```
+
+The report contains two layers:
+
+- `events`, `operationSummaries`, and `remediationItems` explain operation/model
+  reliability and required follow-up.
+- `signalCoverage` audits raw structured signals: child `AiRun`, operation-envelope
+  incidents, retry/backup/fallback attempts, payload/runtime budget incidents, and
+  ignored stats-only budget payloads with explicit reasons.
+
+One run is useful for inspection but reports `insufficientData` for systemic
+conclusions. Repeated same-model retry is a reliability signal, not a failed result.
+Backup success is accepted but diagnostic. Deterministic fallback and open
+validation/final-gate issues must become remediation items or explicit watch/no-action
+decisions. Any `fixBacklogSlice` or `fixBeforeTrustingQuality` item must reference a
+concrete roadmap slice, not a placeholder.
 
 ## Workflow Orchestration
 

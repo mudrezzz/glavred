@@ -7438,7 +7438,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics
 
-- Status: Ready
+- Status: Done
 - Goal: Measure retry, repair, backup, fallback, timeout, malformed JSON, schema failure, and provider incident frequency across multiple DraftRuns by operation, provider, model, and execution mode.
 - User value: The team can distinguish an isolated successful retry from a systemic provider/model/prompt reliability problem before changing prompts or model policy.
 - Scope:
@@ -7459,6 +7459,122 @@ Status:
   - Cross-run report shows operation/model counts for clean, retryRecovered, backupRecovered, fallbackRecovered, degraded, failed, timeout, malformedJson, schemaFailure, and open critical outcomes.
   - A step that usually succeeds after retry is visible as reliability signal but not mislabeled as failed quality.
   - Analytics identifies systemic patterns without requiring manual comparison of individual DraftRun traces.
+- Completed: 2026-07-08
+
+- Live proof completed:
+  - Five real OpenRouter-backed DraftRuns were launched and finished with `DraftRun.status=succeeded`.
+  - Reliability report covered 5 run ids, 375 operation events, 964 raw structured signals, 0 non-stats ignored signals, and all linked child `AiRun` records.
+  - Report conclusion is `requiresFixBeforeTrustingQuality`, because live runs retained open criticals, final-gate warnings, evidence fallback/weakness, and one failed editorial critique branch.
+  - Repair branch added: `2.17.4.6.1.3.1`, `2.17.4.6.1.3.2`, `2.17.4.6.1.3.3`, `2.17.4.6.1.3.4`.
+
+### Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair
+
+- Status: Ready
+- Goal: Repair evidence interpretation reliability after live analytics found repeated provider timeouts, deterministic fallback, and weak evidence coverage.
+- User value: The team can trust that DraftRun evidence interpretation is not silently weakening final editorial quality.
+- Scope:
+  - Analyze the five-run reliability report for evidence interpretation failures, backup acceptance, provider timeout, deterministic fallback, and weak evidence coverage.
+  - Tune the evidence interpretation timeout/retry/fallback decision path only where the live report proves quality impact.
+  - Make fallback fidelity explicit in `qualityFidelity` and reliability analytics.
+  - Preserve DraftRun step order, HTTP API, SQLite schema, UI layout, and prompt goals unless a minimal trace field is needed for diagnosis.
+- Out of scope:
+  - Broad prompt rewrite, model replacement policy, source search changes, or UI redesign.
+- Architecture impact:
+  - Keeps repair under `backend.app.drafting.application.evidence` and reliability diagnostics under `backend.app.drafting.application.reliability`.
+  - No new flat legacy `backend/app/application` surface.
+- Tests:
+  - Targeted evidence interpretation timeout/fallback tests.
+  - `python scripts/analyze_draft_run_reliability.py` over fixture and live-style runs.
+  - Backend regression and architecture smoke.
+- Docs:
+  - Update DraftRun diagnostics docs and roadmap artifacts with the repaired evidence-fidelity semantics.
+- Acceptance criteria:
+  - Evidence interpretation fallback/timeout no longer silently produces trusted quality.
+  - Live-style reliability report maps evidence interpretation non-clean signals to this slice or `noActionExpected`.
+  - Weak evidence coverage has an explicit remediation or accepted-risk outcome.
+- Risks:
+  - Over-tightening evidence interpretation may block otherwise usable drafts; keep fallback continuation explicit but fidelity-lowering.
+
+### Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair
+
+- Status: Backlog
+- Goal: Close the validation/final-quality gap found in five live DraftRuns: all runs finished technically but retained open criticals and final gate warnings.
+- User value: A succeeded DraftRun cannot look publishable while unresolved critical validation or final gate warnings remain open.
+- Scope:
+  - Repair critical/warning lifecycle so every validation/final-gate issue is resolved, suppressed, accepted-risk, or open with blocking impact.
+  - Make final gate warning policy distinguish publishable-with-caution from quality-trusted success.
+  - Handle validation runtime `providerIncident` and revision-loop stop reasons without hiding quality risk.
+  - Re-run reliability analytics on the same five-run set or a fresh equivalent set.
+- Out of scope:
+  - Product copy rewrite, new model selection policy, frontend redesign, or DraftRun step-order changes.
+- Architecture impact:
+  - Keeps ownership in `drafting.application.validation`, `drafting.application.revision`, `drafting.application.final_quality`, and `drafting.application.quality`.
+- Tests:
+  - Validation critical lifecycle tests.
+  - Final quality warning/accepted-risk tests.
+  - Reliability report tests proving open critical/final warnings cannot become clean success.
+- Docs:
+  - Update DraftRun AS IS and diagnostics skill if verdict semantics change.
+- Acceptance criteria:
+  - `qualityFidelity:openCritical` across live-style runs maps to a blocking remediation until fixed.
+  - `qualityFidelity:finalGateWarning` cannot produce `cleanSuccess` without explicit accepted-risk semantics.
+  - Reliability report no longer says quality can be trusted when open criticals remain.
+- Risks:
+  - Some warning classes may be legitimate accepted risk; do not convert all warnings into hard failures blindly.
+
+### Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair
+
+- Status: Backlog
+- Goal: Reduce malformed JSON, unknown provider failures, and deterministic strategy/material-plan fallbacks visible in live reliability analysis.
+- User value: Provider retries remain normal recovery, but repeated malformed/unknown/fallback paths get concrete repair instead of hidden degradation.
+- Scope:
+  - Inspect provider JSON retry/repair prompts and schema failure handling for editorial critique, material plan, strategy, and final quality review paths.
+  - Improve safe error classification where the report currently sees `unknownProviderFailure`.
+  - Keep successful same-model retry as reliability signal, not result degradation.
+  - Repair deterministic fallback conditions where fallback changes result fidelity.
+- Out of scope:
+  - Full model policy redesign, prompt-quality rewrite, new provider adapter, API/schema/UI changes.
+- Architecture impact:
+  - Stays inside provider-heavy operation owners and shared LLM operation governance.
+  - Any new provider-heavy behavior must keep operation envelopes, safe errors, retry policy, and payload budget metadata.
+- Tests:
+  - Malformed JSON then accepted retry remains recovered.
+  - Fallback with quality impact remains degraded.
+  - Unknown provider failures get a more precise incident where structured data allows it.
+  - Cross-run reliability report groups repaired cases under `noActionExpected` or `watchWithMoreRuns`.
+- Docs:
+  - Update developer guide and diagnostics skill with any new incident classification.
+- Acceptance criteria:
+  - Report no longer produces placeholder provider-operation repair slices for observed malformed/unknown/fallback paths.
+  - Strategy/material-plan fallback is either avoided, accepted-risk, or blocks quality trust explicitly.
+- Risks:
+  - Provider responses vary; repairs must stay robust without overfitting five runs.
+
+### Slice 2.17.4.6.1.3.4: DraftRun Queue and Staleness Reliability Guard
+
+- Status: Backlog
+- Goal: Prevent queued or worker-saturated live DraftRuns from being misdiagnosed as stale when no worker has actually started the run.
+- User value: Live reliability checks distinguish a real stuck DraftRun from normal queue saturation or slow-but-healthy validation work.
+- Scope:
+  - Add queue-aware staleness diagnostics for `queued` DraftRuns and worker saturation.
+  - Make validation slow-but-healthy status visible in reliability diagnostics when runtime budget is still valid.
+  - Preserve existing stale behavior for genuinely stuck running operations.
+  - Add repeatable diagnostics commands for Docker/live proof runs.
+- Out of scope:
+  - Changing worker architecture, retrying jobs automatically, provider behavior, prompt/model changes, or database schema changes.
+- Architecture impact:
+  - Keeps queue/staleness logic in backend diagnostics/runtime guard owners; no UI redesign unless trace display needs a small readable field.
+- Tests:
+  - Queued run within worker saturation is not reported as stale.
+  - Running validation inside runtime budget remains slow-but-healthy.
+  - Running operation beyond stale budget still reports stale.
+- Docs:
+  - Update diagnostics skill and developer guide with queue-aware live-run checks.
+- Acceptance criteria:
+  - A five-run live batch no longer produces false stale alarms for runs that are only waiting for workers.
+  - Reliability report can separate queue health from provider/model quality.
+- Risks:
+  - Queue visibility may be limited by current persistence; keep any new trace field minimal and backward-compatible.
 
 ### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
 
@@ -8063,6 +8179,7 @@ Status:
 - Slice 2.17.4.6.1.2.1: Live Radar Golden Evaluation Harness. Completed 2026-07-07.
 - Slice 2.17.4.6.1.2.2: Live Radar Executed Coverage Gate. Completed 2026-07-07.
 - Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up. Completed 2026-07-08.
+- Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics. Completed 2026-07-08.
 
 
 ## Blocked Items
@@ -8091,4 +8208,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics`.
+Implement `Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair`.
