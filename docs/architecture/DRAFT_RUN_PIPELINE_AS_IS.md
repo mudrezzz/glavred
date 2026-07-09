@@ -1,7 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate
-Warning Repair.
+Current as of Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -16,6 +15,35 @@ Regenerate PDF:
 ```powershell
 python scripts/generate-draft-run-pipeline-pdf.py
 ```
+
+## How AS IS Participates in DoD
+
+This document is not only a trace map. For any complex DraftRun slice it is an
+acceptance contract:
+
+1. Before planning or implementation, the slice DoD must cite the AS IS sections it
+   preserves, changes, or intentionally supersedes.
+2. Provider-heavy changes must derive their requirements from the current step order,
+   role handoff, context flow, payload budget, operation envelope, runtime budget,
+   and quality/fidelity rules in this document.
+3. The slice DoD must name the runtime evidence that will prove the behavior: step
+   artifact path, child `AiRun.requestPayload`, `operationEnvelope`, `payloadBudget`,
+   `runtimeBudget`, `qualityFidelity`, diagnostics script output, or known debt entry.
+4. At the end of the slice, the implementer must state either "AS IS unchanged" with
+   the reason, or update this Markdown and regenerate
+   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
+5. If the current AS IS behavior is known to be weaker than the target design, the
+   document must say so as known debt and link the repair slice or TO BE/ADR. Do not
+   describe a target state as if it already exists.
+
+Minimum DoD input from this document:
+
+- step order and persisted artifact handoff;
+- which role/model receives which provider projection;
+- whether the current provider call has direct budget proof;
+- where provider retry, repair, backup, fallback, not-run, and incidents are visible;
+- whether `DraftRun.status=succeeded` is enough for the claim being tested. It is not
+  enough for editorial quality; use `qualityFidelity`.
 
 ## 1. Core concepts
 
@@ -859,6 +887,63 @@ Important AS IS rules:
 - `ContextPack` selects up to 12 cards for one role;
 - child `AiRun.requestPayload` stores the role model and context pack it received;
 - context packs are local orchestration artifacts, not long-term memory.
+
+### 6.1 Context Handoff and Provider Input Contract
+
+This section defines what future DoD must check before changing provider-heavy
+DraftRun behavior.
+
+Terms:
+
+- `rich artifact`: the full persisted DraftRun artifact. It stays in storage and
+  trace for audit/debug.
+- `provider projection`: the curated subset sent to one provider call. It may be a
+  role `ContextPack`, a payload-budget compact payload, an operation-specific
+  dossier, or a transitional compact structure.
+- `direct budget proof`: the current provider call itself records `payloadBudget`
+  limits, sent/trimmed counts, prompt estimate, token estimate, and suppressed fields
+  in child `AiRun.requestPayload`, attempts, or the current `operationEnvelope`.
+- `trace proof`: the concrete trace path that proves what was sent, what was
+  trimmed, which model was used, and how retry/backup/fallback behaved.
+- `known debt`: an AS IS limitation that is deliberately carried forward and linked
+  to a repair slice. Known debt is not target architecture.
+
+Strict AS IS invariants:
+
+- the step order remains
+  `context -> sourceIntent -> publicEvidence -> feasibility -> postContract -> rulePack -> materialPlan -> strategy -> rhetoricalPlans -> draft -> validation -> complete`;
+- roles communicate through persisted artifacts, not hidden model conversation state;
+- `DraftRun.status=succeeded` means the worker completed, not that the text is trusted
+  editorial quality;
+- provider retry, repair, backup, fallback, not-run, timeout, and schema/JSON
+  incidents must be visible through structured trace;
+- a nested `payloadBudget` copied from an older artifact is not direct proof that the
+  current provider call was bounded.
+
+Provider-heavy AS IS contract:
+
+| Operation | Current rich artifacts | Current provider projection / ContextPack | Required trace proof | Direct budget status | Known debt / target slice |
+| --- | --- | --- | --- | --- | --- |
+| `sourceIntentAndResearchPlan` | brief sources, context summary, initial source ledger, DraftRun budget | research prompt over brief sources, normalized context summary, initial ledger, budget caps | child `AiRun`, `sourceIntent.researchPlan`, skipped budget trace | partial/transitional; planning output has trace but no full provider-input dossier | Dossier boundary target in `2.17.4.6.1.3.5` |
+| `evidenceSynthesis` | public evidence attempts, accepted/rejected evidence, initial/enriched ledger | accepted public evidence plus relevant ledger/context | `publicEvidence.evidenceSynthesis`, child `AiRun`, accepted/rejected evidence trace | partial/transitional | Dossier and evidence-query access target in `2.17.4.6.1.3.6` |
+| `evidenceInterpretation` | enriched ledger, accepted public evidence, evidence synthesis, contract, rule subset | compact evidence payload plus strategy `ContextPack`, timeout envelope | `rulePack.evidenceInterpretation`, `evidenceInterpretationFidelity`, child `AiRun`, `operationEnvelope`, timeout/input stats | enforced for representative operation | Further context-access hardening in `2.17.4.6.1.3.6` |
+| `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | strategy `ContextPack`, usable evidence candidates, interpretation, contract, registry | `materialPlan.materialPlan`, child `AiRun`, selected/rejected evidence reasons | weak: last live traces showed oversized prompt risk; nested or indirect budgets are not enough | Direct dossier/budget repair in `2.17.4.6.1.3.5` |
+| `strategy` | material plan, post contract, rule registry, strategy context | material plan, rules, contract, strategy `ContextPack` | `strategy.draftStrategy`, child `AiRun`, model role metadata | partial/transitional | Strategy dossier hardening in `2.17.4.6.1.3.5` |
+| `rhetoricalPlans` | strategy, material plan, claim/rule ids | strategy/material plan summary plus compact ids | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun` | partial/transitional | Planning prompt/dossier split in `2.17.4.6.1.3.5` |
+| `draftCandidate` | one rhetorical plan, material evidence, contract, writer context, generation params | writer `ContextPack`, one direction, material evidence, contract | `draft.candidates[]`, child `AiRun`, fallback/publishability status | partial/transitional | Writer dossier hardening in `2.17.4.6.1.3.7` |
+| `llmValidation` | candidates, deterministic report, contract, registry, ledger | review `ContextPack`, candidates, deterministic findings | `validation.llmValidationReport`, candidate reports, child `AiRun`, incidents | partial/transitional | Validation dossier/read model in `2.17.4.6.1.3.8` |
+| `editorialCritique` | candidates, evidence interpretation, validation findings, critique context | critic `ContextPack`, candidate summaries, evidence interpretation, findings | `validation.editorialCritiqueReport`, child `AiRun`, `operationEnvelope`, parser/trace payload | enforced for representative operation | Debate/critique expansion remains future work; current single critique is AS IS |
+| `alternativeAngleRoute` | initial validation, editorial critique, rejected/weak moves, another-angle context | another-angle `ContextPack`, critique and validation summaries | `validation.alternativeAngleTournament.route`, child `AiRun`, route attempts | partial/transitional | Alternative-angle context split in `2.17.4.6.1.3.8` |
+| `alternativeAngleCandidate` | challenger route, writer context, contract/evidence constraints | writer `ContextPack`, route brief, constraints | challenger candidate payload, child `AiRun`, no-fake-challenger failure trace | partial/transitional | Writer/another-angle dossier hardening in `2.17.4.6.1.3.8` |
+| `pairwiseRanking` | merged candidates, validation summaries, old scorecard, contract/rules | review `ContextPack`, compact candidates and summaries | `validation.rankingRevision.pairwiseRanking`, attempts, scorecard | partial/transitional | Ranking/revision read-model tightening in `2.17.4.6.1.3.9` |
+| `directedRevision` | current best candidate, repair goals, anti-regression constraints, material evidence | writer `ContextPack`, selected candidate, revision goals, constraints | `validation.rankingRevision.revisionLoop`, child `AiRun`, `operationEnvelope`, accepted/rejected cycle trace | enforced for representative operation | Revision dossier hardening in `2.17.4.6.1.3.9` |
+| `finalQualityGateReview` | delivered final candidate, final quality contract, validation reports, critique, evidence interpretation, ledger, material plan | final-gate review payload over delivered candidate and compact supporting artifacts | `validation.rankingRevision.finalQualityGate`, issue lifecycle, child `AiRun`, repair cycles | partial/transitional | Final-quality read model in `2.17.4.6.1.3.9` |
+| `humanCommentRevision` | active `DraftVersion`, editor comment, compact machine trace context | compact current/base version, comment, contract/material evidence and machine trace summaries | new version result, child `AiRun`, `operationEnvelope`, attempts, safe error | enforced for representative operation | Current HITL context is already compact; future learning slices may tighten accepted-risk handling |
+| `humanCommentRevisionQualityCheck` | base version, revised version, editor comment, compact machine trace context | compact base/revised versions and quality constraints | `DraftVersion.qualityCheck`, child `AiRun`, `operationEnvelope`, not-run/incident trace | enforced for representative operation | Current HITL check is diagnostic and must not block saving the revision |
+
+Future provider-input DoD should use this table mechanically: a change is not ready
+unless it proves the relevant row still has the required trace proof, or updates the
+row and links the new debt/repair slice.
 
 ## 7. Artifact catalog
 

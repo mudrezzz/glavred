@@ -593,24 +593,40 @@ npm run docs:wiki:publish
 Before implementing a product, refactor, domain, application, app, or frontend slice:
 
 1. Read the active `ROADMAP.md` slice and confirm it has `Architecture impact`.
-2. For DraftRun, drafting, LLM role, trace, validation, ranking, or revision work,
-   read `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` before changing code. If the
-   slice changes the pipeline, update that Markdown file and regenerate
-   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` in the same slice.
-3. Check the planned files against the current large-file limits in
+2. For DraftRun, drafting, LLM role, trace, validation, ranking, revision, upstream
+   search, radar, signal extraction, scoring, or candidate assembly work, start from
+   the relevant AS IS document before changing code:
+   - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` for DraftRun pipeline work;
+   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for RadarRun runtime, search
+     execution, coverage, benchmark, and trace-page work;
+   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` for the broader
+     upstream boundary across source registry, found material, signal extraction,
+     scoring, candidate assembly, plan, and DraftRun handoff.
+3. For complex pipeline slices, write the DoD from the AS IS document before
+   implementation. The DoD must name which AS IS invariants are preserved, which are
+   changed, and which runtime evidence will prove the result: step artifacts,
+   `AiRun.requestPayload`, `operationEnvelope`, `payloadBudget`, `runtimeBudget`,
+   `qualityFidelity`, `searchPlan`, planned/executed coverage, selected/rejected
+   reads, found materials, or benchmark verdict.
+4. At completion, explicitly state one of two outcomes: AS IS unchanged with a reason,
+   or AS IS updated. If `DRAFT_RUN_PIPELINE_AS_IS.md` or
+   `RADAR_RUN_PIPELINE_AS_IS.md` changes, regenerate the matching PDF in the same
+   slice. A complex pipeline slice without AS IS impact analysis is not ready for
+   implementation.
+5. Check the planned files against the current large-file limits in
    `scripts/architecture-smoke.mjs`.
-4. Treat files reported as near-limit by `npm run test:architecture` as closed for new
+6. Treat files reported as near-limit by `npm run test:architecture` as closed for new
    behavior unless the same slice includes a refactor step into a role-owned module.
-5. Confirm module ownership before editing:
+7. Confirm module ownership before editing:
    - app shell and high-level wiring stay in `src/app/`;
    - feature UI stays under its own `src/features/<feature>/` folder;
    - shared visual primitives go to `src/shared/ui`;
    - shared business behavior goes to `src/application` or `src/domain`.
-6. For frontend work, check existing design-system primitives before adding a new UI
+8. For frontend work, check existing design-system primitives before adding a new UI
    pattern.
-7. Run `npm run test:architecture` before completing the slice. For visible frontend
+9. Run `npm run test:architecture` before completing the slice. For visible frontend
    changes, also run `npm run test:design` and `npm run test:visual`.
-8. For backend slices, confirm the slice adds only the modules required by the current
+10. For backend slices, confirm the slice adds only the modules required by the current
    use case. Avoid empty package scaffolding, unused base classes, and "future"
    abstractions without tests.
 
@@ -771,8 +787,13 @@ Draft generation observability:
 - The maintained current-state map of the queued drafting pipeline is
   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`; a quick-view PDF is generated at
   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
-- Regenerate the PDF after updating the Markdown:
+- The maintained current-state map of the RadarRun search pipeline is
+  `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`; a quick-view PDF is generated at
+  `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`.
+- Regenerate the DraftRun PDF after updating the Markdown:
   `python scripts/generate-draft-run-pipeline-pdf.py`.
+- Regenerate the RadarRun PDF after updating the Markdown:
+  `python scripts/generate-draft-run-pipeline-pdf.py --source docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md --output docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`.
 - Backend draft runs store full local sanitized trace in `AiRun.requestPayload` and
   `AiRun.resultPayload`: prompt messages, provider request summary, generated draft
   body, provider metadata, fallback flag, and safe error context.

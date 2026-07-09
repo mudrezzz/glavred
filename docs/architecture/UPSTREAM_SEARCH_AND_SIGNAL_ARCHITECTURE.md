@@ -17,6 +17,40 @@ The goal is not to replace the current `Signals` UI in one step. The goal is to 
 the next implementation slices decision-complete: raw retrieval, signal review, and
 editorial candidate assembly must have separate ownership and trace.
 
+The concrete RadarRun runtime pipeline is maintained separately in
+`docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` with a quick-view PDF at
+`docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`. Use that document for step order,
+trace proof, benchmark verdict, and RadarRun-specific DoD. Use this document for the
+broader upstream boundary from retrieval through signal review and candidate assembly.
+
+## How This AS IS Contract Feeds DoD
+
+Upstream slices must treat this document as a requirement source before
+implementation and as a validator at completion. RadarRun/search slices must also use
+`RADAR_RUN_PIPELINE_AS_IS.md` as the concrete pipeline contract. A DoD for search,
+radar, signal extraction, scoring, or candidate assembly must explicitly say which AS
+IS rules are preserved, changed, or superseded.
+
+Minimum DoD inputs from this document and the dedicated RadarRun AS IS:
+
+- source eligibility: which `SourceHandle` records were searchable, readable-only,
+  paused, or skipped;
+- `searchPlan`: strategy, language, intents, query families, evidence types, source
+  strategy, and budget limits;
+- planned and executed coverage: `plannedCoverage`, `executedCoverage`, and
+  `skippedRequiredCoverage`, not only the existence of good planned intents;
+- execution trace: query operations, raw results, selected URL reads, rejected-before-
+  read results, warnings, and errors;
+- output boundary: `FoundMaterial` can be created by a radar run, but `SourceSignal`,
+  `PostCandidate`, plan slots, and `DraftRun` must not be created by upstream search;
+- benchmark verdict: when a matching scenario exists, `benchmarkReport` must explain
+  whether the result is `passed`, `warning`, `failed`, or `inconclusive`.
+
+The RadarRun AS IS trace contract is currently stricter than older DraftRun provider
+input tracing because it already separates planned coverage from executed coverage.
+That difference is intentional and should be used as a template for later pipeline DoD
+work, not watered down in new radar slices.
+
 ## Boundary Rules
 
 - `DraftRun` is downstream. It may enrich evidence for an approved brief, but it is
@@ -150,7 +184,9 @@ must be kept working only as a fallback. Running a radar in 2.17.4.6 must not cr
 
 ## Trace Requirements
 
-Every future upstream run should make the handoff readable:
+The complete RadarRun trace contract lives in
+`docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`. At the broader upstream level, every
+future upstream run should make the handoff readable:
 
 - what sources were eligible;
 - what search plan, query families, query intents, evidence types, and source
@@ -167,6 +203,10 @@ Every future upstream run should make the handoff readable:
 
 ## Benchmark And Trace Inspection Plan
 
+The dedicated RadarRun runtime and benchmark contract is maintained in
+`docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`. This section keeps only the broad
+upstream summary and command pointers.
+
 The first stable diagnostic scenario is a single golden radar, not a broad benchmark
 corpus. `benchmark-industrial-ai-maintenance-cases` is implemented for `Опытный цех
 «Сборочная»`, bound to the industrial AI cases radar. It runs in recorded-fixture
@@ -182,14 +222,10 @@ python -m pytest backend/tests/test_upstream_golden_radar_benchmark.py
 ```
 
 Live provider-backed runs for the same industrial AI radar are evaluated with the
-same scenario expectations, but not by exact URL matching. The live evaluator checks
-durable evidence instead: planned coverage, actually executed query families,
-evidence types represented by executed queries, raw result count, selected reads,
-found materials, domain diversity, unacceptable noise, and trace completeness. It
-writes `run.benchmarkReport` when the project/radar match the golden scenario.
-`coverage` remains a compatibility summary; `plannedCoverage`, `executedCoverage`,
-and `skippedRequiredCoverage` explain whether a verdict is based on execution or only
-on planned-but-skipped intents. The status vocabulary is:
+same scenario expectations, but not by exact URL matching. The live evaluator writes
+`run.benchmarkReport` when the project/radar match the golden scenario. Detailed
+planned/executed coverage rules live in the dedicated RadarRun AS IS contract. The
+status vocabulary is:
 
 Backend ownership after Slice `2.17.4.6.0.12` is intentionally split: the external
 run service orchestrates the campaign, `OpenWebQueryOperationRunner` owns one
@@ -209,12 +245,9 @@ expectations, coverage, and trace/provider-health rules to separate policy class
   executed search trace.
 
 The compact `Сигналы -> Радары -> Трасса запуска` panel remains the operational
-preview. A dedicated `/radar-runs?runId=<id>` trace page now lets a single
-`RadarRun` be inspected like DraftRun/AiRun traces, while keeping upstream concepts
-separate: search plan, source handles, operation timeline, raw results,
-selected/rejected read decisions, found materials, warnings, errors, and benchmark
-verdict when available. The page is a frontend read model over existing workspace
-snapshots; it does not add backend tables or provider calls.
+preview. The dedicated `/radar-runs?runId=<id>` trace page is defined by the RadarRun
+AS IS contract and remains a frontend read model over existing workspace snapshots;
+it does not add backend tables or provider calls.
 
 ## Implementation Slices
 

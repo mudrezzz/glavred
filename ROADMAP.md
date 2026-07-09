@@ -7553,9 +7553,136 @@ Status:
   - Provider responses vary; repairs must stay robust without overfitting five runs.
 - Completed: 2026-07-09
 
-### Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness
+### Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation
+
+- Status: Done
+- Goal: Turn pipeline AS IS documents into explicit contracts that can generate and validate DoD for complex DraftRun/RadarRun slices.
+- User value: Future complex slices start from the real pipeline map instead of reconstructing requirements from memory or chat context.
+- Scope:
+  - Audit `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` for missing context-handoff, provider-input, budget, trace-proof, retry/backup/fallback, and quality/fidelity invariants.
+  - Add an explicit DraftRun context handoff and provider-input contract section: rich artifacts, provider projection, must-have fields, never-send fields, direct budget proof, trace proof, and known debt.
+  - Audit `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` for the same DoD-source role in RadarRun/search slices.
+  - Add a small `How this AS IS document participates in DoD` section to relevant AS IS architecture documents.
+  - Regenerate affected PDFs when Markdown changes.
+- Out of scope:
+  - Runtime code changes, prompt changes, provider behavior changes, new tests for runtime behavior, or implementing the provider-input dossier track.
+- Implementation notes:
+  - This slice prepares the source of requirements; it does not yet enforce the process in skills or smoke.
+  - If the AS IS document lacks a principle needed for current pipeline safety, document the current limitation and link the target TO BE/ADR rather than pretending it already works.
+- Architecture impact:
+  - Makes AS IS documents active contracts rather than passive descriptions.
+  - Establishes that every complex pipeline DoD must cite AS IS invariants preserved, changed, or intentionally superseded.
+- Tests:
+  - `npm run test:architecture`.
+  - PDF sanity check for any regenerated pipeline PDF.
+  - `git diff --check`.
+- Docs:
+  - Update DraftRun AS IS and, if needed, upstream architecture docs.
+  - Update developer guide with the AS IS-as-contract rule.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - DraftRun AS IS explicitly describes context handoff/provider input boundaries enough to generate DoD requirements.
+  - AS IS documents include a clear rule for when they must be updated at slice completion.
+  - The next DoD guardrail slice can reference concrete AS IS sections instead of inventing the rule from scratch.
+- Risks:
+  - AS IS can become too broad; keep it factual and separate current behavior from TO BE target.
+- Completed: 2026-07-09
+
+### Slice 2.17.4.6.1.3.4.0.1: RadarRun Pipeline AS IS Contract Preparation
+
+- Status: Done
+- Goal: Create a dedicated RadarRun pipeline AS IS document and PDF so RadarRun has the same DoD-ready contract surface as DraftRun before complex pipeline guardrails are enforced.
+- User value: Future radar/search/signal slices will have a single current-state source of truth instead of mixing RadarRun runtime facts into the broader upstream architecture document.
+- Scope:
+  - Create `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` and `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`.
+  - Cover current RadarRun order: source eligibility, `searchPlan`, intents/query families, budget caps, skipped intents, provider web-search operations, raw results, dedupe/triage, selected reads, rejected reads, found materials, `benchmarkReport`, and `/radar-runs` trace page.
+  - Define hard boundaries: RadarRun may create `FoundMaterial`, but must not create `SourceSignal`, `PostCandidate`, plan slot, or DraftRun.
+  - Define trace contract: where to inspect `searchPlan`, `plannedCoverage`, `executedCoverage`, `skippedRequiredCoverage`, `rawResults`, `selectedForRead`, `rejectedBeforeRead`, `foundMaterials`, warnings/errors, and benchmark verdict.
+  - Define provider/live evaluation contract for `passed`, `warning`, `failed`, and `inconclusive`.
+  - Move pipeline-specific details out of `UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` by reference, leaving that document as the broad upstream architecture map.
+  - Update developer guide and roadmap references so `2.17.4.6.1.3.4.1` can enforce both DraftRun and RadarRun AS IS sources.
+- Out of scope:
+  - Runtime behavior changes, provider/search behavior changes, HTTP API changes, SQLite changes, UI changes, signal extraction, candidate assembly, and benchmark scoring changes.
+- Implementation notes:
+  - This is a documentation/contract slice, symmetric to `DRAFT_RUN_PIPELINE_AS_IS.md`.
+  - The document must be factual AS IS, not a TO BE design.
+  - Known gaps such as missing search cache, one-scenario benchmark coverage, narrow read budget, and incomplete signal extraction must be called out as known AS IS limitations.
+- Architecture impact:
+  - Splits broad upstream architecture from the concrete RadarRun runtime pipeline contract.
+  - Gives future RadarRun/search/signal DoD a dedicated AS IS source with PDF parity to DraftRun.
+- Tests:
+  - PDF sanity check for `RADAR_RUN_PIPELINE_AS_IS.pdf`.
+  - `python -m backend.app.roadmap render`.
+  - `python -m backend.app.roadmap export`.
+  - `python -m backend.app.roadmap check`.
+  - `npm run test:architecture`.
+  - `git diff --check`.
+- Docs:
+  - New RadarRun AS IS Markdown and PDF.
+  - Update `UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` to reference the dedicated AS IS instead of carrying all pipeline detail inline.
+  - Update `docs/developer/DEVELOPER_GUIDE.md` with the new RadarRun AS IS source.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - RadarRun has a dedicated AS IS document and PDF with the same lifecycle role as DraftRun AS IS.
+  - The document describes the current RadarRun order, trace contract, hard output boundaries, provider/live evaluation vocabulary, and known limitations.
+  - `UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` remains the broad upstream architecture map and links to the new RadarRun AS IS for runtime pipeline details.
+  - `2.17.4.6.1.3.4.1` remains after this slice and can enforce both AS IS sources in skills/guardrails.
+- Risks:
+  - Duplication with the upstream architecture document; mitigate by moving detailed pipeline material into the new AS IS and leaving summary references in the broad document.
+- Completed: 2026-07-09
+
+### Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails
 
 - Status: Ready
+- Goal: Require every complex pipeline slice to declare AS IS impact, TO BE intent when behavior changes, and a verifiable Definition of Done before implementation starts.
+- User value: We stop shipping green tests that do not prove the pipeline still works, and we stop losing architectural constraints between chat, docs, trace, and code.
+- Scope:
+  - Add a reusable complex-pipeline DoD reference for DraftRun/RadarRun/backend pipeline work.
+  - Encode the lifecycle `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update` in repo-local skills and developer workflow.
+  - Update repo-local skills: `roadmap-slice-planning`, `slice-implementation`, `draft-run-to-be-planning`, `regression-and-test-strategy`, `docs-sync`, `draft-run-pipeline-diagnostics`, and `draft-run-pipeline-evaluation`.
+  - Update `AGENTS.md` and developer guide with the rule: complex pipeline slices need `AS IS sources`, optional/required `TO BE sources`, `AS IS invariants preserved`, `AS IS invariants changed`, `Target behavior from TO BE`, `Required AS IS updates`, and `Definition of Done`.
+  - Extend `draft-run-to-be-planning` so every TO BE document includes an `AS IS -> TO BE -> Proof` table and marks target changes as `UNCHANGED`, `CHANGED vs AS IS`, `NEW`, `REMOVED`, or `NOT THIS SLICE`.
+  - Define when TO BE is mandatory: pipeline semantics, provider input, trace shape, retry/backup/fallback, quality/fidelity, budgets, diagnostics, async/staleness, or hard-to-verify runtime behavior changes.
+  - Define when TO BE is optional: documentation-only slices, small local bugfixes, and changes that do not alter pipeline behavior or trace semantics.
+  - Add or extend architecture smoke where practical so DraftRun/RadarRun roadmap slices cannot omit DoD/AS IS-impact sections.
+- Out of scope:
+  - Runtime code changes, provider-input migration, prompt changes, provider/model selection, creating new AS IS documents, or changing existing completed slice records retroactively except where needed for the active track.
+- Implementation notes:
+  - This slice depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.0.1`: guardrails should reference both `DRAFT_RUN_PIPELINE_AS_IS.md` and `RADAR_RUN_PIPELINE_AS_IS.md`.
+  - AS IS is not a freeze. It is the current-state baseline that tells a slice what it preserves, changes, supersedes, or turns into known debt.
+  - TO BE is not required for every small change, but it is required when the slice changes complex pipeline behavior.
+  - DoD must be built from both sources: AS IS prevents accidental regression; TO BE defines the target state and proof.
+  - At completion, implementation must state either `AS IS unchanged` with rationale or `AS IS updated` with regenerated PDF where applicable.
+  - Every `CHANGED vs AS IS`, `NEW`, or `REMOVED` item in TO BE must have a corresponding proof item in DoD.
+  - Every `NOT THIS SLICE` item that affects safety/quality must become known debt or a follow-up roadmap slice.
+- Architecture impact:
+  - Converts AS IS and TO BE from passive documents into a controlled transition protocol for complex pipeline changes.
+  - Makes `Definition of Done` a tracker artifact backed by AS IS invariants, TO BE targets, structured trace proof, tests, replay/live proof when relevant, and final AS IS update outcome.
+- Tests:
+  - Skill validation where available.
+  - `npm run test:architecture`.
+  - Roadmap `render/export/check`.
+  - `git diff --check`.
+- Docs:
+  - Update skills, `AGENTS.md`, developer guide, and roadmap workflow notes.
+  - Reference both DraftRun and RadarRun AS IS documents once `RADAR_RUN_PIPELINE_AS_IS.md` exists.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - A future complex pipeline slice without AS IS impact and DoD is considered not ready for implementation.
+  - A future complex pipeline slice that changes runtime/trace/provider/quality behavior either links an approved TO BE or explicitly explains why TO BE is not required.
+  - DoD template explicitly combines AS IS preservation, AS IS changes, TO BE target behavior, tests, structured trace proof, replay and/or live proof when relevant, and follow-up-roadmap closure rules.
+  - TO BE template includes `AS IS -> TO BE -> Proof` mapping and status markers: `UNCHANGED`, `CHANGED vs AS IS`, `NEW`, `REMOVED`, `NOT THIS SLICE`.
+  - Completion workflow requires either AS IS unchanged with rationale or AS IS updated and regenerated.
+- Risks:
+  - Too much process can slow small changes; scope the rule only to complex pipeline/backend slices.
+  - Too weak a rule turns into checkbox theater; DoD must require concrete proof, not just document references.
+
+### Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness
+
+- Status: Backlog
 - Goal: Distinguish queue wait, worker saturation, slow provider calls, slow-but-healthy validation work, and genuinely stale DraftRun operations.
 - User value: A live DraftRun that waits on a long model call is no longer misdiagnosed as an unexplained hang, and reliability diagnostics can separate runtime health from provider/model quality.
 - Scope:
@@ -7567,6 +7694,7 @@ Status:
 - Out of scope:
   - Worker architecture changes, automatic job retry, prompt/model changes, provider adapter changes, HTTP API changes, SQLite migrations, and UI redesign.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - Align this slice with `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` section 7.1.
   - This is the runtime visibility prerequisite before provider-input budget enforcement.
 - Architecture impact:
@@ -7602,6 +7730,7 @@ Status:
 - Out of scope:
   - Rewriting prompts, changing models, changing DraftRun step order, adding MCP/tool access, changing provider behavior, HTTP API changes, or SQLite changes.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - Use `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` as the target design.
   - The gate must inspect the current provider call, not historical nested payloads.
 - Architecture impact:
@@ -7634,6 +7763,7 @@ Status:
 - Out of scope:
   - Migrating every provider operation in this slice, changing prompt wording, changing models, using external MCP, API changes, SQLite changes, or UI redesign.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - This is the architectural foundation for `3.7` through `3.10`.
   - Dossier factories should be class-owned service/policy/component owners, not public helper sprawl.
 - Architecture impact:
@@ -7664,6 +7794,7 @@ Status:
 - Out of scope:
   - Rewriting planning quality, changing model selection, changing research/search behavior, writer generation migration, validation/ranking migration, API changes, or SQLite changes.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - Start with the measured `materialPlan` bloat because it caused a long live wait, but treat `strategy` and `rhetoricalPlans` as the same architectural family.
 - Architecture impact:
   - Planning prompts consume compact contract, interpreted evidence summaries, selected claim/evidence/rule handles, and planning constraints instead of full accumulated artifacts.
@@ -7694,6 +7825,7 @@ Status:
 - Out of scope:
   - Rewriting candidate quality, changing topic/fabula logic, validation/ranking migration, API changes, SQLite changes, or UI redesign.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - Writer input should contain one route/direction, supporting handles, allowed claims, forbidden moves, and size/style constraints.
   - Alternative-angle routing should receive compact critique and candidate summaries rather than full candidate bodies and full validation trace by default.
 - Architecture impact:
@@ -7724,6 +7856,7 @@ Status:
 - Out of scope:
   - Changing ranking algorithm, final selection policy, prompt quality, model selection, API, SQLite, or UI layout.
 - Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
   - `pairwiseRanking` is the largest observed input and must not compare full candidate pools plus full material plan plus full validation reports when compact summaries are enough.
 - Architecture impact:
   - Review/ranking/final gate become role-owned provider-input projections rather than full trace consumers.
@@ -7742,37 +7875,6 @@ Status:
   - Regression tests prove old trace keys remain compatible.
 - Risks:
   - Ranking can become unfair if summaries omit decisive details; tests need candidate-level invariants, not just size checks.
-
-### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
-
-- Status: Backlog
-- Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
-- User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
-- Scope:
-  - Choose one low-risk provider-heavy operation for a deterministic tool/MCP-style context access pilot.
-  - Expose only typed context-access methods, not raw full DraftRun JSON.
-  - Record tool calls, handles, returned snippets, and provider-input budget in trace.
-  - Compare quality, latency, and reliability against dossier-only mode.
-- Out of scope:
-  - Making MCP mandatory, adding an autonomous agent loop, replacing OpenRouter, changing DraftRun step order, API changes, SQLite changes, or broad prompt rewrite.
-- Implementation notes:
-  - The pilot is allowed only after `DraftRunContextAccessService` exists, so the tool is a thin adapter over deterministic reads.
-- Architecture impact:
-  - Tests whether context-on-demand can further reduce prompt bloat while keeping deterministic ownership in backend components.
-- Tests:
-  - Tool adapter cannot return full artifacts unless explicitly requested by a whitelisted handle resolver.
-  - Trace shows every context read and its budget impact.
-  - Fallback to dossier-only mode remains available.
-- Docs:
-  - Add or update ADR if the pilot becomes a durable architecture rule.
-  - Update TO BE and developer guide.
-- Demo impact:
-  - No demo behavior change unless the pilot is intentionally demonstrated.
-- Acceptance criteria:
-  - One operation can run through tool-mediated context access without exposing raw full DraftRun state.
-  - Diagnostics can compare dossier-only vs tool-mediated context usage.
-- Risks:
-  - Tool access can become hidden state if not traced; trace completeness is mandatory.
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -7807,6 +7909,38 @@ Status:
   - Candidate list is ranked and explainable; no hard `.slice(0, 3)` from blind pairing remains as the main logic.
 - Risks:
   - Ranking can hide useful alternatives; keep rejected/alternative matches inspectable.
+
+### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
+
+- Status: Backlog
+- Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
+- User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
+- Scope:
+  - Choose one low-risk provider-heavy operation for a deterministic tool/MCP-style context access pilot.
+  - Expose only typed context-access methods, not raw full DraftRun JSON.
+  - Record tool calls, handles, returned snippets, and provider-input budget in trace.
+  - Compare quality, latency, and reliability against dossier-only mode.
+- Out of scope:
+  - Making MCP mandatory, adding an autonomous agent loop, replacing OpenRouter, changing DraftRun step order, API changes, SQLite changes, or broad prompt rewrite.
+- Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
+  - The pilot is allowed only after `DraftRunContextAccessService` exists, so the tool is a thin adapter over deterministic reads.
+- Architecture impact:
+  - Tests whether context-on-demand can further reduce prompt bloat while keeping deterministic ownership in backend components.
+- Tests:
+  - Tool adapter cannot return full artifacts unless explicitly requested by a whitelisted handle resolver.
+  - Trace shows every context read and its budget impact.
+  - Fallback to dossier-only mode remains available.
+- Docs:
+  - Add or update ADR if the pilot becomes a durable architecture rule.
+  - Update TO BE and developer guide.
+- Demo impact:
+  - No demo behavior change unless the pilot is intentionally demonstrated.
+- Acceptance criteria:
+  - One operation can run through tool-mediated context access without exposing raw full DraftRun state.
+  - Diagnostics can compare dossier-only vs tool-mediated context usage.
+- Risks:
+  - Tool access can become hidden state if not traced; trace completeness is mandatory.
 
 ### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
 
@@ -8381,6 +8515,8 @@ Status:
 - Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.4.0.1: RadarRun Pipeline AS IS Contract Preparation. Completed 2026-07-09.
 
 
 ## Blocked Items
@@ -8409,4 +8545,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness`.
+Implement `Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails`.
