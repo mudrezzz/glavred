@@ -22,6 +22,9 @@ from backend.app.drafting.application.reliability.quality_signal_extractor impor
 from backend.app.drafting.application.reliability.raw_artifact_event_component import (
     RawArtifactReliabilityEventComponent,
 )
+from backend.app.drafting.application.reliability.stage_incident_refinement import (
+    LegacyStageIncidentRefinementComponent,
+)
 
 
 class DraftRunReliabilityExtractor:
@@ -33,11 +36,13 @@ class DraftRunReliabilityExtractor:
         quality_signals: QualityFidelityReliabilitySignalExtractor | None = None,
         ai_run_events: ChildAiRunReliabilityEventComponent | None = None,
         raw_artifact_events: RawArtifactReliabilityEventComponent | None = None,
+        stage_incident_refinement: LegacyStageIncidentRefinementComponent | None = None,
     ) -> None:
         self._quality_reporter = quality_reporter or DraftRunQualityFidelityReporter()
         self._quality_signals = quality_signals or QualityFidelityReliabilitySignalExtractor()
         self._ai_run_events = ai_run_events or ChildAiRunReliabilityEventComponent()
         self._raw_artifact_events = raw_artifact_events or RawArtifactReliabilityEventComponent()
+        self._stage_incident_refinement = stage_incident_refinement or LegacyStageIncidentRefinementComponent()
 
     def from_draft_run(self, run: DraftRun, ai_runs: list[AiRun] | None = None) -> list[OperationReliabilityEvent]:
         ai_payloads = [self._ai_run_payload(item) for item in ai_runs or []]
@@ -56,6 +61,7 @@ class DraftRunReliabilityExtractor:
             quality_fidelity=quality,
             execution_mode=execution_mode,
         )
+        events = self._stage_incident_refinement.refine(events, ai_payloads)
         events.extend(
             self._ai_run_events.missing_events(
                 run_id=run.id,
@@ -128,7 +134,7 @@ class DraftRunReliabilityExtractor:
         stage: dict[str, Any],
         execution_mode: str | None,
     ) -> OperationReliabilityEvent:
-        incident_types = tuple(str(item) for item in _list(stage.get("incidentTypes")) if item)
+        incident_types = _canonical_incident_types(stage.get("incidentTypes"))
         return OperationReliabilityEvent(
             run_id=run_id,
             step_key=str(stage.get("stepKey") or "unknown"),
@@ -211,6 +217,13 @@ def _dict(value: Any) -> dict[str, Any]:
 
 def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _canonical_incident_types(value: Any) -> tuple[str, ...]:
+    incidents = tuple(str(item) for item in _list(value) if item)
+    if "unknownProviderFailure" in incidents and len(set(incidents)) > 1:
+        return tuple(item for item in incidents if item != "unknownProviderFailure")
+    return incidents
 
 
 def _optional_str(value: Any) -> str | None:

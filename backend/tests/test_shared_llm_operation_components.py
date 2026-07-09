@@ -9,6 +9,7 @@ from backend.app.shared.llm_operations import (
     LlmOperationIncidentSeverity,
     LlmOperationIncidentType,
 )
+from backend.app.shared.llm_operations.incidents import infer_incident_type_value
 
 
 def test_llm_operation_envelope_factory_preserves_failed_incident_payload() -> None:
@@ -54,3 +55,13 @@ def test_llm_operation_result_safe_error_redaction_still_applies_after_split() -
     assert result.status is JsonOperationResultStatus.FAILED
     assert "sk-test-secret-token" not in payload["safeError"]
     assert "sk-test-secret-token" not in payload["incident"]["safeError"]
+
+
+def test_incident_classifier_maps_provider_shape_errors_to_schema_failure() -> None:
+    assert infer_incident_type_value("OpenRouter response did not include text content") == "schemaFailure"
+    assert (
+        infer_incident_type_value("availableEvidence does not reference projected source-ledger claims")
+        == "schemaFailure"
+    )
+    assert infer_incident_type_value("OpenRouter response missing keys: weakestMove") == "schemaFailure"
+    assert infer_incident_type_value("OpenRouter response JSON parse failed: Expecting ':' delimiter") == "malformedJson"

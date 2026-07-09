@@ -89,6 +89,11 @@ Check these failure classes explicitly:
   `malformedJson`, `schemaFailure`, `payloadTooLarge`, `contextOverBudget`,
   `deterministicFallback`, `backupAccepted`, `notConfigured`, `staleOperation`,
   `cancelled`, `workerFailure`, or `unknownProviderFailure`.
+  Treat `unknownProviderFailure` as a last resort. Empty provider text, missing
+  required JSON keys, invalid response shape, and operation-specific contract
+  mismatch are `schemaFailure`; JSON parse errors are `malformedJson`. When an old
+  `qualityFidelity.stageSummaries[]` item says only `unknownProviderFailure`, compare
+  it with matching child `AiRun.error` before proposing a new repair slice.
   When `payloadStats.payloadBudget` exists, verify `profileId`, execution mode,
   prompt char estimate, approx token estimate, sent/trimmed counts, suppressed
   fields, semantic inputs, and `qualityRisk` before blaming the model. If
@@ -122,7 +127,9 @@ Check these failure classes explicitly:
   envelope incident, retry, backup, fallback, payload/runtime budget incident, or
   stats-only ignored budget payload must be covered or ignored with a concrete
   reason. `fixBacklogSlice` and `fixBeforeTrustingQuality` entries must point to
-  concrete roadmap slices, not placeholders.
+  concrete roadmap slices, not placeholders. A single recovered fallback or retry is
+  normally a watch signal; repeated fallback or quality-impact fallback is repair
+  work.
 - **Planning**: material plan ignores public evidence, `usableEvidenceCandidates`
   missing, `availableEvidence` empty without `rejectionReasons`, repair/backup attempts
   absent, emergency fallback used too early, strategy is generic, rhetorical plans do

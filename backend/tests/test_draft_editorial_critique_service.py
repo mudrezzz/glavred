@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -80,6 +81,19 @@ def test_editorial_critique_retries_malformed_json_and_uses_repair(tmp_path) -> 
     assert attempts[1]["status"] == "accepted"
     assert result.artifact_payload["candidateReports"][0]["operationEnvelope"]["status"] == "accepted"
     assert adapter.calls[0]["model"] == "critic-model"
+    repair_payload = json.loads(adapter.calls[1]["messages"][1]["content"])
+    assert repair_payload["repairContext"]["requiredKeys"] == [
+        "editorialRisk",
+        "findings",
+        "observations",
+        "overallJudgment",
+        "recommendedEditorialMove",
+        "strongestMove",
+        "summary",
+        "weakestMove",
+    ]
+    assert "Do not wrap JSON in markdown or prose." in repair_payload["repairContext"]["repairInstructions"]
+    assert "findings/observations are not lists" in repair_payload["repairContext"]["previousError"]
 
 
 def test_editorial_critique_provider_unconfigured_is_not_run(tmp_path) -> None:

@@ -339,6 +339,13 @@ validation/final-gate issues must become remediation items or explicit watch/no-
 decisions. Any `fixBacklogSlice` or `fixBeforeTrustingQuality` item must reference a
 concrete roadmap slice, not a placeholder.
 
+Incident classification is shared across quality and reliability layers. Provider
+responses with no text content, missing required keys, invalid response shape, or
+operation-specific contract mismatch are `schemaFailure`. JSON parse errors remain
+`malformedJson`. `unknownProviderFailure` is reserved for genuinely unclassified
+structured failures; old embedded stage summaries may be refined from matching child
+`AiRun` errors during replay.
+
 ## Workflow Orchestration
 
 `backend.app.drafting.application.workflow` owns the new DraftRun orchestration

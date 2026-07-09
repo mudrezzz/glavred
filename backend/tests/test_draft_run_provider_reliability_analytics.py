@@ -53,6 +53,23 @@ def test_backup_and_fallback_get_separate_remediation_decisions() -> None:
     assert slices["evidenceInterpretation"] == "2.17.4.6.1.3.1"
 
 
+def test_single_fallback_across_larger_sample_is_watch_signal_not_backlog_slice() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality("run-1", stage("strategy", retry_path="fallbackRecovered", result_impact="fallbackRecovered")),
+            run_with_quality("run-2", stage("strategy")),
+            run_with_quality("run-3", stage("strategy")),
+            run_with_quality("run-4", stage("strategy")),
+            run_with_quality("run-5", stage("strategy")),
+        ]
+    )
+    payload = report.to_payload()
+
+    item = next(item for item in payload["remediationItems"] if item["operationId"] == "strategy")
+    assert item["decision"] == "watchWithMoreRuns"
+    assert item["recommendedSlice"] == "2.17.4.6.1.3"
+
+
 def test_evidence_fidelity_partial_and_missing_map_to_evidence_repair_slice() -> None:
     report = DraftRunProviderReliabilityReporter().build(
         [
@@ -181,6 +198,85 @@ def test_child_ai_run_error_is_counted_as_recovered_signal_when_run_succeeds() -
     assert ai_event["outcome"] == "retryRecovered"
     assert ai_event["incidentTypes"] == ["malformedJson"]
     assert payload["signalCoverage"]["summary"]["signalCounts"]["childAiRunError"] == 1
+
+
+def test_child_ai_run_shape_error_is_schema_failure_not_unknown_provider_failure() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [run_with_quality("run-1", stage("materialPlan"), ai_run_ids=["ai-run-1"])],
+        ai_runs_by_draft_run_id={
+            "run-1": [
+                ai_run_record(
+                    "ai-run-1",
+                    error="availableEvidence does not reference projected source-ledger claims",
+                )
+            ]
+        },
+    )
+
+    payload = report.to_payload()
+    ai_event = next(item for item in payload["events"] if item["operationId"] == "aiRun:ai-run-1")
+    assert ai_event["outcome"] == "retryRecovered"
+    assert ai_event["incidentTypes"] == ["schemaFailure"]
+    assert payload["summary"]["incidentCounts"]["schemaFailure"] == 1
+    assert "unknownProviderFailure" not in payload["summary"]["incidentCounts"]
+    remediation = next(item for item in payload["remediationItems"] if item["operationId"] == "aiRun:ai-run-1")
+    assert remediation["decision"] == "watchWithMoreRuns"
+
+
+def test_redundant_unknown_incident_is_removed_when_concrete_incident_exists() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage(
+                    "editorialCritique",
+                    retry_path="providerError",
+                    result_impact="stepFailed",
+                    incidents=["unknownProviderFailure", "malformedJson"],
+                    attempts=3,
+                ),
+            )
+        ]
+    )
+
+    payload = report.to_payload()
+    event = next(item for item in payload["events"] if item["operationId"] == "editorialCritique")
+    assert event["incidentTypes"] == ["malformedJson"]
+    assert payload["summary"]["incidentCounts"] == {"malformedJson": 1}
+
+
+def test_embedded_unknown_stage_incident_is_refined_from_matching_child_ai_run_error() -> None:
+    candidate_id = "candidate-research"
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage(
+                    f"editorialCritique:{candidate_id}",
+                    retry_path="retryRecovered",
+                    result_impact="retryRecovered",
+                    incidents=["unknownProviderFailure"],
+                    attempts=2,
+                ),
+                ai_run_ids=["ai-run-1"],
+            )
+        ],
+        ai_runs_by_draft_run_id={
+            "run-1": [
+                ai_run_record(
+                    "ai-run-1",
+                    error="ValueError: OpenRouter response did not include text content",
+                    request_payload_extra={"draftRunStep": "editorialCritique", "candidateId": candidate_id},
+                )
+            ]
+        },
+    )
+
+    payload = report.to_payload()
+    stage_event = next(item for item in payload["events"] if item["operationId"] == f"editorialCritique:{candidate_id}")
+    assert stage_event["incidentTypes"] == ["schemaFailure"]
+    assert payload["summary"]["incidentCounts"]["schemaFailure"] == 2
+    assert "unknownProviderFailure" not in payload["summary"]["incidentCounts"]
 
 
 def test_cli_reads_draft_run_and_child_ai_runs_from_sqlite(tmp_path, capsys) -> None:
@@ -325,15 +421,22 @@ def stage(
     }
 
 
-def ai_run_record(run_id: str, *, fallback_used: bool = False, error: str | None = None) -> AiRun:
+def ai_run_record(
+    run_id: str,
+    *,
+    fallback_used: bool = False,
+    error: str | None = None,
+    request_payload_extra: dict | None = None,
+) -> AiRun:
     now = datetime.now(UTC)
+    request_payload = {"draftRunStep": "llmValidation", **(request_payload_extra or {})}
     return AiRun(
         id=run_id,
         capability=AiRunCapability.DRAFT_GENERATION,
         status=AiRunStatus.SUCCEEDED,
         provider=AiRunProvider.OPENROUTER,
         model="openai/test-model",
-        request_payload={"draftRunStep": "llmValidation"},
+        request_payload=request_payload,
         result_payload={"ok": True},
         error=error,
         fallback_used=fallback_used,

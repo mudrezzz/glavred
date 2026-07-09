@@ -96,7 +96,22 @@ class LlmOperationIncidentFactory:
             return LlmOperationIncidentType.NOT_CONFIGURED
         if "json" in value:
             return LlmOperationIncidentType.MALFORMED_JSON
-        if "schema" in value or "validation" in value or "empty" in value or "missing" in value or "not list" in value:
+        schema_markers = (
+            "schema",
+            "validation",
+            "empty",
+            "missing",
+            "missing key",
+            "missing keys",
+            "not list",
+            "not include",
+            "did not include",
+            "does not reference",
+            "invalid payload",
+            "invalid response",
+            "expected",
+        )
+        if any(marker in value for marker in schema_markers):
             return LlmOperationIncidentType.SCHEMA_FAILURE
         if " 4" in value or " 400" in value or " 401" in value or " 403" in value:
             return LlmOperationIncidentType.PROVIDER_4XX
@@ -128,4 +143,10 @@ _SAFE_ERROR_REDACTOR = LlmOperationSafeErrorRedactor()
 incident_from_safe_error = _INCIDENT_FACTORY.from_safe_error
 incident_from_payload = _INCIDENT_FACTORY.from_payload
 infer_incident_type = _INCIDENT_FACTORY.infer_type
+
+
+def infer_incident_type_value(safe_error: str | None) -> str:
+    return _INCIDENT_FACTORY.infer_type(safe_error).value
+
+
 redact_safe_error = _SAFE_ERROR_REDACTOR.redact

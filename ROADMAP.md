@@ -7526,7 +7526,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Reduce malformed JSON, unknown provider failures, and deterministic strategy/material-plan fallbacks visible in live reliability analysis.
 - User value: Provider retries remain normal recovery, but repeated malformed/unknown/fallback paths get concrete repair instead of hidden degradation.
 - Scope:
@@ -7551,10 +7551,11 @@ Status:
   - Strategy/material-plan fallback is either avoided, accepted-risk, or blocks quality trust explicitly.
 - Risks:
   - Provider responses vary; repairs must stay robust without overfitting five runs.
+- Completed: 2026-07-09
 
 ### Slice 2.17.4.6.1.3.4: DraftRun Queue and Staleness Reliability Guard
 
-- Status: Backlog
+- Status: Ready
 - Goal: Prevent queued or worker-saturated live DraftRuns from being misdiagnosed as stale when no worker has actually started the run.
 - User value: Live reliability checks distinguish a real stuck DraftRun from normal queue saturation or slow-but-healthy validation work.
 - Scope:
@@ -8184,6 +8185,7 @@ Status:
 - Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair. Completed 2026-07-09.
 
 
 ## Blocked Items
@@ -8212,4 +8214,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair`.
+Implement `Slice 2.17.4.6.1.3.4: DraftRun Queue and Staleness Reliability Guard`.

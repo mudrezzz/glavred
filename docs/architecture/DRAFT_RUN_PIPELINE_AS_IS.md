@@ -970,6 +970,15 @@ parse prose diagnostics and does not change runtime behavior. One run is reporte
 remediation decision such as `noActionExpected`, `watchWithMoreRuns`,
 `fixBacklogSlice`, or `fixBeforeTrustingQuality`.
 
+Slice 2.17.4.6.1.3.3 tightens provider JSON recovery diagnostics. Empty provider
+content, missing required keys, invalid response shape, and operation-specific
+contract mismatches are classified as `schemaFailure`; JSON parser failures remain
+`malformedJson`; `unknownProviderFailure` is reserved for failures without a more
+specific structured cause. Historical stage summaries with `unknownProviderFailure`
+may be refined from matching child `AiRun.error` records during replay. Isolated
+same-model repair and isolated fallback are watch signals; repeated fallback or
+quality-impact fallback remains repair work.
+
 The report also includes `signalCoverage`. This is the audit layer for the analytics
 itself: it records raw child `AiRun` records, operation-envelope incidents,
 retry/backup/fallback signals, payload/runtime budget incidents, and ignored

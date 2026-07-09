@@ -309,6 +309,15 @@ operation, provider, model, model role, and execution mode. A single run produce
 `insufficientData` for systemic conclusions; it is still useful for checking whether
 every non-clean signal has a remediation decision.
 
+Provider JSON recovery uses shared incident classification. Empty provider content,
+missing required JSON keys, invalid response shape, and operation-specific shape
+mismatches such as evidence references that do not match the source ledger are
+`schemaFailure`, not `unknownProviderFailure`. `unknownProviderFailure` should remain
+only when structured trace data does not contain a more specific cause. A recovered
+same-model retry stays a reliability signal, not a quality failure. A deterministic
+fallback is watch-only when it is isolated, and becomes backlog repair when it repeats
+or weakens fidelity.
+
 For live proof or release decisions, inspect the report's `signalCoverage` block.
 It must show every child `AiRun`, operation-envelope incident, retry, backup,
 fallback, payload/runtime budget incident, and stats-only ignored budget payload with

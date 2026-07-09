@@ -153,7 +153,18 @@ class DraftEditorialCritiqueService:
                     attempts=tuple(attempts),
                     operation_envelope=self._attempts.candidate_envelope(candidate_id, attempts, "accepted", payload=payload),
                 )
-            repair_context = {"previousAttempt": result["attempt"].to_payload(), "requiredShape": "object with editorialRisk, findings[], observations[], and recommendedEditorialMove"}
+            repair_context = {
+                "previousAttempt": result["attempt"].to_payload(),
+                "previousError": result["attempt"].validation,
+                "requiredShape": "object with all editorial critique keys",
+                "requiredKeys": sorted(EDITORIAL_CRITIQUE_KEYS),
+                "repairInstructions": [
+                    "Return one JSON object only.",
+                    "Include every required key even if findings or observations are empty arrays.",
+                    "Use findings=[] and observations=[] instead of omitting either field.",
+                    "Do not wrap JSON in markdown or prose.",
+                ],
+            }
         safe_error = self._attempts.last_attempt_error(attempts) or "Editorial critique attempts did not produce a usable report"
         return EditorialCandidateCritique(
             candidate_id=candidate_id,

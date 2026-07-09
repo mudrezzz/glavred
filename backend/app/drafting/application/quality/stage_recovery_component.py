@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from backend.app.shared.llm_operations.incidents import infer_incident_type_value
+
 
 class QualityFidelityStageRecoveryComponent:
     """Classifies per-operation retry, backup, fallback, and provider incidents."""
@@ -135,18 +137,7 @@ def _walk_dicts(value: dict[str, Any], path: str = "") -> list[tuple[str, dict[s
 
 
 def _incident_from_error(error: str) -> str:
-    lowered = error.lower()
-    if "timeout" in lowered:
-        return "providerTimeout"
-    if "json" in lowered:
-        return "malformedJson"
-    if "schema" in lowered or "validation" in lowered:
-        return "schemaFailure"
-    if "4xx" in lowered or "401" in lowered or "403" in lowered:
-        return "provider4xx"
-    if "5xx" in lowered or "500" in lowered:
-        return "provider5xx"
-    return "unknownProviderFailure"
+    return infer_incident_type_value(error)
 
 
 def _status(value: dict[str, Any]) -> str:

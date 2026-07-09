@@ -55,7 +55,8 @@ class ProviderReliabilityRemediationPolicy:
         if outcomes.get("finalGateWarning") or outcomes.get("contextOverBudget"):
             return "watchWithMoreRuns" if run_count < 3 else "fixBacklogSlice", "nextLiveProof"
         if outcomes.get("fallbackRecovered") or outcomes.get("degraded"):
-            return "watchWithMoreRuns" if run_count < 3 else "fixBacklogSlice", "nextLiveProof"
+            occurrence_count = int(outcomes.get("fallbackRecovered") or 0) + int(outcomes.get("degraded") or 0)
+            return "watchWithMoreRuns" if run_count < 3 or occurrence_count < 2 else "fixBacklogSlice", "nextLiveProof"
         if outcomes.get("backupRecovered"):
             return "watchWithMoreRuns", "none"
         if outcomes.get("retryRecovered"):
