@@ -441,6 +441,35 @@ fields, semantic inputs, quality risk, prompt char estimate, and approx token
 estimate. Operations not yet wired must be explicitly debt-allowlisted in
 `CURRENT_LLM_OPERATION_INVENTORY` with a removal slice.
 
+The next provider-input target is the DraftRun dossier boundary documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and ADR
+`docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`. The payload
+budget rule is not enough if prompt builders still receive full artifacts and only
+record budget metadata indirectly. Every provider-heavy operation should receive a
+task-specific dossier assembled through deterministic context access:
+
+`DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider`
+
+The parent DraftRun keeps rich artifacts for storage, diagnostics, replay, and
+human inspection. The provider gets a compact projection with handles back to the
+rich artifacts. Prompt builders must not receive full `rulePack`, `SourceLedger`,
+`materialPlan`, candidate pools, validation reports, or final-quality traces by
+default. A temporary exception requires an explicit inventory/debt entry, direct
+payload stats, and a removal slice.
+
+Target dossier owners:
+
+- `PlanningDossierFactory` for `materialPlan`, `strategy`, and `rhetoricalPlans`.
+- `WriterDossierFactory` for `draftCandidate` and alternative-angle candidate prose.
+- `ReviewDossierFactory` for `llmValidation` and `editorialCritique`.
+- `RankingDossierFactory` for `pairwiseRanking`.
+- `RevisionDossierFactory` for `directedRevision` and final repair.
+- `FinalQualityDossierFactory` for independent final quality review.
+
+Tool-mediated or MCP-style context access is a future adapter over the deterministic
+context service, not a substitute for it. A tool server must not expose raw full
+DraftRun JSON to the model.
+
 DraftRun JSON LLM operations must keep using the universal JSON retry policy:
 primary, repair, optional backup, then explicit fallback, not-run, or failed outcome.
 
@@ -517,6 +546,13 @@ The Drafting v1 implementation of this contract is:
 13. Tighten allowlists after each cluster migration.
 14. Retire `CURRENT_LLM_OPERATION_INVENTORY` entries as their owning slices migrate
    each provider-heavy operation behind the shared envelope.
+15. Add provider-operation runtime guard coverage for all slow provider-heavy calls.
+16. Enforce direct provider-input budgets on every provider-heavy child `AiRun`.
+17. Add deterministic DraftRun context access and provider-input dossier factories.
+18. Migrate planning, writer/alternative-angle, and review/ranking/final-gate
+    operations from full-artifact prompt inputs to operation-specific dossiers.
+19. Pilot tool-mediated context access only after the deterministic dossier boundary
+    is in place.
 
 ## Review Checklist
 

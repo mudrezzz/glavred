@@ -446,6 +446,24 @@ fields, semantic inputs, quality risk, `promptCharEstimate`, and
 The provider-input budget decision is recorded in
 `docs/adr/2026-07-04-draftrun-provider-input-payload-budgets.md`.
 
+The provider-input treatment track after Slice 2.17.4.6.1.3.3 closes the remaining
+gap: budget metadata is useful only when it belongs to the current provider call,
+not when it is nested inside a previous artifact. Live traces showed that
+`pairwiseRanking`, `materialPlan`, `draftCandidate`, `alternativeAngle*`,
+`strategy`, `llmValidation`, and `rhetoricalPlans` can still receive large
+full-artifact prompts. The target architecture is documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and ADR
+`docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`.
+
+The target flow is:
+
+`DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider`
+
+This keeps rich artifacts available for diagnostics while provider calls receive
+operation-specific planning, writer, review, ranking, revision, or final-quality
+dossiers. A future MCP/tool adapter may sit on top of deterministic context access,
+but it must not become a new path for raw full DraftRun JSON.
+
 Slice 2.17.4.6.0.3.4 adds DraftRun validation runtime budgets in
 `backend/app/drafting/application/operations/validation_runtime_budget.py`.
 `ValidationRuntimeBudgetProfile` and `ValidationRuntimeGuard` keep long background

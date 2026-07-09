@@ -7553,31 +7553,365 @@ Status:
   - Provider responses vary; repairs must stay robust without overfitting five runs.
 - Completed: 2026-07-09
 
-### Slice 2.17.4.6.1.3.4: DraftRun Queue and Staleness Reliability Guard
+### Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness
 
 - Status: Ready
-- Goal: Prevent queued or worker-saturated live DraftRuns from being misdiagnosed as stale when no worker has actually started the run.
-- User value: Live reliability checks distinguish a real stuck DraftRun from normal queue saturation or slow-but-healthy validation work.
+- Goal: Distinguish queue wait, worker saturation, slow provider calls, slow-but-healthy validation work, and genuinely stale DraftRun operations.
+- User value: A live DraftRun that waits on a long model call is no longer misdiagnosed as an unexplained hang, and reliability diagnostics can separate runtime health from provider/model quality.
 - Scope:
   - Add queue-aware staleness diagnostics for `queued` DraftRuns and worker saturation.
-  - Make validation slow-but-healthy status visible in reliability diagnostics when runtime budget is still valid.
+  - Extend runtime diagnostics with current provider operation id, operation start time, selected model, direct prompt estimate when available, provider wait time, and stale/timeout reason.
+  - Preserve slow-but-healthy validation semantics while runtime budget is still valid.
   - Preserve existing stale behavior for genuinely stuck running operations.
-  - Add repeatable diagnostics commands for Docker/live proof runs.
+  - Add repeatable Docker/live proof diagnostics for slow provider-heavy calls.
 - Out of scope:
-  - Changing worker architecture, retrying jobs automatically, provider behavior, prompt/model changes, or database schema changes.
+  - Worker architecture changes, automatic job retry, prompt/model changes, provider adapter changes, HTTP API changes, SQLite migrations, and UI redesign.
+- Implementation notes:
+  - Align this slice with `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` section 7.1.
+  - This is the runtime visibility prerequisite before provider-input budget enforcement.
 - Architecture impact:
-  - Keeps queue/staleness logic in backend diagnostics/runtime guard owners; no UI redesign unless trace display needs a small readable field.
+  - Keeps queue/staleness/provider-wait logic in diagnostics/runtime guard owners.
+  - Establishes trace fields that later provider-input budget slices can reuse.
 - Tests:
   - Queued run within worker saturation is not reported as stale.
-  - Running validation inside runtime budget remains slow-but-healthy.
-  - Running operation beyond stale budget still reports stale.
+  - Running provider operation inside runtime budget is slow-but-healthy, not stale.
+  - Running operation beyond stale budget reports validation/provider-specific stale reason.
+  - Reliability report separates queue health, provider wait, and model-quality signals.
 - Docs:
-  - Update diagnostics skill and developer guide with queue-aware live-run checks.
+  - Update diagnostics skill, developer guide, and DraftRun TO BE references.
+- Demo impact:
+  - No demo behavior change; diagnostics become more accurate for live proof runs.
 - Acceptance criteria:
-  - A five-run live batch no longer produces false stale alarms for runs that are only waiting for workers.
-  - Reliability report can separate queue health from provider/model quality.
+  - A five-run live batch no longer produces false stale alarms for runs only waiting for workers or a still-budgeted provider call.
+  - Slow `materialPlan`/validation calls show current operation, model, wait time, and prompt-size telemetry instead of only generic running/stale state.
+  - Reliability report can separate queue health, provider wait, and provider/model quality.
 - Risks:
   - Queue visibility may be limited by current persistence; keep any new trace field minimal and backward-compatible.
+
+### Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement
+
+- Status: Backlog
+- Goal: Make every provider-heavy DraftRun child `AiRun` prove it crossed a direct provider-input budget gate before prompt construction.
+- User value: We can stop guessing whether a large prompt is accidental; the trace will show exactly what was sent, what was trimmed, and whether the current operation was actually bounded.
+- Scope:
+  - Add a repeatable audit over stored child `AiRun` request payloads.
+  - Detect missing direct `payloadBudget` on provider-heavy calls.
+  - Detect false positives where `payloadBudget` exists only inside a nested previous artifact.
+  - Add or enforce a `ProviderInputBudgetGate` before `build_*_messages(...)` for the current call.
+  - Cover `pairwiseRanking`, `materialPlan`, `draftCandidate`, `alternativeAngleRoute`, `alternativeAngleCandidate`, `strategy`, `llmValidation`, `rhetoricalPlans`, and `finalQualityGateReview` with direct budget status or explicit temporary debt.
+- Out of scope:
+  - Rewriting prompts, changing models, changing DraftRun step order, adding MCP/tool access, changing provider behavior, HTTP API changes, or SQLite changes.
+- Implementation notes:
+  - Use `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` as the target design.
+  - The gate must inspect the current provider call, not historical nested payloads.
+- Architecture impact:
+  - Turns provider-input budget from representative coverage into a mandatory boundary for all provider-heavy DraftRun operations.
+- Tests:
+  - Audit flags a synthetic child `AiRun` with only nested prior `payloadBudget` as unbounded.
+  - Audit passes a child `AiRun` with direct current-call `payloadBudget`.
+  - Architecture smoke rejects new provider-heavy operations without budget gate or debt entry.
+- Docs:
+  - Update backend target, developer guide, DraftRun diagnostics skill, and TO BE if the target changes.
+- Demo impact:
+  - No user-facing demo change.
+- Acceptance criteria:
+  - Every provider-heavy DraftRun operation is either directly budgeted or explicitly debt-listed with owner, reason, and repair slice.
+  - Child `AiRun.requestPayload` shows current-call prompt estimate and budget profile for migrated operations.
+  - The audit catches the known oversized operations when replayed against old traces.
+- Risks:
+  - Static detection can be blunt; prefer structured request payload checks over fragile prompt-text parsing.
+
+### Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture
+
+- Status: Backlog
+- Goal: Introduce deterministic context access and typed provider-input dossier factories so prompt builders stop receiving raw full DraftRun artifacts.
+- User value: Provider inputs become intentional projections of the working set, not accidental dumps of everything the pipeline knows.
+- Scope:
+  - Add provider-free `DraftRunContextAccessService` for compact deterministic reads from rich DraftRun artifacts.
+  - Add typed dossier DTOs/factories for planning, writer, review, ranking, revision, and final quality operations.
+  - Add handle resolution so trace can point from compact provider input back to full diagnostic artifacts.
+  - Add unit tests proving dossiers preserve `mustHave` inputs and suppress `neverSendToProvider` fields.
+- Out of scope:
+  - Migrating every provider operation in this slice, changing prompt wording, changing models, using external MCP, API changes, SQLite changes, or UI redesign.
+- Implementation notes:
+  - This is the architectural foundation for `3.7` through `3.10`.
+  - Dossier factories should be class-owned service/policy/component owners, not public helper sprawl.
+- Architecture impact:
+  - Adds the target boundary: `DraftRun artifacts -> ContextAccess -> DossierFactory -> BudgetGate -> PromptBuilder -> Provider`.
+- Tests:
+  - Context access returns compact contract/evidence/rule/candidate/issue summaries without provider calls.
+  - Dossier factories include required handles and explicit sent/trimmed/suppressed counts.
+  - No factory exposes full `SourceLedger`, full `rulePack`, full candidate pool, or full validation report by default.
+- Docs:
+  - Update TO BE, backend component map, developer guide, and ADR if boundaries change.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - Dossier factories exist for all operation families and can be tested without live providers.
+  - Prompt-builder migrations can start without inventing new context slicing rules per operation.
+- Risks:
+  - Over-abstracting too early; keep factories close to observed provider-heavy operations.
+
+### Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration
+
+- Status: Backlog
+- Goal: Move `materialPlan`, `strategy`, and `rhetoricalPlans` from full-artifact provider inputs to planning dossiers.
+- User value: The slow and oversized planning calls should become smaller, more focused, and easier to diagnose without losing required evidence/rule/contract constraints.
+- Scope:
+  - Migrate material planning, strategy, and rhetorical planning prompt inputs to `PlanningDossierFactory` output.
+  - Preserve prompt goals, model roles, step order, operation envelopes, payload budgets, and trace compatibility.
+  - Add live/replay comparison of prompt size and quality/fidelity verdict before and after migration.
+- Out of scope:
+  - Rewriting planning quality, changing model selection, changing research/search behavior, writer generation migration, validation/ranking migration, API changes, or SQLite changes.
+- Implementation notes:
+  - Start with the measured `materialPlan` bloat because it caused a long live wait, but treat `strategy` and `rhetoricalPlans` as the same architectural family.
+- Architecture impact:
+  - Planning prompts consume compact contract, interpreted evidence summaries, selected claim/evidence/rule handles, and planning constraints instead of full accumulated artifacts.
+- Tests:
+  - Planning dossier preserves required post contract, interpreted evidence, and relevant rule handles.
+  - Prompt request payload no longer contains full `rulePack`, full `SourceLedger`, or embedded previous operation traces.
+  - Replay/live proof shows lower prompt estimate without weaker quality/fidelity classification.
+- Docs:
+  - Update TO BE implementation status, backend docs, diagnostics skill, and roadmap artifacts.
+- Demo impact:
+  - No demo behavior change unless a live proof is included in demo notes.
+- Acceptance criteria:
+  - Direct `payloadBudget` exists for planning operations.
+  - `materialPlan`, `strategy`, and `rhetoricalPlans` show operation-specific prompt sizes and retained required handles.
+  - Reliability diagnostics no longer report planning input as uncontrolled context bloat.
+- Risks:
+  - Excessive trimming could hide necessary constraints; tests must assert `mustHave` preservation, not only smaller size.
+
+### Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration
+
+- Status: Backlog
+- Goal: Move `draftCandidate`, `alternativeAngleRoute`, and `alternativeAngleCandidate` to writer/alternative-angle dossiers instead of broad planning-stack dumps.
+- User value: Candidate generation and alternative-angle work stay grounded, but no longer pay latency/quality cost for unrelated full artifacts.
+- Scope:
+  - Migrate draft candidate generation to `WriterDossierFactory`.
+  - Migrate alternative-angle routing and candidate generation to a compact alternative-angle dossier.
+  - Preserve prompt wording, candidate count semantics, model roles, trace keys, and fallback behavior.
+- Out of scope:
+  - Rewriting candidate quality, changing topic/fabula logic, validation/ranking migration, API changes, SQLite changes, or UI redesign.
+- Implementation notes:
+  - Writer input should contain one route/direction, supporting handles, allowed claims, forbidden moves, and size/style constraints.
+  - Alternative-angle routing should receive compact critique and candidate summaries rather than full candidate bodies and full validation trace by default.
+- Architecture impact:
+  - Separates writer context from planning/review working sets.
+- Tests:
+  - Candidate prompts preserve required route, contract, evidence handles, style constraints, and forbidden moves.
+  - Alternative-angle prompts preserve critique signals and invariants without full validation dump.
+  - Payload audit shows direct budgets and smaller provider input.
+- Docs:
+  - Update TO BE status, backend docs, and diagnostics notes.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - `draftCandidate`, `alternativeAngleRoute`, and `alternativeAngleCandidate` no longer receive full planning stack by default.
+  - Generated candidates retain required grounding handles and pass existing validation regressions.
+- Risks:
+  - Candidate creativity may degrade if dossiers become too narrow; use quality/fidelity diagnostics to catch this.
+
+### Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, and Final Gate Dossier Migration
+
+- Status: Backlog
+- Goal: Move `llmValidation`, `pairwiseRanking`, and final quality review/gate calls to review/ranking/final-quality dossiers.
+- User value: The most oversized comparison and review calls become auditable, bounded, and focused on the actual decision being made.
+- Scope:
+  - Migrate LLM validation to a review dossier with one candidate, compact deterministic findings, relevant claims/rules, and evidence summaries.
+  - Migrate pairwise ranking to a ranking dossier with compact candidates, scorecard dimensions, validation summaries, and selection constraints.
+  - Migrate final quality gate review to a final-quality dossier with final prose, issue lifecycle, attribution summary, and repair history.
+- Out of scope:
+  - Changing ranking algorithm, final selection policy, prompt quality, model selection, API, SQLite, or UI layout.
+- Implementation notes:
+  - `pairwiseRanking` is the largest observed input and must not compare full candidate pools plus full material plan plus full validation reports when compact summaries are enough.
+- Architecture impact:
+  - Review/ranking/final gate become role-owned provider-input projections rather than full trace consumers.
+- Tests:
+  - Ranking keeps candidate ids, compact bodies/excerpts, score dimensions, and validation summaries.
+  - Validation keeps required issue evidence and rule references.
+  - Final gate keeps warning/critical lifecycle and repair history.
+  - Existing quality/fidelity and reliability tests remain strict.
+- Docs:
+  - Update TO BE status, backend docs, diagnostics skill, and roadmap artifacts.
+- Demo impact:
+  - No demo behavior change.
+- Acceptance criteria:
+  - `pairwiseRanking`, `llmValidation`, and final quality provider calls show direct budget and compact dossier input.
+  - No open quality/fidelity signal is hidden by compaction.
+  - Regression tests prove old trace keys remain compatible.
+- Risks:
+  - Ranking can become unfair if summaries omit decisive details; tests need candidate-level invariants, not just size checks.
+
+### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
+
+- Status: Backlog
+- Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
+- User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
+- Scope:
+  - Choose one low-risk provider-heavy operation for a deterministic tool/MCP-style context access pilot.
+  - Expose only typed context-access methods, not raw full DraftRun JSON.
+  - Record tool calls, handles, returned snippets, and provider-input budget in trace.
+  - Compare quality, latency, and reliability against dossier-only mode.
+- Out of scope:
+  - Making MCP mandatory, adding an autonomous agent loop, replacing OpenRouter, changing DraftRun step order, API changes, SQLite changes, or broad prompt rewrite.
+- Implementation notes:
+  - The pilot is allowed only after `DraftRunContextAccessService` exists, so the tool is a thin adapter over deterministic reads.
+- Architecture impact:
+  - Tests whether context-on-demand can further reduce prompt bloat while keeping deterministic ownership in backend components.
+- Tests:
+  - Tool adapter cannot return full artifacts unless explicitly requested by a whitelisted handle resolver.
+  - Trace shows every context read and its budget impact.
+  - Fallback to dossier-only mode remains available.
+- Docs:
+  - Add or update ADR if the pilot becomes a durable architecture rule.
+  - Update TO BE and developer guide.
+- Demo impact:
+  - No demo behavior change unless the pilot is intentionally demonstrated.
+- Acceptance criteria:
+  - One operation can run through tool-mediated context access without exposing raw full DraftRun state.
+  - Diagnostics can compare dossier-only vs tool-mediated context usage.
+- Risks:
+  - Tool access can become hidden state if not traced; trace completeness is mandatory.
+
+### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
+
+- Status: Backlog
+- Goal: Replace mechanical approved-signal ? topic/fabula pairing with explainable candidate assembly and ranking.
+- User value:
+  - The user receives fewer but stronger post candidates, each explaining why this signal fits this topic, fabula, audience value, and channel context.
+- Scope:
+  - Add `CandidateAssemblyReport`, `CandidateMatch`, and `CandidateRanking` contracts.
+  - Use signal scores, topic/fabula matrix, publisher rules, author memory, channel/default platform, and benchmark expectations.
+  - Generate multiple candidate angles only when justified; avoid blind Cartesian products.
+  - Explain accepted/rejected topic/fabula matches and candidate risks.
+  - Preserve manual edit/approve/reject flow for candidates.
+- Out of scope:
+  - DraftRun generation changes.
+  - Multi-target variants.
+  - Automatic plan scheduling.
+- Implementation notes:
+  - Candidate assembly may start deterministic with optional review-role ranking later.
+  - Candidate ids must remain stable enough for plan/workbench links.
+- Architecture impact:
+  - Moves editorial composition logic into `PostCandidateAssembly` rather than `Signals` UI or `Plan`.
+- Tests:
+  - Candidate assembly tests for one signal with multiple topics/fabulas.
+  - Tests preventing one-to-one topic/fabula coupling regressions.
+  - UI tests for candidate rationale and rejection reasons.
+- Docs:
+  - Developer guide, user guide, SAO.
+- Demo impact:
+  - Three benchmark blogs should show distinct candidate logic from the same upstream pattern.
+- Acceptance criteria:
+  - Candidate list is ranked and explainable; no hard `.slice(0, 3)` from blind pairing remains as the main logic.
+- Risks:
+  - Ranking can hide useful alternatives; keep rejected/alternative matches inspectable.
+
+### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
+
+- Status: Backlog
+- Goal: Make the upstream workspace usable: materials, signals, and post candidates become separate readable work surfaces with clear actions and diagnostics.
+- User value:
+  - The editor can inspect found material, approve/reject signals, compare post candidates, and send the chosen concept to the plan without guessing what happened.
+- Scope:
+  - Refine `Сигналы` into explicit layers: `Материалы`, `Сигналы`, `Кандидаты`, `Диагностика`.
+  - Add compact/expanded states for found material, scored signal, and post candidate cards using the approved design-system card patterns.
+  - Show score/rationale, source provenance, topic/fabula match, risks, and next action.
+  - Add manual override/correction path that is trace-visible.
+  - Keep plan handoff compatible with current downstream flow.
+- Out of scope:
+  - New DraftRun behavior.
+  - Multi-platform variant workbench.
+  - Autoposting.
+- Implementation notes:
+  - Must use `ui-design-systems/START-HERE.md` and existing cabinet/card patterns.
+  - Do not put editing forms under action buttons; edit mode transforms fields in place.
+- Architecture impact:
+  - UI read models follow upstream domain boundaries instead of mixing raw signals and post concepts.
+- Tests:
+  - App-flow tests from radar run to material to signal to candidate to plan.
+  - Visual/design smoke for compact/expanded/edit states.
+  - Project isolation tests.
+- Docs:
+  - User guide, demo README, wiki/screenshots if applicable.
+- Demo impact:
+  - Demo portfolio can demonstrate upstream work before DraftRun quality is evaluated.
+- Acceptance criteria:
+  - A user can understand and operate the upstream flow end-to-end without opening DraftRun.
+- Risks:
+  - The section can become visually dense; prioritize progressive disclosure and two-column cabinet layout.
+
+### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+
+- Status: Backlog
+- Goal: Let one editorial idea target multiple publication channels while keeping a
+  shared fabula/brief and separate platform variants.
+- User value:
+  - The author can plan one post for Telegram + Dzen, or LinkedIn article + Telegram
+    companion, without duplicating the whole work item manually.
+- Scope:
+  - Add `targetChannelIds` or equivalent target group on plan/work items.
+  - Add `PublicationGroup` for one shared editorial idea.
+  - Add per-channel `PlatformVariant` state under the selected work item.
+  - Update workbench UX with tabs/segmented controls:
+    `Общий замысел`, then one tab per channel variant.
+- Out of scope:
+  - Running multi-platform DraftRun.
+  - Real publication adapters.
+  - Cross-platform analytics.
+- Implementation notes:
+  - Shared brief remains the source of intent; platform variants own their draft,
+    version history, final approval, and readiness.
+- Architecture impact:
+  - Adds platform-variant state without changing author memory or topic/fabula reuse.
+- Tests:
+  - Domain tests for target groups and variant isolation.
+  - UI tests for channel tabs and final selection per variant.
+- Docs:
+  - User guide, SAO, roadmap.
+- Demo impact:
+  - `Блог Главреда` can show a Telegram + Dzen work item.
+- Acceptance criteria:
+  - One work item can hold at least two channel variants without overwriting drafts.
+- Risks:
+  - UI complexity; keep v1 focused on one selected work item.
+
+### Slice 2.17.6: Multi-Platform DraftRun Contract v1
+
+- Status: Backlog
+- Goal: Generate platform-specific variants from one shared editorial idea using
+  explicit contracts rather than one generic text.
+- User value:
+  - A Telegram post and a Dzen article can share evidence/thesis but differ in length,
+    structure, voice density, CTA, and examples.
+- Scope:
+  - Build shared context/evidence once where practical.
+  - Resolve separate `PostContract` and publication-size contract per target channel.
+  - Run one DraftRun per platform variant in v1, linked by `PublicationGroupId`.
+  - Show trace links per variant.
+- Out of scope:
+  - A monolithic group-run orchestrator.
+  - Autoposting.
+  - Platform API credentials.
+- Implementation notes:
+  - Prefer transparent separate runs first; optimize shared orchestration later.
+  - Keep planned source/evidence work reusable across variant contracts.
+- Architecture impact:
+  - Extends DraftRun context with project/channel/variant identity while preserving
+    current step order.
+- Tests:
+  - Backend/frontend contract tests for variant-specific context.
+  - Smoke run for two variants from one shared work item.
+- Docs:
+  - DraftRun AS IS map and PDF must be updated when implemented.
+- Demo impact:
+  - `Блог Главреда` becomes the first multi-platform benchmark.
+- Acceptance criteria:
+  - Two channel variants can be generated, traced, approved, and learned from
+    independently.
+- Risks:
+  - Cost and runtime increase; use budget modes and smoke mode for diagnostics.
 
 ### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
 
@@ -7613,6 +7947,70 @@ Status:
   - Read selection is diverse and trace-visible.
 - Risks:
   - Triage can over-filter surprising materials; keep rejected-before-read inspectable.
+
+### Slice 2.17.7: Blog Portfolio Benchmark Runner
+
+- Status: Backlog
+- Goal: Turn the three-blog demo portfolio into a repeatable benchmark for pipeline
+  quality and regression diagnosis.
+- User value:
+  - Changes to models, prompts, retrieval, validation, revision, and platform
+    adaptation can be judged against multiple real editorial systems.
+- Scope:
+  - Add benchmark scenario definitions per blog.
+  - Add a runner that can execute selected scenarios in smoke/standard/full mode.
+  - Produce a report covering project isolation, channel adaptation, author voice,
+    source use, final quality gate status, HITL readiness, and learning-note output.
+  - Keep private benchmark inputs gitignored.
+- Out of scope:
+  - Automatic approval of quality.
+  - Full analytics ingestion.
+  - Publishing to platforms.
+- Implementation notes:
+  - The benchmark should say "good enough to continue" vs "repair slice needed" using
+    roadmap-aware diagnostics.
+- Architecture impact:
+  - Converts demo portfolio into a product-quality test harness.
+- Tests:
+  - Runner unit tests, smoke benchmark tests, docs for private fixtures.
+- Docs:
+  - Developer guide, demo README, diagnostics skill notes.
+- Demo impact:
+  - Demo portfolio becomes both visible product sample and repeatable quality suite.
+- Acceptance criteria:
+  - At least one scenario per blog can be run and summarized.
+  - Reports distinguish expected future gaps from unexpected regressions.
+- Risks:
+  - Benchmark can become expensive; v1 must support smoke mode.
+
+### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
+
+- Status: Backlog
+- Goal: Turn accepted `editorialLearning` notes into explicit, reviewable proposals
+  for publisher rules, Topic/Fabula guidance, source strategy, validators, prompts, or
+  model policy.
+- Scope:
+  - Read only accepted editorial-learning notes.
+  - Group repeated lessons across posts.
+  - Create explainable improvement proposals linked back to versions, comments,
+    quality checks, and final decisions.
+  - Require explicit human approval before mutating any editorial setting.
+- Out of scope:
+  - Silent prompt/rule mutation.
+  - Automatic fine-tuning.
+  - Cross-user learning.
+
+### Deferred: Document AI Platform Import Adapter
+
+- Status: Deferred
+- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
+  document/archive analysis.
+- Reason deferred:
+  - The current product risk is drafting orchestration, not archive import. The next
+    backend foundation should establish durable queue/run semantics first.
+- Re-open when:
+  - Queued `DraftRun` semantics and trace contracts are stable enough to reuse for
+    document workflows.
 
 ### Slice 2.17.4.6.3: Source Strategy Adapters and Domain-Aware Search
 
@@ -7796,209 +8194,6 @@ Status:
   - A found material can become a scored signal with clear reasons and risks.
 - Risks:
   - Scoring can become opaque; require visible dimension-level explanations.
-
-### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
-
-- Status: Backlog
-- Goal: Replace mechanical approved-signal ? topic/fabula pairing with explainable candidate assembly and ranking.
-- User value:
-  - The user receives fewer but stronger post candidates, each explaining why this signal fits this topic, fabula, audience value, and channel context.
-- Scope:
-  - Add `CandidateAssemblyReport`, `CandidateMatch`, and `CandidateRanking` contracts.
-  - Use signal scores, topic/fabula matrix, publisher rules, author memory, channel/default platform, and benchmark expectations.
-  - Generate multiple candidate angles only when justified; avoid blind Cartesian products.
-  - Explain accepted/rejected topic/fabula matches and candidate risks.
-  - Preserve manual edit/approve/reject flow for candidates.
-- Out of scope:
-  - DraftRun generation changes.
-  - Multi-target variants.
-  - Automatic plan scheduling.
-- Implementation notes:
-  - Candidate assembly may start deterministic with optional review-role ranking later.
-  - Candidate ids must remain stable enough for plan/workbench links.
-- Architecture impact:
-  - Moves editorial composition logic into `PostCandidateAssembly` rather than `Signals` UI or `Plan`.
-- Tests:
-  - Candidate assembly tests for one signal with multiple topics/fabulas.
-  - Tests preventing one-to-one topic/fabula coupling regressions.
-  - UI tests for candidate rationale and rejection reasons.
-- Docs:
-  - Developer guide, user guide, SAO.
-- Demo impact:
-  - Three benchmark blogs should show distinct candidate logic from the same upstream pattern.
-- Acceptance criteria:
-  - Candidate list is ranked and explainable; no hard `.slice(0, 3)` from blind pairing remains as the main logic.
-- Risks:
-  - Ranking can hide useful alternatives; keep rejected/alternative matches inspectable.
-
-### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
-
-- Status: Backlog
-- Goal: Make the upstream workspace usable: materials, signals, and post candidates become separate readable work surfaces with clear actions and diagnostics.
-- User value:
-  - The editor can inspect found material, approve/reject signals, compare post candidates, and send the chosen concept to the plan without guessing what happened.
-- Scope:
-  - Refine `Сигналы` into explicit layers: `Материалы`, `Сигналы`, `Кандидаты`, `Диагностика`.
-  - Add compact/expanded states for found material, scored signal, and post candidate cards using the approved design-system card patterns.
-  - Show score/rationale, source provenance, topic/fabula match, risks, and next action.
-  - Add manual override/correction path that is trace-visible.
-  - Keep plan handoff compatible with current downstream flow.
-- Out of scope:
-  - New DraftRun behavior.
-  - Multi-platform variant workbench.
-  - Autoposting.
-- Implementation notes:
-  - Must use `ui-design-systems/START-HERE.md` and existing cabinet/card patterns.
-  - Do not put editing forms under action buttons; edit mode transforms fields in place.
-- Architecture impact:
-  - UI read models follow upstream domain boundaries instead of mixing raw signals and post concepts.
-- Tests:
-  - App-flow tests from radar run to material to signal to candidate to plan.
-  - Visual/design smoke for compact/expanded/edit states.
-  - Project isolation tests.
-- Docs:
-  - User guide, demo README, wiki/screenshots if applicable.
-- Demo impact:
-  - Demo portfolio can demonstrate upstream work before DraftRun quality is evaluated.
-- Acceptance criteria:
-  - A user can understand and operate the upstream flow end-to-end without opening DraftRun.
-- Risks:
-  - The section can become visually dense; prioritize progressive disclosure and two-column cabinet layout.
-
-### Slice 2.17.5: Multi-Target Planning and Variant Workbench
-
-- Status: Backlog
-- Goal: Let one editorial idea target multiple publication channels while keeping a
-  shared fabula/brief and separate platform variants.
-- User value:
-  - The author can plan one post for Telegram + Dzen, or LinkedIn article + Telegram
-    companion, without duplicating the whole work item manually.
-- Scope:
-  - Add `targetChannelIds` or equivalent target group on plan/work items.
-  - Add `PublicationGroup` for one shared editorial idea.
-  - Add per-channel `PlatformVariant` state under the selected work item.
-  - Update workbench UX with tabs/segmented controls:
-    `Общий замысел`, then one tab per channel variant.
-- Out of scope:
-  - Running multi-platform DraftRun.
-  - Real publication adapters.
-  - Cross-platform analytics.
-- Implementation notes:
-  - Shared brief remains the source of intent; platform variants own their draft,
-    version history, final approval, and readiness.
-- Architecture impact:
-  - Adds platform-variant state without changing author memory or topic/fabula reuse.
-- Tests:
-  - Domain tests for target groups and variant isolation.
-  - UI tests for channel tabs and final selection per variant.
-- Docs:
-  - User guide, SAO, roadmap.
-- Demo impact:
-  - `Блог Главреда` can show a Telegram + Dzen work item.
-- Acceptance criteria:
-  - One work item can hold at least two channel variants without overwriting drafts.
-- Risks:
-  - UI complexity; keep v1 focused on one selected work item.
-
-### Slice 2.17.6: Multi-Platform DraftRun Contract v1
-
-- Status: Backlog
-- Goal: Generate platform-specific variants from one shared editorial idea using
-  explicit contracts rather than one generic text.
-- User value:
-  - A Telegram post and a Dzen article can share evidence/thesis but differ in length,
-    structure, voice density, CTA, and examples.
-- Scope:
-  - Build shared context/evidence once where practical.
-  - Resolve separate `PostContract` and publication-size contract per target channel.
-  - Run one DraftRun per platform variant in v1, linked by `PublicationGroupId`.
-  - Show trace links per variant.
-- Out of scope:
-  - A monolithic group-run orchestrator.
-  - Autoposting.
-  - Platform API credentials.
-- Implementation notes:
-  - Prefer transparent separate runs first; optimize shared orchestration later.
-  - Keep planned source/evidence work reusable across variant contracts.
-- Architecture impact:
-  - Extends DraftRun context with project/channel/variant identity while preserving
-    current step order.
-- Tests:
-  - Backend/frontend contract tests for variant-specific context.
-  - Smoke run for two variants from one shared work item.
-- Docs:
-  - DraftRun AS IS map and PDF must be updated when implemented.
-- Demo impact:
-  - `Блог Главреда` becomes the first multi-platform benchmark.
-- Acceptance criteria:
-  - Two channel variants can be generated, traced, approved, and learned from
-    independently.
-- Risks:
-  - Cost and runtime increase; use budget modes and smoke mode for diagnostics.
-
-### Slice 2.17.7: Blog Portfolio Benchmark Runner
-
-- Status: Backlog
-- Goal: Turn the three-blog demo portfolio into a repeatable benchmark for pipeline
-  quality and regression diagnosis.
-- User value:
-  - Changes to models, prompts, retrieval, validation, revision, and platform
-    adaptation can be judged against multiple real editorial systems.
-- Scope:
-  - Add benchmark scenario definitions per blog.
-  - Add a runner that can execute selected scenarios in smoke/standard/full mode.
-  - Produce a report covering project isolation, channel adaptation, author voice,
-    source use, final quality gate status, HITL readiness, and learning-note output.
-  - Keep private benchmark inputs gitignored.
-- Out of scope:
-  - Automatic approval of quality.
-  - Full analytics ingestion.
-  - Publishing to platforms.
-- Implementation notes:
-  - The benchmark should say "good enough to continue" vs "repair slice needed" using
-    roadmap-aware diagnostics.
-- Architecture impact:
-  - Converts demo portfolio into a product-quality test harness.
-- Tests:
-  - Runner unit tests, smoke benchmark tests, docs for private fixtures.
-- Docs:
-  - Developer guide, demo README, diagnostics skill notes.
-- Demo impact:
-  - Demo portfolio becomes both visible product sample and repeatable quality suite.
-- Acceptance criteria:
-  - At least one scenario per blog can be run and summarized.
-  - Reports distinguish expected future gaps from unexpected regressions.
-- Risks:
-  - Benchmark can become expensive; v1 must support smoke mode.
-
-### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
-
-- Status: Backlog
-- Goal: Turn accepted `editorialLearning` notes into explicit, reviewable proposals
-  for publisher rules, Topic/Fabula guidance, source strategy, validators, prompts, or
-  model policy.
-- Scope:
-  - Read only accepted editorial-learning notes.
-  - Group repeated lessons across posts.
-  - Create explainable improvement proposals linked back to versions, comments,
-    quality checks, and final decisions.
-  - Require explicit human approval before mutating any editorial setting.
-- Out of scope:
-  - Silent prompt/rule mutation.
-  - Automatic fine-tuning.
-  - Cross-user learning.
-
-### Deferred: Document AI Platform Import Adapter
-
-- Status: Deferred
-- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
-  document/archive analysis.
-- Reason deferred:
-  - The current product risk is drafting orchestration, not archive import. The next
-    backend foundation should establish durable queue/run semantics first.
-- Re-open when:
-  - Queued `DraftRun` semantics and trace contracts are stable enough to reuse for
-    document workflows.
 
 ## Completed Slices
 
@@ -8214,4 +8409,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.4: DraftRun Queue and Staleness Reliability Guard`.
+Implement `Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness`.

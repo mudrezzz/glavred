@@ -1,6 +1,6 @@
 # Backend Architecture AS IS
 
-Current as of Slice 2.17.4.6.0.7.
+Current as of Slice 2.17.4.6.1.3.3.
 
 This document records the backend state before the recovery refactor. It is factual:
 it describes what exists now, including debt. The target shape is documented in
@@ -198,6 +198,32 @@ The enforced representative operations are:
 `budgetPolicyId`, `reasonNotBudgeted`, and `payloadBudgetRemovalSlice`. Operations
 not yet wired at runtime remain debt-allowlisted rather than silently sending full
 artifacts.
+
+### Current provider-input limitation
+
+The payload budget layer is present, but live DraftRun traces show that the problem
+is not fully solved yet. Several provider-heavy operations still build prompt inputs
+from large parent artifacts or broad accumulated traces instead of a direct
+operation-specific provider-input dossier.
+
+Largest observed provider inputs in the live audit:
+
+| Operation | Largest observed input | Approx tokens | Direct provider-input budget |
+| --- | ---: | ---: | --- |
+| `pairwiseRanking` | 626449 chars | 156613 | missing |
+| `materialPlan` | 346264 chars | 86566 | missing |
+| `alternativeAngleCandidate` | 328412 chars | 82103 | missing |
+| `draftCandidate` | 328276 chars | 82069 | missing |
+| `strategy` | 323040 chars | 80760 | missing |
+| `alternativeAngleRoute` | 320833 chars | 80209 | missing |
+| `llmValidation` | 255935 chars | 63984 | missing |
+| `rhetoricalPlans` | 168461 chars | 42116 | missing |
+
+This is an AS IS architecture risk, not only a `materialPlan` performance bug.
+Nested `payloadBudget` metadata inside a previous artifact is not proof that the
+current provider call was bounded. The target treatment plan is documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and
+`docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`.
 
 ## Current Guardrails
 

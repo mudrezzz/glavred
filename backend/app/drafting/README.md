@@ -267,6 +267,39 @@ are compacted. Child `AiRun.requestPayload`, attempts, and `operationEnvelope` m
 include `payloadBudget` metadata for every enforced operation. Operations not yet
 wired must stay explicit debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
 
+## Provider Input Dossier Boundary
+
+Live DraftRun traces after the reliability slices showed that the payload-budget
+rule must become stricter. A current provider call is not considered budgeted just
+because it contains a previous artifact that itself contains `payloadBudget`
+metadata. The current call needs its own direct profile and compact provider input.
+
+The target track is documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and ADR
+`docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`.
+
+Target flow:
+
+```text
+DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider
+```
+
+The drafting package should introduce deterministic context access and
+operation-specific dossier factories before migrating more prompt builders.
+Planned dossier owners include:
+
+- planning dossiers for `materialPlan`, `strategy`, and `rhetoricalPlans`;
+- writer dossiers for `draftCandidate` and alternative-angle candidate prose;
+- review dossiers for `llmValidation` and `editorialCritique`;
+- ranking dossiers for `pairwiseRanking`;
+- revision dossiers for directed revision and final repair;
+- final-quality dossiers for independent final gate review.
+
+Prompt builders must not receive full `rulePack`, full `SourceLedger`, full
+`materialPlan`, full candidate pools, full validation reports, or full final-quality
+traces by default. A temporary exception must be explicit roadmap debt with a
+removal slice.
+
 ## Validation Runtime Budget
 
 DraftRun validation can be slow, but it must be bounded and trace-visible.

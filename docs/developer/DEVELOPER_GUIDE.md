@@ -275,6 +275,21 @@ attempts, and `operationEnvelope.payloadStats` must show the `payloadBudget` use
 an enforced operation. Debt operations must keep
 `payloadBudgetStatus=debtAllowlisted` in the inventory with a removal slice.
 
+After the live provider-input audit, do not treat a `payloadBudget` key nested
+inside a previous artifact as proof that the current provider call was bounded. The
+target provider-input architecture is documented in
+`docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and ADR
+`docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`. New or migrated
+provider-heavy calls must follow:
+
+`DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider`
+
+Prompt builders should receive operation-specific dossiers, not full `rulePack`,
+full `SourceLedger`, full `materialPlan`, full candidate pools, full validation
+reports, or full final-quality traces. A future MCP/tool server may call the
+deterministic context access service, but it must not expose raw full DraftRun JSON
+to the model.
+
 Validation/revision loops must also use
 `backend.app.drafting.application.operations.validation_runtime_budget`.
 `ValidationRuntimeBudgetProfile` defines execution-mode runtime caps, and
