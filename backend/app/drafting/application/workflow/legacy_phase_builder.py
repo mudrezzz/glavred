@@ -25,6 +25,7 @@ from backend.app.drafting.application.operations.validation_runtime_budget impor
     ValidationRuntimeBudgetPolicy,
     ValidationRuntimeGuard,
 )
+from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
 from backend.app.drafting.application.workflow.legacy_services import LegacyDraftWorkflowServices
 from backend.app.drafting.application.workflow.registry import DraftStepRegistry, DraftWorkflowPhase
 from backend.app.drafting.application.workflow.state import DraftWorkflowState
@@ -182,19 +183,26 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.MATERIAL_PLAN)
         material_progress = state.progress.operation_sink(DraftRunStepKey.MATERIAL_PLAN, total_operations=1)
         settings = get_settings()
+        material_budget = _budget_estimate(
+            operation_id="materialPlan",
+            draft_run_step="materialPlan",
+            provider_input={
+                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
+                "rule_pack": state.rule_pack,
+                "usable_evidence_candidates": [],
+                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+            },
+            execution_mode=settings.draft_run_execution_mode,
+            model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+        )
         material_progress.start_operation(
             "materialPlan",
             kind="materialPlan",
             label="Material plan",
             model_role=DraftModelRole.STRATEGY.value,
             selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
-            prompt_char_estimate=_payload_char_estimate(
-                {
-                    "contextSummary": state.context_summary,
-                    "rulePack": state.rule_pack,
-                    "contextArtifact": state.context_artifact,
-                }
-            ),
+            prompt_char_estimate=material_budget["promptCharEstimate"],
+            approx_token_estimate=material_budget["approxTokenEstimate"],
             stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
         try:
@@ -232,20 +240,27 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.STRATEGY)
         strategy_progress = state.progress.operation_sink(DraftRunStepKey.STRATEGY, total_operations=1)
         settings = get_settings()
+        strategy_budget = _budget_estimate(
+            operation_id="strategy",
+            profile_operation_id="draftStrategy",
+            draft_run_step="strategy",
+            provider_input={
+                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
+                "rule_pack": state.rule_pack,
+                "material_plan": state.material_plan,
+                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+            },
+            execution_mode=settings.draft_run_execution_mode,
+            model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+        )
         strategy_progress.start_operation(
             "draftStrategy",
             kind="draftStrategy",
             label="Draft strategy",
             model_role=DraftModelRole.STRATEGY.value,
             selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
-            prompt_char_estimate=_payload_char_estimate(
-                {
-                    "contextSummary": state.context_summary,
-                    "rulePack": state.rule_pack,
-                    "materialPlan": state.material_plan,
-                    "contextPack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
-                }
-            ),
+            prompt_char_estimate=strategy_budget["promptCharEstimate"],
+            approx_token_estimate=strategy_budget["approxTokenEstimate"],
             stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
         try:
@@ -283,21 +298,27 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.RHETORICAL_PLANS)
         rhetorical_progress = state.progress.operation_sink(DraftRunStepKey.RHETORICAL_PLANS, total_operations=1)
         settings = get_settings()
+        rhetorical_budget = _budget_estimate(
+            operation_id="rhetoricalPlans",
+            draft_run_step="rhetoricalPlans",
+            provider_input={
+                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
+                "rule_pack": state.rule_pack,
+                "material_plan": state.material_plan,
+                "draft_strategy": state.draft_strategy,
+                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+            },
+            execution_mode=settings.draft_run_execution_mode,
+            model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+        )
         rhetorical_progress.start_operation(
             "rhetoricalPlans",
             kind="rhetoricalPlans",
             label="Rhetorical plans",
             model_role=DraftModelRole.STRATEGY.value,
             selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
-            prompt_char_estimate=_payload_char_estimate(
-                {
-                    "contextSummary": state.context_summary,
-                    "contextArtifact": state.context_artifact,
-                    "rulePack": state.rule_pack,
-                    "materialPlan": state.material_plan,
-                    "draftStrategy": state.draft_strategy,
-                }
-            ),
+            prompt_char_estimate=rhetorical_budget["promptCharEstimate"],
+            approx_token_estimate=rhetorical_budget["approxTokenEstimate"],
             stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
         try:
@@ -474,3 +495,27 @@ def _provider_stale_after_seconds(execution_mode: str | None) -> int:
     if mode == "full":
         return 1200
     return 900
+
+
+def _budget_estimate(
+    *,
+    operation_id: str,
+    draft_run_step: str,
+    provider_input: dict[str, Any],
+    execution_mode: str | None,
+    model: str | None,
+    profile_operation_id: str | None = None,
+) -> dict[str, int]:
+    proof = ProviderInputBudgetGate().evaluate(
+        operation_id=operation_id,
+        profile_operation_id=profile_operation_id,
+        draft_run_step=draft_run_step,
+        provider_input=provider_input,
+        execution_mode=execution_mode,
+        model=model,
+        model_role=DraftModelRole.STRATEGY.value,
+    )
+    return {
+        "promptCharEstimate": proof.prompt_char_estimate,
+        "approxTokenEstimate": proof.approx_token_estimate,
+    }

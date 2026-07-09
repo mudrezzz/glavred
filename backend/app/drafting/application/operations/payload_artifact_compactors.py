@@ -45,7 +45,27 @@ class MaterialPlanCompactor:
         counts: dict[str, int] = {}
         compact = _pick(
             material_plan,
-            ("status", "thesis", "angle", "readerValue", "structure", "sections", "outline", "warnings", "rejectionReasons", "evidenceInterpretationSummary"),
+            (
+                "status",
+                "thesis",
+                "angle",
+                "readerValue",
+                "structure",
+                "sections",
+                "outline",
+                "availableEvidence",
+                "rejectedEvidence",
+                "claimsRequiringAttribution",
+                "qualifiedClaims",
+                "missingEvidence",
+                "riskyClaims",
+                "groundingPlan",
+                "sourceNotes",
+                "openQuestions",
+                "warnings",
+                "rejectionReasons",
+                "evidenceInterpretationSummary",
+            ),
         )
         for key in ("usableEvidence", "usableEvidenceCandidates", "evidenceCandidates"):
             if key in material_plan:

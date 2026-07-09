@@ -18,10 +18,14 @@ class BudgetedProviderInput:
     payload: dict[str, Any]
     input_stats: dict[str, Any]
     payload_stats: dict[str, Any]
+    incident: dict[str, Any] | None = None
 
     @property
     def payload_budget(self) -> dict[str, Any]:
-        return dict(self.payload_stats.get("payloadBudget") or {})
+        payload = dict(self.payload_stats.get("payloadBudget") or {})
+        if self.incident:
+            payload["incident"] = dict(self.incident)
+        return payload
 
 
 class DraftRunPayloadBudgetRuntime:
@@ -50,6 +54,7 @@ class DraftRunPayloadBudgetRuntime:
             payload=result.compact_payload,
             input_stats=result.input_stats,
             payload_stats=result.payload_stats,
+            incident=result.incident.to_payload() if result.incident else None,
         )
 
 

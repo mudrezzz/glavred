@@ -1739,7 +1739,11 @@ const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
   compactorArtifacts: "backend/app/drafting/application/operations/payload_artifact_compactors.py",
   compactorOrchestrator: "backend/app/drafting/application/operations/payload_compactor_orchestrator.py",
   policy: "backend/app/drafting/application/operations/payload_budget_policy.py",
+  providerInputGate: "backend/app/drafting/application/operations/provider_input_budget_gate.py",
+  providerInputAudit: "backend/app/drafting/application/operations/provider_input_audit.py",
 };
+const DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH =
+  "scripts/audit_draft_run_provider_inputs.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
   "backend/app/drafting/application/operations/validation_runtime_budget.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_OWNER_PATHS = [
@@ -3399,6 +3403,45 @@ for (const fragment of [
     `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.policy} is missing payload budget orchestration fragment: ${fragment}`
   );
 }
+
+const draftingProviderInputGateSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.providerInputGate
+);
+for (const fragment of [
+  "class ProviderInputBudgetGate",
+  "class ProviderInputBudgetProof",
+  "providerInput",
+  "payloadBudget",
+  "operationAlias",
+]) {
+  assert(
+    draftingProviderInputGateSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.providerInputGate} is missing direct provider-input budget gate fragment: ${fragment}`
+  );
+}
+
+const draftingProviderInputAuditSource = readText(
+  DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.providerInputAudit
+);
+for (const fragment of [
+  "class ProviderInputAudit",
+  "TARGET_PROVIDER_INPUT_OPERATIONS",
+  "directlyBudgeted",
+  "overBudget",
+  "missingDirectBudget",
+  "nestedBudgetFalsePositive",
+  "explicitDebt",
+]) {
+  assert(
+    draftingProviderInputAuditSource.includes(fragment),
+    `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.providerInputAudit} is missing provider-input audit fragment: ${fragment}`
+  );
+}
+
+assert(
+  fileExists(DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH),
+  `${DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH} is required for replayable DraftRun provider input audits.`
+);
 
 for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not_budgeted", "payload_budget_removal_slice"]) {
   assert(

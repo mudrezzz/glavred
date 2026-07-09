@@ -57,6 +57,11 @@ def test_rhetorical_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     run = ai_service(tmp_path).get_run(result.ai_run_id or "")
     assert run is not None
     assert run.request_payload["draftRunStep"] == "rhetoricalPlans"
+    assert run.request_payload["operationId"] == "rhetoricalPlans"
+    assert run.request_payload["providerInput"]["material_plan"]["availableEvidence"] == ["evidence"]
+    assert run.request_payload["payloadBudget"]["profileId"] == "rhetoricalPlans"
+    assert run.request_payload["inputStats"]["modelRole"] == "strategy"
+    assert run.request_payload["payloadStats"]["payloadBudget"]["profileId"] == "rhetoricalPlans"
     assert result.artifact_payload["attempts"][0]["status"] == "accepted"
 
 def test_rhetorical_plan_service_falls_back_without_openrouter(tmp_path) -> None:

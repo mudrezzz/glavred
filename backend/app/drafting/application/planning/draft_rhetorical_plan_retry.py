@@ -26,6 +26,7 @@ from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_rhetorical_plan import rhetorical_plan_set_from_payload
 from backend.app.settings import BackendSettings
 from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
+from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
 
 
 class DraftRhetoricalPlanRetryOrchestrator:
@@ -41,6 +42,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
         self._ai_run_service = ai_run_service
         self._openrouter_adapter = openrouter_adapter
         self._deterministic_plan_service = deterministic_plan_service
+        self._budget_gate = ProviderInputBudgetGate()
 
     def create_with_retry(
         self,
@@ -84,14 +86,34 @@ class DraftRhetoricalPlanRetryOrchestrator:
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
+        budget_proof = self._budget_gate.evaluate(
+            operation_id="rhetoricalPlans",
+            draft_run_step="rhetoricalPlans",
+            provider_input={
+                "context_artifact": {**context_summary, "contextSummary": context_summary, "contextPack": context_pack},
+                "rule_pack": {"ruleRegistrySnapshot": rule_registry},
+                "post_contract": post_contract,
+                "material_plan": material_plan,
+                "draft_strategy": draft_strategy,
+                "context_pack": context_pack,
+                "repair_context": repair_context if attempt.repair else None,
+            },
+            execution_mode=self._settings.draft_run_execution_mode,
+            model=attempt.model,
+            model_role=DraftModelRole.STRATEGY.value,
+        )
+        prompt_input = budget_proof.budgeted_input.payload
+        compact_context = _record(prompt_input.get("context_artifact")).get("contextSummary") or context_summary
+        compact_rule_pack = _record(prompt_input.get("rule_pack"))
+        compact_rule_registry = _record(compact_rule_pack.get("ruleRegistrySnapshot")) or rule_registry
         messages = build_rhetorical_plan_messages(
-            context_summary=context_summary,
-            rule_registry=rule_registry,
-            post_contract=post_contract,
-            material_plan=material_plan,
-            draft_strategy=draft_strategy,
-            context_pack=context_pack,
-            repair_context=repair_context if attempt.repair else None,
+            context_summary=_record(compact_context),
+            rule_registry=compact_rule_registry,
+            post_contract=_record(prompt_input.get("post_contract")) or post_contract,
+            material_plan=_record(prompt_input.get("material_plan")) or material_plan,
+            draft_strategy=_record(prompt_input.get("draft_strategy")) or draft_strategy,
+            context_pack=_record(prompt_input.get("context_pack")) or context_pack,
+            repair_context=_record(prompt_input.get("repair_context")) if attempt.repair else None,
         )
         request_payload = build_rhetorical_plan_request_trace(
             provider=AiRunProvider.OPENROUTER,
@@ -106,6 +128,7 @@ class DraftRhetoricalPlanRetryOrchestrator:
             attempt=attempt_payload,
             model_selection=selection.to_payload(),
         )
+        request_payload.update(budget_proof.request_payload_fields())
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
@@ -205,3 +228,7 @@ __all__ = (
     'DraftRhetoricalPlanRetryOrchestrator',
     'DraftRhetoricalPlanRetryComponent',
 )
+
+
+def _record(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}

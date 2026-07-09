@@ -275,6 +275,30 @@ attempts, and `operationEnvelope.payloadStats` must show the `payloadBudget` use
 an enforced operation. Debt operations must keep
 `payloadBudgetStatus=debtAllowlisted` in the inventory with a removal slice.
 
+For DraftRun provider-input replay, use:
+
+```bash
+python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID> --format json
+```
+
+The audit reads stored child `AiRun.requestPayload` records and classifies target
+operations as `directlyBudgeted`, `overBudget`, `missingDirectBudget`,
+`nestedBudgetFalsePositive`, or `explicitDebt`. `explicitDebt` is allowed only when
+it has owner, reason, risk, and repair slice; it is not a clean budget verdict.
+Planning operations `materialPlan`, `strategy`, and `rhetoricalPlans` now write
+direct current-call proof through `ProviderInputBudgetGate`. A nested `payloadBudget`
+from a previous artifact must be treated as a false positive, not as proof.
+If the audit reports `overBudget` for one of those planning calls, the gate is
+working but the provider input is not yet clean. Treat that as planning dossier debt
+for `2.17.4.6.1.3.7`, not as a reason to hide or ignore the budget incident.
+
+The live proof for Slice `2.17.4.6.1.3.5` also exposed a separate Docker/SQLite
+durability issue: a long DraftRun can corrupt `var/glavred-draft-runs.sqlite3` after
+worker `disk I/O error` while persisting validation progress. If this happens,
+preserve the malformed ignored `var/` file for diagnostics, restore a clean local
+working DB, and treat the root fix as slice `2.17.4.6.1.3.5.1`; do not confuse it
+with provider-input budget correctness.
+
 After the live provider-input audit, do not treat a `payloadBudget` key nested
 inside a previous artifact as proof that the current provider call was bounded. The
 target provider-input architecture is documented in

@@ -27,6 +27,7 @@ from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_planning import material_plan_from_payload
 from backend.app.settings import BackendSettings
 from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
+from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
 
 MATERIAL_PLAN_KEYS = {
     "availableEvidence",
@@ -55,6 +56,7 @@ class MaterialPlanRetryOrchestrator:
         self._ai_run_service = ai_run_service
         self._openrouter_adapter = openrouter_adapter
         self._deterministic_planning_service = deterministic_planning_service
+        self._budget_gate = ProviderInputBudgetGate()
 
     def create_with_retry(
         self,
@@ -200,12 +202,28 @@ class MaterialPlanRetryOrchestrator:
         context_pack: dict[str, Any] | None,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
+        budget_proof = self._budget_gate.evaluate(
+            operation_id="materialPlan",
+            draft_run_step="materialPlan",
+            provider_input={
+                "context_artifact": _context_artifact_for_budget(context_summary, context_pack),
+                "rule_pack": rule_pack,
+                "usable_evidence_candidates": usable_candidates,
+                "context_pack": context_pack,
+                "repair_context": repair_context if attempt.repair else None,
+            },
+            execution_mode=self._settings.draft_run_execution_mode,
+            model=attempt.model,
+            model_role=DraftModelRole.STRATEGY.value,
+        )
+        prompt_input = budget_proof.budgeted_input.payload
+        compact_context = _record(prompt_input.get("context_artifact")).get("contextSummary") or context_summary
         messages = build_material_plan_messages(
-            context_summary=context_summary,
-            rule_pack=rule_pack,
-            usable_evidence_candidates=usable_candidates,
-            context_pack=context_pack,
-            repair_context=repair_context if attempt.repair else None,
+            context_summary=_record(compact_context),
+            rule_pack=_record(prompt_input.get("rule_pack")) or rule_pack,
+            usable_evidence_candidates=_records(prompt_input.get("usable_evidence_candidates")) or usable_candidates,
+            context_pack=_record(prompt_input.get("context_pack")) or context_pack,
+            repair_context=_record(prompt_input.get("repair_context")) if attempt.repair else None,
         )
         request_payload = build_planning_request_trace(
             step="materialPlan",
@@ -219,6 +237,7 @@ class MaterialPlanRetryOrchestrator:
             attempt={"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup},
             model_selection=selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection).to_payload(),
         )
+        request_payload.update(budget_proof.request_payload_fields())
         try:
             return self._record_provider_attempt(attempt, request_payload, messages, usable_candidates)
         except Exception as exc:
@@ -337,3 +356,19 @@ __all__ = (
     'MATERIAL_PLAN_KEYS',
     'MaterialPlanRetryOrchestrator',
 )
+
+
+def _context_artifact_for_budget(context_summary: dict[str, Any], context_pack: dict[str, Any] | None) -> dict[str, Any]:
+    return {
+        **context_summary,
+        "contextSummary": context_summary,
+        "contextPack": context_pack,
+    }
+
+
+def _record(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _records(value: Any) -> list[dict[str, Any]]:
+    return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []

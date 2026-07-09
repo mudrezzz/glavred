@@ -260,12 +260,24 @@ split by role under `backend.app.drafting.application.operations`:
   provider input plus `inputStats`, `payloadStats`,
   trimmed/suppressed fields, quality risk, and optional `contextOverBudget` /
   `payloadTooLarge` incident metadata.
+- `provider_input_budget_gate.py`: `ProviderInputBudgetGate`, the direct current-call
+  boundary used before planning prompt builders.
+- `provider_input_audit.py`: replayable classification for stored child
+  `AiRun.requestPayload` records.
 - `payload_budget.py`: compatibility facade for legacy imports only.
 
 The full DraftRun artifacts remain in parent storage and trace. Only provider inputs
 are compacted. Child `AiRun.requestPayload`, attempts, and `operationEnvelope` must
 include `payloadBudget` metadata for every enforced operation. Operations not yet
 wired must stay explicit debt entries in `CURRENT_LLM_OPERATION_INVENTORY`.
+
+Slice 2.17.4.6.1.3.5 enforces this direct proof for `materialPlan`, `strategy`, and
+`rhetoricalPlans`. The proof lives on the child `AiRun.requestPayload` as
+`operationId`, `providerInput`, `payloadBudget`, `inputStats`, and `payloadStats`.
+Use `python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID>
+--format json` to replay the check. `directlyBudgeted` is the only clean budget
+verdict; `overBudget`, `missingDirectBudget`, `nestedBudgetFalsePositive`, and
+`explicitDebt` all require attention or a linked repair slice.
 
 ## Provider Input Dossier Boundary
 

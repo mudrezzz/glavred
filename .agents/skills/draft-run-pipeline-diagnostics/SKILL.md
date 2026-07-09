@@ -106,6 +106,19 @@ Check these failure classes explicitly:
   `contextOverBudget` or `payloadTooLarge` repeats, scan the inventory for other
   operations with the same `budgetPolicyId` or `payloadBudgetStatus=debtAllowlisted`
   and escalate a payload-boundary slice when the pattern is systemic.
+  For provider-input replay, run
+  `python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID> --format json`.
+  Treat `directlyBudgeted` as the only clean budget proof. Treat `overBudget`,
+  `missingDirectBudget`, `nestedBudgetFalsePositive`, and `explicitDebt` as follow-up
+  signals; a nested `payloadBudget` from an older artifact is not proof that the
+  current provider call was bounded.
+  If `materialPlan`, `strategy`, or `rhetoricalPlans` are `overBudget`, say plainly
+  that the gate is present but the planning dossier migration is still needed
+  (`2.17.4.6.1.3.7`). Do not call that a clean budget verdict.
+  If the helper or API fails with `database disk image is malformed` or worker logs
+  show SQLite `disk I/O error`, stop treating the run as a provider-quality signal.
+  Preserve the ignored `var/` database evidence and route the issue to
+  `2.17.4.6.1.3.5.1`.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched
@@ -222,6 +235,10 @@ hide bad output behind polite abstractions.
   `ruleRegistrySnapshot`, full `sourceLedger`, full validation reports, full
   candidate pools, or full revision traces in provider messages without a matching
   budget profile are architecture bugs.
+- For planning operations, `materialPlan`, `strategy`, and `rhetoricalPlans` must
+  have direct current-call proof in child `AiRun.requestPayload`: `operationId`,
+  `providerInput`, `payloadBudget`, `inputStats`, and `payloadStats`. The `strategy`
+  trace may use `operationId=strategy` with budget profile `draftStrategy`.
 - Backup success is not silent success. It is an accepted payload with
   `backupAccepted` incident metadata and should trigger a blast-radius check if it
   repeats.

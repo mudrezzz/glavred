@@ -60,6 +60,13 @@ def test_material_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
     assert result.artifact_payload["attempts"][0]["selectedModel"] == "strategy-model"
     assert result.ai_run_id
+    run = AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3")).get_run(result.ai_run_id or "")
+    assert run is not None
+    assert run.request_payload["operationId"] == "materialPlan"
+    assert run.request_payload["providerInput"]
+    assert run.request_payload["payloadBudget"]["profileId"] == "materialPlan"
+    assert run.request_payload["inputStats"]["modelRole"] == "strategy"
+    assert run.request_payload["payloadStats"]["payloadBudget"]["profileId"] == "materialPlan"
 
 
 def test_material_plan_retries_when_projected_evidence_is_ignored(tmp_path) -> None:

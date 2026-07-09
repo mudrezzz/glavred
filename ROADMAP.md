@@ -7154,6 +7154,7 @@ Status:
   - Clean provider path, retry-only recovery, backup recovery, deterministic fallback, open critical, and final gate warning map to distinct verdicts.
   - Diagnostics says whether a run works cleanly, works recovered/degraded, or requires attention before trusting editorial quality.
   - Future reliability analytics has enough structured per-run signals and a backlog slice.
+- Completed: 2026-07-06
 
 ### Slice 2.17.4.6.1.0.1: AiRun Trace UX and Quality Verdict Panel
 
@@ -7728,37 +7729,115 @@ Status:
 
 ### Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement
 
-- Status: Ready
+- Status: Done
 - Goal: Make every provider-heavy DraftRun child `AiRun` prove it crossed a direct provider-input budget gate before prompt construction.
 - User value: We can stop guessing whether a large prompt is accidental; the trace will show exactly what was sent, what was trimmed, and whether the current operation was actually bounded.
+- AS IS sources:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`.
+  - Current live traces from `2.17.4.6.1.3.4` where `materialPlan`, `strategy`, and `rhetoricalPlans` exposed very large provider-input estimates.
+- TO BE source:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md`, especially sections `5.4 Budget gate`, `7.2 Provider-input audit and enforcement`, `8 Trace contract`, and `9 Success criteria`.
+- Preserved AS IS invariants:
+  - DraftRun step order, HTTP API, SQLite schema, provider adapter behavior, model-role selection, UI layout, and prompt-quality goals stay unchanged.
+  - Full rich artifacts remain persisted for diagnostics, replay, and human inspection.
+  - Quality/fidelity diagnostics remain at least as strict as before.
+- Changed AS IS invariants:
+  - Provider-heavy prompt construction may no longer rely on unbounded full artifacts by default.
+  - A current provider call must have direct current-call budget proof; nested `payloadBudget` from prior artifacts is not proof.
+  - Oversized provider input becomes an explicit budget incident or explicit temporary debt, not an invisible implementation detail.
 - Scope:
-  - Add a repeatable audit over stored child `AiRun` request payloads.
+  - Add a repeatable audit over stored child `AiRun.requestPayload` records.
   - Detect missing direct `payloadBudget` on provider-heavy calls.
   - Detect false positives where `payloadBudget` exists only inside a nested previous artifact.
   - Add or enforce a `ProviderInputBudgetGate` before `build_*_messages(...)` for the current call.
   - Cover `pairwiseRanking`, `materialPlan`, `draftCandidate`, `alternativeAngleRoute`, `alternativeAngleCandidate`, `strategy`, `llmValidation`, `rhetoricalPlans`, and `finalQualityGateReview` with direct budget status or explicit temporary debt.
+  - Record audit output in a structured report suitable for replay and future automation.
 - Out of scope:
-  - Rewriting prompts, changing models, changing DraftRun step order, adding MCP/tool access, changing provider behavior, HTTP API changes, or SQLite changes.
+  - Rewriting prompts, changing models, changing DraftRun step order, adding MCP/tool access, changing provider behavior, HTTP API changes, SQLite changes, or UI changes.
+  - Full dossier migration for every operation; this slice may create the budget boundary before later dossier-specific reductions.
 - Implementation notes:
-  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
-  - Use `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` as the target design.
+  - This is a complex pipeline slice and must follow `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
   - The gate must inspect the current provider call, not historical nested payloads.
+  - Prefer structured request payload checks over prompt-text parsing.
+  - If an operation cannot be migrated safely, add a debt entry with owner, reason, risk, and repair slice; do not silently leave it unbounded.
 - Architecture impact:
-  - Turns provider-input budget from representative coverage into a mandatory boundary for all provider-heavy DraftRun operations.
+  - Turns provider-input budget from representative coverage into a mandatory boundary for provider-heavy DraftRun operations.
+  - Adds a guardrail so future provider-heavy code cannot bypass budget proof without explicit debt.
+- Definition of Done:
+  - `DRAFT_RUN_PIPELINE_AS_IS.md` and TO BE section `7.2` are explicitly checked before implementation.
+  - Completion records `AS IS unchanged` with reason or updates `DRAFT_RUN_PIPELINE_AS_IS.md` and regenerates `DRAFT_RUN_PIPELINE_AS_IS.pdf`; expected outcome is AS IS updated.
+  - A repeatable provider-input audit exists and reads stored child `AiRun` records.
+  - The audit classifies every target operation as directly budgeted, over budget, missing direct budget, nested-budget false positive, or explicit debt.
+  - Direct current-call `payloadBudget` is required before `build_*_messages(...)` for migrated operations.
+  - `ProviderInputBudgetGate` records `profileId`, execution mode, max chars/token budget, prompt char estimate, approximate token estimate, sent counts, trimmed counts, suppressed fields, quality risk, and budget incidents.
+  - Migrated child `AiRun.requestPayload` contains direct `operationId`, `draftRunStep`, `providerInput`, and `payloadBudget` for the current provider call.
+  - Nested old artifact metadata cannot satisfy the audit.
+  - Replay audit over the latest oversized live traces flags old unbounded `materialPlan`, `strategy`, and `rhetoricalPlans` inputs instead of passing them as safe.
+  - A fresh live DraftRun proves migrated operations now emit direct current-call budget proof, or explicitly reports debt for operations not migrated in this slice.
+  - No operation can receive a clean budget verdict while bypassing the gate.
+  - Every remaining unbounded provider-heavy operation is debt-listed with owner, reason, risk, and repair slice.
+  - Architecture smoke fails for new provider-heavy operations without budget gate or debt entry.
+  - Runtime order, public API, SQLite schema, provider adapter behavior, and UI remain unchanged.
 - Tests:
-  - Audit flags a synthetic child `AiRun` with only nested prior `payloadBudget` as unbounded.
-  - Audit passes a child `AiRun` with direct current-call `payloadBudget`.
-  - Architecture smoke rejects new provider-heavy operations without budget gate or debt entry.
+  - Synthetic `AiRun` with direct `payloadBudget` passes audit.
+  - Synthetic `AiRun` with only nested prior `payloadBudget` fails as unbounded.
+  - Synthetic oversized current input produces `payloadTooLarge` or `contextOverBudget`.
+  - Debt-listed operation appears in report without being treated as clean.
+  - Migrated operation writes budget metadata into `AiRun.requestPayload`.
+  - Architecture smoke rejects new provider-heavy operations without gate or debt.
+  - Replay audit catches known oversized live traces from the previous runtime-guard slice.
+- Regression commands:
+  - Targeted provider-input audit and budget-gate tests.
+  - `python -m pytest backend/tests`.
+  - `npm run test:architecture`.
+  - `npm run smoke`.
+  - `python -m backend.app.roadmap render`.
+  - `python -m backend.app.roadmap export`.
+  - `python -m backend.app.roadmap check`.
+  - `git diff --check`.
+- Live proof:
+  - Use `.env` without printing secrets.
+  - Start the Glavred Docker stack if needed.
+  - Run one fresh live DraftRun after implementation.
+  - Confirm budget proof in new child `AiRun.requestPayload`; if a provider/runtime problem prevents completion, preserve diagnostics and classify it separately from budget-gate correctness.
 - Docs:
+  - Update `DRAFT_RUN_PIPELINE_AS_IS.md` and PDF if runtime trace/provider-input semantics changed.
   - Update backend target, developer guide, DraftRun diagnostics skill, and TO BE if the target changes.
 - Demo impact:
   - No user-facing demo change.
 - Acceptance criteria:
-  - Every provider-heavy DraftRun operation is either directly budgeted or explicitly debt-listed with owner, reason, and repair slice.
-  - Child `AiRun.requestPayload` shows current-call prompt estimate and budget profile for migrated operations.
-  - The audit catches the known oversized operations when replayed against old traces.
+  - We can no longer unknowingly send a huge provider input: every target operation is directly budgeted or explicitly debt-listed.
+  - The audit catches old oversized traces and proves new migrated traces contain current-call budget proof.
+  - The next reduction/dossier slices can rely on structured budget data instead of guessing from provider latency or prompt text.
 - Risks:
-  - Static detection can be blunt; prefer structured request payload checks over fragile prompt-text parsing.
+  - Static detection can be blunt; prefer structured request payload checks.
+  - Over-aggressive trimming could harm quality; this slice must surface quality risk rather than hiding it.
+  - Some operations may need temporary debt if full migration would become a prompt/dossier rewrite.
+- Completed: 2026-07-10
+
+### Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard
+
+- Status: Ready
+- Goal: Fix the live-run storage durability risk exposed by Slice 3.5: long Docker DraftRun execution on host-mounted SQLite must not corrupt the draft-run database or turn diagnostics into HTTP 500.
+- User value: Live DraftRun proof becomes trustworthy again: a provider/runtime issue should be diagnosed as pipeline behavior, not destroy the local run store.
+- Scope:
+  - Investigate the observed sqlite disk I/O error and malformed draft-run database from live run 89dca24d-c06e-4163-97db-0b59aaaf81b4
+  - add repository/SQLite durability settings or Docker-local storage policy
+  - add integrity/startup checks and safe diagnostics
+  - preserve API/SQLite schema semantics
+  - document recovery steps for ignored var DB files.
+- Out of scope:
+  - Product runtime behavior changes.
+- Architecture impact:
+  - Moves roadmap editing behind a tracker/export/render workflow.
+- Tests:
+  - Roadmap CLI import/export/render/check coverage.
+- Docs:
+  - README, ADR, contributor guide, developer guide, AGENTS, and roadmap docs.
+- Acceptance criteria:
+  - Agents can use CLI commands instead of manually editing ROADMAP.md.
+  - ROADMAP.md renders from docs/roadmap/slices.export.jsonl.
+  - Roadmap changes remain reviewable in git diff.
 
 ### Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture
 
@@ -8529,6 +8608,7 @@ Status:
 - Slice 2.17.4.6.1.3.4.0.1: RadarRun Pipeline AS IS Contract Preparation. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement. Completed 2026-07-10.
 
 
 ## Blocked Items
@@ -8557,4 +8637,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement`.
+Implement `Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard`.

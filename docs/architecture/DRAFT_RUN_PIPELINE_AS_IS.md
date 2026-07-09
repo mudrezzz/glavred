@@ -925,12 +925,12 @@ Provider-heavy AS IS contract:
 
 | Operation | Current rich artifacts | Current provider projection / ContextPack | Required trace proof | Direct budget status | Known debt / target slice |
 | --- | --- | --- | --- | --- | --- |
-| `sourceIntentAndResearchPlan` | brief sources, context summary, initial source ledger, DraftRun budget | research prompt over brief sources, normalized context summary, initial ledger, budget caps | child `AiRun`, `sourceIntent.researchPlan`, skipped budget trace | partial/transitional; planning output has trace but no full provider-input dossier | Dossier boundary target in `2.17.4.6.1.3.5` |
+| `sourceIntentAndResearchPlan` | brief sources, context summary, initial source ledger, DraftRun budget | research prompt over brief sources, normalized context summary, initial ledger, budget caps | child `AiRun`, `sourceIntent.researchPlan`, skipped budget trace | partial/transitional; planning output has trace but no full provider-input dossier | Dossier boundary target after the planning budget gate |
 | `evidenceSynthesis` | public evidence attempts, accepted/rejected evidence, initial/enriched ledger | accepted public evidence plus relevant ledger/context | `publicEvidence.evidenceSynthesis`, child `AiRun`, accepted/rejected evidence trace | partial/transitional | Dossier and evidence-query access target in `2.17.4.6.1.3.6` |
 | `evidenceInterpretation` | enriched ledger, accepted public evidence, evidence synthesis, contract, rule subset | compact evidence payload plus strategy `ContextPack`, timeout envelope | `rulePack.evidenceInterpretation`, `evidenceInterpretationFidelity`, child `AiRun`, `operationEnvelope`, timeout/input stats | enforced for representative operation | Further context-access hardening in `2.17.4.6.1.3.6` |
-| `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | strategy `ContextPack`, usable evidence candidates, interpretation, contract, registry | `materialPlan.materialPlan`, child `AiRun`, selected/rejected evidence reasons | weak: last live traces showed oversized prompt risk; nested or indirect budgets are not enough | Direct dossier/budget repair in `2.17.4.6.1.3.5` |
-| `strategy` | material plan, post contract, rule registry, strategy context | material plan, rules, contract, strategy `ContextPack` | `strategy.draftStrategy`, child `AiRun`, model role metadata | partial/transitional | Strategy dossier hardening in `2.17.4.6.1.3.5` |
-| `rhetoricalPlans` | strategy, material plan, claim/rule ids | strategy/material plan summary plus compact ids | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun` | partial/transitional | Planning prompt/dossier split in `2.17.4.6.1.3.5` |
+| `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule pack, usable evidence candidates, repair context | `materialPlan.materialPlan`, child `AiRun.requestPayload.operationId=materialPlan`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, selected/rejected evidence reasons | enforced current-call budget proof; nested prior budgets are rejected by replay audit | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
+| `strategy` | material plan, post contract, rule registry, strategy context | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule pack, compact material plan | `strategy.draftStrategy`, child `AiRun.requestPayload.operationId=strategy`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, model role metadata | enforced current-call budget proof; trace alias `strategy` uses existing payload profile `draftStrategy` | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
+| `rhetoricalPlans` | strategy, material plan, claim/rule ids | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule registry, compact material plan, draft strategy, repair context | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun.requestPayload.operationId=rhetoricalPlans`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced current-call budget proof; nested prior budgets are rejected by replay audit | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
 | `draftCandidate` | one rhetorical plan, material evidence, contract, writer context, generation params | writer `ContextPack`, one direction, material evidence, contract | `draft.candidates[]`, child `AiRun`, fallback/publishability status | partial/transitional | Writer dossier hardening in `2.17.4.6.1.3.7` |
 | `llmValidation` | candidates, deterministic report, contract, registry, ledger | review `ContextPack`, candidates, deterministic findings | `validation.llmValidationReport`, candidate reports, child `AiRun`, incidents | partial/transitional | Validation dossier/read model in `2.17.4.6.1.3.8` |
 | `editorialCritique` | candidates, evidence interpretation, validation findings, critique context | critic `ContextPack`, candidate summaries, evidence interpretation, findings | `validation.editorialCritiqueReport`, child `AiRun`, `operationEnvelope`, parser/trace payload | enforced for representative operation | Debate/critique expansion remains future work; current single critique is AS IS |
@@ -1048,6 +1048,48 @@ the existing step progress payload before the provider call starts. The progress
 payload includes `currentOperationId`, `currentOperationStartedAt`, `operationKind`,
 `modelRole`, `selectedModel`, `promptCharEstimate`, `approxTokenEstimate`,
 `staleAfterSeconds`, `providerWaitSeconds`, and `slowButHealthy` when available.
+
+Slice 2.17.4.6.1.3.5 adds direct provider-input budget enforcement for the planning
+trio that produced the largest live prompt estimates: `materialPlan`, `strategy`,
+and `rhetoricalPlans`. These calls now cross `ProviderInputBudgetGate` before
+`build_*_messages(...)` and persist current-call proof in child
+`AiRun.requestPayload`: `operationId`, `providerInput`, `payloadBudget`,
+`inputStats`, and `payloadStats`. The gate uses the existing semantic contracts and
+payload compaction policy, so full parent DraftRun artifacts remain available for
+diagnostics while provider messages receive the compact projection. The strategy
+pipeline trace uses `operationId=strategy`; its existing budget profile remains
+`draftStrategy` and is recorded as `payloadBudget.profileId=draftStrategy` plus
+`payloadBudget.operationAlias=strategy`.
+
+Fresh live proof for this slice shows the current transition state clearly:
+`materialPlan`, `strategy`, and `rhetoricalPlans` now write direct current-call
+budget proof, but their compacted inputs can still be classified as `overBudget`.
+That is not a clean provider-input verdict. It means the call crossed the gate and
+the oversized context is visible before/during the provider attempt, while actual
+prompt-size reduction remains the responsibility of the planning dossier migration
+slice `2.17.4.6.1.3.7`.
+
+The replayable provider-input audit is:
+
+```bash
+python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID> --format json
+```
+
+It reads stored child `AiRun.requestPayload` records and classifies each target
+operation as `directlyBudgeted`, `overBudget`, `missingDirectBudget`,
+`nestedBudgetFalsePositive`, or `explicitDebt`. A nested `payloadBudget` inside an
+older artifact is deliberately classified as `nestedBudgetFalsePositive`, not as
+proof of the current call. Current explicit debt remains for writer, validation,
+alternative-angle, ranking, and final-gate operations until their dossier/read-model
+slices.
+
+During the live proof for `2.17.4.6.1.3.5`, a long Docker DraftRun exposed a separate
+SQLite durability failure: `var/glavred-draft-runs.sqlite3` became malformed after a
+worker `disk I/O error` during validation progress persistence. This is not treated
+as provider-input budget behavior. It is tracked as follow-up slice
+`2.17.4.6.1.3.5.1`, because future live-heavy DraftRun slices need storage durability
+before their provider/runtime findings can be trusted.
+
 The public DraftRun response shape is unchanged: `isStale`, `staleReason`, and
 `lastProgressAt` remain computed fields. Internally, queued runs are classified as
 queue-wait rather than generic stale, validation still uses `ValidationRuntimeBudget`,
