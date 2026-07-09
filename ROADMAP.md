@@ -7469,7 +7469,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Repair evidence interpretation reliability after live analytics found repeated provider timeouts, deterministic fallback, and weak evidence coverage.
 - User value: The team can trust that DraftRun evidence interpretation is not silently weakening final editorial quality.
 - Scope:
@@ -7494,10 +7494,11 @@ Status:
   - Weak evidence coverage has an explicit remediation or accepted-risk outcome.
 - Risks:
   - Over-tightening evidence interpretation may block otherwise usable drafts; keep fallback continuation explicit but fidelity-lowering.
+- Completed: 2026-07-08
 
 ### Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair
 
-- Status: Backlog
+- Status: Ready
 - Goal: Close the validation/final-quality gap found in five live DraftRuns: all runs finished technically but retained open criticals and final gate warnings.
 - User value: A succeeded DraftRun cannot look publishable while unresolved critical validation or final gate warnings remain open.
 - Scope:
@@ -8180,6 +8181,7 @@ Status:
 - Slice 2.17.4.6.1.2.2: Live Radar Executed Coverage Gate. Completed 2026-07-07.
 - Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics. Completed 2026-07-08.
+- Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair. Completed 2026-07-08.
 
 
 ## Blocked Items
@@ -8208,4 +8210,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair`.
+Implement `Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair`.

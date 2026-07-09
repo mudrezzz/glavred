@@ -5,6 +5,7 @@ from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.drafting.application.evidence.deterministic_evidence_interpretation import DeterministicEvidenceInterpretationService
+from backend.app.drafting.application.evidence.evidence_interpretation_fidelity import EvidenceInterpretationFidelityPolicy
 from backend.app.drafting.application.evidence.evidence_interpretation_service import EvidenceInterpretationService
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
@@ -80,6 +81,8 @@ def test_provider_interpretation_uses_strategy_role_model_and_writes_trace(tmp_p
     assert result.artifact_payload["operationEnvelope"]["operationId"] == "evidenceInterpretation"
     assert result.artifact_payload["operationEnvelope"]["status"] == "accepted"
     assert result.artifact_payload["operationEnvelope"]["payloadStats"]["payloadBudget"]["profileId"] == "evidenceInterpretation"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["coverageVerdict"] == "sufficient"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["fidelityImpact"] == "none"
     assert result.ai_run_id
 
 
@@ -107,6 +110,10 @@ def test_provider_failures_use_backup_then_deterministic_fallback(tmp_path) -> N
     assert result.artifact_payload["attempts"][2]["backup"] is True
     assert result.artifact_payload["operationEnvelope"]["status"] == "fallback"
     assert result.artifact_payload["operationEnvelope"]["incident"]["incidentType"] == "deterministicFallback"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["coverageVerdict"] == "weak"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["fidelityImpact"] == "weak"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["needsFollowUp"] is True
+    assert "deterministic-fallback" in result.artifact_payload["evidenceInterpretationFidelity"]["reasonCodes"]
     assert result.artifact_payload["evidenceInterpretation"]["implications"]
 
 
@@ -132,6 +139,9 @@ def test_provider_timeout_records_failed_attempt_and_continues_to_repair(tmp_pat
     assert "OperationTimeoutError" in result.artifact_payload["attempts"][0]["error"]
     assert result.artifact_payload["attempts"][0]["incident"]["incidentType"] == "providerTimeout"
     assert result.artifact_payload["operationEnvelope"]["timeoutProfile"]["attemptTimeoutSeconds"] == 0.05
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["coverageVerdict"] == "sufficient"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["fidelityImpact"] == "diagnostic"
+    assert "provider-timeout-recovered" in result.artifact_payload["evidenceInterpretationFidelity"]["reasonCodes"]
     assert len(result.ai_run_ids) == 2
     assert any(operation["status"] == "failed" and operation["id"] == "evidence-interpretation-primary" for operation in progress.operations)
     assert any(operation["status"] == "succeeded" and operation["id"] == "evidence-interpretation-primary-repair" for operation in progress.operations)
@@ -164,6 +174,45 @@ def test_unconfigured_provider_uses_deterministic_without_secret(tmp_path) -> No
     assert result.artifact_payload["fallbackUsed"] is True
     assert result.artifact_payload["operationEnvelope"]["incident"]["incidentType"] == "deterministicFallback"
     assert adapter.calls == []
+
+
+def test_backup_accepted_is_diagnostic_not_weak(tmp_path) -> None:
+    adapter = SequenceAdapter([empty_payload(), empty_payload(), provider_payload()])
+    service = interpretation_service(tmp_path, adapter, configured=True, backup_model="backup-model")
+
+    result = service.create(context_summary={}, context_artifact=context_artifact(), rule_pack=rule_pack())
+
+    assert result.artifact_payload["fallbackUsed"] is False
+    assert result.artifact_payload["attempts"][2]["backup"] is True
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["coverageVerdict"] == "sufficient"
+    assert result.artifact_payload["evidenceInterpretationFidelity"]["fidelityImpact"] == "diagnostic"
+    assert "backup-accepted" in result.artifact_payload["evidenceInterpretationFidelity"]["reasonCodes"]
+
+
+def test_missing_accepted_evidence_blocks_fidelity_even_with_interpretation(tmp_path) -> None:
+    adapter = SequenceAdapter([provider_payload()])
+    service = interpretation_service(tmp_path, adapter, configured=True)
+
+    result = service.create(context_summary={}, context_artifact=no_evidence_context_artifact(), rule_pack=rule_pack())
+
+    fidelity = result.artifact_payload["evidenceInterpretationFidelity"]
+    assert fidelity["coverageVerdict"] == "missing"
+    assert fidelity["fidelityImpact"] == "blocked"
+    assert fidelity["needsFollowUp"] is True
+    assert "no-accepted-evidence" in fidelity["reasonCodes"]
+
+
+def test_evidence_interpretation_fidelity_policy_marks_empty_interpretation_partial() -> None:
+    fidelity = EvidenceInterpretationFidelityPolicy().evaluate(
+        context_artifact=context_artifact(),
+        evidence_interpretation=empty_payload(),
+        attempts=[{"label": "primary", "status": "accepted"}],
+        fallback_used=False,
+    ).to_payload()
+
+    assert fidelity["coverageVerdict"] == "partial"
+    assert fidelity["fidelityImpact"] == "weak"
+    assert fidelity["needsFollowUp"] is True
 
 
 def interpretation_service(
@@ -219,6 +268,15 @@ def context_artifact() -> dict[str, Any]:
         },
         "evidenceSynthesis": {"externalClaims": [{"publicEvidenceItemId": "public-1"}]},
     }
+
+
+def no_evidence_context_artifact() -> dict[str, Any]:
+    artifact = context_artifact()
+    artifact["sourceLedger"]["claims"] = []
+    artifact["sourceLedger"]["metadata"] = {"externalClaimCount": 0}
+    artifact["publicEvidence"]["items"] = []
+    artifact["evidenceSynthesis"] = {"externalClaims": []}
+    return artifact
 
 
 def rule_pack() -> dict[str, Any]:

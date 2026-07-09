@@ -375,13 +375,19 @@ Processing:
   repair/backup/fallback instead of leaving `rulePack` running forever;
 - `EvidenceInterpretationService` converts accepted internal/external evidence into
   editorial implications, tensions, examples, limits, forbidden overclaims, reader
-  value hooks, and rejected evidence uses before material planning.
+  value hooks, and rejected evidence uses before material planning;
+- `EvidenceInterpretationFidelityPolicy` classifies the interpretation as
+  `sufficient`, `partial`, `weak`, or `missing`. Retry/repair and backup acceptance
+  are recovery signals, not evidence degradation by themselves. Deterministic
+  fallback always lowers evidence fidelity, and missing accepted evidence blocks a
+  trusted editorial verdict.
 
 Output:
 
 - `ruleRegistrySnapshot`;
 - compatibility rule-pack fields;
 - `evidenceInterpretation`;
+- `evidenceInterpretationFidelity`;
 - `attempts[]` for the interpretation provider/repair/backup path;
 - updated `ArticleDossier` and `ContextPack`s.
 

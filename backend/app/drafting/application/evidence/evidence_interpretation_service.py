@@ -17,6 +17,7 @@ from backend.app.drafting.application.evidence.evidence_interpretation_audit imp
     build_evidence_interpretation_request_trace,
     build_evidence_interpretation_result_trace,
 )
+from backend.app.drafting.application.evidence.evidence_interpretation_fidelity import EvidenceInterpretationFidelityPolicy
 from backend.app.drafting.application.evidence.evidence_interpretation_prompts import (
     EVIDENCE_INTERPRETATION_KEYS,
     EVIDENCE_INTERPRETATION_TEMPERATURE,
@@ -46,6 +47,7 @@ class EvidenceInterpretationService:
         deterministic_service: DeterministicEvidenceInterpretationService | None = None,
         timeout_runner: TimedOperationRunner | None = None,
         payload_compactor: EvidenceInterpretationPayloadCompactor | None = None,
+        fidelity_policy: EvidenceInterpretationFidelityPolicy | None = None,
     ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
@@ -54,6 +56,7 @@ class EvidenceInterpretationService:
         self._deterministic_service = deterministic_service or DeterministicEvidenceInterpretationService()
         self._timeout_runner = timeout_runner or TimedOperationRunner()
         self._payload_compactor = payload_compactor or EvidenceInterpretationPayloadCompactor()
+        self._fidelity_policy = fidelity_policy or EvidenceInterpretationFidelityPolicy()
 
     def create(
         self,
@@ -97,7 +100,14 @@ class EvidenceInterpretationService:
             attempts.append(result["attempt"])
             if result["accepted"]:
                 return DraftPlanningStepResult(
-                    artifact_payload=self._artifact("openrouter", result["payload"], result["aiRunId"], False, attempts=attempts),
+                    artifact_payload=self._artifact(
+                        "openrouter",
+                        result["payload"],
+                        result["aiRunId"],
+                        False,
+                        attempts=attempts,
+                        context_artifact=context_artifact,
+                    ),
                     ai_run_id=result["aiRunId"],
                     ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
                 )
@@ -329,15 +339,46 @@ class EvidenceInterpretationService:
             ).to_payload(),
         }
         return DraftPlanningStepResult(
-            artifact_payload=self._artifact("deterministicFallback", payload, run.id, True, error=error, attempts=[*attempts, fallback_attempt]),
+            artifact_payload=self._artifact(
+                "deterministicFallback",
+                payload,
+                run.id,
+                True,
+                error=error,
+                attempts=[*attempts, fallback_attempt],
+                context_artifact=context_artifact,
+            ),
             ai_run_id=run.id,
             ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")] + [run.id],
         )
 
-    def _artifact(self, source: str, payload: dict[str, Any], ai_run_id: str, fallback_used: bool, *, attempts: list[dict[str, Any]], error: str | None = None) -> dict[str, Any]:
+    def _artifact(
+        self,
+        source: str,
+        payload: dict[str, Any],
+        ai_run_id: str,
+        fallback_used: bool,
+        *,
+        attempts: list[dict[str, Any]],
+        context_artifact: dict[str, Any],
+        error: str | None = None,
+    ) -> dict[str, Any]:
         status = "fallback" if fallback_used else "accepted"
         timeout_seconds = max(0.001, float(self._settings.draft_evidence_interpretation_timeout_seconds or 75))
-        artifact = {"source": source, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "evidenceInterpretation": payload, "attempts": attempts}
+        fidelity = self._fidelity_policy.evaluate(
+            context_artifact=context_artifact,
+            evidence_interpretation=payload,
+            attempts=attempts,
+            fallback_used=fallback_used,
+        ).to_payload()
+        artifact = {
+            "source": source,
+            "aiRunId": ai_run_id,
+            "fallbackUsed": fallback_used,
+            "evidenceInterpretation": payload,
+            "evidenceInterpretationFidelity": fidelity,
+            "attempts": attempts,
+        }
         artifact["operationEnvelope"] = build_operation_envelope(
             operation_id="evidenceInterpretation",
             operation_kind="evidenceInterpretation",

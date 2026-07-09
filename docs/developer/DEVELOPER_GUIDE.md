@@ -284,6 +284,10 @@ recovery; backup model success is diagnostic; deterministic fallback lowers
 fidelity. Open critical findings, final-gate warning/critical status, weak evidence
 coverage, rejected final repair, or over-size final prose should produce
 `publishableWithCaution`, `needsHumanReview`, or a degraded overall verdict.
+For evidence interpretation specifically, read `rulePack.evidenceInterpretationFidelity`:
+`sufficient` means accepted evidence was interpreted, `partial` means accepted
+evidence exists but was not meaningfully interpreted, `weak` means deterministic
+fallback lowered fidelity, and `missing` blocks trusted quality.
 
 For cross-run provider reliability, use:
 
@@ -1769,6 +1773,10 @@ The next artifacts must make candidate validation meaningful:
   overclaims, reader-value hooks, and rejected evidence uses. If provider attempts fail,
   deterministic interpretation fallback is explicit in trace. Prompt layers should use
   this artifact before raw public snippets.
+- `EvidenceInterpretationFidelityPolicy` writes `evidenceInterpretationFidelity` beside
+  the interpretation artifact. Provider retry/repair and backup success are diagnostic
+  recovery signals. Deterministic fallback is always `weak`, and missing accepted
+  evidence is `missing` and must not be treated as trusted quality.
 - Evidence interpretation is provider-heavy and must use a compact provider payload:
   full `ruleRegistrySnapshot` remains in the parent artifact, but the provider request
   receives the locked contract, accepted public evidence, external claims, evidence

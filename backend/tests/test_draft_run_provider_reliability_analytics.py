@@ -53,6 +53,31 @@ def test_backup_and_fallback_get_separate_remediation_decisions() -> None:
     assert slices["evidenceInterpretation"] == "2.17.4.6.1.3.1"
 
 
+def test_evidence_fidelity_partial_and_missing_map_to_evidence_repair_slice() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage("materialPlan"),
+                evidence_fidelity={"coverageVerdict": "partial", "fidelityImpact": "weak", "needsFollowUp": True},
+            ),
+            run_with_quality(
+                "run-2",
+                stage("materialPlan"),
+                evidence_fidelity={"coverageVerdict": "missing", "fidelityImpact": "blocked", "needsFollowUp": True},
+            ),
+            run_with_quality("run-3", stage("materialPlan")),
+        ]
+    )
+    payload = report.to_payload()
+
+    assert payload["summary"]["incidentCounts"]["evidence-partial"] == 1
+    assert payload["summary"]["incidentCounts"]["evidence-missing"] == 1
+    item = next(item for item in payload["remediationItems"] if item["operationId"] == "qualityFidelity:evidenceFidelity")
+    assert item["decision"] == "fixBeforeTrustingQuality"
+    assert item["recommendedSlice"] == "2.17.4.6.1.3.1"
+
+
 def test_open_critical_requires_fix_before_trusting_quality() -> None:
     report = DraftRunProviderReliabilityReporter().build(
         [
@@ -173,6 +198,7 @@ def run_with_quality(
     run_id: str,
     *stages: dict,
     issue_lifecycle: dict | None = None,
+    evidence_fidelity: dict | None = None,
     ai_run_ids: list[str] | None = None,
     extra_artifact: dict | None = None,
 ) -> DraftRun:
@@ -184,7 +210,7 @@ def run_with_quality(
         "editorialStatus": "publishable",
         "overallVerdict": "cleanSuccess",
         "stageSummaries": list(stages),
-        "evidenceFidelity": {"coverageVerdict": "sufficient"},
+        "evidenceFidelity": evidence_fidelity or {"coverageVerdict": "sufficient"},
         "issueLifecycle": issue_lifecycle or {"openCriticalCount": 0, "openWarningCount": 0},
     }
     return DraftRun(

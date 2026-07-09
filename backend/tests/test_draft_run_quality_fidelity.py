@@ -100,6 +100,61 @@ def test_open_critical_requires_attention_but_suppressed_warning_allows_caution(
     assert warning["overallVerdict"] != "cleanSuccess"
 
 
+def test_structured_evidence_fidelity_drives_editorial_verdict() -> None:
+    partial = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "rulePack",
+                {
+                    "evidenceInterpretationFidelity": {
+                        "acceptedEvidenceCount": 2,
+                        "interpretedEvidenceCount": 0,
+                        "fallbackUsed": False,
+                        "coverageVerdict": "partial",
+                        "fidelityImpact": "weak",
+                        "acceptedRisk": True,
+                        "needsFollowUp": True,
+                        "reasonCodes": ["weak-interpreted-evidence"],
+                    }
+                },
+            ),
+            step("validation", {"rankingRevision": {"finalQualityGate": {"status": "passed"}}}),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+    missing = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "rulePack",
+                {
+                    "evidenceInterpretationFidelity": {
+                        "acceptedEvidenceCount": 0,
+                        "interpretedEvidenceCount": 1,
+                        "fallbackUsed": False,
+                        "coverageVerdict": "missing",
+                        "fidelityImpact": "blocked",
+                        "acceptedRisk": False,
+                        "needsFollowUp": True,
+                        "reasonCodes": ["no-accepted-evidence"],
+                    }
+                },
+            ),
+            step("validation", {"rankingRevision": {"finalQualityGate": {"status": "passed"}}}),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+
+    assert partial["evidenceFidelity"]["coverageVerdict"] == "partial"
+    assert partial["editorialStatus"] == "publishableWithCaution"
+    assert missing["evidenceFidelity"]["coverageVerdict"] == "missing"
+    assert missing["editorialStatus"] == "needsHumanReview"
+    assert missing["overallVerdict"] == "needsAttention"
+
+
 def test_pipeline_writes_quality_fidelity_to_validation_and_complete(tmp_path) -> None:
     repository = SqliteDraftRunRepository(tmp_path / "draft-runs.sqlite3")
     request = make_request()

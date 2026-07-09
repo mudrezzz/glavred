@@ -454,6 +454,10 @@ Unresolved critical findings, final-gate warning/critical status, weak evidence
 coverage, rejected final repair, and size/over-budget problems are step-level quality
 issues and must be visible in `qualityFidelity`, not inferred from
 `DraftRun.status` alone.
+Evidence interpretation owns its own fidelity policy. `rulePack` records
+`evidenceInterpretationFidelity` with `sufficient`, `partial`, `weak`, or `missing`
+coverage; quality and reliability reporters consume that structured verdict rather
+than inferring trust from provider success alone.
 
 Cross-run DraftRun provider reliability analytics must reuse structured
 `qualityFidelity`, operation envelopes, payload/runtime budgets, and child `AiRun`

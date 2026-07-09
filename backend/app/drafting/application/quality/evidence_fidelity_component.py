@@ -19,6 +19,21 @@ class QualityFidelityEvidenceComponent:
         found = len(_list(public_evidence.get("items")))
         attempts = _list(public_evidence.get("attempts"))
         rejected = sum(len(_list(_dict(_dict(item).get("metadata")).get("rejectedCitations"))) for item in attempts)
+        structured = _dict(rule_pack.get("evidenceInterpretationFidelity"))
+        if structured:
+            fallback_interpreted = 1 if structured.get("fallbackUsed") else 0
+            return {
+                "foundEvidenceCount": found,
+                "acceptedEvidenceCount": int(structured.get("acceptedEvidenceCount") or found),
+                "interpretedEvidenceCount": int(structured.get("interpretedEvidenceCount") or 0),
+                "fallbackInterpretedEvidenceCount": fallback_interpreted,
+                "rejectedEvidenceCount": rejected,
+                "coverageVerdict": str(structured.get("coverageVerdict") or "missing"),
+                "fidelityImpact": str(structured.get("fidelityImpact") or "none"),
+                "acceptedRisk": bool(structured.get("acceptedRisk")),
+                "needsFollowUp": bool(structured.get("needsFollowUp")),
+                "reasonCodes": _list(structured.get("reasonCodes")),
+            }
         interpretation = _dict(rule_pack.get("evidenceInterpretation"))
         interpreted = sum(
             len(_list(interpretation.get(key)))
@@ -29,13 +44,16 @@ class QualityFidelityEvidenceComponent:
             for item in stage_summaries
             if item.get("stepKey") == "rulePack" and item.get("retryPath") == "fallbackRecovered"
         )
+        coverage = self._coverage(found, interpreted, fallback_interpreted)
+        if coverage == "missing" and not public_evidence:
+            coverage = "sufficient"
         return {
             "foundEvidenceCount": found,
             "acceptedEvidenceCount": found,
             "interpretedEvidenceCount": interpreted,
             "fallbackInterpretedEvidenceCount": fallback_interpreted,
             "rejectedEvidenceCount": rejected,
-            "coverageVerdict": self._coverage(found, interpreted, fallback_interpreted),
+            "coverageVerdict": coverage,
         }
 
     def _coverage(self, accepted: int, interpreted: int, fallback_interpreted: int) -> str:

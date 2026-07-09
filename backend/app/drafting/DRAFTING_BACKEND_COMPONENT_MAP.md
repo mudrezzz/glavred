@@ -164,6 +164,10 @@ Implemented in Slice 2.17.4.6.0.3.1:
 - Legacy `EvidenceInterpretationService` records timeout attempts as failed child
   `AiRun` records, fails the nested progress operation, then proceeds through the
   existing repair/backup/deterministic fallback path.
+- `EvidenceInterpretationFidelityPolicy` records whether the evidence interpretation
+  is `sufficient`, `partial`, `weak`, or `missing`. Same-model retry and backup
+  recovery stay provider reliability signals; deterministic fallback lowers
+  fidelity, and missing accepted evidence requires follow-up before trusting quality.
 
 ## Universal LLM Operation Governance
 

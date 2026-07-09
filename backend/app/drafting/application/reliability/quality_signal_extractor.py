@@ -48,15 +48,16 @@ class QualityFidelityReliabilitySignalExtractor:
         execution_mode: str | None,
     ) -> list[OperationReliabilityEvent]:
         evidence = _dict(quality_fidelity.get("evidenceFidelity"))
-        if evidence.get("coverageVerdict") not in {"weak", "missing"}:
+        verdict = str(evidence.get("coverageVerdict") or "")
+        if verdict not in {"partial", "weak", "missing"}:
             return []
         return [
             self._event(
                 run_id,
                 "qualityFidelity:evidenceFidelity",
-                "degraded",
+                "failed" if verdict == "missing" else "degraded",
                 execution_mode,
-                incident_type=f"evidence-{evidence.get('coverageVerdict')}",
+                incident_type=f"evidence-{verdict}",
             )
         ]
 

@@ -216,6 +216,10 @@ hide bad output behind polite abstractions.
   recommend prompt/model fixes from that single run unless the accepted payload is
   itself bad. Repeated retry/backup/fallback patterns across many runs belong to the
   provider reliability analytics report, not one-run quality diagnosis.
+- For evidence interpretation, inspect `rulePack.evidenceInterpretationFidelity`
+  before judging evidence quality. `retry-recovered` and `backup-accepted` are
+  provider recovery signals; `deterministic-fallback`, `partial`, `weak`, or
+  `missing` evidence fidelity are quality/follow-up signals.
 - For attribution issues, distinguish actionable missing-source findings from
   diagnostic handoff noise. Inspect `finalQualityGate.attributionReview`,
   `actionableAttributionFindings`, `diagnosticAttributionNoise`, and finding metadata

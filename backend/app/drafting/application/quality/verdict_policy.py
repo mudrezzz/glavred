@@ -61,6 +61,8 @@ class QualityFidelityVerdictPolicy:
             return "publishableWithCaution"
         if final_gate.get("status") == "warning" or issue_lifecycle.get("openWarningCount", 0):
             return "publishableWithCaution"
+        if evidence.get("coverageVerdict") == "missing" or evidence.get("fidelityImpact") == "blocked":
+            return "needsHumanReview"
         if evidence.get("coverageVerdict") in {"partial", "weak"}:
             return "publishableWithCaution"
         return "publishable"

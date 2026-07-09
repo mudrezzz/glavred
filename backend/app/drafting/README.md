@@ -297,6 +297,12 @@ quality issues such as weak evidence coverage, open critical findings, final-gat
 warnings, rejected final repair, or over-size final prose are evaluated separately
 from LLM/provider incidents.
 
+Evidence interpretation now writes `evidenceInterpretationFidelity` in the
+`rulePack` artifact. The policy keeps retry/backup recovery separate from evidence
+quality: accepted provider interpretation can remain `sufficient`, deterministic
+fallback is always `weak`, and missing accepted evidence is `missing`/blocking for
+trusted editorial quality.
+
 ## Provider Reliability Analytics
 
 `backend.app.drafting.application.reliability` owns cross-run DraftRun provider
