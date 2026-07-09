@@ -68,6 +68,10 @@ not replace the Glavred compose stack and are not a reason to skip Docker valida
    - Then follow `$draft-run-pipeline-diagnostics` for the full analysis: inspect
      implicated code, compare with `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`
      and `ROADMAP.md`, and decide if the plan continues or needs a repair slice.
+     When the active slice changes pipeline behavior, verify the lifecycle
+     `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update` and
+     require Definition of Done structured trace proof, not only green tests. For
+     RadarRun/search evaluation, use `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
      For backend fixes, distinguish canonical package owner under
      `backend/app/drafting` from active compatibility facade, migrated thin shim, or
      remaining explicit debt, and include `npm run test:architecture` in the proof.

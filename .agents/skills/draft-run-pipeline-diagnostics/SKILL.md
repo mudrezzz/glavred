@@ -34,7 +34,12 @@ Do not diagnose from screenshots alone when a run id is available.
    - `git status --short --branch`
    - note whether there are uncommitted pipeline changes that may affect the run.
 2. Read `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` to establish the current
-   expected pipeline shape before judging the trace.
+   expected pipeline shape before judging the trace. If the run is being evaluated
+   against a slice with TO BE/DoD, compare the trace through
+   `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`:
+   first preserve or explain AS IS invariants, then verify the target proof.
+   For RadarRun/search diagnostics, use `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`
+   instead of this DraftRun-specific workflow.
    For backend/DraftRun architecture drift, also read
    `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md`,
    `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`,
@@ -59,7 +64,8 @@ Do not diagnose from screenshots alone when a run id is available.
    compatibility facade, migrated thin shim, or remaining explicit debt; behavior in
    a migrated thin shim is a guardrail bug, not the owner to patch.
 6. Compare actual trace to `DRAFT_RUN_PIPELINE_AS_IS.md` first, then to expected
-   slice behavior in `ROADMAP.md`.
+   slice behavior, TO BE target, and Definition of Done in `ROADMAP.md`. A successful
+   test suite is not enough when structured trace proof contradicts AS IS/TO BE.
 7. Decide one of:
    - behavior is acceptable for current slice, continue plan;
    - bugfix slice is needed before continuing;

@@ -38,6 +38,16 @@ Keep documentation accurate, useful, and GitHub-ready.
   ranking, revision, trace semantics, or context flow change, update this file and
   regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` with
   `python scripts/generate-draft-run-pipeline-pdf.py`.
+- `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`: current RadarRun pipeline map.
+  If source eligibility, search plan, planned/executed coverage, skipped required
+  coverage, raw results, selected/rejected reads, found materials, benchmark verdict,
+  or trace-page semantics change, update this file and regenerate
+  `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf` with
+  `python scripts/generate-draft-run-pipeline-pdf.py --source docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md --output docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`.
+- Complex pipeline slices must close the lifecycle
+  `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`: either
+  document `AS IS unchanged` with a reason or update the relevant AS IS and PDF.
+  The Definition of Done is incomplete until this AS IS update outcome is recorded.
 - `docs/adr/`: architectural decisions.
 - `docs/contributor/CONTRIBUTING.md`: contribution workflow.
 - `docs/developer/DEVELOPER_GUIDE.md`: local development, commands, internals.

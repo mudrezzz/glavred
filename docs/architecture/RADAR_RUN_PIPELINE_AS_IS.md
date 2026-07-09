@@ -34,6 +34,9 @@ A DoD for a RadarRun slice must explicitly state:
 - which runtime artifacts prove the result;
 - whether this document and PDF must be updated after the slice.
 
+Use the same lifecycle as other complex pipeline work:
+`AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
+
 Required DoD evidence for RadarRun/search work comes from structured artifacts, not
 from subjective inspection:
 

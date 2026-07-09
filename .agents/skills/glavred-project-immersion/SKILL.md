@@ -37,6 +37,7 @@ the repository rather than memory alone.
    - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md`
    - `docs/architecture/BACKEND_ARCHITECTURE_TARGET.md`
    - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`
+   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` when RadarRun/search work is next
    - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` when upstream/radar work is next
    - `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md` when SaaS/project work matters
 6. Latest relevant ADRs in `docs/adr/`.
@@ -97,6 +98,11 @@ Use this structure:
      printing secrets; if Glavred is not running in Docker, start the Glavred
      `docker compose up -d --build` stack even when unrelated Docker projects are
      already running.
+   - complex pipeline slices must follow
+     `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`;
+     DraftRun uses `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, RadarRun uses
+     `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`, and behavior-changing slices
+     need TO BE, Definition of Done, or a documented exception before implementation.
    - frontend work must use `frontend-design-system` and `ui-design-systems/START-HERE.md`.
    - demo changes must stay realistic and project-scoped.
 7. **Проверки**: relevant commands for the current slice.

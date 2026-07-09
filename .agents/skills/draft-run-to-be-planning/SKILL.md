@@ -19,14 +19,18 @@ implemented.
 This skill is for design approval, not code implementation. It turns a roadmap slice
 and discussion context into a concrete target pipeline map with step order, role/model
 handoff, artifacts, trace contract, boundaries, tests, and a generated PDF.
+Use TO BE as the target-state half of the lifecycle
+`AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
 
 ## Required inputs
 
 1. The user's current request and discussion context.
 2. `ROADMAP.md`.
 3. `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`.
-4. The active slice entry and nearby follow-up slices.
-5. Existing ADRs/docs only when the slice changes architecture rules.
+4. `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` when the target slice touches
+   RadarRun/search semantics.
+5. The active slice entry and nearby follow-up slices.
+6. Existing ADRs/docs only when the slice changes architecture rules.
 
 ## Output files
 
@@ -55,17 +59,22 @@ python scripts/generate-draft-run-pipeline-pdf.py `
 3. Identify exactly what changes in the target slice and what must remain out of scope.
 4. Create the TO BE document before implementation.
 5. Mark every important change with one of:
-   - `NEW in <slice>`
+   - `NEW`
    - `CHANGED vs AS IS`
    - `UNCHANGED`
-   - `NOT <slice>`
-6. Include rendered-diagram-friendly Mermaid blocks in Markdown. The PDF generator must
+   - `REMOVED`
+   - `NOT THIS SLICE`
+6. Include an `AS IS -> TO BE -> Proof` table. Every `CHANGED vs AS IS`, `NEW`, or
+   `REMOVED` item needs a proof item for the later Definition of Done. Every
+   safety/quality `NOT THIS SLICE` item must become known debt or a follow-up roadmap
+   slice.
+7. Include rendered-diagram-friendly Mermaid blocks in Markdown. The PDF generator must
    render them as diagrams, not code.
-7. Link the TO BE Markdown and PDF from the active `ROADMAP.md` slice.
-8. Link durable TO BE docs from `README.md` or SAO when they define a meaningful
+8. Link the TO BE Markdown and PDF from the active `ROADMAP.md` slice.
+9. Link durable TO BE docs from `README.md` or SAO when they define a meaningful
    architecture target, not just a temporary note.
-9. Generate the PDF and visually inspect key pages.
-10. Do not implement the slice unless the user explicitly asks for implementation after
+10. Generate the PDF and visually inspect key pages.
+11. Do not implement the slice unless the user explicitly asks for implementation after
     approving the TO BE.
 
 ## Document structure
@@ -83,10 +92,11 @@ Use this baseline structure and adapt only when the slice needs a different shap
 ## 6. Target artifact flow
 ## 7. Step-by-step TO BE flow
 ## 8. Trace contract
-## 9. Acceptance criteria
-## 10. Implementation boundaries
-## 11. Explicit non-goals
-## 12. Maintenance rule
+## 9. AS IS -> TO BE -> Proof map
+## 10. Acceptance criteria
+## 11. Implementation boundaries
+## 12. Explicit non-goals
+## 13. Maintenance rule
 ```
 
 ## Required content
@@ -104,6 +114,10 @@ Every TO BE document must answer:
 - What appears in `/ai-runs?runId=...` trace?
 - What remains explicitly out of scope?
 - What tests should implementation later add?
+- Which AS IS invariants are preserved?
+- Which AS IS invariants are changed?
+- Which runtime evidence will prove every changed target?
+- Which AS IS document must be updated after implementation?
 
 ## DraftRun-specific rules
 

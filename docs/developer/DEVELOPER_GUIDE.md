@@ -602,17 +602,25 @@ Before implementing a product, refactor, domain, application, app, or frontend s
    - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` for the broader
      upstream boundary across source registry, found material, signal extraction,
      scoring, candidate assembly, plan, and DraftRun handoff.
-3. For complex pipeline slices, write the DoD from the AS IS document before
-   implementation. The DoD must name which AS IS invariants are preserved, which are
-   changed, and which runtime evidence will prove the result: step artifacts,
-   `AiRun.requestPayload`, `operationEnvelope`, `payloadBudget`, `runtimeBudget`,
-   `qualityFidelity`, `searchPlan`, planned/executed coverage, selected/rejected
-   reads, found materials, or benchmark verdict.
+3. For complex pipeline slices, use the lifecycle
+   `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`, and
+   write the Definition of Done from the AS IS document before implementation. The
+   DoD must name which AS IS invariants are preserved, which are changed, and which
+   runtime evidence will prove the result: step artifacts, `AiRun.requestPayload`,
+   `operationEnvelope`, `payloadBudget`, `runtimeBudget`, `qualityFidelity`,
+   `searchPlan`, planned/executed coverage, selected/rejected reads, found materials,
+   or benchmark verdict.
+   TO BE is mandatory when the slice changes runtime order, trace shape, provider
+   input, retry/backup/fallback, quality/fidelity, budgets, diagnostics,
+   async/staleness, search coverage, or other hard-to-verify pipeline behavior. If TO
+   BE is not required, the slice must say why.
 4. At completion, explicitly state one of two outcomes: AS IS unchanged with a reason,
    or AS IS updated. If `DRAFT_RUN_PIPELINE_AS_IS.md` or
    `RADAR_RUN_PIPELINE_AS_IS.md` changes, regenerate the matching PDF in the same
-   slice. A complex pipeline slice without AS IS impact analysis is not ready for
-   implementation.
+   slice. Every `CHANGED vs AS IS`, `NEW`, or `REMOVED` item from TO BE needs proof
+   in the DoD, and every safety/quality `NOT THIS SLICE` item must become known debt
+   or a follow-up roadmap slice. A complex pipeline slice without AS IS impact
+   analysis is not ready for implementation.
 5. Check the planned files against the current large-file limits in
    `scripts/architecture-smoke.mjs`.
 6. Treat files reported as near-limit by `npm run test:architecture` as closed for new

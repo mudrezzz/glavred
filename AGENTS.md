@@ -226,6 +226,35 @@ During changes:
 - Prefer minimal, localized changes.
 - Preserve existing behavior unless the task explicitly changes it.
 
+## Complex pipeline slice guardrails
+
+Complex DraftRun, RadarRun, upstream search, provider-input, trace, quality/fidelity,
+budget, diagnostics, async/staleness, validation, ranking, revision, or hard-to-verify
+backend pipeline slices must follow this lifecycle:
+
+`AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`
+
+Use these sources:
+
+- `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` for DraftRun pipeline work.
+- `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for RadarRun runtime/search/coverage
+  and trace work.
+- `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` for broader upstream
+  source registry, found material, signal extraction, scoring, candidate assembly,
+  plan, and DraftRun handoff work.
+
+A complex pipeline slice is not ready for implementation unless its tracker record
+states AS IS sources, TO BE necessity, preserved AS IS invariants, changed AS IS
+invariants, proof evidence, and Definition of Done. If the slice changes runtime
+order, trace shape, provider input, retry/backup/fallback, quality/fidelity, budgets,
+diagnostics, async/staleness, or search coverage, it needs an approved TO BE document
+or an explicit documented exception.
+
+At completion, the implementer must state either `AS IS unchanged` with a reason or
+`AS IS updated` with regenerated PDF where applicable. Every `CHANGED vs AS IS`,
+`NEW`, or `REMOVED` TO BE item needs proof in the DoD. Every safety/quality
+`NOT THIS SLICE` item must become known debt or a follow-up roadmap slice.
+
 Before finishing:
 
 1. Update the roadmap tracker, then run `python -m backend.app.roadmap render` and `python -m backend.app.roadmap export`.

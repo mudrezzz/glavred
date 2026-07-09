@@ -69,6 +69,18 @@ Use this format in the slice `body_markdown` stored by the tracker/export:
   slice changes step order, artifacts, roles, context packs, validation, ranking,
   revision, fallback, or trace semantics, include updating that Markdown file and
   regenerating `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` in the slice scope.
+- For any RadarRun/search pipeline slice, read
+  `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` before planning. Use
+  `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` for broader
+  source-signal, scoring, candidate assembly, plan, and DraftRun handoff changes.
+- Complex pipeline slices must use the lifecycle
+  `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
+  The roadmap slice must name AS IS sources, TO BE necessity, preserved AS IS
+  invariants, changed AS IS invariants, proof evidence, Definition of Done, and
+  whether completion requires `AS IS unchanged` or `AS IS updated`.
+- TO BE is mandatory when a slice changes runtime order, trace shape, provider input,
+  retry/backup/fallback, quality/fidelity, budgets, diagnostics, async/staleness, or
+  other hard-to-verify pipeline behavior. If TO BE is not needed, record the reason.
 
 ## Completion checklist
 

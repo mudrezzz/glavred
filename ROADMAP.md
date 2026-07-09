@@ -7635,7 +7635,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails
 
-- Status: Ready
+- Status: Done
 - Goal: Require every complex pipeline slice to declare AS IS impact, TO BE intent when behavior changes, and a verifiable Definition of Done before implementation starts.
 - User value: We stop shipping green tests that do not prove the pipeline still works, and we stop losing architectural constraints between chat, docs, trace, and code.
 - Scope:
@@ -7679,10 +7679,11 @@ Status:
 - Risks:
   - Too much process can slow small changes; scope the rule only to complex pipeline/backend slices.
   - Too weak a rule turns into checkbox theater; DoD must require concrete proof, not just document references.
+- Completed: 2026-07-09
 
 ### Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness
 
-- Status: Backlog
+- Status: Ready
 - Goal: Distinguish queue wait, worker saturation, slow provider calls, slow-but-healthy validation work, and genuinely stale DraftRun operations.
 - User value: A live DraftRun that waits on a long model call is no longer misdiagnosed as an unexplained hang, and reliability diagnostics can separate runtime health from provider/model quality.
 - Scope:
@@ -7713,6 +7714,14 @@ Status:
   - A five-run live batch no longer produces false stale alarms for runs only waiting for workers or a still-budgeted provider call.
   - Slow `materialPlan`/validation calls show current operation, model, wait time, and prompt-size telemetry instead of only generic running/stale state.
   - Reliability report can separate queue health, provider wait, and provider/model quality.
+
+- Definition of Done:
+  - AS IS sources: `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`; backend runtime docs if diagnostics/runtime guard owners change.
+  - TO BE source: `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` section 7.1; if implementation changes the target, update or supersede the TO BE before code changes.
+  - Preserved AS IS invariants: DraftRun step order, provider/model selection, prompt text, API, SQLite schema, UI layout, and existing runtime-budget semantics for validation.
+  - Changed AS IS behavior: diagnostics/staleness proof must distinguish queued, worker-saturated, slow-but-healthy provider wait, and stale provider operation.
+  - Proof evidence: structured runtime diagnostics, current operation id, operation started time, selected model, direct prompt estimate when available, provider wait time, stale/timeout reason, and replay/live diagnostics over the known slow-run pattern.
+  - AS IS update outcome: completion must state `AS IS unchanged` with reason or update `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` and regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
 - Risks:
   - Queue visibility may be limited by current persistence; keep any new trace field minimal and backward-compatible.
 
@@ -8517,6 +8526,7 @@ Status:
 - Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4.0.1: RadarRun Pipeline AS IS Contract Preparation. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails. Completed 2026-07-09.
 
 
 ## Blocked Items
@@ -8545,4 +8555,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails`.
+Implement `Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness`.

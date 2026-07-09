@@ -104,6 +104,23 @@ Implement one small, complete, tested, documented product increment.
   changes, update that Markdown file and regenerate
   `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` with
   `python scripts/generate-draft-run-pipeline-pdf.py` before completing the slice.
+- For RadarRun/search pipeline slices, also read
+  `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` before implementation. Use
+  `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` when the slice
+  changes source-signal, scoring, candidate assembly, plan, or DraftRun handoff
+  semantics.
+- For complex pipeline slices, enforce the lifecycle
+  `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
+  Before implementation, confirm the roadmap entry has AS IS impact, TO BE necessity,
+  Definition of Done, and proof evidence. If the slice changes runtime order, trace
+  shape, provider input, retry/backup/fallback, quality/fidelity, budgets,
+  diagnostics, async/staleness, or other hard-to-verify behavior, require a TO BE
+  document or an explicit documented exception.
+- At completion of a complex pipeline slice, state either `AS IS unchanged` with a
+  reason or `AS IS updated` with regenerated PDF where applicable. Every `CHANGED vs
+  AS IS`, `NEW`, or `REMOVED` item in TO BE must have proof in the DoD; every
+  safety/quality `NOT THIS SLICE` item must become known debt or a follow-up roadmap
+  slice.
 
 ## Completion checklist
 
@@ -119,3 +136,4 @@ Before finishing:
 - Demo was updated if needed.
 - Tracker status was updated and `ROADMAP.md`/`docs/roadmap/slices.export.jsonl` were regenerated.
 - Remaining risks and next tasks are documented.
+- For complex pipeline slices, AS IS update outcome and DoD proof are documented.

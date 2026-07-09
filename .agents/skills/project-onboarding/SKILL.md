@@ -26,6 +26,11 @@ Quickly understand the project state and select the next appropriate action from
    - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` when backend DraftRun,
      drafting quality, LLM role, validation, ranking, revision, or trace work is
      active or next in `ROADMAP.md`
+   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` when RadarRun, upstream search,
+     coverage, benchmark, or trace-page work is active or next in `ROADMAP.md`
+   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md` when upstream
+     signal extraction, scoring, candidate assembly, plan, or DraftRun handoff work
+     is active or next in `ROADMAP.md`
    - latest ADRs
    - latest architecture ADRs and active architecture guardrails
    - developer docs
@@ -67,6 +72,12 @@ Instead:
    without printing secret values. If Glavred is not running in Docker, start the
    Glavred compose stack with `docker compose up -d --build`; unrelated running
    Docker projects do not block or replace that step.
+8. For complex pipeline slices, check that the slice follows
+   `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
+   If runtime order, trace shape, provider input, retry/backup/fallback,
+   quality/fidelity, budgets, diagnostics, async/staleness, or search coverage
+   changes, a TO BE document or documented exception is required before
+   implementation.
 
 ## Required output before implementation
 
@@ -84,6 +95,8 @@ Provide a short project state summary:
 - For DraftRun/backend slices, the canonical package owner under
   `backend/app/drafting`, whether any touched legacy file is a migrated thin shim,
   and the expected `npm run test:architecture` obligation
+- For complex pipeline slices, AS IS sources, TO BE necessity, Definition of Done,
+  proof evidence, and expected AS IS update outcome
 
 Then continue with the task unless the task is genuinely blocked.
 

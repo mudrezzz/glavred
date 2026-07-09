@@ -29,6 +29,16 @@ Consider:
 1. Inspect the current slice or change.
 2. Identify affected components.
 3. Identify existing tests.
+   - For complex pipeline slices, read the relevant AS IS/TO BE sources before
+     choosing tests. DraftRun proof starts from
+     `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`; RadarRun proof starts from
+     `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`; broader upstream proof uses
+     `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+   - Build the test plan from the lifecycle
+     `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
+     The Definition of Done and test list must prove preserved AS IS invariants,
+     changed TO BE targets, structured trace evidence, and the final AS IS update
+     outcome.
 4. Add or update tests for changed behavior.
    - On Windows/PowerShell, avoid deriving localized expected strings from mojibake
      terminal output. Prefer stable ASCII ids/statuses, semantic DOM queries, or

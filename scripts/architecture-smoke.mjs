@@ -1752,10 +1752,23 @@ const DRAFTING_LEGACY_SURFACE_INVENTORY_PATH =
   "backend/app/drafting/application/migration/legacy_surface_inventory.py";
 const DRAFT_RUN_PIPELINE_AS_IS_PATH =
   "docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md";
+const DRAFT_RUN_PIPELINE_AS_IS_PDF_PATH =
+  "docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf";
+const RADAR_RUN_PIPELINE_AS_IS_PATH =
+  "docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md";
+const RADAR_RUN_PIPELINE_AS_IS_PDF_PATH =
+  "docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf";
 const DRAFT_RUN_DIAGNOSTICS_SKILL_PATH =
   ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md";
 const PROJECT_ONBOARDING_SKILL_PATH = ".agents/skills/project-onboarding/SKILL.md";
 const SLICE_IMPLEMENTATION_SKILL_PATH = ".agents/skills/slice-implementation/SKILL.md";
+const ROADMAP_SLICE_PLANNING_SKILL_PATH =
+  ".agents/skills/roadmap-slice-planning/SKILL.md";
+const DOCS_SYNC_SKILL_PATH = ".agents/skills/docs-sync/SKILL.md";
+const REGRESSION_AND_TEST_STRATEGY_SKILL_PATH =
+  ".agents/skills/regression-and-test-strategy/SKILL.md";
+const DRAFT_RUN_TO_BE_PLANNING_SKILL_PATH =
+  ".agents/skills/draft-run-to-be-planning/SKILL.md";
 const GLAVRED_PROJECT_IMMERSION_SKILL_PATH =
   ".agents/skills/glavred-project-immersion/SKILL.md";
 const DRAFT_RUN_EVALUATION_SKILL_PATH =
@@ -1794,6 +1807,7 @@ const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
 ];
 const SAO_PATH = "docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md";
 const ENV_EXAMPLE_PATH = ".env.example";
+const ROADMAP_EXPORT_PATH = "docs/roadmap/slices.export.jsonl";
 
 const LEGACY_FLAT_DRAFT_APPLICATION_FILES = new Set([
   "backend/app/application/draft_alternative_angle_audit.py",
@@ -2136,6 +2150,13 @@ function readText(relativePath) {
 
 function readJson(relativePath) {
   return JSON.parse(readText(relativePath));
+}
+
+function readJsonl(relativePath) {
+  return readText(relativePath)
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0)
+    .map((line) => JSON.parse(line));
 }
 
 function lineCount(text) {
@@ -3406,6 +3427,9 @@ for (const fragment of [
 }
 
 const draftRunPipelineAsIsSource = readText(DRAFT_RUN_PIPELINE_AS_IS_PATH);
+assert(fileExists(DRAFT_RUN_PIPELINE_AS_IS_PDF_PATH), `${DRAFT_RUN_PIPELINE_AS_IS_PDF_PATH} is required.`);
+assert(fileExists(RADAR_RUN_PIPELINE_AS_IS_PATH), `${RADAR_RUN_PIPELINE_AS_IS_PATH} is required.`);
+assert(fileExists(RADAR_RUN_PIPELINE_AS_IS_PDF_PATH), `${RADAR_RUN_PIPELINE_AS_IS_PDF_PATH} is required.`);
 for (const fragment of [
   "ValidationRuntimeBudget",
   "runtimeBudget",
@@ -3422,6 +3446,38 @@ for (const fragment of [
   );
 }
 
+const radarRunPipelineAsIsSource = readText(RADAR_RUN_PIPELINE_AS_IS_PATH);
+for (const fragment of [
+  "How AS IS Participates in DoD",
+  "plannedCoverage",
+  "executedCoverage",
+  "skippedRequiredCoverage",
+  "benchmarkReport",
+  "AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update",
+]) {
+  assert(
+    radarRunPipelineAsIsSource.includes(fragment),
+    `${RADAR_RUN_PIPELINE_AS_IS_PATH} must document RadarRun pipeline DoD guardrail fragment: ${fragment}`
+  );
+}
+
+for (const [docPath, docSource] of [
+  [DRAFT_RUN_PIPELINE_AS_IS_PATH, draftRunPipelineAsIsSource],
+  [RADAR_RUN_PIPELINE_AS_IS_PATH, radarRunPipelineAsIsSource],
+]) {
+  for (const fragment of [
+    "How AS IS Participates in DoD",
+    "AS IS",
+    "TO BE",
+    "DoD",
+  ]) {
+    assert(
+      docSource.includes(fragment),
+      `${docPath} must participate in complex pipeline DoD guardrails: ${fragment}`
+    );
+  }
+}
+
 const draftRunDiagnosticsSkillSource = readText(DRAFT_RUN_DIAGNOSTICS_SKILL_PATH);
 for (const fragment of [
   "runtimeBudget",
@@ -3434,6 +3490,70 @@ for (const fragment of [
     draftRunDiagnosticsSkillSource.includes(fragment),
     `${DRAFT_RUN_DIAGNOSTICS_SKILL_PATH} must teach validation runtime-budget diagnostics: ${fragment}`
   );
+}
+
+const complexPipelineGuardrailFragments = [
+  "AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update",
+  "Definition of Done",
+  "DRAFT_RUN_PIPELINE_AS_IS.md",
+  "RADAR_RUN_PIPELINE_AS_IS.md",
+];
+for (const [docPath, docSource] of [
+  [AGENTS_PATH, readText(AGENTS_PATH)],
+  [DEVELOPER_GUIDE_PATH, readText(DEVELOPER_GUIDE_PATH)],
+]) {
+  for (const fragment of complexPipelineGuardrailFragments) {
+    assert(
+      docSource.includes(fragment),
+      `${docPath} must document complex pipeline DoD lifecycle fragment: ${fragment}`
+    );
+  }
+}
+
+for (const [skillPath, skillSource] of [
+  [ROADMAP_SLICE_PLANNING_SKILL_PATH, readText(ROADMAP_SLICE_PLANNING_SKILL_PATH)],
+  [SLICE_IMPLEMENTATION_SKILL_PATH, readText(SLICE_IMPLEMENTATION_SKILL_PATH)],
+  [DRAFT_RUN_TO_BE_PLANNING_SKILL_PATH, readText(DRAFT_RUN_TO_BE_PLANNING_SKILL_PATH)],
+  [REGRESSION_AND_TEST_STRATEGY_SKILL_PATH, readText(REGRESSION_AND_TEST_STRATEGY_SKILL_PATH)],
+  [DOCS_SYNC_SKILL_PATH, readText(DOCS_SYNC_SKILL_PATH)],
+  [DRAFT_RUN_DIAGNOSTICS_SKILL_PATH, draftRunDiagnosticsSkillSource],
+  [DRAFT_RUN_EVALUATION_SKILL_PATH, readText(DRAFT_RUN_EVALUATION_SKILL_PATH)],
+  [PROJECT_ONBOARDING_SKILL_PATH, readText(PROJECT_ONBOARDING_SKILL_PATH)],
+  [GLAVRED_PROJECT_IMMERSION_SKILL_PATH, readText(GLAVRED_PROJECT_IMMERSION_SKILL_PATH)],
+]) {
+  for (const fragment of complexPipelineGuardrailFragments) {
+    assert(
+      skillSource.includes(fragment),
+      `${skillPath} must teach complex pipeline DoD lifecycle fragment: ${fragment}`
+    );
+  }
+}
+
+const roadmapSliceRecords = readJsonl(ROADMAP_EXPORT_PATH).filter(
+  (record) => record.recordType === "slice" && record.payload
+);
+for (const record of roadmapSliceRecords) {
+  const slice = record.payload;
+  const body = `${slice.title || ""}\n${slice.body_markdown || ""}`;
+  const status = slice.status || "";
+  const isPipelineSlice =
+    /\b(DraftRun|RadarRun|pipeline|provider|trace|quality|fidelity|budget|staleness|search)\b/i.test(
+      body
+    );
+  const isGuardedBranch = String(slice.id || "").startsWith("2.17.4.6.1.3.4");
+  const mustHaveDodContract =
+    isPipelineSlice &&
+    isGuardedBranch &&
+    ["Ready", "In Progress"].includes(status);
+  if (!mustHaveDodContract) {
+    continue;
+  }
+  for (const fragment of ["AS IS", "TO BE", "Definition of Done", "proof", "AS IS update"]) {
+    assert(
+      body.includes(fragment),
+      `${ROADMAP_EXPORT_PATH} slice ${slice.id} must include complex pipeline DoD fragment: ${fragment}`
+    );
+  }
 }
 
 const backendAsIsSource = readText(BACKEND_ARCHITECTURE_AS_IS_PATH);

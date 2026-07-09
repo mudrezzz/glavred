@@ -92,7 +92,9 @@ Classify every problem:
   prompt/normalizer bug, minor UI trace issue, missing test/docs update.
 - **Architecture shift**: requires changing pipeline shape, adding new durable
   storage, new provider category, new product flow, new data ownership, or changing
-  accepted architecture decisions.
+  accepted architecture decisions. Do not autofix this directly; require the
+  lifecycle `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`
+  and add or amend a roadmap slice.
 
 ### 4. Decide
 
@@ -106,7 +108,8 @@ Use this decision table:
   - update code;
   - add/update tests;
   - update `ROADMAP.md`, SAO, `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`,
-    developer/user/demo docs as needed;
+    `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`, developer/user/demo docs as
+    needed;
   - regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf` when that Markdown
     changes;
   - run targeted and relevant regression checks;
