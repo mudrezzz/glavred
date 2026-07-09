@@ -65,6 +65,7 @@ Minimum DoD input from this document:
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
+| `ProviderOperationRuntime` | Step-local progress boundary for a currently running provider operation outside the validation runtime loop. It records operation id, operation kind, operation start time, model role, selected model, prompt/token estimate when available, provider wait seconds, stale budget, and slow-but-healthy state. | `steps[].artifactPayload.progress`, `scripts/analyze_draft_run_reliability.py` runtime diagnostics |
 | `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. A succeeded DraftRun is not trusted quality by itself: open critical issues block clean success, and unresolved final-gate warnings can only be publishable with caution. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
 | `ProviderReliabilityReport` | Cross-run provider reliability summary and remediation map for retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns. | `python scripts/analyze_draft_run_reliability.py --run-id ...` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
@@ -981,7 +982,10 @@ row and links the new debt/repair slice.
 | Area | Behavior |
 | --- | --- |
 | live DraftRun | frontend keeps polling; no compatibility fallback while run is alive |
-| stale DraftRun | diagnostic state after no timestamp progress; not automatic fallback |
+| queued DraftRun | queue-wait state; old `updated_at` alone is not a generic stale signal while status is `queued` |
+| stale DraftRun | diagnostic state after no timestamp progress or after a current provider operation exceeds its stale budget; not automatic fallback |
+| slow-but-healthy provider operation | running step progress has `currentOperationId`, `currentOperationStartedAt`, `selectedModel`, and operation age inside `staleAfterSeconds`; do not classify as unexplained hang |
+| over-budget provider operation | stale diagnostics report the current provider operation, model, wait seconds, and stale budget instead of the old generic five-minute message |
 | slow-but-healthy validation | validation has `runtimeBudget.currentOperationId` and heartbeat/current-operation age inside `runtimeBudget.limits.staleAfterSeconds`; do not classify as stuck |
 | over-budget validation operation | stale diagnostics report the current validation operation and runtime stale budget instead of the old generic five-minute message |
 | public search disabled | attempt is `notConfigured`; it is not proof |
@@ -1037,6 +1041,19 @@ reasons: `acceptedQuality`, `humanReviewRequired`, `budgetExhausted`,
 kept as `detailStopReason` where useful. No endpoint contract or SQLite schema is
 changed.
 
+Slice 2.17.4.6.1.3.4 adds `ProviderOperationRuntime` diagnostics for non-validation
+provider-heavy steps that previously only showed the parent step as `running`.
+`materialPlan`, `strategy`, and `rhetoricalPlans` now write a current operation into
+the existing step progress payload before the provider call starts. The progress
+payload includes `currentOperationId`, `currentOperationStartedAt`, `operationKind`,
+`modelRole`, `selectedModel`, `promptCharEstimate`, `approxTokenEstimate`,
+`staleAfterSeconds`, `providerWaitSeconds`, and `slowButHealthy` when available.
+The public DraftRun response shape is unchanged: `isStale`, `staleReason`, and
+`lastProgressAt` remain computed fields. Internally, queued runs are classified as
+queue-wait rather than generic stale, validation still uses `ValidationRuntimeBudget`,
+and diagnostics can now distinguish queue wait, slow provider wait, validation runtime
+health, and a genuinely stale provider operation.
+
 Slice 2.17.4.6.1.0 adds `QualityFidelityReport` as a trace-only DraftRun artifact.
 It does not change step order, prompts, provider selection, API, or SQLite schema.
 The report separates `technicalStatus`, `providerRecoveryStatus`,
@@ -1088,10 +1105,14 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
    limits, forbidden overclaims, rejected evidence uses, attempts, `operationEnvelope`,
    timeout profile, input stats, `payloadBudget`, and incident taxonomy.
 9. `materialPlan`: confirm selected evidence and explicit rejection reasons.
-10. `strategy`: confirm the strategy does not change the contract.
-11. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
-12. `draft`: compare candidates, source/fallback status, publishability, scorecard.
-13. `validation`: inspect deterministic warnings, LLM findings, observations.
+10. `materialPlan` / `strategy` / `rhetoricalPlans` progress: while running, inspect
+    `progress.currentOperationId`, `currentOperationStartedAt`, `selectedModel`,
+    prompt/token estimates, `providerWaitSeconds`, `staleAfterSeconds`, and
+    `slowButHealthy` before calling the run stuck.
+11. `strategy`: confirm the strategy does not change the contract.
+12. `rhetoricalPlans`: confirm the plans are different routes, not new topics.
+13. `draft`: compare candidates, source/fallback status, publishability, scorecard.
+14. `validation`: inspect deterministic warnings, LLM findings, observations.
 14. `editorialCritiqueReport`: inspect idea strength, tension, author stance, source
     integration, generic-prose risks, recommended editorial moves, candidate-level
     `operationEnvelope`, malformed JSON/schema incidents, and not-run incidents.

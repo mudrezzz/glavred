@@ -162,6 +162,14 @@ Check these failure classes explicitly:
   progress operations, or child `AiRun` creation continue to advance. Treat it as
   stuck only when the parent step has no progress past the expected operation budget
   and no timeout/stale/cancelled incident or worker error explains the delay.
+  For queued runs, classify queue wait separately from stale execution: old
+  `updated_at` alone is not proof that a queued run is stuck. For running provider
+  operations outside validation, inspect `progress.currentOperationId`,
+  `currentOperationStartedAt`, `operationKind`, `modelRole`, `selectedModel`,
+  `promptCharEstimate`, `approxTokenEstimate`, `providerWaitSeconds`,
+  `staleAfterSeconds`, and `slowButHealthy`. Say plainly whether the run is waiting
+  for a worker, currently inside a provider call, slow but still inside budget, or
+  actually stale.
   For `validation`, inspect `progress.runtimeBudget`: profile id, execution mode,
   limits, used counters, `lastHeartbeatAt`, `currentOperationId`,
   `currentOperationStartedAt`, `slowButHealthy`, `stopReason`, `exhausted`, and

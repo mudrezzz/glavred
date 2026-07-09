@@ -7,6 +7,9 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.generation.draft_candidate_selection_block import candidate_selection_blocked_payload
 from backend.app.drafting.application.artifacts.draft_run_context_builder import build_draft_run_context_summary
@@ -177,68 +180,158 @@ class LegacyDraftWorkflowPhaseBuilder:
 
     def material_plan(self, state: DraftWorkflowState) -> None:
         state.progress.start(DraftRunStepKey.MATERIAL_PLAN)
-        result = self._services.material_plan_service.create(
-            context_summary=state.context_summary,
-            rule_pack=state.rule_pack,
-            context_artifact=state.context_artifact,
+        material_progress = state.progress.operation_sink(DraftRunStepKey.MATERIAL_PLAN, total_operations=1)
+        settings = get_settings()
+        material_progress.start_operation(
+            "materialPlan",
+            kind="materialPlan",
+            label="Material plan",
+            model_role=DraftModelRole.STRATEGY.value,
+            selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+            prompt_char_estimate=_payload_char_estimate(
+                {
+                    "contextSummary": state.context_summary,
+                    "rulePack": state.rule_pack,
+                    "contextArtifact": state.context_artifact,
+                }
+            ),
+            stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
+        try:
+            result = self._services.material_plan_service.create(
+                context_summary=state.context_summary,
+                rule_pack=state.rule_pack,
+                context_artifact=state.context_artifact,
+            )
+        except Exception as exc:
+            material_progress.fail_operation("materialPlan", str(exc))
+            raise
         state.progress.add_ai_run_ids(
             result.ai_run_ids or ([result.ai_run_id] if result.ai_run_id else [])
+        )
+        material_progress.complete_operation(
+            "materialPlan",
+            ai_run_id=result.ai_run_id,
+            notes=["provider-runtime-recorded"],
         )
         state.material_plan = payload_section(result.artifact_payload, "materialPlan")
         state.progress.succeed(
             DraftRunStepKey.MATERIAL_PLAN,
-            self._services.article_memory.attach(
-                result.artifact_payload,
-                context_artifact=state.context_artifact,
-                rule_pack=state.rule_pack,
-                material_plan=state.material_plan,
+            with_progress_payload(
+                self._services.article_memory.attach(
+                    result.artifact_payload,
+                    context_artifact=state.context_artifact,
+                    rule_pack=state.rule_pack,
+                    material_plan=state.material_plan,
+                ),
+                material_progress,
             ),
         )
 
     def strategy(self, state: DraftWorkflowState) -> None:
         state.progress.start(DraftRunStepKey.STRATEGY)
-        result = self._services.strategy_service.create(
-            context_summary=state.context_summary,
-            rule_pack=state.rule_pack,
-            material_plan=state.material_plan,
-            context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+        strategy_progress = state.progress.operation_sink(DraftRunStepKey.STRATEGY, total_operations=1)
+        settings = get_settings()
+        strategy_progress.start_operation(
+            "draftStrategy",
+            kind="draftStrategy",
+            label="Draft strategy",
+            model_role=DraftModelRole.STRATEGY.value,
+            selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+            prompt_char_estimate=_payload_char_estimate(
+                {
+                    "contextSummary": state.context_summary,
+                    "rulePack": state.rule_pack,
+                    "materialPlan": state.material_plan,
+                    "contextPack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+                }
+            ),
+            stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
+        try:
+            result = self._services.strategy_service.create(
+                context_summary=state.context_summary,
+                rule_pack=state.rule_pack,
+                material_plan=state.material_plan,
+                context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
+            )
+        except Exception as exc:
+            strategy_progress.fail_operation("draftStrategy", str(exc))
+            raise
         state.progress.add_ai_run_id(result.ai_run_id)
+        strategy_progress.complete_operation(
+            "draftStrategy",
+            ai_run_id=result.ai_run_id,
+            notes=["provider-runtime-recorded"],
+        )
         state.draft_strategy = payload_section(result.artifact_payload, "draftStrategy")
         state.progress.succeed(
             DraftRunStepKey.STRATEGY,
-            self._services.article_memory.attach(
-                result.artifact_payload,
-                context_artifact=state.context_artifact,
-                rule_pack=state.rule_pack,
-                material_plan=state.material_plan,
-                draft_strategy=state.draft_strategy,
+            with_progress_payload(
+                self._services.article_memory.attach(
+                    result.artifact_payload,
+                    context_artifact=state.context_artifact,
+                    rule_pack=state.rule_pack,
+                    material_plan=state.material_plan,
+                    draft_strategy=state.draft_strategy,
+                ),
+                strategy_progress,
             ),
         )
 
     def rhetorical_plans_phase(self, state: DraftWorkflowState) -> None:
         state.progress.start(DraftRunStepKey.RHETORICAL_PLANS)
-        result = self._services.rhetorical_plan_service.create(
-            context_summary=state.context_summary,
-            context_artifact=state.context_artifact,
-            rule_pack=state.rule_pack,
-            material_plan=state.material_plan,
-            draft_strategy=state.draft_strategy,
+        rhetorical_progress = state.progress.operation_sink(DraftRunStepKey.RHETORICAL_PLANS, total_operations=1)
+        settings = get_settings()
+        rhetorical_progress.start_operation(
+            "rhetoricalPlans",
+            kind="rhetoricalPlans",
+            label="Rhetorical plans",
+            model_role=DraftModelRole.STRATEGY.value,
+            selected_model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
+            prompt_char_estimate=_payload_char_estimate(
+                {
+                    "contextSummary": state.context_summary,
+                    "contextArtifact": state.context_artifact,
+                    "rulePack": state.rule_pack,
+                    "materialPlan": state.material_plan,
+                    "draftStrategy": state.draft_strategy,
+                }
+            ),
+            stale_after_seconds=_provider_stale_after_seconds(settings.draft_run_execution_mode),
         )
-        state.progress.add_ai_run_ids(
-            result.ai_run_ids or ([result.ai_run_id] if result.ai_run_id else [])
-        )
-        state.rhetorical_plans = payload_section(result.artifact_payload, "rhetoricalPlanSet")
-        state.progress.succeed(
-            DraftRunStepKey.RHETORICAL_PLANS,
-            self._services.article_memory.attach(
-                result.artifact_payload,
+        try:
+            result = self._services.rhetorical_plan_service.create(
+                context_summary=state.context_summary,
                 context_artifact=state.context_artifact,
                 rule_pack=state.rule_pack,
                 material_plan=state.material_plan,
                 draft_strategy=state.draft_strategy,
-                rhetorical_plans=state.rhetorical_plans,
+            )
+        except Exception as exc:
+            rhetorical_progress.fail_operation("rhetoricalPlans", str(exc))
+            raise
+        state.progress.add_ai_run_ids(
+            result.ai_run_ids or ([result.ai_run_id] if result.ai_run_id else [])
+        )
+        rhetorical_progress.complete_operation(
+            "rhetoricalPlans",
+            ai_run_id=result.ai_run_id,
+            notes=["provider-runtime-recorded"],
+        )
+        state.rhetorical_plans = payload_section(result.artifact_payload, "rhetoricalPlanSet")
+        state.progress.succeed(
+            DraftRunStepKey.RHETORICAL_PLANS,
+            with_progress_payload(
+                self._services.article_memory.attach(
+                    result.artifact_payload,
+                    context_artifact=state.context_artifact,
+                    rule_pack=state.rule_pack,
+                    material_plan=state.material_plan,
+                    draft_strategy=state.draft_strategy,
+                    rhetorical_plans=state.rhetorical_plans,
+                ),
+                rhetorical_progress,
             ),
         )
 
@@ -361,3 +454,23 @@ class LegacyDraftWorkflowPhaseBuilder:
         ranking_revision["qualityFidelity"] = quality_fidelity
         validation_payload["rankingRevision"] = ranking_revision
         state.progress.succeed(DraftRunStepKey.VALIDATION, validation_payload)
+
+
+def _payload_char_estimate(payload: dict[str, Any]) -> int:
+    return len(json.dumps(payload, ensure_ascii=False, default=str))
+
+
+def _selected_model(*models: str | None) -> str | None:
+    for model in models:
+        if model and model.strip():
+            return model.strip()
+    return None
+
+
+def _provider_stale_after_seconds(execution_mode: str | None) -> int:
+    mode = (execution_mode or "standard").strip().lower()
+    if mode == "smoke":
+        return 180
+    if mode == "full":
+        return 1200
+    return 900

@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any
 
 from backend.app.application.draft_run_pipeline_ports import DraftRunPipelineRepository
-from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.domain.draft_run import DraftRunStatus
 from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
+from backend.app.drafting.application.workflow.draft_run_step_progress import DraftRunStepOperationSink
 
 if TYPE_CHECKING:
     from backend.app.drafting.application.operations.validation_runtime_budget import ValidationRuntimeGuard

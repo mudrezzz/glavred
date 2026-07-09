@@ -303,6 +303,8 @@ def test_cli_reads_draft_run_and_child_ai_runs_from_sqlite(tmp_path, capsys) -> 
     output = capsys.readouterr().out
     assert '"version": "draft-run-provider-reliability-v1"' in output
     assert '"conclusionStatus": "insufficientData"' in output
+    assert '"runtimeDiagnostics"' in output
+    assert '"state": "terminal"' in output
 
 
 def test_report_audits_raw_structured_signal_coverage() -> None:

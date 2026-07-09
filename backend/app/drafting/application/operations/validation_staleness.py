@@ -18,6 +18,8 @@ class ValidationProgressStalenessInspector:
         for step in run.steps:
             if step.status.value != "running":
                 continue
+            if step.key.value != "validation":
+                continue
             progress = step.artifact_payload.get("progress") if isinstance(step.artifact_payload, dict) else None
             if not isinstance(progress, dict):
                 continue

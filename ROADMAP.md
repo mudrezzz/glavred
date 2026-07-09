@@ -7683,7 +7683,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness
 
-- Status: Ready
+- Status: Done
 - Goal: Distinguish queue wait, worker saturation, slow provider calls, slow-but-healthy validation work, and genuinely stale DraftRun operations.
 - User value: A live DraftRun that waits on a long model call is no longer misdiagnosed as an unexplained hang, and reliability diagnostics can separate runtime health from provider/model quality.
 - Scope:
@@ -7724,10 +7724,11 @@ Status:
   - AS IS update outcome: completion must state `AS IS unchanged` with reason or update `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` and regenerate `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.pdf`.
 - Risks:
   - Queue visibility may be limited by current persistence; keep any new trace field minimal and backward-compatible.
+- Completed: 2026-07-09
 
 ### Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement
 
-- Status: Backlog
+- Status: Ready
 - Goal: Make every provider-heavy DraftRun child `AiRun` prove it crossed a direct provider-input budget gate before prompt construction.
 - User value: We can stop guessing whether a large prompt is accidental; the trace will show exactly what was sent, what was trimmed, and whether the current operation was actually bounded.
 - Scope:
@@ -8527,6 +8528,7 @@ Status:
 - Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4.0.1: RadarRun Pipeline AS IS Contract Preparation. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails. Completed 2026-07-09.
+- Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness. Completed 2026-07-09.
 
 
 ## Blocked Items
@@ -8555,4 +8557,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness`.
+Implement `Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement`.

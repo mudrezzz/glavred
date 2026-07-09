@@ -11,6 +11,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from backend.app.drafting.application.reliability import DraftRunProviderReliabilityReporter
+from backend.app.drafting.application.workflow.draft_run_runtime_diagnostics import DraftRunRuntimeDiagnostics
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
 from backend.app.settings import get_settings
@@ -40,9 +41,13 @@ class DraftRunReliabilityCli:
             runs,
             ai_runs_by_draft_run_id=ai_runs_by_draft_run_id,
         )
+        runtime_diagnostics = [DraftRunRuntimeDiagnostics().to_payload(run) for run in runs]
         if args.format == "json":
-            print(json.dumps(report.to_payload(), ensure_ascii=False, indent=2))
+            payload = report.to_payload()
+            payload["runtimeDiagnostics"] = runtime_diagnostics
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
         else:
+            print(self._runtime_markdown(runtime_diagnostics))
             print(report.to_markdown())
         return 0
 
@@ -81,6 +86,35 @@ class DraftRunReliabilityCli:
             for child in value:
                 ids.extend(self._ids_from_payload(child))
         return ids
+
+    def _runtime_markdown(self, diagnostics: list[dict[str, Any]]) -> str:
+        lines = ["# DraftRun Runtime Diagnostics", ""]
+        for item in diagnostics:
+            state = item.get("state") or "unknown"
+            if state == "queued":
+                detail = f"технически ждет очередь; ожидание {item.get('queueWaitSeconds') or 0}s"
+            elif state == "provider-operation-running":
+                detail = (
+                    f"идет вызов провайдера `{item.get('currentOperationId')}`"
+                    f" на модели `{item.get('selectedModel') or 'unknown'}`;"
+                    f" ожидание {item.get('providerWaitSeconds') or 0}s из {item.get('staleAfterSeconds') or 'unknown'}s"
+                )
+            elif state == "provider-operation-stale":
+                detail = (
+                    f"операция превысила бюджет ожидания: `{item.get('currentOperationId')}`"
+                    f" на модели `{item.get('selectedModel') or 'unknown'}`;"
+                    f" ожидание {item.get('providerWaitSeconds') or 0}s"
+                )
+            elif state == "validation-runtime":
+                detail = (
+                    "validation медленный, но в бюджете"
+                    if item.get("slowButHealthy")
+                    else "validation превысил бюджет ожидания"
+                )
+            else:
+                detail = str(item.get("staleReason") or state)
+            lines.append(f"- `{item['runId']}`: {detail}")
+        return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

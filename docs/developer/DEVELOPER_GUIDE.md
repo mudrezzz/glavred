@@ -312,6 +312,16 @@ For evidence interpretation specifically, read `rulePack.evidenceInterpretationF
 evidence exists but was not meaningfully interpreted, `weak` means deterministic
 fallback lowered fidelity, and `missing` blocks trusted quality.
 
+Before judging a running DraftRun as stuck, read runtime diagnostics separately from
+quality diagnostics. A queued run can be waiting for a worker and should not become a
+generic stale run only because `updated_at` is old. For running provider-heavy steps,
+inspect `steps[].artifactPayload.progress.currentOperationId`,
+`currentOperationStartedAt`, `selectedModel`, prompt/token estimate,
+`providerWaitSeconds`, `staleAfterSeconds`, and `slowButHealthy`. For validation,
+`progress.runtimeBudget` remains the canonical runtime source. Use the reliability
+CLI's `runtimeDiagnostics` block to separate queue wait, provider wait, validation
+runtime health, and model/result quality.
+
 For cross-run provider reliability, use:
 
 ```powershell
@@ -1655,13 +1665,21 @@ DraftRun fallback discipline:
   run as the primary path while it is `queued` or `running`.
 - Polling timeout is not a reason to call `/api/drafts/generate`; show a long-running
   state with current step, elapsed time, DraftRun ID, and trace link instead.
-- `isStale=true` means the run has had no timestamp progress for five minutes. It is
-  diagnostic state for `/ai-runs` and the draft screen, not a silent fallback trigger.
+- `isStale=true` means diagnostics found no explainable progress: either no parent
+  progress beyond the default threshold, a validation operation beyond its runtime
+  stale budget, or a provider operation beyond its step stale budget. Queued runs are
+  queue-wait, not generic stale. Stale is diagnostic state for `/ai-runs` and the
+  draft screen, not a silent fallback trigger.
 - Long-running steps may write `artifactPayload.progress` while still running. Inspect
   `progress.currentOperationId` and `progress.operations[]` for URL/search tasks,
   candidate generation, deterministic lint, LLM validation, pairwise ranking,
   directed revision, and regression guard progress. These writes update
   `draft_runs.updated_at`.
+- Planning provider calls now also write current operation progress. Inspect
+  `materialPlan`, `strategy`, and `rhetoricalPlans` for `progress.currentOperationId`,
+  `currentOperationStartedAt`, `selectedModel`, prompt/token estimate,
+  `providerWaitSeconds`, `staleAfterSeconds`, and `slowButHealthy` before blaming the
+  worker or model quality.
 - Validation progress writes must merge into the existing partial validation artifact.
   They must not replace deterministic/LLM/critic/tournament/ranking/revision payloads
   with a progress-only object. Provider-heavy validation sub-operations mark nested
