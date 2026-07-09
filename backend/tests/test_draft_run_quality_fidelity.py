@@ -96,8 +96,127 @@ def test_open_critical_requires_attention_but_suppressed_warning_allows_caution(
     assert critical["editorialStatus"] == "needsHumanReview"
     assert critical["overallVerdict"] == "needsAttention"
     assert warning["issueLifecycle"]["suppressedCount"] == 1
+    assert warning["issueLifecycle"]["finalGateWarningCount"] == 1
+    final_gate_item = next(item for item in warning["issueLifecycle"]["items"] if item["validatorId"] == "finalQualityGate.status")
+    assert final_gate_item["status"] == "open"
     assert warning["editorialStatus"] == "publishableWithCaution"
     assert warning["overallVerdict"] != "cleanSuccess"
+
+
+def test_final_gate_warning_requires_explicit_lifecycle_status() -> None:
+    plain_warning = reporter().build(
+        run_status="succeeded",
+        steps=[step("validation", {"rankingRevision": {"finalQualityGate": {"status": "warning"}}}), step("complete", {})],
+        final_draft=final_draft(),
+    )
+    accepted_risk = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "validation",
+                {
+                    "rankingRevision": {
+                        "finalQualityGate": {
+                            "status": "warning",
+                            "acceptedRisk": True,
+                            "acceptedRiskReason": "editor-approved-publication-risk",
+                        }
+                    }
+                },
+            ),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+
+    plain_item = next(item for item in plain_warning["issueLifecycle"]["items"] if item["validatorId"] == "finalQualityGate.status")
+    accepted_item = next(item for item in accepted_risk["issueLifecycle"]["items"] if item["validatorId"] == "finalQualityGate.status")
+    assert plain_item["status"] == "open"
+    assert plain_warning["overallVerdict"] != "cleanSuccess"
+    assert accepted_item["status"] == "acceptedRisk"
+    assert accepted_item["statusReason"] == "editor-approved-publication-risk"
+    assert accepted_risk["editorialStatus"] == "publishableWithCaution"
+
+
+def test_final_gate_warning_is_not_dropped_after_many_validation_findings() -> None:
+    findings = [
+        {"validatorId": f"validation.warning.{index}", "severity": "warning", "message": "warning"}
+        for index in range(30)
+    ]
+    report = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "validation",
+                {
+                    "candidateReports": [{"findings": findings}],
+                    "rankingRevision": {"finalQualityGate": {"status": "warning"}},
+                },
+            ),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+
+    final_gate_item = next(
+        item for item in report["issueLifecycle"]["items"] if item["validatorId"] == "finalQualityGate.status"
+    )
+    assert report["issueLifecycle"]["warningCount"] == 31
+    assert final_gate_item["status"] == "open"
+    assert final_gate_item["source"] == "finalQualityGate"
+
+
+def test_accepted_final_repair_resolves_initial_critical_gate_status() -> None:
+    report = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "validation",
+                {
+                    "rankingRevision": {
+                        "finalQualityGate": {
+                            "status": "critical",
+                            "acceptedRepair": True,
+                            "repairGate": {"status": "passed"},
+                            "finalDecision": {"source": "finalQualityRepair", "reason": "accepted-repair"},
+                        }
+                    }
+                },
+            ),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+
+    final_gate_item = next(item for item in report["issueLifecycle"]["items"] if item["validatorId"] == "finalQualityGate.status")
+    assert final_gate_item["severity"] == "critical"
+    assert final_gate_item["status"] == "resolved"
+    assert report["issueLifecycle"]["openCriticalCount"] == 0
+    assert report["overallVerdict"] == "cleanSuccess"
+
+
+def test_attribution_warning_is_not_accepted_risk_without_explicit_reason() -> None:
+    report = reporter().build(
+        run_status="succeeded",
+        steps=[
+            step(
+                "validation",
+                {
+                    "candidateReports": [
+                        {"findings": [{"validatorId": "evidence.attribution", "severity": "warning", "message": "Missing marker"}]}
+                    ],
+                    "rankingRevision": {"finalQualityGate": {"status": "passed"}},
+                },
+            ),
+            step("complete", {}),
+        ],
+        final_draft=final_draft(),
+    )
+
+    attribution_item = next(item for item in report["issueLifecycle"]["items"] if item["validatorId"] == "evidence.attribution")
+    assert attribution_item["status"] == "open"
+    assert report["issueLifecycle"]["acceptedRiskCount"] == 0
+    assert report["editorialStatus"] == "publishableWithCaution"
 
 
 def test_structured_evidence_fidelity_drives_editorial_verdict() -> None:

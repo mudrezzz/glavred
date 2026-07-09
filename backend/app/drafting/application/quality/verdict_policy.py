@@ -54,12 +54,15 @@ class QualityFidelityVerdictPolicy:
     ) -> str:
         if technical_status in {"failed", "blocked"} or not final_draft:
             return "blocked" if technical_status == "blocked" else "needsHumanReview"
-        if issue_lifecycle.get("openCriticalCount", 0) or final_gate.get("status") == "critical":
+        if issue_lifecycle.get("openCriticalCount", 0):
             return "needsHumanReview"
         body = str(final_draft.get("body") or final_draft.get("text") or "")
         if len(body) > 10240:
             return "publishableWithCaution"
-        if final_gate.get("status") == "warning" or issue_lifecycle.get("openWarningCount", 0):
+        if (
+            final_gate.get("status") == "warning"
+            and not final_gate.get("acceptedRepair")
+        ) or issue_lifecycle.get("openWarningCount", 0):
             return "publishableWithCaution"
         if evidence.get("coverageVerdict") == "missing" or evidence.get("fidelityImpact") == "blocked":
             return "needsHumanReview"

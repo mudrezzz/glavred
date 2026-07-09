@@ -297,6 +297,14 @@ quality issues such as weak evidence coverage, open critical findings, final-gat
 warnings, rejected final repair, or over-size final prose are evaluated separately
 from LLM/provider incidents.
 
+Validation and final-gate warning/critical findings are lifecycle-managed. Each
+issue in `qualityFidelity.issueLifecycle.items` is `resolved`, `suppressed`,
+`acceptedRisk`, or `open`. Open critical issues always block trusted editorial
+quality. A final-gate warning without explicit resolution, suppression, or
+accepted-risk semantics can produce `publishableWithCaution`, but not
+`cleanSuccess`. `DraftRun.status=succeeded` only means the pipeline finished; it
+does not mean the final text is editorially clean.
+
 Evidence interpretation now writes `evidenceInterpretationFidelity` in the
 `rulePack` artifact. The policy keeps retry/backup recovery separate from evidence
 quality: accepted provider interpretation can remain `sufficient`, deterministic

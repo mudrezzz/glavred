@@ -7498,7 +7498,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Close the validation/final-quality gap found in five live DraftRuns: all runs finished technically but retained open criticals and final gate warnings.
 - User value: A succeeded DraftRun cannot look publishable while unresolved critical validation or final gate warnings remain open.
 - Scope:
@@ -7522,10 +7522,11 @@ Status:
   - Reliability report no longer says quality can be trusted when open criticals remain.
 - Risks:
   - Some warning classes may be legitimate accepted risk; do not convert all warnings into hard failures blindly.
+- Completed: 2026-07-09
 
 ### Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair
 
-- Status: Backlog
+- Status: Ready
 - Goal: Reduce malformed JSON, unknown provider failures, and deterministic strategy/material-plan fallbacks visible in live reliability analysis.
 - User value: Provider retries remain normal recovery, but repeated malformed/unknown/fallback paths get concrete repair instead of hidden degradation.
 - Scope:
@@ -8182,6 +8183,7 @@ Status:
 - Slice 2.17.4.6.0.12: Backend Medium Architecture Debt Follow-up. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics. Completed 2026-07-08.
 - Slice 2.17.4.6.1.3.1: DraftRun Evidence Interpretation Timeout and Fidelity Repair. Completed 2026-07-08.
+- Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair. Completed 2026-07-09.
 
 
 ## Blocked Items
@@ -8210,4 +8212,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate Warning Repair`.
+Implement `Slice 2.17.4.6.1.3.3: DraftRun Provider JSON Recovery and Strategy Fallback Repair`.

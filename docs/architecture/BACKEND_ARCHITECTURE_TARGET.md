@@ -188,7 +188,9 @@ Implemented operation safety repair:
   - `backend.app.drafting.application.quality` owns trace-only per-run quality and
     fidelity reporting across technical completion, provider recovery, evidence
     fidelity, validation/final-gate issue lifecycle, editorial status, and
-    clean/degraded/attention verdicts;
+    clean/degraded/attention verdicts; `DraftRun.status=succeeded` is never used as
+    quality proof by itself, open critical issues block trusted quality, and
+    unresolved final-gate warnings cannot produce `cleanSuccess`;
   - old `backend.app.application.*` imports for this migrated batch are
     compatibility shims only, and provider-heavy migrated services use the bounded
     drafting JSON adapter instead of raw provider `.complete_json(...)`.

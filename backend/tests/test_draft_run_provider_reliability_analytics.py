@@ -98,6 +98,69 @@ def test_open_critical_requires_fix_before_trusting_quality() -> None:
     assert critical["recommendedSlice"] == "2.17.4.6.1.3.2"
 
 
+def test_repeated_final_gate_warning_requires_backlog_repair_slice() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage("finalQualityReviewRepair"),
+                issue_lifecycle={"warningCount": 1, "openCriticalCount": 0, "openWarningCount": 1, "finalGateWarningCount": 1},
+            ),
+            run_with_quality(
+                "run-2",
+                stage("finalQualityReviewRepair"),
+                issue_lifecycle={"warningCount": 1, "openCriticalCount": 0, "openWarningCount": 1, "finalGateWarningCount": 1},
+            ),
+            run_with_quality(
+                "run-3",
+                stage("finalQualityReviewRepair"),
+                issue_lifecycle={"warningCount": 1, "openCriticalCount": 0, "openWarningCount": 1, "finalGateWarningCount": 1},
+            ),
+        ]
+    )
+    payload = report.to_payload()
+
+    item = next(item for item in payload["remediationItems"] if item["operationId"] == "qualityFidelity:finalGateWarning")
+    assert payload["summary"]["conclusionStatus"] == "requiresBacklogFix"
+    assert item["decision"] == "fixBacklogSlice"
+    assert item["recommendedSlice"] == "2.17.4.6.1.3.2"
+
+
+def test_single_final_gate_warning_is_watch_signal_not_clean() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage("finalQualityReviewRepair"),
+                issue_lifecycle={"warningCount": 1, "openCriticalCount": 0, "openWarningCount": 1, "finalGateWarningCount": 1},
+            )
+        ]
+    )
+    payload = report.to_payload()
+
+    item = next(item for item in payload["remediationItems"] if item["operationId"] == "qualityFidelity:finalGateWarning")
+    assert payload["summary"]["conclusionStatus"] == "insufficientData"
+    assert item["decision"] == "watchWithMoreRuns"
+
+
+def test_evidence_only_caution_is_not_reported_as_final_gate_warning() -> None:
+    report = DraftRunProviderReliabilityReporter().build(
+        [
+            run_with_quality(
+                "run-1",
+                stage("materialPlan"),
+                issue_lifecycle={"openCriticalCount": 0, "openWarningCount": 0, "warningCount": 0},
+                evidence_fidelity={"coverageVerdict": "partial", "fidelityImpact": "weak", "needsFollowUp": True},
+            )
+        ]
+    )
+    payload = report.to_payload()
+
+    operation_ids = {item["operationId"] for item in payload["remediationItems"]}
+    assert "qualityFidelity:evidenceFidelity" in operation_ids
+    assert "qualityFidelity:finalGateWarning" not in operation_ids
+
+
 def test_single_run_report_is_marked_as_insufficient_data() -> None:
     report = DraftRunProviderReliabilityReporter().build(
         [run_with_quality("run-1", stage("llmValidation", retry_path="retryRecovered", result_impact="retryRecovered"))]

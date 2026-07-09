@@ -104,9 +104,15 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     2.17.4.6.1.3; `application/reliability` aggregates stored quality/fidelity
     reports, operation envelopes, budgets, and child `AiRun` records into operation
     summaries, raw signal coverage, and remediation decisions.
-21. Repair reliability issues found by five live DraftRuns. Ready in Slice
-    2.17.4.6.1.3.1, then follow-up slices cover validation/final gate warnings,
-    provider JSON/fallback repair, and queue/staleness reliability.
+21. Repair evidence interpretation timeout/fallback fidelity. Done in Slice
+    2.17.4.6.1.3.1; `application/evidence` writes structured
+    `evidenceInterpretationFidelity`, and quality/reliability reports no longer
+    infer weak evidence only from indirect fallback signals.
+22. Repair validation critical/final-gate warning trust semantics. Done in Slice
+    2.17.4.6.1.3.2; `application/quality` owns issue lifecycle classification,
+    open critical issues block trusted quality, unresolved final-gate warnings are
+    at most `publishableWithCaution`, and reliability analytics emits remediation
+    for every non-clean validation/final-gate signal.
 
 Package moves after step 9 must be owner moves, not `no cosmetic package moves`.
 Behavior becomes service, policy, or component methods; small provider-free DTO

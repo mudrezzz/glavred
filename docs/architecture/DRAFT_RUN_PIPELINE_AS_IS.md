@@ -1,6 +1,7 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.1.3: DraftRun Provider Reliability Analytics.
+Current as of Slice 2.17.4.6.1.3.2: DraftRun Validation Critical and Final Gate
+Warning Repair.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -36,7 +37,7 @@ python scripts/generate-draft-run-pipeline-pdf.py
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
-| `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
+| `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. A succeeded DraftRun is not trusted quality by itself: open critical issues block clean success, and unresolved final-gate warnings can only be publishable with caution. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
 | `ProviderReliabilityReport` | Cross-run provider reliability summary and remediation map for retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns. | `python scripts/analyze_draft_run_reliability.py --run-id ...` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
 | `DraftVersion` | Immutable editor-facing version of the delivered draft. `v1` is the machine final draft; later versions come from human-comment revisions or manual edits. | local workspace `postDraft.versions[]` |
@@ -642,7 +643,14 @@ Processing:
    attribution requirements that cannot be resolved become diagnostic handoff noise;
    if the independent final-gate review passes source integration, that diagnostic
    noise does not launch final repair;
-9. provider-heavy validation sub-operations persist progress as they run; if a late
+9. validation and final-gate warnings/critical findings are folded into
+   `qualityFidelity.issueLifecycle`. Each item is classified as `resolved`,
+   `suppressed`, `acceptedRisk`, or `open`. Accepted final repair resolves the
+   gate issue it repaired. Explicit suppression or accepted risk remains visible in
+   trace. Open critical findings block trusted editorial quality, and an unresolved
+   final-gate warning prevents `cleanSuccess` even when `DraftRun.status` is
+   `succeeded`;
+10. provider-heavy validation sub-operations persist progress as they run; if a late
    operation fails, the operation is marked `failed`, safe error details are saved,
    and the previous best candidate is kept when one exists.
 
@@ -659,6 +667,9 @@ Output:
   final-draft status, public-prose status, source-dump risk, actionable attribution
   findings, diagnostic attribution noise, attribution review closure, final repair
   goals, repair cycles, repair result, and gate-level final decision;
+- `qualityFidelity.issueLifecycle` with lifecycle status and reason for validation
+  and final-gate warning/critical issues, including synthetic final-gate items when
+  the gate status is `warning` or `critical`;
 - `progress` with nested validation operations, child `AiRun` ids, failed-operation
   status, and safe error details when a provider-heavy sub-operation fails;
 - final draft candidate decision;

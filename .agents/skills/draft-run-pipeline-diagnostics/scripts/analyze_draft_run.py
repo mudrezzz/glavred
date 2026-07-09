@@ -436,11 +436,21 @@ def print_quality_fidelity(report: dict[str, Any]) -> None:
     )
     print("\n## Editorial verdict")
     lifecycle = report.get("issueLifecycle") if isinstance(report.get("issueLifecycle"), dict) else {}
+    editorial_status = str(report.get("editorialStatus") or "unknown")
+    trust = "trusted" if editorial_status == "publishable" else "limited" if editorial_status == "publishableWithCaution" else "requires-attention"
     print(
-        f"- editorialStatus: {report.get('editorialStatus')}; "
+        f"- editorialStatus: {editorial_status}; editorialTrust={trust}; "
+        f"critical={lifecycle.get('criticalCount')}; warning={lifecycle.get('warningCount')}; "
         f"openCritical={lifecycle.get('openCriticalCount')}; openWarning={lifecycle.get('openWarningCount')}; "
+        f"finalGateCritical={lifecycle.get('finalGateCriticalCount')}; finalGateWarning={lifecycle.get('finalGateWarningCount')}; "
         f"suppressed={lifecycle.get('suppressedCount')}; acceptedRisk={lifecycle.get('acceptedRiskCount')}"
     )
+    items = lifecycle.get("items") if isinstance(lifecycle.get("items"), list) else []
+    for item in items[:5]:
+        print(
+            f"- issue: {item.get('validatorId')}; severity={item.get('severity')}; "
+            f"status={item.get('status')}; reason={item.get('statusReason')}"
+        )
 
 
 def safe_json(value: Any, fallback: Any) -> Any:

@@ -106,6 +106,11 @@ Check these failure classes explicitly:
   technical completion only. Use `technicalStatus`, `providerRecoveryStatus`,
   `evidenceFidelity`, `issueLifecycle`, `editorialStatus`, and `overallVerdict` to
   decide whether the result is clean, recovered, degraded, or needs attention.
+  Every validation or final-gate warning/critical issue should have lifecycle status
+  `resolved`, `suppressed`, `acceptedRisk`, or `open`. `open critical` means quality
+  cannot be trusted. `finalGateWarning` means the result is at most
+  `publishableWithCaution` unless the trace shows explicit resolution, suppression,
+  or accepted-risk semantics.
 - **Cross-run provider reliability**: when the question is whether retries, backup,
   fallback, malformed JSON, timeout, schema failure, payload-budget, or open critical
   signals are systemic, run
@@ -211,7 +216,9 @@ hide bad output behind polite abstractions.
   pool. Check its `finalQualityContract`, independent model review attempts, repair
   goals, bounded repair cycles, accepted/rejected decisions, and final source. It
   shows whether the delivered final draft passed public-prose checks, whether a final
-  repair ran, and why that repair was accepted or rejected.
+  repair ran, and why that repair was accepted or rejected. A rejected final repair
+  is not silent failure: it must remain visible as a safety-preserving decision, and
+  the unresolved warning/critical must remain visible in `qualityFidelity.issueLifecycle`.
 - When a run has `qualityFidelity.providerRecoveryStatus=retryRecovered`, do not
   recommend prompt/model fixes from that single run unless the accepted payload is
   itself bad. Repeated retry/backup/fallback patterns across many runs belong to the

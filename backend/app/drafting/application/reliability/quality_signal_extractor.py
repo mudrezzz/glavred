@@ -37,7 +37,10 @@ class QualityFidelityReliabilitySignalExtractor:
         events: list[OperationReliabilityEvent] = []
         if int(issue_lifecycle.get("openCriticalCount") or 0) > 0:
             events.append(self._event(run_id, "qualityFidelity:openCritical", "openCritical", execution_mode))
-        if int(issue_lifecycle.get("openWarningCount") or 0) > 0 or quality_fidelity.get("editorialStatus") == "publishableWithCaution":
+        warning_count = int(issue_lifecycle.get("warningCount") or issue_lifecycle.get("openWarningCount") or 0)
+        final_gate_warning_count = int(issue_lifecycle.get("finalGateWarningCount") or 0)
+        final_gate_critical_count = int(issue_lifecycle.get("finalGateCriticalCount") or 0)
+        if warning_count > 0 or final_gate_warning_count > 0 or final_gate_critical_count > 0:
             events.append(self._event(run_id, "qualityFidelity:finalGateWarning", "finalGateWarning", execution_mode))
         return events
 

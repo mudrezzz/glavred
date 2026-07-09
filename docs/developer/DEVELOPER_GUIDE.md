@@ -218,6 +218,14 @@ Migrated DraftRun runtime clusters are canonical under:
 Old migrated `backend.app.application.*` paths are compatibility shims only. They may
 keep old imports working, but they must not regain local behavior.
 
+When diagnosing a DraftRun, do not treat `DraftRun.status=succeeded` or the presence
+of `finalDraft` as proof of editorial quality. Inspect
+`complete.qualityFidelity.issueLifecycle`: every validation/final-gate warning or
+critical issue must be `resolved`, `suppressed`, `acceptedRisk`, or `open`. Open
+critical issues require human review. An unresolved final-gate warning can be
+`publishableWithCaution`, but never `cleanSuccess`. Reliability reports must emit a
+remediation item for each non-clean validation/final-gate signal.
+
 Legacy backend files have three statuses:
 
 - active compatibility facade: an old entrypoint still owns compatibility wiring;

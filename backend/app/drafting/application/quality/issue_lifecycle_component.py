@@ -17,12 +17,24 @@ class QualityFidelityIssueComponent:
         final_gate = self.final_gate(steps)
         lifecycle = [self._finding_lifecycle(item, final_gate) for item in self._findings(steps, final_gate)]
         return {
+            "criticalCount": sum(1 for item in lifecycle if item["severity"] == "critical"),
+            "warningCount": sum(1 for item in lifecycle if item["severity"] == "warning"),
             "openCriticalCount": sum(1 for item in lifecycle if item["severity"] == "critical" and item["status"] == "open"),
             "openWarningCount": sum(1 for item in lifecycle if item["severity"] == "warning" and item["status"] == "open"),
+            "finalGateCriticalCount": sum(
+                1
+                for item in lifecycle
+                if item["severity"] == "critical" and item["source"] == "finalQualityGate"
+            ),
+            "finalGateWarningCount": sum(
+                1
+                for item in lifecycle
+                if item["severity"] == "warning" and item["source"] == "finalQualityGate"
+            ),
             "resolvedCount": sum(1 for item in lifecycle if item["status"] == "resolved"),
             "suppressedCount": sum(1 for item in lifecycle if item["status"] == "suppressed"),
             "acceptedRiskCount": sum(1 for item in lifecycle if item["status"] == "acceptedRisk"),
-            "items": lifecycle[:20],
+            "items": lifecycle,
         }
 
     def final_gate(self, steps: list[dict[str, Any]]) -> dict[str, Any]:
@@ -40,6 +52,18 @@ class QualityFidelityIssueComponent:
             findings.extend(_dict(item) for item in _list(_dict(report).get("findings")))
         independent = _dict(final_gate.get("independentReview"))
         findings.extend(_dict(item) for item in _list(independent.get("findings")))
+        gate_status = str(final_gate.get("status") or "")
+        if gate_status in {"warning", "critical"}:
+            final_decision = _dict(final_gate.get("finalDecision"))
+            findings.append(
+                {
+                    "validatorId": "finalQualityGate.status",
+                    "severity": gate_status,
+                    "message": str(final_gate.get("summary") or final_decision.get("reason") or gate_status),
+                    "source": "finalQualityGate",
+                    "metadata": self._final_gate_metadata(final_gate),
+                }
+            )
         return findings
 
     def _finding_lifecycle(self, finding: dict[str, Any], final_gate: dict[str, Any]) -> dict[str, Any]:
@@ -50,10 +74,10 @@ class QualityFidelityIssueComponent:
         suppressed = finding.get("suppressedReason") or _dict(finding.get("metadata")).get("suppressedReason")
         if suppressed:
             status = "suppressed"
+        elif self._accepted_risk_reason(finding):
+            status = "acceptedRisk"
         elif final_gate.get("acceptedRepair"):
             status = "resolved"
-        elif validator_id.startswith("evidence.attribution") and final_gate.get("status") in {"passed", "warning"}:
-            status = "acceptedRisk"
         else:
             status = "open"
         return {
@@ -61,7 +85,40 @@ class QualityFidelityIssueComponent:
             "severity": severity,
             "status": status,
             "message": str(finding.get("message") or "")[:180],
+            "source": str(finding.get("source") or "validation"),
+            "statusReason": self._status_reason(finding, status),
         }
+
+    def _final_gate_metadata(self, final_gate: dict[str, Any]) -> dict[str, Any]:
+        repair = _dict(final_gate.get("repair"))
+        final_decision = _dict(final_gate.get("finalDecision"))
+        return {
+            "acceptedRepair": bool(final_gate.get("acceptedRepair")),
+            "repairStatus": repair.get("status"),
+            "repairDecisionStatus": repair.get("decisionStatus"),
+            "finalDecisionSource": final_decision.get("source"),
+            "finalDecisionReason": final_decision.get("reason"),
+            "acceptedRisk": final_gate.get("acceptedRisk"),
+            "acceptedRiskReason": final_gate.get("acceptedRiskReason"),
+            "suppressedReason": final_gate.get("suppressedReason"),
+        }
+
+    def _accepted_risk_reason(self, finding: dict[str, Any]) -> str:
+        metadata = _dict(finding.get("metadata"))
+        if finding.get("acceptedRisk") or metadata.get("acceptedRisk"):
+            return str(finding.get("acceptedRiskReason") or metadata.get("acceptedRiskReason") or "accepted-risk")
+        reason = finding.get("acceptedRiskReason") or metadata.get("acceptedRiskReason")
+        return str(reason or "")
+
+    def _status_reason(self, finding: dict[str, Any], status: str) -> str:
+        metadata = _dict(finding.get("metadata"))
+        if status == "suppressed":
+            return str(finding.get("suppressedReason") or metadata.get("suppressedReason") or "suppressed")
+        if status == "acceptedRisk":
+            return self._accepted_risk_reason(finding)
+        if status == "resolved":
+            return "accepted-final-repair"
+        return "unresolved"
 
 
 def _artifact(steps: list[dict[str, Any]], key: str) -> dict[str, Any]:
