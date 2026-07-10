@@ -244,6 +244,12 @@ hide bad output behind polite abstractions.
   have direct current-call proof in child `AiRun.requestPayload`: `operationId`,
   `providerInput`, `payloadBudget`, `inputStats`, and `payloadStats`. The `strategy`
   trace may use `operationId=strategy` with budget profile `draftStrategy`.
+- After Slice `2.17.4.6.1.3.7`, those three planning operations must also show
+  `providerDossier.runtimeMigrated=true`. Diagnose `BLOCKED` as missing mandatory
+  persisted context; diagnose `DEGRADED` only from `missingOptionalInputs` and
+  `qualityRisk`. Full `rulePack`, `SourceLedger`, `ArticleDossier`, `ContextPack`,
+  previous envelopes, or previous budgets inside planning `providerInput` are a
+  migration regression even when the call succeeds.
 - Backup success is not silent success. It is an accepted payload with
   `backupAccepted` incident metadata and should trigger a blast-radius check if it
   repeats.

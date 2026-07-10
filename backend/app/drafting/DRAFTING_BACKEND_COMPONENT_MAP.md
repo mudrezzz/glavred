@@ -243,3 +243,16 @@ planning, writer, review, ranking, revision, or final-quality dossiers plus hand
 back to the rich artifacts. Prompt builders should not accept full `rulePack`,
 `SourceLedger`, `materialPlan`, candidate pools, validation reports, or
 final-quality traces by default.
+
+Planning runtime is migrated in Slice `2.17.4.6.1.3.7`:
+
+- `PlanningDossierFactory` owns the distinct `materialPlan`, `strategy`, and
+  `rhetoricalPlans` semantic projections;
+- `DraftRunContextAccessService` reads only persisted parent artifacts and resolves
+  retained handles;
+- planning services retain orchestration and deterministic fallback, while prompt
+  builders accept only dossier projections;
+- `RhetoricalPlanAttemptComponent` owns one budgeted provider attempt, leaving the
+  retry orchestrator responsible only for attempt order and fallback transition;
+- architecture smoke requires all three runtime owners and workflow wiring to use
+  `ProviderInputBudgetGate` and `providerDossier.runtimeMigrated=true`.

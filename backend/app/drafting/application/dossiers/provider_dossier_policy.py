@@ -36,9 +36,26 @@ class ProviderDossierPolicy:
 
 class ProviderDossierPolicyRegistry:
     def planning(self, operation_id: str) -> ProviderDossierPolicy:
+        contracts = {
+            "materialPlan": (
+                ("postContract", "evidence"),
+                ("rules",),
+            ),
+            "strategy": (
+                ("postContract", "materialPlan"),
+                ("evidence", "rules"),
+            ),
+            "rhetoricalPlans": (
+                ("postContract", "materialPlan", "draftStrategy"),
+                ("evidence", "rules"),
+            ),
+        }
+        if operation_id not in contracts:
+            raise ValueError(f"Unsupported planning dossier operation: {operation_id}")
+        must, should = contracts[operation_id]
         return self._policy(
             "planningDossier", operation_id, "strategy",
-            must=("postContract", "evidence"), should=("rules",),
+            must=must, should=should,
         )
 
     def writer(self, operation_id: str) -> ProviderDossierPolicy:

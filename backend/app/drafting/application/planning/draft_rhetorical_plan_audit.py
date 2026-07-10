@@ -27,6 +27,7 @@ class DraftRhetoricalPlanAuditComponent:
         context_pack: dict[str, Any] | None = None,
         attempt: dict[str, Any] | None = None,
         model_selection: dict[str, Any] | None = None,
+        provider_dossier: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         payload = {
             "draftRunStep": "rhetoricalPlans",
@@ -43,8 +44,10 @@ class DraftRhetoricalPlanAuditComponent:
             },
             "attempt": attempt,
         }
-        if context_pack is not None:
+        if context_pack is not None and provider_dossier is None:
             payload["contextPack"] = context_pack
+        if provider_dossier is not None:
+            payload["providerDossier"] = provider_dossier
         if model_selection is not None:
             payload.update(model_selection)
         return payload

@@ -1,35 +1,36 @@
 """Owner: drafting.application.planning
 
-Used by: DraftRun planning migration and legacy compatibility shims.
-Does not own: API routing, SQLite persistence, provider transport, or UI trace layout.
-Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
+Used by: DraftRun rhetorical-plan generation.
+Does not own: prompt construction, provider transport, attempt recording, or API routing.
+Architecture doc: docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md
 """
 
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
-from backend.app.drafting.application.planning.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
+from backend.app.application.json_step_retry_policy import build_json_step_attempts
+from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
+from backend.app.domain.draft_model_roles import DraftModelRole
+from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role
+from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
+from backend.app.drafting.application.planning.deterministic_rhetorical_plan_service import (
+    DeterministicRhetoricalPlanService,
+)
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
-from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
+from backend.app.drafting.application.planning.draft_rhetorical_plan_attempt_component import (
+    RhetoricalPlanAttemptComponent,
+)
 from backend.app.drafting.application.planning.draft_rhetorical_plan_audit import (
     build_rhetorical_plan_request_trace,
     build_rhetorical_plan_result_trace,
 )
-from backend.app.drafting.application.planning.draft_rhetorical_plan_prompts import (
-    RHETORICAL_PLAN_KEYS,
-    RHETORICAL_PLAN_TEMPERATURE,
-    build_rhetorical_plan_messages,
-)
-from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
-from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
-from backend.app.domain.draft_model_roles import DraftModelRole
-from backend.app.domain.draft_rhetorical_plan import rhetorical_plan_set_from_payload
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
 from backend.app.settings import BackendSettings
-from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
-from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
 
 
 class DraftRhetoricalPlanRetryOrchestrator:
+    """Chooses attempts and falls back after all provider attempts fail."""
+
     def __init__(
         self,
         *,
@@ -40,8 +41,12 @@ class DraftRhetoricalPlanRetryOrchestrator:
     ) -> None:
         self._settings = settings
         self._ai_run_service = ai_run_service
-        self._openrouter_adapter = openrouter_adapter
         self._deterministic_plan_service = deterministic_plan_service
+        self._attempt_component = RhetoricalPlanAttemptComponent(
+            settings=settings,
+            ai_run_service=ai_run_service,
+            openrouter_adapter=openrouter_adapter,
+        )
         self._budget_gate = ProviderInputBudgetGate()
 
     def create_with_retry(
@@ -52,132 +57,87 @@ class DraftRhetoricalPlanRetryOrchestrator:
         post_contract: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        provider_dossier: ProviderDossier,
         context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         attempts: list[dict[str, Any]] = []
+        if provider_dossier.readiness_status == DossierReadinessStatus.BLOCKED:
+            return self._fallback(
+                context_summary=context_summary,
+                rule_registry=rule_registry,
+                post_contract=post_contract,
+                material_plan=material_plan,
+                draft_strategy=draft_strategy,
+                attempts=attempts,
+                provider_dossier=provider_dossier,
+                context_pack=context_pack,
+                error=(
+                    "Planning dossier blocked: "
+                    + ", ".join(provider_dossier.missing_required_inputs)
+                ),
+            )
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY)
         for attempt in build_json_step_attempts(
             primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, primary_selection, context_summary, rule_registry, post_contract, material_plan, draft_strategy, context_pack, repair_context)
+            result = self._attempt_component.execute(
+                attempt=attempt,
+                primary_selection=primary_selection,
+                context_summary=context_summary,
+                rule_registry=rule_registry,
+                post_contract=post_contract,
+                material_plan=material_plan,
+                draft_strategy=draft_strategy,
+                provider_dossier=provider_dossier,
+                context_pack=context_pack,
+                repair_context=repair_context,
+            )
             attempts.append(result["attempt"])
             if result["accepted"]:
                 return DraftPlanningStepResult(
-                    artifact_payload=self._artifact("openrouter", result["payload"], result["aiRunId"], False, attempts=attempts),
+                    artifact_payload=self._artifact(
+                        "openrouter",
+                        result["payload"],
+                        result["aiRunId"],
+                        False,
+                        attempts=attempts,
+                    ),
                     ai_run_id=result["aiRunId"],
-                    ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
+                    ai_run_ids=[
+                        str(item["aiRunId"])
+                        for item in attempts
+                        if item.get("aiRunId")
+                    ],
                 )
-            repair_context = {"previousAttempt": result["attempt"], "requiredShape": "object with plans[2..3]"}
-        return self._fallback(context_summary, rule_registry, post_contract, material_plan, draft_strategy, attempts, context_pack)
-
-    def _try_attempt(
-        self,
-        attempt: JsonStepAttempt,
-        primary_selection: Any,
-        context_summary: dict[str, Any],
-        rule_registry: dict[str, Any],
-        post_contract: dict[str, Any],
-        material_plan: dict[str, Any],
-        draft_strategy: dict[str, Any],
-        context_pack: dict[str, Any] | None,
-        repair_context: dict[str, Any] | None,
-    ) -> dict[str, Any]:
-        selection = selection_for_attempt(role=DraftModelRole.STRATEGY, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
-        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        budget_proof = self._budget_gate.evaluate(
-            operation_id="rhetoricalPlans",
-            draft_run_step="rhetoricalPlans",
-            provider_input={
-                "context_artifact": {**context_summary, "contextSummary": context_summary, "contextPack": context_pack},
-                "rule_pack": {"ruleRegistrySnapshot": rule_registry},
-                "post_contract": post_contract,
-                "material_plan": material_plan,
-                "draft_strategy": draft_strategy,
-                "context_pack": context_pack,
-                "repair_context": repair_context if attempt.repair else None,
-            },
-            execution_mode=self._settings.draft_run_execution_mode,
-            model=attempt.model,
-            model_role=DraftModelRole.STRATEGY.value,
-        )
-        prompt_input = budget_proof.budgeted_input.payload
-        compact_context = _record(prompt_input.get("context_artifact")).get("contextSummary") or context_summary
-        compact_rule_pack = _record(prompt_input.get("rule_pack"))
-        compact_rule_registry = _record(compact_rule_pack.get("ruleRegistrySnapshot")) or rule_registry
-        messages = build_rhetorical_plan_messages(
-            context_summary=_record(compact_context),
-            rule_registry=compact_rule_registry,
-            post_contract=_record(prompt_input.get("post_contract")) or post_contract,
-            material_plan=_record(prompt_input.get("material_plan")) or material_plan,
-            draft_strategy=_record(prompt_input.get("draft_strategy")) or draft_strategy,
-            context_pack=_record(prompt_input.get("context_pack")) or context_pack,
-            repair_context=_record(prompt_input.get("repair_context")) if attempt.repair else None,
-        )
-        request_payload = build_rhetorical_plan_request_trace(
-            provider=AiRunProvider.OPENROUTER,
-            model=attempt.model,
-            messages=messages,
+            repair_context = {
+                "previousAttempt": result["attempt"],
+                "requiredShape": "object with plans[2..3]",
+            }
+        return self._fallback(
             context_summary=context_summary,
-            post_contract=post_contract,
             rule_registry=rule_registry,
+            post_contract=post_contract,
             material_plan=material_plan,
             draft_strategy=draft_strategy,
+            attempts=attempts,
+            provider_dossier=provider_dossier,
             context_pack=context_pack,
-            attempt=attempt_payload,
-            model_selection=selection.to_payload(),
         )
-        request_payload.update(budget_proof.request_payload_fields())
-        try:
-            result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
-                settings=self._settings,
-                messages=messages,
-                expected_keys=RHETORICAL_PLAN_KEYS,
-                temperature=RHETORICAL_PLAN_TEMPERATURE,
-                model=attempt.model,
-            )
-            payload = rhetorical_plan_set_from_payload(result.payload).to_payload()
-            if len(payload.get("plans") or []) < 2:
-                raise ValueError("OpenRouter returned fewer than two rhetorical plans")
-            run = self._ai_run_service.create_completed_run(
-                capability=AiRunCapability.DRAFT_GENERATION,
-                provider=AiRunProvider.OPENROUTER,
-                model=attempt.model,
-                request_payload=request_payload,
-                result_payload=build_rhetorical_plan_result_trace(result_payload=payload, provider_response=result.raw_response, attempt=attempt_payload),
-                fallback_used=False,
-            )
-            return {"accepted": True, "payload": payload, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "accepted", selection.to_payload())}
-        except Exception as exc:
-            return self._record_attempt_error(attempt, request_payload, self._safe_error(exc))
-
-    def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
-        run = self._ai_run_service.create_completed_run(
-            capability=AiRunCapability.DRAFT_GENERATION,
-            provider=AiRunProvider.OPENROUTER,
-            model=attempt.model,
-            request_payload=request_payload,
-            result_payload=build_rhetorical_plan_result_trace(
-                result_payload={"plans": []},
-                provider_response=None,
-            attempt={key: request_payload[key] for key in ("attempt",) if key in request_payload}.get("attempt"),
-            ),
-            fallback_used=False,
-            error=error,
-        )
-        model_selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "aiRunId": run.id, "attempt": self._attempt_record(attempt, run.id, "error", model_selection, error)}
 
     def _fallback(
         self,
+        *,
         context_summary: dict[str, Any],
         rule_registry: dict[str, Any],
         post_contract: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
         attempts: list[dict[str, Any]],
+        provider_dossier: ProviderDossier,
         context_pack: dict[str, Any] | None = None,
+        error: str = "RhetoricalPlans JSON generation failed after all LLM attempts",
     ) -> DraftPlanningStepResult:
         payload = self._deterministic_plan_service.create_plans(
             context_summary=context_summary,
@@ -186,49 +146,92 @@ class DraftRhetoricalPlanRetryOrchestrator:
             material_plan=material_plan,
             draft_strategy=draft_strategy,
         ).to_payload()
-        error = "RhetoricalPlans JSON generation failed after all LLM attempts"
+        budget_proof = self._budget_gate.evaluate(
+            operation_id="rhetoricalPlans",
+            draft_run_step="rhetoricalPlans",
+            provider_input=provider_dossier.provider_input(),
+            execution_mode=self._settings.draft_run_execution_mode,
+            model=self._settings.openrouter_default_model,
+            model_role=DraftModelRole.STRATEGY.value,
+        )
+        request_payload = build_rhetorical_plan_request_trace(
+            provider=AiRunProvider.OPENROUTER,
+            model=self._settings.openrouter_default_model,
+            messages=[],
+            context_summary=context_summary,
+            post_contract=post_contract,
+            rule_registry=rule_registry,
+            material_plan=material_plan,
+            draft_strategy=draft_strategy,
+            context_pack=context_pack,
+            provider_dossier=provider_dossier.to_payload(),
+        )
+        request_payload.update(budget_proof.request_payload_fields())
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=self._settings.openrouter_default_model,
-            request_payload={"draftRunStep": "rhetoricalPlans", "attempts": attempts, "contextPack": context_pack, "modelRole": DraftModelRole.STRATEGY.value},
-            result_payload=build_rhetorical_plan_result_trace(result_payload=payload, provider_response=None, fallback="deterministic"),
+            request_payload={
+                **request_payload,
+                "attempts": attempts,
+                "modelRole": DraftModelRole.STRATEGY.value,
+            },
+            result_payload=build_rhetorical_plan_result_trace(
+                result_payload=payload,
+                provider_response=None,
+                fallback="deterministic",
+            ),
             fallback_used=True,
             error=error,
         )
-        fallback_attempt = {"label": "deterministic-fallback", "model": "deterministic", "status": "fallback", "aiRunId": run.id, "backup": False, "modelRole": DraftModelRole.STRATEGY.value, "modelSelectionSource": "unconfigured", "selectedModel": None}
+        fallback_attempt = {
+            "label": "deterministic-fallback",
+            "model": "deterministic",
+            "status": "fallback",
+            "aiRunId": run.id,
+            "backup": False,
+            "modelRole": DraftModelRole.STRATEGY.value,
+            "modelSelectionSource": "unconfigured",
+            "selectedModel": None,
+        }
         return DraftPlanningStepResult(
-            artifact_payload=self._artifact("deterministicFallback", payload, run.id, True, error=error, attempts=[*attempts, fallback_attempt]),
+            artifact_payload=self._artifact(
+                "deterministicFallback",
+                payload,
+                run.id,
+                True,
+                error=error,
+                attempts=[*attempts, fallback_attempt],
+            ),
             ai_run_id=run.id,
-            ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")] + [run.id],
+            ai_run_ids=[
+                str(item["aiRunId"])
+                for item in attempts
+                if item.get("aiRunId")
+            ]
+            + [run.id],
         )
 
-    def _artifact(self, source: str, payload: dict[str, Any], ai_run_id: str, fallback_used: bool, *, attempts: list[dict[str, Any]], error: str | None = None) -> dict[str, Any]:
-        artifact = {"source": source, "aiRunId": ai_run_id, "fallbackUsed": fallback_used, "rhetoricalPlanSet": payload, "attempts": attempts}
+    @staticmethod
+    def _artifact(
+        source: str,
+        payload: dict[str, Any],
+        ai_run_id: str,
+        fallback_used: bool,
+        *,
+        attempts: list[dict[str, Any]],
+        error: str | None = None,
+    ) -> dict[str, Any]:
+        artifact = {
+            "source": source,
+            "aiRunId": ai_run_id,
+            "fallbackUsed": fallback_used,
+            "rhetoricalPlanSet": payload,
+            "attempts": attempts,
+        }
         if error:
             artifact["error"] = error
         return artifact
 
-    def _attempt_record(self, attempt: JsonStepAttempt, ai_run_id: str, status: str, model_selection: dict[str, Any], validation: Any | None = None) -> dict[str, Any]:
-        record = {"label": attempt.label, "model": attempt.model, "status": status, "aiRunId": ai_run_id, "backup": attempt.backup, **model_selection}
-        if validation:
-            record["validation"] = validation
-        return record
 
-    def _safe_error(self, error: Exception) -> str:
-        message = str(error)
-        if self._settings.openrouter_api_key:
-            token = self._settings.openrouter_api_key.get_secret_value()
-            if token:
-                message = message.replace(token, "[redacted]")
-        return f"{error.__class__.__name__}: {message[:180]}"
-
-
-__all__ = (
-    'DraftRhetoricalPlanRetryOrchestrator',
-    'DraftRhetoricalPlanRetryComponent',
-)
-
-
-def _record(value: Any) -> dict[str, Any]:
-    return value if isinstance(value, dict) else {}
+__all__ = ("DraftRhetoricalPlanRetryOrchestrator",)

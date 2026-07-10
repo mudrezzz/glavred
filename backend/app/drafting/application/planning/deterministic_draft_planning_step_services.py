@@ -9,6 +9,7 @@ from typing import Any
 
 from backend.app.drafting.application.planning.deterministic_draft_planning_service import DeterministicDraftPlanningService
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
 
 
 class DeterministicMaterialPlanStepService:
@@ -20,6 +21,7 @@ class DeterministicMaterialPlanStepService:
         *,
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
+        provider_dossier: ProviderDossier | None = None,
         context_artifact: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._planning_service.create_material_plan(
@@ -42,6 +44,7 @@ class DeterministicStrategyStepService:
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier | None = None,
         context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._planning_service.create_strategy(

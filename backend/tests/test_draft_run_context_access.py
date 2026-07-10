@@ -24,11 +24,12 @@ def test_context_access_compacts_evidence_and_reports_trimming() -> None:
     evidence = access.evidence(limit=2)
 
     assert evidence.available is True
-    assert evidence.total_count == 3
+    assert evidence.total_count == 4
     assert evidence.selected_count == 2
-    assert evidence.trimmed_count == 1
+    assert evidence.trimmed_count == 2
     assert all("provenance" not in item for item in evidence.value)
     assert all(item.get("id") != "claim-blocked" for item in evidence.value)
+    assert {item.get("kind") for item in evidence.value} == {"claim", "implication"}
 
 
 def test_context_access_returns_structured_missing_selection() -> None:

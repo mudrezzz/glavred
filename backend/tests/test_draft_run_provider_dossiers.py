@@ -29,7 +29,8 @@ def test_all_operation_families_return_ready_typed_dossiers() -> None:
     assert all(item.readiness_status == DossierReadinessStatus.READY for item in dossiers)
     assert all(item.quality_risk == DossierQualityRisk.NONE for item in dossiers)
     assert {item.model_role for item in dossiers} == {"strategy", "writer", "review", "finalGate"}
-    assert all(item.runtime_migrated is False for item in dossiers)
+    assert dossiers[0].runtime_migrated is True
+    assert all(item.runtime_migrated is False for item in dossiers[1:])
 
 
 def test_missing_required_input_blocks_dossier() -> None:
@@ -48,7 +49,26 @@ def test_trace_payload_exposes_semantic_contract_and_counts() -> None:
     assert payload["mustHave"] == ["postContract", "evidence"]
     assert payload["readinessStatus"] == "ready"
     assert payload["sentCounts"]["evidence"] == len(payload["sent"]["evidence"])
-    assert payload["runtimeMigrated"] is False
+    assert payload["runtimeMigrated"] is True
+
+
+def test_planning_dossiers_have_operation_specific_required_inputs() -> None:
+    factory = PlanningDossierFactory(ProviderDossierTestFixture.access())
+
+    material = factory.build("materialPlan").to_payload()
+    strategy = factory.build("strategy").to_payload()
+    rhetorical = factory.build("rhetoricalPlans").to_payload()
+
+    assert material["mustHave"] == ["postContract", "evidence"]
+    assert strategy["mustHave"] == ["postContract", "materialPlan"]
+    assert rhetorical["mustHave"] == ["postContract", "materialPlan", "draftStrategy"]
+    assert strategy["sent"]["materialPlan"]["availableEvidence"] == ["claim-1", "claim-2"]
+    assert rhetorical["sent"]["draftStrategy"]["thesisAngle"] == "Workflow before model"
+    assert len(material["sent"]["rules"]) <= 8
+    assert len(strategy["sent"]["evidence"]) <= 6
+    assert len(rhetorical["sent"]["evidence"]) <= 2
+    assert len(rhetorical["sent"]["rules"]) <= 4
+    assert "sourceNotes" not in strategy["sent"]["materialPlan"]
 
 
 def test_review_factory_keeps_critic_and_alternative_angle_roles_explicit() -> None:

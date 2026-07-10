@@ -17,10 +17,13 @@ from backend.app.drafting.application.artifacts.draft_run_context_payloads impor
 from backend.app.drafting.application.artifacts.draft_run_payloads import draft_to_payload, payload_section
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import resolve_draft_run_budget
 from backend.app.drafting.application.quality import DraftRunQualityFidelityReporter
+from backend.app.drafting.application.context.draft_run_context_access import DraftRunContextAccessService
+from backend.app.drafting.application.dossiers.provider_dossier_factories import PlanningDossierFactory
 from backend.app.application.draft_run_step_progress_payload import with_progress_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRunStatus
 from backend.app.domain.draft_run_steps import DraftRunStepKey
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
 from backend.app.drafting.application.operations.validation_runtime_budget import (
     ValidationRuntimeBudgetPolicy,
     ValidationRuntimeGuard,
@@ -183,15 +186,11 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.MATERIAL_PLAN)
         material_progress = state.progress.operation_sink(DraftRunStepKey.MATERIAL_PLAN, total_operations=1)
         settings = get_settings()
+        provider_dossier = self._planning_dossier(state, "materialPlan")
         material_budget = _budget_estimate(
             operation_id="materialPlan",
             draft_run_step="materialPlan",
-            provider_input={
-                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
-                "rule_pack": state.rule_pack,
-                "usable_evidence_candidates": [],
-                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
-            },
+            provider_input=provider_dossier.provider_input(),
             execution_mode=settings.draft_run_execution_mode,
             model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
         )
@@ -209,6 +208,7 @@ class LegacyDraftWorkflowPhaseBuilder:
             result = self._services.material_plan_service.create(
                 context_summary=state.context_summary,
                 rule_pack=state.rule_pack,
+                provider_dossier=provider_dossier,
                 context_artifact=state.context_artifact,
             )
         except Exception as exc:
@@ -240,16 +240,12 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.STRATEGY)
         strategy_progress = state.progress.operation_sink(DraftRunStepKey.STRATEGY, total_operations=1)
         settings = get_settings()
+        provider_dossier = self._planning_dossier(state, "strategy")
         strategy_budget = _budget_estimate(
             operation_id="strategy",
             profile_operation_id="draftStrategy",
             draft_run_step="strategy",
-            provider_input={
-                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
-                "rule_pack": state.rule_pack,
-                "material_plan": state.material_plan,
-                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
-            },
+            provider_input=provider_dossier.provider_input(),
             execution_mode=settings.draft_run_execution_mode,
             model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
         )
@@ -268,6 +264,7 @@ class LegacyDraftWorkflowPhaseBuilder:
                 context_summary=state.context_summary,
                 rule_pack=state.rule_pack,
                 material_plan=state.material_plan,
+                provider_dossier=provider_dossier,
                 context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
             )
         except Exception as exc:
@@ -298,16 +295,11 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.start(DraftRunStepKey.RHETORICAL_PLANS)
         rhetorical_progress = state.progress.operation_sink(DraftRunStepKey.RHETORICAL_PLANS, total_operations=1)
         settings = get_settings()
+        provider_dossier = self._planning_dossier(state, "rhetoricalPlans")
         rhetorical_budget = _budget_estimate(
             operation_id="rhetoricalPlans",
             draft_run_step="rhetoricalPlans",
-            provider_input={
-                "context_artifact": {**state.context_artifact, "contextSummary": state.context_summary},
-                "rule_pack": state.rule_pack,
-                "material_plan": state.material_plan,
-                "draft_strategy": state.draft_strategy,
-                "context_pack": context_pack_for_role(state.context_artifact, DraftModelRole.STRATEGY),
-            },
+            provider_input=provider_dossier.provider_input(),
             execution_mode=settings.draft_run_execution_mode,
             model=_selected_model(settings.draft_strategy_model, settings.openrouter_default_model),
         )
@@ -328,6 +320,7 @@ class LegacyDraftWorkflowPhaseBuilder:
                 rule_pack=state.rule_pack,
                 material_plan=state.material_plan,
                 draft_strategy=state.draft_strategy,
+                provider_dossier=provider_dossier,
             )
         except Exception as exc:
             rhetorical_progress.fail_operation("rhetoricalPlans", str(exc))
@@ -475,6 +468,13 @@ class LegacyDraftWorkflowPhaseBuilder:
         ranking_revision["qualityFidelity"] = quality_fidelity
         validation_payload["rankingRevision"] = ranking_revision
         state.progress.succeed(DraftRunStepKey.VALIDATION, validation_payload)
+
+    def _planning_dossier(self, state: DraftWorkflowState, operation_id: str) -> ProviderDossier:
+        run = self._services.repository.get(state.run_id)
+        if run is None:
+            raise RuntimeError(f"DraftRun not found while building {operation_id} dossier: {state.run_id}")
+        access = DraftRunContextAccessService.from_run(run)
+        return PlanningDossierFactory(access).build(operation_id)
 
 
 def _payload_char_estimate(payload: dict[str, Any]) -> int:

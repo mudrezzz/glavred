@@ -9,6 +9,7 @@ from typing import Any
 
 from backend.app.drafting.application.planning.deterministic_rhetorical_plan_service import DeterministicRhetoricalPlanService
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
 
 
 class DeterministicRhetoricalPlanStepService:
@@ -23,6 +24,7 @@ class DeterministicRhetoricalPlanStepService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        provider_dossier: ProviderDossier | None = None,
     ) -> DraftPlanningStepResult:
         payload = self._plan_service.create_plans(
             context_summary=context_summary,

@@ -7,6 +7,8 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from typing import Any
 
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
+
 
 USABLE_ALLOWED_USE = {"canState", "needsQualification", "canUseAsFraming"}
 
@@ -60,6 +62,47 @@ class MaterialPlanEvidenceProjectionComponent:
         return sorted(candidates, key=lambda item: (-int(item["priority"]), str(item["claimId"])))[:limit]
 
     @staticmethod
+    def build_dossier_evidence_candidates(
+        provider_dossier: ProviderDossier,
+        *,
+        limit: int = 12,
+    ) -> list[dict[str, Any]]:
+        evidence = provider_dossier.provider_input().get("evidence")
+        if not isinstance(evidence, list):
+            return []
+        candidates: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for item in evidence:
+            if not isinstance(item, dict) or item.get("kind") != "claim":
+                continue
+            claim_id = str(item.get("id") or "").strip()
+            statement = str(item.get("statement") or item.get("summary") or "").strip()
+            allowed_use = str(item.get("allowedUse") or "").strip()
+            if (
+                not claim_id
+                or claim_id in seen
+                or not statement
+                or allowed_use not in USABLE_ALLOWED_USE
+            ):
+                continue
+            seen.add(claim_id)
+            candidates.append(
+                {
+                    "claimId": claim_id,
+                    "statement": statement,
+                    "allowedUse": allowed_use,
+                    "confidence": item.get("confidence") or "unknown",
+                    "source": item.get("source") or "providerDossier",
+                    "sourceTitle": "",
+                    "sourceUrl": "",
+                    "requiresAttribution": allowed_use in {"canState", "needsQualification"},
+                    "requiresQualification": allowed_use == "needsQualification",
+                    "priority": 100 - len(candidates),
+                }
+            )
+        return candidates[:limit]
+
+    @staticmethod
     def _priority(
         claim: dict[str, Any],
         claim_id: str,
@@ -96,6 +139,7 @@ class MaterialPlanEvidenceProjectionComponent:
         return [item for item in _as_list(value) if isinstance(item, dict)]
 
 build_usable_evidence_candidates = MaterialPlanEvidenceProjectionComponent.build_usable_evidence_candidates
+build_dossier_evidence_candidates = MaterialPlanEvidenceProjectionComponent.build_dossier_evidence_candidates
 _priority = MaterialPlanEvidenceProjectionComponent._priority
 _as_dict = MaterialPlanEvidenceProjectionComponent._as_dict
 _as_list = MaterialPlanEvidenceProjectionComponent._as_list
@@ -105,5 +149,6 @@ _as_list_of_dicts = MaterialPlanEvidenceProjectionComponent._as_list_of_dicts
 __all__ = (
     'USABLE_ALLOWED_USE',
     'build_usable_evidence_candidates',
+    'build_dossier_evidence_candidates',
     'MaterialPlanEvidenceProjectionComponent',
 )

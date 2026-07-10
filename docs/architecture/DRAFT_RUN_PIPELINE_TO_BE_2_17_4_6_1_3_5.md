@@ -239,13 +239,14 @@ gate.
 
 ### 7.3 Planning dossier migration
 
-**NEW in 2.17.4.6.1.3.7:** migrate:
+**IMPLEMENTED in 2.17.4.6.1.3.7:** migrated runtime provider calls:
 
 - `materialPlan`;
 - `strategy`;
 - `rhetoricalPlans`.
 
-These operations should receive:
+These operations now receive operation-specific planning dossiers assembled from
+persisted DraftRun artifacts through `DraftRunContextAccessService`:
 
 - compact post contract;
 - interpreted evidence summaries;
@@ -255,6 +256,20 @@ These operations should receive:
 
 They should not receive full `rulePack`, full `SourceLedger`, or embedded previous
 operation traces.
+
+Each primary, repair, and backup attempt crosses `ProviderInputBudgetGate` after the
+dossier is assembled. Child `AiRun.requestPayload` records the actual
+`providerInput`, `providerDossier.runtimeMigrated=true`, direct budget proof, and
+attempt metadata. Rich artifacts remain available to deterministic fallback and
+parent trace, but prompt builders no longer accept them. A `BLOCKED` planning
+dossier skips the provider and uses the existing safe fallback; `DEGRADED` is valid
+only when all `mustHave` inputs remain present.
+
+Live proof: `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` completed the full pipeline with
+all three planning inputs below their standard caps, zero forbidden-field or
+unresolved-handle findings, sufficient evidence coverage, and no open editorial
+issues. The comparison against baseline `e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2`
+is committed under `docs/evidence/draft-runs/<baseline-id>/`.
 
 ### 7.4 Writer and alternative-angle dossier migration
 

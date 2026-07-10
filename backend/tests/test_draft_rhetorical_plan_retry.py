@@ -2,6 +2,7 @@ from typing import Any
 
 from backend.tests.test_draft_planning_services import context_and_rule_pack
 from backend.tests.rhetorical_plan_test_helpers import FakeOpenRouterResult, context_artifact, rhetorical_service
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 class SequentialRhetoricalAdapter:
@@ -28,6 +29,7 @@ def test_rhetorical_plan_retries_after_malformed_primary(tmp_path) -> None:
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "openrouter"
@@ -49,6 +51,7 @@ def test_rhetorical_plan_uses_backup_model_after_repair_failure(tmp_path) -> Non
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "openrouter"
@@ -70,6 +73,7 @@ def test_rhetorical_plan_all_failed_attempts_fallback_with_trace(tmp_path) -> No
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "deterministicFallback"

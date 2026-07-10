@@ -25,6 +25,7 @@ from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidat
 from backend.app.settings import BackendSettings
 from backend.app.drafting.application.operations.json_step_adapter import DraftingJsonOperationClient
 from backend.app.drafting.application.operations.provider_input_budget_gate import ProviderInputBudgetGate
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
 
 STRATEGY_KEYS = {
     "thesisAngle",
@@ -60,33 +61,26 @@ class DraftStrategyService:
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier,
         context_pack: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         status = self._openrouter_validator.evaluate(self._settings)
-        provider = AiRunProvider.OPENROUTER if status.configured else AiRunProvider.DETERMINISTIC
-        selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY) if status.configured else unconfigured_model_selection(DraftModelRole.STRATEGY)
+        dossier_blocked = provider_dossier.readiness_status == DossierReadinessStatus.BLOCKED
+        provider = AiRunProvider.OPENROUTER if status.configured and not dossier_blocked else AiRunProvider.DETERMINISTIC
+        selection = select_model_for_role(self._settings, DraftModelRole.STRATEGY) if provider == AiRunProvider.OPENROUTER else unconfigured_model_selection(DraftModelRole.STRATEGY)
         model = selection.model
         budget_proof = self._budget_gate.evaluate(
             operation_id="strategy",
             profile_operation_id="draftStrategy",
             draft_run_step="strategy",
-            provider_input={
-                "context_artifact": {**context_summary, "contextSummary": context_summary, "contextPack": context_pack},
-                "rule_pack": rule_pack,
-                "material_plan": material_plan,
-                "context_pack": context_pack,
-            },
+            provider_input=provider_dossier.provider_input(),
             execution_mode=self._settings.draft_run_execution_mode,
             model=model,
             model_role=DraftModelRole.STRATEGY.value,
         )
         prompt_input = budget_proof.budgeted_input.payload
-        compact_context = _record(prompt_input.get("context_artifact")).get("contextSummary") or context_summary
         messages = build_draft_strategy_messages(
-            context_summary=_record(compact_context),
-            rule_pack=_record(prompt_input.get("rule_pack")) or rule_pack,
-            material_plan=_record(prompt_input.get("material_plan")) or material_plan,
-            context_pack=_record(prompt_input.get("context_pack")) or context_pack,
+            dossier_input=prompt_input,
         )
         request_payload = build_planning_request_trace(
             step="strategy",
@@ -98,10 +92,16 @@ class DraftStrategyService:
             material_plan=material_plan,
             context_pack=context_pack,
             model_selection=selection.to_payload(),
+            provider_dossier=provider_dossier.to_payload(),
         )
         request_payload.update(budget_proof.request_payload_fields())
-        if not status.configured:
-            return self._fallback(context_summary, rule_pack, material_plan, request_payload, provider, model, "OpenRouter is not configured")
+        if provider != AiRunProvider.OPENROUTER:
+            error = (
+                f"Planning dossier blocked: {', '.join(provider_dossier.missing_required_inputs)}"
+                if dossier_blocked
+                else "OpenRouter is not configured"
+            )
+            return self._fallback(context_summary, rule_pack, material_plan, request_payload, provider, model, error)
 
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
@@ -196,7 +196,3 @@ __all__ = (
     'STRATEGY_KEYS',
     'DraftStrategyService',
 )
-
-
-def _record(value: Any) -> dict[str, Any]:
-    return value if isinstance(value, dict) else {}

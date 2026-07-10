@@ -230,9 +230,12 @@ Slice `2.17.4.6.1.3.6` now provides the deterministic foundation under
 artifact handles, six role-owned dossier factories, and provider-free replay via
 `scripts/audit_draft_run_provider_dossiers.py`. A replay over a stored live DraftRun
 must report unresolved handles and forbidden-field violations separately from
-readiness/quality risk. This does not close the runtime limitation: prompt-builder
-call sites remain transitional until slices `3.7-3.9` wire these dossiers through
-`ProviderInputBudgetGate`.
+readiness/quality risk. Slice `2.17.4.6.1.3.7` closes the runtime limitation for
+`materialPlan`, `strategy`, and `rhetoricalPlans`: their call sites now read
+persisted artifacts through `DraftRunContextAccessService`, assemble
+operation-specific planning dossiers, and send only budgeted projections. Writer,
+review, ranking, revision, and final-quality call sites remain transitional until
+slices `3.8-3.9`.
 
 ## Current Guardrails
 

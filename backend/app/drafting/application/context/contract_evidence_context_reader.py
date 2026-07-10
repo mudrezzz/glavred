@@ -56,20 +56,50 @@ class ContractEvidenceContextReader:
                 for key in ("id", "statement", "allowedUse", "confidence", "riskFlags", "source")
                 if claim.get(key) not in (None, [], {})
             }
+            compact["kind"] = "claim"
             records.append((compact, self._handle("publicEvidence", ("enrichedSourceLedger", "claims", index), "evidence", str(claim.get("id") or "artifact"))))
 
         rule_pack = self._mapping(self._index.step_payload("rulePack"))
         interpretation = self._mapping(rule_pack.get("evidenceInterpretation"))
-        for index, implication in enumerate(self._records(interpretation.get("implications"))):
-            compact = {
-                key: self._bounded_text(implication.get(key))
-                for key in ("id", "title", "summary", "allowedUse", "confidence", "claimIds", "ruleIds")
-                if implication.get(key) not in (None, [], {})
-            }
-            records.append((compact, self._handle("rulePack", ("evidenceInterpretation", "implications", index), "evidenceInterpretation", str(implication.get("id") or "artifact"))))
+        for field_name, kind in (
+            ("implications", "implication"),
+            ("usableExamples", "usableExample"),
+            ("limits", "limit"),
+            ("forbiddenOverclaims", "forbiddenOverclaim"),
+            ("rejectedEvidenceUses", "rejectedEvidenceUse"),
+        ):
+            for index, item in enumerate(self._records(interpretation.get(field_name))):
+                compact = {
+                    key: self._bounded_text(item.get(key))
+                    for key in (
+                        "id",
+                        "title",
+                        "summary",
+                        "statement",
+                        "reason",
+                        "allowedUse",
+                        "confidence",
+                        "claimIds",
+                        "ruleIds",
+                        "sourceIds",
+                    )
+                    if item.get(key) not in (None, [], {})
+                }
+                compact["kind"] = kind
+                records.append(
+                    (
+                        compact,
+                        self._handle(
+                            "rulePack",
+                            ("evidenceInterpretation", field_name, index),
+                            "evidenceInterpretation",
+                            str(item.get("id") or f"{field_name}-{index}"),
+                        ),
+                    )
+                )
 
-        records.sort(key=lambda item: (str(item[0].get("id") or ""), str(item[0].get("title") or "")))
-        return self._limited("evidence", records, limit)
+        records = self._deduplicate_evidence(records)
+        return self._curated_evidence(records, limit)
 
     def claims(self, limit: int = 12) -> ContextSelection:
         evidence = self.evidence(limit)
@@ -104,6 +134,86 @@ class ContractEvidenceContextReader:
             selected_count=len(selected),
             trimmed_count=max(0, len(records) - len(selected)),
         )
+
+    def _curated_evidence(
+        self,
+        records: list[tuple[dict[str, Any], ArtifactHandle]],
+        limit: int,
+    ) -> ContextSelection:
+        bounded_limit = max(0, limit)
+        source_claims = sorted(
+            [item for item in records if self._is_source_claim(item[0])],
+            key=self._evidence_sort_key,
+        )
+        interpretations = sorted(
+            [item for item in records if item[0].get("kind") != "claim"],
+            key=self._evidence_sort_key,
+        )
+        framing_claims = sorted(
+            [
+                item
+                for item in records
+                if item[0].get("kind") == "claim" and not self._is_source_claim(item[0])
+            ],
+            key=self._evidence_sort_key,
+        )
+        source_quota = min(len(source_claims), max(1, bounded_limit // 2)) if bounded_limit else 0
+        interpretation_quota = (
+            min(len(interpretations), max(1, bounded_limit // 3)) if bounded_limit else 0
+        )
+        selected = source_claims[:source_quota] + interpretations[:interpretation_quota]
+        selected_keys = {item[1].id for item in selected}
+        remainder = source_claims[source_quota:] + interpretations[interpretation_quota:] + framing_claims
+        for item in remainder:
+            if len(selected) >= bounded_limit:
+                break
+            if item[1].id not in selected_keys:
+                selected.append(item)
+                selected_keys.add(item[1].id)
+        return ContextSelection(
+            "evidence",
+            [item for item, _ in selected],
+            tuple(handle for _, handle in selected),
+            available=bool(records),
+            total_count=len(records),
+            selected_count=len(selected),
+            trimmed_count=max(0, len(records) - len(selected)),
+        )
+
+    def _deduplicate_evidence(
+        self,
+        records: list[tuple[dict[str, Any], ArtifactHandle]],
+    ) -> list[tuple[dict[str, Any], ArtifactHandle]]:
+        unique: dict[tuple[str, str], tuple[dict[str, Any], ArtifactHandle]] = {}
+        for item, handle in records:
+            key = (str(item.get("kind") or "artifact"), str(item.get("id") or handle.id))
+            unique.setdefault(key, (item, handle))
+        return list(unique.values())
+
+    def _is_source_claim(self, item: dict[str, Any]) -> bool:
+        if item.get("kind") != "claim":
+            return False
+        allowed_use = str(item.get("allowedUse") or "")
+        source = str(item.get("source") or "").lower()
+        return allowed_use in {"canState", "needsQualification"} and not (
+            source == "brief" or source.startswith("brief.") or source == "authorpositionevidence"
+        )
+
+    def _evidence_sort_key(
+        self,
+        record: tuple[dict[str, Any], ArtifactHandle],
+    ) -> tuple[int, int, str]:
+        item = record[0]
+        allowed_rank = {
+            "canState": 0,
+            "needsQualification": 1,
+            "canUseAsFraming": 2,
+        }.get(str(item.get("allowedUse") or ""), 3)
+        confidence_rank = {"high": 0, "medium": 1, "low": 2}.get(
+            str(item.get("confidence") or ""),
+            3,
+        )
+        return allowed_rank, confidence_rank, str(item.get("id") or item.get("title") or "")
 
     def _handle(self, step_key: str, path: tuple[str | int, ...], artifact_type: str, artifact_id: str) -> ArtifactHandle:
         return ArtifactHandle.create(

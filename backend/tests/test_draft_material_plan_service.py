@@ -12,6 +12,7 @@ from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidat
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings
 from backend.tests.test_draft_run_context_builder import make_context, make_payload
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 @dataclass
@@ -50,11 +51,11 @@ def test_material_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     adapter = SuccessfulAdapter()
     service = material_service(tmp_path, adapter, configured=True, strategy_model="strategy-model")
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier())
 
     assert result.artifact_payload["source"] == "openrouter"
     assert result.artifact_payload["fallbackUsed"] is False
-    assert result.artifact_payload["materialPlan"]["availableEvidence"] == ["pilot usage data"]
+    assert result.artifact_payload["materialPlan"]["availableEvidence"] == ["claim-1"]
     assert result.artifact_payload["evidenceAccountability"]["valid"] is True
     assert adapter.calls[0]["model"] == "strategy-model"
     assert result.artifact_payload["attempts"][0]["modelRole"] == "strategy"
@@ -67,6 +68,12 @@ def test_material_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     assert run.request_payload["payloadBudget"]["profileId"] == "materialPlan"
     assert run.request_payload["inputStats"]["modelRole"] == "strategy"
     assert run.request_payload["payloadStats"]["payloadBudget"]["profileId"] == "materialPlan"
+    assert run.request_payload["providerDossier"]["runtimeMigrated"] is True
+    assert run.request_payload["providerInput"]["dossierId"] == "planningDossier:materialPlan"
+    assert "rulePack" not in run.request_payload["providerInput"]
+    assert run.request_payload["payloadBudget"].get("incident") is None
+    assert "claim-1" in str(adapter.calls[0]["messages"])
+    assert "rule-1" in str(adapter.calls[0]["messages"])
 
 
 def test_material_plan_retries_when_projected_evidence_is_ignored(tmp_path) -> None:
@@ -74,12 +81,20 @@ def test_material_plan_retries_when_projected_evidence_is_ignored(tmp_path) -> N
     adapter = SequenceAdapter([empty_material_payload(), accountable_material_payload()])
     service = material_service(tmp_path, adapter, configured=True)
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_summary)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier(), context_artifact=context_summary)
 
     assert len(adapter.calls) == 2
     assert result.artifact_payload["attempts"][0]["status"] == "rejected"
     assert result.artifact_payload["attempts"][1]["status"] == "accepted"
     assert result.artifact_payload["materialPlan"]["availableEvidence"] == ["external-claim-1"]
+    repair_run = AiRunService(SqliteAiRunRepository(tmp_path / "ai-runs.sqlite3")).get_run(
+        result.artifact_payload["attempts"][1]["aiRunId"]
+    )
+    assert repair_run is not None
+    repair_context = repair_run.request_payload["providerInput"]["repairContext"]
+    assert set(repair_context["previousAttempt"]) == {"label", "status", "model", "backup"}
+    assert "validation" not in repair_context["previousAttempt"]
+    assert repair_run.request_payload["payloadBudget"].get("incident") is None
     assert result.ai_run_ids == [
         result.artifact_payload["attempts"][0]["aiRunId"],
         result.artifact_payload["attempts"][1]["aiRunId"],
@@ -91,7 +106,7 @@ def test_material_plan_uses_backup_model_after_primary_retries_fail(tmp_path) ->
     adapter = SequenceAdapter([empty_material_payload(), empty_material_payload(), accountable_material_payload()])
     service = material_service(tmp_path, adapter, configured=True, backup_model="backup-model")
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_summary)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier(), context_artifact=context_summary)
 
     assert [call["model"] for call in adapter.calls] == ["test-model", "test-model", "backup-model"]
     assert result.artifact_payload["attempts"][2]["backup"] is True
@@ -103,7 +118,7 @@ def test_material_plan_uses_emergency_fallback_after_all_attempts_fail(tmp_path)
     adapter = SequenceAdapter([empty_material_payload(), empty_material_payload()])
     service = material_service(tmp_path, adapter, configured=True)
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack, context_artifact=context_summary)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier(), context_artifact=context_summary)
 
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.artifact_payload["fallbackUsed"] is True
@@ -115,7 +130,7 @@ def test_material_plan_falls_back_without_exposing_token(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
     service = material_service(tmp_path, FailingAdapter(), configured=True)
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier())
 
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert "sk-test-secret" not in result.artifact_payload["error"]
@@ -125,7 +140,7 @@ def test_material_plan_uses_deterministic_fallback_when_openrouter_missing(tmp_p
     context_summary, rule_pack = context_and_rule_pack()
     service = material_service(tmp_path, SuccessfulAdapter(), configured=False)
 
-    result = service.create(context_summary=context_summary, rule_pack=rule_pack)
+    result = service.create(context_summary=context_summary, rule_pack=rule_pack, provider_dossier=ProviderDossierTestFixture.planning_dossier())
 
     assert result.artifact_payload["source"] == "deterministicFallback"
     assert result.artifact_payload["fallbackUsed"] is True
@@ -186,10 +201,10 @@ def settings(configured: bool, backup_model: str = "", strategy_model: str = "")
 
 def material_payload() -> dict[str, Any]:
     return {
-        "availableEvidence": ["pilot usage data"],
+        "availableEvidence": ["claim-1"],
         "rejectedEvidence": [],
         "rejectionReasons": [],
-        "claimsRequiringAttribution": ["pilot usage data"],
+        "claimsRequiringAttribution": ["claim-1"],
         "qualifiedClaims": [],
         "missingEvidence": [],
         "riskyClaims": ["overclaiming"],

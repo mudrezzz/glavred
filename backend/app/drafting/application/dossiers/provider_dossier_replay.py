@@ -37,14 +37,26 @@ class ProviderDossierReplayReport:
         )
 
     def to_payload(self) -> dict[str, Any]:
+        migrated = sum(1 for dossier in self.dossiers if dossier.runtime_migrated)
+        migration_status = (
+            "migrated"
+            if migrated == len(self.dossiers)
+            else "partiallyMigrated"
+            if migrated
+            else "notMigrated"
+        )
         return {
             "runId": self.run_id,
-            "runtimeMigrationStatus": "notMigrated",
+            "runtimeMigrationStatus": migration_status,
             "verdict": "readyForMigration" if self.ready_for_migration else "foundationNeedsAttention",
             "dossiers": [self._summary(dossier) for dossier in self.dossiers],
             "unresolvedHandleIds": list(self.unresolved_handle_ids),
             "forbiddenFieldViolations": list(self.forbidden_field_violations),
-            "note": "Factory proof only; provider operation call sites are not migrated in this slice.",
+            "note": (
+                "Planning call sites are migrated; remaining dossier families still require their roadmap slices."
+                if migrated
+                else "Factory proof only; provider operation call sites are not migrated."
+            ),
         }
 
     def to_markdown(self) -> str:
@@ -53,7 +65,7 @@ class ProviderDossierReplayReport:
             f"# DraftRun provider dossier replay: {self.run_id}",
             "",
             f"- verdict: `{payload['verdict']}`",
-            "- runtime migration: `notMigrated`",
+            f"- runtime migration: `{payload['runtimeMigrationStatus']}`",
             f"- unresolved handles: {len(self.unresolved_handle_ids)}",
             f"- forbidden field violations: {len(self.forbidden_field_violations)}",
             "",
@@ -94,7 +106,9 @@ class ProviderDossierReplayService:
         candidate_id = str(candidate_summary.get("id") or "") or None
         plan_id = str(candidate_summary.get("rhetoricalPlanId") or "") or None
         dossiers = (
-            PlanningDossierFactory(access).build(),
+            PlanningDossierFactory(access).build("materialPlan"),
+            PlanningDossierFactory(access).build("strategy"),
+            PlanningDossierFactory(access).build("rhetoricalPlans"),
             WriterDossierFactory(access).build(plan_id=plan_id),
             ReviewDossierFactory(access).build(candidate_id=candidate_id),
             RankingDossierFactory(access).build(),

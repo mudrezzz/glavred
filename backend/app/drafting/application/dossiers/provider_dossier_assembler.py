@@ -23,6 +23,8 @@ class ProviderDossierAssembler:
         self,
         policy: ProviderDossierPolicy,
         selections: Mapping[str, ContextSelection],
+        *,
+        runtime_migrated: bool = False,
     ) -> ProviderDossier:
         contract = policy.semantic_contract
         required = set(contract.must_have)
@@ -68,9 +70,10 @@ class ProviderDossierAssembler:
             suppressed_fields=suppressed,
             quality_risk=risk,
             missing_required_inputs=missing_required,
+            runtime_migrated=runtime_migrated,
             metadata={
                 "missingOptionalInputs": list(missing_optional),
-                "runtimeMigrationStatus": "notMigrated",
+                "runtimeMigrationStatus": "migrated" if runtime_migrated else "notMigrated",
             },
         )
 

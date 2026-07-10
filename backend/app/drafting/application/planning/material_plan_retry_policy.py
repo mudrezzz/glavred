@@ -6,6 +6,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -29,11 +30,30 @@ class MaterialPlanRetryPolicy:
             attempts.append(MaterialPlanAttempt(label="backup", model=backup_model, repair=True, backup=True))
         return attempts
 
+    @staticmethod
+    def compact_repair_context(
+        previous_attempt: dict[str, Any],
+        invalid_reasons: list[Any],
+    ) -> dict[str, Any]:
+        return {
+            "previousAttempt": {
+                key: previous_attempt.get(key)
+                for key in ("label", "status", "model", "backup")
+                if previous_attempt.get(key) is not None
+            },
+            "invalidReasons": [str(item)[:500] for item in invalid_reasons[:4]],
+            "requiredAction": (
+                "Reference retained evidence by its exact id, or record a concrete rejection reason."
+            ),
+        }
+
 build_material_plan_attempts = MaterialPlanRetryPolicy.build_material_plan_attempts
+compact_material_plan_repair_context = MaterialPlanRetryPolicy.compact_repair_context
 
 
 __all__ = (
     'MaterialPlanAttempt',
     'build_material_plan_attempts',
+    'compact_material_plan_repair_context',
     'MaterialPlanRetryPolicy',
 )

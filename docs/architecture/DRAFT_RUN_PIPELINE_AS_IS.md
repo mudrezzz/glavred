@@ -904,9 +904,10 @@ Slice `2.17.4.6.1.3.6` adds an available provider-free context/dossier foundatio
   without providers and reports actual projected size, unresolved handles, and
   forbidden-field violations.
 
-This is an architectural foundation, not a runtime migration claim. Current
-provider operations continue using the AS IS projections in the table below until
-their call sites are migrated in slices `2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
+The foundation is now partially connected to runtime. Planning operations
+`materialPlan`, `strategy`, and `rhetoricalPlans` use typed dossiers; writer,
+review, ranking, revision, and final-quality operations continue using the other
+AS IS projections until slices `2.17.4.6.1.3.8` and `2.17.4.6.1.3.9`.
 
 ### 6.1 Context Handoff and Provider Input Contract
 
@@ -947,9 +948,9 @@ Provider-heavy AS IS contract:
 | `sourceIntentAndResearchPlan` | brief sources, context summary, initial source ledger, DraftRun budget | research prompt over brief sources, normalized context summary, initial ledger, budget caps | child `AiRun`, `sourceIntent.researchPlan`, skipped budget trace | partial/transitional; planning output has trace but no full provider-input dossier | Dossier boundary target after the planning budget gate |
 | `evidenceSynthesis` | public evidence attempts, accepted/rejected evidence, initial/enriched ledger | accepted public evidence plus relevant ledger/context | `publicEvidence.evidenceSynthesis`, child `AiRun`, accepted/rejected evidence trace | partial/transitional | Dossier and evidence-query access target in `2.17.4.6.1.3.6` |
 | `evidenceInterpretation` | enriched ledger, accepted public evidence, evidence synthesis, contract, rule subset | compact evidence payload plus strategy `ContextPack`, timeout envelope | `rulePack.evidenceInterpretation`, `evidenceInterpretationFidelity`, child `AiRun`, `operationEnvelope`, timeout/input stats | enforced for representative operation | Further context-access hardening in `2.17.4.6.1.3.6` |
-| `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule pack, usable evidence candidates, repair context | `materialPlan.materialPlan`, child `AiRun.requestPayload.operationId=materialPlan`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, selected/rejected evidence reasons | enforced current-call budget proof; nested prior budgets are rejected by replay audit | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
-| `strategy` | material plan, post contract, rule registry, strategy context | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule pack, compact material plan | `strategy.draftStrategy`, child `AiRun.requestPayload.operationId=strategy`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, model role metadata | enforced current-call budget proof; trace alias `strategy` uses existing payload profile `draftStrategy` | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
-| `rhetoricalPlans` | strategy, material plan, claim/rule ids | compact provider input from `ProviderInputBudgetGate`: context summary/context pack, compact rule registry, compact material plan, draft strategy, repair context | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun.requestPayload.operationId=rhetoricalPlans`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced current-call budget proof; nested prior budgets are rejected by replay audit | Further typed planning dossier reduction in `2.17.4.6.1.3.6` / `2.17.4.6.1.3.7` |
+| `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | `PlanningDossierFactory(materialPlan)` projection: compact post contract, interpreted evidence/claim handles, relevant rules, attempt repair context | `materialPlan.materialPlan`, selected/rejected evidence reasons, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced per primary/repair/backup call; replay baseline projects 16810 chars with no forbidden fields | Runtime dossier migration complete in `2.17.4.6.1.3.7`; live quality proof is stored with the slice evidence |
+| `strategy` | material plan, post contract, rule registry, strategy context | `PlanningDossierFactory(strategy)` projection: compact post contract, MaterialPlan, interpreted evidence/handles, relevant rules, attempt repair context | `strategy.draftStrategy`, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, model role metadata | enforced per primary/repair/backup call; budget profile remains `draftStrategy`; replay baseline projects 17720 chars | Runtime dossier migration complete in `2.17.4.6.1.3.7` |
+| `rhetoricalPlans` | strategy, material plan, claim/rule ids | `PlanningDossierFactory(rhetoricalPlans)` projection: compact post contract, MaterialPlan, DraftStrategy, evidence/rule handles, attempt repair context | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced per primary/repair/backup call; replay baseline projects 17203 chars | Runtime dossier migration complete in `2.17.4.6.1.3.7` |
 | `draftCandidate` | one rhetorical plan, material evidence, contract, writer context, generation params | writer `ContextPack`, one direction, material evidence, contract | `draft.candidates[]`, child `AiRun`, fallback/publishability status | partial/transitional | Writer dossier hardening in `2.17.4.6.1.3.7` |
 | `llmValidation` | candidates, deterministic report, contract, registry, ledger | review `ContextPack`, candidates, deterministic findings | `validation.llmValidationReport`, candidate reports, child `AiRun`, incidents | partial/transitional | Validation dossier/read model in `2.17.4.6.1.3.8` |
 | `editorialCritique` | candidates, evidence interpretation, validation findings, critique context | critic `ContextPack`, candidate summaries, evidence interpretation, findings | `validation.editorialCritiqueReport`, child `AiRun`, `operationEnvelope`, parser/trace payload | enforced for representative operation | Debate/critique expansion remains future work; current single critique is AS IS |
@@ -1087,6 +1088,29 @@ That is not a clean provider-input verdict. It means the call crossed the gate a
 the oversized context is visible before/during the provider attempt, while actual
 prompt-size reduction remains the responsibility of the planning dossier migration
 slice `2.17.4.6.1.3.7`.
+
+Slice 2.17.4.6.1.3.7 closes that planning transition. Before each planning step,
+`LegacyDraftRunPhaseBuilder` reloads the persisted DraftRun and uses
+`DraftRunContextAccessService` plus `PlanningDossierFactory` to assemble exactly one
+operation-specific dossier. Prompt builders receive only its budgeted projection
+and attempt-specific repair context. Full `rulePack`, `SourceLedger`,
+`ArticleDossier`, `ContextPack`, previous operation envelopes, and previous budget
+objects are forbidden from provider input. The full parent artifacts remain stored
+for replay, deterministic fallback, and accountability. Dossier replay over the
+control run reports zero unresolved handles and zero forbidden-field violations;
+runtime migration is partial only because non-planning operation families remain
+scheduled for slices `3.8-3.9`.
+
+Accepted live proof `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` records actual planning
+inputs of 14900 chars (`materialPlan`), 15017 chars (`strategy`), and 13601 chars
+(`rhetoricalPlans`) against historical baselines 207065, 210584, and 45249. All
+planning attempts are `directlyBudgeted`; there are no planning `overBudget`,
+`payloadTooLarge`, `contextOverBudget`, missing-direct-budget, unresolved-handle, or
+forbidden-field findings. The run completed with sufficient evidence coverage,
+trusted/publishable editorial status, and no open critical or warning issues.
+Provider malformed JSON caused a visible safe strategy fallback, but the dossier
+had no missing required inputs and no budget incident. The safe comparison is stored
+under `docs/evidence/draft-runs/e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2/`.
 
 The replayable provider-input audit is:
 

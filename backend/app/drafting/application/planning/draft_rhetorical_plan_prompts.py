@@ -17,13 +17,7 @@ class DraftRhetoricalPlanPromptsComponent:
     @staticmethod
     def build_rhetorical_plan_messages(
         *,
-        context_summary: dict[str, Any],
-        rule_registry: dict[str, Any],
-        post_contract: dict[str, Any],
-        material_plan: dict[str, Any],
-        draft_strategy: dict[str, Any],
-        context_pack: dict[str, Any] | None = None,
-        repair_context: dict[str, Any] | None = None,
+        dossier_input: dict[str, Any],
     ) -> list[dict[str, str]]:
         return [
             {
@@ -55,13 +49,7 @@ class DraftRhetoricalPlanPromptsComponent:
                                 "whyThisPlan": "why this route is useful",
                             }]
                         },
-                        "contextSummary": context_summary,
-                        "postContract": post_contract,
-                        "ruleRegistrySnapshot": rule_registry,
-                        "contextPack": context_pack or {},
-                        "materialPlan": material_plan,
-                        "draftStrategy": draft_strategy,
-                        "repairContext": repair_context,
+                        "planningDossier": dossier_input,
                     }
                 ),
             },

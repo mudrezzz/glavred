@@ -17,6 +17,7 @@ from backend.app.domain.ai_run import AiRunProvider
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 from backend.app.drafting.application.operations.json_step_adapter import OpenRouterJsonStepAdapter
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
 
 
 class DraftMaterialPlanService:
@@ -43,6 +44,7 @@ class DraftMaterialPlanService:
         *,
         context_summary: dict[str, Any],
         rule_pack: dict[str, Any],
+        provider_dossier: ProviderDossier,
         context_artifact: dict[str, Any] | None = None,
     ) -> DraftPlanningStepResult:
         status = self._openrouter_validator.evaluate(self._settings)
@@ -50,12 +52,14 @@ class DraftMaterialPlanService:
             return self._orchestrator.create_with_retry(
                 context_summary=context_summary,
                 rule_pack=rule_pack,
+                provider_dossier=provider_dossier,
                 context_artifact=context_artifact,
             )
 
         return self._orchestrator.fallback(
             context_summary=context_summary,
             rule_pack=rule_pack,
+            provider_dossier=provider_dossier,
             usable_candidates=build_usable_evidence_candidates(context_artifact=context_artifact, rule_pack=rule_pack, limit=budget_from_context(context_artifact).caps.max_usable_evidence_candidates),
             attempts=[],
             provider=AiRunProvider.DETERMINISTIC,

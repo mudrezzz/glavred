@@ -104,3 +104,9 @@ python scripts/audit_draft_run_provider_dossiers.py --run-id <run-id> --format m
 Следующий ожидаемый шаг сравнения — новый live DraftRun после миграции planning
 dossiers. Поврежденный CTA должен быть исправлен отдельно или явно исключен из
 сравнения как внешний дефект входных данных.
+
+Сравнение Slice `2.17.4.6.1.3.7` выполнено на live DraftRun
+`c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed`:
+
+- [читаемый отчет](COMPARISON_2_17_4_6_1_3_7.md);
+- [машиночитаемый отчет](comparison-2.17.4.6.1.3.7.json).

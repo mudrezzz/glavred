@@ -18,6 +18,7 @@ from backend.app.domain.ai_run import AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.domain.provider_dossier import ProviderDossier
 
 
 class DraftRhetoricalPlanService:
@@ -48,6 +49,7 @@ class DraftRhetoricalPlanService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         draft_strategy: dict[str, Any],
+        provider_dossier: ProviderDossier,
     ) -> DraftPlanningStepResult:
         post_contract = _record(context_artifact.get("postContract"))
         rule_registry = _record(rule_pack.get("ruleRegistrySnapshot"))
@@ -60,6 +62,7 @@ class DraftRhetoricalPlanService:
                 post_contract=post_contract,
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
+                provider_dossier=provider_dossier,
                 context_pack=context_pack,
             )
         payload = self._deterministic_plan_service.create_plans(
@@ -77,6 +80,7 @@ class DraftRhetoricalPlanService:
                 "rhetoricalPlanSet": payload,
                 "error": "OpenRouter is not configured",
                 "provider": AiRunProvider.DETERMINISTIC.value,
+                "providerDossier": provider_dossier.to_payload(),
                 **unconfigured_model_selection(DraftModelRole.STRATEGY).to_payload(),
             },
             ai_run_id=None,

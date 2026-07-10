@@ -53,6 +53,12 @@ class DraftRunContextAccessService:
     def planning(self) -> ContextSelection:
         return self._editorial.planning()
 
+    def material_plan(self) -> ContextSelection:
+        return self._editorial.material_plan()
+
+    def draft_strategy(self) -> ContextSelection:
+        return self._editorial.draft_strategy()
+
     def rhetorical_plan(self, plan_id: str | None) -> ContextSelection:
         return self._editorial.rhetorical_plan(plan_id)
 

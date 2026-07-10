@@ -39,12 +39,20 @@ SEMANTIC_CONTRACTS: dict[str, SemanticInputContract] = {
         never_send_to_provider=("fullWorkspace",),
     ),
     "materialPlan": SemanticInputContract(
-        must_have=("context_artifact", "rule_pack"),
-        should_have=("material_plan",),
-        never_send_to_provider=("sourceLedgerFull", "ruleRegistryFull"),
+        must_have=("dossierId", "postContract", "evidence"),
+        should_have=("rules", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
     ),
-    "draftStrategy": SemanticInputContract(must_have=("context_artifact", "material_plan", "rule_pack")),
-    "rhetoricalPlans": SemanticInputContract(must_have=("draft_strategy", "material_plan", "rule_pack")),
+    "draftStrategy": SemanticInputContract(
+        must_have=("dossierId", "postContract", "materialPlan"),
+        should_have=("evidence", "rules"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
+    "rhetoricalPlans": SemanticInputContract(
+        must_have=("dossierId", "postContract", "materialPlan", "draftStrategy"),
+        should_have=("evidence", "rules", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
     "draftCandidate": SemanticInputContract(must_have=("direction", "context_summary", "rule_pack", "material_plan", "draft_strategy")),
     "llmValidation": SemanticInputContract(must_have=("candidate", "context_artifact", "rule_pack"), diagnostic_only=("fullValidationTrace",)),
     "editorialCritique": SemanticInputContract(

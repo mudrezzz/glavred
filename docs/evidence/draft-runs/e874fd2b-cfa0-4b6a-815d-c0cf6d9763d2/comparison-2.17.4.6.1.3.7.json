@@ -1,0 +1,92 @@
+{
+  "sliceId": "2.17.4.6.1.3.7",
+  "baselineRunId": "e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2",
+  "liveRunId": "c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed",
+  "sameRequestPayload": true,
+  "knownInputDefectsExcluded": [
+    "damaged-cta-question-marks"
+  ],
+  "planningInputs": [
+    {
+      "operationId": "materialPlan",
+      "baselineChars": 207065,
+      "liveChars": 14900,
+      "reductionPercent": 92.8,
+      "budgetStatus": "directlyBudgeted",
+      "readinessStatus": "degraded",
+      "missingRequiredInputs": [],
+      "fallbackUsed": false,
+      "attemptCount": 1
+    },
+    {
+      "operationId": "strategy",
+      "baselineChars": 210584,
+      "liveChars": 15017,
+      "reductionPercent": 92.9,
+      "budgetStatus": "directlyBudgeted",
+      "readinessStatus": "degraded",
+      "missingRequiredInputs": [],
+      "fallbackUsed": true,
+      "fallbackReason": "provider-malformed-json"
+    },
+    {
+      "operationId": "rhetoricalPlans",
+      "baselineChars": 45249,
+      "liveChars": 13601,
+      "reductionPercent": 69.9,
+      "budgetStatus": "directlyBudgeted",
+      "readinessStatus": "degraded",
+      "missingRequiredInputs": [],
+      "fallbackUsed": false,
+      "attemptCount": 2
+    }
+  ],
+  "planningBudgetIncidents": {
+    "overBudget": 0,
+    "payloadTooLarge": 0,
+    "contextOverBudget": 0,
+    "missingDirectBudget": 0,
+    "nestedBudgetFalsePositive": 0
+  },
+  "dossierProof": {
+    "runtimeMigrationStatus": "partiallyMigrated",
+    "planningRuntimeMigrated": true,
+    "unresolvedHandleCount": 0,
+    "forbiddenFieldViolationCount": 0
+  },
+  "baselineQuality": {
+    "pipelineStatus": "succeeded",
+    "childAiRunCount": 34,
+    "providerRecoveryStatus": "fallbackRecovered",
+    "evidenceCoverage": "weak",
+    "interpretedEvidenceCount": 25,
+    "fallbackInterpretedEvidenceCount": 1,
+    "editorialStatus": "needsHumanReview",
+    "overallVerdict": "needsAttention",
+    "openCriticalCount": 1,
+    "openWarningCount": 19,
+    "finalDraftChars": 9482
+  },
+  "liveQuality": {
+    "pipelineStatus": "succeeded",
+    "childAiRunCount": 32,
+    "providerRecoveryStatus": "fallbackRecovered",
+    "evidenceCoverage": "sufficient",
+    "interpretedEvidenceCount": 36,
+    "fallbackInterpretedEvidenceCount": 0,
+    "editorialStatus": "publishable",
+    "editorialTrust": "trusted",
+    "overallVerdict": "degradedSuccess",
+    "openCriticalCount": 0,
+    "openWarningCount": 0,
+    "finalDraftChars": 5913
+  },
+  "materialPlanAccountability": {
+    "valid": true,
+    "usableCandidateCount": 18,
+    "availableEvidenceCount": 3,
+    "rejectedEvidenceCount": 3,
+    "attributionCount": 3
+  },
+  "verdict": "passed"
+}

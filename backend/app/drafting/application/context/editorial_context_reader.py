@@ -36,6 +36,62 @@ class EditorialContextReader:
         )
         return ContextSelection("planning", value, handles, total_count=len(handles), selected_count=len(handles), trimmed_count=material_trimmed + strategy_trimmed)
 
+    def material_plan(self) -> ContextSelection:
+        payload = self._mapping(self._index.step_payload("materialPlan"))
+        material = self._mapping(payload.get("materialPlan"))
+        if not material:
+            return self._missing("materialPlan")
+        compact, trimmed = self._select_bounded_fields(
+            material,
+            (
+                ("groundingPlan", 4),
+                ("availableEvidence", 8),
+                ("rejectedEvidence", 4),
+                ("rejectionReasons", 4),
+                ("qualifiedClaims", 6),
+                ("riskyClaims", 4),
+                ("missingEvidence", 4),
+                ("claimsRequiringAttribution", 6),
+            ),
+            text_limit=200,
+        )
+        handle = self._whole_handle("materialPlan", ("materialPlan",), "materialPlan")
+        return ContextSelection(
+            "materialPlan",
+            compact,
+            (handle,),
+            total_count=1,
+            selected_count=1,
+            trimmed_count=trimmed,
+        )
+
+    def draft_strategy(self) -> ContextSelection:
+        payload = self._mapping(self._index.step_payload("strategy"))
+        strategy = self._mapping(payload.get("draftStrategy"))
+        if not strategy:
+            return self._missing("draftStrategy")
+        compact, trimmed = self._select_bounded(
+            strategy,
+            (
+                "thesisAngle",
+                "openingMove",
+                "argumentSequence",
+                "fabulaUsage",
+                "ctaPlan",
+                "forbiddenMoves",
+                "toneNotes",
+            ),
+        )
+        handle = self._whole_handle("strategy", ("draftStrategy",), "draftStrategy")
+        return ContextSelection(
+            "draftStrategy",
+            compact,
+            (handle,),
+            total_count=1,
+            selected_count=1,
+            trimmed_count=trimmed,
+        )
+
     def rhetorical_plan(self, plan_id: str | None) -> ContextSelection:
         payload = self._mapping(self._index.step_payload("rhetoricalPlans"))
         plans = self._records(self._mapping(payload.get("rhetoricalPlanSet")).get("plans"))
@@ -176,6 +232,41 @@ class EditorialContextReader:
             else:
                 result[key] = self._bounded_value(item)
         return result, trimmed
+
+    def _select_bounded_fields(
+        self,
+        value: Mapping[str, Any],
+        fields: tuple[tuple[str, int], ...],
+        *,
+        text_limit: int,
+    ) -> tuple[dict[str, Any], int]:
+        result: dict[str, Any] = {}
+        trimmed = 0
+        for key, list_limit in fields:
+            item = value.get(key)
+            if item in (None, [], {}):
+                continue
+            if isinstance(item, str):
+                result[key] = item[:text_limit]
+                trimmed += int(len(item) > text_limit)
+            elif isinstance(item, list):
+                result[key] = [self._bounded_value_to(child, text_limit) for child in item[:list_limit]]
+                trimmed += max(0, len(item) - list_limit)
+            else:
+                result[key] = self._bounded_value_to(item, text_limit)
+        return result, trimmed
+
+    def _bounded_value_to(self, value: Any, text_limit: int) -> Any:
+        if isinstance(value, str):
+            return value[:text_limit]
+        if isinstance(value, Mapping):
+            return {
+                str(key): self._bounded_value_to(child, text_limit)
+                for key, child in list(value.items())[:12]
+            }
+        if isinstance(value, list):
+            return [self._bounded_value_to(child, text_limit) for child in value[:6]]
+        return value
 
     def _bounded_value(self, value: Any) -> Any:
         if isinstance(value, str):

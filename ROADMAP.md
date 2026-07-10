@@ -7972,7 +7972,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration
 
-- Status: Ready
+- Status: Done
 - Goal: Move `materialPlan`, `strategy`, and `rhetoricalPlans` from full-artifact provider inputs to planning dossiers.
 - User value: The slow and oversized planning calls should become smaller, more focused, and easier to diagnose without losing required evidence/rule/contract constraints.
 - Scope:
@@ -8000,10 +8000,11 @@ Status:
   - Reliability diagnostics no longer report planning input as uncontrolled context bloat.
 - Risks:
   - Excessive trimming could hide necessary constraints; tests must assert `mustHave` preservation, not only smaller size.
+- Completed: 2026-07-10
 
 ### Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move `draftCandidate`, `alternativeAngleRoute`, and `alternativeAngleCandidate` to writer/alternative-angle dossiers instead of broad planning-stack dumps.
 - User value: Candidate generation and alternative-angle work stay grounded, but no longer pay latency/quality cost for unrelated full artifacts.
 - Scope:
@@ -8710,6 +8711,7 @@ Status:
 - Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture. Completed 2026-07-10.
+- Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration. Completed 2026-07-10.
 
 
 ## Blocked Items
@@ -8738,4 +8740,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration`.
+Implement `Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration`.

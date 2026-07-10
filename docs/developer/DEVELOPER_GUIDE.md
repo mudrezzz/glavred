@@ -347,9 +347,25 @@ python scripts/audit_draft_run_provider_dossiers.py `
 
 `readyForMigration` confirms that all six factories assembled, handles resolved,
 and forbidden full artifacts were absent. `runtimeMigrationStatus=notMigrated` is
-intentional until the corresponding provider call is wired in slices `3.7-3.9`.
-Do not use factory replay as evidence that a live LLM request already received a
-dossier.
+expected only before runtime wiring. After Slice `2.17.4.6.1.3.7`, planning replay
+must report `runtimeMigrationStatus=partiallyMigrated`: `materialPlan`, `strategy`,
+and `rhetoricalPlans` have `runtimeMigrated=true`, while later provider families
+remain false until `3.8-3.9`. Do not use factory replay alone as evidence that a
+live request received a dossier; inspect the child `AiRun.requestPayload` for
+`providerDossier.runtimeMigrated=true`, direct `providerInput`, and direct
+`payloadBudget`.
+
+Planning runtime construction follows this strict sequence:
+
+1. Reload the current persisted DraftRun through `DraftRunContextAccessService`.
+2. Build exactly one operation-specific dossier with `PlanningDossierFactory`.
+3. Reject `BLOCKED` before provider execution; permit `DEGRADED` only with all
+   `mustHave` inputs retained.
+4. Add attempt-specific repair context, then cross `ProviderInputBudgetGate` again.
+5. Give the prompt builder only the resulting budgeted projection.
+
+Rich artifacts remain available to deterministic fallback and parent trace. Do not
+reintroduce them into planning prompt signatures.
 
 Validation/revision loops must also use
 `backend.app.drafting.application.operations.validation_runtime_budget`.

@@ -7,10 +7,15 @@ from backend.tests.rhetorical_plan_test_helpers import (
     context_artifact,
     rhetorical_service,
 )
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 class SuccessfulRhetoricalAdapter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
     def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
+        self.calls.append(kwargs)
         return FakeOpenRouterResult(
             {
                 "plans": [
@@ -42,7 +47,8 @@ class FailingRhetoricalAdapter:
 
 def test_rhetorical_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
-    service = rhetorical_service(tmp_path, SuccessfulRhetoricalAdapter(), configured=True)
+    adapter = SuccessfulRhetoricalAdapter()
+    service = rhetorical_service(tmp_path, adapter, configured=True)
 
     result = service.create(
         context_summary=context_summary,
@@ -50,6 +56,7 @@ def test_rhetorical_plan_service_returns_openrouter_artifact(tmp_path) -> None:
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["evidence"]},
         draft_strategy={"thesisAngle": "angle"},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "openrouter"
@@ -58,11 +65,16 @@ def test_rhetorical_plan_service_returns_openrouter_artifact(tmp_path) -> None:
     assert run is not None
     assert run.request_payload["draftRunStep"] == "rhetoricalPlans"
     assert run.request_payload["operationId"] == "rhetoricalPlans"
-    assert run.request_payload["providerInput"]["material_plan"]["availableEvidence"] == ["evidence"]
+    assert run.request_payload["providerInput"]["materialPlan"]["availableEvidence"] == ["claim-1", "claim-2"]
     assert run.request_payload["payloadBudget"]["profileId"] == "rhetoricalPlans"
     assert run.request_payload["inputStats"]["modelRole"] == "strategy"
     assert run.request_payload["payloadStats"]["payloadBudget"]["profileId"] == "rhetoricalPlans"
     assert result.artifact_payload["attempts"][0]["status"] == "accepted"
+    assert run.request_payload["providerDossier"]["runtimeMigrated"] is True
+    assert "rulePack" not in run.request_payload["providerInput"]
+    assert run.request_payload["payloadBudget"].get("incident") is None
+    assert "claim-1" in str(adapter.calls[0]["messages"])
+    assert "rule-1" in str(adapter.calls[0]["messages"])
 
 def test_rhetorical_plan_service_falls_back_without_openrouter(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
@@ -74,6 +86,7 @@ def test_rhetorical_plan_service_falls_back_without_openrouter(tmp_path) -> None
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "deterministicFallback"
@@ -89,6 +102,7 @@ def test_rhetorical_plan_provider_error_falls_back_without_secret(tmp_path) -> N
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("rhetoricalPlans"),
     )
 
     assert result.artifact_payload["source"] == "deterministicFallback"

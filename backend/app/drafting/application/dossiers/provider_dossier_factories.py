@@ -18,13 +18,29 @@ class PlanningDossierFactory:
         self._access = access
 
     def build(self, operation_id: str = "materialPlan") -> ProviderDossier:
+        evidence_limit = {
+            "materialPlan": 12,
+            "strategy": 6,
+            "rhetoricalPlans": 2,
+        }.get(operation_id, 12)
+        rule_limit = {
+            "materialPlan": 8,
+            "strategy": 8,
+            "rhetoricalPlans": 4,
+        }.get(operation_id, 8)
+        selections = {
+            "postContract": self._access.post_contract(),
+            "evidence": self._access.evidence(limit=evidence_limit),
+            "rules": self._access.rules(limit=rule_limit),
+        }
+        if operation_id in {"strategy", "rhetoricalPlans"}:
+            selections["materialPlan"] = self._access.material_plan()
+        if operation_id == "rhetoricalPlans":
+            selections["draftStrategy"] = self._access.draft_strategy()
         return ProviderDossierAssembler().assemble(
             ProviderDossierPolicyRegistry().planning(operation_id),
-            {
-                "postContract": self._access.post_contract(),
-                "evidence": self._access.evidence(),
-                "rules": self._access.rules(),
-            },
+            selections,
+            runtime_migrated=True,
         )
 
 

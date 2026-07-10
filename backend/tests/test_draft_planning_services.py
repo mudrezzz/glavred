@@ -12,6 +12,7 @@ from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidat
 from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
 from backend.app.settings import BackendSettings
 from backend.tests.test_draft_run_context_builder import make_context, make_payload
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 @dataclass
@@ -21,17 +22,22 @@ class FakeOpenRouterResult:
 
 
 class SuccessfulAdapter:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
     def complete_json(self, **kwargs: Any) -> FakeOpenRouterResult:
+        self.calls.append(kwargs)
         return FakeOpenRouterResult(strategy_payload(), {"id": "or-strategy", "model": "test"})
 
 
 def test_strategy_service_returns_openrouter_artifact_and_uses_material_plan(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
+    adapter = SuccessfulAdapter()
     service = DraftStrategyService(
         settings=settings(configured=True),
         ai_run_service=ai_service(tmp_path),
         openrouter_validator=OpenRouterConfigValidator(),
-        openrouter_adapter=SuccessfulAdapter(),
+        openrouter_adapter=adapter,
         deterministic_planning_service=DeterministicDraftPlanningService(),
     )
 
@@ -39,6 +45,7 @@ def test_strategy_service_returns_openrouter_artifact_and_uses_material_plan(tmp
         context_summary=context_summary,
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
+        provider_dossier=ProviderDossierTestFixture.planning_dossier("strategy"),
         context_pack={"role": "strategy", "items": [{"cardId": "claim-1", "summary": "usable claim"}]},
     )
 
@@ -47,11 +54,16 @@ def test_strategy_service_returns_openrouter_artifact_and_uses_material_plan(tmp
     run = ai_service(tmp_path).get_run(result.ai_run_id or "")
     assert run is not None
     assert run.request_payload["operationId"] == "strategy"
-    assert run.request_payload["providerInput"]["material_plan"]["availableEvidence"] == ["pilot usage data"]
+    assert run.request_payload["providerInput"]["materialPlan"]["availableEvidence"] == ["claim-1", "claim-2"]
     assert run.request_payload["payloadBudget"]["profileId"] == "draftStrategy"
     assert run.request_payload["payloadBudget"]["operationAlias"] == "strategy"
     assert run.request_payload["inputStats"]["modelRole"] == "strategy"
     assert run.request_payload["payloadStats"]["payloadBudget"]["profileId"] == "draftStrategy"
+    assert run.request_payload["providerDossier"]["runtimeMigrated"] is True
+    assert "rulePack" not in run.request_payload["providerInput"]
+    assert run.request_payload["payloadBudget"].get("incident") is None
+    assert "claim-1" in str(adapter.calls[0]["messages"])
+    assert "rule-1" in str(adapter.calls[0]["messages"])
 
 
 def context_and_rule_pack() -> tuple[dict[str, Any], dict[str, Any]]:

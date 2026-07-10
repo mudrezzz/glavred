@@ -5,6 +5,7 @@ Does not own: API routing, SQLite persistence, provider transport, or UI trace l
 Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 """
 
+import json
 from typing import Any
 
 
@@ -14,14 +15,11 @@ class DraftPlanningPromptsComponent:
     @staticmethod
     def build_material_plan_messages(
         *,
-        context_summary: dict[str, Any],
-        rule_pack: dict[str, Any],
-        usable_evidence_candidates: list[dict[str, Any]] | None = None,
-        context_pack: dict[str, Any] | None = None,
-        repair_context: dict[str, Any] | None = None,
+        dossier_input: dict[str, Any],
     ) -> list[dict[str, str]]:
+        repair_context = dossier_input.get("repairContext")
         repair_instruction = ""
-        if repair_context:
+        if isinstance(repair_context, dict) and repair_context:
             repair_instruction = (
                 "\n\nRepair context:\n"
                 f"{repair_context}\n"
@@ -44,11 +42,8 @@ class DraftPlanningPromptsComponent:
             {
                 "role": "user",
                 "content": (
-                    f"Context summary:\n{context_summary}\n\n"
-                    f"RulePack:\n{rule_pack}\n\n"
-                    f"Context pack:\n{context_pack or {}}\n\n"
-                    f"Evidence interpretation:\n{rule_pack.get('evidenceInterpretation') or {}}\n\n"
-                    f"Usable evidence candidates:\n{usable_evidence_candidates or []}"
+                    "Planning dossier:\n"
+                    f"{json.dumps(dossier_input, ensure_ascii=False, sort_keys=True)}"
                     f"{repair_instruction}"
                 ),
             },
@@ -57,10 +52,7 @@ class DraftPlanningPromptsComponent:
     @staticmethod
     def build_draft_strategy_messages(
         *,
-        context_summary: dict[str, Any],
-        rule_pack: dict[str, Any],
-        material_plan: dict[str, Any],
-        context_pack: dict[str, Any] | None = None,
+        dossier_input: dict[str, Any],
     ) -> list[dict[str, str]]:
         return [
             {
@@ -73,7 +65,10 @@ class DraftPlanningPromptsComponent:
             },
             {
                 "role": "user",
-                "content": f"Context summary:\n{context_summary}\n\nRulePack:\n{rule_pack}\n\nContext pack:\n{context_pack or {}}\n\nMaterial plan:\n{material_plan}",
+                "content": (
+                    "Planning dossier:\n"
+                    f"{json.dumps(dossier_input, ensure_ascii=False, sort_keys=True)}"
+                ),
             },
         ]
 

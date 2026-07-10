@@ -1756,6 +1756,13 @@ const DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES = {
 };
 const DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH =
   "scripts/audit_draft_run_provider_dossiers.py";
+const DRAFTING_PLANNING_DOSSIER_RUNTIME_PATHS = [
+  "backend/app/drafting/application/planning/material_plan_retry_orchestrator.py",
+  "backend/app/drafting/application/planning/draft_strategy_service.py",
+  "backend/app/drafting/application/planning/draft_rhetorical_plan_retry.py",
+];
+const DRAFTING_PLANNING_DOSSIER_WORKFLOW_PATH =
+  "backend/app/drafting/application/workflow/legacy_phase_builder.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
   "backend/app/drafting/application/operations/validation_runtime_budget.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_OWNER_PATHS = [
@@ -3516,6 +3523,34 @@ assert(
   fileExists(DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH),
   `${DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH} is required for provider-free dossier replay proof.`
 );
+
+for (const path of DRAFTING_PLANNING_DOSSIER_RUNTIME_PATHS) {
+  const source = readText(path);
+  for (const fragment of [
+    "provider_dossier",
+    "provider_dossier.provider_input()",
+    "provider_dossier.to_payload()",
+    "ProviderInputBudgetGate",
+  ]) {
+    assert(
+      source.includes(fragment),
+      `${path} is missing planning dossier runtime fragment: ${fragment}`
+    );
+  }
+}
+const planningDossierWorkflowSource = readText(DRAFTING_PLANNING_DOSSIER_WORKFLOW_PATH);
+for (const fragment of [
+  "PlanningDossierFactory",
+  "DraftRunContextAccessService.from_run",
+  'self._planning_dossier(state, "materialPlan")',
+  'self._planning_dossier(state, "strategy")',
+  'self._planning_dossier(state, "rhetoricalPlans")',
+]) {
+  assert(
+    planningDossierWorkflowSource.includes(fragment),
+    `${DRAFTING_PLANNING_DOSSIER_WORKFLOW_PATH} is missing planning dossier wiring fragment: ${fragment}`
+  );
+}
 
 for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not_budgeted", "payload_budget_removal_slice"]) {
   assert(

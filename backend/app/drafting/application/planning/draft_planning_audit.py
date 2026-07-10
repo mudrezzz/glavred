@@ -30,7 +30,16 @@ class DraftPlanningAuditComponent:
         context_pack: dict[str, Any] | None = None,
         attempt: dict[str, Any] | None = None,
         model_selection: dict[str, Any] | None = None,
+        provider_dossier: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        capability_input = (
+            {
+                "dossierProfileId": provider_dossier.get("profileId"),
+                "runtimeMigrated": provider_dossier.get("runtimeMigrated"),
+            }
+            if provider_dossier is not None
+            else {"contextSummary": context_summary, "rulePack": rule_pack}
+        )
         payload: dict[str, Any] = {
             "draftRunStep": step,
             "requestSummary": {
@@ -40,7 +49,7 @@ class DraftPlanningAuditComponent:
                 "fabula": _get(context_summary, "fabula", "title"),
                 "rulePackVersion": _get(rule_pack, "metadata", "version"),
             },
-            "capabilityInput": {"contextSummary": context_summary, "rulePack": rule_pack},
+            "capabilityInput": capability_input,
             "providerRequest": {
                 "provider": provider.value,
                 "model": model,
@@ -49,12 +58,14 @@ class DraftPlanningAuditComponent:
                 "responseFormat": PLANNING_RESPONSE_FORMAT,
             },
         }
-        if material_plan is not None:
+        if material_plan is not None and provider_dossier is None:
             payload["capabilityInput"]["materialPlan"] = material_plan
-        if usable_evidence_candidates is not None:
+        if usable_evidence_candidates is not None and provider_dossier is None:
             payload["capabilityInput"]["usableEvidenceCandidates"] = usable_evidence_candidates
-        if context_pack is not None:
+        if context_pack is not None and provider_dossier is None:
             payload["capabilityInput"]["contextPack"] = context_pack
+        if provider_dossier is not None:
+            payload["providerDossier"] = provider_dossier
         if attempt is not None:
             payload["attempt"] = attempt
         if model_selection is not None:
