@@ -118,7 +118,12 @@ Check these failure classes explicitly:
   If the helper or API fails with `database disk image is malformed` or worker logs
   show SQLite `disk I/O error`, stop treating the run as a provider-quality signal.
   Preserve the ignored `var/` database evidence and route the issue to
-  `2.17.4.6.1.3.5.1`.
+  `2.17.4.6.1.3.5.1`. Run
+  `python scripts/check_sqlite_integrity.py --format json --fail-on-error` to check
+  `DRAFT_RUN_DB_PATH` and `AI_RUN_AUDIT_DB_PATH`. A controlled
+  `sqliteDatabaseMalformed` / `sqliteStorageUnavailable` diagnostic is a storage
+  durability finding, not a model, prompt, validation, or provider-input budget
+  finding.
 - **Research**: source intent absent, research plan too vague, search disabled,
   failed URL/search attempts, irrelevant accepted citations, accepted evidence not
   synthesized into `EvidenceSynthesis`, or external claims missing from enriched

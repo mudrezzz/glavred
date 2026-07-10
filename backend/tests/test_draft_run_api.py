@@ -114,6 +114,7 @@ def test_get_draft_run_missing_returns_404(tmp_path) -> None:
     client = make_client(tmp_path, RecordingDispatcher())
 
     response = client.get("/api/draft-runs/missing")
+    assert response.status_code == 404
 
 
 def test_dispatch_failure_marks_run_failed(tmp_path) -> None:

@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from contextlib import AbstractContextManager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,11 +12,17 @@ from backend.app.domain.draft_run import (
     DraftRunStepKey,
     DraftRunStepStatus,
 )
+from backend.app.infrastructure.sqlite_runtime import SqliteConnectionFactory
 
 
 class SqliteDraftRunRepository:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        connection_factory: SqliteConnectionFactory | None = None,
+    ) -> None:
         self._db_path = db_path
+        self._connection_factory = connection_factory or SqliteConnectionFactory()
         self._ensure_schema()
 
     def save(self, run: DraftRun) -> DraftRun:
@@ -157,10 +164,8 @@ class SqliteDraftRunRepository:
                 "CREATE INDEX IF NOT EXISTS idx_draft_run_steps_run_id ON draft_run_steps(run_id)"
             )
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self._db_path)
-        connection.row_factory = sqlite3.Row
-        return connection
+    def _connect(self) -> AbstractContextManager[sqlite3.Connection]:
+        return self._connection_factory.open(self._db_path, operation="draftRunRepository")
 
     def _run_params(self, run: DraftRun) -> tuple[Any, ...]:
         return (

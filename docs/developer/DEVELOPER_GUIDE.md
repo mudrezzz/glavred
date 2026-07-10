@@ -299,6 +299,22 @@ preserve the malformed ignored `var/` file for diagnostics, restore a clean loca
 working DB, and treat the root fix as slice `2.17.4.6.1.3.5.1`; do not confuse it
 with provider-input budget correctness.
 
+After Slice `2.17.4.6.1.3.5.1`, DraftRun and AiRun SQLite repositories use the shared
+runtime connection policy in `backend.app.infrastructure.sqlite_runtime`: bounded
+`timeout`, `busy_timeout`, `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`,
+row factory, and explicit commit/rollback. To separate storage damage from provider or
+pipeline failure, run:
+
+```bash
+python scripts/check_sqlite_integrity.py --format json --fail-on-error
+```
+
+If a local ignored DB is malformed, stop the backend/worker, move the broken file to a
+timestamped evidence name such as `var/glavred-draft-runs.sqlite3.corrupt-YYYYMMDD-HHMMSS`,
+restart the stack so schemas are recreated, and rerun the integrity check. Do not commit
+runtime DB files or move product state into tracked fixtures. A malformed DB should now
+surface as a controlled storage diagnostic instead of an unexplained HTTP `500`.
+
 After the live provider-input audit, do not treat a `payloadBudget` key nested
 inside a previous artifact as proof that the current provider call was bounded. The
 target provider-input architecture is documented in

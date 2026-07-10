@@ -7817,31 +7817,49 @@ Status:
 
 ### Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard
 
-- Status: Ready
-- Goal: Fix the live-run storage durability risk exposed by Slice 3.5: long Docker DraftRun execution on host-mounted SQLite must not corrupt the draft-run database or turn diagnostics into HTTP 500.
-- User value: Live DraftRun proof becomes trustworthy again: a provider/runtime issue should be diagnosed as pipeline behavior, not destroy the local run store.
+- Status: Done
+- AS IS source: `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`.
+- TO BE exception: no separate TO BE document; this slice changes persistence durability/error handling, not DraftRun order, trace shape, provider input, retry/fallback, budget policy, API semantics, or UI.
+- Goal: Fix the live-run storage durability risk exposed by Slice `2.17.4.6.1.3.5`: long Docker DraftRun execution on host-mounted SQLite must not corrupt the draft-run database, and corrupted SQLite must not turn diagnostics into an unexplained HTTP `500`.
+- User value: Live DraftRun proof becomes trustworthy again: storage failure is diagnosed as storage durability, while provider/runtime findings remain separate.
 - Scope:
-  - Investigate the observed sqlite disk I/O error and malformed draft-run database from live run 89dca24d-c06e-4163-97db-0b59aaaf81b4
-  - add repository/SQLite durability settings or Docker-local storage policy
-  - add integrity/startup checks and safe diagnostics
-  - preserve API/SQLite schema semantics
-  - document recovery steps for ignored var DB files.
+  - classify live incident `89dca24d-c06e-4163-97db-0b59aaaf81b4` as `disk I/O error` during progress persistence followed by `database disk image is malformed`;
+  - add shared SQLite runtime connection policy for DraftRun/AiRun repositories: timeout, `busy_timeout`, WAL, synchronous mode, foreign keys, row factory, and controlled commit/rollback;
+  - add integrity helper for `DRAFT_RUN_DB_PATH` and `AI_RUN_AUDIT_DB_PATH`;
+  - add controlled storage diagnostics for malformed/unavailable SQLite;
+  - preserve `./var:/app/var`, ignored runtime DB files, API success shape, and SQLite schema;
+  - document recovery steps and update DraftRun AS IS/PDF.
 - Out of scope:
-  - Product runtime behavior changes.
+  - prompt/model/provider changes;
+  - DraftRun quality fixes;
+  - DB schema migration;
+  - migration away from SQLite;
+  - changing successful HTTP response contracts.
 - Architecture impact:
-  - Moves roadmap editing behind a tracker/export/render workflow.
+  - introduces `backend.app.infrastructure.sqlite_runtime` as the local SQLite durability owner;
+  - keeps repository schemas/mappers in existing repositories;
+  - does not apply the policy to roadmap/portfolio repositories unless a later slice accepts that scope explicitly.
 - Tests:
-  - Roadmap CLI import/export/render/check coverage.
+  - SQLite runtime pragma/integrity tests;
+  - DraftRun/AiRun repository regression tests;
+  - DraftRun/AiRun API controlled malformed-storage tests;
+  - full backend regression, architecture smoke, npm smoke, roadmap render/export/check, diff check.
 - Docs:
-  - README, ADR, contributor guide, developer guide, AGENTS, and roadmap docs.
+  - `DRAFT_RUN_PIPELINE_AS_IS.md` and PDF;
+  - `docs/developer/DEVELOPER_GUIDE.md`;
+  - `.agents/skills/draft-run-pipeline-diagnostics/SKILL.md`;
+  - roadmap artifacts.
 - Acceptance criteria:
-  - Agents can use CLI commands instead of manually editing ROADMAP.md.
-  - ROADMAP.md renders from docs/roadmap/slices.export.jsonl.
-  - Roadmap changes remain reviewable in git diff.
+  - `SqliteDraftRunRepository` and `SqliteAiRunRepository` use the shared connection policy;
+  - corrupted SQLite returns controlled storage diagnostic instead of raw unhandled `500`;
+  - integrity helper reports `ok`/malformed/missing for draft-run and ai-run DB paths;
+  - recovery procedure is documented;
+  - one fresh Docker live DraftRun is attempted with `.env`, and integrity checks before/after remain `ok` or any provider/runtime issue is separated from storage corruption.
+- Completed: 2026-07-10
 
 ### Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture
 
-- Status: Backlog
+- Status: Ready
 - Goal: Introduce deterministic context access and typed provider-input dossier factories so prompt builders stop receiving raw full DraftRun artifacts.
 - User value: Provider inputs become intentional projections of the working set, not accidental dumps of everything the pipeline knows.
 - Scope:
@@ -8609,6 +8627,7 @@ Status:
 - Slice 2.17.4.6.1.3.4.1: Complex Pipeline Slice DoD Guardrails. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement. Completed 2026-07-10.
+- Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard. Completed 2026-07-10.
 
 
 ## Blocked Items
@@ -8637,4 +8656,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard`.
+Implement `Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture`.

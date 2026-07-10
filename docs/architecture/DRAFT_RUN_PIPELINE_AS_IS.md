@@ -66,6 +66,7 @@ Minimum DoD input from this document:
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
 | `ProviderOperationRuntime` | Step-local progress boundary for a currently running provider operation outside the validation runtime loop. It records operation id, operation kind, operation start time, model role, selected model, prompt/token estimate when available, provider wait seconds, stale budget, and slow-but-healthy state. | `steps[].artifactPayload.progress`, `scripts/analyze_draft_run_reliability.py` runtime diagnostics |
+| `SQLiteRuntimeStorageGuard` | Local durability/error-handling guard for DraftRun and child AiRun SQLite stores. It applies timeout, busy-timeout, WAL journal mode, normal synchronous mode, foreign keys, controlled connection open/commit/rollback, integrity checks, and storage diagnostics for malformed/unavailable DB files. | `backend.app.infrastructure.sqlite_runtime`, `scripts/check_sqlite_integrity.py` |
 | `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. A succeeded DraftRun is not trusted quality by itself: open critical issues block clean success, and unresolved final-gate warnings can only be publishable with caution. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
 | `ProviderReliabilityReport` | Cross-run provider reliability summary and remediation map for retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns. | `python scripts/analyze_draft_run_reliability.py --run-id ...` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
@@ -1089,6 +1090,26 @@ worker `disk I/O error` during validation progress persistence. This is not trea
 as provider-input budget behavior. It is tracked as follow-up slice
 `2.17.4.6.1.3.5.1`, because future live-heavy DraftRun slices need storage durability
 before their provider/runtime findings can be trusted.
+
+Slice `2.17.4.6.1.3.5.1` adds the operational storage guard without changing the
+pipeline flow, public response contract, SQLite schema, prompts, provider behavior, or
+budget policy. `SqliteDraftRunRepository` and `SqliteAiRunRepository` now use
+`backend.app.infrastructure.sqlite_runtime.SqliteConnectionFactory`, which opens local
+SQLite connections with a bounded timeout, `busy_timeout`, `journal_mode=WAL`,
+`synchronous=NORMAL`, `foreign_keys=ON`, row factory, and explicit commit/rollback. If
+SQLite reports malformed/unavailable storage, API and diagnostics should classify the
+problem as storage durability, not provider quality, prompt quality, or budget-gate
+failure. The repeatable local check is:
+
+```bash
+python scripts/check_sqlite_integrity.py --format json --fail-on-error
+```
+
+If the check reports `sqliteDatabaseMalformed`, preserve the ignored `var/` DB file as
+evidence, restore a clean working DB, rerun the integrity check, and only then use new
+DraftRun traces as provider/runtime proof. The live incident
+`89dca24d-c06e-4163-97db-0b59aaaf81b4` remains the reference example for this storage
+failure class.
 
 The public DraftRun response shape is unchanged: `isStale`, `staleReason`, and
 `lastProgressAt` remain computed fields. Internally, queued runs are classified as

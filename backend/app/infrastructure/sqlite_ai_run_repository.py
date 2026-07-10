@@ -1,15 +1,22 @@
 import json
 import sqlite3
+from contextlib import AbstractContextManager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from backend.app.domain.ai_run import AiRun, AiRunCapability, AiRunProvider, AiRunStatus
+from backend.app.infrastructure.sqlite_runtime import SqliteConnectionFactory
 
 
 class SqliteAiRunRepository:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        connection_factory: SqliteConnectionFactory | None = None,
+    ) -> None:
         self._db_path = db_path
+        self._connection_factory = connection_factory or SqliteConnectionFactory()
         self._ensure_schema()
 
     def save(self, run: AiRun) -> AiRun:
@@ -88,10 +95,8 @@ class SqliteAiRunRepository:
                 "CREATE INDEX IF NOT EXISTS idx_ai_runs_capability ON ai_runs(capability)"
             )
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self._db_path)
-        connection.row_factory = sqlite3.Row
-        return connection
+    def _connect(self) -> AbstractContextManager[sqlite3.Connection]:
+        return self._connection_factory.open(self._db_path, operation="aiRunRepository")
 
     def _row_to_run(self, row: sqlite3.Row) -> AiRun:
         return AiRun(
