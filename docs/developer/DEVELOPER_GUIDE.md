@@ -330,6 +330,27 @@ reports, or full final-quality traces. A future MCP/tool server may call the
 deterministic context access service, but it must not expose raw full DraftRun JSON
 to the model.
 
+Slice `2.17.4.6.1.3.6` implements the provider-free dossier foundation. Use
+`DraftRunContextAccessService` and the role-owned factories under
+`backend.app.drafting.application.dossiers`; do not read raw step payloads inside a
+new prompt builder. Every dossier reports readiness, missing required inputs,
+actual sent fields, handles, counts, suppressed fields, and quality risk.
+
+Replay a stored run without calling OpenRouter:
+
+```powershell
+python scripts/audit_draft_run_provider_dossiers.py `
+  --run-id <DraftRun ID> `
+  --format markdown `
+  --fail-on-unready
+```
+
+`readyForMigration` confirms that all six factories assembled, handles resolved,
+and forbidden full artifacts were absent. `runtimeMigrationStatus=notMigrated` is
+intentional until the corresponding provider call is wired in slices `3.7-3.9`.
+Do not use factory replay as evidence that a live LLM request already received a
+dossier.
+
 Validation/revision loops must also use
 `backend.app.drafting.application.operations.validation_runtime_budget`.
 `ValidationRuntimeBudgetProfile` defines execution-mode runtime caps, and

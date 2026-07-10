@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.app.drafting.domain.provider_input_semantics import SemanticInputContract
 from backend.app.shared.llm_operations import LlmOperationIncident
 
 
@@ -40,22 +41,6 @@ class PayloadBudgetProfile:
             "maxCandidates": self.max_candidates,
             "maxSourceSnippets": self.max_source_snippets,
             "maxPriorDrafts": self.max_prior_drafts,
-        }
-
-
-@dataclass(frozen=True)
-class SemanticInputContract:
-    must_have: tuple[str, ...] = ()
-    should_have: tuple[str, ...] = ()
-    diagnostic_only: tuple[str, ...] = ()
-    never_send_to_provider: tuple[str, ...] = ()
-
-    def to_payload(self) -> dict[str, list[str]]:
-        return {
-            "mustHave": list(self.must_have),
-            "shouldHave": list(self.should_have),
-            "diagnosticOnly": list(self.diagnostic_only),
-            "neverSendToProvider": list(self.never_send_to_provider),
         }
 
 

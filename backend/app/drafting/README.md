@@ -246,8 +246,10 @@ DraftRun provider-heavy operations must cross the DraftRun payload budget layer
 before `build_*_messages(...)` creates provider messages. The implementation is
 split by role under `backend.app.drafting.application.operations`:
 
-- `payload_budget_contracts.py`: `PayloadBudgetProfile`,
-  `SemanticInputContract`, `PayloadBudgetResult`, and internal compaction DTOs.
+- `domain/provider_input_semantics.py`: provider-free `SemanticInputContract` shared
+  by dossiers and payload budgeting.
+- `payload_budget_contracts.py`: `PayloadBudgetProfile`, `PayloadBudgetResult`, and
+  internal compaction DTOs; it re-exports the semantic contract for compatibility.
 - `payload_budget_profiles.py`: per-operation, per-execution-mode caps for prompt chars,
   approximate tokens, rules, claims, evidence, candidates, source snippets, and prior
   drafts.
@@ -296,9 +298,9 @@ Target flow:
 DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider
 ```
 
-The drafting package should introduce deterministic context access and
+Slice `2.17.4.6.1.3.6` introduces deterministic context access and
 operation-specific dossier factories before migrating more prompt builders.
-Planned dossier owners include:
+Implemented dossier owners include:
 
 - planning dossiers for `materialPlan`, `strategy`, and `rhetoricalPlans`;
 - writer dossiers for `draftCandidate` and alternative-angle candidate prose;
@@ -311,6 +313,17 @@ Prompt builders must not receive full `rulePack`, full `SourceLedger`, full
 `materialPlan`, full candidate pools, full validation reports, or full final-quality
 traces by default. A temporary exception must be explicit roadmap debt with a
 removal slice.
+
+The foundation is provider-free and currently lives in:
+
+- `domain/provider_dossier.py` and `domain/provider_input_semantics.py` for typed
+  contracts;
+- `application/context` for deterministic compact reads and handle resolution;
+- `application/dossiers` for policies, assembly, six factories, and replay;
+- `scripts/audit_draft_run_provider_dossiers.py` for stored-run proof.
+
+`readyForMigration` means factories, exclusions, and handles passed replay. It does
+not mean provider call sites already use dossiers; those migrations remain `3.7-3.9`.
 
 ## Validation Runtime Budget
 

@@ -1,0 +1,55 @@
+{
+  "baselineVersion": "draft-run-baseline-v1",
+  "runId": "e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2",
+  "capturedAt": "2026-07-10",
+  "createdAt": "2026-07-09T21:50:48.343532+00:00",
+  "updatedAt": "2026-07-09T22:13:06.860424+00:00",
+  "status": "succeeded",
+  "stepCount": 12,
+  "childAiRunCount": 34,
+  "technicalStatus": "succeeded",
+  "providerRecoveryStatus": "fallbackRecovered",
+  "editorialStatus": "needsHumanReview",
+  "overallVerdict": "needsAttention",
+  "evidenceFidelity": {
+    "foundEvidenceCount": 24,
+    "acceptedEvidenceCount": 36,
+    "interpretedEvidenceCount": 25,
+    "fallbackInterpretedEvidenceCount": 1,
+    "rejectedEvidenceCount": 12,
+    "coverageVerdict": "weak",
+    "fidelityImpact": "weak",
+    "needsFollowUp": true
+  },
+  "providerSignals": {
+    "evidenceInterpretationTimeouts": 3,
+    "malformedJsonFallbacks": 1,
+    "overBudgetOperations": [
+      "materialPlan",
+      "strategy",
+      "rhetoricalPlans"
+    ]
+  },
+  "editorialSignals": {
+    "finalDraftCharacters": 9482,
+    "finalDraftParagraphs": 33,
+    "expectedParagraphRange": "8-18",
+    "validationOpenCriticalCount": 1,
+    "validationOpenWarningCount": 19,
+    "finalGateStatus": "warning",
+    "revisionLoopStopReason": "noImprovement"
+  },
+  "knownConfounders": [
+    "The brief CTA was already corrupted with question marks at input time.",
+    "The run predates runtime provider-dossier migration; current dossier replay is factory proof only.",
+    "The final text has a readable CTA despite the corrupted contract value."
+  ],
+  "diagnosticCommands": [
+    "python .agents/skills/draft-run-pipeline-diagnostics/scripts/analyze_draft_run.py e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2",
+    "python scripts/analyze_draft_run_reliability.py --run-id e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2 --format markdown",
+    "python scripts/audit_draft_run_provider_inputs.py --run-id e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2 --format markdown",
+    "python scripts/audit_draft_run_provider_dossiers.py --run-id e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2 --format markdown",
+    "python scripts/check_sqlite_integrity.py --format json --fail-on-error"
+  ],
+  "comparisonRule": "Compare future runs with the same project, topic, fabula, settings, and provider roles; judge stage metrics and quality signals, not exact generated wording."
+}

@@ -225,6 +225,15 @@ current provider call was bounded. The target treatment plan is documented in
 `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and
 `docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`.
 
+Slice `2.17.4.6.1.3.6` now provides the deterministic foundation under
+`backend.app.drafting`: typed provider-dossier contracts, context readers, stable
+artifact handles, six role-owned dossier factories, and provider-free replay via
+`scripts/audit_draft_run_provider_dossiers.py`. A replay over a stored live DraftRun
+must report unresolved handles and forbidden-field violations separately from
+readiness/quality risk. This does not close the runtime limitation: prompt-builder
+call sites remain transitional until slices `3.7-3.9` wire these dossiers through
+`ProviderInputBudgetGate`.
+
 ## Current Guardrails
 
 Already enforced:

@@ -1744,6 +1744,18 @@ const DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES = {
 };
 const DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH =
   "scripts/audit_draft_run_provider_inputs.py";
+const DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES = {
+  contracts: "backend/app/drafting/domain/provider_dossier.py",
+  semantics: "backend/app/drafting/domain/provider_input_semantics.py",
+  contextAccess: "backend/app/drafting/application/context/draft_run_context_access.py",
+  handleResolver: "backend/app/drafting/application/context/draft_run_handle_resolver.py",
+  policy: "backend/app/drafting/application/dossiers/provider_dossier_policy.py",
+  assembler: "backend/app/drafting/application/dossiers/provider_dossier_assembler.py",
+  factories: "backend/app/drafting/application/dossiers/provider_dossier_factories.py",
+  replay: "backend/app/drafting/application/dossiers/provider_dossier_replay.py",
+};
+const DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH =
+  "scripts/audit_draft_run_provider_dossiers.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_PATH =
   "backend/app/drafting/application/operations/validation_runtime_budget.py";
 const DRAFTING_VALIDATION_RUNTIME_BUDGET_OWNER_PATHS = [
@@ -1796,6 +1808,8 @@ const DRAFTING_BACKEND_REQUIRED_PACKAGES = [
   "backend/app/drafting/application/workflow",
   "backend/app/drafting/application/steps",
   "backend/app/drafting/application/operations",
+  "backend/app/drafting/application/context",
+  "backend/app/drafting/application/dossiers",
   "backend/app/drafting/application/artifacts",
   "backend/app/drafting/application/evidence",
   "backend/app/drafting/application/planning",
@@ -3320,7 +3334,6 @@ const draftingPayloadBudgetContractsSource = readText(
 );
 for (const fragment of [
   "class PayloadBudgetProfile",
-  "class SemanticInputContract",
   "class PayloadBudgetResult",
   "class PayloadCompactionResult",
 ]) {
@@ -3381,6 +3394,10 @@ for (const fragment of [
     `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.compactors} is missing role-owned compactor fragment: ${fragment}`
   );
 }
+assert(
+  readText(DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES.semantics).includes("class SemanticInputContract"),
+  `${DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES.semantics} must own the provider-free SemanticInputContract.`
+);
 
 assert(
   !/\ndef\s+(drop_empty|pick|record|records)\s*\(/.test(draftingPayloadCompactorsSource),
@@ -3441,6 +3458,63 @@ for (const fragment of [
 assert(
   fileExists(DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH),
   `${DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH} is required for replayable DraftRun provider input audits.`
+);
+
+const draftingProviderDossierSources = Object.fromEntries(
+  Object.entries(DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES).map(([key, path]) => [key, readText(path)])
+);
+for (const fragment of [
+  "class ProviderDossier",
+  "class ArtifactHandle",
+  "class ContextSelection",
+  "runtimeMigrated",
+  "missingRequiredInputs",
+]) {
+  assert(
+    draftingProviderDossierSources.contracts.includes(fragment),
+    `${DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES.contracts} is missing typed dossier contract fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class DraftRunContextAccessService",
+  "def post_contract",
+  "def evidence",
+  "def rules",
+  "def resolve",
+]) {
+  assert(
+    draftingProviderDossierSources.contextAccess.includes(fragment),
+    `${DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES.contextAccess} is missing deterministic context access fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class PlanningDossierFactory",
+  "class WriterDossierFactory",
+  "class ReviewDossierFactory",
+  "class RankingDossierFactory",
+  "class RevisionDossierFactory",
+  "class FinalQualityDossierFactory",
+]) {
+  assert(
+    draftingProviderDossierSources.factories.includes(fragment),
+    `${DRAFTING_PROVIDER_DOSSIER_ROLE_MODULES.factories} is missing role-owned dossier factory: ${fragment}`
+  );
+}
+for (const fragment of [
+  "never_send_to_provider",
+  "missing_required_inputs",
+  "runtimeMigrationStatus",
+  "notMigrated",
+]) {
+  const combinedDossierSource = Object.values(draftingProviderDossierSources).join("\n");
+  assert(
+    combinedDossierSource.includes(fragment),
+    `DraftRun provider dossier boundary is missing guardrail fragment: ${fragment}`
+  );
+}
+assert(
+  fileExists(DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH),
+  `${DRAFTRUN_PROVIDER_DOSSIER_AUDIT_SCRIPT_PATH} is required for provider-free dossier replay proof.`
 );
 
 for (const fragment of ["payload_budget_status", "budget_policy_id", "reason_not_budgeted", "payload_budget_removal_slice"]) {

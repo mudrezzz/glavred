@@ -64,6 +64,7 @@ Minimum DoD input from this document:
 | `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
+| `ProviderDossier` | Typed, operation-family projection assembled from rich artifacts through deterministic context access. It records required/optional inputs, actual `sent` data, handles, counts, suppressed fields, readiness, and quality risk. Slice `2.17.4.6.1.3.6` implements the provider-free foundation; provider call sites remain transitional until `3.7-3.9`. | provider-free replay/audit output; future child `AiRun.requestPayload.providerInput` after call-site migration |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
 | `ProviderOperationRuntime` | Step-local progress boundary for a currently running provider operation outside the validation runtime loop. It records operation id, operation kind, operation start time, model role, selected model, prompt/token estimate when available, provider wait seconds, stale budget, and slow-but-healthy state. | `steps[].artifactPayload.progress`, `scripts/analyze_draft_run_reliability.py` runtime diagnostics |
 | `SQLiteRuntimeStorageGuard` | Local durability/error-handling guard for DraftRun and child AiRun SQLite stores. It applies timeout, busy-timeout, WAL journal mode, normal synchronous mode, foreign keys, controlled connection open/commit/rollback, integrity checks, and storage diagnostics for malformed/unavailable DB files. | `backend.app.infrastructure.sqlite_runtime`, `scripts/check_sqlite_integrity.py` |
@@ -890,6 +891,23 @@ Important AS IS rules:
 - child `AiRun.requestPayload` stores the role model and context pack it received;
 - context packs are local orchestration artifacts, not long-term memory.
 
+Slice `2.17.4.6.1.3.6` adds an available provider-free context/dossier foundation:
+
+- `DraftRunContextAccessService` reads compact contract, evidence, rule, planning,
+  candidate, validation, and final-quality views deterministically;
+- planning, writer, review, ranking, revision, and final-quality dossier factories
+  return typed `ProviderDossier` contracts;
+- compact entries carry stable handles back to full persisted artifacts;
+- missing required inputs block readiness, while trimming and missing optional input
+  remain explicit quality risk;
+- `scripts/audit_draft_run_provider_dossiers.py` replays all six dossier families
+  without providers and reports actual projected size, unresolved handles, and
+  forbidden-field violations.
+
+This is an architectural foundation, not a runtime migration claim. Current
+provider operations continue using the AS IS projections in the table below until
+their call sites are migrated in slices `2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
+
 ### 6.1 Context Handoff and Provider Input Contract
 
 This section defines what future DoD must check before changing provider-heavy
@@ -1234,6 +1252,11 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
   loop or general fallback.
 - `ArticleDossier` is a local compact memory artifact, not a vector store or
   cross-run RAG system.
+- The deterministic context-access and typed dossier foundation exists, but live
+  provider call sites do not use it yet. Replay status `readyForMigration` proves
+  factory/handle/exclusion behavior only; it does not mean runtime provider input is
+  dossier-backed. Planning, writer, review, ranking, revision, and final-gate
+  migrations remain slices `2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
 - Failed late provider operations are safely finalized when the Python call returns or
   raises. Evidence interpretation now has an operation-level timeout envelope; a
   broader infrastructure watchdog is still needed for externally stuck Celery tasks

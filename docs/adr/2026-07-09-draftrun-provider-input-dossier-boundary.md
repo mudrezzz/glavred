@@ -50,6 +50,18 @@ Key rules:
 The implementation track is recorded in roadmap slices
 `2.17.4.6.1.3.4` through `2.17.4.6.1.3.10`.
 
+Slice `2.17.4.6.1.3.6` implements the deterministic boundary itself:
+
+- provider-free `DraftRunContextAccessService`;
+- typed planning, writer, review, ranking, revision, and final-quality dossiers;
+- stable handles and controlled full-artifact resolution;
+- explicit readiness, missing-required-input, trimming, suppression, and quality-risk
+  fields;
+- provider-free replay that refuses to claim runtime migration.
+
+Actual prompt-builder/provider call sites remain separate migrations in slices
+`2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
+
 ## Consequences
 
 Positive:

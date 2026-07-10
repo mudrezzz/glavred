@@ -1,0 +1,236 @@
+{
+  "runId": "dossier-replay-run",
+  "steps": {
+    "postContract": {
+      "status": "created",
+      "title": "Decision workbench for industrial maintenance",
+      "thesis": "A reliable industrial AI product starts with a controlled decision workflow.",
+      "audience": "B2B product leaders",
+      "value": "A concrete path from pilot to governed operation",
+      "goal": "Explain the operating model",
+      "cta": "Audit one maintenance decision before scaling",
+      "platform": "telegram",
+      "claims": [
+        {"id": "claim-1", "allowedUse": "canState"},
+        {"id": "claim-2", "allowedUse": "needsQualification"}
+      ],
+      "forbiddenMoves": ["Do not invent production metrics"],
+      "evidenceObligations": [{"id": "obligation-1", "kind": "proof", "statement": "Name implementation constraints"}],
+      "publicationSizeContract": {"minChars": 1800, "maxChars": 4200},
+      "riskNotes": ["Keep vendor examples qualified"],
+      "metadata": {"diagnosticOnly": "must not reach provider"}
+    },
+    "publicEvidence": {
+      "enrichedSourceLedger": {
+        "claims": [
+          {
+            "id": "claim-1",
+            "statement": "Maintenance copilots need rollback and confidence boundaries.",
+            "source": "public-evidence-1",
+            "confidence": "high",
+            "allowedUse": "canState",
+            "riskFlags": [],
+            "provenance": {"url": "https://example.test/case", "rawBody": "diagnostic source body"}
+          },
+          {
+            "id": "claim-2",
+            "statement": "Pilot outcomes depend on workflow integration.",
+            "source": "public-evidence-2",
+            "confidence": "medium",
+            "allowedUse": "needsQualification",
+            "riskFlags": ["cross-domain-analogy"],
+            "provenance": {"url": "https://example.test/report"}
+          },
+          {
+            "id": "claim-blocked",
+            "statement": "Unverified vendor promise.",
+            "source": "vendor-page",
+            "confidence": "low",
+            "allowedUse": "doNotState",
+            "riskFlags": ["marketing-copy"]
+          }
+        ],
+        "metadata": {"claimCount": 3},
+        "payloadBudget": {"historical": true}
+      },
+      "articleDossier": {"cards": [{"id": "full-card", "summary": "diagnostic only"}]},
+      "contextPacks": {"writer": {"items": [{"cardId": "full-card"}]}}
+    },
+    "rulePack": {
+      "evidenceInterpretation": {
+        "implications": [
+          {
+            "id": "implication-1",
+            "title": "Show the control loop",
+            "summary": "Connect evaluation, confidence boundaries, and rollback.",
+            "allowedUse": "canState",
+            "confidence": "high",
+            "claimIds": ["claim-1"],
+            "ruleIds": ["rule-1"]
+          }
+        ],
+        "rejectedEvidenceUses": [{"id": "rejected-1", "reason": "Vendor marketing"}]
+      },
+      "ruleRegistrySnapshot": {
+        "version": "rule-registry-v2",
+        "rules": [
+          {
+            "id": "rule-1",
+            "scope": "post",
+            "category": "evidence",
+            "title": "Ground factual claims",
+            "statement": "Every factual claim needs an evidence handle.",
+            "priority": 1,
+            "severity": "hard",
+            "claimIds": ["claim-1"],
+            "contractRefs": ["obligation-1"],
+            "binding": {"validatorType": "deterministic"}
+          },
+          {
+            "id": "rule-2",
+            "scope": "voice",
+            "category": "style",
+            "title": "Avoid generic AI prose",
+            "statement": "Use a concrete maintenance decision.",
+            "priority": 2,
+            "severity": "soft",
+            "binding": {"validatorType": "llm"}
+          }
+        ]
+      },
+      "operationEnvelope": {"attempts": [{"raw": "diagnostic trace"}]},
+      "payloadBudget": {"historical": true}
+    },
+    "materialPlan": {
+      "materialPlan": {
+        "groundingPlan": ["Use claim-1 for rollback and confidence boundaries"],
+        "availableEvidence": ["claim-1", "claim-2"],
+        "qualifiedClaims": ["claim-2"],
+        "riskyClaims": ["Do not promise autonomous maintenance"],
+        "missingEvidence": ["Production KPI delta"],
+        "claimsRequiringAttribution": ["claim-2"],
+        "sourceNotes": ["Full diagnostic note that should not be sent by default"]
+      }
+    },
+    "strategy": {
+      "draftStrategy": {
+        "thesisAngle": "Workflow before model",
+        "openingMove": "Start with one failed maintenance decision",
+        "argumentSequence": ["Decision", "Evidence", "Evaluation", "Rollback"],
+        "ctaPlan": "Audit one decision loop",
+        "forbiddenMoves": ["No autonomous factory claims"],
+        "toneNotes": ["Calm B2B tone"]
+      }
+    },
+    "rhetoricalPlans": {
+      "rhetoricalPlanSet": {
+        "plans": [
+          {
+            "id": "plan-1",
+            "title": "Decision workbench",
+            "angle": "A controlled workflow beats an impressive demo",
+            "openingMove": "Begin with the maintenance planner",
+            "moves": ["Expose uncertainty", "Define evaluation", "Show rollback"],
+            "claimsToUse": ["claim-1", "claim-2"],
+            "claimIdsToAvoid": ["claim-blocked"],
+            "requiredRuleIds": ["rule-1", "rule-2"],
+            "ctaRoute": "Audit one workflow",
+            "risks": ["Do not overstate quantified value"],
+            "sizeIntent": "standard"
+          }
+        ]
+      }
+    },
+    "draft": {
+      "candidates": [
+        {
+          "id": "candidate-1",
+          "title": "Decision workbench for maintenance",
+          "body": "A maintenance copilot is useful only when the team can inspect evidence, confidence, and rollback. The first product is a controlled decision workflow, not an autonomous factory.",
+          "rhetoricalPlanId": "plan-1",
+          "usedEvidence": ["claim-1", "claim-2"],
+          "ruleCoverage": ["rule-1", "rule-2"],
+          "risks": ["No production KPI"],
+          "weaknesses": ["Needs one more concrete implementation detail"]
+        },
+        {
+          "id": "candidate-2",
+          "title": "Industrial AI pilot",
+          "body": "A shorter alternative candidate used to exercise ranking without exposing the full candidate pool.",
+          "rhetoricalPlanId": "plan-1",
+          "usedEvidence": ["claim-1"],
+          "ruleCoverage": ["rule-1"],
+          "risks": [],
+          "weaknesses": ["Too generic"]
+        }
+      ],
+      "selection": {"selectedCandidateId": "candidate-1"}
+    },
+    "validation": {
+      "candidateReports": [
+        {
+          "candidateId": "candidate-1",
+          "status": "warning",
+          "criticalCount": 0,
+          "warningCount": 1,
+          "findings": [
+            {
+              "id": "finding-1",
+              "validatorId": "evidence.attribution",
+              "severity": "warning",
+              "status": "open",
+              "message": "Qualify the workflow integration claim.",
+              "repairGuidance": "Name it as an implementation condition.",
+              "source": "deterministic"
+            }
+          ]
+        },
+        {
+          "candidateId": "candidate-2",
+          "status": "warning",
+          "criticalCount": 0,
+          "warningCount": 1,
+          "findings": [
+            {
+              "id": "finding-2",
+              "validatorId": "voice.generic",
+              "severity": "warning",
+              "status": "open",
+              "message": "The candidate is generic.",
+              "repairGuidance": "Use the maintenance decision.",
+              "source": "critic"
+            }
+          ]
+        }
+      ],
+      "rankingRevision": {
+        "revisionLoop": {
+          "status": "completed",
+          "stopReason": "acceptedQuality",
+          "cycles": [{"cycle": 1, "status": "accepted", "accepted": true, "candidateId": "candidate-1"}]
+        },
+        "operationEnvelope": {"attempts": [{"raw": "diagnostic trace"}]},
+        "runtimeBudget": {"limits": {"staleAfterSeconds": 600}}
+      }
+    },
+    "complete": {
+      "qualityFidelity": {
+        "editorialStatus": "publishableWithCaution",
+        "overallVerdict": "recoveredSuccess",
+        "issueLifecycle": {
+          "items": [
+            {
+              "id": "quality-1",
+              "validatorId": "evidence.attribution",
+              "severity": "warning",
+              "status": "acceptedRisk",
+              "source": "finalQualityGate",
+              "message": "One claim remains qualified.",
+              "reason": "No quantified production evidence"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

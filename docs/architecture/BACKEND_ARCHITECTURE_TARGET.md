@@ -441,7 +441,7 @@ fields, semantic inputs, quality risk, prompt char estimate, and approx token
 estimate. Operations not yet wired must be explicitly debt-allowlisted in
 `CURRENT_LLM_OPERATION_INVENTORY` with a removal slice.
 
-The next provider-input target is the DraftRun dossier boundary documented in
+The DraftRun dossier boundary is documented in
 `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md` and ADR
 `docs/adr/2026-07-09-draftrun-provider-input-dossier-boundary.md`. The payload
 budget rule is not enough if prompt builders still receive full artifacts and only
@@ -465,6 +465,11 @@ Target dossier owners:
 - `RankingDossierFactory` for `pairwiseRanking`.
 - `RevisionDossierFactory` for `directedRevision` and final repair.
 - `FinalQualityDossierFactory` for independent final quality review.
+
+Slice `2.17.4.6.1.3.6` implements these typed factories plus
+`DraftRunContextAccessService`, stable artifact handles, controlled resolution, and
+provider-free replay. Slices `3.7-3.9` remain responsible for wiring actual provider
+operations; a factory-only replay must never be presented as live runtime proof.
 
 Tool-mediated or MCP-style context access is a future adapter over the deterministic
 context service, not a substitute for it. A tool server must not expose raw full
@@ -548,7 +553,7 @@ The Drafting v1 implementation of this contract is:
    each provider-heavy operation behind the shared envelope.
 15. Add provider-operation runtime guard coverage for all slow provider-heavy calls.
 16. Enforce direct provider-input budgets on every provider-heavy child `AiRun`.
-17. Add deterministic DraftRun context access and provider-input dossier factories.
+17. Add deterministic DraftRun context access and provider-input dossier factories. Done.
 18. Migrate planning, writer/alternative-angle, and review/ranking/final-gate
     operations from full-artifact prompt inputs to operation-specific dossiers.
 19. Pilot tool-mediated context access only after the deterministic dossier boundary

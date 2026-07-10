@@ -7859,39 +7859,120 @@ Status:
 
 ### Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture
 
-- Status: Ready
-- Goal: Introduce deterministic context access and typed provider-input dossier factories so prompt builders stop receiving raw full DraftRun artifacts.
-- User value: Provider inputs become intentional projections of the working set, not accidental dumps of everything the pipeline knows.
+- Status: Done
+- Goal: Introduce deterministic context access and typed provider-input dossier factories so later provider-operation migrations can stop passing raw full DraftRun artifacts into prompt builders.
+- User value: Provider inputs become intentional, bounded, traceable projections of the working set instead of accidental dumps of everything the pipeline knows.
+- AS IS sources:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, especially sections `6 Context flow`, `6.1 Context Handoff and Provider Input Contract`, and `10 Known AS IS limitations`.
+  - Existing `ArticleDossier`, `ContextPack`, provider-input budget gate, stored child `AiRun.requestPayload`, and current operation-specific projections.
+- Change intent:
+  - Add a deterministic read boundary between rich persisted DraftRun artifacts and operation-specific provider inputs.
+  - Define typed dossier contracts and explicit inclusion/exclusion policies before migrating individual provider calls.
+- TO BE source and necessity:
+  - Approved source: `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md`, especially sections `5.1 Rich working set stays rich`, `5.2 Context access service`, `5.3 Dossier factories`, `5.4 Budget gate`, `6 Target artifact flow`, and `8 Trace contract`.
+  - A separate TO BE is not required because the approved track document already defines this slice's target boundary and proof contract. If implementation diverges, update or supersede the TO BE before code changes.
+- Preserved AS IS invariants:
+  - DraftRun step order, prompts, model-role selection, retry/backup/fallback behavior, provider adapter, HTTP API, SQLite schema, UI, and quality/fidelity policy remain unchanged.
+  - Full rich artifacts remain persisted for diagnostics, replay, and human inspection.
+  - Roles exchange persisted artifacts, not hidden conversation state.
+  - Existing direct current-call `ProviderInputBudgetGate` remains the mandatory budget owner.
+- Changed AS IS invariants:
+  - Add an available canonical boundary `DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider`.
+  - Add typed, deterministic, trace-safe provider dossier contracts with explicit required, optional, diagnostic-only, and forbidden fields.
+  - Add stable handles that resolve compact dossier entries back to full persisted artifacts.
+  - Real provider operations are not migrated in this slice; runtime provider input remains AS IS until slices `2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
 - Scope:
-  - Add provider-free `DraftRunContextAccessService` for compact deterministic reads from rich DraftRun artifacts.
-  - Add typed dossier DTOs/factories for planning, writer, review, ranking, revision, and final quality operations.
-  - Add handle resolution so trace can point from compact provider input back to full diagnostic artifacts.
-  - Add unit tests proving dossiers preserve `mustHave` inputs and suppress `neverSendToProvider` fields.
+  - Add provider-free `DraftRunContextAccessService` for compact deterministic reads of post contract, accepted/interpreted evidence, claim handles, scoped rules, candidate summaries, validation issues, and final-quality issue lifecycle.
+  - Add typed immutable dossier contracts and readiness/quality-risk vocabulary.
+  - Add class-owned `PlanningDossierFactory`, `WriterDossierFactory`, `ReviewDossierFactory`, `RankingDossierFactory`, `RevisionDossierFactory`, and `FinalQualityDossierFactory`.
+  - Add operation-family policies that declare `mustHave`, `shouldHave`, `diagnosticOnly`, and `neverSendToProvider` fields.
+  - Add stable trace-safe handle creation and controlled handle resolution.
+  - Add dossier serialization and compatibility with `ProviderInputBudgetGate` without special-case prompt logic.
+  - Add a provider-free replay/audit command that builds dossier summaries for a stored DraftRun or sanitized fixture.
+  - Add architecture guardrails preventing public helper sprawl, raw provider calls, and untyped dossier result contracts in the new boundary.
 - Out of scope:
-  - Migrating every provider operation in this slice, changing prompt wording, changing models, using external MCP, API changes, SQLite changes, or UI redesign.
+  - Migrating actual `materialPlan`, `strategy`, `rhetoricalPlans`, writer, validation, ranking, revision, final-quality, or HITL calls to dossiers.
+  - Changing prompt wording, models, retries, fallback policy, provider behavior, API, SQLite, UI, or step order.
+  - External MCP/tool access; that remains slice `2.17.4.6.1.3.10`.
+  - Treating factory existence as proof that live provider calls are already bounded by dossiers.
 - Implementation notes:
-  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
-  - This is the architectural foundation for `3.7` through `3.10`.
-  - Dossier factories should be class-owned service/policy/component owners, not public helper sprawl.
+  - Keep DTOs provider-free and persistence-free under `backend.app.drafting.domain`.
+  - Keep deterministic reads and dossier assembly under class-owned `backend.app.drafting.application` packages.
+  - Reuse existing artifact DTOs and `ProviderInputBudgetGate`; do not duplicate `ArticleDossier`, `ContextPack`, or budget policy.
+  - A dossier with a missing `mustHave` input must be `blocked` or explicitly degraded; it may not silently report readiness.
+  - `neverSendToProvider` fields must be absent from the serialized `sent` payload, not merely listed as suppressed.
+  - Handles must carry run/artifact identity and reject unknown, stale, or cross-run references with a controlled result.
 - Architecture impact:
-  - Adds the target boundary: `DraftRun artifacts -> ContextAccess -> DossierFactory -> BudgetGate -> PromptBuilder -> Provider`.
+  - Establishes the canonical provider-input projection boundary used by slices `3.7` through `3.10`.
+  - Keeps the rich working set intact while separating storage/diagnostics data from provider-visible data.
+  - Gives each operation family one reusable context policy instead of allowing prompt builders to invent ad hoc slicing rules.
+- Definition of Done:
+  - AS IS and the approved TO BE sections are checked before implementation; every new/changed target below has matching proof.
+  - `DraftRunContextAccessService` exposes deterministic, bounded, provider-free reads for contract, evidence, claims, rules, candidates, validation issues, and final-quality lifecycle.
+  - Identical inputs produce stable ordering, handles, serialized payloads, and counts.
+  - All six dossier factories exist as class-owned components and return typed contracts rather than raw `dict[str, Any]` service results.
+  - Every dossier exposes `profileId`, `operationId`, `modelRole`, `readinessStatus`, `mustHave`, `shouldHave`, `sent`, `handles`, `sentCounts`, `trimmedCounts`, `suppressedFields`, `qualityRisk`, and `missingRequiredInputs` in a trace-safe serialization.
+  - For every operation family, each required AS IS input is either present in `sent` or represented by a resolvable allowed handle.
+  - Missing required input cannot produce `readinessStatus=ready`; the reason is structured and testable.
+  - Full `SourceLedger`, full `rulePack`, full candidate pool, full validation/final-quality trace, historical operation envelopes, and nested historical budget metadata are absent from default serialized `sent` payloads.
+  - Forbidden fields are checked against the actual serialized payload; declaring a field in `neverSendToProvider` without removing it fails tests.
+  - Every compact claim, evidence, rule, candidate, and issue reference can be resolved to the correct full artifact; unknown, stale, and cross-run handles fail through a controlled typed result without leaking full data.
+  - Every dossier serializes to JSON and can be evaluated by `ProviderInputBudgetGate`; reported sent/trimmed/suppressed counts match actual content.
+  - A sanitized realistic DraftRun replay builds every dossier family without providers, preserves all declared `mustHave` inputs, suppresses forbidden data, resolves handles, and reports measured sizes and quality risk.
+  - The replay/audit output explicitly states that runtime operations are not yet migrated; no clean live-dossier claim is emitted from factory-only proof.
+  - New modules have ownership headers and architecture smoke rejects raw provider calls, public helper sprawl, or untyped dossier owners in the new packages.
+  - No runtime provider call, prompt text, model selection, HTTP contract, SQLite schema, UI layout, or DraftRun step order changes in this slice.
+  - Completion records `AS IS updated`: document the available foundation and the fact that runtime operations remain transitional, then regenerate `DRAFT_RUN_PIPELINE_AS_IS.pdf`.
+- Proof evidence:
+  - AS IS -> TO BE -> Proof matrix covering context access, all six factories, exclusion policy, handle resolution, budget compatibility, replay proof, and explicit runtime non-migration.
+  - Structured replay report over a sanitized full DraftRun artifact set.
+  - Unit and integration tests mapped one-to-one to the DoD items.
+  - Architecture smoke output and backend architecture audit for the new packages.
 - Tests:
-  - Context access returns compact contract/evidence/rule/candidate/issue summaries without provider calls.
-  - Dossier factories include required handles and explicit sent/trimmed/suppressed counts.
-  - No factory exposes full `SourceLedger`, full `rulePack`, full candidate pool, or full validation report by default.
+  - `backend/tests/test_draft_run_context_access.py`: deterministic compact reads, stable ordering, bounds, missing data, no provider/persistence writes.
+  - `backend/tests/test_draft_run_provider_dossiers.py`: all six factories, typed contracts, operation profiles, required/optional fields, readiness and quality risk.
+  - `backend/tests/test_draft_run_dossier_exclusion_policy.py`: full-artifact and diagnostic-field suppression; actual serialized payload cannot contain forbidden fields.
+  - `backend/tests/test_draft_run_dossier_handles.py`: stable handle creation, correct resolution, missing/stale/cross-run rejection, no full-artifact leakage.
+  - `backend/tests/test_draft_run_dossier_budget_compatibility.py`: JSON serialization, direct gate compatibility, accurate sent/trimmed/suppressed counts, oversized dossier incident behavior.
+  - `backend/tests/test_draft_run_provider_dossier_replay.py`: realistic sanitized artifact replay for every dossier family and explicit factory-only/non-runtime verdict.
+  - Extend `backend/tests/test_backend_architecture_audit.py` or architecture smoke fixtures for ownership headers, class-owned boundaries, forbidden raw provider calls, and helper-sprawl prevention.
+- Targeted validation commands:
+  - `python -m pytest backend/tests/test_draft_run_context_access.py backend/tests/test_draft_run_provider_dossiers.py backend/tests/test_draft_run_dossier_exclusion_policy.py backend/tests/test_draft_run_dossier_handles.py backend/tests/test_draft_run_dossier_budget_compatibility.py backend/tests/test_draft_run_provider_dossier_replay.py`.
+  - `python scripts/audit_draft_run_provider_dossiers.py --run-id <existing-live-run-id> --format json` when a local saved run is available; otherwise use the committed sanitized replay fixture.
+  - `python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high`.
+  - `python -m pytest backend/tests/test_backend_architecture_audit.py`.
+- Regression commands:
+  - `python -m pytest backend/tests`.
+  - `npm run test:architecture`.
+  - `npm run smoke`.
+  - `python -m backend.app.roadmap render`.
+  - `python -m backend.app.roadmap export`.
+  - `python -m backend.app.roadmap check`.
+  - `git diff --check`.
+- Live proof:
+  - A fresh live DraftRun is not required because this slice does not alter runtime provider calls.
+  - If an existing local live run is available, use it only as provider-free replay input and do not expose secrets or raw sensitive content in committed fixtures.
+  - Fresh live proof becomes mandatory in slices `3.7` through `3.9`, when real provider operations are migrated to dossiers.
 - Docs:
-  - Update TO BE, backend component map, developer guide, and ADR if boundaries change.
+  - Update the approved TO BE only if implementation changes the target contract.
+  - Update `DRAFT_RUN_PIPELINE_AS_IS.md` and regenerate its PDF to record the implemented but not-yet-wired foundation.
+  - Update backend AS IS/TARGET, drafting README/component map, developer guide, and ADR if the ownership boundary changes beyond the approved TO BE.
 - Demo impact:
-  - No demo behavior change.
+  - No user-visible demo behavior change.
 - Acceptance criteria:
-  - Dossier factories exist for all operation families and can be tested without live providers.
-  - Prompt-builder migrations can start without inventing new context slicing rules per operation.
+  - Any future provider-operation migration can request a typed operation dossier without inventing new context slicing or handle rules.
+  - Dossier construction is deterministic, provider-free, budget-compatible, and demonstrably excludes full diagnostic artifacts by default.
+  - The project does not claim runtime provider-input improvement until the relevant call sites are migrated and live-proven in later slices.
 - Risks:
-  - Over-abstracting too early; keep factories close to observed provider-heavy operations.
+  - Over-abstraction: keep factories aligned with observed operation families and avoid a generic query language.
+  - False safety: test actual serialized payloads, not policy declarations alone.
+  - Quality loss from omission: missing required inputs must block or degrade visibly, and later migration slices must compare live quality before acceptance.
+  - Handle drift: include run and artifact identity and test stale/cross-run rejection.
+- Completed: 2026-07-10
 
 ### Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move `materialPlan`, `strategy`, and `rhetoricalPlans` from full-artifact provider inputs to planning dossiers.
 - User value: The slow and oversized planning calls should become smaller, more focused, and easier to diagnose without losing required evidence/rule/contract constraints.
 - Scope:
@@ -8628,6 +8709,7 @@ Status:
 - Slice 2.17.4.6.1.3.4: DraftRun Provider Operation Runtime Guard and Staleness. Completed 2026-07-09.
 - Slice 2.17.4.6.1.3.5: DraftRun Provider Input Audit and Budget Enforcement. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard. Completed 2026-07-10.
+- Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture. Completed 2026-07-10.
 
 
 ## Blocked Items
@@ -8656,4 +8738,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture`.
+Implement `Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration`.

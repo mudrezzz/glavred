@@ -459,6 +459,12 @@ The target flow is:
 
 `DraftRun artifacts -> DraftRunContextAccessService -> DossierFactory -> ProviderInputBudgetGate -> PromptBuilder -> Provider`
 
+Slice `2.17.4.6.1.3.6` implements the provider-free first half of this flow:
+deterministic context readers, typed planning/writer/review/ranking/revision/final
+quality dossiers, stable artifact handles, and replay diagnostics. The provider-call
+half remains transitional until slices `3.7-3.9`; `readyForMigration` is therefore a
+foundation verdict, not proof that a live provider received the dossier.
+
 This keeps rich artifacts available for diagnostics while provider calls receive
 operation-specific planning, writer, review, ranking, revision, or final-quality
 dossiers. A future MCP/tool adapter may sit on top of deterministic context access,
