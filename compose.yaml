@@ -22,6 +22,7 @@ services:
       OPENROUTER_HTTP_REFERER: http://localhost:5176
       REDIS_URL: redis://redis:6379/0
       DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
+      SQLITE_JOURNAL_MODE: DELETE
     ports:
       - "8000:8000"
     volumes:
@@ -51,6 +52,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
+      SQLITE_JOURNAL_MODE: DELETE
     volumes:
       - ./var:/app/var
     depends_on:

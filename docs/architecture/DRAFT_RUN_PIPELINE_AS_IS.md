@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.1.3.4.0: Pipeline AS IS Contract Preparation.
+Current as of Slice 2.17.4.6.1.3.8: Writer and Alternative-Angle Dossier Migration.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -64,10 +64,10 @@ Minimum DoD input from this document:
 | `FinalQualityGate` | Last machine acceptance layer for the delivered final draft as public prose; combines deterministic checks with an independent final-gate model review and may run bounded writer repair cycles if actionable gate findings require it. It separates real missing attribution from diagnostic attribution handoff noise. | `validation.rankingRevision.finalQualityGate` |
 | `DraftRunBudget` | Effective research/execution caps derived from `Fabula.researchDepth` and backend execution mode. | `context.draftRunBudget`, downstream budget metadata |
 | `PayloadBudget` | Provider-input boundary for LLM calls: operation profile, execution mode, prompt/token estimates, sent/trimmed counts, suppressed fields, semantic inputs, quality risk, and over-budget incidents. | child `AiRun.requestPayload.payloadBudget`, attempts, `operationEnvelope.payloadStats` |
-| `ProviderDossier` | Typed, operation-family projection assembled from rich artifacts through deterministic context access. It records required/optional inputs, actual `sent` data, handles, counts, suppressed fields, readiness, and quality risk. Slice `2.17.4.6.1.3.6` implements the provider-free foundation; provider call sites remain transitional until `3.7-3.9`. | provider-free replay/audit output; future child `AiRun.requestPayload.providerInput` after call-site migration |
+| `ProviderDossier` | Typed, operation-family projection assembled from rich artifacts through deterministic context access. It records required/optional inputs, actual `sent` data, handles, counts, suppressed fields, readiness, and quality risk. Planning and writer/alternative-angle runtime call sites are migrated in `3.7-3.8`; review/ranking/final-quality remain transitional until `3.9`. | provider-free replay/audit output; migrated child `AiRun.requestPayload.providerDossier` and `providerInput` |
 | `ValidationRuntimeBudget` | Runtime boundary for the validation/revision loop: wall-clock, LLM-call, revision-cycle, pairwise-round, final-repair, non-improvement, heartbeat, slow-but-healthy, and canonical stop-reason accounting. | `validation.progress.runtimeBudget`, `validation.rankingRevision.runtimeBudget`, `validation.rankingRevision.revisionLoop.runtimeBudget` |
 | `ProviderOperationRuntime` | Step-local progress boundary for a currently running provider operation outside the validation runtime loop. It records operation id, operation kind, operation start time, model role, selected model, prompt/token estimate when available, provider wait seconds, stale budget, and slow-but-healthy state. | `steps[].artifactPayload.progress`, `scripts/analyze_draft_run_reliability.py` runtime diagnostics |
-| `SQLiteRuntimeStorageGuard` | Local durability/error-handling guard for DraftRun and child AiRun SQLite stores. It applies timeout, busy-timeout, WAL journal mode, normal synchronous mode, foreign keys, controlled connection open/commit/rollback, integrity checks, and storage diagnostics for malformed/unavailable DB files. | `backend.app.infrastructure.sqlite_runtime`, `scripts/check_sqlite_integrity.py` |
+| `SQLiteRuntimeStorageGuard` | Local durability/error-handling guard for DraftRun and child AiRun SQLite stores. It applies timeout, busy-timeout, local WAL or Docker-bind `DELETE` journal mode, normal synchronous mode, foreign keys, controlled connection open/commit/rollback, integrity checks, and storage diagnostics for malformed/unavailable DB files. | `backend.app.infrastructure.sqlite_runtime`, `SQLITE_JOURNAL_MODE`, `scripts/check_sqlite_integrity.py` |
 | `QualityFidelityReport` | Final per-run distinction between technical completion, provider retry/backup/fallback recovery, evidence fidelity, validation/final-gate issue lifecycle, editorial publishability, and overall clean/degraded/attention verdict. A succeeded DraftRun is not trusted quality by itself: open critical issues block clean success, and unresolved final-gate warnings can only be publishable with caution. | `validation.rankingRevision.qualityFidelity`, `complete.qualityFidelity`, diagnostics helper output |
 | `ProviderReliabilityReport` | Cross-run provider reliability summary and remediation map for retry, backup, fallback, timeout, malformed JSON, schema failure, payload/runtime budget, degraded, failed, and open critical patterns. | `python scripts/analyze_draft_run_reliability.py --run-id ...` |
 | `finalDraft` | The selected draft returned to the frontend after validation, ranking, revision loop, and final quality gate. | parent DraftRun |
@@ -602,9 +602,13 @@ Role/model handoff:
 
 - active role: `writer`;
 - model resolver chooses `DRAFT_WRITER_MODEL` or default;
-- each candidate call receives one rhetorical plan, writer `ContextPack`, material
-  evidence, evidence interpretation, allowed claim ids, forbidden moves, and size
+- each candidate call reloads persisted artifacts through `DraftRunContextAccessService`
+  and receives one `WriterDossierFactory` projection: rhetorical route, compact
+  planning decisions, evidence/claim/rule handles, forbidden moves, and size/style
   contract;
+- the standard writer projection retains one route, four curated evidence items, two
+  claim handles, and five relevant rules; omitted optional detail stays trace-visible
+  through dossier counts and handles rather than entering the provider prompt;
 - each JSON candidate attempt follows the universal retry sequence: primary writer
   model, repair prompt, optional backup model, then domain-safe deterministic fallback
   only if provider attempts are exhausted;
@@ -620,7 +624,9 @@ Role/model handoff:
 Trace:
 
 - `draft` step;
-- child `AiRun.requestPayload.draftRunStep = draftCandidate`.
+- child `AiRun.requestPayload.draftRunStep = draftCandidate`;
+- direct `providerInput`, `providerDossier.runtimeMigrated=true`, `payloadBudget`,
+  `inputStats`, and `payloadStats` for every primary/repair/backup attempt.
 
 AS IS behavior:
 
@@ -719,9 +725,14 @@ Role/model handoff:
   ranking;
 - `critic` receives candidates, critic `ContextPack`, evidence interpretation, and
   validation context, then returns report-only critique findings and observations;
-- `anotherAngle` receives the initial validation, editorial critique, dossier cards,
-  and another-angle `ContextPack`, then returns one different contract-safe route;
-- `writer` executes the alternative route into one challenger candidate;
+- `anotherAngle` receives an `AlternativeAngleDossierFactory` projection with compact
+  candidate summaries, critique signals, validation issues, rejected moves, contract
+  invariants, and supporting handles, then returns one different contract-safe route;
+- route input is bounded to three candidate summaries, three critique summaries, three
+  validation issues, two rejected moves, two evidence items, and two rules; each
+  retained rejected-move handle resolves through the persisted editorial critique;
+- the accepted route is persisted into the running validation artifact before
+  `WriterDossierFactory(alternativeAngleCandidate)` resolves it for challenger prose;
 - `finalGate` receives the delivered final candidate, `FinalQualityContract`,
   deterministic gate findings, validation context, evidence interpretation, ledger,
   rule registry, material plan, and attribution requirement resolution, then returns
@@ -905,9 +916,10 @@ Slice `2.17.4.6.1.3.6` adds an available provider-free context/dossier foundatio
   forbidden-field violations.
 
 The foundation is now partially connected to runtime. Planning operations
-`materialPlan`, `strategy`, and `rhetoricalPlans` use typed dossiers; writer,
-review, ranking, revision, and final-quality operations continue using the other
-AS IS projections until slices `2.17.4.6.1.3.8` and `2.17.4.6.1.3.9`.
+`materialPlan`, `strategy`, `rhetoricalPlans`, `draftCandidate`,
+`alternativeAngleRoute`, and `alternativeAngleCandidate` use typed dossiers. Review,
+ranking, revision, and final-quality operations continue using transitional AS IS
+projections until Slice `2.17.4.6.1.3.9`.
 
 ### 6.1 Context Handoff and Provider Input Contract
 
@@ -951,11 +963,11 @@ Provider-heavy AS IS contract:
 | `materialPlan` | evidence interpretation, usable evidence candidates, post contract, rule registry, strategy context | `PlanningDossierFactory(materialPlan)` projection: compact post contract, interpreted evidence/claim handles, relevant rules, attempt repair context | `materialPlan.materialPlan`, selected/rejected evidence reasons, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced per primary/repair/backup call; replay baseline projects 16810 chars with no forbidden fields | Runtime dossier migration complete in `2.17.4.6.1.3.7`; live quality proof is stored with the slice evidence |
 | `strategy` | material plan, post contract, rule registry, strategy context | `PlanningDossierFactory(strategy)` projection: compact post contract, MaterialPlan, interpreted evidence/handles, relevant rules, attempt repair context | `strategy.draftStrategy`, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats`, model role metadata | enforced per primary/repair/backup call; budget profile remains `draftStrategy`; replay baseline projects 17720 chars | Runtime dossier migration complete in `2.17.4.6.1.3.7` |
 | `rhetoricalPlans` | strategy, material plan, claim/rule ids | `PlanningDossierFactory(rhetoricalPlans)` projection: compact post contract, MaterialPlan, DraftStrategy, evidence/rule handles, attempt repair context | `rhetoricalPlans.rhetoricalPlanSet`, attempts, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct `providerInput`, `payloadBudget`, `inputStats`, `payloadStats` | enforced per primary/repair/backup call; replay baseline projects 17203 chars | Runtime dossier migration complete in `2.17.4.6.1.3.7` |
-| `draftCandidate` | one rhetorical plan, material evidence, contract, writer context, generation params | writer `ContextPack`, one direction, material evidence, contract | `draft.candidates[]`, child `AiRun`, fallback/publishability status | partial/transitional | Writer dossier hardening in `2.17.4.6.1.3.7` |
-| `llmValidation` | candidates, deterministic report, contract, registry, ledger | review `ContextPack`, candidates, deterministic findings | `validation.llmValidationReport`, candidate reports, child `AiRun`, incidents | partial/transitional | Validation dossier/read model in `2.17.4.6.1.3.8` |
+| `draftCandidate` | one rhetorical plan, material evidence, contract, generation params | `WriterDossierFactory(draftCandidate)` projection with one route, compact planning, four evidence items, two claim handles, five rules, forbidden moves, and size/style constraints | `draft.candidates[]`, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct budget proof, fallback/publishability status | enforced per primary/repair/backup call; standard cap 24000 chars | Runtime dossier migration complete in `2.17.4.6.1.3.8` |
+| `llmValidation` | candidates, deterministic report, contract, registry, ledger | review `ContextPack`, candidates, deterministic findings | `validation.llmValidationReport`, candidate reports, child `AiRun`, incidents | partial/transitional | Validation dossier/read model in `2.17.4.6.1.3.9` |
 | `editorialCritique` | candidates, evidence interpretation, validation findings, critique context | critic `ContextPack`, candidate summaries, evidence interpretation, findings | `validation.editorialCritiqueReport`, child `AiRun`, `operationEnvelope`, parser/trace payload | enforced for representative operation | Debate/critique expansion remains future work; current single critique is AS IS |
-| `alternativeAngleRoute` | initial validation, editorial critique, rejected/weak moves, another-angle context | another-angle `ContextPack`, critique and validation summaries | `validation.alternativeAngleTournament.route`, child `AiRun`, route attempts | partial/transitional | Alternative-angle context split in `2.17.4.6.1.3.8` |
-| `alternativeAngleCandidate` | challenger route, writer context, contract/evidence constraints | writer `ContextPack`, route brief, constraints | challenger candidate payload, child `AiRun`, no-fake-challenger failure trace | partial/transitional | Writer/another-angle dossier hardening in `2.17.4.6.1.3.8` |
+| `alternativeAngleRoute` | persisted initial validation, editorial critique, rejected/weak moves, contract and candidate summaries | `AlternativeAngleDossierFactory` projection with three candidate summaries, three critique summaries, three validation issues, two rejected moves, contract, two evidence items and two rules | persisted tournament route before challenger construction, child `AiRun` with direct budget proof, route attempts, resolvable editorial-critique handles | enforced per primary/repair/backup call; standard cap 22000 chars | Runtime dossier migration complete in `2.17.4.6.1.3.8` |
+| `alternativeAngleCandidate` | persisted challenger route, compact planning, contract/evidence constraints | `WriterDossierFactory(alternativeAngleCandidate)` projection with route, planning decisions, four evidence items, one claim handle, four rules and one critique summary | challenger candidate payload, child `AiRun` with direct budget proof, no-fake-challenger failure trace | enforced per primary/repair/backup call; standard cap 24000 chars | Runtime dossier migration complete in `2.17.4.6.1.3.8` |
 | `pairwiseRanking` | merged candidates, validation summaries, old scorecard, contract/rules | review `ContextPack`, compact candidates and summaries | `validation.rankingRevision.pairwiseRanking`, attempts, scorecard | partial/transitional | Ranking/revision read-model tightening in `2.17.4.6.1.3.9` |
 | `directedRevision` | current best candidate, repair goals, anti-regression constraints, material evidence | writer `ContextPack`, selected candidate, revision goals, constraints | `validation.rankingRevision.revisionLoop`, child `AiRun`, `operationEnvelope`, accepted/rejected cycle trace | enforced for representative operation | Revision dossier hardening in `2.17.4.6.1.3.9` |
 | `finalQualityGateReview` | delivered final candidate, final quality contract, validation reports, critique, evidence interpretation, ledger, material plan | final-gate review payload over delivered candidate and compact supporting artifacts | `validation.rankingRevision.finalQualityGate`, issue lifecycle, child `AiRun`, repair cycles | partial/transitional | Final-quality read model in `2.17.4.6.1.3.9` |
@@ -1098,8 +1110,8 @@ and attempt-specific repair context. Full `rulePack`, `SourceLedger`,
 objects are forbidden from provider input. The full parent artifacts remain stored
 for replay, deterministic fallback, and accountability. Dossier replay over the
 control run reports zero unresolved handles and zero forbidden-field violations;
-runtime migration is partial only because non-planning operation families remain
-scheduled for slices `3.8-3.9`.
+runtime migration is partial because review/ranking/final-quality operation families
+remain scheduled for Slice `3.9`.
 
 Accepted live proof `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` records actual planning
 inputs of 14900 chars (`materialPlan`), 15017 chars (`strategy`), and 13601 chars
@@ -1122,9 +1134,8 @@ It reads stored child `AiRun.requestPayload` records and classifies each target
 operation as `directlyBudgeted`, `overBudget`, `missingDirectBudget`,
 `nestedBudgetFalsePositive`, or `explicitDebt`. A nested `payloadBudget` inside an
 older artifact is deliberately classified as `nestedBudgetFalsePositive`, not as
-proof of the current call. Current explicit debt remains for writer, validation,
-alternative-angle, ranking, and final-gate operations until their dossier/read-model
-slices.
+proof of the current call. Current explicit debt remains for validation, ranking,
+revision, and final-gate operations until Slice `2.17.4.6.1.3.9`.
 
 During the live proof for `2.17.4.6.1.3.5`, a long Docker DraftRun exposed a separate
 SQLite durability failure: `var/glavred-draft-runs.sqlite3` became malformed after a
@@ -1152,6 +1163,16 @@ evidence, restore a clean working DB, rerun the integrity check, and only then u
 DraftRun traces as provider/runtime proof. The live incident
 `89dca24d-c06e-4163-97db-0b59aaaf81b4` remains the reference example for this storage
 failure class.
+
+Additional Docker/Windows live-proof caveat from Slice `2.17.4.6.1.3.8`: direct
+host-side reads of `var/glavred-ai-runs.sqlite3` while the Docker worker is actively
+writing can still expose or trigger a malformed local view of the bind-mounted DB.
+During an active Docker DraftRun, progress should be observed through the HTTP API
+and worker logs. Host-side SQLite diagnostics and provider-input audits should run
+after terminal status, or after stopping backend/worker. The incident DB was preserved
+as `var/glavred-ai-runs.sqlite3.corrupt-20260710-221934`; the repeat proof
+`72b3a2df-c8be-41a8-b2c0-e74e5e502cd0` finished with both `draftRuns` and `aiRuns`
+integrity checks returning `ok`.
 
 The public DraftRun response shape is unchanged: `isStale`, `staleReason`, and
 `lastProgressAt` remain computed fields. Internally, queued runs are classified as
@@ -1276,11 +1297,11 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
   loop or general fallback.
 - `ArticleDossier` is a local compact memory artifact, not a vector store or
   cross-run RAG system.
-- The deterministic context-access and typed dossier foundation exists, but live
-  provider call sites do not use it yet. Replay status `readyForMigration` proves
-  factory/handle/exclusion behavior only; it does not mean runtime provider input is
-  dossier-backed. Planning, writer, review, ranking, revision, and final-gate
-  migrations remain slices `2.17.4.6.1.3.7` through `2.17.4.6.1.3.9`.
+- The deterministic context-access and typed dossier foundation is active for
+  planning and writer/alternative-angle runtime. Replay status `readyForMigration`
+  proves factory/handle/exclusion behavior; runtime proof additionally requires child
+  `AiRun.requestPayload.providerDossier.runtimeMigrated=true`. Review, ranking,
+  revision, and final-gate migration remains Slice `2.17.4.6.1.3.9`.
 - Failed late provider operations are safely finalized when the Python call returns or
   raises. Evidence interpretation now has an operation-level timeout envelope; a
   broader infrastructure watchdog is still needed for externally stuck Celery tasks

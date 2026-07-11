@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
@@ -12,6 +13,7 @@ from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepos
 from backend.app.settings import BackendSettings
 from backend.tests.test_draft_planning_services import context_and_rule_pack
 from backend.tests.test_draft_run_pipeline import make_request
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 @dataclass
@@ -33,6 +35,23 @@ class SequentialAdapter:
         return FakeOpenRouterResult(outcome, {"id": f"or-{len(self.calls)}", "model": kwargs.get("model")})
 
 
+class StaticDossierProgress:
+    def context_access(self):
+        return ProviderDossierTestFixture.access()
+
+    def start_operation(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def complete_operation(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def fail_operation(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def merge_artifact(self, artifact: dict[str, Any]) -> None:
+        pass
+
+
 def test_alternative_angle_tournament_adds_challenger_candidate(tmp_path) -> None:
     context_summary, rule_pack = context_and_rule_pack()
     adapter = SequentialAdapter([route_payload(), candidate_payload()])
@@ -47,6 +66,7 @@ def test_alternative_angle_tournament_adds_challenger_candidate(tmp_path) -> Non
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["evidence"]},
         draft_strategy={"thesisAngle": "workflow before model"},
+        progress=StaticDossierProgress(),
     )
 
     assert tournament["status"] == "succeeded"
@@ -66,6 +86,17 @@ def test_alternative_angle_tournament_adds_challenger_candidate(tmp_path) -> Non
     assert route_run.request_payload["draftRunStep"] == "alternativeAngleRoute"
     assert route_run.request_payload["modelRole"] == "anotherAngle"
     assert route_run.request_payload["generationParams"]["generationParamProfile"] == "anotherAngle"
+    candidate_run = ai_service(tmp_path).get_run(ai_run_ids[1])
+    assert candidate_run is not None
+    for run in (route_run, candidate_run):
+        assert run.request_payload["providerDossier"]["runtimeMigrated"] is True
+        assert run.request_payload["payloadBudget"]["promptCharEstimate"] > 0
+        assert run.request_payload["providerInput"]["dossierId"]
+        user_payload = json.loads(run.request_payload["providerRequest"]["messages"][1]["content"])
+        assert "providerInput" in user_payload
+        assert "contextPack" not in user_payload
+    assert "critiqueSignals" in route_run.request_payload["providerInput"]
+    assert "alternativeRoute" in candidate_run.request_payload["providerInput"]
 
 
 def test_alternative_angle_tournament_is_not_run_without_provider(tmp_path) -> None:
@@ -81,6 +112,7 @@ def test_alternative_angle_tournament_is_not_run_without_provider(tmp_path) -> N
         rule_pack=rule_pack,
         material_plan={},
         draft_strategy={},
+        progress=StaticDossierProgress(),
     )
 
     assert merged == draft_artifact()

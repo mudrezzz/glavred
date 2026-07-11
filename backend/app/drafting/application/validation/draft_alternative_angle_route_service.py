@@ -10,11 +10,8 @@ from typing import Any
 
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.drafting.application.validation.draft_alternative_angle_audit import AlternativeAngleTraceBuilder
-from backend.app.drafting.application.validation.draft_alternative_angle_prompts import (
-    ALTERNATIVE_ANGLE_KEYS,
-    AlternativeAnglePromptBuilder,
-)
-from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
+from backend.app.drafting.application.validation.draft_alternative_angle_prompts import ALTERNATIVE_ANGLE_KEYS
+from backend.app.drafting.application.validation.draft_alternative_angle_dossier_attempt import AlternativeAngleDossierAttemptBuilder
 from backend.app.drafting.application.generation.draft_generation_params import GenerationParamProfile, generation_params_for_attempt
 from backend.app.drafting.application.operations.json_step_adapter import OpenRouterJsonStepAdapter
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
@@ -24,6 +21,7 @@ from backend.app.domain.draft_alternative_angle import AlternativeAngleRoute, al
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
 
 
 class DraftAlternativeAngleRouteService:
@@ -39,8 +37,8 @@ class DraftAlternativeAngleRouteService:
         self._ai_run_service = ai_run_service
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
-        self._prompts = AlternativeAnglePromptBuilder()
         self._traces = AlternativeAngleTraceBuilder()
+        self._attempt_builder = AlternativeAngleDossierAttemptBuilder()
 
     def create(
         self,
@@ -50,6 +48,7 @@ class DraftAlternativeAngleRouteService:
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier,
     ) -> tuple[AlternativeAngleRoute | None, list[dict[str, Any]], list[str], str]:
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
@@ -57,11 +56,15 @@ class DraftAlternativeAngleRouteService:
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.ANOTHER_ANGLE)
+        if provider_dossier.readiness_status is DossierReadinessStatus.BLOCKED:
+            attempt = JsonStepAttempt(label="dossier-blocked", model=primary_selection.model or self._settings.openrouter_default_model)
+            result = self._blocked_attempt(attempt, primary_selection, provider_dossier)
+            return None, [result["attempt"]], [str(result["attempt"]["aiRunId"])], "dossier-blocked"
         for attempt in build_json_step_attempts(
             primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, context_artifact, rule_pack, material_plan, repair_context)
+            result = self._try_attempt(attempt, primary_selection, provider_dossier, repair_context)
             attempts.append(result["attempt"])
             if result["route"]:
                 return result["route"], attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")], ""
@@ -72,35 +75,24 @@ class DraftAlternativeAngleRouteService:
         self,
         attempt: JsonStepAttempt,
         primary_selection: Any,
-        draft_artifact: dict[str, Any],
-        validation_report: dict[str, Any],
-        context_artifact: dict[str, Any],
-        rule_pack: dict[str, Any],
-        material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.ANOTHER_ANGLE, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.ANOTHER_ANGLE, attempt=attempt)
-        context_pack = context_pack_for_role(context_artifact, DraftModelRole.ANOTHER_ANGLE)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = self._prompts.build_messages(
-            draft_artifact=draft_artifact,
-            validation_report=validation_report,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-            context_pack=context_pack,
-            repair_context=repair_context if attempt.repair else None,
-        )
-        request_payload = self._traces.request_trace(
-            provider=AiRunProvider.OPENROUTER,
+        prepared = self._attempt_builder.prepare(
+            dossier=provider_dossier,
             model=attempt.model,
-            messages=messages,
-            context_pack=context_pack,
+            model_role=DraftModelRole.ANOTHER_ANGLE.value,
             attempt=attempt_payload,
             model_selection=selection.to_payload(),
             generation_params=generation_params.to_payload(),
+            execution_mode=self._settings.draft_run_execution_mode,
+            repair_context=repair_context if attempt.repair else None,
         )
+        messages = prepared.messages
+        request_payload = prepared.request_payload
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
@@ -123,6 +115,23 @@ class DraftAlternativeAngleRouteService:
             return {"route": route, "attempt": _attempt_record(attempt, run.id, "accepted", selection.to_payload())}
         except Exception as exc:
             return self._record_attempt_error(attempt, request_payload, self._safe_error(exc), _raw_excerpt(exc))
+
+    def _blocked_attempt(self, attempt: JsonStepAttempt, primary_selection: Any, provider_dossier: ProviderDossier) -> dict[str, Any]:
+        selection = selection_for_attempt(role=DraftModelRole.ANOTHER_ANGLE, model=attempt.model, backup=False, primary_selection=primary_selection)
+        generation_params = generation_params_for_attempt(self._settings, primary_profile=GenerationParamProfile.ANOTHER_ANGLE, attempt=attempt)
+        attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": False, "backup": False, **selection.to_payload()}
+        prepared = self._attempt_builder.prepare(
+            dossier=provider_dossier,
+            model=attempt.model,
+            model_role=DraftModelRole.ANOTHER_ANGLE.value,
+            attempt=attempt_payload,
+            model_selection=selection.to_payload(),
+            generation_params=generation_params.to_payload(),
+            execution_mode=self._settings.draft_run_execution_mode,
+            repair_context=None,
+        )
+        prepared.request_payload["dossierBlocked"] = True
+        return self._record_attempt_error(attempt, prepared.request_payload, "alternative-angle-dossier-blocked")
 
     def _record_attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str, raw_response_excerpt: str | None = None) -> dict[str, Any]:
         result_payload = self._traces.result_trace(result_payload={}, provider_response=None, attempt=request_payload.get("attempt"))

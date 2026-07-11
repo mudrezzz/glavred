@@ -319,17 +319,19 @@ The foundation is provider-free and currently lives in:
 - `domain/provider_dossier.py` and `domain/provider_input_semantics.py` for typed
   contracts;
 - `application/context` for deterministic compact reads and handle resolution;
-- `application/dossiers` for policies, assembly, six factories, and replay;
+- `application/dossiers` for policies, assembly, role-owned factories, and replay;
 - `scripts/audit_draft_run_provider_dossiers.py` for stored-run proof.
 
 `readyForMigration` means factories, exclusions, and handles passed replay. It does
-not by itself prove a provider call used a dossier. Slice `2.17.4.6.1.3.7` connects
-the three planning call sites: `materialPlan`, `strategy`, and `rhetoricalPlans`.
+not by itself prove a provider call used a dossier. Slices `2.17.4.6.1.3.7-3.8`
+connect planning plus writer/alternative-angle call sites.
 Their workflow reads the current persisted run through `DraftRunContextAccessService`,
 builds one operation-specific `PlanningDossier`, passes only the budgeted projection
 to the prompt builder, and records `providerDossier.runtimeMigrated=true` on every
-child `AiRun`. Other provider families remain scheduled for `3.8-3.9`, so replay
-correctly reports `runtimeMigrationStatus=partiallyMigrated`.
+child `AiRun`. `draftCandidate`, `alternativeAngleRoute`, and
+`alternativeAngleCandidate` additionally use operation-specific writer/route dossiers;
+the route is persisted before challenger construction. Review/ranking/final-quality
+families remain scheduled for `3.9`, so replay stays `partiallyMigrated`.
 
 ## Validation Runtime Budget
 

@@ -23,8 +23,30 @@ class EditorialContextReader:
         strategy = self._mapping(self._mapping(self._index.step_payload("strategy")).get("draftStrategy"))
         if not material and not strategy:
             return self._missing("planning")
-        compact_material, material_trimmed = self._select_bounded(material, ("groundingPlan", "availableEvidence", "qualifiedClaims", "riskyClaims", "missingEvidence", "claimsRequiringAttribution"))
-        compact_strategy, strategy_trimmed = self._select_bounded(strategy, ("thesisAngle", "openingMove", "argumentSequence", "ctaPlan", "forbiddenMoves", "toneNotes"))
+        compact_material, material_trimmed = self._select_bounded_fields(
+            material,
+            (
+                ("groundingPlan", 4),
+                ("availableEvidence", 4),
+                ("qualifiedClaims", 4),
+                ("riskyClaims", 2),
+                ("missingEvidence", 2),
+                ("claimsRequiringAttribution", 4),
+            ),
+            text_limit=180,
+        )
+        compact_strategy, strategy_trimmed = self._select_bounded_fields(
+            strategy,
+            (
+                ("thesisAngle", 1),
+                ("openingMove", 1),
+                ("argumentSequence", 4),
+                ("ctaPlan", 1),
+                ("forbiddenMoves", 4),
+                ("toneNotes", 3),
+            ),
+            text_limit=240,
+        )
         value = {"material": compact_material, "strategy": compact_strategy}
         handles = tuple(
             handle
@@ -196,10 +218,16 @@ class EditorialContextReader:
     def _candidate_summary(self, candidate: Mapping[str, Any]) -> dict[str, Any]:
         body = str(candidate.get("body") or "")
         return {
-            **self._select(candidate, ("id", "title", "rhetoricalPlanId", "risks", "weaknesses", "usedEvidence")),
-            "bodyExcerpt": body[:480],
+            **self._select(candidate, ("id", "title", "rhetoricalPlanId")),
+            "risks": [self._bounded_value_to(item, 240) for item in self._records_or_values(candidate.get("risks"))[:2]],
+            "weaknesses": [self._bounded_value_to(item, 240) for item in self._records_or_values(candidate.get("weaknesses"))[:2]],
+            "usedEvidence": [self._bounded_value_to(item, 160) for item in self._records_or_values(candidate.get("usedEvidence"))[:6]],
+            "bodyExcerpt": body[:360],
             "bodyChars": len(body),
         }
+
+    def _records_or_values(self, value: Any) -> list[Any]:
+        return list(value) if isinstance(value, list) else []
 
     def _limited(self, key: str, records: list[tuple[dict[str, Any], ArtifactHandle]], limit: int, *, source_available: bool) -> ContextSelection:
         selected = records[: max(0, limit)]

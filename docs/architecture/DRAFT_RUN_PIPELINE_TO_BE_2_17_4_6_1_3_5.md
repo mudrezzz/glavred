@@ -273,16 +273,48 @@ is committed under `docs/evidence/draft-runs/<baseline-id>/`.
 
 ### 7.4 Writer and alternative-angle dossier migration
 
-**NEW in 2.17.4.6.1.3.8:** migrate:
+**IMPLEMENTED in 2.17.4.6.1.3.8:** migrated runtime provider calls:
 
 - `draftCandidate`;
 - `alternativeAngleRoute`;
 - `alternativeAngleCandidate`.
 
-The writer should receive one route and its supporting handles, not the whole
-planning stack. Alternative-angle route should receive compact critique and
-candidate summaries, not full candidate bodies plus full validation trace unless
-explicitly needed.
+`WriterDossierFactory` now builds operation-specific `draftCandidate` and
+`alternativeAngleCandidate` projections. `AlternativeAngleDossierFactory` builds the
+route projection from persisted candidate summaries, critique signals, validation
+issues, rejected moves, contract invariants, and supporting handles. The accepted
+route is persisted before challenger dossier construction. Every attempt crosses
+`ProviderInputBudgetGate` and records `providerDossier.runtimeMigrated=true`, direct
+`providerInput`, `payloadBudget`, `inputStats`, and `payloadStats`.
+
+The implemented standard-mode projections are intentionally bounded before prompt
+construction: primary writer calls retain four curated evidence items, two claim
+handles and five rules; the challenger retains the accepted route, four evidence
+items, one claim handle, four rules and one critique summary. Route selection retains three candidate summaries,
+three critique summaries, three validation issues, two rejected moves, two evidence
+items and two rules. These limits keep `draftCandidate` and
+`alternativeAngleCandidate` within 24000 characters and `alternativeAngleRoute`
+within 22000 while preserving every semantic `mustHave` field.
+
+Full planning stacks, candidate pools, validation traces, old envelopes/budgets, and
+role `ContextPack`s remain in parent DraftRun storage and are not provider input.
+
+Live proof:
+
+- `72b3a2df-c8be-41a8-b2c0-e74e5e502cd0` completed the full pipeline after the
+  final compaction pass;
+- `draftCandidate` recorded direct budget proof at 16256-16533 chars against the
+  24000 cap;
+- `alternativeAngleRoute` recorded 18386 chars against the 22000 cap;
+- `alternativeAngleCandidate` recorded 16534 chars against the 24000 cap;
+- replay reported zero unresolved handles and zero forbidden-field violations.
+
+The final proof also showed why Slice `3.9` remains necessary: the delivered text
+itself stayed below `hardMaxChars`, but `qualityFidelity.issueLifecycle` still
+counted open critical findings from intermediate or losing validation reports. That
+is not a writer-dossier regression; it is review/ranking/final-gate lifecycle debt.
+The comparison is stored in
+`docs/evidence/draft-runs/e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2/COMPARISON_2_17_4_6_1_3_8.md`.
 
 ### 7.5 Review, ranking, and final gate dossier migration
 
@@ -297,6 +329,12 @@ Ranking must compare compact candidate summaries and score dimensions. It should
 not receive full candidate pool plus full material plan plus full validation report
 when only candidate ids, short body excerpts, issue summaries, and scorecard
 dimensions are needed.
+
+`qualityFidelity.issueLifecycle` must also stop treating all intermediate and losing
+candidate reports as open final-draft quality blockers. The lifecycle should make the
+final selected or repaired candidate explicit, keep non-final findings visible as
+diagnostic context, and block trusted quality only for unresolved issues that still
+apply to the delivered final text.
 
 ### 7.6 Tool-mediated context access pilot
 

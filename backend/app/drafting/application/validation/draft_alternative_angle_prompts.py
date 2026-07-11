@@ -24,6 +24,23 @@ ALTERNATIVE_ANGLE_KEYS = {
 
 
 class AlternativeAnglePromptBuilder:
+    def build_from_provider_input(
+        self,
+        *,
+        provider_input: dict[str, Any],
+        repair_context: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        return self._messages(
+            {
+                "task": "Create one genuinely different editorial route for the same approved post contract.",
+                "rules": self._rules(),
+                "expectedShape": {key: "string or string[]" for key in sorted(ALTERNATIVE_ANGLE_KEYS)},
+                "providerInput": provider_input,
+                "repairContext": repair_context or {},
+                "outputLanguage": "ru",
+            }
+        )
+
     def build_messages(
         self,
         *,
@@ -35,15 +52,9 @@ class AlternativeAnglePromptBuilder:
         context_pack: dict[str, Any] | None = None,
         repair_context: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
-        payload = {
+        return self._messages({
             "task": "Create one genuinely different editorial route for the same approved post contract.",
-            "rules": [
-                "Return strict JSON only.",
-                "Do not create a technical backup or small rewrite of the current winner.",
-                "Use critic findings, weak moves, rejected moves, tensions, and open questions.",
-                "Preserve the approved thesis, allowed claims, forbidden moves, and size contract.",
-                "Do not invent evidence; use only claim ids and evidence already available.",
-            ],
+            "rules": self._rules(),
             "expectedShape": {key: "string or string[]" for key in sorted(ALTERNATIVE_ANGLE_KEYS)},
             "draftArtifact": _compact_draft(draft_artifact),
             "validationReport": validation_report,
@@ -53,7 +64,18 @@ class AlternativeAnglePromptBuilder:
             "contextPack": context_pack or {},
             "repairContext": repair_context or {},
             "outputLanguage": "ru",
-        }
+        })
+
+    def _rules(self) -> list[str]:
+        return [
+            "Return strict JSON only.",
+            "Do not create a technical backup or small rewrite of the current winner.",
+            "Use critic findings, weak moves, rejected moves, tensions, and open questions.",
+            "Preserve the approved thesis, allowed claims, forbidden moves, and size contract.",
+            "Do not invent evidence; use only claim ids and evidence already available.",
+        ]
+
+    def _messages(self, payload: dict[str, Any]) -> list[dict[str, str]]:
         return [
             {
                 "role": "system",

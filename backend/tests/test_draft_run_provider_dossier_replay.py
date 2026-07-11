@@ -2,14 +2,14 @@ from backend.app.drafting.application.dossiers.provider_dossier_replay import Pr
 from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
-def test_sanitized_realistic_replay_reports_planning_migration_only() -> None:
+def test_sanitized_realistic_replay_reports_planning_and_writer_migration() -> None:
     report = ProviderDossierReplayService().run(ProviderDossierTestFixture.access())
     payload = report.to_payload()
 
     assert report.ready_for_migration is True
     assert payload["verdict"] == "readyForMigration"
     assert payload["runtimeMigrationStatus"] == "partiallyMigrated"
-    assert len(payload["dossiers"]) == 8
+    assert len(payload["dossiers"]) == 10
     assert payload["unresolvedHandleIds"] == []
     assert payload["forbiddenFieldViolations"] == []
     assert [item["operationId"] for item in payload["dossiers"][:3]] == [
@@ -17,8 +17,8 @@ def test_sanitized_realistic_replay_reports_planning_migration_only() -> None:
         "strategy",
         "rhetoricalPlans",
     ]
-    assert all(item["runtimeMigrated"] is True for item in payload["dossiers"][:3])
-    assert all(item["runtimeMigrated"] is False for item in payload["dossiers"][3:])
+    migrated = {item["operationId"] for item in payload["dossiers"] if item["runtimeMigrated"]}
+    assert migrated == {"materialPlan", "strategy", "rhetoricalPlans", "draftCandidate", "alternativeAngleRoute", "alternativeAngleCandidate"}
     assert all(item["promptCharEstimate"] > 0 for item in payload["dossiers"])
     assert "Planning call sites are migrated" in payload["note"]
 

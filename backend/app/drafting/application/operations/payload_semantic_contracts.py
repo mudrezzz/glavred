@@ -53,7 +53,11 @@ SEMANTIC_CONTRACTS: dict[str, SemanticInputContract] = {
         should_have=("evidence", "rules", "repairContext"),
         never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
     ),
-    "draftCandidate": SemanticInputContract(must_have=("direction", "context_summary", "rule_pack", "material_plan", "draft_strategy")),
+    "draftCandidate": SemanticInputContract(
+        must_have=("dossierId", "postContract", "planning", "rhetoricalPlan", "evidence"),
+        should_have=("claims", "rules", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "candidatePool", "validationReport", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
     "llmValidation": SemanticInputContract(must_have=("candidate", "context_artifact", "rule_pack"), diagnostic_only=("fullValidationTrace",)),
     "editorialCritique": SemanticInputContract(
         must_have=("candidate", "context_artifact", "rule_pack"),
@@ -76,8 +80,16 @@ SEMANTIC_CONTRACTS: dict[str, SemanticInputContract] = {
         diagnostic_only=("fullDraftRun",),
         never_send_to_provider=("rawDraftRun",),
     ),
-    "alternativeAngleRoute": SemanticInputContract(must_have=("validation_report", "context_artifact")),
-    "alternativeAngleCandidate": SemanticInputContract(must_have=("direction", "context_artifact", "rule_pack", "material_plan")),
+    "alternativeAngleRoute": SemanticInputContract(
+        must_have=("dossierId", "candidates", "critiqueSignals", "postContract"),
+        should_have=("validationIssues", "rejectedMoves", "evidence", "claims", "rules", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "candidatePool", "validationReport", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
+    "alternativeAngleCandidate": SemanticInputContract(
+        must_have=("dossierId", "postContract", "planning", "alternativeRoute", "evidence"),
+        should_have=("claims", "rules", "critiqueSignals", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "candidatePool", "validationReport", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
     "publicEvidenceSearch": SemanticInputContract(must_have=("research_task",), never_send_to_provider=("fullWorkspace",)),
     "publicEvidenceRead": SemanticInputContract(must_have=("url",), never_send_to_provider=("fullWorkspace",)),
 }

@@ -12,6 +12,7 @@ from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepos
 from backend.app.settings import BackendSettings
 from backend.tests.test_draft_planning_services import context_and_rule_pack
 from backend.tests.test_draft_run_pipeline import make_request
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 @dataclass
@@ -82,12 +83,13 @@ def test_candidate_generation_uses_openrouter_and_child_ai_runs(tmp_path) -> Non
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
         draft_strategy={"thesisAngle": "workflow before model"},
-        rhetorical_plans={"plans": [{"id": "research", "title": "Research plan"}]},
+        rhetorical_plans={"plans": [{"id": "plan-1", "title": "Research plan"}]},
+        provider_dossier_factory=ProviderDossierTestFixture.writer_factory(),
     )
 
     assert result.artifact_payload["source"] == "openrouter"
     assert len(result.artifact_payload["candidates"]) == 1
-    assert result.artifact_payload["candidates"][0]["rhetoricalPlanId"] == "research"
+    assert result.artifact_payload["candidates"][0]["rhetoricalPlanId"] == "plan-1"
     assert result.artifact_payload["selection"]["selectedCandidateId"]
     assert len(result.ai_run_ids) == 1
     run = ai_service(tmp_path).get_run(result.ai_run_ids[0])
@@ -119,6 +121,7 @@ def test_candidate_generation_falls_back_without_openrouter(tmp_path) -> None:
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
         draft_strategy={"thesisAngle": "workflow before model"},
+        provider_dossier_factory=ProviderDossierTestFixture.writer_factory(),
     )
 
     assert result.artifact_payload["source"] == "deterministicFallback"
@@ -139,6 +142,8 @@ def test_candidate_provider_error_falls_back_without_secret(tmp_path) -> None:
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["pilot usage data"]},
         draft_strategy={"thesisAngle": "workflow before model"},
+        rhetorical_plans={"plans": [{"id": "plan-1", "title": "Research plan"}]},
+        provider_dossier_factory=ProviderDossierTestFixture.writer_factory(),
     )
 
     run = ai_service(tmp_path).get_run(result.ai_run_ids[-1])

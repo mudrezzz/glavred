@@ -8,6 +8,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 from __future__ import annotations
 
 import sqlite3
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -73,9 +74,12 @@ class SqliteConnectionFactory:
         *,
         timeout_seconds: float = SQLITE_TIMEOUT_SECONDS,
         busy_timeout_ms: int = SQLITE_BUSY_TIMEOUT_MS,
+        journal_mode: str | None = None,
     ) -> None:
         self._timeout_seconds = timeout_seconds
         self._busy_timeout_ms = busy_timeout_ms
+        configured_mode = str(journal_mode or os.getenv("SQLITE_JOURNAL_MODE") or "WAL").strip().upper()
+        self._journal_mode = configured_mode if configured_mode in {"WAL", "DELETE"} else "WAL"
 
     @contextmanager
     def open(self, path: Path, *, operation: str) -> Iterator[sqlite3.Connection]:
@@ -136,7 +140,7 @@ class SqliteConnectionFactory:
     def _apply_pragmas(self, connection: sqlite3.Connection) -> None:
         connection.execute(f"PRAGMA busy_timeout = {self._busy_timeout_ms}")
         connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute("PRAGMA journal_mode = WAL")
+        connection.execute(f"PRAGMA journal_mode = {self._journal_mode}")
         connection.execute("PRAGMA synchronous = NORMAL")
 
 

@@ -13,6 +13,7 @@ from typing import Any
 
 from backend.app.drafting.application.context.draft_run_context_access import DraftRunContextAccessService
 from backend.app.drafting.application.dossiers.provider_dossier_factories import (
+    AlternativeAngleDossierFactory,
     FinalQualityDossierFactory,
     PlanningDossierFactory,
     RankingDossierFactory,
@@ -110,6 +111,8 @@ class ProviderDossierReplayService:
             PlanningDossierFactory(access).build("strategy"),
             PlanningDossierFactory(access).build("rhetoricalPlans"),
             WriterDossierFactory(access).build(plan_id=plan_id),
+            AlternativeAngleDossierFactory(access).build(),
+            WriterDossierFactory(access).build(plan_id=None, operation_id="alternativeAngleCandidate"),
             ReviewDossierFactory(access).build(candidate_id=candidate_id),
             RankingDossierFactory(access).build(),
             RevisionDossierFactory(access).build(candidate_id=candidate_id),

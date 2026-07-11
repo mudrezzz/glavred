@@ -18,7 +18,7 @@ from backend.app.drafting.application.artifacts.draft_run_payloads import draft_
 from backend.app.drafting.application.artifacts.draft_run_budget_resolver import resolve_draft_run_budget
 from backend.app.drafting.application.quality import DraftRunQualityFidelityReporter
 from backend.app.drafting.application.context.draft_run_context_access import DraftRunContextAccessService
-from backend.app.drafting.application.dossiers.provider_dossier_factories import PlanningDossierFactory
+from backend.app.drafting.application.dossiers.provider_dossier_factories import PlanningDossierFactory, WriterDossierFactory
 from backend.app.application.draft_run_step_progress_payload import with_progress_payload
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_run import DraftRunStatus
@@ -360,6 +360,7 @@ class LegacyDraftWorkflowPhaseBuilder:
             draft_strategy=state.draft_strategy,
             rhetorical_plans=state.rhetorical_plans,
             context_pack=context_pack_for_role(state.context_artifact, DraftModelRole.WRITER),
+            provider_dossier_factory=WriterDossierFactory(self._context_access(state)),
             progress=draft_progress,
         )
         state.progress.add_ai_run_ids(state.draft_result.ai_run_ids)
@@ -470,11 +471,13 @@ class LegacyDraftWorkflowPhaseBuilder:
         state.progress.succeed(DraftRunStepKey.VALIDATION, validation_payload)
 
     def _planning_dossier(self, state: DraftWorkflowState, operation_id: str) -> ProviderDossier:
+        return PlanningDossierFactory(self._context_access(state)).build(operation_id)
+
+    def _context_access(self, state: DraftWorkflowState) -> DraftRunContextAccessService:
         run = self._services.repository.get(state.run_id)
         if run is None:
-            raise RuntimeError(f"DraftRun not found while building {operation_id} dossier: {state.run_id}")
-        access = DraftRunContextAccessService.from_run(run)
-        return PlanningDossierFactory(access).build(operation_id)
+            raise RuntimeError(f"DraftRun not found while building provider dossier: {state.run_id}")
+        return DraftRunContextAccessService.from_run(run)
 
 
 def _payload_char_estimate(payload: dict[str, Any]) -> int:

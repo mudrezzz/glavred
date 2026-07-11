@@ -13,6 +13,7 @@ from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepos
 from backend.app.settings import BackendSettings
 from backend.tests.test_draft_planning_services import context_and_rule_pack
 from backend.tests.test_draft_run_pipeline import make_request
+from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
 @dataclass
@@ -49,7 +50,8 @@ def test_writer_candidate_retries_primary_repair_and_backup_before_success(tmp_p
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["evidence"]},
         draft_strategy={"thesisAngle": "workflow before model"},
-        rhetorical_plans={"plans": [{"id": "research", "title": "Research plan"}]},
+        rhetorical_plans={"plans": [{"id": "plan-1", "title": "Research plan"}]},
+        provider_dossier_factory=ProviderDossierTestFixture.writer_factory(),
     )
 
     assert [call["model"] for call in adapter.calls] == ["writer-model", "writer-model", "backup-model"]
@@ -66,10 +68,15 @@ def test_writer_candidate_retries_primary_repair_and_backup_before_success(tmp_p
     assert backup_run.request_payload["attempt"]["backup"] is True
     assert backup_run.request_payload["generationParams"]["generationParamProfile"] == "jsonRepair"
     assert backup_run.request_payload["generationParams"]["temperature"] == 0.15
+    for run_id in result.ai_run_ids:
+        attempt_run = _ai_service(tmp_path).get_run(run_id)
+        assert attempt_run is not None
+        assert attempt_run.request_payload["payloadBudget"]["promptCharEstimate"] > 0
+        assert attempt_run.request_payload["providerDossier"]["runtimeMigrated"] is True
 
 
 def test_alternative_angle_candidate_retries_before_returning_challenger(tmp_path) -> None:
-    context_summary, rule_pack = context_and_rule_pack()
+    context_summary, _ = context_and_rule_pack()
     adapter = SequentialAdapter([RuntimeError("malformed"), candidate_payload()])
     service = DraftAlternativeAngleCandidateService(
         settings=_settings(),
@@ -88,10 +95,10 @@ def test_alternative_angle_candidate_retries_before_returning_challenger(tmp_pat
             why_different="It avoids the generic source recap.",
         ),
         context_summary=context_summary,
-        rule_pack=rule_pack,
-        material_plan={"availableEvidence": ["evidence"]},
-        draft_strategy={"thesisAngle": "workflow before model"},
-        context_pack={"role": "writer", "items": []},
+        provider_dossier=ProviderDossierTestFixture.writer_factory().build(
+            plan_id=None,
+            operation_id="alternativeAngleCandidate",
+        ),
     )
 
     assert error == ""
@@ -100,6 +107,7 @@ def test_alternative_angle_candidate_retries_before_returning_challenger(tmp_pat
     assert [call["temperature"] for call in adapter.calls] == [0.65, 0.15]
     assert [attempt["label"] for attempt in attempts] == ["primary", "primary-repair"]
     assert len(ai_run_ids) == 2
+    assert all(_ai_service(tmp_path).get_run(run_id).request_payload["payloadBudget"] for run_id in ai_run_ids)
 
 
 def test_public_prose_guard_is_present_in_writer_prompt(tmp_path) -> None:
@@ -113,7 +121,8 @@ def test_public_prose_guard_is_present_in_writer_prompt(tmp_path) -> None:
         rule_pack=rule_pack,
         material_plan={"availableEvidence": ["evidence"]},
         draft_strategy={"thesisAngle": "workflow before model"},
-        rhetorical_plans={"plans": [{"id": "research", "title": "Research plan"}]},
+        rhetorical_plans={"plans": [{"id": "plan-1", "title": "Research plan"}]},
+        provider_dossier_factory=ProviderDossierTestFixture.writer_factory(),
     )
 
     system_message = adapter.calls[0]["messages"][0]["content"]

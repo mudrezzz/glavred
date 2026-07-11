@@ -59,9 +59,27 @@ class ProviderDossierPolicyRegistry:
         )
 
     def writer(self, operation_id: str) -> ProviderDossierPolicy:
+        if operation_id == "alternativeAngleCandidate":
+            return self._policy(
+                "writerDossier", operation_id, "writer",
+                must=("postContract", "planning", "alternativeRoute", "evidence"),
+                should=("claims", "rules", "critiqueSignals"),
+            )
         return self._policy(
             "writerDossier", operation_id, "writer",
-            must=("postContract", "planning", "rhetoricalPlan", "evidence"), should=("rules",),
+            must=("postContract", "planning", "rhetoricalPlan", "evidence"),
+            should=("claims", "rules"),
+        )
+
+    def alternative_angle(self, operation_id: str) -> ProviderDossierPolicy:
+        if operation_id != "alternativeAngleRoute":
+            raise ValueError(f"Unsupported alternative-angle dossier operation: {operation_id}")
+        return self._policy(
+            "alternativeAngleDossier",
+            operation_id,
+            "anotherAngle",
+            must=("candidates", "critiqueSignals", "postContract"),
+            should=("validationIssues", "rejectedMoves", "evidence", "claims", "rules"),
         )
 
     def review(self, operation_id: str, model_role: str) -> ProviderDossierPolicy:

@@ -45,6 +45,15 @@ class DraftRunStepOperationSink:
     def runtime_guard(self) -> "ValidationRuntimeGuard | None":
         return self._runtime_guard
 
+    def context_access(self):
+        """Returns a read-only view over the currently persisted DraftRun artifacts."""
+        from backend.app.drafting.application.context.draft_run_context_access import DraftRunContextAccessService
+
+        run = self._repository.get(self._run_id)
+        if run is None:
+            raise RuntimeError(f"DraftRun not found while loading step context: {self._run_id}")
+        return DraftRunContextAccessService.from_run(run)
+
     def start_operation(
         self,
         operation_id: str,

@@ -21,6 +21,7 @@ from backend.app.domain.draft_candidates import DraftCandidateDirection
 from backend.app.domain.draft_generation import DraftGenerationRequest, GeneratedDraft
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.application.dossiers.provider_dossier_factories import WriterDossierFactory
 
 
 class DraftCandidateGenerationService:
@@ -60,6 +61,7 @@ class DraftCandidateGenerationService:
         draft_strategy: dict[str, Any],
         rhetorical_plans: dict[str, Any] | None = None,
         context_pack: dict[str, Any] | None = None,
+        provider_dossier_factory: WriterDossierFactory,
         progress: DraftRunStepOperationSink | None = None,
     ) -> DraftCandidateGenerationResult:
         directions = self._direction_service.create_directions(
@@ -90,6 +92,10 @@ class DraftCandidateGenerationService:
                 material_plan=material_plan,
                 draft_strategy=draft_strategy,
                 direction=direction,
+                provider_dossier=provider_dossier_factory.build(
+                    plan_id=direction.rhetorical_plan_id or direction.id,
+                    operation_id="draftCandidate",
+                ),
                 context_pack=context_pack,
             )
             candidate_payloads.append(payload)

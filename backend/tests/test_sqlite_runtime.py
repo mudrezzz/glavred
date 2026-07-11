@@ -31,6 +31,15 @@ def test_integrity_check_reports_malformed_database(tmp_path) -> None:
     assert result.error["code"] == "sqliteDatabaseMalformed"
 
 
+def test_sqlite_connection_factory_supports_bind_mount_delete_journal(tmp_path) -> None:
+    db_path = tmp_path / "bind-mount.sqlite3"
+
+    with SqliteConnectionFactory(journal_mode="DELETE").open(db_path, operation="test") as connection:
+        journal_mode = connection.execute("PRAGMA journal_mode").fetchone()[0]
+
+    assert journal_mode.lower() == "delete"
+
+
 def test_repository_raises_controlled_error_for_malformed_database(tmp_path) -> None:
     db_path = tmp_path / "draft-runs.sqlite3"
     db_path.write_bytes(b"not a sqlite database")

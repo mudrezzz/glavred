@@ -11,6 +11,7 @@ from typing import Any, Mapping
 
 from backend.app.domain.draft_run import DraftRun
 from backend.app.drafting.application.context.contract_evidence_context_reader import ContractEvidenceContextReader
+from backend.app.drafting.application.context.alternative_angle_context_reader import AlternativeAngleContextReader
 from backend.app.drafting.application.context.draft_run_artifact_index import DraftRunArtifactIndex
 from backend.app.drafting.application.context.draft_run_handle_resolver import DraftRunHandleResolver
 from backend.app.drafting.application.context.editorial_context_reader import EditorialContextReader
@@ -24,6 +25,7 @@ class DraftRunContextAccessService:
         self._index = index
         self._contract_evidence = ContractEvidenceContextReader(index)
         self._editorial = EditorialContextReader(index)
+        self._alternative_angle = AlternativeAngleContextReader(index)
         self._resolver = DraftRunHandleResolver(index)
 
     @classmethod
@@ -76,6 +78,15 @@ class DraftRunContextAccessService:
 
     def repair_history(self) -> ContextSelection:
         return self._editorial.repair_history()
+
+    def critique_signals(self, limit: int = 12) -> ContextSelection:
+        return self._alternative_angle.critique_signals(limit)
+
+    def rejected_moves(self, limit: int = 12) -> ContextSelection:
+        return self._alternative_angle.rejected_moves(limit)
+
+    def alternative_route(self) -> ContextSelection:
+        return self._alternative_angle.route()
 
     def resolve(self, handle: ArtifactHandle) -> HandleResolution:
         return self._resolver.resolve(handle)

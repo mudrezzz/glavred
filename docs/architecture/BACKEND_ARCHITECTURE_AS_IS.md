@@ -227,15 +227,17 @@ current provider call was bounded. The target treatment plan is documented in
 
 Slice `2.17.4.6.1.3.6` now provides the deterministic foundation under
 `backend.app.drafting`: typed provider-dossier contracts, context readers, stable
-artifact handles, six role-owned dossier factories, and provider-free replay via
+artifact handles, role-owned dossier factories, and provider-free replay via
 `scripts/audit_draft_run_provider_dossiers.py`. A replay over a stored live DraftRun
 must report unresolved handles and forbidden-field violations separately from
 readiness/quality risk. Slice `2.17.4.6.1.3.7` closes the runtime limitation for
 `materialPlan`, `strategy`, and `rhetoricalPlans`: their call sites now read
 persisted artifacts through `DraftRunContextAccessService`, assemble
-operation-specific planning dossiers, and send only budgeted projections. Writer,
-review, ranking, revision, and final-quality call sites remain transitional until
-slices `3.8-3.9`.
+operation-specific planning dossiers, and send only budgeted projections. Slice
+`2.17.4.6.1.3.8` applies the same boundary to `draftCandidate`,
+`alternativeAngleRoute`, and `alternativeAngleCandidate`, including persistence of
+the accepted route before challenger construction. Review, ranking, revision, and
+final-quality call sites remain transitional until Slice `3.9`.
 
 ## Current Guardrails
 

@@ -79,21 +79,6 @@
       "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
     },
     {
-      "debtId": "bad-006-largemodule-backend-app-drafting-application-generation-draft-candidate-provider-service-p",
-      "findingKey": "largeModule:backend/app/drafting/application/generation/draft_candidate_provider_service.py",
-      "package": "backend/app/drafting/application/generation",
-      "module": "backend/app/drafting/application/generation/draft_candidate_provider_service.py",
-      "smellType": "largeModule",
-      "severity": "medium",
-      "owner": "backend.app.drafting.application.generation",
-      "targetShape": "component",
-      "allowedUntilSlice": "2.17.4.6.0.12.2",
-      "repairSlice": "2.17.4.6.0.12.2",
-      "guardrail": "python scripts/backend-architecture-audit.py --format json --ledger docs/architecture/backend-architecture-debt-ledger.json --fail-on-unledgered high",
-      "currentEvidence": "Module has 220 lines.",
-      "notes": "Re-ledgered by Slice 2.17.4.6.0.12 into the drafting residual medium cleanup follow-up."
-    },
-    {
       "debtId": "bad-007-largemodule-backend-app-drafting-application-migration-legacy-surface-inventory-py",
       "findingKey": "largeModule:backend/app/drafting/application/migration/legacy_surface_inventory.py",
       "package": "backend/app/drafting/application/migration",

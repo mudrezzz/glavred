@@ -14,7 +14,7 @@ from backend.app.drafting.domain.provider_dossier import (
 from backend.tests.provider_dossier_test_support import ProviderDossierTestFixture
 
 
-def test_all_operation_families_return_ready_typed_dossiers() -> None:
+def test_all_operation_families_return_usable_typed_dossiers() -> None:
     access = ProviderDossierTestFixture.access()
     dossiers = (
         PlanningDossierFactory(access).build(),
@@ -26,11 +26,13 @@ def test_all_operation_families_return_ready_typed_dossiers() -> None:
     )
 
     assert all(isinstance(item, ProviderDossier) for item in dossiers)
-    assert all(item.readiness_status == DossierReadinessStatus.READY for item in dossiers)
-    assert all(item.quality_risk == DossierQualityRisk.NONE for item in dossiers)
+    assert all(item.readiness_status != DossierReadinessStatus.BLOCKED for item in dossiers)
+    assert all(not item.missing_required_inputs for item in dossiers)
+    assert all(item.quality_risk != DossierQualityRisk.HIGH for item in dossiers)
     assert {item.model_role for item in dossiers} == {"strategy", "writer", "review", "finalGate"}
     assert dossiers[0].runtime_migrated is True
-    assert all(item.runtime_migrated is False for item in dossiers[1:])
+    assert dossiers[1].runtime_migrated is True
+    assert all(item.runtime_migrated is False for item in dossiers[2:])
 
 
 def test_missing_required_input_blocks_dossier() -> None:

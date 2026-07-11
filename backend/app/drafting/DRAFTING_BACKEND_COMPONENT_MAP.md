@@ -36,8 +36,8 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
 | `application/workflow` | Draft workflow sequencing, step registry, workflow state, progress handoff. `DraftWorkflow`, `DraftWorkflowState`, `DraftWorkflowPhase`, and `DraftStepRegistry` now own the behavior-preserving orchestration shell while legacy step services remain in place. | `draft_run_pipeline.py`, `draft_run_progress.py`, `draft_run_step_progress.py`, `draft_run_service.py` |
 | `application/steps` | Step-level use cases with stable input/output contracts. `contracts.py` defines `DraftStepContext`, `DraftStepTrace`, `DraftStepOutcome`, and the `DraftStep` protocol. `legacy_adapters.py` converts the first legacy result shapes without changing runtime behavior. | context, source intent, public evidence, feasibility, rule pack, material plan, strategy, rhetorical plans, draft, validation |
 | `application/operations` | Drafting compatibility imports and bounded operation helpers. `json_contracts.py` re-exports the shared `backend.app.shared.llm_operations` contract (`LlmOperationEnvelope`, `JsonOperationEnvelope`, attempts, incidents, input stats, retry policy, timeout profile). `json_step_adapter.py` owns the bounded JSON provider-call client/adapter for migrated services. `timeout.py` and `evidence_interpretation_payload.py` protect the evidence-interpretation operation during migration. DraftRun provider-input budgets are role-owned by payload budget contract/profile/semantic/runtime modules; `ProviderInputBudgetGate` applies direct current-call budget proof before planning prompt builders; `ProviderInputAudit` and `scripts/audit_draft_run_provider_inputs.py` replay stored child `AiRun.requestPayload` records. `payload_compactors.py` and `payload_budget.py` are compatibility facades over role-owned compactor modules and policy/runtime owners. Validation runtime support is split into budget contracts, guard, progress presenter, stop-reason policy, incident factory, and revision-loop payload factory. Deterministic context access and typed dossier factories live in their own `application/context` and `application/dossiers` owners. | `backend.app.shared.llm_operations`, `json_step_retry_policy.py`, provider-heavy drafting services after adapter split |
-| `application/context` | Provider-free deterministic reads from rich DraftRun artifacts plus stable trace-safe handle resolution. `DraftRunContextAccessService` exposes compact contract, evidence, rule, planning, candidate, validation, and final-quality selections without provider or persistence calls. | provider dossier factories and replay diagnostics |
-| `application/dossiers` | Semantic inclusion/exclusion policies, typed dossier assembly, planning/writer/review/ranking/revision/final-quality factories, and provider-free replay. `readyForMigration` proves factory readiness only; runtime call-site migration remains `3.7-3.9`. | future provider-heavy prompt builders through `ProviderInputBudgetGate` |
+| `application/context` | Provider-free deterministic reads from rich DraftRun artifacts plus stable trace-safe handle resolution. `DraftRunContextAccessService` exposes compact contract, evidence, rule, planning, candidate, critique, rejected-move, alternative-route, validation, and final-quality selections without provider calls. | provider dossier factories and replay diagnostics |
+| `application/dossiers` | Semantic inclusion/exclusion policies, typed dossier assembly, planning/writer/alternative-angle/review/ranking/revision/final-quality factories, and provider-free replay. Planning and writer/alternative-angle runtime call sites are migrated in `3.7-3.8`; remaining runtime migration is `3.9`. | provider-heavy prompt builders through `ProviderInputBudgetGate` |
 | `application/migration` | Planning-only migration inventories. `legacy_surface_inventory.py` records the Legacy DraftRun Surface, `moduleDisposition`, `publicHelperDisposition`, target owners, and the `no cosmetic package moves` rule for `draft_*` and `deterministic_*` modules. | `backend/app/application/draft_*.py`, `backend/app/application/deterministic_*.py` |
 | `application/artifacts` | Context/run payloads, run budget resolution, source ledger assembly/sections, article dossier, article memory, and context pack building. | migrated context/source-ledger/article-memory modules |
 | `application/evidence` | Source intent and research planning, public evidence retrieval/merge/synthesis, feasibility, post contract, rule registry, rule pack, evidence interpretation, and deterministic evidence fallbacks. | migrated source/evidence/contract/rule modules |
@@ -121,10 +121,10 @@ current snapshot is `docs/architecture/BACKEND_ARCHITECTURE_AUDIT.md`.
     Planned in Slice 2.17.4.6.1.3.5.
 25. Add deterministic DraftRun context access and typed provider-input dossier
     factories. Done in Slice 2.17.4.6.1.3.6.
-26. Migrate planning operations to planning dossiers. Planned in Slice
+26. Migrate planning operations to planning dossiers. Done in Slice
     2.17.4.6.1.3.7.
 27. Migrate writer and alternative-angle operations to writer/route dossiers.
-    Planned in Slice 2.17.4.6.1.3.8.
+    Done in Slice 2.17.4.6.1.3.8.
 28. Migrate review, ranking, and final-gate operations to review/ranking/final
     quality dossiers. Planned in Slice 2.17.4.6.1.3.9.
 29. Pilot tool-mediated context access over the deterministic context service.
@@ -256,3 +256,14 @@ Planning runtime is migrated in Slice `2.17.4.6.1.3.7`:
   retry orchestrator responsible only for attempt order and fallback transition;
 - architecture smoke requires all three runtime owners and workflow wiring to use
   `ProviderInputBudgetGate` and `providerDossier.runtimeMigrated=true`.
+
+Writer and alternative-angle runtime is migrated in Slice `2.17.4.6.1.3.8`:
+
+- `WriterDossierFactory` owns distinct `draftCandidate` and
+  `alternativeAngleCandidate` projections;
+- `AlternativeAngleDossierFactory` owns candidate-summary, critique, rejected-move,
+  contract, and handle selection for `alternativeAngleRoute`;
+- the validation progress owner persists an accepted route before challenger dossier
+  construction, so role handoff remains artifact-mediated;
+- `WriterDossierAttemptBuilder` and `AlternativeAngleDossierAttemptBuilder` apply a
+  direct budget to every primary/repair/backup attempt before prompt construction.

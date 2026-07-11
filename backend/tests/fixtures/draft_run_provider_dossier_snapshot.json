@@ -167,6 +167,34 @@
       "selection": {"selectedCandidateId": "candidate-1"}
     },
     "validation": {
+      "editorialCritiqueReport": {
+        "status": "warning",
+        "candidateReports": [
+          {
+            "candidateId": "candidate-1",
+            "status": "warning",
+            "summary": "The opening is generic and needs a sharper operational conflict.",
+            "editorialRisk": "high",
+            "weakestMove": "Generic opening",
+            "recommendedEditorialMove": "Start with the maintenance planner rejecting an ungrounded recommendation."
+          }
+        ]
+      },
+      "alternativeAngleTournament": {
+        "status": "succeeded",
+        "route": {
+          "id": "challenger",
+          "title": "Author stance challenger",
+          "angle": "Start from the author's dissent instead of the source recap.",
+          "openingMove": "Open with a sharper author claim.",
+          "whyDifferent": "It attacks the weakest move instead of polishing the same opening.",
+          "critiqueInputs": ["voice.generic"],
+          "claimsToUse": ["claim-1"],
+          "claimsToAvoid": ["claim-blocked"],
+          "rulesToStress": ["rule-1"],
+          "risks": ["May overcorrect tone"]
+        }
+      },
       "candidateReports": [
         {
           "candidateId": "candidate-1",

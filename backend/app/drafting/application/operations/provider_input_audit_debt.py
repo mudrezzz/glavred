@@ -17,27 +17,6 @@ DEFAULT_PROVIDER_INPUT_BUDGET_DEBTS: dict[str, ProviderInputBudgetDebt] = {
         risk="large candidate/report payloads can exceed provider input budget until revision dossier slice",
         repair_slice="2.17.4.6.1.3.9",
     ),
-    "draftCandidate": ProviderInputBudgetDebt(
-        operation_id="draftCandidate",
-        owner="backend.app.drafting.application.generation",
-        reason="writer dossier migration is deferred to keep this slice focused on direct audit and planning proof",
-        risk="candidate generation can still pass broad material/rule context until writer dossier slice",
-        repair_slice="2.17.4.6.1.3.8",
-    ),
-    "alternativeAngleRoute": ProviderInputBudgetDebt(
-        operation_id="alternativeAngleRoute",
-        owner="backend.app.drafting.application.validation",
-        reason="alternative-angle route dossier belongs with validation/read-model cleanup",
-        risk="route evaluation can still receive broad validation trace",
-        repair_slice="2.17.4.6.1.3.8",
-    ),
-    "alternativeAngleCandidate": ProviderInputBudgetDebt(
-        operation_id="alternativeAngleCandidate",
-        owner="backend.app.drafting.application.generation",
-        reason="alternative writer candidate uses same future writer dossier boundary as draftCandidate",
-        risk="alternative candidate can still receive broad material/rule context",
-        repair_slice="2.17.4.6.1.3.8",
-    ),
     "llmValidation": ProviderInputBudgetDebt(
         operation_id="llmValidation",
         owner="backend.app.drafting.application.validation",

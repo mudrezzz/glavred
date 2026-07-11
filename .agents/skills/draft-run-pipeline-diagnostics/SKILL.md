@@ -51,6 +51,10 @@ Do not diagnose from screenshots alone when a run id is available.
 4. If the helper reports missing or ambiguous data, query SQLite directly:
    - parent DB: `var/glavred-draft-runs.sqlite3`
    - child AI DB: `var/glavred-ai-runs.sqlite3`
+   - when a live Docker DraftRun is still running on Windows, do not read these
+     SQLite files directly from the host. Poll `GET /api/draft-runs/{id}` and worker
+     logs during execution, then run host-side SQLite diagnostics only after terminal
+     status or after stopping backend/worker.
 5. Inspect current code only for the components implicated by the trace:
    - source intent / public evidence;
    - source ledger / feasibility / post contract;
@@ -250,6 +254,14 @@ hide bad output behind polite abstractions.
   `qualityRisk`. Full `rulePack`, `SourceLedger`, `ArticleDossier`, `ContextPack`,
   previous envelopes, or previous budgets inside planning `providerInput` are a
   migration regression even when the call succeeds.
+- After Slice `2.17.4.6.1.3.8`, apply the same rule to `draftCandidate`,
+  `alternativeAngleRoute`, and `alternativeAngleCandidate`. Their child runs must
+  show operation-specific `providerDossier.runtimeMigrated=true`, direct budget
+  proof, and no full planning stack/candidate pool/validation trace. Confirm that the
+  accepted route was persisted before challenger generation. Treat weaker grounding,
+  specificity, or candidate diversity relative to checkpoint
+  `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` as a possible dossier regression, not as an
+  automatic provider incident.
 - Backup success is not silent success. It is an accepted payload with
   `backupAccepted` incident metadata and should trigger a blast-radius check if it
   repeats.

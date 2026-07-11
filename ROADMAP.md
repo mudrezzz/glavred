@@ -8004,7 +8004,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration
 
-- Status: Ready
+- Status: Done
 - Goal: Move `draftCandidate`, `alternativeAngleRoute`, and `alternativeAngleCandidate` to writer/alternative-angle dossiers instead of broad planning-stack dumps.
 - User value: Candidate generation and alternative-angle work stay grounded, but no longer pay latency/quality cost for unrelated full artifacts.
 - Scope:
@@ -8032,10 +8032,11 @@ Status:
   - Generated candidates retain required grounding handles and pass existing validation regressions.
 - Risks:
   - Candidate creativity may degrade if dossiers become too narrow; use quality/fidelity diagnostics to catch this.
+- Completed: 2026-07-10
 
 ### Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, and Final Gate Dossier Migration
 
-- Status: Backlog
+- Status: Ready
 - Goal: Move `llmValidation`, `pairwiseRanking`, and final quality review/gate calls to review/ranking/final-quality dossiers.
 - User value: The most oversized comparison and review calls become auditable, bounded, and focused on the actual decision being made.
 - Scope:
@@ -8712,6 +8713,7 @@ Status:
 - Slice 2.17.4.6.1.3.5.1: DraftRun SQLite Runtime Durability Guard. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration. Completed 2026-07-10.
+- Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration. Completed 2026-07-10.
 
 
 ## Blocked Items
@@ -8740,4 +8742,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration`.
+Implement `Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, and Final Gate Dossier Migration`.

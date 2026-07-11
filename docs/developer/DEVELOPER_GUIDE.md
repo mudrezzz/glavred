@@ -305,6 +305,19 @@ runtime connection policy in `backend.app.infrastructure.sqlite_runtime`: bounde
 row factory, and explicit commit/rollback. To separate storage damage from provider or
 pipeline failure, run:
 
+The Docker compose stack overrides `SQLITE_JOURNAL_MODE=DELETE` for the Windows
+`./var:/app/var` bind mount. WAL remains the normal local default, but WAL shared-memory
+files are not reliable over Docker Desktop `9p`; using DELETE there avoids the observed
+`disk I/O error` while `busy_timeout` still serializes backend/worker writes.
+
+For live Docker DraftRun proof on Windows, do not run host-side SQLite readers against
+`var/glavred-ai-runs.sqlite3` while the worker is still writing. Poll the run through
+`GET /api/draft-runs/{id}` or use worker logs during execution, then run host-side
+diagnostics after terminal status or after stopping backend/worker. Slice
+`2.17.4.6.1.3.8` preserved one counterexample as
+`var/glavred-ai-runs.sqlite3.corrupt-20260710-221934`; the repeat proof with one
+worker and API-only polling completed with both DB integrity checks returning `ok`.
+
 ```bash
 python scripts/check_sqlite_integrity.py --format json --fail-on-error
 ```
@@ -345,12 +358,13 @@ python scripts/audit_draft_run_provider_dossiers.py `
   --fail-on-unready
 ```
 
-`readyForMigration` confirms that all six factories assembled, handles resolved,
+`readyForMigration` confirms that all role-owned factories assembled, handles resolved,
 and forbidden full artifacts were absent. `runtimeMigrationStatus=notMigrated` is
-expected only before runtime wiring. After Slice `2.17.4.6.1.3.7`, planning replay
-must report `runtimeMigrationStatus=partiallyMigrated`: `materialPlan`, `strategy`,
-and `rhetoricalPlans` have `runtimeMigrated=true`, while later provider families
-remain false until `3.8-3.9`. Do not use factory replay alone as evidence that a
+expected only before runtime wiring. After Slices `2.17.4.6.1.3.7-3.8`, replay must
+report `runtimeMigrationStatus=partiallyMigrated`: planning plus `draftCandidate`,
+`alternativeAngleRoute`, and `alternativeAngleCandidate` have
+`runtimeMigrated=true`, while review/ranking/final-quality families remain false
+until `3.9`. Do not use factory replay alone as evidence that a
 live request received a dossier; inspect the child `AiRun.requestPayload` for
 `providerDossier.runtimeMigrated=true`, direct `providerInput`, and direct
 `payloadBudget`.
@@ -363,6 +377,12 @@ Planning runtime construction follows this strict sequence:
    `mustHave` inputs retained.
 4. Add attempt-specific repair context, then cross `ProviderInputBudgetGate` again.
 5. Give the prompt builder only the resulting budgeted projection.
+
+Writer runtime follows the same boundary, but builds one dossier per rhetorical
+direction after applying `maxDraftCandidates`. Alternative-angle routing first reads
+persisted initial validation, then persists the accepted route before the challenger
+writer resolves it. A configured provider call without a dossier is a runtime error;
+`BLOCKED` must not call the provider.
 
 Rich artifacts remain available to deterministic fallback and parent trace. Do not
 reintroduce them into planning prompt signatures.
@@ -506,6 +526,8 @@ Required variables for the backend/AI track:
   default `var/glavred-ai-runs.sqlite3`.
 - `DRAFT_RUN_DB_PATH`: local SQLite store for queued DraftRun records, default
   `var/glavred-draft-runs.sqlite3`.
+- `SQLITE_JOURNAL_MODE`: shared local repository journal policy, `WAL` by default;
+  Docker compose overrides it to `DELETE` for the Windows `./var:/app/var` bind mount.
 - `PORTFOLIO_DB_PATH`: local SQLite store for dev users, sessions, projects,
   memberships, and workspace snapshots, default `var/glavred-portfolio.sqlite3`.
 - `GLAVRED_AUTH_MODE`: v1 value `dev-password`.

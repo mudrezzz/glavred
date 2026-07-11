@@ -49,15 +49,43 @@ class WriterDossierFactory:
         self._access = access
 
     def build(self, *, plan_id: str | None, operation_id: str = "draftCandidate") -> ProviderDossier:
+        alternative_candidate = operation_id == "alternativeAngleCandidate"
+        selections = {
+            "postContract": self._access.post_contract(),
+            "planning": self._access.planning(),
+            "evidence": self._access.evidence(limit=4),
+            "claims": self._access.claims(limit=1 if alternative_candidate else 2),
+            "rules": self._access.rules(limit=4 if alternative_candidate else 5),
+        }
+        if alternative_candidate:
+            selections["alternativeRoute"] = self._access.alternative_route()
+            selections["critiqueSignals"] = self._access.critique_signals(limit=1)
+        else:
+            selections["rhetoricalPlan"] = self._access.rhetorical_plan(plan_id)
         return ProviderDossierAssembler().assemble(
             ProviderDossierPolicyRegistry().writer(operation_id),
+            selections,
+            runtime_migrated=True,
+        )
+
+
+class AlternativeAngleDossierFactory:
+    def __init__(self, access: DraftRunContextAccessService) -> None:
+        self._access = access
+
+    def build(self, operation_id: str = "alternativeAngleRoute") -> ProviderDossier:
+        return ProviderDossierAssembler().assemble(
+            ProviderDossierPolicyRegistry().alternative_angle(operation_id),
             {
+                "candidates": self._access.candidate_summaries(limit=3),
+                "critiqueSignals": self._access.critique_signals(limit=3),
+                "validationIssues": self._access.validation_issues(limit=3),
+                "rejectedMoves": self._access.rejected_moves(limit=2),
                 "postContract": self._access.post_contract(),
-                "planning": self._access.planning(),
-                "rhetoricalPlan": self._access.rhetorical_plan(plan_id),
-                "evidence": self._access.evidence(),
-                "rules": self._access.rules(),
+                "evidence": self._access.evidence(limit=2),
+                "rules": self._access.rules(limit=2),
             },
+            runtime_migrated=True,
         )
 
 
@@ -144,6 +172,7 @@ class FinalQualityDossierFactory:
 
 
 __all__ = (
+    "AlternativeAngleDossierFactory",
     "FinalQualityDossierFactory",
     "PlanningDossierFactory",
     "RankingDossierFactory",

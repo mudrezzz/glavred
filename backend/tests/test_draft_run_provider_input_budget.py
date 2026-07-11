@@ -122,13 +122,13 @@ def test_provider_input_audit_reports_oversized_current_input() -> None:
     assert payload["findings"][0]["status"] == "overBudget"
 
 
-def test_provider_input_audit_reports_debt_as_not_clean() -> None:
-    report = ProviderInputAudit(target_operations=("draftCandidate",)).audit_ai_runs([])
+def test_provider_input_audit_reports_remaining_debt_as_not_clean() -> None:
+    report = ProviderInputAudit(target_operations=("pairwiseRanking",)).audit_ai_runs([])
 
     payload = report.to_payload()
     assert payload["summary"]["clean"] is False
     assert payload["findings"][0]["status"] == "explicitDebt"
-    assert payload["findings"][0]["debt"]["repairSlice"] == "2.17.4.6.1.3.8"
+    assert payload["findings"][0]["debt"]["repairSlice"] == "2.17.4.6.1.3.9"
 
 
 def ai_run(run_id: str, request_payload: dict[str, Any]) -> AiRun:
