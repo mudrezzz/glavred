@@ -12,6 +12,7 @@ from typing import Any
 
 TARGET_PROVIDER_INPUT_OPERATIONS: tuple[str, ...] = (
     "pairwiseRanking",
+    "directedRevision",
     "materialPlan",
     "draftCandidate",
     "alternativeAngleRoute",

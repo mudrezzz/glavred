@@ -15,7 +15,28 @@ class ProviderDossierTestFixture:
 
     @classmethod
     def access(cls) -> DraftRunContextAccessService:
-        return DraftRunContextAccessService.from_snapshot(cls.snapshot())
+        snapshot = cls.snapshot()
+        steps = snapshot["steps"]
+        validation = steps["validation"]
+        candidates = steps["draft"]["candidates"]
+        validation["reviewContext"] = {
+            "stage": "provider-dossier-test",
+            "candidates": candidates,
+            "currentCandidate": candidates[0],
+            "validationReport": {"candidateReports": validation["candidateReports"]},
+            "revisionInstruction": {
+                "status": "created",
+                "candidateId": candidates[0]["id"],
+                "repairGoals": ["Qualify the workflow integration claim."],
+            },
+            "finalQualityContract": {
+                "version": "final-quality-contract-v1",
+                "postContract": steps["postContract"],
+            },
+            "deterministicGate": {"status": "warning", "candidateId": candidates[0]["id"]},
+            "repairHistory": validation["rankingRevision"]["revisionLoop"],
+        }
+        return DraftRunContextAccessService.from_snapshot(snapshot)
 
     @classmethod
     def planning_dossier(cls, operation_id: str = "materialPlan") -> ProviderDossier:

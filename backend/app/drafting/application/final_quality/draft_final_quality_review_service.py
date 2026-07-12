@@ -15,6 +15,7 @@ from backend.app.drafting.application.final_quality.draft_final_quality_review_p
     FINAL_QUALITY_REVIEW_TEMPERATURE,
     FinalQualityReviewPromptBuilder,
 )
+from backend.app.drafting.application.final_quality.draft_final_quality_dossier_attempt import FinalQualityDossierAttemptBuilder
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_final_gate, selection_for_attempt
 from backend.app.drafting.application.operations.draft_provider_error_utils import raw_response_excerpt, safe_provider_error
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -22,6 +23,9 @@ from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
+from backend.app.drafting.application.dossiers.provider_dossier_context_snapshot import ProviderDossierContextSnapshotFactory
+from backend.app.drafting.application.dossiers.provider_dossier_factories import FinalQualityDossierFactory
 
 
 class DraftFinalQualityReviewService:
@@ -41,6 +45,7 @@ class DraftFinalQualityReviewService:
         self._openrouter_adapter = openrouter_adapter
         self._parser = parser or FinalQualityReviewParser()
         self._prompt_builder = prompt_builder or FinalQualityReviewPromptBuilder()
+        self._attempt_builder = FinalQualityDossierAttemptBuilder(prompt_builder=self._prompt_builder)
 
     def review(
         self,
@@ -49,11 +54,36 @@ class DraftFinalQualityReviewService:
         contract: dict[str, Any],
         deterministic_gate: dict[str, Any],
         validation_report: dict[str, Any],
+        provider_dossier: ProviderDossier | None = None,
         repair_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         status = self._openrouter_validator.evaluate(self._settings)
         primary_selection = select_model_for_final_gate(self._settings)
         independence = _model_independence(self._settings, primary_selection.model)
+        if provider_dossier is None:
+            access = ProviderDossierContextSnapshotFactory().access(
+                draft_artifact={"candidates": [candidate]},
+                validation_report=validation_report,
+                context_artifact={"postContract": contract.get("postContract") or contract},
+                review_context={
+                    "currentCandidate": candidate,
+                    "validationReport": validation_report,
+                    "finalQualityContract": contract,
+                    "deterministicGate": deterministic_gate,
+                },
+            )
+            provider_dossier = FinalQualityDossierFactory(access).build(candidate_id=str(candidate.get("id") or ""))
+        if provider_dossier is None or provider_dossier.readiness_status is DossierReadinessStatus.BLOCKED:
+            return {
+                "status": "not-run",
+                "reason": "dossier-context-unavailable" if provider_dossier is None else "final-quality-dossier-blocked",
+                "attempts": [],
+                "aiRunIds": [],
+                "dossierBlocked": True,
+                "providerDossier": provider_dossier.to_payload() if provider_dossier else None,
+                "modelIndependence": independence,
+                **primary_selection.to_payload(),
+            }
         if not status.configured or not primary_selection.model:
             return {
                 "status": "not-run",
@@ -76,6 +106,7 @@ class DraftFinalQualityReviewService:
                 contract=contract,
                 deterministic_gate=deterministic_gate,
                 validation_report=validation_report,
+                provider_dossier=provider_dossier,
                 repair_context=repair_context,
                 repair_attempt_context=repair_attempt_context,
                 independence=independence,
@@ -109,27 +140,24 @@ class DraftFinalQualityReviewService:
         contract: dict[str, Any],
         deterministic_gate: dict[str, Any],
         validation_report: dict[str, Any],
+        provider_dossier: ProviderDossier,
         repair_context: dict[str, Any] | None,
         repair_attempt_context: dict[str, Any] | None,
         independence: str,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.FINAL_GATE, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = self._prompt_builder.build_messages(
-            candidate=candidate,
-            contract=contract,
-            deterministic_gate=deterministic_gate,
-            validation_report=validation_report,
+        prepared = self._attempt_builder.prepare(
+            dossier=provider_dossier,
+            model=attempt.model,
+            attempt=attempt_payload,
+            model_selection=selection.to_payload(),
+            execution_mode=self._settings.draft_run_execution_mode,
+            model_independence=independence,
             repair_context=repair_attempt_context or repair_context if attempt.repair else repair_context,
         )
-        request_payload = {
-            "draftRunStep": "finalQualityGateReview",
-            "attempt": attempt_payload,
-            "messages": messages,
-            "finalQualityContract": contract,
-            "modelIndependence": independence,
-            **selection.to_payload(),
-        }
+        messages = prepared.messages
+        request_payload = {**prepared.request_payload, "finalQualityContract": contract}
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,

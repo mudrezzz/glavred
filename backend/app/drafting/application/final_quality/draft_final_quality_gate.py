@@ -84,6 +84,8 @@ class DraftFinalQualityGateService:
             context_artifact=context_artifact,
             revision_loop_stop_reason=revision_loop_stop_reason,
             contract=contract,
+            progress=progress,
+            repair_history={"revisionLoopStopReason": revision_loop_stop_reason},
         )
         if progress:
             progress.complete_operation("final-quality-gate", notes=[f"status={initial['status']}"])
@@ -91,6 +93,11 @@ class DraftFinalQualityGateService:
             initial["repair"] = {"status": "not-run", "reason": "final-quality-gate-passed"}
             initial["acceptedRepair"] = False
             initial["finalDecision"] = self._payloads.final_decision(final_candidate, final_source, "final-quality-gate-passed")
+            initial["initialStatus"] = initial["status"]
+            initial["effectiveStatus"] = initial["status"]
+            initial["effectiveCandidateId"] = final_candidate.get("id")
+            initial["effectiveIndependentReview"] = initial.get("independentReview")
+            initial["effectiveValidationReport"] = current_report
             return FinalQualityGateResult(initial, final_candidate, self._payloads.strings(initial.get("independentReview", {}).get("aiRunIds")))
         repair = self._repair_loop.run(
             initial_gate=initial,

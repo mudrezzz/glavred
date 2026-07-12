@@ -330,8 +330,13 @@ builds one operation-specific `PlanningDossier`, passes only the budgeted projec
 to the prompt builder, and records `providerDossier.runtimeMigrated=true` on every
 child `AiRun`. `draftCandidate`, `alternativeAngleRoute`, and
 `alternativeAngleCandidate` additionally use operation-specific writer/route dossiers;
-the route is persisted before challenger construction. Review/ranking/final-quality
-families remain scheduled for `3.9`, so replay stays `partiallyMigrated`.
+the route is persisted before challenger construction. `llmValidation`,
+`pairwiseRanking`, `directedRevision`, and `finalQualityGateReview` now use their
+review/ranking/revision/final-quality dossiers as well. Terminal replay is
+`readyForMigration`; Slice `3.9` is live-accepted by run `7bf3...`: all four target
+families are inside caps, evidence is sufficient, final quality is publishable, and
+open critical/warning counts are 0/0. The separate `alternativeAngleRoute`
+data-dependent over-budget finding is tracked by Slice `3.9.1`.
 
 ## Validation Runtime Budget
 

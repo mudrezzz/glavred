@@ -15,6 +15,27 @@ DIRECTED_REVISION_TEMPERATURE = 0.2
 class DirectedRevisionPromptBuilder:
     """Owns directed-revision provider message construction."""
 
+    def build_from_provider_input(
+        self,
+        *,
+        provider_input: dict[str, Any],
+        repair_context: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        payload = {
+            "task": "Revise the selected draft candidate once.",
+            "requiredJson": {"title": "string", "body": "string", "changeLog": ["what changed"]},
+            "candidate": provider_input.get("candidate"),
+            "revisionInstruction": provider_input.get("revisionInstruction"),
+            "postContract": provider_input.get("postContract"),
+            "validationIssues": provider_input.get("validationIssues"),
+            "evidence": provider_input.get("evidence"),
+            "rules": provider_input.get("rules"),
+            "antiRegressionConstraints": provider_input.get("antiRegressionConstraints"),
+            "repairContext": repair_context,
+            "editorialGoalContract": self._editorial_goal_contract(),
+        }
+        return self._messages(payload)
+
     def build_messages(
         self,
         *,
@@ -26,14 +47,6 @@ class DirectedRevisionPromptBuilder:
         context_pack: dict[str, Any] | None = None,
         repair_context: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
-        system = (
-            "You are Glavred's directed revision editor. Return strict JSON only. "
-            "Improve only the listed validator/editorial goals. Preserve contract, claims, "
-            "forbidden moves, route, grounding, and anti-regression constraints. "
-            "Do not mechanically expose internal pipeline artifact names as dev-jargon, "
-            "such as SourceLedger, publicEvidence, validators, RuleRegistry, or PostContract in public prose. "
-            "Use them only if you intentionally frame and explain them as reader-facing concepts."
-        )
         payload = {
             "task": "Revise the selected draft candidate once.",
             "requiredJson": {"title": "string", "body": "string", "changeLog": ["what changed"]},
@@ -45,15 +58,29 @@ class DirectedRevisionPromptBuilder:
             "contextPack": context_pack or {},
             "sourceLedger": context_artifact.get("sourceLedger"),
             "repairContext": repair_context,
-            "editorialGoalContract": {
-                "dimensions": ["ideaStrength", "tension", "readerValue", "authorStance", "sourceIntegration", "structure", "validatorHealth"],
-                "rules": [
-                    "Make targeted editorial improvements only.",
-                    "Preserve working source markers.",
-                    "Do not repeat rejected moves.",
-                    "Avoid internal pipeline jargon unless it is explicitly explained as a public concept.",
-                    "If unsafe, leave unchanged and explain in changeLog.",
-                ],
-            },
+            "editorialGoalContract": self._editorial_goal_contract(),
         }
+        return self._messages(payload)
+
+    def _editorial_goal_contract(self) -> dict[str, Any]:
+        return {
+            "dimensions": ["ideaStrength", "tension", "readerValue", "authorStance", "sourceIntegration", "structure", "validatorHealth"],
+            "rules": [
+                "Make targeted editorial improvements only.",
+                "Preserve working source markers.",
+                "Do not repeat rejected moves.",
+                "Avoid internal pipeline jargon unless it is explicitly explained as a public concept.",
+                "If unsafe, leave unchanged and explain in changeLog.",
+            ],
+        }
+
+    def _messages(self, payload: dict[str, Any]) -> list[dict[str, str]]:
+        system = (
+            "You are Glavred's directed revision editor. Return strict JSON only. "
+            "Improve only the listed validator/editorial goals. Preserve contract, claims, "
+            "forbidden moves, route, grounding, and anti-regression constraints. "
+            "Do not mechanically expose internal pipeline artifact names as dev-jargon, "
+            "such as SourceLedger, publicEvidence, validators, RuleRegistry, or PostContract in public prose. "
+            "Use them only if you intentionally frame and explain them as reader-facing concepts."
+        )
         return [{"role": "system", "content": system}, {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]

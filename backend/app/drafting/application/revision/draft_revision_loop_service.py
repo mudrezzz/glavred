@@ -105,6 +105,7 @@ class DraftRevisionLoopService:
                 cycle_number=cycle_number,
                 candidate=current,
                 instruction=instruction,
+                current_validation=current_validation,
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,

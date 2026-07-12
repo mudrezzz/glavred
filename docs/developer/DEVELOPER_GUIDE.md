@@ -360,14 +360,19 @@ python scripts/audit_draft_run_provider_dossiers.py `
 
 `readyForMigration` confirms that all role-owned factories assembled, handles resolved,
 and forbidden full artifacts were absent. `runtimeMigrationStatus=notMigrated` is
-expected only before runtime wiring. After Slices `2.17.4.6.1.3.7-3.8`, replay must
-report `runtimeMigrationStatus=partiallyMigrated`: planning plus `draftCandidate`,
-`alternativeAngleRoute`, and `alternativeAngleCandidate` have
-`runtimeMigrated=true`, while review/ranking/final-quality families remain false
-until `3.9`. Do not use factory replay alone as evidence that a
+expected only before runtime wiring. After Slice `2.17.4.6.1.3.9`, replay reports
+all dossier families as runtime-migrated. `llmValidation`, `pairwiseRanking`,
+`directedRevision`, and `finalQualityGateReview` must also expose direct current-call
+budget proof. Do not use factory replay alone as evidence that a
 live request received a dossier; inspect the child `AiRun.requestPayload` for
 `providerDossier.runtimeMigrated=true`, direct `providerInput`, and direct
 `payloadBudget`.
+
+For ranking, verify more than total size: every active candidate must have the same
+opening/middle/ending projection, the same maximum number of prioritized findings,
+the full `findingCount`, and all seven editorial dimensions. A clean exact-payload
+replay after changing compaction is necessary but not sufficient to close the slice;
+the final code still needs one fresh live DraftRun with no budget incident.
 
 Planning runtime construction follows this strict sequence:
 

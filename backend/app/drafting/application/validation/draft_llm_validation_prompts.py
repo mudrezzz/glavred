@@ -12,6 +12,22 @@ LLM_VALIDATION_TEMPERATURE = 0.1
 
 
 class LlmValidationPromptBuilder:
+    def build_from_provider_input(
+        self,
+        *,
+        provider_input: dict[str, Any],
+        repair_context: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        payload = self._payload(
+            candidate=provider_input.get("candidate"),
+            post_contract=provider_input.get("postContract"),
+            evidence=provider_input.get("evidence"),
+            rules=provider_input.get("rules"),
+            validation_issues=provider_input.get("validationIssues"),
+            repair_context=repair_context,
+        )
+        return self._messages(payload)
+
     def build_messages(
         self,
         *,
@@ -23,15 +39,35 @@ class LlmValidationPromptBuilder:
         context_pack: dict[str, Any] | None = None,
         repair_context: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
+        payload = self._payload(
+            candidate=candidate,
+            post_contract=context_artifact.get("postContract"),
+            evidence=material_plan,
+            rules=rule_pack.get("ruleRegistrySnapshot"),
+            validation_issues=deterministic_report,
+            repair_context=repair_context,
+        )
+        payload["sourceLedger"] = context_artifact.get("sourceLedger")
+        payload["contextPack"] = context_pack or {}
+        return self._messages(payload)
+
+    def _payload(
+        self,
+        *,
+        candidate: Any,
+        post_contract: Any,
+        evidence: Any,
+        rules: Any,
+        validation_issues: Any,
+        repair_context: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         payload = {
             "task": "Validate one Glavred draft candidate. Return strict JSON only.",
             "candidate": candidate,
-            "sourceLedger": context_artifact.get("sourceLedger"),
-            "postContract": context_artifact.get("postContract"),
-            "ruleRegistrySnapshot": rule_pack.get("ruleRegistrySnapshot"),
-            "contextPack": context_pack or {},
-            "materialPlan": material_plan,
-            "deterministicReport": deterministic_report,
+            "postContract": post_contract,
+            "evidence": evidence,
+            "rules": rules,
+            "deterministicFindings": validation_issues,
             "requiredJson": {
                 "summary": "short validator summary",
                 "observations": [
@@ -68,6 +104,9 @@ class LlmValidationPromptBuilder:
         }
         if repair_context:
             payload["repairContext"] = repair_context
+        return payload
+
+    def _messages(self, payload: dict[str, Any]) -> list[dict[str, str]]:
         return [
             {
                 "role": "system",

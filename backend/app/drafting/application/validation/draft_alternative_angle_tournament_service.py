@@ -107,6 +107,15 @@ class DraftAlternativeAngleTournamentService:
 
         merged = _append_candidate(draft_artifact, candidate)
         tournament = AlternativeAngleTournament(status="succeeded", route=route, candidate=candidate, attempts=[*attempts, *candidate_attempts], ai_run_ids=ai_run_ids)
+        if progress:
+            progress.merge_artifact(
+                {
+                    "alternativeAngleTournament": {
+                        **tournament.to_payload(),
+                        "inputCritiqueSummary": _critique_summary(validation_report),
+                    }
+                }
+            )
         return merged, {**tournament.to_payload(), "inputCritiqueSummary": _critique_summary(validation_report)}, ai_run_ids
 
 

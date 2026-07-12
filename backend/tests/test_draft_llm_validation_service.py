@@ -30,7 +30,7 @@ def test_llm_validation_success_reports_all_candidates(tmp_path) -> None:
     adapter = SequentialValidationAdapter([valid_payload("source"), valid_payload("voice")])
     result = service(tmp_path, adapter, configured=True, review_model="review-model").validate(
         draft_artifact={"candidates": [{"id": "candidate-1"}, {"id": "candidate-2"}]},
-        context_artifact={},
+        context_artifact=context_artifact(),
         rule_pack={},
         material_plan={},
         deterministic_report={"candidateReports": [{"candidateId": "candidate-1"}, {"candidateId": "candidate-2"}]},
@@ -47,7 +47,7 @@ def test_llm_validation_success_reports_all_candidates(tmp_path) -> None:
 def test_llm_validation_unconfigured_is_not_run_without_fake_findings(tmp_path) -> None:
     result = service(tmp_path, SequentialValidationAdapter([]), configured=False).validate(
         draft_artifact={"candidates": [{"id": "candidate-1"}]},
-        context_artifact={},
+        context_artifact=context_artifact(),
         rule_pack={},
         material_plan={},
         deterministic_report={},
@@ -63,7 +63,7 @@ def test_llm_validation_retries_and_uses_backup_model(tmp_path) -> None:
     adapter = SequentialValidationAdapter([ValueError("bad json sk-test-secret"), ValueError("bad repair"), valid_payload("coherence")])
     result = service(tmp_path, adapter, configured=True, backup_model="backup-model").validate(
         draft_artifact={"candidates": [{"id": "candidate-1"}]},
-        context_artifact={},
+        context_artifact=context_artifact(),
         rule_pack={},
         material_plan={},
         deterministic_report={},
@@ -104,3 +104,7 @@ def valid_payload(kind: str) -> dict[str, Any]:
             }
         ],
     }
+
+
+def context_artifact() -> dict[str, Any]:
+    return {"postContract": {"thesis": "Test thesis", "audience": "Test audience"}}

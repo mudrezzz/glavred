@@ -1,0 +1,124 @@
+{
+  "sliceId": "2.17.4.6.1.3.9",
+  "status": "passed",
+  "controlRuns": {
+    "baseline": "e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2",
+    "planningCheckpoint": "c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed",
+    "writerCheckpoint": "72b3a2df-c8be-41a8-b2c0-e74e5e502cd0",
+    "diagnosticRuns": [
+      "e369175a-29a6-4e37-97cc-a4bba7e09950",
+      "37564139-55c2-4cba-beb0-b4c2aed78518"
+    ],
+    "lastDiagnosticRun": "d06d8f17-36eb-46ea-8fcd-fd302905f41a",
+    "finalPostFixLiveRun": "7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47"
+  },
+  "runtimeMigration": {
+    "operations": [
+      "llmValidation",
+      "pairwiseRanking",
+      "directedRevision",
+      "finalQualityGateReview"
+    ],
+    "runtimeMigrated": true,
+    "unresolvedHandles": 0,
+    "forbiddenFieldViolations": 0,
+    "missingRequiredInputs": 0,
+    "terminalReplayVerdict": "readyForMigration"
+  },
+  "lastLiveInputChars": {
+    "llmValidation": [15403, 14883, 15735, 13987],
+    "pairwiseRanking": [22738, 13298, 13148, 13207],
+    "directedRevision": [19747, 18674, 18742, 17694],
+    "finalQualityGateReview": [19553, 19652]
+  },
+  "finalCompactorReplayOnLastLiveInput": {
+    "llmValidation": [15403, 14883, 15735, 13987],
+    "pairwiseRanking": [20916, 12450, 12378, 12440],
+    "directedRevision": [19747, 18674, 18742, 17694],
+    "finalQualityGateReview": [19553, 19652],
+    "budgetIncidents": 0
+  },
+  "lifecycleReplay72b3": {
+    "openCriticalCount": 0,
+    "openWarningCount": 1,
+    "diagnosticCriticalCount": 3,
+    "directCandidateWarningCount": 20,
+    "suppressedAttributionDiagnostics": 4,
+    "editorialStatus": "publishableWithCaution",
+    "overallVerdict": "recoveredSuccess"
+  },
+  "lastLiveQuality": {
+    "technicalStatus": "succeeded",
+    "providerRecoveryStatus": "backupRecovered",
+    "evidenceCoverage": "sufficient",
+    "editorialStatus": "needsHumanReview",
+    "overallVerdict": "needsAttention",
+    "openCriticalCount": 1,
+    "openWarningCount": 1,
+    "finalDraftChars": 8660,
+    "finalDraftParagraphs": 46,
+    "openCriticalReason": "missing source-backed implementation example"
+  },
+  "finalPostFixProof": {
+    "runId": "7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47",
+    "elapsedSeconds": 1459.306161,
+    "technicalStatus": "succeeded",
+    "providerRecoveryStatus": "backupRecovered",
+    "evidenceCoverage": "sufficient",
+    "editorialStatus": "publishable",
+    "overallVerdict": "recoveredSuccess",
+    "openCriticalCount": 0,
+    "openWarningCount": 0,
+    "finalDraftChars": 8938,
+    "finalDraftBlocks": 18,
+    "finalCandidateId": "revised-revised-revised-revised-alternative-angle-1-brief-control-workflow-20260703211313",
+    "finalDecisionSource": "finalQualityRepair",
+    "operationInputChars": {
+      "llmValidation": [15733, 15785, 16628, 14808],
+      "pairwiseRanking": [20534, 10832, 10696, 10517],
+      "directedRevision": [19197, 20157, 18136, 14823, 15616],
+      "finalQualityGateReview": [16523, 17105, 18015]
+    },
+    "targetOperationAudit": {
+      "callCount": 16,
+      "directlyBudgeted": 16,
+      "budgetIncidents": 0,
+      "forbiddenFieldViolations": 0,
+      "unresolvedHandles": 0
+    },
+    "economyVsWriterCheckpoint": {
+      "writerCheckpointMessageChars": 2030528,
+      "currentMessageChars": 272288,
+      "messageCharReductionPercent": 86.6,
+      "writerCheckpointProviderCostUsd": 0.597017,
+      "currentProviderCostUsd": 0.302704,
+      "providerCostReductionPercent": 49.3,
+      "note": "Exact token counts are redacted in trace; comparable message chars and provider cost are used."
+    }
+  },
+  "outOfScopeFinding": {
+    "operationId": "alternativeAngleRoute",
+    "ownerSlice": "2.17.4.6.1.3.8",
+    "status": "overBudget",
+    "promptCharEstimate": 34589,
+    "maxPromptChars": 22000,
+    "disposition": "followUpSlice"
+  },
+  "traceFinding": {
+    "operationId": "pairwiseRanking",
+    "status": "nonBlockingTraceDebt",
+    "comparisonCount": 3,
+    "blankLeftRightCandidateIds": 3,
+    "winnerPresent": true,
+    "editorialDimensionScoreCount": 7,
+    "recommendedSlice": "2.17.4.6.1.3.9.2"
+  },
+  "acceptance": {
+    "codeMigration": "passed",
+    "deterministicTests": "passed",
+    "terminalReplay": "passed",
+    "freshLiveBudgetProofAfterFinalPatch": "passed",
+    "qualityNonRegressionVsWriterCheckpoint": "passed",
+    "trackerStatus": "Done"
+  }
+}

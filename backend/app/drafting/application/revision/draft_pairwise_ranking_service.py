@@ -16,14 +16,17 @@ from backend.app.drafting.application.revision.draft_pairwise_ranking_prompts im
     PairwiseRankingPromptBuilder,
 )
 from backend.app.drafting.application.revision.draft_pairwise_ranking_payloads import PairwiseRankingPayloadMapper
+from backend.app.drafting.application.revision.draft_pairwise_ranking_dossier_attempt import PairwiseRankingDossierAttemptBuilder
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
 from backend.app.domain.draft_ranking_revision import PairwiseRankingReport, RankingDecision
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
+from backend.app.drafting.application.dossiers.provider_dossier_context_snapshot import ProviderDossierContextSnapshotFactory
+from backend.app.drafting.application.dossiers.provider_dossier_factories import RankingDossierFactory
 
 
 class DraftPairwiseRankingService:
@@ -45,6 +48,7 @@ class DraftPairwiseRankingService:
         self._fallback = fallback_ranker or DeterministicPairwiseRanker()
         self._prompt_builder = prompt_builder or PairwiseRankingPromptBuilder()
         self._payloads = payload_mapper or PairwiseRankingPayloadMapper()
+        self._attempt_builder = PairwiseRankingDossierAttemptBuilder(prompt_builder=self._prompt_builder)
 
     def rank(
         self,
@@ -54,7 +58,21 @@ class DraftPairwiseRankingService:
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier | None = None,
     ) -> PairwiseRankingReport:
+        if provider_dossier is None:
+            access = ProviderDossierContextSnapshotFactory().access(
+                draft_artifact=draft_artifact,
+                validation_report=validation_report,
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+                review_context={"candidates": draft_artifact.get("candidates", []), "validationReport": validation_report},
+            )
+            provider_dossier = RankingDossierFactory(access).build()
+        if provider_dossier is None or provider_dossier.readiness_status is DossierReadinessStatus.BLOCKED:
+            reason = "dossier-context-unavailable" if provider_dossier is None else "ranking-dossier-blocked"
+            return self._fallback_report(draft_artifact, validation_report, [], reason)
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
             return self._fallback_report(draft_artifact, validation_report, [], "provider-unconfigured")
@@ -65,7 +83,7 @@ class DraftPairwiseRankingService:
             primary_model=primary_selection.model or self._settings.openrouter_default_model,
             backup_model=self._settings.openrouter_backup_model_or_none,
         ):
-            result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, context_artifact, rule_pack, material_plan, repair_context)
+            result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, provider_dossier, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
                 report = self._payloads.report_from_payload(result["payload"], attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")])
@@ -80,24 +98,21 @@ class DraftPairwiseRankingService:
         primary_selection: Any,
         draft_artifact: dict[str, Any],
         validation_report: dict[str, Any],
-        context_artifact: dict[str, Any],
-        rule_pack: dict[str, Any],
-        material_plan: dict[str, Any],
+        provider_dossier: ProviderDossier,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
-        context_pack = context_pack_for_role(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = self._prompt_builder.build_messages(
-            draft_artifact=draft_artifact,
-            validation_report=validation_report,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-            context_pack=context_pack,
+        prepared = self._attempt_builder.prepare(
+            dossier=provider_dossier,
+            model=attempt.model,
+            attempt=attempt_payload,
+            model_selection=selection.to_payload(),
+            execution_mode=self._settings.draft_run_execution_mode,
             repair_context=repair_context if attempt.repair else None,
         )
-        request_payload = {"draftRunStep": "pairwiseRanking", "attempt": attempt_payload, "contextPack": context_pack, "messages": messages, **selection.to_payload()}
+        messages = prepared.messages
+        request_payload = prepared.request_payload
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,

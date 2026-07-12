@@ -7,7 +7,7 @@ Architecture doc: docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md
 
 from __future__ import annotations
 
-from typing import Mapping
+from typing import Any, Mapping
 
 from backend.app.drafting.application.dossiers.provider_dossier_policy import ProviderDossierPolicy
 from backend.app.drafting.domain.provider_dossier import (
@@ -34,7 +34,7 @@ class ProviderDossierAssembler:
         missing_optional = tuple(sorted(key for key in optional if not self._available(selections.get(key))))
 
         sent = {
-            key: selection.copied_value()
+            key: self._without_forbidden_keys(selection.copied_value(), set(contract.never_send_to_provider))
             for key, selection in sorted(selections.items())
             if key in provider_keys and self._available(selection)
         }
@@ -76,6 +76,17 @@ class ProviderDossierAssembler:
                 "runtimeMigrationStatus": "migrated" if runtime_migrated else "notMigrated",
             },
         )
+
+    def _without_forbidden_keys(self, value: Any, forbidden: set[str]) -> Any:
+        if isinstance(value, dict):
+            return {
+                key: self._without_forbidden_keys(child, forbidden)
+                for key, child in value.items()
+                if key not in forbidden
+            }
+        if isinstance(value, list):
+            return [self._without_forbidden_keys(child, forbidden) for child in value]
+        return value
 
     def _available(self, selection: ContextSelection | None) -> bool:
         return bool(selection and selection.available)

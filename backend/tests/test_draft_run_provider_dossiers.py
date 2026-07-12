@@ -32,7 +32,7 @@ def test_all_operation_families_return_usable_typed_dossiers() -> None:
     assert {item.model_role for item in dossiers} == {"strategy", "writer", "review", "finalGate"}
     assert dossiers[0].runtime_migrated is True
     assert dossiers[1].runtime_migrated is True
-    assert all(item.runtime_migrated is False for item in dossiers[2:])
+    assert all(item.runtime_migrated is True for item in dossiers[2:])
 
 
 def test_missing_required_input_blocks_dossier() -> None:

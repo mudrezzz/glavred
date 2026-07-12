@@ -20,6 +20,7 @@ from backend.app.drafting.application.operations.payload_budget_contracts import
 from backend.app.drafting.application.operations.payload_compactor_common import CountAccumulator, _record, _records
 from backend.app.drafting.application.operations.payload_evidence_compactors import RulePackCompactor
 from backend.app.drafting.application.operations.payload_record_compactors import CandidatePayloadCompactor
+from backend.app.drafting.application.operations.payload_review_dossier_compactor import ReviewDossierPayloadCompactor
 
 
 class DraftRunPayloadCompactor:
@@ -30,6 +31,7 @@ class DraftRunPayloadCompactor:
         self._draft = DraftArtifactCompactor()
         self._trace = TraceContextCompactor()
         self._validation = ValidationReportCompactor()
+        self._review_dossiers = ReviewDossierPayloadCompactor()
 
     def compact(self, payload: Mapping[str, Any], *, profile: PayloadBudgetProfile, contract: SemanticInputContract) -> PayloadCompactionResult:
         suppressed = [field_name for field_name in contract.never_send_to_provider if field_name in payload]
@@ -47,7 +49,11 @@ class DraftRunPayloadCompactor:
         self._compact_key(compact, trimmed, "rulePack", self._rules.compact, profile)
         self._compact_key(compact, trimmed, "material_plan", self._material.compact, profile)
         self._compact_key(compact, trimmed, "materialPlan", self._material.compact, profile)
-        self._compact_candidates(compact, trimmed, profile)
+        if "dossierId" in compact:
+            compact, dossier_counts = self._review_dossiers.compact(compact, profile)
+            CountAccumulator.merge(trimmed, dossier_counts)
+        else:
+            self._compact_candidates(compact, trimmed, profile)
         self._compact_key(compact, trimmed, "draft_artifact", self._draft.compact, profile)
         self._compact_key(compact, trimmed, "trace_context", self._trace.compact, profile)
         self._compact_key(compact, trimmed, "traceContext", self._trace.compact, profile)

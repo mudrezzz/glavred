@@ -11,6 +11,18 @@ from backend.app.drafting.application.context.draft_run_context_access import Dr
 from backend.app.drafting.application.dossiers.provider_dossier_assembler import ProviderDossierAssembler
 from backend.app.drafting.application.dossiers.provider_dossier_policy import ProviderDossierPolicyRegistry
 from backend.app.drafting.domain.provider_dossier import ProviderDossier
+from backend.app.drafting.domain.provider_dossier import ContextSelection
+
+
+EDITORIAL_DIMENSIONS = (
+    "ideaStrength",
+    "tension",
+    "readerValue",
+    "authorStance",
+    "sourceIntegration",
+    "structure",
+    "validatorHealth",
+)
 
 
 class PlanningDossierFactory:
@@ -29,7 +41,7 @@ class PlanningDossierFactory:
             "rhetoricalPlans": 4,
         }.get(operation_id, 8)
         selections = {
-            "postContract": self._access.post_contract(),
+            "postContract": _required_projection(self._access.post_contract()),
             "evidence": self._access.evidence(limit=evidence_limit),
             "rules": self._access.rules(limit=rule_limit),
         }
@@ -51,7 +63,7 @@ class WriterDossierFactory:
     def build(self, *, plan_id: str | None, operation_id: str = "draftCandidate") -> ProviderDossier:
         alternative_candidate = operation_id == "alternativeAngleCandidate"
         selections = {
-            "postContract": self._access.post_contract(),
+            "postContract": _required_projection(self._access.post_contract()),
             "planning": self._access.planning(),
             "evidence": self._access.evidence(limit=4),
             "claims": self._access.claims(limit=1 if alternative_candidate else 2),
@@ -81,7 +93,7 @@ class AlternativeAngleDossierFactory:
                 "critiqueSignals": self._access.critique_signals(limit=3),
                 "validationIssues": self._access.validation_issues(limit=3),
                 "rejectedMoves": self._access.rejected_moves(limit=2),
-                "postContract": self._access.post_contract(),
+                "postContract": _required_projection(self._access.post_contract()),
                 "evidence": self._access.evidence(limit=2),
                 "rules": self._access.rules(limit=2),
             },
@@ -105,11 +117,12 @@ class ReviewDossierFactory:
             ProviderDossierPolicyRegistry().review(operation_id, resolved_role),
             {
                 "candidate": self._access.selected_candidate(candidate_id),
-                "postContract": self._access.post_contract(),
+                "postContract": _required_projection(self._access.post_contract()),
                 "evidence": self._access.evidence(),
                 "rules": self._access.rules(),
                 "validationIssues": self._access.validation_issues(candidate_id),
             },
+            runtime_migrated=True,
         )
 
     def _model_role(self, operation_id: str) -> str:
@@ -129,10 +142,27 @@ class RankingDossierFactory:
             ProviderDossierPolicyRegistry().ranking(operation_id),
             {
                 "candidates": self._access.candidate_summaries(),
-                "validationIssues": self._access.validation_issues(),
-                "postContract": self._access.post_contract(),
+                "validationIssues": self._access.ranking_validation_summaries(),
+                "postContract": _required_projection(self._access.post_contract()),
                 "evidence": self._access.evidence(),
+                "editorialDimensions": ContextSelection(
+                    "editorialDimensions",
+                    list(EDITORIAL_DIMENSIONS),
+                    total_count=len(EDITORIAL_DIMENSIONS),
+                    selected_count=len(EDITORIAL_DIMENSIONS),
+                ),
+                "selectionConstraints": ContextSelection(
+                    "selectionConstraints",
+                    {
+                        "compareAllCandidates": True,
+                        "preservePostContract": True,
+                        "doNotRewrite": True,
+                    },
+                    total_count=3,
+                    selected_count=3,
+                ),
             },
+            runtime_migrated=True,
         )
 
 
@@ -146,10 +176,22 @@ class RevisionDossierFactory:
             {
                 "candidate": self._access.selected_candidate(candidate_id),
                 "validationIssues": self._access.validation_issues(candidate_id),
-                "postContract": self._access.post_contract(),
+                "postContract": _required_projection(self._access.post_contract()),
                 "evidence": self._access.evidence(),
                 "rules": self._access.rules(),
+                "revisionInstruction": self._access.revision_instruction(),
+                "antiRegressionConstraints": ContextSelection(
+                    "antiRegressionConstraints",
+                    {
+                        "preserveContract": True,
+                        "preserveEvidenceMarkers": True,
+                        "doNotStrengthenClaims": True,
+                    },
+                    total_count=3,
+                    selected_count=3,
+                ),
             },
+            runtime_migrated=True,
         )
 
 
@@ -162,13 +204,29 @@ class FinalQualityDossierFactory:
             ProviderDossierPolicyRegistry().final_quality(operation_id),
             {
                 "candidate": self._access.selected_candidate(candidate_id),
-                "postContract": self._access.post_contract(),
+                "postContract": _required_projection(self._access.post_contract()),
+                "finalQualityContract": self._access.final_quality_contract(),
+                "deterministicGate": self._access.deterministic_gate(),
                 "finalQualityIssues": self._access.final_quality_lifecycle(),
                 "validationIssues": self._access.validation_issues(candidate_id),
                 "evidence": self._access.evidence(),
                 "repairHistory": self._access.repair_history(),
             },
+            runtime_migrated=True,
         )
+
+
+def _required_projection(selection: ContextSelection) -> ContextSelection:
+    """Marks an intentional semantic projection as complete for dossier readiness."""
+    return ContextSelection(
+        selection.key,
+        selection.value,
+        selection.handles,
+        available=selection.available,
+        total_count=selection.selected_count,
+        selected_count=selection.selected_count,
+        trimmed_count=0,
+    )
 
 
 __all__ = (

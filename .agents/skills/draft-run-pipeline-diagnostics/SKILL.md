@@ -280,6 +280,19 @@ hide bad output behind polite abstractions.
   repair ran, and why that repair was accepted or rejected. A rejected final repair
   is not silent failure: it must remain visible as a safety-preserving decision, and
   the unresolved warning/critical must remain visible in `qualityFidelity.issueLifecycle`.
+- For `llmValidation`, `pairwiseRanking`, `directedRevision`, and
+  `finalQualityGateReview`, require `providerDossier.runtimeMigrated=true` and a
+  direct current-call `payloadBudget`. Include `directedRevision` in audits; it is
+  not covered by checking ranking alone. A post-fix replay below the cap does not
+  replace one fresh live proof after compaction changes.
+- Ranking budget success is not enough if representation is biased. Verify the same
+  opening/middle/ending window sizes, the same finding-summary cap, the full
+  `findingCount`, and all seven editorial dimensions for every active candidate.
+- Interpret lifecycle counts against `finalDecision.finalCandidateId`. A finding for
+  a non-delivered candidate should remain visible with
+  `resolved/candidate-not-delivered`; an unknown historical candidate scope stays
+  open conservatively. Never suppress a real finding that applies to the delivered
+  or effective repaired candidate.
 - When a run has `qualityFidelity.providerRecoveryStatus=retryRecovered`, do not
   recommend prompt/model fixes from that single run unless the accepted payload is
   itself bad. Repeated retry/backup/fallback patterns across many runs belong to the

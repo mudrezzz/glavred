@@ -309,6 +309,12 @@ Live proof:
 - `alternativeAngleCandidate` recorded 16534 chars against the 24000 cap;
 - replay reported zero unresolved handles and zero forbidden-field violations.
 
+A later broader live context in run `7bf3...` exposed data-dependent drift in
+`alternativeAngleRoute`: `34589/22000`. The migration remains structurally correct,
+but its projection is not reliably bounded. Repair is explicit follow-up
+`2.17.4.6.1.3.9.1`; it must preserve the semantic route contract while enforcing the
+cap before the tool-mediated pilot.
+
 The final proof also showed why Slice `3.9` remains necessary: the delivered text
 itself stayed below `hardMaxChars`, but `qualityFidelity.issueLifecycle` still
 counted open critical findings from intermediate or losing validation reports. That
@@ -322,6 +328,7 @@ The comparison is stored in
 
 - `llmValidation`;
 - `pairwiseRanking`;
+- `directedRevision`, including final repair;
 - `finalQualityGateReview`;
 - remaining final repair review calls.
 
@@ -335,6 +342,21 @@ candidate reports as open final-draft quality blockers. The lifecycle should mak
 final selected or repaired candidate explicit, keep non-final findings visible as
 diagnostic context, and block trusted quality only for unresolved issues that still
 apply to the delivered final text.
+
+**Implementation status (2026-07-12):** runtime wiring, direct attempt budgets,
+terminal replay, persisted-candidate recovery, and candidate-scoped lifecycle are
+implemented. `72b3...` replay now has `openCriticalCount=0` and
+`openWarningCount=1`; losing-candidate findings remain diagnostic. Exact-payload
+replay of the final compactor over `d06...` keeps all four operation families inside
+their caps with zero forbidden/unresolved handles.
+
+Section 7.5 is implemented and live-accepted. Fresh control run `7bf3...` records
+accepted maximums `llmValidation=16628/22000`, `pairwiseRanking=20534/22000`,
+`directedRevision=20157/24000`, and `finalQualityGateReview=18015/22000`, with all
+16 target attempts directly budgeted. Evidence fidelity is `sufficient`, editorial
+status is `publishable`, open critical/warning counts are 0/0, and final repair is
+reviewed and accepted against the actually delivered candidate. Evidence:
+`docs/evidence/draft-runs/e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2/COMPARISON_2_17_4_6_1_3_9.md`.
 
 ### 7.6 Tool-mediated context access pilot
 

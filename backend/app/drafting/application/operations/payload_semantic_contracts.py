@@ -58,18 +58,33 @@ SEMANTIC_CONTRACTS: dict[str, SemanticInputContract] = {
         should_have=("claims", "rules", "repairContext"),
         never_send_to_provider=("sourceLedger", "rulePack", "articleDossier", "contextPacks", "candidatePool", "validationReport", "operationEnvelope", "payloadBudget", "runtimeBudget"),
     ),
-    "llmValidation": SemanticInputContract(must_have=("candidate", "context_artifact", "rule_pack"), diagnostic_only=("fullValidationTrace",)),
+    "llmValidation": SemanticInputContract(
+        must_have=("dossierId", "candidate", "postContract", "validationIssues"),
+        should_have=("evidence", "rules", "repairContext"),
+        diagnostic_only=("fullValidationTrace",),
+        never_send_to_provider=("sourceLedger", "rulePack", "materialPlan", "candidatePool", "validationReport", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
     "editorialCritique": SemanticInputContract(
         must_have=("candidate", "context_artifact", "rule_pack"),
         diagnostic_only=("draft_artifact",),
         never_send_to_provider=("fullCandidatePool",),
     ),
-    "pairwiseRanking": SemanticInputContract(must_have=("candidates", "validation_report", "context_artifact", "rule_pack")),
-    "directedRevision": SemanticInputContract(
-        must_have=("candidate", "instruction", "context_artifact", "rule_pack", "material_plan"),
-        diagnostic_only=("fullRevisionTrace",),
+    "pairwiseRanking": SemanticInputContract(
+        must_have=("dossierId", "candidates", "validationIssues", "editorialDimensions"),
+        should_have=("postContract", "evidence", "selectionConstraints", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "materialPlan", "candidatePool", "validationReport", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
     ),
-    "finalQualityReviewRepair": SemanticInputContract(must_have=("candidate", "validation_report", "context_artifact", "rule_pack", "material_plan")),
+    "directedRevision": SemanticInputContract(
+        must_have=("dossierId", "candidate", "revisionInstruction", "postContract"),
+        should_have=("validationIssues", "evidence", "rules", "antiRegressionConstraints", "repairContext"),
+        diagnostic_only=("fullRevisionTrace",),
+        never_send_to_provider=("sourceLedger", "rulePack", "materialPlan", "candidatePool", "validationReport", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
+    "finalQualityReviewRepair": SemanticInputContract(
+        must_have=("dossierId", "candidate", "finalQualityContract", "deterministicGate"),
+        should_have=("postContract", "validationIssues", "evidence", "repairHistory", "finalQualityIssues", "repairContext"),
+        never_send_to_provider=("sourceLedger", "rulePack", "materialPlan", "candidatePool", "validationReport", "finalQualityTrace", "contextPacks", "operationEnvelope", "payloadBudget", "runtimeBudget"),
+    ),
     "humanCommentRevision": SemanticInputContract(
         must_have=("current_version", "editor_comment", "trace_context"),
         diagnostic_only=("fullDraftRun",),

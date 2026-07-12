@@ -8034,37 +8034,95 @@ Status:
   - Candidate creativity may degrade if dossiers become too narrow; use quality/fidelity diagnostics to catch this.
 - Completed: 2026-07-10
 
-### Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, and Final Gate Dossier Migration
+### Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, Revision, and Final Gate Dossier Migration
+
+- Status: Done
+- Goal: Migrate `llmValidation`, `pairwiseRanking`, `directedRevision`, and `finalQualityGateReview` to bounded operation-specific dossiers and scope quality findings to the delivered candidate.
+- User value: Review and repair calls are auditable and bounded without hiding real final-text quality problems or letting losing candidates block delivery.
+- AS IS:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`.
+- TO BE:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md`, section 7.5.
+- Preserved invariants:
+  - DraftRun step order, HTTP API, SQLite schema, model roles, retry/backup/fallback order, ranking algorithm, and output artifact shapes.
+- Changed vs AS IS:
+  - Four operation families use persisted-context dossiers and direct current-call budget proof.
+  - Ranking uses equal candidate windows, candidate-scoped summaries, and seven dimensions.
+  - Issue lifecycle counts only findings applicable to the effective delivered candidate as open.
+- Definition of Done:
+  - All attempts are directly budgeted within 22000/24000 caps with no forbidden fields or unresolved handles.
+  - Ranking includes the challenger, equal projections, and all seven dimensions.
+  - Repaired final candidates are re-reviewed; rejected repairs preserve the actually delivered candidate and open findings.
+  - Replay `72b3...` gives open critical 0, open warning 1, with losing-candidate findings retained diagnostically.
+  - Fresh post-fix live DraftRun has sufficient evidence, clean target-operation budget proof, and no proven regression versus `c230...` and `72b3...`.
+- Tests and proof:
+  - `357` backend tests passed; architecture, smoke, PDF, roadmap, SQLite integrity, provider-input, dossier, and replay checks passed.
+  - Final live proof: `7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47`.
+  - Four target families: 16/16 directly budgeted; maximums `16628/22000`, `20534/22000`, `20157/24000`, `18015/22000`.
+  - Quality: evidence `sufficient`, editorial `publishable`, open critical/warning `0/0`, final repair accepted.
+  - Economy versus `72b3...`: message chars `-86.6%`, provider cost `-49.3%` for the four operation families.
+  - Evidence: `docs/evidence/draft-runs/e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2/COMPARISON_2_17_4_6_1_3_9.md`.
+- Residual finding:
+  - `alternativeAngleRoute=34589/22000` belongs to prior writer/alternative-angle migration and is tracked by `2.17.4.6.1.3.9.1`.
+- AS IS update outcome:
+  - AS IS updated and both DraftRun PDFs regenerated because provider-input and lifecycle trace semantics changed.
+- Completed: 2026-07-12
+
+### Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair
 
 - Status: Ready
-- Goal: Move `llmValidation`, `pairwiseRanking`, and final quality review/gate calls to review/ranking/final-quality dossiers.
-- User value: The most oversized comparison and review calls become auditable, bounded, and focused on the actual decision being made.
-- Scope:
-  - Migrate LLM validation to a review dossier with one candidate, compact deterministic findings, relevant claims/rules, and evidence summaries.
-  - Migrate pairwise ranking to a ranking dossier with compact candidates, scorecard dimensions, validation summaries, and selection constraints.
-  - Migrate final quality gate review to a final-quality dossier with final prose, issue lifecycle, attribution summary, and repair history.
-- Out of scope:
-  - Changing ranking algorithm, final selection policy, prompt quality, model selection, API, SQLite, or UI layout.
-- Implementation notes:
-  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
-  - `pairwiseRanking` is the largest observed input and must not compare full candidate pools plus full material plan plus full validation reports when compact summaries are enough.
-- Architecture impact:
-  - Review/ranking/final gate become role-owned provider-input projections rather than full trace consumers.
-- Tests:
-  - Ranking keeps candidate ids, compact bodies/excerpts, score dimensions, and validation summaries.
-  - Validation keeps required issue evidence and rule references.
-  - Final gate keeps warning/critical lifecycle and repair history.
-  - Existing quality/fidelity and reliability tests remain strict.
-- Docs:
-  - Update TO BE status, backend docs, diagnostics skill, and roadmap artifacts.
-- Demo impact:
-  - No demo behavior change.
-- Acceptance criteria:
-  - `pairwiseRanking`, `llmValidation`, and final quality provider calls show direct budget and compact dossier input.
-  - No open quality/fidelity signal is hidden by compaction.
-  - Regression tests prove old trace keys remain compatible.
-- Risks:
-  - Ranking can become unfair if summaries omit decisive details; tests need candidate-level invariants, not just size checks.
+- Goal: Bring the live `alternativeAngleRoute` provider input under its 22000-character cap without losing candidate, critique, validation, or contract semantics.
+- User value: The alternative-angle tournament no longer carries a hidden oversized provider call before the tool-mediated context pilot.
+- AS IS:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, validation alternative-angle route contract.
+- TO BE:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md`, section 7.4; no new TO BE is required unless route semantics change.
+- Preserved invariants:
+  - DraftRun order, candidate count, model roles, retry/backup/fallback, route JSON contract, tournament behavior, API, SQLite, and UI.
+- Changed vs AS IS:
+  - `alternativeAngleRoute` sends a bounded candidate/critique/validation projection instead of the current 34589-character input.
+- NOT THIS SLICE:
+  - Tool-mediated context access remains `2.17.4.6.1.3.10`.
+  - Prompt goals, ranking, revision, final gate, and model selection do not change.
+- Definition of Done:
+  - Fresh or controlled live trace has `alternativeAngleRoute <= 22000` and direct current-call budget proof.
+  - No `payloadTooLarge`, `contextOverBudget`, forbidden fields, unresolved handles, or missing must-have route inputs.
+  - Candidate summaries remain symmetric; critique signals, validation issues, rejected moves, PostContract constraints, and evidence/rule handles remain available.
+  - Challenger is generated and remains meaningfully different from the incumbent; tournament semantics and downstream 3.9 quality do not regress.
+  - Provider-input audit is clean for every runtime-migrated operation or any unrelated finding is explicitly debt-listed.
+- Proof evidence:
+  - Reproduce from live run `7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47`, AiRun `32a97abc-dab3-42b8-a10b-c70742804f9f`: `34589/22000`.
+  - Add component, attempt-builder, provider-input audit, alternative-angle flow, and pipeline regression tests.
+  - Run one post-fix live proof only after deterministic/replay checks pass.
+- AS IS update outcome:
+  - Completion must state `AS IS unchanged` with reason or update AS IS/PDF if provider-input semantics change.
+
+### Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair
+
+- Status: Backlog
+- Goal: Require and validate left/right candidate identity for every provider pairwise comparison while preserving the seven-dimension ranking result.
+- User value: Ranking diagnostics can prove exactly which candidates were compared instead of relying on comparison order.
+- AS IS:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, pairwise ranking trace contract.
+- TO BE:
+  - `docs/architecture/DRAFT_RUN_PIPELINE_TO_BE_2_17_4_6_1_3_5.md`, section 7.5; this is a trace-contract completion, not a ranking-policy change.
+- Preserved invariants:
+  - Candidate projections, seven editorial dimensions, ranking algorithm, winner selection, retry/fallback, API, SQLite, and final text remain unchanged.
+- Changed vs AS IS:
+  - Each provider comparison must contain known `leftCandidateId`, `rightCandidateId`, and `winnerCandidateId`; payload validation rejects missing or unknown pair identity.
+- Definition of Done:
+  - Prompt required JSON names all comparison identity fields.
+  - Mapper/validator rejects blank, unknown, self-paired, duplicate, or winner-outside-pair comparisons.
+  - All expected candidate pairs are represented or an explicit bounded comparison policy explains the subset.
+  - Seven `editorialDimensionScores` remain present and the selected winner is unchanged on replay fixtures.
+  - Live or recorded trace has zero blank comparison candidate ids.
+- Proof evidence:
+  - Source live run `7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47` has three useful comparisons and seven dimensions, but blank left/right ids.
+  - Add prompt, payload mapper, service, ranking/revision pipeline, replay, and diagnostics tests.
+- NOT THIS SLICE:
+  - Do not change candidate scoring policy, model roles, prompts beyond JSON shape, or editorial selection semantics.
+- AS IS update outcome:
+  - Completion must update the pairwise trace contract and regenerate AS IS PDF if trace semantics change.
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -8714,6 +8772,7 @@ Status:
 - Slice 2.17.4.6.1.3.6: DraftRun Context Access and Provider Dossier Architecture. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration. Completed 2026-07-10.
+- Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, Revision, and Final Gate Dossier Migration. Completed 2026-07-12.
 
 
 ## Blocked Items
@@ -8742,4 +8801,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, and Final Gate Dossier Migration`.
+Implement `Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair`.

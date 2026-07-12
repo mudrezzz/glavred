@@ -11,14 +11,15 @@ from typing import Any
 from backend.app.application.ai_run_service import AiRunService
 from backend.app.drafting.application.validation.draft_llm_validation_audit import LlmValidationTraceBuilder
 from backend.app.drafting.application.validation.draft_llm_validation_attempts import LlmValidationAttemptMapper
+from backend.app.drafting.application.validation.draft_llm_validation_dossier_attempt import LlmValidationDossierAttemptBuilder
 from backend.app.drafting.application.validation.draft_llm_validation_parser import LlmValidationParser
 from backend.app.drafting.application.validation.draft_llm_validation_prompts import (
     LLM_VALIDATION_KEYS,
     LLM_VALIDATION_TEMPERATURE,
-    LlmValidationPromptBuilder,
 )
+from backend.app.drafting.application.dossiers.provider_dossier_factories import ReviewDossierFactory
+from backend.app.drafting.application.dossiers.provider_dossier_context_snapshot import ProviderDossierContextSnapshotFactory
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
-from backend.app.drafting.application.artifacts.draft_context_pack_builder import context_pack_for_role
 from backend.app.drafting.application.planning.draft_planning_result import DraftPlanningStepResult
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
@@ -34,6 +35,7 @@ from backend.app.domain.draft_validation import DraftValidatorStatus
 from backend.app.domain.draft_validation import validation_status_for
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
+from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
 
 
 class DraftLlmValidationService:
@@ -50,9 +52,9 @@ class DraftLlmValidationService:
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._parser = LlmValidationParser()
-        self._prompts = LlmValidationPromptBuilder()
         self._traces = LlmValidationTraceBuilder()
         self._attempts = LlmValidationAttemptMapper()
+        self._attempt_builder = LlmValidationDossierAttemptBuilder()
 
     def validate(
         self,
@@ -62,9 +64,20 @@ class DraftLlmValidationService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         deterministic_report: dict[str, Any],
+        provider_dossier_factory: ReviewDossierFactory | None = None,
         progress: DraftRunStepOperationSink | None = None,
     ) -> DraftPlanningStepResult:
         candidates = [item for item in _list(draft_artifact.get("candidates")) if isinstance(item, dict)]
+        if provider_dossier_factory is None:
+            access = ProviderDossierContextSnapshotFactory().access(
+                draft_artifact=draft_artifact,
+                validation_report=deterministic_report,
+                context_artifact=context_artifact,
+                rule_pack=rule_pack,
+                material_plan=material_plan,
+                review_context={"validationReport": deterministic_report},
+            )
+            provider_dossier_factory = ReviewDossierFactory(access)
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
             return DraftPlanningStepResult(
@@ -78,6 +91,7 @@ class DraftLlmValidationService:
         reports: list[LlmCandidateValidationReport] = []
         for candidate in candidates:
             candidate_id = str(candidate.get("id") or "unknown-candidate")
+            dossier = provider_dossier_factory.build(candidate_id=candidate_id) if provider_dossier_factory else None
             operation_id = f"llm-validation-{candidate_id}"
             if progress:
                 progress.start_operation(operation_id, kind="llmValidation", label=f"LLM validation: {candidate_id}", target=candidate_id)
@@ -87,6 +101,7 @@ class DraftLlmValidationService:
                 rule_pack=rule_pack,
                 material_plan=material_plan,
                 deterministic_report=self._attempts.candidate_deterministic_report(deterministic_report, str(candidate.get("id") or "")),
+                provider_dossier=dossier,
             )
             reports.append(report)
             ai_run_id = next((attempt.ai_run_id for attempt in reversed(report.attempts) if attempt.ai_run_id), None)
@@ -110,8 +125,16 @@ class DraftLlmValidationService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         deterministic_report: dict[str, Any],
+        provider_dossier: ProviderDossier | None,
     ) -> LlmCandidateValidationReport:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
+        if provider_dossier is None or provider_dossier.readiness_status is DossierReadinessStatus.BLOCKED:
+            reason = "dossier-context-unavailable" if provider_dossier is None else "review-dossier-blocked"
+            return LlmCandidateValidationReport(
+                candidate_id=candidate_id,
+                status=DraftValidatorStatus.NOT_RUN,
+                attempts=[LlmValidatorAttempt("dossier-blocked", None, "not-run", candidate_id, validation=reason)],
+            )
         attempts: list[LlmValidatorAttempt] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.REVIEW)
@@ -127,6 +150,7 @@ class DraftLlmValidationService:
                 rule_pack=rule_pack,
                 material_plan=material_plan,
                 deterministic_report=deterministic_report,
+                provider_dossier=provider_dossier,
                 repair_context=repair_context,
             )
             attempts.append(result["attempt"])
@@ -156,31 +180,23 @@ class DraftLlmValidationService:
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
         deterministic_report: dict[str, Any],
+        provider_dossier: ProviderDossier,
         repair_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
         candidate_id = str(candidate.get("id") or "unknown-candidate")
         selection = selection_for_attempt(role=DraftModelRole.REVIEW, model=attempt.model, backup=attempt.backup, primary_selection=primary_selection)
-        context_pack = context_pack_for_role(context_artifact, DraftModelRole.REVIEW)
         attempt_payload = {"label": attempt.label, "model": attempt.model, "repair": attempt.repair, "backup": attempt.backup, **selection.to_payload()}
-        messages = self._prompts.build_messages(
-            candidate=candidate,
-            context_artifact=context_artifact,
-            rule_pack=rule_pack,
-            material_plan=material_plan,
-            deterministic_report=deterministic_report,
-            context_pack=context_pack,
-            repair_context=repair_context if attempt.repair else None,
-        )
-        request_payload = self._traces.request_trace(
-            provider=AiRunProvider.OPENROUTER,
-            model=attempt.model,
-            messages=messages,
+        prepared = self._attempt_builder.prepare(
+            dossier=provider_dossier,
             candidate_id=candidate_id,
             attempt=attempt_payload,
-            deterministic_report=deterministic_report,
-            context_pack=context_pack,
+            model=attempt.model,
             model_selection=selection.to_payload(),
+            execution_mode=self._settings.draft_run_execution_mode,
+            repair_context=repair_context if attempt.repair else None,
         )
+        messages = prepared.messages
+        request_payload = prepared.request_payload
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,

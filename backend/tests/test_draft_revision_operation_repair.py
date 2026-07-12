@@ -2,7 +2,7 @@ from backend.app.drafting.application.artifacts.draft_run_context_payloads impor
 from backend.app.drafting.application.artifacts.draft_run_payloads import request_to_payload
 from backend.app.application.draft_run_progress import DraftRunProgress
 from backend.app.domain.draft_run import create_queued_draft_run
-from backend.app.domain.draft_run_steps import DraftRunStepKey
+from backend.app.domain.draft_run_steps import DraftRunStepKey, DraftRunStepStatus
 from backend.app.infrastructure.sqlite_draft_run_repository import SqliteDraftRunRepository
 from backend.tests.test_draft_ranking_revision import (
     SequenceAdapter,
@@ -40,6 +40,12 @@ def test_revision_cycle_failure_keeps_previous_best_and_marks_operation_failed(t
         input_summary={"title": req.brief.title},
     )
     repository.save(run)
+    repository.set_step_status(
+        run.id,
+        DraftRunStepKey.POST_CONTRACT,
+        DraftRunStepStatus.SUCCEEDED,
+        artifact_payload=context_artifact()["postContract"],
+    )
     progress = DraftRunProgress(repository, run.id).operation_sink(DraftRunStepKey.VALIDATION)
 
     result = ranking_revision_service(tmp_path, adapter, max_iterations=2).run(

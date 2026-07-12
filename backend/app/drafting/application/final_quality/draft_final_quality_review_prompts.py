@@ -26,6 +26,25 @@ FINAL_QUALITY_REVIEW_TEMPERATURE = 0.2
 class FinalQualityReviewPromptBuilder:
     """Owns independent final-quality review message construction."""
 
+    def build_from_provider_input(
+        self,
+        *,
+        provider_input: dict[str, Any],
+        repair_context: dict[str, Any] | None = None,
+    ) -> list[dict[str, str]]:
+        user = {
+            "task": "Review final public prose against the contract.",
+            "requiredJsonShape": self._required_shape(),
+            "candidate": provider_input.get("candidate"),
+            "finalQualityContract": provider_input.get("finalQualityContract"),
+            "deterministicGate": provider_input.get("deterministicGate"),
+            "validationIssues": provider_input.get("validationIssues"),
+            "evidence": provider_input.get("evidence"),
+            "repairHistory": provider_input.get("repairHistory"),
+            "repairContext": repair_context,
+        }
+        return self._messages(user)
+
     def build_messages(
         self,
         *,
@@ -35,34 +54,9 @@ class FinalQualityReviewPromptBuilder:
         validation_report: dict[str, Any],
         repair_context: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
-        system = (
-            "You are Glavred's independent final editor. Review only the delivered public post. "
-            "Use the FinalQualityContract as the source of criteria. Do not impose generic taste: "
-            "research-heavy fabulas may cite more sources, opinion posts should foreground author voice. "
-            "Return strict JSON only."
-        )
         user = {
             "task": "Review final public prose against the contract.",
-            "requiredJsonShape": {
-                "status": "passed|warning|critical",
-                "summary": "short explanation",
-                "publicProseStatus": "passed|warning|critical",
-                "sourceIntegrationStatus": "passed|warning|critical",
-                "authorVoiceStrength": "passed|warning|critical",
-                "readerValueClarity": "passed|warning|critical",
-                "findings": [
-                    {
-                        "id": "stable-id",
-                        "severity": "warning|critical",
-                        "message": "actionable issue",
-                        "evidenceExcerpt": "short quote from the post",
-                        "repairGuidance": "specific repair instruction",
-                        "contractCriterion": "criterion from FinalQualityContract",
-                    }
-                ],
-                "observations": [{"message": "positive or neutral observation"}],
-                "repairGoals": ["goal for writer if repair is needed"],
-            },
+            "requiredJsonShape": self._required_shape(),
             "candidate": {
                 "id": candidate.get("id"),
                 "title": candidate.get("title"),
@@ -73,6 +67,37 @@ class FinalQualityReviewPromptBuilder:
             "validationReport": validation_report,
             "repairContext": repair_context,
         }
+        return self._messages(user)
+
+    def _required_shape(self) -> dict[str, Any]:
+        return {
+            "status": "passed|warning|critical",
+            "summary": "short explanation",
+            "publicProseStatus": "passed|warning|critical",
+            "sourceIntegrationStatus": "passed|warning|critical",
+            "authorVoiceStrength": "passed|warning|critical",
+            "readerValueClarity": "passed|warning|critical",
+            "findings": [
+                {
+                    "id": "stable-id",
+                    "severity": "warning|critical",
+                    "message": "actionable issue",
+                    "evidenceExcerpt": "short quote from the post",
+                    "repairGuidance": "specific repair instruction",
+                    "contractCriterion": "criterion from FinalQualityContract",
+                }
+            ],
+            "observations": [{"message": "positive or neutral observation"}],
+            "repairGoals": ["goal for writer if repair is needed"],
+        }
+
+    def _messages(self, user: dict[str, Any]) -> list[dict[str, str]]:
+        system = (
+            "You are Glavred's independent final editor. Review only the delivered public post. "
+            "Use the FinalQualityContract as the source of criteria. Do not impose generic taste: "
+            "research-heavy fabulas may cite more sources, opinion posts should foreground author voice. "
+            "Return strict JSON only."
+        )
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": _jsonish(user)},

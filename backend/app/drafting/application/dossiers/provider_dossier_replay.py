@@ -54,7 +54,9 @@ class ProviderDossierReplayReport:
             "unresolvedHandleIds": list(self.unresolved_handle_ids),
             "forbiddenFieldViolations": list(self.forbidden_field_violations),
             "note": (
-                "Planning call sites are migrated; remaining dossier families still require their roadmap slices."
+                "All planned dossier families are runtime-migrated."
+                if migrated == len(self.dossiers)
+                else "Planning and writer call sites are migrated; remaining dossier families still require their roadmap slices."
                 if migrated
                 else "Factory proof only; provider operation call sites are not migrated."
             ),

@@ -15,6 +15,8 @@ from backend.app.drafting.application.final_quality.draft_final_quality_gate_pay
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
 from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED
+from backend.app.drafting.application.context.review_context_checkpoint import ReviewContextCheckpointPublisher
+from backend.app.drafting.application.dossiers.provider_dossier_factories import RevisionDossierFactory
 
 
 @dataclass(frozen=True)
@@ -41,6 +43,7 @@ class FinalQualityRepairLoop:
         self._max_iterations = max(1, int(max_iterations or 1))
         self._assessment = assessment_policy or FinalQualityAssessmentPolicy()
         self._payloads = payloads or FinalQualityGatePayloadFactory()
+        self._checkpoints = ReviewContextCheckpointPublisher()
 
     def run(
         self,
@@ -72,7 +75,7 @@ class FinalQualityRepairLoop:
                 reasons = [STOP_BUDGET_EXHAUSTED]
                 break
             repair, revised, cycle_ids = self._revise_cycle(
-                cycle, current_candidate, current_gate, context_artifact, rule_pack, material_plan, progress
+                cycle, current_candidate, current_gate, current_report, context_artifact, rule_pack, material_plan, progress
             )
             ai_run_ids.extend(cycle_ids)
             accepted, regression, repaired_gate, reasons = self._accept_repair(
@@ -103,6 +106,9 @@ class FinalQualityRepairLoop:
             current_candidate = revised or current_candidate
             current_gate = repaired_gate or current_gate
             current_report = regression.get("validationReport") if isinstance(regression, dict) else current_report
+        effective_gate = repaired_gate if accepted_any and repaired_gate else initial_gate
+        effective_report = regression.get("validationReport") if accepted_any and isinstance(regression, dict) else current_report
+        effective_candidate = current_candidate if accepted_any else final_candidate
         updates = {
             "repair": last_repair,
             "repairCycles": cycles,
@@ -111,10 +117,15 @@ class FinalQualityRepairLoop:
             "repairGate": repaired_gate,
             "repairRegression": regression,
             "finalDecision": self._payloads.final_decision(
-                current_candidate if accepted_any else final_candidate,
+                effective_candidate,
                 "finalQualityRepair" if accepted_any else final_source,
                 "final-quality-repair-accepted" if accepted_any else "; ".join(reasons),
             ),
+            "initialStatus": initial_gate.get("status"),
+            "effectiveStatus": effective_gate.get("status"),
+            "effectiveCandidateId": effective_candidate.get("id"),
+            "effectiveIndependentReview": effective_gate.get("independentReview"),
+            "effectiveValidationReport": effective_report,
         }
         return FinalQualityRepairLoopResult(updates, current_candidate if accepted_any else final_candidate, self._payloads.unique(ai_run_ids))
 
@@ -123,6 +134,7 @@ class FinalQualityRepairLoop:
         cycle: int,
         current_candidate: dict[str, Any],
         current_gate: dict[str, Any],
+        current_report: dict[str, Any],
         context_artifact: dict[str, Any],
         rule_pack: dict[str, Any],
         material_plan: dict[str, Any],
@@ -132,7 +144,23 @@ class FinalQualityRepairLoop:
         if progress:
             progress.start_operation(operation_id, kind="directedRevision", label=f"Repair final public prose cycle {cycle}")
         instruction = self._assessment.repair_instruction(current_candidate, current_gate)
-        revision = self._revision.revise(candidate=current_candidate, instruction=instruction, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan)
+        self._checkpoints.publish(
+            progress,
+            stage=f"final-quality-repair-{cycle}",
+            current_candidate=current_candidate,
+            validation_report=current_report,
+            revision_instruction=instruction,
+            deterministic_gate=current_gate.get("deterministicGate") if isinstance(current_gate.get("deterministicGate"), dict) else None,
+            repair_history={"cycle": cycle, "gateStatus": current_gate.get("status")},
+        )
+        revision = self._revision.revise(
+            candidate=current_candidate,
+            instruction=instruction,
+            context_artifact=context_artifact,
+            rule_pack=rule_pack,
+            material_plan=material_plan,
+            provider_dossier=RevisionDossierFactory(progress.context_access()).build(candidate_id=str(current_candidate.get("id") or "")) if progress else None,
+        )
         ai_run_ids = self._payloads.strings(revision.get("aiRunIds"))
         if progress:
             if revision.get("status") == "succeeded":
@@ -160,7 +188,15 @@ class FinalQualityRepairLoop:
         if progress:
             progress.start_operation(operation_id, kind="regressionGuard", label=f"Check final repair regression cycle {cycle}")
         regression = self._regression.evaluate(original_candidate_id=str(original.get("id") or ""), revised_candidate=revised, validation_report=current_report, context_artifact=context_artifact, rule_pack=rule_pack, material_plan=material_plan).to_payload()
-        repaired_gate = self._evaluator.evaluate(candidate=revised, validation_report=regression.get("validationReport") or {}, context_artifact=context_artifact, revision_loop_stop_reason="final-repair", contract=contract) if revised else None
+        repaired_gate = self._evaluator.evaluate(
+            candidate=revised,
+            validation_report=regression.get("validationReport") or {},
+            context_artifact=context_artifact,
+            revision_loop_stop_reason="final-repair",
+            contract=contract,
+            progress=progress,
+            repair_history={"cycle": cycle, "initialGateStatus": initial_gate.get("status")},
+        ) if revised else None
         reasons = self._assessment.repair_rejection_reasons(initial_gate, repaired_gate, regression)
         if repaired_gate and not self._payloads.gate_improved(initial_gate, repaired_gate):
             reasons.append("final-quality-contract-not-improved")

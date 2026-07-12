@@ -19,6 +19,8 @@ from backend.app.drafting.application.revision.draft_revision_loop_service impor
 from backend.app.drafting.application.revision.draft_revision_regression import DraftRevisionRegressionGuard
 from backend.app.domain.draft_generation import DraftGenerationRequest
 from backend.app.drafting.application.operations.validation_runtime_budget import STOP_BUDGET_EXHAUSTED, ValidationStopReasonPolicy
+from backend.app.drafting.application.context.review_context_checkpoint import ReviewContextCheckpointPublisher
+from backend.app.drafting.application.dossiers.provider_dossier_factories import RankingDossierFactory
 
 
 class DraftRankingRevisionService:
@@ -36,6 +38,7 @@ class DraftRankingRevisionService:
         self._ranking = ranking_service
         self._candidates = candidate_mapper or RankingRevisionCandidateMapper()
         self._stop_reason_policy = ValidationStopReasonPolicy()
+        self._checkpoints = ReviewContextCheckpointPublisher()
         guard = regression_guard or DraftRevisionRegressionGuard()
         self._loop = DraftRevisionLoopService(
             ranking_service=ranking_service,
@@ -63,6 +66,12 @@ class DraftRankingRevisionService:
             guard.record_stop(STOP_BUDGET_EXHAUSTED, detail="initial-pairwise-budget-denied")
         if progress:
             progress.start_operation("pairwise-ranking", kind="pairwiseRanking", label="Rank draft candidates")
+        self._checkpoints.publish(
+            progress,
+            stage="initial-ranking",
+            candidates=[item for item in draft_artifact.get("candidates", []) if isinstance(item, dict)],
+            validation_report=validation_report,
+        )
         try:
             if initial_pairwise_denied:
                 raise RuntimeError(STOP_BUDGET_EXHAUSTED)
@@ -72,6 +81,7 @@ class DraftRankingRevisionService:
                 context_artifact=context_artifact,
                 rule_pack=rule_pack,
                 material_plan=material_plan,
+                provider_dossier=RankingDossierFactory(progress.context_access()).build() if progress else None,
             )
         except Exception as exc:
             if progress:

@@ -11,6 +11,9 @@ from backend.app.drafting.application.final_quality.draft_final_quality_assessme
 from backend.app.drafting.application.final_quality.draft_final_quality_gate_payloads import FinalQualityGatePayloadFactory
 from backend.app.drafting.application.final_quality.draft_final_quality_review_service import DraftFinalQualityReviewService
 from backend.app.drafting.application.validation.draft_validator_orchestrator import DraftValidatorOrchestrator
+from backend.app.application.draft_run_step_progress import DraftRunStepOperationSink
+from backend.app.drafting.application.context.review_context_checkpoint import ReviewContextCheckpointPublisher
+from backend.app.drafting.application.dossiers.provider_dossier_factories import FinalQualityDossierFactory
 
 
 class FinalQualityGateEvaluator:
@@ -26,6 +29,7 @@ class FinalQualityGateEvaluator:
         self._review = review_service
         self._assessment = assessment_policy or FinalQualityAssessmentPolicy()
         self._payloads = payloads or FinalQualityGatePayloadFactory()
+        self._checkpoints = ReviewContextCheckpointPublisher()
 
     def validate_candidate(
         self,
@@ -57,9 +61,26 @@ class FinalQualityGateEvaluator:
         context_artifact: dict[str, Any],
         revision_loop_stop_reason: str,
         contract: dict[str, Any],
+        progress: DraftRunStepOperationSink | None = None,
+        repair_history: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         deterministic = self._assessment.gate_payload(candidate, validation_report, context_artifact, revision_loop_stop_reason)
-        independent = self._independent_review(candidate, contract, deterministic, validation_report)
+        self._checkpoints.publish(
+            progress,
+            stage="final-quality-review",
+            current_candidate=candidate,
+            validation_report=validation_report,
+            final_quality_contract=contract,
+            deterministic_gate=deterministic,
+            repair_history=repair_history,
+        )
+        independent = self._independent_review(
+            candidate,
+            contract,
+            deterministic,
+            validation_report,
+            FinalQualityDossierFactory(progress.context_access()).build(candidate_id=str(candidate.get("id") or "")) if progress else None,
+        )
         combined = dict(deterministic)
         combined["deterministicGate"] = deterministic
         combined["finalQualityContract"] = contract
@@ -80,6 +101,7 @@ class FinalQualityGateEvaluator:
         contract: dict[str, Any],
         deterministic: dict[str, Any],
         validation_report: dict[str, Any],
+        provider_dossier: Any,
     ) -> dict[str, Any]:
         if not self._review:
             return {"status": "not-run", "reason": "independent-review-service-not-configured", "attempts": [], "aiRunIds": []}
@@ -88,6 +110,7 @@ class FinalQualityGateEvaluator:
             contract=contract,
             deterministic_gate=deterministic,
             validation_report=validation_report,
+            provider_dossier=provider_dossier,
         )
 
     def _repair_goals(self, deterministic: dict[str, Any], independent: dict[str, Any]) -> list[str]:

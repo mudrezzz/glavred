@@ -85,26 +85,28 @@ class ProviderDossierPolicyRegistry:
     def review(self, operation_id: str, model_role: str) -> ProviderDossierPolicy:
         return self._policy(
             "reviewDossier", operation_id, model_role,
-            must=("candidate", "postContract"), should=("evidence", "rules", "validationIssues"),
+            must=("candidate", "postContract", "validationIssues"), should=("evidence", "rules"),
         )
 
     def ranking(self, operation_id: str) -> ProviderDossierPolicy:
         return self._policy(
             "rankingDossier", operation_id, "review",
-            must=("candidates", "validationIssues"), should=("postContract", "evidence"),
+            must=("candidates", "validationIssues", "editorialDimensions"),
+            should=("postContract", "evidence", "selectionConstraints"),
         )
 
     def revision(self, operation_id: str) -> ProviderDossierPolicy:
         return self._policy(
             "revisionDossier", operation_id, "writer",
-            must=("candidate", "validationIssues", "postContract"), should=("evidence", "rules"),
+            must=("candidate", "revisionInstruction", "postContract"),
+            should=("validationIssues", "evidence", "rules", "antiRegressionConstraints"),
         )
 
     def final_quality(self, operation_id: str) -> ProviderDossierPolicy:
         return self._policy(
             "finalQualityDossier", operation_id, "finalGate",
-            must=("candidate", "postContract", "finalQualityIssues"),
-            should=("validationIssues", "evidence", "repairHistory"),
+            must=("candidate", "finalQualityContract", "deterministicGate"),
+            should=("postContract", "validationIssues", "evidence", "repairHistory", "finalQualityIssues"),
         )
 
     def _policy(
