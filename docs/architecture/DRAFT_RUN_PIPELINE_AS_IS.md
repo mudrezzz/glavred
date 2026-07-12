@@ -1129,6 +1129,20 @@ attempt `d08b26c7-2b5d-436a-8d03-5f4def3b3991` ended before route execution beca
 of a transient SQLite `disk I/O error`; both databases passed integrity checks and
 that run is not used as route-quality proof.
 
+Slice `2.17.4.6.1.3.9.2` makes pairwise comparison identity part of the accepted
+ranking contract. The prompt lists the exact unordered candidate pairs, and the
+payload policy rejects blank, unknown, self-paired, duplicated, missing, or
+winner-outside-pair rows. It also requires all seven unique editorial dimensions.
+The stored `comparisonIdentity` trace reports expected, actual, missing, duplicate,
+and invalid pairs without reconstructing old responses by position. Every attempt
+budgets dossier plus repair context before prompt construction and verifies the
+serialized messages against the `22000` character cap. Live run
+`480be950-4538-4077-bccb-330b732ff26a` records complete matrices of `6`, `1`, and `1`
+pairs and message sizes `20269`, `12223`, and `12227`; all three have zero identity
+or budget incidents. Replays of `7bf3...` and `92532...` remain explicitly
+incomplete because their pair identities were blank in the original provider
+responses.
+
 Accepted live proof `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` records actual planning
 inputs of 14900 chars (`materialPlan`), 15017 chars (`strategy`), and 13601 chars
 (`rhetoricalPlans`) against historical baselines 207065, 210584, and 45249. All
@@ -1144,6 +1158,12 @@ The replayable provider-input audit is:
 
 ```bash
 python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID> --format json
+```
+
+Pairwise identity can be replayed independently:
+
+```bash
+python scripts/audit_pairwise_comparison_identity.py --run-id <DraftRun ID> --fail-on-incomplete
 ```
 
 It reads stored child `AiRun.requestPayload` records and classifies each target

@@ -24,6 +24,7 @@ from backend.app.drafting.application.operations.payload_compactor_common import
 from backend.app.drafting.application.operations.payload_evidence_compactors import RulePackCompactor
 from backend.app.drafting.application.operations.payload_record_compactors import CandidatePayloadCompactor
 from backend.app.drafting.application.operations.payload_review_dossier_compactor import ReviewDossierPayloadCompactor
+from backend.app.drafting.application.operations.payload_pairwise_ranking_compactor import PairwiseRankingPayloadCompactor
 
 
 class DraftRunPayloadCompactor:
@@ -36,6 +37,7 @@ class DraftRunPayloadCompactor:
         self._validation = ValidationReportCompactor()
         self._alternative_angle_route = AlternativeAngleRoutePayloadCompactor()
         self._review_dossiers = ReviewDossierPayloadCompactor()
+        self._pairwise_ranking = PairwiseRankingPayloadCompactor()
 
     def compact(self, payload: Mapping[str, Any], *, profile: PayloadBudgetProfile, contract: SemanticInputContract) -> PayloadCompactionResult:
         suppressed = [field_name for field_name in contract.never_send_to_provider if field_name in payload]
@@ -59,6 +61,9 @@ class DraftRunPayloadCompactor:
             else:
                 compact, dossier_counts = self._review_dossiers.compact(compact, profile)
             CountAccumulator.merge(trimmed, dossier_counts)
+            if profile.operation_id == "pairwiseRanking":
+                compact, ranking_counts = self._pairwise_ranking.compact(compact)
+                CountAccumulator.merge(trimmed, ranking_counts)
         else:
             self._compact_candidates(compact, trimmed, profile)
         self._compact_key(compact, trimmed, "draft_artifact", self._draft.compact, profile)

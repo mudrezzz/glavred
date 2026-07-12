@@ -73,6 +73,8 @@ class ProviderMessageBudgetGuard:
                 "payloadStats": payload_stats,
                 "messageCharCount": message_chars,
                 "repairContextCharCount": repair_context_char_count,
+                "providerInputCharEstimate": provider_input_chars,
+                "promptCharEstimate": message_chars,
             }
         )
         return ProviderMessageBudgetResult(fields, blocked_reason)

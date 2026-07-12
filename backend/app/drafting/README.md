@@ -341,6 +341,14 @@ route compactor and final serialized-message guard. Live run `92532...` records
 `16321/22000` actual message characters, no budget incident, and a challenger-derived
 final winner.
 
+Slice `3.9.2` adds exact pair identity to ranking. `comparisonContract` lists every
+unordered provider-visible pair, `PairwiseComparisonIdentityPolicy` rejects missing,
+duplicate, unknown, or ambiguous rows, and the ranking attempt builder measures the
+final messages after repair context is included. Use
+`python scripts/audit_pairwise_comparison_identity.py --run-id <id>` for replay.
+Live run `480be950-4538-4077-bccb-330b732ff26a` records complete `6/1/1` matrices
+with a maximum message size of `20269/22000`.
+
 ## Validation Runtime Budget
 
 DraftRun validation can be slow, but it must be bounded and trace-visible.

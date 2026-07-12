@@ -1,0 +1,42 @@
+{
+  "sliceId": "2.17.4.6.1.3.9.2",
+  "historicalRuns": [
+    {
+      "runId": "7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47",
+      "comparisonIdentityComplete": false,
+      "reason": "blank pair identities and incomplete initial four-candidate matrix"
+    },
+    {
+      "runId": "92532cb9-e83b-4bb1-ab2b-7d7a46d279b5",
+      "comparisonIdentityComplete": false,
+      "reason": "six useful decisions with blank left/right candidate identities"
+    }
+  ],
+  "inconclusiveRuns": [
+    {
+      "runId": "b9dfe586-60f5-4a70-8ab5-cc64417d3bdb",
+      "reason": "host-side SQLite replay audit overlapped Docker worker writes and the run ended with controlled disk I/O error",
+      "initialComparisonIdentityComplete": true,
+      "integrityCheckAfterFailure": "ok"
+    }
+  ],
+  "acceptedLiveRun": {
+    "runId": "480be950-4538-4077-bccb-330b732ff26a",
+    "status": "succeeded",
+    "pairwiseAttempts": [
+      {"aiRunId": "1a9921fd-f007-482b-9d9d-8d358479d408", "expectedPairs": 6, "actualPairs": 6, "providerInputChars": 16964, "messageChars": 20269},
+      {"aiRunId": "d0671885-b00d-4e91-a22f-268313f81052", "expectedPairs": 1, "actualPairs": 1, "providerInputChars": 10119, "messageChars": 12223},
+      {"aiRunId": "c0c28ae7-0c77-499e-b8ea-ce2471be8135", "expectedPairs": 1, "actualPairs": 1, "providerInputChars": 10121, "messageChars": 12227}
+    ],
+    "missingPairs": 0,
+    "duplicatePairs": 0,
+    "invalidPairs": 0,
+    "dimensionCoverageComplete": true,
+    "rankingBudgetIncidents": 0,
+    "evidenceCoverageVerdict": "sufficient",
+    "openCriticalCount": 0,
+    "openWarningCount": 0,
+    "editorialStatus": "publishable",
+    "overallVerdict": "recoveredSuccess"
+  }
+}

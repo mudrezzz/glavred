@@ -44,6 +44,8 @@ class PairwiseRankingReport:
     comparisons: list[PairwiseComparison] = field(default_factory=list)
     attempts: list[dict[str, Any]] = field(default_factory=list)
     ai_run_ids: list[str] = field(default_factory=list)
+    comparison_identity: dict[str, Any] = field(default_factory=dict)
+    editorial_dimension_scores: list[dict[str, Any]] = field(default_factory=list)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -51,6 +53,8 @@ class PairwiseRankingReport:
             "comparisons": [comparison.to_payload() for comparison in self.comparisons],
             "attempts": self.attempts,
             "aiRunIds": self.ai_run_ids,
+            "comparisonIdentity": self.comparison_identity,
+            "editorialDimensionScores": self.editorial_dimension_scores,
         }
 
 

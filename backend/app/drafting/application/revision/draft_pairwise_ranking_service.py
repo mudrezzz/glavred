@@ -16,12 +16,16 @@ from backend.app.drafting.application.revision.draft_pairwise_ranking_prompts im
     PairwiseRankingPromptBuilder,
 )
 from backend.app.drafting.application.revision.draft_pairwise_ranking_payloads import PairwiseRankingPayloadMapper
+from backend.app.drafting.application.revision.pairwise_comparison_identity import (
+    PairwisePayloadValidationError,
+)
+from backend.app.drafting.application.revision.pairwise_ranking_fallback_factory import PairwiseRankingFallbackFactory
 from backend.app.drafting.application.revision.draft_pairwise_ranking_dossier_attempt import PairwiseRankingDossierAttemptBuilder
 from backend.app.drafting.application.operations.draft_model_role_resolver import select_model_for_role, selection_for_attempt
 from backend.app.application.json_step_retry_policy import JsonStepAttempt, build_json_step_attempts
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.domain.draft_model_roles import DraftModelRole
-from backend.app.domain.draft_ranking_revision import PairwiseRankingReport, RankingDecision
+from backend.app.domain.draft_ranking_revision import PairwiseRankingReport
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.settings import BackendSettings
 from backend.app.drafting.domain.provider_dossier import DossierReadinessStatus, ProviderDossier
@@ -46,6 +50,7 @@ class DraftPairwiseRankingService:
         self._openrouter_validator = openrouter_validator
         self._openrouter_adapter = openrouter_adapter
         self._fallback = fallback_ranker or DeterministicPairwiseRanker()
+        self._fallback_reports = PairwiseRankingFallbackFactory(self._fallback)
         self._prompt_builder = prompt_builder or PairwiseRankingPromptBuilder()
         self._payloads = payload_mapper or PairwiseRankingPayloadMapper()
         self._attempt_builder = PairwiseRankingDossierAttemptBuilder(prompt_builder=self._prompt_builder)
@@ -72,10 +77,10 @@ class DraftPairwiseRankingService:
             provider_dossier = RankingDossierFactory(access).build()
         if provider_dossier is None or provider_dossier.readiness_status is DossierReadinessStatus.BLOCKED:
             reason = "dossier-context-unavailable" if provider_dossier is None else "ranking-dossier-blocked"
-            return self._fallback_report(draft_artifact, validation_report, [], reason)
+            return self._fallback_reports.build(draft_artifact=draft_artifact, validation_report=validation_report, attempts=[], warning=reason)
         status = self._openrouter_validator.evaluate(self._settings)
         if not status.configured:
-            return self._fallback_report(draft_artifact, validation_report, [], "provider-unconfigured")
+            return self._fallback_reports.build(draft_artifact=draft_artifact, validation_report=validation_report, attempts=[], warning="provider-unconfigured")
         attempts: list[dict[str, Any]] = []
         repair_context: dict[str, Any] | None = None
         primary_selection = select_model_for_role(self._settings, DraftModelRole.REVIEW)
@@ -86,11 +91,20 @@ class DraftPairwiseRankingService:
             result = self._try_attempt(attempt, primary_selection, draft_artifact, validation_report, provider_dossier, repair_context)
             attempts.append(result["attempt"])
             if result["accepted"]:
-                report = self._payloads.report_from_payload(result["payload"], attempts, [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")])
+                report = self._payloads.report_from_payload(
+                    result["payload"],
+                    attempts,
+                    [str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
+                    result["comparisonIdentity"],
+                )
                 if report.decision.winner_candidate_id:
                     return report
-            repair_context = {"previousAttempt": result["attempt"], "requiredShape": "winnerCandidateId, reason, comparisons[]"}
-        return self._fallback_report(draft_artifact, validation_report, attempts, "pairwise-ranking-provider-failed")
+            repair_context = {
+                "errorType": "schemaFailure",
+                "validationDetails": result.get("validationDetails") or {},
+                "requiredShape": "winnerCandidateId, reason, comparisons[], editorialDimensionScores[]",
+            }
+        return self._fallback_reports.build(draft_artifact=draft_artifact, validation_report=validation_report, attempts=attempts, warning="pairwise-ranking-provider-failed")
 
     def _try_attempt(
         self,
@@ -113,6 +127,11 @@ class DraftPairwiseRankingService:
         )
         messages = prepared.messages
         request_payload = prepared.request_payload
+        if prepared.blocked_reason:
+            return self._attempt_error(attempt, request_payload, prepared.blocked_reason, {
+                "code": prepared.blocked_reason,
+                "messageCharCount": request_payload.get("messageCharCount"),
+            })
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,
@@ -121,7 +140,9 @@ class DraftPairwiseRankingService:
                 temperature=PAIRWISE_RANKING_TEMPERATURE,
                 model=attempt.model,
             )
-            self._payloads.validate_pairwise_payload(result.payload, draft_artifact)
+            visible_candidates = request_payload.get("providerInput", {}).get("candidates", [])
+            candidate_ids = [str(item.get("id")) for item in visible_candidates if isinstance(item, dict) and item.get("id")]
+            comparison_identity = self._payloads.validate_pairwise_payload(result.payload, candidate_ids)
             run = self._ai_run_service.create_completed_run(
                 capability=AiRunCapability.DRAFT_GENERATION,
                 provider=AiRunProvider.OPENROUTER,
@@ -133,7 +154,8 @@ class DraftPairwiseRankingService:
             return {
                 "accepted": True,
                 "payload": result.payload,
-                    "attempt": self._payloads.attempt_record(
+                "comparisonIdentity": comparison_identity,
+                "attempt": self._payloads.attempt_record(
                     attempt,
                     run.id,
                     "accepted",
@@ -141,37 +163,39 @@ class DraftPairwiseRankingService:
                     editorial_dimension_scores=self._payloads.dimension_scores(result.payload),
                 ),
             }
+        except PairwisePayloadValidationError as exc:
+            return self._attempt_error(attempt, request_payload, "schemaFailure", exc.to_payload())
         except Exception as exc:
             return self._attempt_error(attempt, request_payload, self._safe_error(exc))
 
-    def _attempt_error(self, attempt: JsonStepAttempt, request_payload: dict[str, Any], error: str) -> dict[str, Any]:
+    def _attempt_error(
+        self,
+        attempt: JsonStepAttempt,
+        request_payload: dict[str, Any],
+        error: str,
+        validation_details: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         run = self._ai_run_service.create_completed_run(
             capability=AiRunCapability.DRAFT_GENERATION,
             provider=AiRunProvider.OPENROUTER,
             model=attempt.model,
             request_payload=request_payload,
-            result_payload={"draftRunStep": "pairwiseRanking", "attempt": {"label": attempt.label, "model": attempt.model}, "result": {}},
+            result_payload={
+                "draftRunStep": "pairwiseRanking",
+                "attempt": {"label": attempt.label, "model": attempt.model},
+                "result": {},
+                "validationDetails": validation_details or {},
+            },
             fallback_used=False,
             error=error,
         )
         selection = {key: request_payload[key] for key in ("modelRole", "selectedModel", "modelSelectionSource") if key in request_payload}
-        return {"accepted": False, "payload": {}, "attempt": self._payloads.attempt_record(attempt, run.id, "error", selection, error)}
-
-    def _fallback_report(self, draft_artifact: dict[str, Any], validation_report: dict[str, Any], attempts: list[dict[str, Any]], warning: str) -> PairwiseRankingReport:
-        fallback = self._fallback.rank(draft_artifact=draft_artifact, validation_report=validation_report)
-        decision = RankingDecision(
-            winner_candidate_id=fallback.decision.winner_candidate_id,
-            reason=fallback.decision.reason,
-            source="deterministicFallback",
-            fallback_used=True,
-            warnings=[*fallback.decision.warnings, warning],
-        )
-        return PairwiseRankingReport(
-            decision=decision,
-            comparisons=fallback.comparisons,
-            attempts=[*attempts, {"label": "deterministic-fallback", "model": "deterministic", "status": "fallback", "backup": False, "validation": warning}],
-            ai_run_ids=[str(item["aiRunId"]) for item in attempts if item.get("aiRunId")],
-        )
+        return {
+            "accepted": False,
+            "payload": {},
+            "validationDetails": validation_details or {},
+            "attempt": self._payloads.attempt_record(attempt, run.id, "error", selection, error),
+        }
 
     def _safe_error(self, error: Exception) -> str:
         message = str(error)

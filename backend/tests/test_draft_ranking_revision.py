@@ -6,6 +6,7 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.drafting.application.revision.deterministic_pairwise_ranking import DeterministicPairwiseRanker
 from backend.app.drafting.application.revision.draft_directed_revision_service import DraftDirectedRevisionService
 from backend.app.drafting.application.revision.draft_pairwise_ranking_service import DraftPairwiseRankingService
+from backend.app.drafting.application.revision.pairwise_comparison_identity import EDITORIAL_DIMENSIONS
 from backend.app.drafting.application.revision.draft_ranking_revision_service import DraftRankingRevisionService
 from backend.app.domain.draft_generation import DraftBriefContext, DraftEditorialModelContext, DraftGenerationRequest
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
@@ -29,7 +30,31 @@ class SequenceAdapter:
         response = self.responses.pop(0)
         if isinstance(response, Exception):
             raise response
+        if kwargs.get("expected_keys") == {"winnerCandidateId", "comparisons", "reason"}:
+            response = _complete_pairwise_fixture(response, kwargs.get("messages", []))
         return FakeJsonResult(response, {"id": f"call-{len(self.calls)}", "model": kwargs.get("model")})
+
+
+def _complete_pairwise_fixture(response: dict[str, Any], messages: list[dict[str, str]]) -> dict[str, Any]:
+    """Keeps older revision fixtures focused on revision behavior under the stricter ranking schema."""
+    result = dict(response)
+    winner = str(result.get("winnerCandidateId") or "")
+    if not winner:
+        return result
+    payload = json.loads(messages[1]["content"])
+    candidate_ids = payload.get("comparisonContract", {}).get("candidateIds", [])
+    if winner not in candidate_ids:
+        return result
+    existing = {
+        str(item.get("dimension")): item
+        for item in result.get("editorialDimensionScores", [])
+        if isinstance(item, dict) and item.get("dimension")
+    }
+    result["editorialDimensionScores"] = [
+        existing.get(dimension) or {"dimension": dimension, "winnerCandidateId": winner, "reason": "Fixture keeps this dimension unchanged."}
+        for dimension in EDITORIAL_DIMENSIONS
+    ]
+    return result
 
 
 def test_deterministic_ranking_prefers_fewer_validation_findings_on_score_tie() -> None:
@@ -76,6 +101,8 @@ def test_pairwise_ranking_retries_malformed_json_and_uses_repair(tmp_path) -> No
     assert report.attempts[0]["modelRole"] == "review"
     assert report.attempts[0]["status"] == "error"
     assert len(report.ai_run_ids) == 2
+    assert report.comparison_identity["comparisonIdentityComplete"] is True
+    assert report.comparison_identity["expectedPairCount"] == 1
 
 
 def test_ranking_revision_accepts_non_regressing_revision(tmp_path) -> None:

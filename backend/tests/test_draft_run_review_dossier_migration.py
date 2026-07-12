@@ -46,6 +46,14 @@ def test_review_ranking_revision_and_final_attempts_record_direct_budget() -> No
         execution_mode="standard",
         repair_context=None,
     )
+    ranking_repair_attempt = PairwiseRankingDossierAttemptBuilder().prepare(
+        dossier=ranking,
+        model="review-model",
+        attempt={"label": "primary-repair", "model": "review-model", "repair": True},
+        model_selection={"modelRole": "review"},
+        execution_mode="standard",
+        repair_context={"errorType": "schemaFailure", "validationDetails": {"missingPairs": [{"leftCandidateId": "candidate-1", "rightCandidateId": "candidate-2"}]}},
+    )
     revision_attempt = RevisionDossierAttemptBuilder().prepare(
         dossier=revision,
         model="writer-model",
@@ -65,12 +73,18 @@ def test_review_ranking_revision_and_final_attempts_record_direct_budget() -> No
         repair_context=None,
     )
 
-    for prepared in (review_attempt, ranking_attempt, revision_attempt, final_attempt):
+    for prepared in (review_attempt, ranking_attempt, ranking_repair_attempt, revision_attempt, final_attempt):
         request = prepared.request_payload
         assert request["providerDossier"]["runtimeMigrated"] is True
         assert request["payloadBudget"]["promptCharEstimate"] <= request["payloadBudget"]["limits"]["maxPromptChars"]
         assert request["operationId"] in {"llmValidation", "pairwiseRanking", "directedRevision", "finalQualityGateReview"}
         assert not ({"sourceLedger", "rulePack", "materialPlan", "candidatePool", "validationReport"} & set(request["providerInput"]))
+    assert ranking_attempt.blocked_reason is None
+    assert ranking_attempt.request_payload["messageCharCount"] <= 22000
+    assert ranking_attempt.request_payload["providerInputCharEstimate"] <= 19000
+    assert ranking_repair_attempt.blocked_reason is None
+    assert ranking_repair_attempt.request_payload["repairContextCharCount"] > 0
+    assert ranking_repair_attempt.request_payload["messageCharCount"] <= 22000
     assert final_attempt.request_payload["payloadBudget"]["profileId"] == "finalQualityReviewRepair"
     assert final_attempt.request_payload["payloadBudget"]["operationAlias"] == "finalQualityGateReview"
 

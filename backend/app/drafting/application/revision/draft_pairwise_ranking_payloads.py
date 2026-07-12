@@ -9,6 +9,10 @@ from typing import Any
 
 from backend.app.application.json_step_retry_policy import JsonStepAttempt
 from backend.app.domain.draft_ranking_revision import PairwiseComparison, PairwiseRankingReport, RankingDecision
+from backend.app.drafting.application.revision.pairwise_comparison_identity import (
+    PairwiseComparisonIdentityPolicy,
+    PairwiseComparisonIdentityTrace,
+)
 
 
 class PairwiseRankingPayloadMapper:
@@ -19,6 +23,7 @@ class PairwiseRankingPayloadMapper:
         payload: dict[str, Any],
         attempts: list[dict[str, Any]],
         ai_run_ids: list[str],
+        comparison_identity: PairwiseComparisonIdentityTrace,
     ) -> PairwiseRankingReport:
         return PairwiseRankingReport(
             decision=RankingDecision(
@@ -41,15 +46,16 @@ class PairwiseRankingPayloadMapper:
             ],
             attempts=attempts,
             ai_run_ids=ai_run_ids,
+            comparison_identity=comparison_identity.to_payload(),
+            editorial_dimension_scores=self.dimension_scores(payload),
         )
 
-    def validate_pairwise_payload(self, payload: dict[str, Any], draft_artifact: dict[str, Any]) -> None:
-        candidate_ids = {str(candidate.get("id")) for candidate in draft_artifact.get("candidates", []) if isinstance(candidate, dict)}
-        winner = str(payload.get("winnerCandidateId") or "")
-        if winner not in candidate_ids:
-            raise ValueError("Pairwise ranking winnerCandidateId is not a known candidate")
-        if not isinstance(payload.get("comparisons"), list):
-            raise ValueError("Pairwise ranking comparisons is not a list")
+    def validate_pairwise_payload(
+        self,
+        payload: dict[str, Any],
+        candidate_ids: list[str],
+    ) -> PairwiseComparisonIdentityTrace:
+        return self._identity.validate(payload, candidate_ids)
 
     def attempt_record(
         self,
@@ -76,3 +82,5 @@ class PairwiseRankingPayloadMapper:
             if isinstance(comparison, dict) and isinstance(comparison.get("editorialDimensionScores"), list):
                 scores.extend(item for item in comparison["editorialDimensionScores"] if isinstance(item, dict))
         return scores
+    def __init__(self, identity_policy: PairwiseComparisonIdentityPolicy | None = None) -> None:
+        self._identity = identity_policy or PairwiseComparisonIdentityPolicy()

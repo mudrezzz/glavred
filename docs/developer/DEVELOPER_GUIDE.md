@@ -281,6 +281,17 @@ For DraftRun provider-input replay, use:
 python scripts/audit_draft_run_provider_inputs.py --run-id <DraftRun ID> --format json
 ```
 
+For pairwise ranking identity replay, use:
+
+```bash
+python scripts/audit_pairwise_comparison_identity.py --run-id <DraftRun ID> --fail-on-incomplete
+```
+
+The identity audit uses the candidates actually present in each child
+`AiRun.requestPayload.providerInput`. It requires every unordered pair exactly once
+and all seven editorial dimensions. It reports old blank identifiers as incomplete;
+it never reconstructs them from response order.
+
 The audit reads stored child `AiRun.requestPayload` records and classifies target
 operations as `directlyBudgeted`, `overBudget`, `missingDirectBudget`,
 `nestedBudgetFalsePositive`, or `explicitDebt`. `explicitDebt` is allowed only when

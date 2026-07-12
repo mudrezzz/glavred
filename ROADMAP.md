@@ -8105,7 +8105,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Require and validate left/right candidate identity for every provider pairwise comparison while preserving the seven-dimension ranking result.
 - User value: Ranking diagnostics can prove exactly which candidates were compared instead of relying on comparison order.
 - AS IS:
@@ -8129,6 +8129,7 @@ Status:
   - Do not change candidate scoring policy, model roles, prompts beyond JSON shape, or editorial selection semantics.
 - AS IS update outcome:
   - Completion must update the pairwise trace contract and regenerate AS IS PDF if trace semantics change.
+- Completed: 2026-07-12
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -8166,7 +8167,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
 
-- Status: Backlog
+- Status: Ready
 - Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
 - User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
 - Scope:
@@ -8780,6 +8781,7 @@ Status:
 - Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, Revision, and Final Gate Dossier Migration. Completed 2026-07-12.
 - Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair. Completed 2026-07-12.
+- Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair. Completed 2026-07-12.
 
 
 ## Blocked Items
@@ -8808,4 +8810,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair`.
+Implement `Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot`.

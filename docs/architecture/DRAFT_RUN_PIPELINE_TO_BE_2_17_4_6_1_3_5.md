@@ -353,6 +353,17 @@ final selected or repaired candidate explicit, keep non-final findings visible a
 diagnostic context, and block trusted quality only for unresolved issues that still
 apply to the delivered final text.
 
+**Implemented through Slice 2.17.4.6.1.3.9.2.** Pairwise ranking now receives an
+explicit `comparisonContract`, requires every unordered provider-visible candidate
+pair exactly once, and records a typed `comparisonIdentity` coverage trace. Blank or
+ambiguous identities are schema failures and feed structured repair context; they
+are never reconstructed from response order. Seven editorial dimensions are
+required exactly once. A symmetric ranking compactor leaves provider-input headroom,
+and `ProviderMessageBudgetGuard` measures the final serialized messages after JSON
+instructions and repair context are added. Accepted live proof is DraftRun
+`480be950-4538-4077-bccb-330b732ff26a`: complete `6/1/1` pair matrices and maximum
+message size `20269/22000`, with the editorial winner policy unchanged.
+
 **Implementation status (2026-07-12):** runtime wiring, direct attempt budgets,
 terminal replay, persisted-candidate recovery, and candidate-scoped lifecycle are
 implemented. `72b3...` replay now has `openCriticalCount=0` and

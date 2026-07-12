@@ -39,7 +39,7 @@ class DeterministicPairwiseRanker:
                 source="deterministicFallback",
                 fallback_used=True,
             ),
-            comparisons=_comparisons(eligible, metrics),
+            comparisons=_comparisons(list(metrics), metrics),
         )
 
 
@@ -60,7 +60,7 @@ def _candidate_metric(candidate: dict[str, Any], scorecard: dict[str, dict[str, 
 def _comparisons(candidate_ids: list[str], metrics: dict[str, dict[str, Any]]) -> list[PairwiseComparison]:
     rows: list[PairwiseComparison] = []
     for left, right in combinations(candidate_ids, 2):
-        winner = min((left, right), key=lambda candidate_id: _sort_key(metrics[candidate_id]))
+        winner = min((left, right), key=lambda candidate_id: _comparison_sort_key(metrics[candidate_id]))
         loser = right if winner == left else left
         rows.append(PairwiseComparison(
             left_candidate_id=left,
@@ -78,6 +78,10 @@ def _comparisons(candidate_ids: list[str], metrics: dict[str, dict[str, Any]]) -
 
 def _sort_key(metric: dict[str, Any]) -> tuple[int, int, int, str]:
     return (_int(metric.get("critical")), _int(metric.get("warning")), -_int(metric.get("oldTotal")), str(metric.get("candidateId") or ""))
+
+
+def _comparison_sort_key(metric: dict[str, Any]) -> tuple[int, int, int, int, str]:
+    return (0 if metric.get("eligible") else 1, *_sort_key(metric))
 
 
 def _report_for(report: dict[str, Any], candidate_id: str) -> dict[str, Any]:
