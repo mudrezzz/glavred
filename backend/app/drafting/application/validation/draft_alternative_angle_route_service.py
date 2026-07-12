@@ -93,6 +93,8 @@ class DraftAlternativeAngleRouteService:
         )
         messages = prepared.messages
         request_payload = prepared.request_payload
+        if prepared.blocked_reason:
+            return self._record_attempt_error(attempt, request_payload, prepared.blocked_reason)
         try:
             result = DraftingJsonOperationClient(self._openrouter_adapter).complete(
                 settings=self._settings,

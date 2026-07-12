@@ -16,6 +16,9 @@ from backend.app.drafting.application.operations.payload_artifact_compactors imp
     TraceContextCompactor,
     ValidationReportCompactor,
 )
+from backend.app.drafting.application.operations.payload_alternative_angle_route_compactor import (
+    AlternativeAngleRoutePayloadCompactor,
+)
 from backend.app.drafting.application.operations.payload_budget_contracts import PayloadBudgetProfile, PayloadCompactionResult, SemanticInputContract
 from backend.app.drafting.application.operations.payload_compactor_common import CountAccumulator, _record, _records
 from backend.app.drafting.application.operations.payload_evidence_compactors import RulePackCompactor
@@ -31,6 +34,7 @@ class DraftRunPayloadCompactor:
         self._draft = DraftArtifactCompactor()
         self._trace = TraceContextCompactor()
         self._validation = ValidationReportCompactor()
+        self._alternative_angle_route = AlternativeAngleRoutePayloadCompactor()
         self._review_dossiers = ReviewDossierPayloadCompactor()
 
     def compact(self, payload: Mapping[str, Any], *, profile: PayloadBudgetProfile, contract: SemanticInputContract) -> PayloadCompactionResult:
@@ -50,7 +54,10 @@ class DraftRunPayloadCompactor:
         self._compact_key(compact, trimmed, "material_plan", self._material.compact, profile)
         self._compact_key(compact, trimmed, "materialPlan", self._material.compact, profile)
         if "dossierId" in compact:
-            compact, dossier_counts = self._review_dossiers.compact(compact, profile)
+            if profile.operation_id == "alternativeAngleRoute":
+                compact, dossier_counts = self._alternative_angle_route.compact(compact, profile)
+            else:
+                compact, dossier_counts = self._review_dossiers.compact(compact, profile)
             CountAccumulator.merge(trimmed, dossier_counts)
         else:
             self._compact_candidates(compact, trimmed, profile)

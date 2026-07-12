@@ -315,6 +315,16 @@ but its projection is not reliably bounded. Repair is explicit follow-up
 `2.17.4.6.1.3.9.1`; it must preserve the semantic route contract while enforcing the
 cap before the tool-mediated pilot.
 
+Slice `2.17.4.6.1.3.9.1` implements that repair. Route selection now applies a
+dedicated deterministic compactor with equal per-candidate fields and budgets,
+severity-prioritized critique/validation signals, bounded contract/evidence/rules,
+and a reserved repair-context budget. The same gate sees dossier plus repair context,
+then `ProviderMessageBudgetGuard` verifies the final serialized messages. Live run
+`92532cb9-e83b-4bb1-ab2b-7d7a46d279b5` records `14371` provider-input characters and
+`16321/22000` actual message characters, zero route budget incidents, no missing
+required input, a generated challenger, and a challenger-derived final winner. This
+closes the `3.9.1` follow-up without changing route output semantics.
+
 The final proof also showed why Slice `3.9` remains necessary: the delivered text
 itself stayed below `hardMaxChars`, but `qualityFidelity.issueLifecycle` still
 counted open critical findings from intermediate or losing validation reports. That

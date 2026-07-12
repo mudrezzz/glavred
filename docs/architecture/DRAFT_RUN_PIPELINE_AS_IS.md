@@ -1,6 +1,6 @@
 # DraftRun Pipeline AS IS
 
-Current as of Slice 2.17.4.6.1.3.8: Writer and Alternative-Angle Dossier Migration.
+Current as of Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair.
 
 This document is the maintained technical map of the current DraftRun generation
 pipeline. It describes the running system as it exists now, not the target design.
@@ -968,7 +968,7 @@ Provider-heavy AS IS contract:
 | `draftCandidate` | one rhetorical plan, material evidence, contract, generation params | `WriterDossierFactory(draftCandidate)` projection with one route, compact planning, four evidence items, two claim handles, five rules, forbidden moves, and size/style constraints | `draft.candidates[]`, child `AiRun.requestPayload.providerDossier.runtimeMigrated=true`, direct budget proof, fallback/publishability status | enforced per primary/repair/backup call; standard cap 24000 chars | Runtime dossier migration complete in `2.17.4.6.1.3.8` |
 | `llmValidation` | one persisted candidate, deterministic findings, post contract, evidence/rule handles | `ReviewDossierFactory` projection with exact candidate prose, compact candidate-specific findings and bounded optional evidence/rules | `validation.llmValidationReport`, candidate reports, child `AiRun.requestPayload.providerDossier`, direct budget and incidents | enforced per attempt; standard cap 22000; accepted live maximum 16628 | Runtime migration and live acceptance complete in `2.17.4.6.1.3.9` |
 | `editorialCritique` | candidates, evidence interpretation, validation findings, critique context | critic `ContextPack`, candidate summaries, evidence interpretation, findings | `validation.editorialCritiqueReport`, child `AiRun`, `operationEnvelope`, parser/trace payload | enforced for representative operation | Debate/critique expansion remains future work; current single critique is AS IS |
-| `alternativeAngleRoute` | persisted initial validation, editorial critique, rejected/weak moves, contract and candidate summaries | `AlternativeAngleDossierFactory` projection with three candidate summaries, three critique summaries, three validation issues, two rejected moves, contract, two evidence items and two rules | persisted tournament route before challenger construction, child `AiRun` with direct budget proof, route attempts, resolvable editorial-critique handles | standard cap 22000; live run `7bf3...` exposed 34589 and `payloadTooLarge` | Runtime migration exists from `3.8`, but budget repair is explicit debt `2.17.4.6.1.3.9.1` |
+| `alternativeAngleRoute` | persisted initial validation, editorial critique, rejected/weak moves, contract and candidate summaries | `AlternativeAngleDossierFactory` selection followed by `AlternativeAngleRoutePayloadCompactor`: three symmetric candidate projections, candidate-scoped critique/validation signals, two rejected moves, compact contract, two evidence items, two rules, and bounded repair context | persisted tournament route before challenger construction, child `AiRun` with direct current-call budget, actual serialized `messageCharCount`, trimming counts, route attempts, resolvable editorial-critique handles | enforced per primary/repair/backup call; standard cap 22000; live run `92532...` records 16321 actual message chars with no incident | Runtime migration completed in `3.8`; data-dependent cap drift repaired and live-accepted in `2.17.4.6.1.3.9.1` |
 | `alternativeAngleCandidate` | persisted challenger route, compact planning, contract/evidence constraints | `WriterDossierFactory(alternativeAngleCandidate)` projection with route, planning decisions, four evidence items, one claim handle, four rules and one critique summary | challenger candidate payload, child `AiRun` with direct budget proof, no-fake-challenger failure trace | enforced per primary/repair/backup call; standard cap 24000 chars | Runtime dossier migration complete in `2.17.4.6.1.3.8` |
 | `pairwiseRanking` | persisted active candidate pool, candidate-scoped validation reports, post contract and evidence handles | `RankingDossierFactory` projection with equal opening/middle/ending windows, per-candidate finding counts/summaries, seven dimensions and selection constraints | `validation.rankingRevision.pairwiseRanking`, attempts, scorecard, child direct budget | enforced per attempt; standard cap 22000; accepted live maximum 20534 | Runtime migration and live acceptance complete in `3.9`; live comparisons preserve winner and seven dimensions but blank left/right pair ids remain explicit trace debt `3.9.2` |
 | `directedRevision` | current persisted candidate, applicable repair goals, anti-regression constraints and evidence/rule handles | `RevisionDossierFactory` projection with exact candidate body and bounded prioritized repair context | `validation.rankingRevision.revisionLoop`, child `AiRun.requestPayload.providerDossier`, accepted/rejected cycles and direct budget | enforced per attempt; standard cap 24000; accepted live maximum 20157 | Runtime migration and live acceptance complete in `2.17.4.6.1.3.9` |
@@ -1116,6 +1116,18 @@ Runtime migration and strict live acceptance were completed through Slice `3.9`.
 Run `7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47` records 16/16 target attempts directly
 budgeted, accepted maximums of 16628/20534/20157/18015 characters, sufficient
 evidence, editorial status `publishable`, and open critical/warning counts 0/0.
+
+Slice `2.17.4.6.1.3.9.1` closes the remaining `alternativeAngleRoute` cap drift.
+The operation now budgets its dossier and repair context together, uses equal
+candidate projections, and verifies the final serialized messages rather than only
+the nested provider-input JSON. Live run `92532cb9-e83b-4bb1-ab2b-7d7a46d279b5`
+records `14371` provider-input characters and `16321/22000` actual message
+characters with no budget incident. The challenger was generated, validated, and
+became the basis of the final revised winner; evidence remained `sufficient`,
+editorial status `publishable`, and open critical/warning counts 0/0. The preceding
+attempt `d08b26c7-2b5d-436a-8d03-5f4def3b3991` ended before route execution because
+of a transient SQLite `disk I/O error`; both databases passed integrity checks and
+that run is not used as route-quality proof.
 
 Accepted live proof `c2303e05-e7d0-4cad-a3f9-6ea26fc1a3ed` records actual planning
 inputs of 14900 chars (`materialPlan`), 15017 chars (`strategy`), and 13601 chars
@@ -1315,7 +1327,7 @@ Open `/ai-runs?runId=<DraftRun ID>` and inspect in this order:
   proves factory/handle/exclusion behavior; runtime proof additionally requires child
   `AiRun.requestPayload.providerDossier.runtimeMigrated=true`. Slice `3.9` has final
   live acceptance in run `7bf3...`; the separate `alternativeAngleRoute` over-budget
-  finding is tracked by `3.9.1`.
+  finding was repaired and live-accepted in `3.9.1` by run `92532...`.
 - Failed late provider operations are safely finalized when the Python call returns or
   raises. Evidence interpretation now has an operation-level timeout envelope; a
   broader infrastructure watchdog is still needed for externally stuck Celery tasks

@@ -8070,7 +8070,7 @@ Status:
 
 ### Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Bring the live `alternativeAngleRoute` provider input under its 22000-character cap without losing candidate, critique, validation, or contract semantics.
 - User value: The alternative-angle tournament no longer carries a hidden oversized provider call before the tool-mediated context pilot.
 - AS IS:
@@ -8094,12 +8094,18 @@ Status:
   - Reproduce from live run `7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47`, AiRun `32a97abc-dab3-42b8-a10b-c70742804f9f`: `34589/22000`.
   - Add component, attempt-builder, provider-input audit, alternative-angle flow, and pipeline regression tests.
   - Run one post-fix live proof only after deterministic/replay checks pass.
+- Completion proof:
+  - Deterministic stress/replay reduces the live-sized route projection below the cap while retaining symmetric candidates and required semantic sections.
+  - Full backend regression: 363 tests passed; targeted final regression: 19 tests passed; architecture and smoke checks passed.
+  - Accepted live run `92532cb9-e83b-4bb1-ab2b-7d7a46d279b5`: `alternativeAngleRoute=16321/22000` actual message chars, no incident, challenger-derived final winner, evidence `sufficient`, editorial `publishable`, open critical/warning `0/0`.
+  - Inconclusive run `d08b26c7-2b5d-436a-8d03-5f4def3b3991` failed before route execution on transient SQLite disk I/O; both databases remained integral.
+  - Evidence: `docs/evidence/draft-runs/e874fd2b-cfa0-4b6a-815d-c0cf6d9763d2/COMPARISON_2_17_4_6_1_3_9_1.md`.
 - AS IS update outcome:
-  - Completion must state `AS IS unchanged` with reason or update AS IS/PDF if provider-input semantics change.
+  - AS IS updated and both DraftRun AS IS/TO BE PDFs regenerated because direct route budget semantics now include repair context and final serialized messages.
 
 ### Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair
 
-- Status: Backlog
+- Status: Ready
 - Goal: Require and validate left/right candidate identity for every provider pairwise comparison while preserving the seven-dimension ranking result.
 - User value: Ranking diagnostics can prove exactly which candidates were compared instead of relying on comparison order.
 - AS IS:
@@ -8773,6 +8779,7 @@ Status:
 - Slice 2.17.4.6.1.3.7: DraftRun Planning Dossier Migration. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.8: DraftRun Writer and Alternative-Angle Dossier Migration. Completed 2026-07-10.
 - Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, Revision, and Final Gate Dossier Migration. Completed 2026-07-12.
+- Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair. Completed 2026-07-12.
 
 
 ## Blocked Items
@@ -8801,4 +8808,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair`.
+Implement `Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair`.

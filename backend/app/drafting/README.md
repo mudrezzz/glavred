@@ -336,7 +336,10 @@ review/ranking/revision/final-quality dossiers as well. Terminal replay is
 `readyForMigration`; Slice `3.9` is live-accepted by run `7bf3...`: all four target
 families are inside caps, evidence is sufficient, final quality is publishable, and
 open critical/warning counts are 0/0. The separate `alternativeAngleRoute`
-data-dependent over-budget finding is tracked by Slice `3.9.1`.
+data-dependent over-budget finding is repaired in Slice `3.9.1` by a dedicated
+route compactor and final serialized-message guard. Live run `92532...` records
+`16321/22000` actual message characters, no budget incident, and a challenger-derived
+final winner.
 
 ## Validation Runtime Budget
 

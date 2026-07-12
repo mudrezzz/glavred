@@ -368,6 +368,12 @@ live request received a dossier; inspect the child `AiRun.requestPayload` for
 `providerDossier.runtimeMigrated=true`, direct `providerInput`, and direct
 `payloadBudget`.
 
+For `alternativeAngleRoute`, direct input proof also includes bounded repair
+context and the final serialized messages. Treat `payloadBudget.promptCharEstimate`
+as clean only when it equals `messageCharCount` and stays within the operation cap;
+`providerInputCharEstimate` records the smaller dossier-plus-repair projection.
+Candidate summaries must remain structurally symmetric after compaction.
+
 For ranking, verify more than total size: every active candidate must have the same
 opening/middle/ending projection, the same maximum number of prioritized findings,
 the full `findingCount`, and all seven editorial dimensions. A clean exact-payload

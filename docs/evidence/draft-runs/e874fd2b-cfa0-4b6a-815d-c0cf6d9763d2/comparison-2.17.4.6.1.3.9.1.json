@@ -1,0 +1,70 @@
+{
+  "slice": "2.17.4.6.1.3.9.1",
+  "baselineRunId": "7bf3a7b9-4646-4b32-8bfd-cc5b200a1b47",
+  "acceptedLiveRunId": "92532cb9-e83b-4bb1-ab2b-7d7a46d279b5",
+  "inconclusiveRun": {
+    "runId": "d08b26c7-2b5d-436a-8d03-5f4def3b3991",
+    "status": "failed",
+    "reason": "SQLite disk I/O error before alternativeAngleRoute",
+    "routeExecuted": false,
+    "draftRunDbIntegrityAfter": "ok",
+    "aiRunDbIntegrityAfter": "ok"
+  },
+  "alternativeAngleRoute": {
+    "before": {
+      "aiRunId": "32a97abc-dab3-42b8-a10b-c70742804f9f",
+      "promptCharEstimate": 34589,
+      "maxPromptChars": 22000,
+      "incidentType": "payloadTooLarge",
+      "totalProviderCost": 0.02604625,
+      "providerPromptCost": 0.01192375
+    },
+    "after": {
+      "aiRunId": "c548f4cc-7620-490a-813f-92352fb129df",
+      "providerInputCharEstimate": 14371,
+      "messageCharCount": 16321,
+      "promptCharEstimate": 16321,
+      "repairContextCharCount": 140,
+      "maxPromptChars": 22000,
+      "incident": null,
+      "missingRequiredInputs": [],
+      "totalProviderCost": 0.01945625,
+      "providerPromptCost": 0.005405
+    },
+    "change": {
+      "messageCharsPercent": -52.8,
+      "totalProviderCostPercent": -25.3,
+      "providerPromptCostPercent": -54.7
+    }
+  },
+  "runtimeProof": {
+    "status": "succeeded",
+    "providerInputAudit": "clean",
+    "directlyBudgetedOperations": 20,
+    "overBudgetOperations": 0,
+    "challengerGenerated": true,
+    "challengerValidated": true,
+    "finalCandidateDerivedFromChallenger": true,
+    "evidenceCoverageVerdict": "sufficient",
+    "editorialStatus": "publishable",
+    "overallVerdict": "recoveredSuccess",
+    "openCriticalCount": 0,
+    "openWarningCount": 0,
+    "draftRunDbIntegrityAfter": "ok",
+    "aiRunDbIntegrityAfter": "ok"
+  },
+  "qualityComparison": {
+    "baselineBodyChars": 8938,
+    "acceptedBodyChars": 5574,
+    "baselineParagraphs": 18,
+    "acceptedParagraphs": 11,
+    "preserved": [
+      "industrial maintenance scenario",
+      "source conflict",
+      "confidence boundary",
+      "engineer decision ownership",
+      "contract and evidence identifiers"
+    ],
+    "editorialNote": "The accepted route is meaningfully different and survived validation, ranking, and revision. Its opening is less sharp than the baseline failure-first scene, but structured checks found no context-loss regression attributable to dossier trimming."
+  }
+}
