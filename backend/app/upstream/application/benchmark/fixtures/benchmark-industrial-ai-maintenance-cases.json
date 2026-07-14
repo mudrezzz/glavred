@@ -15,7 +15,7 @@
     "caseExample": [
       {
         "title": "Predictive maintenance case with EAM integration",
-        "url": "https://cases.example/predictive-maintenance-eam?utm=recorded",
+        "url": "https://cases.example/predictive-maintenance-eam?utm_source=recorded",
         "snippet": "Implementation case: sensor history, EAM work orders, engineer feedback, measurable downtime reduction, and rollback path."
       },
       {

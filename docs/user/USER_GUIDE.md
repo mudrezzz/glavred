@@ -202,14 +202,18 @@ offered. Draft generation starts only after a candidate is approved.
 Current radar execution has a first external-search mode. In `Радары`, expand a radar
 and click `Запустить радар`: Glavred tries the backend runner, builds a typed search
 campaign with query intents, evidence types, source strategy, and skipped-intent
-reasons, runs configured OpenRouter web-search queries, deduplicates raw results,
-chooses which URLs to read, and stores found material with warnings when reading fails. If
-the backend is unavailable, the same action falls back to the local deterministic
+reasons, runs configured OpenRouter web-search queries, normalizes and groups duplicate
+results, scores their relevance/evidence/project/source/novelty/noise signals, and
+allocates the small read budget across the strongest required directions. Every raw
+result remains visible as selected, rejected, duplicate, invalid, or deferred by
+budget. A failed or unsupported read is shown as `metadataOnly` and is not counted as
+readable material. If the backend is unavailable, the same action falls back to the local deterministic
 contract run. The expanded radar has internal tabs: `Настройка` for rules/sources/
 filters and `Трасса запуска` for a compact preview of search intents, search plan,
 operations, triage, found material, and diagnostics. Use `Открыть трассу` or open
 `/radar-runs?runId=<id>` to inspect the full run page with source strategy, raw
-results, selected/rejected reads, warnings/errors, raw JSON fallback, and benchmark
+results, score dimensions, duplicate groups, read coverage and gaps, selected/rejected
+reads, warnings/errors, raw JSON fallback, and benchmark
 verdict when the run carries one. This trace stays separate from `Найденные сигналы`.
 It does not create new signals or post candidates yet.
 

@@ -12,7 +12,7 @@ class FakeWebSearchAdapter:
         return OpenRouterWebSearchResult(
             content="Search content",
             citations=[
-                OpenRouterWebSearchCitation(title="Industrial AI case", url="https://example.com/case?utm=1", snippet="implementation case with benchmark metrics"),
+                OpenRouterWebSearchCitation(title="Industrial AI case", url="https://example.com/case?utm_source=test", snippet="implementation case with benchmark metrics"),
                 OpenRouterWebSearchCitation(title="Industrial AI case duplicate", url="https://example.com/case", snippet="same case"),
                 OpenRouterWebSearchCitation(title="Generic vendor page", url="https://vendor.example/pricing", snippet="buy now pricing vendor"),
             ],

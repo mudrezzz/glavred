@@ -30,6 +30,14 @@ describe('RadarRunTracePage', () => {
     fireEvent.click(within(screen.getByTestId('radar-run-timeline')).getByText('read-selection'));
     expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('best-diverse-result');
     expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('vendor-pricing-noise');
+
+    fireEvent.click(within(screen.getByTestId('radar-run-timeline')).getByText('triage-quality'));
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('Maintenance workbench case');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('Релевантность');
+
+    fireEvent.click(within(screen.getByTestId('radar-run-timeline')).getByText('read-plan'));
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('limitationCritique: no-candidate');
+    expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('Страница прочитана');
   });
 
   it('renders legacy/minimal runs without empty external-search sections', async () => {
@@ -38,7 +46,8 @@ describe('RadarRunTracePage', () => {
         searchPlan: undefined,
         rawResults: undefined,
         selectedForRead: undefined,
-        rejectedBeforeRead: undefined
+        rejectedBeforeRead: undefined,
+        searchTriage: undefined
       }),
       null
     );

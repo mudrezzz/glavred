@@ -164,13 +164,13 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
 - the backend external runner builds a deterministic typed search campaign from
   radar settings, source handles, project language, topic/fabula context, publisher
   rules, benchmark profile, research depth, and budget mode;
-- each external run records `searchPlan`, query operations, raw search results,
-  pre-read triage, selected URL reads, rejected-before-read results, warnings, and
-  normalized found materials;
+- each external run records `searchPlan`, directly budgeted query operations, bounded
+  raw search results, deterministic `searchTriage`, selected URL reads, every terminal
+  rejected/duplicate/invalid/deferred decision, read outcomes, and found materials;
 - expanded radar rows keep configuration in an internal settings tab and run
   diagnostics in an internal run-trace tab;
-- URL read failures are kept as `search-result-only` found material with warnings
-  when enough search-result metadata exists;
+- URL read failures and unsupported binary formats are failed read outcomes and may
+  be kept only as `metadataOnly`; they do not count as readable material;
 - `sourceSignals` are still seeded/demo-local or manually reviewed compatibility data
   rather than produced by extraction from `FoundMaterial`;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
@@ -232,6 +232,10 @@ run service orchestrates the campaign, `OpenWebQueryOperationRunner` owns one
 provider-backed web query operation, `RadarRunBenchmarkReporter` owns scenario
 matching and report attachment, and benchmark evaluation delegates status,
 expectations, coverage, and trace/provider-health rules to separate policy classes.
+After Slice `2.17.4.6.2`, normalization, duplicate grouping, quality assessment, read
+allocation, URL-read execution, payload construction, and upstream budget policy also
+have separate application owners. The provider-neutral final-message guard lives in
+`backend.app.shared.llm_operations`; upstream does not import DraftRun budget runtime.
 
 - `passed`: required search/evidence coverage was actually executed, trace is
   complete, no noise was accepted, and the provider path was usable;
@@ -277,7 +281,11 @@ it does not add backend tables or provider calls.
   separate planned coverage from executed coverage, expose skipped required coverage,
   and prevent a planned-but-budget-skipped required direction from producing a clean
   `passed` verdict.
-- `2.17.4.6.2`: Search Result Triage, Deduplication, and Selective Reading.
+- `2.17.4.6.2`: Search Result Triage v2 and Selective Reading. Done: bounded
+  normalization, stable duplicate groups, six-dimensional deterministic assessment,
+  coverage-aware `1/2/4` read plans, complete terminal decisions, honest read
+  outcomes, `metadataOnly` fallback, `discoveryTrace`, upstream provider-input and
+  final-message budgets, readable trace UI, recorded tests, and pre/post live proof.
 - `2.17.4.6.3`: Source Strategy Adapters and Domain-Aware Search.
 - `2.17.4.6.4`: LLM-Assisted Query Expansion and Search Critic.
 - `2.17.4.6.5`: Radar Search Evaluation Harness and Benchmark Corpus.

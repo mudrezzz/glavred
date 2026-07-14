@@ -11,10 +11,12 @@ from typing import Any
 
 
 class ExternalRunResultPolicy:
-    def status(self, *, found_ids: list[str], operations: list[dict[str, Any]], errors: list[str]) -> str:
-        if found_ids and not errors:
+    def status(self, *, found_materials: list[dict[str, Any]], operations: list[dict[str, Any]], errors: list[str]) -> str:
+        readable = [item for item in found_materials if item.get("status") != "metadataOnly"]
+        failed_operations = [item for item in operations if item.get("status") == "failed"]
+        if readable and not errors and not failed_operations:
             return "succeeded"
-        if found_ids or operations:
+        if found_materials or operations:
             return "partial"
         return "failed"
 

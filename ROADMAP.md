@@ -8131,275 +8131,316 @@ Status:
   - Completion must update the pairwise trace contract and regenerate AS IS PDF if trace semantics change.
 - Completed: 2026-07-12
 
+### Slice 2.17.4.6.2: Search Result Triage v2 and Selective Reading
+
+- Status: Done
+- Goal: Upgrade the existing basic URL triage into an explainable retrieval-quality layer that selects the most useful and diverse materials before reading.
+- User value: The radar reads fewer but stronger sources and clearly explains duplicates, noise, budget skips, and read failures.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+- TO BE source:
+  - `docs/architecture/RADAR_TO_CANDIDATE_PIPELINE_TO_BE_2_17_4_6_2.md`.
+- TO BE necessity:
+  - Required before implementation because result classification, selection semantics, and trace fields change.
+  - Prepare or update a Radar-to-Candidate TO BE mapping during slice planning.
+- Preserved AS IS invariants:
+  - RadarRun may create `FoundMaterial` but not `SourceSignal`, `PostCandidate`, plan slots, or DraftRun.
+  - Raw, selected, rejected, warning, and error records remain trace-visible.
+- Changed AS IS invariants:
+  - Replace keyword-only scoring and first-pass domain diversity with typed evidence, relevance, source-quality, novelty, project-fit, risk, and duplicate-group decisions.
+- Scope:
+  - Normalize URL, domain, title, snippet, query family, and evidence type.
+  - Build explicit duplicate groups instead of only rejecting repeated canonical URLs.
+  - Score relevance, evidence type, source quality, novelty, project fit, and noise risk.
+  - Select a diverse read set across query intents, evidence types, and domains.
+  - Keep unread, rejected, duplicated, and read-failed results inspectable.
+- Out of scope:
+  - Signal extraction, candidate assembly, LLM search expansion, and cross-run search memory.
+- Proof evidence:
+  - Recorded industrial-AI fixture, a fresh live run, `rawResults`, duplicate groups, `selectedForRead`, `rejectedBeforeRead`, URL-read outcomes, and benchmark report.
+- Tests:
+  - Canonicalization and semantic duplicate tests.
+  - Strong-case, weak-generic, vendor-noise, source-diversity, budget, and unreadable-URL tests.
+  - RadarRun trace view-model and UI tests.
+  - Full backend, architecture, smoke, roadmap, and diff checks.
+- Docs:
+  - Update RadarRun AS IS/PDF, upstream architecture, developer guide, user guide, and diagnostics notes.
+- Definition of Done:
+  - Selection no longer depends mainly on provider order or keyword count.
+  - Every raw result receives an explainable selected/rejected/duplicate/unread decision.
+  - Required search directions receive fair read-budget consideration.
+  - Read failures remain explicit and do not masquerade as successful reads.
+  - Recorded and live benchmark evidence shows no loss of required coverage or accepted-material quality.
+  - AS IS is updated and its PDF regenerated.
+- Risks:
+  - Strong filtering can hide surprising sources; rejected results must remain inspectable and future-memory compatible.
+- Implementation proof:
+  - Trace-safe pre/post comparison: `docs/evidence/radar-runs/2.17.4.6.2/COMPARISON.md` and `comparison.json`.
+  - Final live proof: 52 raw results, 52 terminal decisions, 35 duplicate groups, 2 readable materials, 0 metadata-only materials, 0 accepted noise.
+  - All 3 `openWebQuery` operations directly budgeted; 1,185 serialized message characters, 297 local approximate tokens, 0 budget incidents.
+  - Benchmark remained `warning` only because required `limitationCritique` was skipped by the existing three-query campaign budget.
+  - `AS IS updated` and RadarRun AS IS/TO BE PDFs regenerated and visually checked.
+- NOT THIS SLICE:
+  - Signal extraction -> `2.17.4.7`.
+  - Signal scoring -> `2.17.4.7.1`.
+  - Candidate assembly/ranking -> `2.17.4.8` and `2.17.4.8.1`.
+  - Provider-owned web-search cost and cross-run memory -> `2.17.4.6.6`.
+- Completed: 2026-07-13
+
+### Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction
+
+- Status: Ready
+- Goal: Convert `FoundMaterial` records into evidence-backed `SourceSignal` candidates without assigning topic/fabula ownership.
+- User value: The user receives editorially meaningful facts, changes, tensions, practices, and problems instead of a list of links.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+- TO BE necessity:
+  - Required because the upstream pipeline gains a new material-to-signal runtime boundary and trace contract.
+- Preserved AS IS invariants:
+  - Found materials remain durable and inspectable.
+  - Extraction does not create post candidates, plan slots, DraftRuns, or final topic/fabula ownership.
+- Changed AS IS invariants:
+  - Real `FoundMaterial` can produce typed signal candidates and explicit noise rejections.
+- Scope:
+  - Add `SignalExtractionReport`, extraction decisions, evidence fragments, source provenance, and rejection reasons.
+  - Extract zero, one, or several signals from one or several related materials.
+  - Keep deterministic checks and a bounded optional review-role provider call with structured retry/fallback trace.
+  - Preserve every material-to-signal and material-to-noise decision.
+- Out of scope:
+  - Editorial scoring, human approval policy, topic/fabula matching, and candidate ranking.
+- Proof evidence:
+  - Recorded extraction fixtures plus a fresh live RadarRun whose found materials produce traceable signal candidates and explicit noise decisions.
+- Tests:
+  - Fact/change/tension/practice/problem extraction tests.
+  - Duplicate, weak-source, no-signal, malformed-provider, fallback, and provenance tests.
+  - Guard tests preventing topic/fabula ownership and downstream artifact creation.
+- Docs:
+  - Update both AS IS contracts, active TO BE, SAO, developer guide, user guide, and demo.
+- Definition of Done:
+  - Every produced signal resolves to source material and evidence fragments.
+  - Every inspected material is classified as signal-producing, insufficient, duplicate, or noise with a stable reason.
+  - Provider failure cannot fabricate a high-confidence signal.
+  - A live run demonstrates the material-to-signal handoff without creating candidates or DraftRun.
+  - AS IS is updated and relevant PDFs regenerated.
+- Risks:
+  - Extraction can invent significance; evidence links and conservative failure semantics are mandatory.
+
+### Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle
+
+- Status: Backlog
+- Goal: Add explainable editorial scoring and a complete human review lifecycle for extracted signals.
+- User value: The editor can understand, correct, approve, reject, archive, or revisit a signal based on explicit editorial dimensions.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+- TO BE necessity:
+  - Required because scoring and review decisions become persisted upstream behavior.
+- Preserved AS IS invariants:
+  - Raw materials and extraction evidence remain unchanged and traceable.
+  - Scoring does not create post candidates or silently approve signals.
+- Changed AS IS invariants:
+  - Signals gain dimension-level scores, risks, review status, corrections, and decision history.
+- Scope:
+  - Score novelty, source credibility, author fit, audience value, positioning fit, topic affinity, evidence strength, and risk.
+  - Add statuses `candidate`, `approved`, `rejected`, `archived`, and `corrected` with transition rules.
+  - Persist explanations, manual corrections, and decision history.
+- Out of scope:
+  - Topic/fabula candidate assembly and plan handoff.
+- Proof evidence:
+  - Recorded good, weak, duplicate, off-position, risky, and corrected signals plus one live reviewed signal.
+- Tests:
+  - Dimension scoring, status transition, manual correction, provider recovery, and project-isolation tests.
+  - Tests proving low-confidence fallback cannot become automatic approval.
+- Docs:
+  - Update upstream AS IS/TO BE, SAO, developer guide, user guide, and demo.
+- Definition of Done:
+  - Every score has a reason and supporting material/evidence reference.
+  - Human decisions and corrections are reversible and trace-visible.
+  - No opaque aggregate score can hide a blocking risk.
+  - A reviewed live signal remains linked to its run, material, and extraction report.
+  - AS IS is updated and relevant PDFs regenerated.
+- Risks:
+  - Scoring can look objective while remaining heuristic; dimension evidence and human authority stay visible.
+
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
 - Status: Backlog
-- Goal: Replace mechanical approved-signal ? topic/fabula pairing with explainable candidate assembly and ranking.
-- User value:
-  - The user receives fewer but stronger post candidates, each explaining why this signal fits this topic, fabula, audience value, and channel context.
+- Goal: Replace blind approved-signal x topic/fabula multiplication with explainable candidate assembly.
+- User value: The user receives fewer, stronger post concepts whose topic, fabula, audience value, and source basis are justified.
+- AS IS sources:
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for the preserved retrieval boundary.
+- TO BE necessity:
+  - Required because the pipeline gains signal-to-candidate matching and rejection semantics.
+- Preserved AS IS invariants:
+  - RadarRun itself does not create candidates.
+  - SourceSignal remains the reviewed upstream input; DraftRun remains downstream.
+- Changed AS IS invariants:
+  - Candidate assembly replaces Cartesian pairing and `.slice(0, 3)` as canonical behavior.
 - Scope:
-  - Add `CandidateAssemblyReport`, `CandidateMatch`, and `CandidateRanking` contracts.
-  - Use signal scores, topic/fabula matrix, publisher rules, author memory, channel/default platform, and benchmark expectations.
-  - Generate multiple candidate angles only when justified; avoid blind Cartesian products.
-  - Explain accepted/rejected topic/fabula matches and candidate risks.
-  - Preserve manual edit/approve/reject flow for candidates.
+  - Add `CandidateAssemblyReport` and accepted/rejected `Signal x Topic x Fabula` matches.
+  - Use signal scores, topic/fabula matrix, author position, audience, channel context, evidence, and risk.
+  - Produce multiple angles only when their editorial frames are meaningfully different.
+  - Keep stable candidate identities and full provenance.
 - Out of scope:
-  - DraftRun generation changes.
-  - Multi-target variants.
-  - Automatic plan scheduling.
-- Implementation notes:
-  - Candidate assembly may start deterministic with optional review-role ranking later.
-  - Candidate ids must remain stable enough for plan/workbench links.
-- Architecture impact:
-  - Moves editorial composition logic into `PostCandidateAssembly` rather than `Signals` UI or `Plan`.
+  - Final candidate ranking, plan handoff, DraftRun generation, and multi-platform variants.
+- Proof evidence:
+  - Three-project deterministic fixtures and a live reviewed signal producing justified matches and visible rejections.
 - Tests:
-  - Candidate assembly tests for one signal with multiple topics/fabulas.
-  - Tests preventing one-to-one topic/fabula coupling regressions.
-  - UI tests for candidate rationale and rejection reasons.
+  - Multi-topic/fabula matching, no-match, duplicate-angle, stable-id, provenance, project-isolation, and anti-Cartesian tests.
 - Docs:
-  - Developer guide, user guide, SAO.
-- Demo impact:
-  - Three benchmark blogs should show distinct candidate logic from the same upstream pattern.
-- Acceptance criteria:
-  - Candidate list is ranked and explainable; no hard `.slice(0, 3)` from blind pairing remains as the main logic.
+  - Update upstream AS IS/TO BE, SAO, developer guide, user guide, and demo.
+- Definition of Done:
+  - Blind pairing and fixed first-three truncation are no longer canonical.
+  - Every candidate and rejected match has a traceable rationale and risk set.
+  - Candidate evidence, signal, topic, and fabula references resolve without hidden state.
+  - A live signal produces a meaningful candidate set without auto-starting DraftRun.
+  - AS IS is updated and relevant PDFs regenerated.
 - Risks:
-  - Ranking can hide useful alternatives; keep rejected/alternative matches inspectable.
+  - Ranking pressure can remove useful alternatives; rejected matches remain inspectable.
 
-### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
+### Slice 2.17.4.8.1: Candidate Ranking and Plan Handoff
 
-- Status: Ready
-- Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
-- User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
+- Status: Backlog
+- Goal: Rank assembled post candidates transparently and hand an editor-approved candidate to the content plan without provenance loss.
+- User value: The editor can compare alternatives, understand the recommendation, and promote the chosen concept into planning with confidence.
+- AS IS sources:
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - Current content-plan and candidate handoff contracts.
+- TO BE necessity:
+  - Required because candidate ranking and plan handoff semantics change.
+- Preserved AS IS invariants:
+  - Human approval remains authoritative.
+  - Candidate promotion does not automatically run DraftRun.
+- Changed AS IS invariants:
+  - Candidate ranking becomes typed, explainable, and provenance-preserving instead of list position and formula confidence.
 - Scope:
-  - Choose one low-risk provider-heavy operation for a deterministic tool/MCP-style context access pilot.
-  - Expose only typed context-access methods, not raw full DraftRun JSON.
-  - Record tool calls, handles, returned snippets, and provider-input budget in trace.
-  - Compare quality, latency, and reliability against dossier-only mode.
+  - Add candidate comparison dimensions, ranking report, recommendation, alternatives, and risks.
+  - Persist editor selection, override reason, and stable handoff into the current plan contract.
+  - Preserve source, signal, evidence, topic, fabula, audience, value, and channel context.
 - Out of scope:
-  - Making MCP mandatory, adding an autonomous agent loop, replacing OpenRouter, changing DraftRun step order, API changes, SQLite changes, or broad prompt rewrite.
-- Implementation notes:
-  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
-  - The pilot is allowed only after `DraftRunContextAccessService` exists, so the tool is a thin adapter over deterministic reads.
-- Architecture impact:
-  - Tests whether context-on-demand can further reduce prompt bloat while keeping deterministic ownership in backend components.
+  - Draft generation and multi-platform variants.
+- Proof evidence:
+  - Deterministic ranking fixtures, manual override replay, and one live candidate-to-plan handoff.
 - Tests:
-  - Tool adapter cannot return full artifacts unless explicitly requested by a whitelisted handle resolver.
-  - Trace shows every context read and its budget impact.
-  - Fallback to dossier-only mode remains available.
+  - Ranking identity, tie, override, stable-id, provenance, plan-handoff, and no-auto-DraftRun tests.
 - Docs:
-  - Add or update ADR if the pilot becomes a durable architecture rule.
-  - Update TO BE and developer guide.
-- Demo impact:
-  - No demo behavior change unless the pilot is intentionally demonstrated.
-- Acceptance criteria:
-  - One operation can run through tool-mediated context access without exposing raw full DraftRun state.
-  - Diagnostics can compare dossier-only vs tool-mediated context usage.
+  - Update upstream AS IS/TO BE, plan handoff docs, developer guide, user guide, and demo.
+- Definition of Done:
+  - Recommendation and alternatives are dimension-level explainable.
+  - Manual override is visible and does not erase automated reasoning.
+  - The selected plan item resolves back to candidate, signal, material, RadarRun, and source URL.
+  - No fixed-position confidence remains canonical.
+  - AS IS is updated and relevant PDFs regenerated.
 - Risks:
-  - Tool access can become hidden state if not traced; trace completeness is mandatory.
+  - A single score can hide trade-offs; preserve dimension breakdown and alternatives.
 
 ### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
 
 - Status: Backlog
-- Goal: Make the upstream workspace usable: materials, signals, and post candidates become separate readable work surfaces with clear actions and diagnostics.
-- User value:
-  - The editor can inspect found material, approve/reject signals, compare post candidates, and send the chosen concept to the plan without guessing what happened.
+- Goal: Deliver a coherent editor workbench for materials, signals, candidates, diagnostics, and plan handoff.
+- User value: The editor can operate the full upstream flow without reading raw JSON or opening DraftRun diagnostics.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+- TO BE necessity:
+  - Required for the end-to-end human workflow and read-model transitions; RadarRun runtime remains unchanged unless explicitly stated.
+- Preserved AS IS invariants:
+  - Materials, signals, candidates, and diagnostics remain separate concepts.
+  - Manual decisions are authoritative and trace-visible.
+- Changed AS IS invariants:
+  - The Signals workspace becomes the canonical operational surface for the complete upstream flow.
 - Scope:
-  - Refine `Сигналы` into explicit layers: `Материалы`, `Сигналы`, `Кандидаты`, `Диагностика`.
-  - Add compact/expanded states for found material, scored signal, and post candidate cards using the approved design-system card patterns.
-  - Show score/rationale, source provenance, topic/fabula match, risks, and next action.
-  - Add manual override/correction path that is trace-visible.
-  - Keep plan handoff compatible with current downstream flow.
+  - Add clear `?????????`, `???????`, `?????????`, and `???????????` work surfaces.
+  - Support compact/expanded inspection, review, correction, comparison, rejection, approval, and plan handoff.
+  - Show provenance, scores, rationale, risks, and next action with progressive disclosure.
 - Out of scope:
-  - New DraftRun behavior.
-  - Multi-platform variant workbench.
-  - Autoposting.
-- Implementation notes:
-  - Must use `ui-design-systems/START-HERE.md` and existing cabinet/card patterns.
-  - Do not put editing forms under action buttons; edit mode transforms fields in place.
-- Architecture impact:
-  - UI read models follow upstream domain boundaries instead of mixing raw signals and post concepts.
+  - DraftRun changes, multi-platform variants, scheduling, and autoposting.
+- Proof evidence:
+  - End-to-end UI flow over recorded data plus one live RadarRun-to-plan workflow and visual screenshots.
 - Tests:
-  - App-flow tests from radar run to material to signal to candidate to plan.
-  - Visual/design smoke for compact/expanded/edit states.
-  - Project isolation tests.
+  - App-flow, read-model, review/action, project-isolation, design-system, responsive, and visual tests.
 - Docs:
-  - User guide, demo README, wiki/screenshots if applicable.
-- Demo impact:
-  - Demo portfolio can demonstrate upstream work before DraftRun quality is evaluated.
-- Acceptance criteria:
-  - A user can understand and operate the upstream flow end-to-end without opening DraftRun.
+  - Update user guide, demo README, developer guide, architecture docs, and screenshots where maintained.
+- Definition of Done:
+  - A user can move from live found material to reviewed signal to compared candidate to plan without JSON inspection.
+  - Every displayed decision links to its rationale and provenance.
+  - Empty, partial, provider-failed, legacy, and corrected states remain usable.
+  - The UI follows the existing design system and passes visual checks.
+  - AS IS update outcome is explicitly recorded and PDFs regenerated where runtime contracts changed.
 - Risks:
-  - The section can become visually dense; prioritize progressive disclosure and two-column cabinet layout.
+  - The workbench can become dense; independent scroll regions and progressive disclosure are mandatory.
 
-### Slice 2.17.5: Multi-Target Planning and Variant Workbench
+### Slice 2.17.4.9.1: Radar-to-Candidate Golden Evaluation Harness
 
 - Status: Backlog
-- Goal: Let one editorial idea target multiple publication channels while keeping a
-  shared fabula/brief and separate platform variants.
-- User value:
-  - The author can plan one post for Telegram + Dzen, or LinkedIn article + Telegram
-    companion, without duplicating the whole work item manually.
+- Goal: Add a repeatable end-to-end golden evaluation harness for `RadarRun -> FoundMaterial -> SourceSignal -> PostCandidate -> plan handoff`.
+- User value: Changes to search, extraction, scoring, and assembly can be compared objectively instead of judged from one lucky run.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+- TO BE necessity:
+  - Required because a new end-to-end quality verdict and proof contract are introduced.
+- Preserved AS IS invariants:
+  - Recorded evaluation remains deterministic; live provider failure is `inconclusive`, not a quality failure.
+  - Human approval boundaries are not bypassed by the evaluator.
+- Changed AS IS invariants:
+  - Benchmark coverage extends beyond search into signal quality, candidate quality, provenance, and plan handoff.
 - Scope:
-  - Add `targetChannelIds` or equivalent target group on plan/work items.
-  - Add `PublicationGroup` for one shared editorial idea.
-  - Add per-channel `PlatformVariant` state under the selected work item.
-  - Update workbench UX with tabs/segmented controls:
-    `Общий замысел`, then one tab per channel variant.
+  - Add one recorded industrial-AI end-to-end scenario and live comparison mode.
+  - Measure material usefulness, signal precision proxies, evidence traceability, candidate diversity, rejected-noise behavior, provenance completeness, and handoff correctness.
+  - Report `passed`, `warning`, `failed`, or `inconclusive` with actionable reasons.
 - Out of scope:
-  - Running multi-platform DraftRun.
-  - Real publication adapters.
-  - Cross-platform analytics.
-- Implementation notes:
-  - Shared brief remains the source of intent; platform variants own their draft,
-    version history, final approval, and readiness.
-- Architecture impact:
-  - Adds platform-variant state without changing author memory or topic/fabula reuse.
+  - Scientific web-scale recall measurement and automatic editorial approval.
+- Proof evidence:
+  - Recorded fixture, one live run with the same project/radar, structured report, and UI-visible verdict.
 - Tests:
-  - Domain tests for target groups and variant isolation.
-  - UI tests for channel tabs and final selection per variant.
+  - Good, partial, noisy, provider-unavailable, provenance-broken, and candidate-regression scenarios.
 - Docs:
-  - User guide, SAO, roadmap.
-- Demo impact:
-  - `Блог Главреда` can show a Telegram + Dzen work item.
-- Acceptance criteria:
-  - One work item can hold at least two channel variants without overwriting drafts.
+  - Update AS IS/TO BE, benchmark docs, developer guide, user guide, and demo.
+- Definition of Done:
+  - One command evaluates the complete upstream chain reproducibly.
+  - Every failed expectation maps to a concrete material, signal, candidate, or handoff record.
+  - Exact URL drift does not fail a useful live result, but accepted noise and broken provenance do.
+  - The report separates provider/runtime health from editorial quality.
+  - AS IS is updated and relevant PDFs regenerated.
 - Risks:
-  - UI complexity; keep v1 focused on one selected work item.
+  - Metrics can reward quantity; evidence usefulness and editorial fit remain first-class.
 
-### Slice 2.17.6: Multi-Platform DraftRun Contract v1
+### Slice 2.17.4.6.5: Radar Search Evaluation Harness and Benchmark Corpus
 
 - Status: Backlog
-- Goal: Generate platform-specific variants from one shared editorial idea using
-  explicit contracts rather than one generic text.
+- Goal: Make search quality measurable with benchmark radar scenarios before promoting the upstream search runner as reliable.
 - User value:
-  - A Telegram post and a Dzen article can share evidence/thesis but differ in length,
-    structure, voice density, CTA, and examples.
+  - The team can compare search algorithm changes on the three benchmark blogs instead of judging by screenshots or single lucky runs.
 - Scope:
-  - Build shared context/evidence once where practical.
-  - Resolve separate `PostContract` and publication-size contract per target channel.
-  - Run one DraftRun per platform variant in v1, linked by `PublicationGroupId`.
-  - Show trace links per variant.
+  - Add benchmark radar fixtures for `Опытный цех`, `Северная стена`, and `Блог Главреда`.
+  - Define expected evidence types, unacceptable noise, freshness expectations, diversity targets, and must-not-miss source categories.
+  - Add evaluation reports for recall proxies, precision proxies, duplicate rate, read success rate, source diversity, evidence-type coverage, and trace completeness.
+  - Add smoke-mode benchmark runs that do not require high spend.
 - Out of scope:
-  - A monolithic group-run orchestrator.
-  - Autoposting.
-  - Platform API credentials.
+  - Automatic quality approval.
+  - Full web-scale recall measurement.
+  - DraftRun text quality evaluation.
 - Implementation notes:
-  - Prefer transparent separate runs first; optimize shared orchestration later.
-  - Keep planned source/evidence work reusable across variant contracts.
+  - Metrics are directional: enough to catch regressions and compare algorithms, not a scientific IR benchmark.
 - Architecture impact:
-  - Extends DraftRun context with project/channel/variant identity while preserving
-    current step order.
+  - Converts demo portfolio into an upstream-search evaluation harness.
 - Tests:
-  - Backend/frontend contract tests for variant-specific context.
-  - Smoke run for two variants from one shared work item.
+  - Benchmark fixture tests.
+  - Evaluation report unit tests.
+  - Smoke benchmark command or documented manual workflow.
 - Docs:
-  - DraftRun AS IS map and PDF must be updated when implemented.
+  - Update demo README, developer guide, and diagnostics docs.
 - Demo impact:
-  - `Блог Главреда` becomes the first multi-platform benchmark.
+  - Three benchmark blogs become repeatable upstream search scenarios.
 - Acceptance criteria:
-  - Two channel variants can be generated, traced, approved, and learned from
-    independently.
+  - A benchmark run can say what improved, regressed, or remained unknown.
+  - Empty/low-quality search results produce actionable diagnostics.
 - Risks:
-  - Cost and runtime increase; use budget modes and smoke mode for diagnostics.
-
-### Slice 2.17.4.6.2: Search Result Triage, Deduplication, and Selective Reading
-
-- Status: Backlog
-- Goal: Stop treating provider result order as quality by adding explainable pre-read triage, URL canonicalization, deduplication, diversity selection, and selective URL reading.
-- User value:
-  - The radar reads fewer but better materials and explains which links were selected, rejected, duplicated, or unreadable.
-- Scope:
-  - Add raw search result normalization before `FoundMaterial` creation.
-  - Canonicalize URLs, domains, titles, and duplicate groups.
-  - Score snippet-level relevance, evidence type, source credibility, novelty, project fit, and risk.
-  - Select diverse results across query intents and domains before URL reading.
-  - Store `selectedForRead`, `rejectedBeforeRead`, duplicate groups, and read failures in trace.
-- Out of scope:
-  - LLM extraction/scoring.
-  - Full source credibility database.
-  - Candidate generation.
-- Implementation notes:
-  - Search-result triage is diagnostic, not final editorial judgment.
-  - Failed URL reads must remain visible as warnings, not disappear.
-- Architecture impact:
-  - Adds the retrieval-quality layer between provider search and durable found material.
-- Tests:
-  - Dedupe tests for URL variants and repeated provider results.
-  - Triage tests for strong case materials, weak generic articles, duplicates, and unreadable URLs.
-  - UI/trace tests for selected/rejected/read-failed materials.
-- Docs:
-  - Update upstream architecture, diagnostics notes, developer guide, and user guide.
-- Demo impact:
-  - Demo radars show why some links were read and others were not.
-- Acceptance criteria:
-  - Provider results are not blindly promoted in search order.
-  - Read selection is diverse and trace-visible.
-- Risks:
-  - Triage can over-filter surprising materials; keep rejected-before-read inspectable.
-
-### Slice 2.17.7: Blog Portfolio Benchmark Runner
-
-- Status: Backlog
-- Goal: Turn the three-blog demo portfolio into a repeatable benchmark for pipeline
-  quality and regression diagnosis.
-- User value:
-  - Changes to models, prompts, retrieval, validation, revision, and platform
-    adaptation can be judged against multiple real editorial systems.
-- Scope:
-  - Add benchmark scenario definitions per blog.
-  - Add a runner that can execute selected scenarios in smoke/standard/full mode.
-  - Produce a report covering project isolation, channel adaptation, author voice,
-    source use, final quality gate status, HITL readiness, and learning-note output.
-  - Keep private benchmark inputs gitignored.
-- Out of scope:
-  - Automatic approval of quality.
-  - Full analytics ingestion.
-  - Publishing to platforms.
-- Implementation notes:
-  - The benchmark should say "good enough to continue" vs "repair slice needed" using
-    roadmap-aware diagnostics.
-- Architecture impact:
-  - Converts demo portfolio into a product-quality test harness.
-- Tests:
-  - Runner unit tests, smoke benchmark tests, docs for private fixtures.
-- Docs:
-  - Developer guide, demo README, diagnostics skill notes.
-- Demo impact:
-  - Demo portfolio becomes both visible product sample and repeatable quality suite.
-- Acceptance criteria:
-  - At least one scenario per blog can be run and summarized.
-  - Reports distinguish expected future gaps from unexpected regressions.
-- Risks:
-  - Benchmark can become expensive; v1 must support smoke mode.
-
-### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
-
-- Status: Backlog
-- Goal: Turn accepted `editorialLearning` notes into explicit, reviewable proposals
-  for publisher rules, Topic/Fabula guidance, source strategy, validators, prompts, or
-  model policy.
-- Scope:
-  - Read only accepted editorial-learning notes.
-  - Group repeated lessons across posts.
-  - Create explainable improvement proposals linked back to versions, comments,
-    quality checks, and final decisions.
-  - Require explicit human approval before mutating any editorial setting.
-- Out of scope:
-  - Silent prompt/rule mutation.
-  - Automatic fine-tuning.
-  - Cross-user learning.
-
-### Deferred: Document AI Platform Import Adapter
-
-- Status: Deferred
-- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
-  document/archive analysis.
-- Reason deferred:
-  - The current product risk is drafting orchestration, not archive import. The next
-    backend foundation should establish durable queue/run semantics first.
-- Re-open when:
-  - Queued `DraftRun` semantics and trace contracts are stable enough to reuse for
-    document workflows.
+  - Metrics can incentivize quantity over usefulness; keep editorial evidence-type expectations visible.
 
 ### Slice 2.17.4.6.3: Source Strategy Adapters and Domain-Aware Search
 
@@ -8472,39 +8513,6 @@ Status:
 - Risks:
   - LLM may add noisy or over-broad queries; require accepted/rejected query suggestions in trace.
 
-### Slice 2.17.4.6.5: Radar Search Evaluation Harness and Benchmark Corpus
-
-- Status: Backlog
-- Goal: Make search quality measurable with benchmark radar scenarios before promoting the upstream search runner as reliable.
-- User value:
-  - The team can compare search algorithm changes on the three benchmark blogs instead of judging by screenshots or single lucky runs.
-- Scope:
-  - Add benchmark radar fixtures for `Опытный цех`, `Северная стена`, and `Блог Главреда`.
-  - Define expected evidence types, unacceptable noise, freshness expectations, diversity targets, and must-not-miss source categories.
-  - Add evaluation reports for recall proxies, precision proxies, duplicate rate, read success rate, source diversity, evidence-type coverage, and trace completeness.
-  - Add smoke-mode benchmark runs that do not require high spend.
-- Out of scope:
-  - Automatic quality approval.
-  - Full web-scale recall measurement.
-  - DraftRun text quality evaluation.
-- Implementation notes:
-  - Metrics are directional: enough to catch regressions and compare algorithms, not a scientific IR benchmark.
-- Architecture impact:
-  - Converts demo portfolio into an upstream-search evaluation harness.
-- Tests:
-  - Benchmark fixture tests.
-  - Evaluation report unit tests.
-  - Smoke benchmark command or documented manual workflow.
-- Docs:
-  - Update demo README, developer guide, and diagnostics docs.
-- Demo impact:
-  - Three benchmark blogs become repeatable upstream search scenarios.
-- Acceptance criteria:
-  - A benchmark run can say what improved, regressed, or remained unknown.
-  - Empty/low-quality search results produce actionable diagnostics.
-- Risks:
-  - Metrics can incentivize quantity over usefulness; keep editorial evidence-type expectations visible.
-
 ### Slice 2.17.4.6.6: Search Memory, Refresh Policy, and Production Controls
 
 - Status: Backlog
@@ -8550,39 +8558,174 @@ Status:
   - Search memory can hide useful rediscoveries; keep manual reset/reconsider path.
   - Persisting too much raw provider output can create noise; keep retention policy explicit and project-scoped.
 
-### Slice 2.17.4.7: Signal Extraction and Editorial Scoring
+### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
+
+- Status: Deferred
+- Goal: Pilot tool-mediated context access for one DraftRun provider operation after deterministic context access and dossier factories exist.
+- User value: We can test a more mature interaction model where the model asks for specific structured context instead of receiving a giant prompt upfront.
+- Scope:
+  - Choose one low-risk provider-heavy operation for a deterministic tool/MCP-style context access pilot.
+  - Expose only typed context-access methods, not raw full DraftRun JSON.
+  - Record tool calls, handles, returned snippets, and provider-input budget in trace.
+  - Compare quality, latency, and reliability against dossier-only mode.
+- Out of scope:
+  - Making MCP mandatory, adding an autonomous agent loop, replacing OpenRouter, changing DraftRun step order, API changes, SQLite changes, or broad prompt rewrite.
+- Implementation notes:
+  - Depends on `2.17.4.6.1.3.4.0` and `2.17.4.6.1.3.4.1`; this slice must use the AS IS/DoD guardrails prepared there.
+  - The pilot is allowed only after `DraftRunContextAccessService` exists, so the tool is a thin adapter over deterministic reads.
+- Architecture impact:
+  - Tests whether context-on-demand can further reduce prompt bloat while keeping deterministic ownership in backend components.
+- Tests:
+  - Tool adapter cannot return full artifacts unless explicitly requested by a whitelisted handle resolver.
+  - Trace shows every context read and its budget impact.
+  - Fallback to dossier-only mode remains available.
+- Docs:
+  - Add or update ADR if the pilot becomes a durable architecture rule.
+  - Update TO BE and developer guide.
+- Demo impact:
+  - No demo behavior change unless the pilot is intentionally demonstrated.
+- Acceptance criteria:
+  - One operation can run through tool-mediated context access without exposing raw full DraftRun state.
+  - Diagnostics can compare dossier-only vs tool-mediated context usage.
+- Risks:
+  - Tool access can become hidden state if not traced; trace completeness is mandatory.
+- Deferred reason:
+  - The incomplete RadarRun-to-Signal-to-Candidate product chain has higher priority; resume only after the upstream v1 is demonstrable and measured.
+
+### Slice 2.17.5: Multi-Target Planning and Variant Workbench
 
 - Status: Backlog
-- Goal: Convert found materials into reviewed `SourceSignal` candidates with explicit editorial scoring before they can feed post candidates.
+- Goal: Let one editorial idea target multiple publication channels while keeping a
+  shared fabula/brief and separate platform variants.
 - User value:
-  - The user sees not just raw links, but why a material is promising, weak, duplicate, off-position, or worth turning into a post idea.
+  - The author can plan one post for Telegram + Dzen, or LinkedIn article + Telegram
+    companion, without duplicating the whole work item manually.
 - Scope:
-  - Add `SignalExtractionReport` and `SignalScore` contracts.
-  - Extract possible source signals from found materials using deterministic rules plus optional review-role JSON call where useful.
-  - Score novelty, source credibility, author fit, audience value, positioning fit, topic fit, evidence strength, and risk.
-  - Keep `SourceSignal` raw/reviewed: no final topic/fabula ownership yet.
-  - Add status: `candidate`, `approved`, `rejected`, `archived`, with explainable scoring metadata.
+  - Add `targetChannelIds` or equivalent target group on plan/work items.
+  - Add `PublicationGroup` for one shared editorial idea.
+  - Add per-channel `PlatformVariant` state under the selected work item.
+  - Update workbench UX with tabs/segmented controls:
+    `Общий замысел`, then one tab per channel variant.
 - Out of scope:
-  - Draft text generation.
-  - Multi-platform planning.
-  - Long-term learning/promotion rules.
+  - Running multi-platform DraftRun.
+  - Real publication adapters.
+  - Cross-platform analytics.
 - Implementation notes:
-  - Universal JSON retry policy applies to any LLM extraction/scoring call.
-  - Deterministic fallback can produce diagnostic scoring only where safe; no fake high-quality signal.
+  - Shared brief remains the source of intent; platform variants own their draft,
+    version history, final approval, and readiness.
 - Architecture impact:
-  - Introduces the editorial judgment layer between retrieval and candidate assembly.
+  - Adds platform-variant state without changing author memory or topic/fabula reuse.
 - Tests:
-  - Extraction/scoring unit tests for good, duplicate, off-position, and weak-source materials.
-  - JSON retry/failure trace tests if LLM scoring is used.
-  - UI tests for score breakdown and review actions.
+  - Domain tests for target groups and variant isolation.
+  - UI tests for channel tabs and final selection per variant.
 - Docs:
-  - SAO, developer guide, user guide.
+  - User guide, SAO, roadmap.
 - Demo impact:
-  - Benchmark blogs get scored signals that reflect their distinct editorial policies.
+  - `Блог Главреда` can show a Telegram + Dzen work item.
 - Acceptance criteria:
-  - A found material can become a scored signal with clear reasons and risks.
+  - One work item can hold at least two channel variants without overwriting drafts.
 - Risks:
-  - Scoring can become opaque; require visible dimension-level explanations.
+  - UI complexity; keep v1 focused on one selected work item.
+
+### Slice 2.17.6: Multi-Platform DraftRun Contract v1
+
+- Status: Backlog
+- Goal: Generate platform-specific variants from one shared editorial idea using
+  explicit contracts rather than one generic text.
+- User value:
+  - A Telegram post and a Dzen article can share evidence/thesis but differ in length,
+    structure, voice density, CTA, and examples.
+- Scope:
+  - Build shared context/evidence once where practical.
+  - Resolve separate `PostContract` and publication-size contract per target channel.
+  - Run one DraftRun per platform variant in v1, linked by `PublicationGroupId`.
+  - Show trace links per variant.
+- Out of scope:
+  - A monolithic group-run orchestrator.
+  - Autoposting.
+  - Platform API credentials.
+- Implementation notes:
+  - Prefer transparent separate runs first; optimize shared orchestration later.
+  - Keep planned source/evidence work reusable across variant contracts.
+- Architecture impact:
+  - Extends DraftRun context with project/channel/variant identity while preserving
+    current step order.
+- Tests:
+  - Backend/frontend contract tests for variant-specific context.
+  - Smoke run for two variants from one shared work item.
+- Docs:
+  - DraftRun AS IS map and PDF must be updated when implemented.
+- Demo impact:
+  - `Блог Главреда` becomes the first multi-platform benchmark.
+- Acceptance criteria:
+  - Two channel variants can be generated, traced, approved, and learned from
+    independently.
+- Risks:
+  - Cost and runtime increase; use budget modes and smoke mode for diagnostics.
+
+### Slice 2.17.7: Blog Portfolio Benchmark Runner
+
+- Status: Backlog
+- Goal: Turn the three-blog demo portfolio into a repeatable benchmark for pipeline
+  quality and regression diagnosis.
+- User value:
+  - Changes to models, prompts, retrieval, validation, revision, and platform
+    adaptation can be judged against multiple real editorial systems.
+- Scope:
+  - Add benchmark scenario definitions per blog.
+  - Add a runner that can execute selected scenarios in smoke/standard/full mode.
+  - Produce a report covering project isolation, channel adaptation, author voice,
+    source use, final quality gate status, HITL readiness, and learning-note output.
+  - Keep private benchmark inputs gitignored.
+- Out of scope:
+  - Automatic approval of quality.
+  - Full analytics ingestion.
+  - Publishing to platforms.
+- Implementation notes:
+  - The benchmark should say "good enough to continue" vs "repair slice needed" using
+    roadmap-aware diagnostics.
+- Architecture impact:
+  - Converts demo portfolio into a product-quality test harness.
+- Tests:
+  - Runner unit tests, smoke benchmark tests, docs for private fixtures.
+- Docs:
+  - Developer guide, demo README, diagnostics skill notes.
+- Demo impact:
+  - Demo portfolio becomes both visible product sample and repeatable quality suite.
+- Acceptance criteria:
+  - At least one scenario per blog can be run and summarized.
+  - Reports distinguish expected future gaps from unexpected regressions.
+- Risks:
+  - Benchmark can become expensive; v1 must support smoke mode.
+
+### Future Slice: Rule Promotion from Accepted Editorial Learning Notes
+
+- Status: Backlog
+- Goal: Turn accepted `editorialLearning` notes into explicit, reviewable proposals
+  for publisher rules, Topic/Fabula guidance, source strategy, validators, prompts, or
+  model policy.
+- Scope:
+  - Read only accepted editorial-learning notes.
+  - Group repeated lessons across posts.
+  - Create explainable improvement proposals linked back to versions, comments,
+    quality checks, and final decisions.
+  - Require explicit human approval before mutating any editorial setting.
+- Out of scope:
+  - Silent prompt/rule mutation.
+  - Automatic fine-tuning.
+  - Cross-user learning.
+
+### Deferred: Document AI Platform Import Adapter
+
+- Status: Deferred
+- Goal: Integrate `langgraph-document-ai-platform` behind a backend adapter for
+  document/archive analysis.
+- Reason deferred:
+  - The current product risk is drafting orchestration, not archive import. The next
+    backend foundation should establish durable queue/run semantics first.
+- Re-open when:
+  - Queued `DraftRun` semantics and trace contracts are stable enough to reuse for
+    document workflows.
 
 ## Completed Slices
 
@@ -8782,6 +8925,7 @@ Status:
 - Slice 2.17.4.6.1.3.9: DraftRun Review, Ranking, Revision, and Final Gate Dossier Migration. Completed 2026-07-12.
 - Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair. Completed 2026-07-12.
 - Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair. Completed 2026-07-12.
+- Slice 2.17.4.6.2: Search Result Triage v2 and Selective Reading. Completed 2026-07-13.
 
 
 ## Blocked Items
@@ -8810,4 +8954,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot`.
+Implement `Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction`.

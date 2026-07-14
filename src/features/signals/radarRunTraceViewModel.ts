@@ -62,6 +62,11 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
     ...(bundle.run.searchPlan?.sourceStrategy || bundle.sourceHandles.length > 0 ? [sourceStrategyDetail(bundle)] : []),
     operationsDetail(bundle),
     ...(rawResults.length > 0 ? [rawResultsDetail(bundle)] : []),
+    ...(bundle.run.searchTriage ? [triageQualityDetail(bundle)] : []),
+    ...(bundle.run.searchTriage?.duplicateGroups?.some((group) => group.candidateIds.length > 1)
+      ? [duplicateGroupsDetail(bundle)]
+      : []),
+    ...(bundle.run.searchTriage ? [readPlanDetail(bundle)] : []),
     ...(selected.length > 0 || rejected.length > 0 ? [readSelectionDetail(bundle)] : []),
     ...(bundle.foundMaterials.length > 0 || bundle.run.foundMaterialIds.length > 0 ? [foundMaterialsDetail(bundle)] : []),
     ...(bundle.benchmarkReport ? [benchmarkDetail(bundle.benchmarkReport)] : []),
@@ -215,10 +220,133 @@ function operationsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         ['Handle', operation.sourceHandleId],
         ['Started', operation.startedAt],
         ['Completed', operation.completedAt],
-        ['Materials', operation.foundMaterialIds.join(', ')]
+        ['Materials', operation.foundMaterialIds.join(', ')],
+        ['Model', operation.selectedModel],
+        ['Message chars', operation.messageCharCount],
+        ['Provider usage', operation.providerUsage]
       ])
     })),
     jsonPayload: bundle.run.operations
+  };
+}
+
+function triageQualityDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const triage = bundle.run.searchTriage!;
+  return {
+    id: 'triage-quality',
+    title: 'Оценка результатов',
+    kicker: triage.policyVersion,
+    fields: compactFields([
+      ['Кандидаты', triage.candidates.length],
+      ['Порог качества', triage.readPlan.qualityFloor],
+      ['Выбрано', triage.decisionCounts.selected],
+      ['Ниже порога', triage.decisionCounts.rejected],
+      ['Дубли', triage.decisionCounts.duplicate],
+      ['Отложено бюджетом', triage.decisionCounts.deferredByBudget],
+      ['Некорректные', triage.decisionCounts.invalid]
+    ]),
+    items: triage.candidates.map((candidate) => ({
+      id: `triage-${candidate.id}`,
+      label: candidate.family || 'результат',
+      title: candidate.title,
+      body: candidate.scores?.explanation || candidate.invalidReason || candidate.url,
+      status: candidate.valid ? `score ${candidate.scores?.total ?? 0}` : 'invalid',
+      meta: compactFields([
+        ['Релевантность', candidate.scores?.relevance],
+        ['Тип доказательства', candidate.scores?.evidenceFit],
+        ['Проект', candidate.scores?.projectFit],
+        ['Качество источника', candidate.scores?.sourceQuality],
+        ['Новизна', candidate.scores?.novelty],
+        ['Риск шума', candidate.scores?.noiseRisk],
+        ['Домен', candidate.domain],
+        ['Сигналы', candidate.scores?.reasonCodes?.join(', ')]
+      ])
+    })),
+    jsonPayload: {
+      policyVersion: triage.policyVersion,
+      candidates: triage.candidates,
+      decisionCounts: triage.decisionCounts
+    }
+  };
+}
+
+function duplicateGroupsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const groups = bundle.run.searchTriage!.duplicateGroups;
+  const duplicates = groups.filter((group) => group.candidateIds.length > 1);
+  return {
+    id: 'duplicate-groups',
+    title: 'Группы дублей',
+    kicker: `${duplicates.length} групп с дублями`,
+    fields: compactFields([
+      ['Все группы', groups.length],
+      ['Группы с дублями', duplicates.length],
+      ['Объединено результатов', duplicates.reduce((total, group) => total + group.rawResultIds.length, 0)]
+    ]),
+    items: duplicates.map((group) => ({
+      id: group.id,
+      label: group.matchReasons.join(', '),
+      title: `${group.rawResultIds.length} результатов`,
+      body: group.domains.join('\n'),
+      status: 'duplicate',
+      meta: compactFields([
+        ['Представитель', group.representativeCandidateId],
+        ['Запросы', group.queryIds.join(', ')],
+        ['Направления', group.families.join(', ')],
+        ['Типы доказательств', group.evidenceTypes.join(', ')]
+      ])
+    })),
+    jsonPayload: groups
+  };
+}
+
+function readPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const triage = bundle.run.searchTriage!;
+  const plan = triage.readPlan;
+  return {
+    id: 'read-plan',
+    title: 'План чтения',
+    kicker: `${plan.selectedCandidateIds.length}/${plan.maxReads} выбрано`,
+    fields: compactFields([
+      ['Лимит чтения', plan.maxReads],
+      ['Порог качества', plan.qualityFloor],
+      ['Обязательные направления', plan.requiredFamilies.join(', ')],
+      ['Покрытые направления', plan.coveredFamilies.join(', ')],
+      ['Пробелы покрытия', plan.readCoverageGaps.map((gap) => `${gap.family}: ${gap.reason}`).join('\n')],
+      ['Успешно прочитано', triage.readOutcomes.filter((item) => item.readable).length],
+      ['Ошибки чтения', triage.readOutcomes.filter((item) => item.status === 'failed').length]
+    ]),
+    items: [
+      ...plan.decisions.map((decision) => ({
+        id: `plan-${decision.rawResultId}`,
+        label: decision.status || 'decision',
+        title: decision.reason,
+        body: decision.url,
+        status: decision.status,
+        meta: compactFields([
+          ['Балл', decision.score],
+          ['Направления', decision.families?.join(', ')],
+          ['Доказательства', decision.evidenceTypes?.join(', ')],
+          ['Группа дублей', decision.duplicateGroupId]
+        ])
+      })),
+      ...triage.readOutcomes.map((outcome) => ({
+        id: `outcome-${outcome.rawResultId}`,
+        label: 'исход чтения',
+        title: outcome.readable ? 'Страница прочитана' : 'Страница не прочитана',
+        body: outcome.reason || outcome.materialId || '',
+        status: outcome.status,
+        meta: compactFields([
+          ['Материал', outcome.materialId],
+          ['Группа дублей', outcome.duplicateGroupId]
+        ])
+      }))
+    ],
+    jsonPayload: {
+      readPlan: plan,
+      readCoverage: triage.readCoverage,
+      readCoverageGaps: triage.readCoverageGaps,
+      readOutcomes: triage.readOutcomes
+    }
   };
 }
 
@@ -273,15 +401,25 @@ function foundMaterialsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
   return {
     id: 'found-materials',
     title: 'Найденные материалы',
-    kicker: `${bundle.foundMaterials.length} materials`,
-    fields: compactFields([['Found material ids', bundle.run.foundMaterialIds.join(', ')]]),
+    kicker: `${bundle.foundMaterials.length} материалов`,
+    fields: compactFields([['Идентификаторы материалов', bundle.run.foundMaterialIds.join(', ')]]),
     items: bundle.foundMaterials.map((material) => ({
       id: material.id,
       label: material.type,
       title: material.title,
       body: [material.locator, material.summary || material.snippet].filter(Boolean).join('\n'),
       status: material.status,
-      meta: compactFields([['Handle', material.sourceHandleId], ['Provenance', material.provenanceLabel], ['Warnings', material.warnings.join(', ')]])
+      meta: compactFields([
+        ['Источник', material.sourceHandleId],
+        ['Происхождение', material.provenanceLabel],
+        ['Предупреждения', material.warnings.join(', ')],
+        ['Сырые результаты', material.discoveryTrace?.rawResultIds.join(', ')],
+        ['Запросы', material.discoveryTrace?.queryIds.join(', ')],
+        ['Направления', material.discoveryTrace?.families.join(', ')],
+        ['Типы доказательств', material.discoveryTrace?.evidenceTypes.join(', ')],
+        ['Группа дублей', material.discoveryTrace?.duplicateGroupId],
+        ['Причина выбора', material.discoveryTrace?.decisionReason]
+      ])
     })),
     jsonPayload: bundle.foundMaterials
   };

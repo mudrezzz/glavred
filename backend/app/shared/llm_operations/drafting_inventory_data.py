@@ -203,4 +203,16 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         payload_budget_status="enforced",
         budget_policy_id="humanCommentRevisionQualityCheck",
     ),
+    LlmOperationInventoryEntry(
+        operation_id="openWebQuery",
+        owner="backend.app.upstream.application.external_search_operations",
+        current_module="backend/app/upstream/application/external_search_operations.py",
+        operation_kind="upstreamWebSearch",
+        status="migrated",
+        reason_not_migrated="",
+        removal_slice="",
+        expected_incident_coverage=("payloadTooLarge", "networkError", "provider4xx", "provider5xx", "notConfigured"),
+        payload_budget_status="enforced",
+        budget_policy_id="upstream-open-web-query-v1",
+    ),
 )

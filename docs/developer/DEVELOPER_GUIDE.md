@@ -84,6 +84,30 @@ source eligibility, and budget skips before provider search runs.
 Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
 URL reading belongs behind the public URL reader port.
 
+Search-result triage is deterministic and backend-owned. Keep normalization,
+duplicate grouping, quality assessment, read allocation, read execution, and payload
+construction in their role-owned modules under `backend/app/upstream/application`.
+Every raw result must receive exactly one terminal decision in `run.searchTriage`.
+The read caps are `1/2/4` for `smoke/standard/full`; a result below the quality floor
+or in an unsupported format must not consume a read slot. A read failure creates a
+failed operation and at most a `metadataOnly` material, never a readable success.
+
+`openWebQuery` is governed like other provider-heavy operations: build the typed
+input, run `UpstreamProviderInputBudgetGate`, build messages, then run the shared
+`ProviderMessageBudgetGuard`. Record direct `providerInput`, `payloadBudget`,
+`messageCharCount`, and provider usage on the operation. The current per-call caps are
+1,000 query characters, 1,500 provider-input characters, 4,000 serialized-message
+characters, and about 1,000 local input tokens. Do not use provider-reported web-tool
+prompt tokens as a substitute for the direct local budget: OpenRouter may add its own
+retrieval context. Preserve that value as cost telemetry and handle production limits
+in the search-control layer.
+
+Run the focused regression with:
+
+```powershell
+python -m pytest backend/tests/test_upstream_search_result_triage_v2.py backend/tests/test_upstream_provider_input_budget.py backend/tests/test_public_url_reader.py
+```
+
 Before treating radar search as reliable, keep one golden upstream benchmark small
 and repeatable. The first scenario is
 `benchmark-industrial-ai-maintenance-cases` for `Опытный цех «Сборочная»`: it uses

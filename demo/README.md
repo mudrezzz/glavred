@@ -231,6 +231,14 @@ radar card keeps a short `Трасса запуска` preview; use `Откры�
 source strategy, operations, raw results, selected/rejected reads, found materials,
 warnings/errors, and any benchmark verdict stored on the run.
 
+Slice `2.17.4.6.2` makes this trace an explainable retrieval-quality surface. The
+industrial-AI radar now records bounded normalized candidates, stable duplicate
+groups, six deterministic score dimensions, a coverage-aware read plan, one terminal
+decision for every raw result, and explicit read outcomes. Failed or unsupported
+binary reads remain `metadataOnly`; they do not pass as readable evidence. The
+recorded benchmark and trace-safe live comparison are documented in
+`docs/evidence/radar-runs/2.17.4.6.2/COMPARISON.md`.
+
 Live provider-backed runs for that same radar now reuse the golden expectations without
 requiring exact URL matches. The live report is attached as `benchmarkReport` on the
 run and separates quality from provider availability: `passed`/`warning`/`failed`

@@ -13,21 +13,15 @@ from backend.app.application.public_evidence_ports import PublicUrlReader
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterWebSearchAdapter
 from backend.app.settings import BackendSettings
-from backend.app.upstream.application.external_payloads import (
-    budget_for_mode,
-    material_from_raw,
-    material_from_read,
-    now_iso,
-    operation,
-    safe_error,
-    stable_slug,
-    warnings_for,
-)
+from backend.app.upstream.application.external_read_operations import RadarUrlReadOperationRunner
+from backend.app.upstream.application.external_run_budget import UpstreamRadarRunBudgetPolicy
+from backend.app.upstream.application.external_run_payloads import UpstreamRadarPayloadFactory
 from backend.app.upstream.application.external_run_result_policy import ExternalRunResultPolicy
 from backend.app.upstream.application.external_search_operations import OpenWebQueryOperationRunner
 from backend.app.upstream.application.radar_benchmark_reporter import RadarRunBenchmarkReporter
 from backend.app.upstream.application.search_planner import build_search_plan
-from backend.app.upstream.application.search_triage import select_results_for_read
+from backend.app.upstream.application.search_triage_service import SearchResultTriageService
+from backend.app.upstream.domain.search_triage_contracts import SearchReadOutcome
 
 
 class UpstreamRadarExternalRunService:
@@ -40,23 +34,26 @@ class UpstreamRadarExternalRunService:
         openrouter_validator: OpenRouterConfigValidator,
     ) -> None:
         self._settings = settings
-        self._url_reader = url_reader
         self._result_policy = ExternalRunResultPolicy()
+        self._budget_policy = UpstreamRadarRunBudgetPolicy()
+        self._payloads = UpstreamRadarPayloadFactory()
+        self._read_runner = RadarUrlReadOperationRunner(url_reader=url_reader)
         self._search_runner = OpenWebQueryOperationRunner(
             settings=settings,
             web_search_adapter=web_search_adapter,
             openrouter_validator=openrouter_validator,
         )
         self._benchmark_reporter = RadarRunBenchmarkReporter()
+        self._triage_service = SearchResultTriageService()
 
     def run(self, *, workspace: dict[str, Any], radar_id: str) -> dict[str, Any]:
         radar = _find_by_id(workspace.get("radars"), radar_id)
         if not radar:
             raise ValueError("Radar was not found in workspace.")
         handles = _resolve_handles(workspace, radar)
-        started_at = now_iso()
+        started_at = self._payloads.now_iso()
         run_id = _run_id(workspace, radar_id)
-        budget = budget_for_mode(self._settings.draft_run_execution_mode)
+        budget = self._budget_policy.for_mode(self._settings.draft_run_execution_mode)
         search_plan = build_search_plan(radar=radar, handles=handles, budget=budget, workspace=workspace)
 
         operations: list[dict[str, Any]] = []
@@ -67,28 +64,47 @@ class UpstreamRadarExternalRunService:
 
         self._read_direct_handles(run_id, handles, started_at, budget, operations, found_materials, errors)
         self._search_queries(run_id, search_plan, started_at, budget, operations, raw_results, skipped_reasons, errors)
-        selected, rejected = select_results_for_read(raw_results, int(budget["maxUrlReads"]) - int(budget["usedUrlReads"]))
-        self._read_selected_results(run_id, selected, raw_results, started_at, budget, operations, found_materials)
+        triage = self._triage_service.triage(
+            raw_results=raw_results,
+            search_plan=search_plan,
+            workspace=workspace,
+            radar=radar,
+            max_reads=int(budget["maxUrlReads"]) - int(budget["usedUrlReads"]),
+        )
+        raw_results = list(triage.raw_results)
+        selected = list(triage.selected_for_read)
+        rejected = list(triage.rejected_before_read)
+        read_outcomes = self._read_selected_results(
+            run_id,
+            selected,
+            raw_results,
+            started_at,
+            budget,
+            operations,
+            found_materials,
+        )
+        triage_report = triage.report.with_read_outcomes(read_outcomes)
 
-        completed_at = now_iso()
+        completed_at = self._payloads.now_iso()
         found_ids = [material["id"] for material in found_materials]
         budget["usedOperations"] = len(operations)
         run = {
             "id": run_id,
             "radarId": radar_id,
-            "status": self._result_policy.status(found_ids=found_ids, operations=operations, errors=errors),
+            "status": self._result_policy.status(found_materials=found_materials, operations=operations, errors=errors),
             "startedAt": started_at,
             "completedAt": completed_at,
             "budget": budget,
             "operations": [{key: value for key, value in item.items() if key != "_rawResults"} for item in operations],
             "foundMaterialIds": found_ids,
             "skippedReasons": self._result_policy.unique(skipped_reasons + search_plan.get("skippedIntents", [])),
-            "warnings": warnings_for(raw_results, found_materials),
+            "warnings": self._payloads.warnings_for(raw_results, found_materials),
             "errors": self._result_policy.unique(errors),
             "searchPlan": search_plan,
             "rawResults": raw_results,
             "selectedForRead": selected,
             "rejectedBeforeRead": rejected,
+            "searchTriage": triage_report.to_payload(),
         }
         self._benchmark_reporter.attach_if_matching(
             workspace=workspace,
@@ -111,7 +127,11 @@ class UpstreamRadarExternalRunService:
         for handle in handles:
             if not _can_read_url(handle) or budget["usedUrlReads"] >= budget["maxUrlReads"]:
                 continue
-            material, read_operation = self._read_direct_handle(run_id, handle, started_at)
+            material, read_operation = self._read_runner.read_direct_handle(
+                run_id=run_id,
+                handle=handle,
+                started_at=started_at,
+            )
             operations.append(read_operation)
             budget["usedUrlReads"] += 1
             if material:
@@ -132,7 +152,12 @@ class UpstreamRadarExternalRunService:
         errors: list[str],
     ) -> None:
         for query in search_plan["queries"]:
-            search_operation = self._search_runner.search(run_id=run_id, query=query, started_at=started_at)
+            search_operation = self._search_runner.search(
+                run_id=run_id,
+                query=query,
+                started_at=started_at,
+                run_budget=budget,
+            )
             operations.append(search_operation)
             if search_operation["status"] == "succeeded":
                 raw_results.extend(search_operation.pop("_rawResults"))
@@ -151,47 +176,21 @@ class UpstreamRadarExternalRunService:
         budget: dict[str, int],
         operations: list[dict[str, Any]],
         found_materials: list[dict[str, Any]],
-    ) -> None:
+    ) -> list[SearchReadOutcome]:
+        outcomes: list[SearchReadOutcome] = []
         for selection in selected:
-            material, read_operation = self._read_selection(run_id, selection, raw_results, started_at)
+            material, read_operation, outcome = self._read_runner.read_selection(
+                run_id=run_id,
+                selection=selection,
+                raw_results=raw_results,
+                started_at=started_at,
+            )
             operations.append(read_operation)
             found_materials.append(material)
+            outcomes.append(outcome)
             budget["usedUrlReads"] += 1
             budget["usedFoundMaterials"] += 1
-
-    def _read_direct_handle(self, run_id: str, handle: dict[str, Any], started_at: str) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-        operation_id = f"{run_id}-read-{handle.get('id')}"
-        title = str(handle.get("title") or handle.get("locator") or "URL")
-        target = str(handle.get("locator") or "")
-        try:
-            read = self._url_reader.read(target)
-            material_id = f"{run_id}-material-{stable_slug(str(handle.get('id') or 'url'))}"
-            return material_from_read(material_id=material_id, run_id=run_id, source_handle_id=str(handle["id"]), title=title, read=read, provenance=title), operation(
-                operation_id=operation_id,
-                run_id=run_id,
-                source_handle_id=str(handle["id"]),
-                kind="readUrl",
-                label=title,
-                status="succeeded",
-                started_at=started_at,
-                target=target,
-                found_material_ids=[material_id],
-            )
-        except Exception as exc:
-            error = safe_error(exc)
-            return None, operation(operation_id=operation_id, run_id=run_id, source_handle_id=str(handle["id"]), kind="readUrl", label=title, status="failed", started_at=started_at, target=target, error=error)
-
-    def _read_selection(self, run_id: str, selection: dict[str, Any], raw_results: list[dict[str, Any]], started_at: str) -> tuple[dict[str, Any], dict[str, Any]]:
-        raw = next(item for item in raw_results if item["id"] == selection["rawResultId"])
-        material_id = f"{run_id}-material-{stable_slug(raw['duplicateKey'])}"
-        operation_id = f"{run_id}-read-{material_id}"
-        try:
-            read = self._url_reader.read(raw["url"])
-            material = material_from_read(material_id=material_id, run_id=run_id, source_handle_id=raw["sourceHandleId"], title=raw["title"], read=read, provenance=f"{raw['provider']} / {raw['domain']}")
-        except Exception as exc:
-            material = material_from_raw(material_id=material_id, run_id=run_id, raw=raw, warning=f"url-read-failed:{safe_error(exc)}")
-        return material, operation(operation_id=operation_id, run_id=run_id, source_handle_id=raw["sourceHandleId"], kind="readUrl", label=raw["title"], status="succeeded", started_at=started_at, target=raw["url"], found_material_ids=[material_id])
-
+        return outcomes
 
 def _resolve_handles(workspace: dict[str, Any], radar: dict[str, Any]) -> list[dict[str, Any]]:
     registry = workspace.get("sourceRegistry") if isinstance(workspace.get("sourceRegistry"), dict) else {}

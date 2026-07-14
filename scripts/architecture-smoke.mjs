@@ -1707,6 +1707,18 @@ const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
 const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/contracts.py";
 const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
+const SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH =
+  "backend/app/shared/llm_operations/provider_message_budget_guard.py";
+const UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH =
+  "backend/app/upstream/application/provider_budget_profiles.py";
+const UPSTREAM_PROVIDER_INPUT_GATE_PATH =
+  "backend/app/upstream/application/provider_input_budget_gate.py";
+const UPSTREAM_WEB_SEARCH_OPERATION_PATH =
+  "backend/app/upstream/application/external_search_operations.py";
+const UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH =
+  "backend/app/upstream/application/open_web_query_input.py";
+const UPSTREAM_TRIAGE_STRESS_TEST_PATH =
+  "backend/tests/test_upstream_search_result_triage_v2.py";
 const SHARED_LLM_OPERATION_OWNER_PATHS = [
   SHARED_LLM_OPERATION_CONTRACT_PATH,
   "backend/app/shared/llm_operations/statuses.py",
@@ -2126,6 +2138,7 @@ const LLM_OPERATION_INVENTORY_IDS = [
   "finalQualityReviewRepair",
   "humanCommentRevision",
   "humanCommentRevisionQualityCheck",
+  "openWebQuery",
 ];
 
 const RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES = new Set([
@@ -3459,6 +3472,85 @@ for (const fragment of [
   assert(
     draftingProviderInputAuditSource.includes(fragment),
     `${DRAFTING_PAYLOAD_BUDGET_ROLE_MODULES.providerInputAudit} is missing provider-input audit fragment: ${fragment}`
+  );
+}
+
+const sharedProviderMessageBudgetGuardSource = readText(
+  SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH
+);
+for (const fragment of [
+  "class ProviderMessageBudgetGuard",
+  "messageCharCount",
+  "provider-message-budget-exceeded",
+  "maxMessageChars",
+]) {
+  assert(
+    sharedProviderMessageBudgetGuardSource.includes(fragment),
+    `${SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH} is missing shared final-message budget fragment: ${fragment}`
+  );
+}
+
+const upstreamProviderBudgetProfileSource = readText(UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH);
+const upstreamProviderInputGateSource = readText(UPSTREAM_PROVIDER_INPUT_GATE_PATH);
+const upstreamWebSearchOperationSource = readText(UPSTREAM_WEB_SEARCH_OPERATION_PATH);
+const upstreamWebSearchInputOwnerSource = readText(UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH);
+const upstreamTriageStressTestSource = readText(UPSTREAM_TRIAGE_STRESS_TEST_PATH);
+for (const fragment of [
+  "class UpstreamProviderBudgetProfileRegistry",
+  "max_provider_input_chars",
+  "max_message_chars",
+  "max_run_input_chars",
+  "max_results_per_query",
+]) {
+  assert(
+    upstreamProviderBudgetProfileSource.includes(fragment),
+    `${UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH} is missing upstream provider budget fragment: ${fragment}`
+  );
+}
+for (const fragment of ["class OpenWebQueryInputBuilder", "provider_input", "messages"]) {
+  assert(
+    upstreamWebSearchInputOwnerSource.includes(fragment),
+    `${UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH} is missing upstream provider-input owner fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class UpstreamProviderInputBudgetGate",
+  "providerInput",
+  "payloadBudget",
+  "provider-input-over-budget",
+  "payloadTooLarge",
+]) {
+  assert(
+    upstreamProviderInputGateSource.includes(fragment),
+    `${UPSTREAM_PROVIDER_INPUT_GATE_PATH} is missing upstream direct budget fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "UpstreamProviderInputBudgetGate",
+  "ProviderMessageBudgetGuard",
+  "run_budget",
+  "providerUsage",
+  "messageCharCount",
+]) {
+  assert(
+    upstreamWebSearchOperationSource.includes(fragment),
+    `${UPSTREAM_WEB_SEARCH_OPERATION_PATH} is missing governed openWebQuery fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamTriageStressTestSource.includes("100") &&
+    upstreamTriageStressTestSource.includes("test_triage_stress"),
+  `${UPSTREAM_TRIAGE_STRESS_TEST_PATH} must prove bounded triage behavior with 100 raw results.`
+);
+
+for (const backendFile of backendPythonFiles) {
+  if (!backendFile.startsWith("backend/app/upstream/") || backendFile === UPSTREAM_WEB_SEARCH_OPERATION_PATH) {
+    continue;
+  }
+  const source = readText(backendFile);
+  assert(
+    !source.includes("web_search_adapter.search("),
+    `${backendFile} introduces an upstream provider-heavy web search outside the governed operation owner.`
   );
 }
 

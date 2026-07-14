@@ -62,6 +62,11 @@ export interface RadarRunBudget {
   usedExternalQueries: number;
   usedUrlReads: number;
   usedFoundMaterials: number;
+  maxProviderInputChars?: number;
+  maxProviderInputTokens?: number;
+  maxResultsPerQuery?: number;
+  usedProviderInputChars?: number;
+  usedProviderInputTokens?: number;
 }
 
 export interface RadarRunOperation {
@@ -77,6 +82,14 @@ export interface RadarRunOperation {
   foundMaterialIds: string[];
   skippedReason?: string;
   error?: string;
+  providerInput?: Record<string, unknown>;
+  payloadBudget?: Record<string, unknown>;
+  inputStats?: Record<string, unknown>;
+  payloadStats?: Record<string, unknown>;
+  messageCharCount?: number;
+  providerUsage?: Record<string, unknown>;
+  selectedModel?: string;
+  maxResults?: number;
 }
 
 export interface RadarSearchQuery {
@@ -160,20 +173,109 @@ export interface RadarRawSearchResult {
   score: number;
   duplicateKey: string;
   provider: string;
+  intentId?: string;
+  family?: string;
+  evidenceType?: string;
+  query?: string;
+  candidateId?: string;
+  duplicateGroupId?: string;
+  dimensionScores?: RadarSearchResultDimensionScores;
 }
 
-export interface RadarReadSelection {
+export interface RadarSearchResultDimensionScores {
+  relevance: number;
+  evidenceFit: number;
+  projectFit: number;
+  sourceQuality: number;
+  novelty: number;
+  noiseRisk: number;
+  total: number;
+  reasonCodes: string[];
+  explanation: string;
+}
+
+export interface RadarReadDecision {
   rawResultId: string;
+  candidateId?: string;
+  duplicateGroupId?: string;
+  status?: 'selected' | 'rejected' | 'duplicate' | 'invalid' | 'deferredByBudget';
   url: string;
   reason: string;
   score: number;
+  families?: string[];
+  evidenceTypes?: string[];
+  domain?: string;
+  duplicateRawResultIds?: string[];
+  queryIds?: string[];
+  intentIds?: string[];
 }
 
-export interface RadarReadRejection {
+export type RadarReadSelection = RadarReadDecision;
+export type RadarReadRejection = RadarReadDecision;
+
+export interface RadarSearchDuplicateGroup {
+  id: string;
+  representativeCandidateId: string;
+  candidateIds: string[];
+  rawResultIds: string[];
+  queryIds: string[];
+  intentIds: string[];
+  families: string[];
+  evidenceTypes: string[];
+  domains: string[];
+  matchReasons: string[];
+}
+
+export interface RadarSearchTriageCandidate {
+  id: string;
   rawResultId: string;
+  sourceHandleId: string;
+  queryId: string;
+  intentId: string;
+  family: string;
+  evidenceType: string;
+  title: string;
   url: string;
-  reason: string;
-  score: number;
+  canonicalUrl: string;
+  snippet: string;
+  domain: string;
+  provider: string;
+  fingerprint: string;
+  valid: boolean;
+  invalidReason?: string;
+  scores?: RadarSearchResultDimensionScores | null;
+}
+
+export interface RadarSearchReadOutcome {
+  rawResultId: string;
+  candidateId: string;
+  duplicateGroupId?: string;
+  status: 'succeeded' | 'failed' | 'notRun';
+  materialId?: string;
+  readable: boolean;
+  reason?: string;
+}
+
+export interface RadarSearchTriageReport {
+  policyVersion: string;
+  candidates: RadarSearchTriageCandidate[];
+  duplicateGroups: RadarSearchDuplicateGroup[];
+  readPlan: {
+    maxReads: number;
+    qualityFloor: number;
+    requiredFamilies: string[];
+    selectedCandidateIds: string[];
+    decisions: RadarReadDecision[];
+    coveredFamilies: string[];
+    readCoverageGaps: Array<{ family: string; reason: string }>;
+  };
+  readCoverage: {
+    requiredFamilies: string[];
+    coveredFamilies: string[];
+  };
+  readCoverageGaps: Array<{ family: string; reason: string }>;
+  readOutcomes: RadarSearchReadOutcome[];
+  decisionCounts: Record<string, number>;
 }
 
 export interface RadarBenchmarkReport {
@@ -210,6 +312,7 @@ export interface RadarRun {
   selectedForRead?: RadarReadSelection[];
   rejectedBeforeRead?: RadarReadRejection[];
   benchmarkReport?: RadarBenchmarkReport;
+  searchTriage?: RadarSearchTriageReport;
 }
 
 export type FoundMaterialType =
@@ -238,4 +341,13 @@ export interface FoundMaterial {
   status: FoundMaterialStatus;
   warnings: string[];
   provenanceLabel: string;
+  discoveryTrace?: {
+    rawResultIds: string[];
+    queryIds: string[];
+    intentIds: string[];
+    families: string[];
+    evidenceTypes: string[];
+    duplicateGroupId?: string;
+    decisionReason?: string;
+  };
 }

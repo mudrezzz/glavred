@@ -14,6 +14,9 @@ describe('radarRunTraceViewModel', () => {
       'Стратегия источников',
       'Операции',
       'Сырые результаты',
+      'Оценка результатов',
+      'Группы дублей',
+      'План чтения',
       'Отбор перед чтением',
       'Найденные материалы',
       'Предупреждения и ошибки',
@@ -32,6 +35,32 @@ describe('radarRunTraceViewModel', () => {
         expect.objectContaining({ label: 'skip', title: 'vendor-pricing-noise' })
       ])
     );
+    expect(viewModel.details.find((detail) => detail.id === 'triage-quality')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Maintenance workbench case', status: 'score 79' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'duplicate-groups')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'canonical-url', title: '2 результатов' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'read-plan')?.fields).toEqual(
+      expect.arrayContaining([
+        { label: 'Пробелы покрытия', value: 'limitationCritique: no-candidate' },
+        { label: 'Успешно прочитано', value: '1' }
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'found-materials')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          meta: expect.arrayContaining([
+            { label: 'Группа дублей', value: 'duplicate-group-case' },
+            { label: 'Причина выбора', value: 'coverage-aware-best-result' }
+          ])
+        })
+      ])
+    );
   });
 
   it('keeps minimal legacy RadarRun payloads readable', () => {
@@ -40,6 +69,7 @@ describe('radarRunTraceViewModel', () => {
       rawResults: undefined,
       selectedForRead: undefined,
       rejectedBeforeRead: undefined,
+      searchTriage: undefined,
       warnings: [],
       errors: []
     }));

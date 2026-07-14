@@ -1,6 +1,6 @@
 # RadarRun Pipeline AS IS
 
-Current as of Slice `2.17.4.6.1.3.4.0.1`.
+Current as of Slice `2.17.4.6.2`.
 
 This document is the factual runtime contract for the current RadarRun pipeline. It
 describes what the product does today, what evidence proves it, and which boundaries
@@ -15,7 +15,9 @@ PDF quick view: `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf`.
 Regenerate with:
 
 ```powershell
-python scripts/generate-draft-run-pipeline-pdf.py --source docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md --output docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf
+python scripts/generate-draft-run-pipeline-pdf.py `
+  --source docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md `
+  --output docs/architecture/RADAR_RUN_PIPELINE_AS_IS.pdf
 ```
 
 ## How AS IS Participates in DoD
@@ -67,6 +69,7 @@ why the contract remained valid, the slice is not ready to close.
 | `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, warnings, errors, and optional benchmark report. | `SourceSignal`, `PostCandidate`, plan slot, or `DraftRun` creation. |
 | `RadarRunOperation` | One provider/search/read operation with status and trace-safe payload. | Editorial approval. |
 | `RawSearchResult` | Normalized provider search result with query/run provenance. | Durable source memory or signal ownership. |
+| `SearchTriageReport` | Deterministic normalization, duplicate groups, six-dimensional quality assessment, read plan, coverage gaps, terminal decisions, and read outcomes. | Provider search, URL parsing, or editorial approval. |
 | `selectedForRead` | Search results chosen for URL reading within budget. | Proof that the material is accepted. |
 | `rejectedBeforeRead` | Results rejected before URL reading, including duplicates, budget skips, and noise. | Permanent deletion from future search memory. |
 | `FoundMaterial` | Retrieval output with provenance, title, URL/source ref, snippet or summary, warnings, and captured timestamp. | Topic/fabula ownership or final post candidate approval. |
@@ -77,23 +80,18 @@ why the contract remained valid, the slice is not ready to close.
 
 ```mermaid
 flowchart TD
-    A[Project workspace] --> B[RadarDefinition]
-    A --> C[Source handles]
-    B --> D[SearchIntentPlanner]
-    C --> D
-    D --> E[SearchPlan]
-    E --> F[UpstreamRadarExternalRunService]
-    F --> G[OpenRouter web search adapter]
-    G --> H[Raw search results]
-    H --> I[Triage and dedupe]
-    I --> J[Selected URL reads]
-    I --> K[Rejected before read]
-    J --> L[URL reader]
-    L --> M[FoundMaterial]
-    F --> N[RadarBenchmarkReport]
-    M --> O[Workspace snapshot]
-    N --> O
-    O --> P[/radar-runs trace page]
+    A[Project workspace, radar, source handles] --> B[SearchIntentPlanner]
+    B --> C[SearchPlan]
+    C --> D[Budgeted OpenRouter web search]
+    D --> E[Raw search results]
+    E --> F[Normalization and duplicate groups]
+    F --> G[Quality assessment]
+    G --> H[Coverage-aware read plan]
+    H --> I[Terminal decisions and selected reads]
+    I --> J[URL reader]
+    J --> K[Read outcomes and FoundMaterial]
+    K --> L[RadarBenchmarkReport]
+    L --> M[Workspace snapshot and trace page]
 ```
 
 The current implementation stores RadarRun and FoundMaterial data in the workspace
@@ -119,16 +117,24 @@ endpoint in this AS IS state.
    - budget caps;
    - skipped intents and reasons.
 4. Apply `maxExternalQueries` and produce provider-executable `queries[]`.
-5. Run provider web-search operations for executable queries.
-6. Normalize provider citations into `rawResults[]` with `queryId` provenance.
-7. Deduplicate and triage raw results.
-8. Select a bounded set of URL reads.
-9. Record rejected-before-read results and reasons.
-10. Read selected URLs when URL reading is available.
-11. Create `FoundMaterial` for usable reads or search-result-only fallbacks.
-12. Attach `benchmarkReport` when the run matches a golden scenario.
-13. Persist the updated workspace snapshot.
-14. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
+5. Apply the direct `openWebQuery` input budget and final serialized-message guard.
+6. Run provider web-search operations for executable queries and record provider usage
+   when OpenRouter returns it.
+7. Normalize and bound provider citations into `rawResults[]` with `queryId`
+   provenance.
+8. Build stable duplicate groups that retain every query, intent, family, and evidence
+   handle.
+9. Assess representatives by relevance, evidence fit, project fit, source quality,
+   novelty, and noise risk.
+10. Build a coverage-aware read plan within the active `1/2/4` read cap.
+11. Give every raw result exactly one terminal decision: selected, rejected,
+   duplicate, invalid, or deferred by budget.
+12. Read selected URLs when the format is supported and URL reading is available.
+13. Record each read outcome. Successful text becomes a readable `FoundMaterial`;
+   failed or unsupported reads become `metadataOnly` and do not count as readable.
+14. Attach `benchmarkReport` when the run matches a golden scenario.
+15. Persist the updated workspace snapshot.
+16. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
     page.
 
 ## Context Handoff and Execution Contract
@@ -141,9 +147,9 @@ workspace snapshot and in the run payload.
 | Source eligibility | Project workspace, `RadarDefinition`, source handles | `searchPlan.sourceStrategy`, skipped source reasons | Trace shows searchable, readable-only, paused, and needs-review handles. |
 | Campaign planning | Radar scope, language, topics/fabulas as context, publisher/editorial rules, source strategy, budget mode | `searchPlan.intents`, `queries`, `skippedIntentDetails`, campaign trace | Planned intents and skipped reasons are visible in `searchPlan`. |
 | Query budgeting | Planned intents, `maxExternalQueries` | Bounded `queries[]`, skipped intent reasons | Required directions skipped by budget appear as skipped coverage. |
-| Provider search | Executable `queries[]`, provider config | `RadarRunOperation`, provider citations, raw results | Operation status, query id, provider errors, warnings, and raw result provenance. |
-| Triage and dedupe | `rawResults[]`, read budget, duplicate URLs, noise rules | `selectedForRead`, `rejectedBeforeRead` | Selected and rejected counts plus per-result reasons. |
-| URL read | Selected reads, URL reader adapter | read payloads, warnings, search-result-only fallback where available | URL-read operation status and material warnings. |
+| Provider search | Executable `queries[]`, provider config, upstream budget profile | `RadarRunOperation`, provider citations, raw results | Direct `providerInput`, `payloadBudget`, `messageCharCount`, operation status, provider usage, errors, warnings, and provenance. |
+| Triage and dedupe | Bounded `rawResults[]`, read budget, project/search context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, dimension scores, one terminal decision per raw result, coverage, and gaps. |
+| URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
 | Material output | Search/read payloads | `FoundMaterial`, `foundMaterialIds` | Workspace contains the material and run links it by id. |
 | Benchmark evaluation | Scenario, run, found materials | `benchmarkReport` | Recorded/live status, provider health, coverage, missing expectations, and noise hits. |
 
@@ -178,8 +184,11 @@ collapse it into a single "results" blob.
 | `searchPlan.skippedIntents[]` and `skippedIntentDetails[]` | Directions not executed and why. | Makes budget and source gaps visible. |
 | `operations[]` | Provider and read operations. | Separates provider/runtime health from quality. |
 | `rawResults[]` | Normalized provider citations. | Shows what the provider returned before triage. |
+| `searchTriage` | Versioned candidates, scores, duplicate groups, read plan, coverage gaps, decisions, counts, and read outcomes. | Proves that no result disappeared and explains why each read slot was allocated. |
 | `selectedForRead[]` | Raw results chosen for URL reading. | Shows read-budget choices. |
 | `rejectedBeforeRead[]` | Raw results rejected before read. | Shows duplicates, noise, and budget skips. |
+| `operations[].providerInput` and `payloadBudget` | Direct current-call provider input and limits. | Prevents nested metadata from masquerading as budget proof. |
+| `operations[].messageCharCount` and `providerUsage` | Actual serialized message size and provider-reported usage when available. | Separates Glavred context size from provider-owned web-tool usage. |
 | `foundMaterialIds[]` | Materials created by this run. | Links run trace to stored source material. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
@@ -228,12 +237,16 @@ The trace should be read in this order:
 2. Campaign plan: strategy, language, source strategy, intent families, skipped
    intents.
 3. Operations: provider query and URL-read statuses.
-4. Raw results: provider citations before triage.
-5. Selected and rejected reads: what the run read and what it skipped.
-6. Found materials: what became durable upstream material.
-7. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
+4. Search triage: result scores, duplicate groups, terminal decisions, read coverage,
+   and gaps.
+5. Raw results: bounded provider citations before triage.
+6. Selected and rejected reads: what the run read and why every other result was
+   rejected, duplicated, invalid, or deferred.
+7. Found materials and read outcomes: what became readable upstream material and what
+   remained metadata-only.
+8. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
    `failed`, or `inconclusive`.
-8. Raw JSON fallback when a legacy/minimal run lacks richer fields.
+9. Raw JSON fallback when a legacy/minimal run lacks richer fields.
 
 ## Known AS IS Limitations
 
@@ -248,6 +261,13 @@ These are current facts, not target architecture:
   future product-quality slice.
 - URL-read budget is intentionally narrow. A run may produce many raw results but read
   only a small subset.
+- The current URL reader accepts text/HTML. Obvious PDF URLs are rejected before
+  allocation; a binary or unsupported response is preserved only as metadata. A
+  dedicated PDF/document reader is future adapter work.
+- Glavred directly limits query text, provider input, serialized messages, and total
+  local RadarRun input. OpenRouter may report much larger prompt-token usage because
+  its web-search tool adds provider-owned retrieval context; production cost controls
+  and reuse belong to Slice `2.17.4.6.6`.
 - Query family wording can still be too similar across broad discovery, case/example,
   and benchmark/paper directions.
 - Signal extraction, signal scoring, and candidate assembly remain downstream and are
