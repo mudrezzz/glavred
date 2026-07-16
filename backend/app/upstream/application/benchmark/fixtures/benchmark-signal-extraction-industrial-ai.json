@@ -1,0 +1,28 @@
+{
+  "id": "benchmark-signal-extraction-industrial-ai",
+  "cases": [
+    {
+      "id": "industrial-case",
+      "material": {"id": "m-case", "title": "Кейс обслуживания", "text": "На линии инженеры сопоставляют вибрацию станка с журналом ремонтов. Система предупреждает мастера, но зависит от полноты истории отказов."},
+      "expectedDecision": "signalProducing",
+      "payload": {"signals": [{"type": "case", "title": "Вибрация сопоставляется с историей ремонтов", "summary": "Система предупреждает мастера о риске отказа.", "confidence": "high", "uncertainty": "Зависит от полноты истории отказов.", "mechanism": "Сопоставление вибрации с журналом ремонтов.", "actors": ["инженеры", "мастер"], "outcome": "Мастер получает предупреждение.", "limitations": ["Зависит от полноты истории отказов."], "reasonCodes": ["mechanism-present"], "evidenceRefs": [{"materialId": "m-case", "fragmentId": "$fragment", "quote": "$text"}]}], "materialDecisions": [{"materialId": "m-case", "decision": "signalProducing", "reasonCodes": ["grounded-case"]}]}
+    },
+    {
+      "id": "benchmark-report",
+      "material": {"id": "m-report", "title": "Отчет", "text": "В отчете сравниваются два подхода к диагностике оборудования; авторы не объявляют один подход универсально лучшим."},
+      "expectedDecision": "signalProducing",
+      "payload": {"signals": [{"type": "recurringPattern", "title": "Сравнение подходов не дает универсального победителя", "summary": "Отчет фиксирует зависимость выбора от условий применения.", "confidence": "medium", "uncertainty": "Нет универсального победителя.", "mechanism": "Сравнение двух подходов.", "actors": ["авторы отчета"], "outcome": "Выбор зависит от условий.", "limitations": ["Вывод не универсален."], "reasonCodes": ["benchmark-report"], "evidenceRefs": [{"materialId": "m-report", "fragmentId": "$fragment", "quote": "$text"}]}], "materialDecisions": [{"materialId": "m-report", "decision": "signalProducing", "reasonCodes": ["report-evidence"]}]}
+    },
+    {"id": "vendor-pricing", "material": {"id": "m-vendor", "title": "Тарифы", "text": "Купите корпоративный тариф сегодня и получите скидку."}, "expectedDecision": "noise", "payload": {"signals": [], "materialDecisions": [{"materialId": "m-vendor", "decision": "noise", "reasonCodes": ["vendor-pricing-no-evidence"]}]}},
+    {"id": "generic-news", "material": {"id": "m-news", "title": "Новости AI", "text": "Искусственный интеллект продолжает менять мир, считают участники конференции."}, "expectedDecision": "insufficient", "payload": {"signals": [], "materialDecisions": [{"materialId": "m-news", "decision": "insufficient", "reasonCodes": ["generic-news"]}]}},
+    {
+      "id": "autonomy-tension",
+      "material": {"id": "m-tension", "title": "Автономность", "text": "Поставщик утверждает, что система работает без участия человека, но независимых данных в публикации нет."},
+      "expectedDecision": "signalProducing",
+      "payload": {"signals": [{"type": "tensionCounterargument", "title": "Заявление об автономности не подтверждено независимыми данными", "summary": "Утверждение поставщика полезно как предмет проверки, а не как принятая позиция.", "confidence": "medium", "uncertainty": "Независимых данных нет.", "mechanism": "Поставщик делает неподтвержденное заявление.", "actors": ["поставщик"], "outcome": "Требуется независимая проверка.", "limitations": ["Нет независимых данных."], "reasonCodes": ["claim-as-tension"], "evidenceRefs": [{"materialId": "m-tension", "fragmentId": "$fragment", "quote": "$text"}]}], "materialDecisions": [{"materialId": "m-tension", "decision": "signalProducing", "reasonCodes": ["tension-only"]}]}
+    },
+    {"id": "off-domain", "material": {"id": "m-offdomain", "title": "Рецепт", "text": "Для теста выпечки смешайте муку и воду."}, "expectedDecision": "noise", "payload": {"signals": [], "materialDecisions": [{"materialId": "m-offdomain", "decision": "noise", "reasonCodes": ["off-domain"]}]}},
+    {"id": "corroborating", "material": {"id": "m-corroborating", "title": "Повторное подтверждение", "text": "Второй источник также описывает сопоставление вибрации с журналом ремонтов."}, "expectedDecision": "corroborating", "payload": {"signals": [], "materialDecisions": [{"materialId": "m-corroborating", "decision": "corroborating", "reasonCodes": ["supports-existing-mechanism"]}]}},
+    {"id": "no-signal", "material": {"id": "m-empty", "title": "Пустая заметка", "text": "Материал содержит только навигацию и общие сведения об организации."}, "expectedDecision": "insufficient", "payload": {"signals": [], "materialDecisions": [{"materialId": "m-empty", "decision": "insufficient", "reasonCodes": ["no-factual-signal"]}]}}
+  ]
+}

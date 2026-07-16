@@ -28,7 +28,7 @@ class UpstreamProviderInputBudgetGate:
         self,
         *,
         provider_input: Mapping[str, Any],
-        query_text: str,
+        query_text: str = "",
         profile: UpstreamProviderBudgetProfile,
         run_budget: Mapping[str, Any],
     ) -> UpstreamProviderInputBudgetResult:
@@ -38,7 +38,7 @@ class UpstreamProviderInputBudgetGate:
         current_run_chars = int(run_budget.get("usedProviderInputChars") or 0)
         current_run_tokens = int(run_budget.get("usedProviderInputTokens") or 0)
         reasons: list[str] = []
-        if len(query_text) > profile.max_query_chars:
+        if profile.max_query_chars and len(query_text) > profile.max_query_chars:
             reasons.append("query-char-limit")
         if input_chars > profile.max_provider_input_chars:
             reasons.append("provider-input-char-limit")

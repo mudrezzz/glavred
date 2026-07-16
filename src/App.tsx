@@ -9,6 +9,7 @@ import { EditorialModelView } from './features/editorial-model/EditorialModelVie
 import { EditView } from './features/editing/EditView';
 import { PlanView } from './features/plan/PlanView';
 import { PortfolioLoginPanel } from './features/portfolio/PortfolioLoginPanel';
+import { PortfolioIntegrityPanel } from './features/portfolio/PortfolioIntegrityPanel';
 import { ProjectDashboardView } from './features/portfolio/ProjectDashboardView';
 import { SidebarPortfolioSwitcher } from './features/portfolio/SidebarPortfolioSwitcher';
 import { ReleaseView } from './features/release/ReleaseView';
@@ -42,6 +43,7 @@ function CabinetApp() {
     contextChatScope,
     contextChatTab,
     editorialModelTab,
+    integrityError,
     memoryTab,
     portfolio,
     portfolioMode,
@@ -52,6 +54,10 @@ function CabinetApp() {
 
   if (backendStatus === 'loginRequired') {
     return <PortfolioLoginPanel error={authError} loading={false} onLogin={controller.login} />;
+  }
+
+  if (backendStatus === 'integrityError') {
+    return <PortfolioIntegrityPanel message={integrityError} />;
   }
 
   if (portfolioMode === 'projectDashboard') {

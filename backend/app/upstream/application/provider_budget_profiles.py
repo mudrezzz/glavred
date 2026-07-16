@@ -22,6 +22,10 @@ class UpstreamProviderBudgetProfile:
     max_run_input_chars: int
     max_run_approx_tokens: int
     max_results_per_query: int
+    max_materials: int = 0
+    max_fragments_per_material: int = 0
+    max_fragment_chars: int = 0
+    max_output_tokens: int = 0
 
 
 class UpstreamProviderBudgetProfileRegistry:
@@ -36,11 +40,34 @@ class UpstreamProviderBudgetProfileRegistry:
         *,
         operation_id: str,
         execution_mode: str,
-        configured_max_results: int,
+        configured_max_results: int = 0,
     ) -> UpstreamProviderBudgetProfile:
+        mode = execution_mode if execution_mode in self._RUN_LIMITS else "standard"
+        if operation_id == "signalExtraction":
+            limits = {
+                "smoke": (1, 3, 700, 6000, 9000, 2250, 1200),
+                "standard": (2, 4, 900, 12000, 16000, 4000, 2200),
+                "full": (4, 5, 900, 24000, 30000, 7500, 3500),
+            }[mode]
+            materials, fragments, fragment_chars, input_chars, message_chars, tokens, output_tokens = limits
+            return UpstreamProviderBudgetProfile(
+                id=f"upstream-signal-extraction-v1-{mode}",
+                operation_id=operation_id,
+                execution_mode=mode,
+                max_query_chars=0,
+                max_provider_input_chars=input_chars,
+                max_message_chars=message_chars,
+                max_approx_tokens=tokens,
+                max_run_input_chars=input_chars,
+                max_run_approx_tokens=tokens,
+                max_results_per_query=0,
+                max_materials=materials,
+                max_fragments_per_material=fragments,
+                max_fragment_chars=fragment_chars,
+                max_output_tokens=output_tokens,
+            )
         if operation_id != "openWebQuery":
             raise KeyError(f"Unknown upstream provider budget operation: {operation_id}")
-        mode = execution_mode if execution_mode in self._RUN_LIMITS else "standard"
         run_chars, run_tokens, profile_results = self._RUN_LIMITS[mode]
         configured = max(0, int(configured_max_results))
         return UpstreamProviderBudgetProfile(

@@ -28,7 +28,7 @@ export type RadarSearchSourceType =
   | 'socialProfile'
   | 'document'
   | 'openWeb';
-export type SignalReviewStatus = 'new' | 'approved' | 'rejected' | 'archived' | 'corrected';
+export type SignalReviewStatus = 'candidate' | 'new' | 'approved' | 'rejected' | 'archived' | 'corrected';
 
 export interface RadarDefinition {
   id: string;
@@ -87,6 +87,14 @@ export interface SignalEvidence {
   sourceUrl: string;
   quote: string;
   summary: string;
+  materialId?: string;
+  fragmentId?: string;
+}
+
+export interface SignalEvidenceRef {
+  materialId: string;
+  fragmentId: string;
+  quote: string;
 }
 
 export interface SourceSignal {
@@ -108,4 +116,14 @@ export interface SourceSignal {
   authorCorrection?: string;
   filterEvaluations?: SignalFilterEvaluation[];
   filterStatus?: SignalFilterStatus;
+  radarRunId?: string;
+  evidenceRefs?: SignalEvidenceRef[];
+  confidence?: 'low' | 'medium' | 'high';
+  uncertainty?: string;
+  mechanism?: string;
+  actors?: string[];
+  outcome?: string;
+  limitations?: string[];
+  provenance?: { materialIds: string[] };
+  reasonCodes?: string[];
 }

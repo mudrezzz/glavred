@@ -69,6 +69,10 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
     ...(bundle.run.searchTriage ? [readPlanDetail(bundle)] : []),
     ...(selected.length > 0 || rejected.length > 0 ? [readSelectionDetail(bundle)] : []),
     ...(bundle.foundMaterials.length > 0 || bundle.run.foundMaterialIds.length > 0 ? [foundMaterialsDetail(bundle)] : []),
+    ...(bundle.foundMaterials.some((material) => (material.contentFragments ?? []).length > 0)
+      ? [evidenceFragmentsDetail(bundle)]
+      : []),
+    ...(bundle.run.signalExtraction ? [signalExtractionDetail(bundle)] : []),
     ...(bundle.benchmarkReport ? [benchmarkDetail(bundle.benchmarkReport)] : []),
     ...(warnings > 0 ? [warningsDetail(bundle)] : []),
     rawDetail(bundle)
@@ -102,6 +106,7 @@ function summaryFields(bundle: RadarRunTraceBundle): RadarTraceField[] {
     { label: 'Сырые результаты', value: String(run.rawResults?.length ?? 0) },
     { label: 'Чтение', value: `${selected}/${rejected}` },
     { label: 'Материалы', value: String(bundle.foundMaterials.length) },
+    { label: 'Сигналы', value: String(bundle.sourceSignals.length) },
     { label: 'Источник', value: bundle.source }
   ];
 }
@@ -422,6 +427,94 @@ function foundMaterialsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
       ])
     })),
     jsonPayload: bundle.foundMaterials
+  };
+}
+
+function evidenceFragmentsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const fragments = bundle.foundMaterials.flatMap((material) =>
+    (material.contentFragments ?? []).map((fragment) => ({ material, fragment }))
+  );
+  return {
+    id: 'evidence-fragments',
+    title: 'Доказательные фрагменты',
+    kicker: `${fragments.length} сохранено`,
+    fields: compactFields([
+      ['Материалы с фрагментами', new Set(fragments.map((item) => item.material.id)).size],
+      ['Всего фрагментов', fragments.length]
+    ]),
+    items: fragments.map(({ material, fragment }) => ({
+      id: fragment.id,
+      label: fragment.kind,
+      title: material.title,
+      body: fragment.text,
+      status: 'evidence',
+      meta: compactFields([
+        ['Материал', material.id],
+        ['Смещение', `${fragment.startChar}-${fragment.endChar}`],
+        ['Hash', fragment.hash]
+      ])
+    })),
+    jsonPayload: fragments.map(({ material, fragment }) => ({ materialId: material.id, ...fragment }))
+  };
+}
+
+function signalExtractionDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const report = bundle.run.signalExtraction!;
+  const attempts = report.providerAttempts ?? [];
+  return {
+    id: 'signal-extraction',
+    title: 'Извлечение сигналов',
+    kicker: `${report.status}, ревизия ${report.revision}`,
+    fields: compactFields([
+      ['Статус', report.status],
+      ['Ревизия', report.revision],
+      ['Результат повтора', report.retryOutcome],
+      ['Сохранены сигналы прошлой ревизии', report.preservedPreviousSignalIds?.length],
+      ['Материалы обработаны', report.materialDecisions.length],
+      ['Сигналы-кандидаты', bundle.sourceSignals.length],
+      ['Полное покрытие решений', report.decisionCoverageComplete],
+      ['Неразрешенные evidence handles', report.unresolvedEvidenceHandleCount],
+      ['Grounding violations', report.groundingViolations?.length ?? 0],
+      ['Попытки провайдера', attempts.length],
+      ['Предупреждения', report.warnings?.join(', ')]
+    ]),
+    items: [
+      ...bundle.sourceSignals.map((signal) => ({
+        id: signal.id,
+        label: signal.type,
+        title: signal.title,
+        body: [signal.summary, signal.uncertainty, ...(signal.limitations ?? [])].filter(Boolean).join('\n'),
+        status: signal.confidence ?? 'candidate',
+        meta: compactFields([
+          ['Механизм', signal.mechanism],
+          ['Результат', signal.outcome],
+          ['Evidence refs', signal.evidenceRefs?.map((ref) => `${ref.materialId}/${ref.fragmentId}`).join('\n')]
+        ])
+      })),
+      ...report.materialDecisions.map((decision) => ({
+        id: `decision-${decision.materialId}`,
+        label: 'решение по материалу',
+        title: decision.materialId,
+        body: decision.reasonCodes.join(', '),
+        status: decision.decision,
+        meta: compactFields([['Сигналы', decision.signalIds.join(', ')]])
+      })),
+      ...attempts.map((attempt, index) => ({
+        id: `attempt-${index}`,
+        label: String(attempt.attemptLabel ?? 'attempt'),
+        title: String(attempt.model ?? 'provider'),
+        body: String(attempt.error ?? ''),
+        status: String(attempt.status ?? ''),
+        meta: compactFields([
+          ['AiRun', attempt.aiRunId],
+          ['Размер сообщений', attempt.messageCharCount],
+          ['Repair context', attempt.repairContextCharCount],
+          ['Usage', attempt.providerUsage],
+          ['Usage status', attempt.providerUsageStatus]
+        ])
+      }))
+    ],
+    jsonPayload: { report, sourceSignals: bundle.sourceSignals }
   };
 }
 

@@ -89,6 +89,11 @@ backend is running, Glavred asks you to log in and then shows only the projects
 available to that user. If the backend is not running, the same dashboard falls back
 to the local demo portfolio.
 
+If the project snapshot fails text-integrity validation, the application shows
+`Проект временно недоступен`, stops autosave, and does not silently display local
+demo data instead. This state means the saved project must be recovered by an
+administrator; it is different from an unavailable backend.
+
 From the dashboard you can:
 
 - open a project card or press `Открыть кабинет` to enter the editorial cabinet;
@@ -207,15 +212,22 @@ results, scores their relevance/evidence/project/source/novelty/noise signals, a
 allocates the small read budget across the strongest required directions. Every raw
 result remains visible as selected, rejected, duplicate, invalid, or deferred by
 budget. A failed or unsupported read is shown as `metadataOnly` and is not counted as
-readable material. If the backend is unavailable, the same action falls back to the local deterministic
+readable material. Readable materials now automatically enter backend signal
+extraction. Glavred retains bounded evidence fragments, may create zero or more
+`reviewStatus=candidate` signals, and records why every inspected material did or did
+not produce a signal. A candidate signal is evidence, not an approved post idea.
+
+If the backend is unavailable, the same action falls back to the local deterministic
 contract run. The expanded radar has internal tabs: `Настройка` for rules/sources/
 filters and `Трасса запуска` for a compact preview of search intents, search plan,
-operations, triage, found material, and diagnostics. Use `Открыть трассу` or open
-`/radar-runs?runId=<id>` to inspect the full run page with source strategy, raw
-results, score dimensions, duplicate groups, read coverage and gaps, selected/rejected
-reads, warnings/errors, raw JSON fallback, and benchmark
-verdict when the run carries one. This trace stays separate from `Найденные сигналы`.
-It does not create new signals or post candidates yet.
+operations, triage, found material, extraction, and diagnostics. Use `Открыть трассу`
+or open `/radar-runs?runId=<id>` to inspect source strategy, raw results, score
+dimensions, duplicate groups, read coverage and gaps, evidence fragments, terminal
+material decisions, provider attempts, token usage, created signal candidates,
+warnings/errors, raw JSON fallback, and benchmark verdict. The user-facing candidates
+also appear in `Найденные сигналы`, where their exact evidence and uncertainty are
+visible. Project usefulness scoring and the full review lifecycle arrive in the next
+slice; no `PostCandidate`, plan slot, or DraftRun is created automatically.
 
 The first diagnostic layer uses one golden radar benchmark:
 `Опытный цех «Сборочная»` / industrial AI maintenance cases. For matching live runs,
@@ -321,6 +333,10 @@ Opening or closing a radar should not move the Signals workspace sideways. The s
 header stat cards stay pinned to the right edge of the header, and the radar editor
 keeps visible spacing between labels and controls. These are now covered by
 `npm run test:design`, so layout drift should be treated as a regression.
+
+Long radar rules, source URLs, signal summaries, and the current insight stay inside
+their cards. The insight sidebar shows a bounded preview with `Показать полностью`;
+the full text remains available without widening the page.
 
 ### Radar editing after Slice 1.5.7
 

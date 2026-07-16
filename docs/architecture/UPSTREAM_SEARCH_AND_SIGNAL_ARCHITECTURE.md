@@ -57,8 +57,9 @@ work, not watered down in new radar slices.
   not the first place where Glavred discovers what to write about.
 - `FoundMaterial` is retrieval output. It can be a search result, URL read, archive
   item, imported note, document excerpt, previous post, or manual research item.
-- `SourceSignal` is reviewed material. It answers: "what did we find, why might it
-  matter, what evidence/provenance does it carry, and what risks are visible?"
+- `SourceSignal` starts as an evidence-backed extraction candidate. It answers:
+  "what did we find, which exact fragments prove it, and what uncertainty or
+  limitation remains?" Project usefulness and human review are separate stages.
 - `SourceSignal` does not own topic, fabula, target audience, value, goal, platform,
   format, or publication channel. Those belong to candidate assembly and planning.
 - `PostCandidate` is an editorial composition: `Signal x Topic x Fabula`, with
@@ -70,11 +71,12 @@ work, not watered down in new radar slices.
 
 ## Core Contracts
 
-These contracts are the upstream boundary. Slice 2.17.4.6 implements the first
-provider-backed retrieval pass: project-scoped `SourceRegistry`, `RadarRun`, typed
-search plan, OpenRouter web-search operations, selective URL reads, raw result
-triage, and normalized `FoundMaterial`. Signal extraction, scoring, and candidate
-assembly v2 remain later slices.
+These contracts are the upstream boundary. Slices 2.17.4.6-2.17.4.7 implement the
+provider-backed retrieval and extraction pass: project-scoped `SourceRegistry`,
+`RadarRun`, typed search plan, OpenRouter web-search operations, selective URL reads,
+raw result triage, normalized `FoundMaterial`, bounded evidence fragments and
+candidate `SourceSignal`. Project utility scoring and candidate assembly v2 remain
+later slices.
 
 | Contract | Owns | Does Not Own |
 | --- | --- | --- |
@@ -82,8 +84,9 @@ assembly v2 remain later slices.
 | `SourceRegistry` | The set of internal and external source handles available to a project. | Cross-project sources or global author memory. |
 | `RadarRun` | One execution attempt for a radar: status, budget, operations, found material ids, errors. | Final signal approval or post candidate approval. |
 | `RadarRunOperation` | One read/search/import operation inside a run. | Domain scoring or candidate ranking. |
-| `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, capturedAt, warnings. | Topic/fabula assignment or approval. |
-| `SignalExtractionReport` | Which materials produced signal candidates, which were rejected as noise, and why. | Final post candidate ranking. |
+| `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, bounded hashed fragments, capturedAt, warnings. | Topic/fabula assignment or approval. |
+| `SignalExtractionReport` | Versioned terminal decisions, provider attempts, grounding incidents, budgets, usage and signal ids. | Project usefulness scoring or final post candidate ranking. |
+| `SourceSignal` candidate | Evidence-backed extracted observation with uncertainty, reason codes and exact material/fragment handles. | Automatic approval or topic/fabula/audience/value ownership. |
 | `SignalScore` | Dimension-level editorial fit: novelty, source credibility, author fit, audience value, positioning fit, topic affinity, evidence strength, risk. | Draft text quality. |
 | `CandidateAssemblyReport` | Accepted/rejected `Signal x Topic x Fabula` matches, candidate ranking, rationale, and risks. | DraftRun generation or publication variants. |
 
@@ -110,9 +113,13 @@ assembly v2 remain later slices.
      not silently promoted and not silently dropped.
 
 4. **Signal extraction and scoring**
-   - Extraction turns one or more found materials into candidate source signals.
-   - Scoring explains whether the material is promising for the project.
-   - A human or acceptance policy can approve, reject, archive, or correct signals.
+   - Implemented extraction turns one or more readable found materials into zero or
+     more grounded candidate source signals and gives every material a terminal
+     decision.
+   - A retry reuses persisted fragments and creates a new extraction revision without
+     repeating search or URL reading.
+   - Scoring and human lifecycle explain whether the material is useful for the
+     project and remain owned by `2.17.4.7.1`.
 
 5. **Candidate assembly**
    - Candidate assembly evaluates `approved SourceSignal x active Topic x active Fabula`.
@@ -171,16 +178,21 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   diagnostics in an internal run-trace tab;
 - URL read failures and unsupported binary formats are failed read outcomes and may
   be kept only as `metadataOnly`; they do not count as readable material;
-- `sourceSignals` are still seeded/demo-local or manually reviewed compatibility data
-  rather than produced by extraction from `FoundMaterial`;
+- readable materials now enter backend-owned extraction; accepted results are merged
+  into workspace `sourceSignals` as unreviewed candidates with exact evidence refs;
+- extraction status is independent from retrieval status, and provider failure can
+  produce an explicit failed/not-run extraction without rewriting successful search;
+- the retry API reuses persisted fragments, replaces only signals belonging to the
+  same run and does not repeat search or reads;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
   keeps the first three candidates;
 - some compatibility fields such as `suggestedTopicId` and `suggestedFabulaId` may
   remain on `SourceSignal`, but UI and new services must not treat them as ownership.
 
 Until Slice 2.17.4.8 replaces candidate assembly, blind pairing is legacy behavior and
-must be kept working only as a fallback. Running a radar in 2.17.4.6 must not create
-`SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
+must be kept working only as a fallback. Running a radar may create only candidate
+`SourceSignal` through extraction; it must not create `PostCandidate`, plan slots or
+DraftRuns.
 
 ## Trace Requirements
 
@@ -196,7 +208,11 @@ future upstream run should make the handoff readable:
 - what raw search results were returned;
 - which results were selected for URL reading and which were rejected before reading;
 - what material was found;
-- which materials became signals and which were rejected as noise;
+- which exact fragments were retained;
+- which materials became signals and which received insufficient, duplicate,
+  corroborating, contradiction, noise or extraction-failed decisions;
+- which provider attempt was accepted, what grounding incidents were rejected, and
+  whether direct input/message budgets were respected;
 - how signal scoring dimensions were decided;
 - why a topic/fabula candidate was accepted or rejected;
 - what human correction or approval changed.
@@ -253,6 +269,12 @@ preview. The dedicated `/radar-runs?runId=<id>` trace page is defined by the Rad
 AS IS contract and remains a frontend read model over existing workspace snapshots;
 it does not add backend tables or provider calls.
 
+Inspect a saved extraction run with:
+
+```powershell
+python scripts/analyze_radar_signal_extraction.py --project-id <project-id> --run-id <run-id> --format markdown
+```
+
 ## Implementation Slices
 
 - `2.17.4.5`: Source Registry and Radar Run Contract. Done: deterministic local run
@@ -290,7 +312,11 @@ it does not add backend tables or provider calls.
 - `2.17.4.6.4`: LLM-Assisted Query Expansion and Search Critic.
 - `2.17.4.6.5`: Radar Search Evaluation Harness and Benchmark Corpus.
 - `2.17.4.6.6`: Search Memory, Refresh Policy, and Production Controls.
-- `2.17.4.7`: Signal Extraction and Editorial Scoring.
+- `2.17.4.7`: FoundMaterial to SourceSignal Extraction. Done: bounded evidence
+  fragments, extraction dossier, direct budgets, final-message guard,
+  primary/repair/backup recovery, strict grounding, terminal material decisions,
+  revision retry without retrieval, trace/UI, recorded benchmark and live proof.
+- `2.17.4.7.1`: Signal Editorial Scoring and Review Lifecycle.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
 - `2.17.4.9`: Signal Review and Candidate Workbench UX.
 

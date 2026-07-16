@@ -49,6 +49,7 @@ export type RadarRunOperationKind =
   | 'readUrl'
   | 'importDocument'
   | 'metadataOnly'
+  | 'signalExtraction'
   | 'skip';
 
 export interface RadarRunBudget {
@@ -313,6 +314,40 @@ export interface RadarRun {
   rejectedBeforeRead?: RadarReadRejection[];
   benchmarkReport?: RadarBenchmarkReport;
   searchTriage?: RadarSearchTriageReport;
+  signalExtraction?: RadarSignalExtractionReport;
+}
+
+export type RadarMaterialExtractionDecision =
+  | 'signalProducing'
+  | 'insufficient'
+  | 'duplicate'
+  | 'corroborating'
+  | 'contradiction'
+  | 'noise'
+  | 'extractionFailed';
+
+export interface RadarSignalExtractionReport {
+  status: 'succeeded' | 'partial' | 'failed' | 'notRun';
+  revision: number;
+  revisions?: Array<{ revision: number; status: string }>;
+  retryOutcome?: 'succeeded' | 'partial' | 'failed' | 'notRun';
+  preservedPreviousSignalIds?: string[];
+  materialDecisions: Array<{
+    materialId: string;
+    decision: RadarMaterialExtractionDecision;
+    reasonCodes: string[];
+    signalIds: string[];
+  }>;
+  decisionCounts?: Record<string, number>;
+  signalIds?: string[];
+  signalCount?: number;
+  providerAttempts?: Array<Record<string, unknown>>;
+  groundingViolations?: Array<Record<string, unknown>>;
+  warnings?: string[];
+  dossier?: Record<string, unknown>;
+  decisionCoverageComplete?: boolean;
+  unresolvedEvidenceHandleCount?: number;
+  createdDownstreamArtifacts?: Record<string, number>;
 }
 
 export type FoundMaterialType =
@@ -341,6 +376,15 @@ export interface FoundMaterial {
   status: FoundMaterialStatus;
   warnings: string[];
   provenanceLabel: string;
+  contentFragments?: Array<{
+    id: string;
+    ordinal: number;
+    text: string;
+    startChar: number;
+    endChar: number;
+    hash: string;
+    kind: string;
+  }>;
   discoveryTrace?: {
     rawResultIds: string[];
     queryIds: string[];

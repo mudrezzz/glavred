@@ -215,4 +215,16 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         payload_budget_status="enforced",
         budget_policy_id="upstream-open-web-query-v1",
     ),
+    LlmOperationInventoryEntry(
+        operation_id="signalExtraction",
+        owner="backend.app.upstream.application.signal_extraction_service",
+        current_module="backend/app/upstream/application/signal_extraction_service.py",
+        operation_kind="upstreamSignalExtraction",
+        status="migrated",
+        reason_not_migrated="",
+        removal_slice="",
+        expected_incident_coverage=("payloadTooLarge", "malformedJson", "schemaFailure", "networkError", "notConfigured", "backupAccepted"),
+        payload_budget_status="enforced",
+        budget_policy_id="upstream-signal-extraction-v1",
+    ),
 )

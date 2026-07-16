@@ -29,6 +29,7 @@ class OpenRouterJsonAdapter:
         temperature: float,
         top_p: float | None = None,
         model: str | None = None,
+        max_tokens: int | None = None,
     ) -> OpenRouterJsonResult:
         api_key = settings.openrouter_api_key.get_secret_value() if settings.openrouter_api_key else ""
         selected_model = model or settings.openrouter_default_model
@@ -40,6 +41,8 @@ class OpenRouterJsonAdapter:
         }
         if top_p is not None:
             request_payload["top_p"] = top_p
+        if max_tokens is not None:
+            request_payload["max_tokens"] = max_tokens
         response = httpx.post(
             f"{settings.openrouter_base_url.rstrip('/')}/chat/completions",
             headers={

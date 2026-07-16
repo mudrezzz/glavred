@@ -72,7 +72,11 @@ export function SignalsSidePanel({
         <section className="panel insight-mini">
           <span className="sig">Текущий инсайт</span>
           <h4>{workspace.insightCard.title}</h4>
-          <p>{workspace.insightCard.whyItMatters}</p>
+          <p className="insight-mini-preview">{workspace.insightCard.whyItMatters}</p>
+          <details className="insight-mini-details">
+            <summary>Показать полностью</summary>
+            <p>{workspace.insightCard.whyItMatters}</p>
+          </details>
           <button className="btn btn-pri wide" type="button" onClick={onPlan}>
             В план
           </button>

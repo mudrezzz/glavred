@@ -66,13 +66,15 @@ why the contract remained valid, the slice is not ready to close.
 | `SearchPlan` | Deterministic provider-free campaign plan with strategy, language, intents, queries, source strategy, budget, and skipped intents. | Provider calls or quality scoring. |
 | `SearchIntent` | One planned evidence direction such as broad discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, or freshness. | URL reading or material acceptance. |
 | `SearchQuery` | One provider-executable web-search query derived from an intent and eligible source strategy. | Search result quality judgment. |
-| `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, warnings, errors, and optional benchmark report. | `SourceSignal`, `PostCandidate`, plan slot, or `DraftRun` creation. |
+| `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, extraction revision, warnings, errors, and optional benchmark report. | Signal approval, project-utility scoring, `PostCandidate`, plan slot, or `DraftRun` creation. |
 | `RadarRunOperation` | One provider/search/read operation with status and trace-safe payload. | Editorial approval. |
 | `RawSearchResult` | Normalized provider search result with query/run provenance. | Durable source memory or signal ownership. |
 | `SearchTriageReport` | Deterministic normalization, duplicate groups, six-dimensional quality assessment, read plan, coverage gaps, terminal decisions, and read outcomes. | Provider search, URL parsing, or editorial approval. |
 | `selectedForRead` | Search results chosen for URL reading within budget. | Proof that the material is accepted. |
 | `rejectedBeforeRead` | Results rejected before URL reading, including duplicates, budget skips, and noise. | Permanent deletion from future search memory. |
-| `FoundMaterial` | Retrieval output with provenance, title, URL/source ref, snippet or summary, warnings, and captured timestamp. | Topic/fabula ownership or final post candidate approval. |
+| `FoundMaterial` | Retrieval output with provenance, title, URL/source ref, snippet/summary, bounded evidence fragments, warnings, and captured timestamp. | Topic/fabula ownership or final post candidate approval. |
+| `SignalExtractionReport` | Versioned decisions for every inspected material, provider attempts, grounding incidents, budgets, usage and downstream-leak proof. | Project usefulness scoring or human review decisions. |
+| `SourceSignal` candidate | Evidence-backed fact, change, tension, case, data point, practice, failure mode, observation, question or pattern in `reviewStatus=candidate`. | Topic/fabula/audience/value/goal/platform/channel ownership or automatic approval. |
 | `RadarBenchmarkReport` | Recorded or live evaluation against a golden scenario. | Search execution or UI-side scoring. |
 | `RadarRunTracePage` | Frontend read model for inspecting one run. | Recomputing live quality or mutating the run. |
 
@@ -90,8 +92,11 @@ flowchart TD
     H --> I[Terminal decisions and selected reads]
     I --> J[URL reader]
     J --> K[Read outcomes and FoundMaterial]
-    K --> L[RadarBenchmarkReport]
-    L --> M[Workspace snapshot and trace page]
+    K --> L[Bounded evidence fragments]
+    L --> M[Signal extraction dossier]
+    M --> N[Grounding validation and SourceSignal candidates]
+    N --> O[RadarBenchmarkReport]
+    O --> P[Workspace snapshot and trace page]
 ```
 
 The current implementation stores RadarRun and FoundMaterial data in the workspace
@@ -132,9 +137,18 @@ endpoint in this AS IS state.
 12. Read selected URLs when the format is supported and URL reading is available.
 13. Record each read outcome. Successful text becomes a readable `FoundMaterial`;
    failed or unsupported reads become `metadataOnly` and do not count as readable.
-14. Attach `benchmarkReport` when the run matches a golden scenario.
-15. Persist the updated workspace snapshot.
-16. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
+14. Preserve bounded, hashed `contentFragments` with stable offsets for every
+    readable material before the full page text is discarded.
+15. Build a bounded signal-extraction dossier from readable materials, radar scope,
+    active rules and enabled filter references.
+16. Run `signalExtraction` through primary, same-model repair, backup, or a safe
+    no-signal fallback. Validate exact material/fragment handles, quotations,
+    numbers, dates and confidence before accepting signals.
+17. Give every inspected material one extraction decision and persist zero or more
+    `SourceSignal` candidates with `reviewStatus=candidate`.
+18. Attach `benchmarkReport` when the run matches a golden scenario.
+19. Persist the updated workspace snapshot.
+20. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
     page.
 
 ## Context Handoff and Execution Contract
@@ -150,20 +164,24 @@ workspace snapshot and in the run payload.
 | Provider search | Executable `queries[]`, provider config, upstream budget profile | `RadarRunOperation`, provider citations, raw results | Direct `providerInput`, `payloadBudget`, `messageCharCount`, operation status, provider usage, errors, warnings, and provenance. |
 | Triage and dedupe | Bounded `rawResults[]`, read budget, project/search context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, dimension scores, one terminal decision per raw result, coverage, and gaps. |
 | URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
-| Material output | Search/read payloads | `FoundMaterial`, `foundMaterialIds` | Workspace contains the material and run links it by id. |
+| Material output | Search/read payloads | `FoundMaterial`, `contentFragments`, `foundMaterialIds` | Workspace contains the material, bounded fragments retain offsets/hash, and run links it by id. |
+| Signal extraction | Readable materials, bounded radar context, extraction taxonomy | terminal material decisions, candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact evidence handles, grounding incidents and downstream-leak counters. |
 | Benchmark evaluation | Scenario, run, found materials | `benchmarkReport` | Recorded/live status, provider health, coverage, missing expectations, and noise hits. |
 
 ## Hard Output Boundaries
 
-RadarRun is a retrieval and trace pipeline. It may create `FoundMaterial`.
+RadarRun is a retrieval, evidence extraction and trace pipeline. It may create
+`FoundMaterial` and unreviewed `SourceSignal` candidates through the dedicated
+backend extraction owner.
 
 It must not create:
 
-- `SourceSignal`;
 - `PostCandidate`;
 - plan slots;
 - `DraftRun`;
-- final topic/fabula ownership for raw material.
+- final topic/fabula/audience/value/goal/platform/channel ownership for raw material
+  or signal candidates;
+- automatic signal approval.
 
 Those downstream artifacts belong to separate review, scoring, candidate assembly, and
 planning slices. A RadarRun may expose affinity context, but it must not silently turn
@@ -190,6 +208,10 @@ collapse it into a single "results" blob.
 | `operations[].providerInput` and `payloadBudget` | Direct current-call provider input and limits. | Prevents nested metadata from masquerading as budget proof. |
 | `operations[].messageCharCount` and `providerUsage` | Actual serialized message size and provider-reported usage when available. | Separates Glavred context size from provider-owned web-tool usage. |
 | `foundMaterialIds[]` | Materials created by this run. | Links run trace to stored source material. |
+| `FoundMaterial.contentFragments[]` | Bounded evidence text with offsets and hashes. | Lets extraction cite durable evidence without retaining or sending full pages. |
+| `run.signalExtraction` | Versioned extraction report and current revision. | Separates retrieval health from extraction health and records every material decision. |
+| `signalExtraction.providerAttempts[]` | Primary/repair/backup outcomes, budgets and usage. | Proves recovery and prevents a rejected payload from becoming a trusted signal. |
+| `sourceSignals[].evidenceRefs[]` | Exact material and fragment handles. | Makes every accepted signal resolvable to retained evidence. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
 
@@ -244,9 +266,11 @@ The trace should be read in this order:
    rejected, duplicated, invalid, or deferred.
 7. Found materials and read outcomes: what became readable upstream material and what
    remained metadata-only.
-8. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
+8. Evidence fragments, extraction decisions, signal candidates, provider attempts,
+   message budget and actual usage.
+9. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
    `failed`, or `inconclusive`.
-9. Raw JSON fallback when a legacy/minimal run lacks richer fields.
+10. Raw JSON fallback when a legacy/minimal run lacks richer fields.
 
 ## Known AS IS Limitations
 
@@ -270,8 +294,12 @@ These are current facts, not target architecture:
   and reuse belong to Slice `2.17.4.6.6`.
 - Query family wording can still be too similar across broad discovery, case/example,
   and benchmark/paper directions.
-- Signal extraction, signal scoring, and candidate assembly remain downstream and are
-  not owned by RadarRun.
+- Signal extraction is implemented, but project-specific utility scoring, human review
+  policy, candidate assembly and plan handoff remain downstream. A candidate signal is
+  not an approved editorial opportunity.
+- Successful extraction retry replaces the current signal revision. Stable IDs are
+  preserved only when type and exact evidence handles still describe the same signal;
+  semantically different model output receives new IDs instead of a false match.
 - The frontend trace page can display historical/minimal runs, but older runs may not
   contain all enriched fields.
 

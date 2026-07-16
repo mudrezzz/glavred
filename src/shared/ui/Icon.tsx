@@ -27,6 +27,8 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     spark:
       '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 16v4"/><path d="M21 18h-4"/>',
     close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    warning:
+      '<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     caret: '<path d="M4 16 L12 7 L20 16"/>'
   };
 

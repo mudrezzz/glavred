@@ -1,0 +1,56 @@
+{
+  "sliceId": "2.17.4.7",
+  "checkedAt": "2026-07-14",
+  "baselineRunId": "radar-run-industrial-ai-triage-v2-live-20260713",
+  "inconclusiveRunIds": [
+    "radar-run-ai-pattern-radar-industrial-cases-7"
+  ],
+  "acceptedRunId": "radar-run-ai-pattern-radar-industrial-cases-8",
+  "retrieval": {
+    "status": "succeeded",
+    "rawResultCount": 60,
+    "selectedReadCount": 2,
+    "readableMaterialCount": 2,
+    "distinctSelectedDomainCount": 2,
+    "metadataOnlyMaterialCount": 0,
+    "acceptedNoiseCount": 0,
+    "benchmarkStatus": "warning",
+    "benchmarkWarningReason": "limitationCritique skipped by maxExternalQueries=3"
+  },
+  "initialExtraction": {
+    "revision": 1,
+    "status": "succeeded",
+    "materialCount": 2,
+    "terminalDecisionCount": 2,
+    "signalCount": 3,
+    "unresolvedEvidenceRefCount": 0,
+    "acceptedGroundingViolationCount": 0,
+    "messageCharCount": 12496,
+    "messageCharLimit": 16000,
+    "inputTokens": 2848,
+    "outputTokens": 895,
+    "totalTokens": 3743
+  },
+  "retry": {
+    "revision": 2,
+    "status": "succeeded",
+    "searchOperationCountBefore": 3,
+    "searchOperationCountAfter": 3,
+    "readOperationCountBefore": 2,
+    "readOperationCountAfter": 2,
+    "signalCount": 3,
+    "duplicateSignalIdCount": 0,
+    "primaryStatus": "failed",
+    "primaryReason": "number-or-date-not-grounded:40",
+    "repairStatus": "accepted",
+    "primaryMessageCharCount": 12496,
+    "repairMessageCharCount": 12647,
+    "primaryTotalTokens": 4106,
+    "repairTotalTokens": 4078
+  },
+  "downstreamArtifacts": {
+    "postCandidates": 0,
+    "planSlots": 0,
+    "draftRuns": 0
+  }
+}

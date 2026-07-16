@@ -6,7 +6,11 @@ from pydantic import BaseModel, Field
 from backend.app.infrastructure.openrouter_config import OpenRouterConfigValidator
 from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterWebSearchAdapter
 from backend.app.infrastructure.public_url_reader import HttpxPublicUrlReader
+from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepository
+from backend.app.application.ai_run_service import AiRunService
 from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
+from backend.app.upstream.application.signal_extraction_service import SignalExtractionService
+from backend.app.infrastructure.openrouter_signal_extraction_adapter import OpenRouterSignalExtractionAdapter
 
 router = APIRouter(prefix="/api/radar-runs")
 
@@ -20,6 +24,23 @@ class RadarRunExternalResponse(BaseModel):
     radar: dict[str, Any]
     run: dict[str, Any]
     found_materials: list[dict[str, Any]] = Field(alias="foundMaterials")
+    source_signals: list[dict[str, Any]] = Field(default_factory=list, alias="sourceSignals")
+    signal_extraction_report: dict[str, Any] = Field(default_factory=dict, alias="signalExtractionReport")
+
+    model_config = {"populate_by_name": True}
+
+
+class SignalExtractionRetryRequest(BaseModel):
+    workspace: dict[str, Any]
+    force_retry: bool = Field(default=False, alias="forceRetry")
+
+    model_config = {"populate_by_name": True}
+
+
+class SignalExtractionRetryResponse(BaseModel):
+    run: dict[str, Any]
+    source_signals: list[dict[str, Any]] = Field(alias="sourceSignals")
+    signal_extraction_report: dict[str, Any] = Field(alias="signalExtractionReport")
 
     model_config = {"populate_by_name": True}
 
@@ -27,11 +48,19 @@ class RadarRunExternalResponse(BaseModel):
 def create_upstream_radar_external_run_service(request: Request) -> UpstreamRadarExternalRunService:
     web_search_adapter = getattr(request.app.state, "openrouter_web_search_adapter", None) or OpenRouterWebSearchAdapter()
     url_reader = getattr(request.app.state, "public_url_reader", None) or HttpxPublicUrlReader()
+    settings = request.app.state.settings
+    signal_provider = getattr(request.app.state, "signal_extraction_provider", None) or OpenRouterSignalExtractionAdapter(settings=settings)
+    signal_service = SignalExtractionService(
+        settings=settings,
+        provider=signal_provider,
+        ai_run_service=AiRunService(repository=SqliteAiRunRepository(settings.ai_run_audit_db_path)),
+    )
     return UpstreamRadarExternalRunService(
-        settings=request.app.state.settings,
+        settings=settings,
         web_search_adapter=web_search_adapter,
         url_reader=url_reader,
         openrouter_validator=OpenRouterConfigValidator(),
+        signal_extraction_service=signal_service,
     )
 
 
@@ -48,4 +77,27 @@ def run_external_radar(
         radar=result["radar"],
         run=result["run"],
         foundMaterials=result["foundMaterials"],
+        sourceSignals=result["sourceSignals"],
+        signalExtractionReport=result["signalExtractionReport"],
+    )
+
+
+@router.post("/{run_id}/signal-extraction", response_model=SignalExtractionRetryResponse, response_model_by_alias=True)
+def retry_signal_extraction(
+    run_id: str,
+    payload: SignalExtractionRetryRequest,
+    service: UpstreamRadarExternalRunService = Depends(create_upstream_radar_external_run_service),
+) -> SignalExtractionRetryResponse:
+    try:
+        result = service.retry_signal_extraction(
+            workspace=payload.workspace,
+            run_id=run_id,
+            force_retry=payload.force_retry,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail={"message": str(exc)}) from exc
+    return SignalExtractionRetryResponse(
+        run=result["run"],
+        sourceSignals=result["sourceSignals"],
+        signalExtractionReport=result["signalExtractionReport"],
     )

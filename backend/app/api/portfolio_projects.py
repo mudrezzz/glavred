@@ -14,6 +14,7 @@ from backend.app.api.portfolio_contracts import (
 from backend.app.api.portfolio_dependencies import current_user, portfolio_service
 from backend.app.application.portfolio_service import AccessDeniedError, PortfolioService
 from backend.app.domain.portfolio import UserAccount
+from backend.app.portfolio.application.workspace_integrity import WorkspaceIntegrityError
 
 router = APIRouter()
 
@@ -91,6 +92,8 @@ def workspace(
         snapshot = service.get_workspace(user, project_id)
     except AccessDeniedError as exc:
         raise HTTPException(status_code=403, detail="project-access-denied") from exc
+    except WorkspaceIntegrityError as exc:
+        raise HTTPException(status_code=409, detail=exc.to_payload()) from exc
     return workspace_response(snapshot).model_dump(by_alias=True)
 
 
@@ -105,4 +108,6 @@ def save_workspace(
         snapshot = service.save_workspace(user, project_id, payload.workspace)
     except AccessDeniedError as exc:
         raise HTTPException(status_code=403, detail="project-access-denied") from exc
+    except WorkspaceIntegrityError as exc:
+        raise HTTPException(status_code=422, detail=exc.to_payload()) from exc
     return workspace_response(snapshot).model_dump(by_alias=True)

@@ -67,6 +67,7 @@ PROCEDURAL_PACKAGE_REPAIR_SLICES = {
 
 RAW_PROVIDER_ALLOWED_PREFIXES = (
     "backend/app/infrastructure/openrouter_json_adapter.py",
+    "backend/app/infrastructure/openrouter_signal_extraction_adapter.py",
     "backend/app/drafting/application/operations/json_step_adapter.py",
 )
 

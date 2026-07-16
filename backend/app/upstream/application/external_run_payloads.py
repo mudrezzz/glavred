@@ -12,11 +12,13 @@ from typing import Any
 
 from backend.app.application.public_evidence_ports import PublicUrlReadResult
 from backend.app.upstream.application.search_result_normalization import SearchResultNormalizer
+from backend.app.upstream.application.signal_extraction_fragments import FoundMaterialFragmentPolicy
 
 
 class UpstreamRadarPayloadFactory:
     def __init__(self) -> None:
         self._normalizer = SearchResultNormalizer()
+        self._fragments = FoundMaterialFragmentPolicy()
 
     def raw_result(self, run_id: str, query: dict[str, Any], citation: Any, index: int) -> dict[str, Any]:
         original_url = str(citation.url or "")
@@ -141,6 +143,11 @@ class UpstreamRadarPayloadFactory:
             "warnings": values["warnings"],
             "provenanceLabel": values["provenance"],
         }
+        if values["status"] == "found":
+            payload["contentFragments"] = self._fragments.from_read_text(
+                material_id=str(values["material_id"]),
+                text=text,
+            )
         if values.get("discovery_trace"):
             payload["discoveryTrace"] = values["discovery_trace"]
         return payload

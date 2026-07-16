@@ -226,6 +226,19 @@ During changes:
 - Prefer minimal, localized changes.
 - Preserve existing behavior unless the task explicitly changes it.
 
+## Workspace text integrity
+
+Never perform a full workspace `GET -> PUT` roundtrip with PowerShell
+`Invoke-RestMethod`. On Windows that path can silently reinterpret UTF-8 response
+text before saving it again. Use `python scripts/workspace_utf8_client.py` or an
+application-owned seed/recovery command and verify the semantic hash after the
+roundtrip. Do not print complete workspace payloads or damaged text in diagnostics.
+
+Changes to portfolio persistence or a persisted user-facing workspace require at
+least one browser acceptance scenario against real FastAPI, authenticated session,
+and temporary SQLite. A visual test that received `401`, CORS failure, unavailable
+backend, or `localFallback` is not proof of backend workspace behavior.
+
 ## Complex pipeline slice guardrails
 
 Complex DraftRun, RadarRun, upstream search, provider-input, trace, quality/fidelity,

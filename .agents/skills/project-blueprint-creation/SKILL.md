@@ -46,6 +46,9 @@ For the blueprint checklist, read `references/blueprint-checklist.md`.
 ## Non-Negotiable Guards
 
 - Never patch Cyrillic demo content directly into SQLite through inline shell commands.
+- Never roundtrip a complete workspace through PowerShell `Invoke-RestMethod`; use
+  `python scripts/workspace_utf8_client.py` or an application-owned migration and
+  verify its semantic hash.
 - Never trust mojibake terminal output as proof of corrupted data; verify with UTF-8-aware reads.
 - Do not set canonical audience on `PublicationChannel`.
 - Do not rely only on `EditorialModel.author/audience/goals`; UI-visible Publisher blocks and DraftRun context must be backed by `editorialRules`.

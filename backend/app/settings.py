@@ -53,6 +53,7 @@ class BackendSettings(BaseSettings):
     openrouter_web_tools_enabled: bool = Field(default=False, validation_alias="OPENROUTER_WEB_TOOLS_ENABLED")
     openrouter_web_search_model: str = Field(default="", validation_alias="OPENROUTER_WEB_SEARCH_MODEL")
     openrouter_web_search_max_results: int = Field(default=5, validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS")
+    upstream_signal_extraction_model: str = Field(default="", validation_alias="UPSTREAM_SIGNAL_EXTRACTION_MODEL")
 
     @property
     def has_openrouter_api_key(self) -> bool:
@@ -72,6 +73,14 @@ class BackendSettings(BaseSettings):
     def openrouter_backup_model_or_none(self) -> str | None:
         value = self.openrouter_backup_model.strip()
         return value or None
+
+    @property
+    def upstream_signal_extraction_model_or_default(self) -> str:
+        return (
+            self.upstream_signal_extraction_model.strip()
+            or self.draft_review_model.strip()
+            or self.openrouter_default_model.strip()
+        )
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -122,6 +122,7 @@ export function signalFilterEvaluationLabel(status: SignalFilterEvaluationStatus
 }
 
 export function signalReviewStatusLabel(status: SignalReviewStatus | undefined): string {
+  if (status === 'candidate') return 'Кандидат';
   if (status === 'approved') return 'Утвержден';
   if (status === 'rejected') return 'Отклонен';
   if (status === 'archived') return 'В архиве';

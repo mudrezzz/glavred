@@ -9,6 +9,7 @@ class AiRunCapability(StrEnum):
     VISUAL_GENERATION = "visualGeneration"
     MEME_SEARCH = "memeSearch"
     DOCUMENT_IMPORT = "documentImport"
+    SIGNAL_EXTRACTION = "signalExtraction"
 
 
 class AiRunProvider(StrEnum):

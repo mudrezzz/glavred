@@ -1719,6 +1719,16 @@ const UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH =
   "backend/app/upstream/application/open_web_query_input.py";
 const UPSTREAM_TRIAGE_STRESS_TEST_PATH =
   "backend/tests/test_upstream_search_result_triage_v2.py";
+const UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH =
+  "backend/app/upstream/application/signal_extraction_service.py";
+const UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH =
+  "backend/app/upstream/application/signal_extraction_context.py";
+const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH =
+  "backend/app/upstream/application/signal_extraction_attempts.py";
+const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH =
+  "backend/app/upstream/application/signal_extraction_attempt_request.py";
+const UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH =
+  "backend/tests/test_upstream_signal_extraction.py";
 const SHARED_LLM_OPERATION_OWNER_PATHS = [
   SHARED_LLM_OPERATION_CONTRACT_PATH,
   "backend/app/shared/llm_operations/statuses.py",
@@ -2139,11 +2149,13 @@ const LLM_OPERATION_INVENTORY_IDS = [
   "humanCommentRevision",
   "humanCommentRevisionQualityCheck",
   "openWebQuery",
+  "signalExtraction",
 ];
 
 const RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES = new Set([
   "backend/app/shared/llm_operations/contracts.py",
   "backend/app/shared/llm_operations/inventory.py",
+  "backend/app/infrastructure/openrouter_signal_extraction_adapter.py",
 ]);
 
 const LEGACY_FLAT_DRAFT_DOMAIN_FILES = new Set([
@@ -3495,6 +3507,11 @@ const upstreamProviderInputGateSource = readText(UPSTREAM_PROVIDER_INPUT_GATE_PA
 const upstreamWebSearchOperationSource = readText(UPSTREAM_WEB_SEARCH_OPERATION_PATH);
 const upstreamWebSearchInputOwnerSource = readText(UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH);
 const upstreamTriageStressTestSource = readText(UPSTREAM_TRIAGE_STRESS_TEST_PATH);
+const upstreamSignalExtractionServiceSource = readText(UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH);
+const upstreamSignalExtractionDossierSource = readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH);
+const upstreamSignalExtractionAttemptSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH);
+const upstreamSignalExtractionAttemptRequestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH);
+const upstreamSignalExtractionTestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH);
 for (const fragment of [
   "class UpstreamProviderBudgetProfileRegistry",
   "max_provider_input_chars",
@@ -3541,6 +3558,42 @@ assert(
   upstreamTriageStressTestSource.includes("100") &&
     upstreamTriageStressTestSource.includes("test_triage_stress"),
   `${UPSTREAM_TRIAGE_STRESS_TEST_PATH} must prove bounded triage behavior with 100 raw results.`
+);
+for (const fragment of [
+  "class SignalExtractionDossierFactory",
+  "neverSendToProvider",
+  "runtimeMigrated",
+  "contentFragments",
+]) {
+  assert(
+    upstreamSignalExtractionDossierSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH} is missing signal extraction dossier fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "UpstreamProviderInputBudgetGate",
+  "ProviderMessageBudgetGuard",
+  "signalExtraction",
+  "max_output_tokens",
+]) {
+  assert(
+    upstreamSignalExtractionAttemptRequestSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH} is missing governed signal extraction request fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "create_failed_run",
+  "SignalExtractionAttemptRequestBuilder",
+]) {
+  assert(
+    upstreamSignalExtractionAttemptSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH} is missing governed signal extraction fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamSignalExtractionTestSource.includes("test_standard_profile_bounds_materials_fragments_input_and_output") &&
+    upstreamSignalExtractionTestSource.includes("test_recorded_golden_signal_extraction_benchmark_passes_all_cases"),
+  `${UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH} must prove bounded and golden signal extraction behavior.`
 );
 
 for (const backendFile of backendPythonFiles) {
@@ -4293,6 +4346,36 @@ for (const fragment of requiredSaoFragments) {
     `SAO is missing required React architecture fragment: ${fragment}`
   );
 }
+
+const workspaceIntegritySource = readText("backend/app/portfolio/application/workspace_integrity.py");
+const portfolioServiceSource = readText("backend/app/application/portfolio_service.py");
+const connectedSignalsSmokeSource = readText("scripts/connected-signals-smoke.mjs");
+const packageSource = readText("package.json");
+const agentSource = readText("AGENTS.md");
+
+assert(
+  workspaceIntegritySource.includes("class WorkspaceTextIntegrityInspector") &&
+    workspaceIntegritySource.includes("class WorkspaceIntegrityPolicy"),
+  "Portfolio workspace text-integrity owners are missing."
+);
+assert(
+  portfolioServiceSource.includes("ensure_readable") && portfolioServiceSource.includes("ensure_saveable"),
+  "PortfolioService must apply workspace integrity on both read and save."
+);
+assert(
+  connectedSignalsSmokeSource.includes("/api/users/me") &&
+    connectedSignalsSmokeSource.includes("local fallback") &&
+    connectedSignalsSmokeSource.includes("project-ai-design-patterns"),
+  "Connected Signals smoke must prove authenticated backend workspace behavior."
+);
+assert(
+  packageSource.includes('"test:visual": "node scripts/visual-smoke.mjs && node scripts/connected-signals-smoke.mjs"'),
+  "Visual tests must include the connected authenticated Signals scenario."
+);
+assert(
+  agentSource.includes("workspace_utf8_client.py") && agentSource.includes("Invoke-RestMethod"),
+  "AGENTS.md must keep the UTF-8-safe full-workspace roundtrip rule."
+);
 
 if (failures.length > 0) {
   if (warnings.length > 0) {

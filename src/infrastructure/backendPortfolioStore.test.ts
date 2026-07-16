@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createDemoPortfolio } from '../fixtures/demoPortfolio';
 import {
   BackendPortfolioAuthRequiredError,
+  BackendPortfolioIntegrityError,
   BackendPortfolioStore,
   BackendPortfolioUnavailableError
 } from './backendPortfolioStore';
@@ -110,6 +112,39 @@ describe('BackendPortfolioStore', () => {
     );
   });
 
+  it('uses the browser loopback hostname so the session cookie remains same-site', async () => {
+    vi.stubGlobal('location', { hostname: '127.0.0.1' });
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          user: {
+            id: 'user-founder-editor',
+            displayName: 'Founder',
+            email: 'founder@example.test',
+            status: 'active',
+            createdAt: '2026-06-30T00:00:00Z'
+          }
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse({ projects: [] }));
+    vi.stubGlobal('fetch', fetcher);
+
+    await new BackendPortfolioStore().login('founder@example.test', 'glavred-demo');
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      'http://127.0.0.1:8000/api/auth/login',
+      expect.objectContaining({ credentials: 'include' })
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'http://127.0.0.1:8000/api/users/me',
+      expect.objectContaining({ credentials: 'include' })
+    );
+  });
+
   it('maps 401 to auth required', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({}, 401)));
 
@@ -120,5 +155,35 @@ describe('BackendPortfolioStore', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed')));
 
     await expect(new BackendPortfolioStore().load()).rejects.toBeInstanceOf(BackendPortfolioUnavailableError);
+  });
+
+  it('keeps workspace integrity failures distinct from backend unavailability', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            detail: {
+              code: 'workspace-text-integrity-failed',
+              operation: 'save',
+              projectId: 'project-ai-design-patterns',
+              snapshotId: null,
+              blockingIssueCount: 1
+            }
+          },
+          422
+        )
+      )
+    );
+
+    const promise = new BackendPortfolioStore().save({
+      ...createDemoPortfolio(),
+      activeProjectId: 'project-ai-design-patterns'
+    });
+
+    await expect(promise).rejects.toBeInstanceOf(BackendPortfolioIntegrityError);
+    await expect(promise).rejects.toMatchObject({
+      diagnostic: expect.objectContaining({ operation: 'save', blockingIssueCount: 1 })
+    });
   });
 });

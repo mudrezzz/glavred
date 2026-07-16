@@ -81,6 +81,14 @@ brief, but it is not the first discovery layer for what the author should write 
 
 The next SaaS-ready model wraps that loop in a portfolio boundary:
 
+Workspace snapshot persistence has a text-integrity boundary defined by
+`docs/adr/2026-07-16-workspace-text-integrity-and-connected-ui-acceptance.md`.
+`WorkspaceTextIntegrityInspector` checks the latest snapshot before it reaches the
+frontend and checks new payloads before persistence. It reports only paths, reason
+codes, lengths, and hashes. Corrupt backend data is a blocking integrity state, not a
+network failure and not a reason to silently render the local demo. Complete
+workspace roundtrips use the UTF-8-safe Python client and semantic hash verification.
+
 `UserAccount -> BlogProject -> PublicationChannels -> Project-scoped EditorialSystem -> PlatformVariants -> Learning`
 
 - `UserAccount`: the future authenticated principal. It may own or access several
@@ -271,16 +279,19 @@ approves editorial artifacts automatically.
 - `SearchCampaignTrace`: provider-free explanation of the radar's query intents,
   query families, evidence types, source eligibility, budget skips, and the boundary
   that raw material does not own topic/fabula decisions.
-- `RadarRunTrace`: planned read-model page for one run id. It should render the full
-  upstream search campaign and benchmark verdict without turning `RadarCard` into a
-  diagnostics god component.
+- `RadarRunTrace`: implemented read-model page for one run id. It renders the search
+  campaign, triage, read outcomes, evidence fragments, signal extraction attempts,
+  budgets, material decisions, signal candidates and benchmark verdict without
+  turning `RadarCard` into a diagnostics god component.
 - `FoundMaterial`: retrieval output from an internal or external source, with source
-  and run provenance. It is not yet a reviewed source signal and does not own topic or
-  fabula.
-- `SignalExtraction` and `SignalScoring`: application-layer policies that turn found
-  material into reviewed source-signal candidates and explain novelty, source
+  and run provenance plus bounded hashed evidence fragments. It is not yet a reviewed
+  source signal and does not own topic or fabula.
+- `SignalExtraction`: implemented backend application policy that builds a bounded
+  dossier, extracts zero or more evidence-backed signal candidates, validates exact
+  material/fragment grounding, and records a terminal decision for every material.
+- `SignalScoring`: the next application policy. It will explain novelty, source
   credibility, author fit, audience value, positioning fit, topic affinity, evidence
-  strength, and risk.
+  strength and risk without changing source evidence.
 - Slice 1.5.1 correction: `EditorialRadar` owns atomic search rules and optional
   search sources. `SourceSignal` remains raw material with radar provenance, date,
   finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
@@ -2171,11 +2182,13 @@ is unavailable.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
-- Upstream search adapters should populate `RadarRun`, `searchPlan`, raw results,
-  selected/rejected read decisions, and `FoundMaterial` before promoting anything
-  into `SourceSignal`. OpenRouter search, URL reading, future RSS, social, document,
-  API, and MCP adapters belong in infrastructure; signal extraction, scoring, and
-  candidate assembly belong in application services.
+- Upstream search adapters populate `RadarRun`, `searchPlan`, raw results,
+  selected/rejected read decisions, `FoundMaterial` and retained fragments before the
+  extraction application service creates candidate `SourceSignal`. OpenRouter search,
+  extraction, URL reading, future RSS, social, document, API and MCP adapters belong
+  in infrastructure; extraction orchestration, grounding, scoring and candidate
+  assembly belong in application services. Extraction candidates remain unapproved
+  until the scoring/review lifecycle.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
 - Context chat can open draft flows for structured entities, but should not bypass

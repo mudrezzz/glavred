@@ -2,13 +2,14 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import type { PortfolioState } from '../domain/portfolio/types';
 import {
   BackendPortfolioAuthRequiredError,
+  BackendPortfolioIntegrityError,
   BackendPortfolioStore,
   type BackendProjectCreateInput,
   type BackendProjectUpdateInput
 } from '../infrastructure/backendPortfolioStore';
 import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
 
-export type PortfolioBackendStatus = 'checking' | 'authenticated' | 'loginRequired' | 'localFallback';
+export type PortfolioBackendStatus = 'checking' | 'authenticated' | 'loginRequired' | 'localFallback' | 'integrityError';
 
 const backendStore = new BackendPortfolioStore();
 
@@ -25,6 +26,7 @@ export function useBackendPortfolioBridge({
 }) {
   const [backendStatus, setBackendStatus] = useState<PortfolioBackendStatus>('checking');
   const [authError, setAuthError] = useState('');
+  const [integrityError, setIntegrityError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +40,11 @@ export function useBackendPortfolioBridge({
       })
       .catch((error) => {
         if (cancelled) return;
+        if (error instanceof BackendPortfolioIntegrityError) {
+          setBackendStatus('integrityError');
+          setIntegrityError(integrityMessage(error));
+          return;
+        }
         setBackendStatus(error instanceof BackendPortfolioAuthRequiredError ? 'loginRequired' : 'localFallback');
       });
     return () => {
@@ -47,7 +54,12 @@ export function useBackendPortfolioBridge({
 
   useEffect(() => {
     if (backendStatus !== 'authenticated') return;
-    backendStore.save(portfolio).catch(() => {
+    backendStore.save(portfolio).catch((error) => {
+      if (error instanceof BackendPortfolioIntegrityError) {
+        setBackendStatus('integrityError');
+        setIntegrityError(integrityMessage(error));
+        return;
+      }
       setBackendStatus('localFallback');
       setToast('Backend недоступен, изменения сохранены локально');
     });
@@ -58,11 +70,17 @@ export function useBackendPortfolioBridge({
     try {
       setPortfolio(await backendStore.login(email, password));
       setBackendStatus('authenticated');
+      setIntegrityError('');
       setToast('Вход выполнен');
     } catch (error) {
       if (error instanceof BackendPortfolioAuthRequiredError) {
         setBackendStatus('loginRequired');
         setAuthError('Неверный email или пароль');
+        return;
+      }
+      if (error instanceof BackendPortfolioIntegrityError) {
+        setBackendStatus('integrityError');
+        setIntegrityError(integrityMessage(error));
         return;
       }
       setBackendStatus('localFallback');
@@ -79,7 +97,17 @@ export function useBackendPortfolioBridge({
 
   function reloadBackendPortfolio(): boolean {
     if (backendStatus !== 'authenticated') return false;
-    backendStore.load().then(setPortfolio).catch(() => setBackendStatus('localFallback'));
+    backendStore.load().then((loaded) => {
+      setPortfolio(loaded);
+      setIntegrityError('');
+    }).catch((error) => {
+      if (error instanceof BackendPortfolioIntegrityError) {
+        setBackendStatus('integrityError');
+        setIntegrityError(integrityMessage(error));
+        return;
+      }
+      setBackendStatus('localFallback');
+    });
     setToast('Backend-портфель перезагружен');
     return true;
   }
@@ -112,5 +140,10 @@ export function useBackendPortfolioBridge({
     }
   }
 
-  return { authError, backendStatus, createProject, login, logout, reloadBackendPortfolio, updateProject };
+  return { authError, backendStatus, createProject, integrityError, login, logout, reloadBackendPortfolio, updateProject };
+}
+
+function integrityMessage(error: BackendPortfolioIntegrityError): string {
+  const snapshot = error.diagnostic.snapshotId ? ` Снимок: ${error.diagnostic.snapshotId}.` : '';
+  return `Проверка данных проекта обнаружила поврежденный текст. Автосохранение остановлено.${snapshot}`;
 }

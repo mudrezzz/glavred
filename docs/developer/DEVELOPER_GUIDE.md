@@ -28,6 +28,23 @@ adds the project dashboard and lifecycle UX. Frontend runtime still keeps
 `LocalPortfolioStore` as fallback, but first tries `BackendPortfolioStore`:
 authenticated sessions load backend projects/workspaces, `401` shows the login
 panel, and network failure keeps the local demo portfolio.
+
+Workspace integrity is stricter than network fallback. A stored workspace with
+probable mojibake returns controlled `409`; an unsafe write returns `422` with
+`workspace-text-integrity-failed`. The frontend stops autosave and shows a blocking
+integrity state. Do not use PowerShell `Invoke-RestMethod` for a complete workspace
+`GET -> PUT` cycle. Use:
+
+```bash
+python scripts/workspace_utf8_client.py --project-id project-ai-design-patterns --cycles 10
+python scripts/check_workspace_integrity.py --fail-on-error
+```
+
+The client reads credentials from `.env`, preserves UTF-8, and compares semantic
+hashes without printing the workspace or secrets. For a damaged local database, run
+`python scripts/recover_workspace_database.py --project-id project-ai-design-patterns`
+first in dry-run mode, preserve its backup, and add `--apply` only after the report
+confirms that clean projects remain untouched.
 Legacy `glavred.workspace.v1` storage is migrated into one default project; fresh
 local reset seeds two users and three project containers. After login, users land on
 the project dashboard; they enter a project cabinet explicitly through `Открыть
@@ -76,7 +93,9 @@ normalization in `src/domain/upstream-search`, local deterministic orchestration
 through `src/infrastructure/radarRunClient.ts` and falls back to the local contract
 run if the backend is unavailable. The backend runner may create `RadarRun`,
 `searchPlan`, raw results, selected/rejected URL-read decisions, and `FoundMaterial`,
-but it must not create `SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
+then pass readable fragments to the dedicated extraction owner. Extraction may create
+only unreviewed `SourceSignal` candidates with exact evidence handles; it must not
+approve them or create `PostCandidate`, plan slots, or DraftRuns.
 `searchPlan` is now an enriched provider-free campaign payload: old `queries[]` and
 `skippedIntents[]` remain compatible, while `intents[]`, `sourceStrategy`,
 `trace`, and `skippedIntentDetails[]` explain query families, evidence coverage,
@@ -725,11 +744,41 @@ Run browser visual smoke checks for operational UI guardrails:
 npm run test:visual
 ```
 
+`test:visual` includes `connected-signals-smoke.mjs`: real FastAPI, temporary SQLite,
+dev-password login, `/api/users/me = 200`, and five viewport widths. The scenario
+fails on CORS errors, backend unavailability, or `localFallback`; fixture-only checks
+remain useful but do not prove persisted workspace behavior.
+
 Run structural design-system checks for cabinet layout contracts:
 
 ```bash
 npm run test:design
 ```
+
+Diagnose a saved RadarRun signal-extraction revision:
+
+```bash
+python scripts/analyze_radar_signal_extraction.py \
+  --project-id project-ai-design-patterns \
+  --run-id <RadarRun ID> \
+  --format markdown
+```
+
+Set `UPSTREAM_SIGNAL_EXTRACTION_MODEL` to select the extraction model. When empty,
+the backend falls back to `DRAFT_REVIEW_MODEL`, then `OPENROUTER_DEFAULT_MODEL`.
+`OPENROUTER_BACKUP_MODEL` remains the backup attempt. Never print `.env` secrets in
+diagnostics.
+
+The extraction operation receives only radar scope, active rules, enabled filter
+references, material metadata and bounded `contentFragments`. It must not receive a
+full workspace, full page text, topics, fabulas, content plan, publication history or
+old operation envelopes. Primary, repair and backup each need a direct current-call
+budget plus the final serialized-message guard.
+
+`POST /api/radar-runs/{runId}/signal-extraction` reuses persisted fragments. It must
+not execute new search or URL-read operations. A successful revision replaces only
+signals from that run; a failed retry preserves the previous successful revision.
+Retrieval and extraction statuses are independent.
 
 Refresh wiki screenshots:
 

@@ -1,6 +1,8 @@
 import { getActiveWorkspace } from '../application/portfolioService';
 import type { BlogProject, PortfolioState } from '../domain/portfolio/types';
-import type { FoundMaterial, RadarDefinition, RadarRun, SourceHandle, WorkspaceState } from '../domain/editorialWorkspace';
+import type { FoundMaterial, RadarDefinition, RadarRun, SourceHandle, SourceSignal, WorkspaceState } from '../domain/editorialWorkspace';
+import { applyRadarRunWorkspaceResult } from '../app/radarRunWorkspacePatches';
+import { retryRadarSignalExtraction } from './radarRunClient';
 import { BackendPortfolioStore } from './backendPortfolioStore';
 import { LocalPortfolioStore } from './localPortfolioStore';
 
@@ -28,6 +30,7 @@ export type RadarRunTraceBundle = {
   run: RadarRun;
   sourceHandles: SourceHandle[];
   foundMaterials: FoundMaterial[];
+  sourceSignals: SourceSignal[];
   benchmarkReport: RadarBenchmarkTraceReport | null;
   source: 'local' | 'backend';
 };
@@ -95,11 +98,32 @@ function findRadarRunTrace(
       run,
       sourceHandles,
       foundMaterials,
+      sourceSignals: workspace.sourceSignals.filter((signal) => signal.radarRunId === run.id),
       benchmarkReport: extractBenchmarkReport(run),
       source
     };
   }
   return null;
+}
+
+export async function retryRadarRunSignalExtraction(bundle: RadarRunTraceBundle): Promise<RadarRunTraceBundle> {
+  const result = await retryRadarSignalExtraction(bundle.workspace, bundle.run.id, true);
+  const workspace = applyRadarRunWorkspaceResult(bundle.workspace, result);
+  const portfolio = await (bundle.source === 'backend' ? backendPortfolioLoader() : localPortfolioLoader());
+  const nextPortfolio: PortfolioState = {
+    ...portfolio,
+    activeProjectId: bundle.project.id,
+    workspacesByProjectId: { ...portfolio.workspacesByProjectId, [bundle.project.id]: workspace },
+    updatedAt: new Date().toISOString()
+  };
+  if (bundle.source === 'backend') await backendStore.save(nextPortfolio);
+  else localStore.save(nextPortfolio);
+  return {
+    ...bundle,
+    workspace,
+    run: result.run,
+    sourceSignals: workspace.sourceSignals.filter((signal) => signal.radarRunId === result.run.id)
+  };
 }
 
 function resolveSourceHandles(workspace: WorkspaceState, radar: RadarDefinition, run: RadarRun): SourceHandle[] {

@@ -51,6 +51,13 @@ independent blog project containers. With FastAPI running, the frontend uses
 dev-password backend login and project-scoped SQLite workspace snapshots. Without
 FastAPI, the same shell falls back to local browser storage.
 
+The connected Signals acceptance test is `npm run test:signals:connected`. It starts
+real FastAPI with temporary SQLite, logs in as `founder@example.test`, verifies the
+backend session, injects long valid Russian content, rejects a damaged write, and
+checks `390/1180/1440/1904/2048` pixel widths. A fallback-only page is a failure.
+Full workspace refreshes use `scripts/workspace_utf8_client.py`; PowerShell
+read-modify-write is intentionally not part of the demo workflow.
+
 The default post-login entry point is the `Project Dashboard`: choose a blog card,
 click `Открыть кабинет`, or create/rename/archive a project. The lower-left sidebar
 identity block remains inside an opened project for quick switching and has `Все
@@ -102,6 +109,22 @@ The seeded fixtures are intentionally sanitized. They are derived from real work
 materials supplied by the product owner, but the source PDFs/resume and private
 details are not committed. The public demo keeps only reusable editorial signals,
 source descriptions, author-memory notes, and benchmark expectations.
+
+The live upstream demo uses `Опытный цех «Сборочная»` and radar
+`Industrial AI cases`. Open `Сигналы -> Радары`, run that radar, then inspect:
+
+- `Найденные сигналы` for unreviewed evidence-backed candidates;
+- `Открыть трассу` for search, reading, retained fragments, extraction decisions,
+  provider recovery, budgets and actual usage;
+- `Повторить извлечение` to create a new extraction revision from saved fragments
+  without repeating search or URL reads.
+
+The accepted Slice `2.17.4.7` proof is
+`radar-run-ai-pattern-radar-industrial-cases-8`. It produced two readable materials
+and three candidate signals with exact evidence refs. The benchmark remains warning
+only because the current three-query budget skips `limitationCritique`. Signal
+project-utility scoring and full review lifecycle are intentionally deferred to
+`2.17.4.7.1`.
 
 New and reworked benchmark projects should be created through
 `$project-blueprint-creation`. The workflow starts from an approved project blueprint,

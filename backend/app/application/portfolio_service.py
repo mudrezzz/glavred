@@ -4,6 +4,7 @@ from typing import Any
 
 from backend.app.domain.portfolio import BlogProject, ProjectMembership, UserAccount, WorkspaceSnapshot
 from backend.app.infrastructure.sqlite_portfolio_repository import SQLitePortfolioRepository
+from backend.app.portfolio.application.workspace_integrity import WorkspaceIntegrityPolicy
 
 
 class AuthError(Exception):
@@ -15,8 +16,13 @@ class AccessDeniedError(Exception):
 
 
 class PortfolioService:
-    def __init__(self, repository: SQLitePortfolioRepository) -> None:
+    def __init__(
+        self,
+        repository: SQLitePortfolioRepository,
+        integrity_policy: WorkspaceIntegrityPolicy | None = None,
+    ) -> None:
         self._repository = repository
+        self._integrity_policy = integrity_policy or WorkspaceIntegrityPolicy()
         self._repository.ensure_seeded()
 
     def list_projects(self, user: UserAccount, *, include_archived: bool = False) -> list[tuple[BlogProject, ProjectMembership]]:
@@ -33,10 +39,12 @@ class PortfolioService:
         snapshot = self._repository.latest_workspace_snapshot(project_id)
         if snapshot is None:
             return self._repository.save_workspace_snapshot(project_id, {})
+        self._integrity_policy.ensure_readable(snapshot.payload, project_id=project_id, snapshot_id=snapshot.id)
         return snapshot
 
     def save_workspace(self, user: UserAccount, project_id: str, payload: dict[str, Any]) -> WorkspaceSnapshot:
         self.get_project(user, project_id)
+        self._integrity_policy.ensure_saveable(payload, project_id=project_id)
         return self._repository.save_workspace_snapshot(project_id, payload)
 
     def create_project(

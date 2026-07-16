@@ -1,0 +1,17 @@
+{
+  "sliceId": "2.17.4.7",
+  "purpose": "retrieval baseline before FoundMaterial to SourceSignal extraction",
+  "sourceRunId": "radar-run-industrial-ai-triage-v2-live-20260713",
+  "sourceEvidence": "docs/evidence/radar-runs/2.17.4.6.2/COMPARISON.json",
+  "metrics": {
+    "rawResultCount": 52,
+    "selectedReadCount": 2,
+    "readableMaterialCount": 2,
+    "metadataOnlyMaterialCount": 0,
+    "distinctSelectedDomainCount": 2,
+    "acceptedNoiseCount": 0,
+    "benchmarkStatus": "warning",
+    "traceComplete": true,
+    "sourceSignalCount": 0
+  }
+}

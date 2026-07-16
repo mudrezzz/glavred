@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchRadarRunTrace, type RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
+import { fetchRadarRunTrace, retryRadarRunSignalExtraction, type RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
 import { Icon } from '../../shared/ui/Icon';
 import {
   buildRadarRunTraceViewModel,
@@ -77,7 +77,9 @@ export function RadarRunTracePage() {
 }
 
 function RadarRunTraceDetails({ trace }: { trace: RadarRunTraceBundle }) {
-  const viewModel = useMemo(() => buildRadarRunTraceViewModel(trace), [trace]);
+  const [currentTrace, setCurrentTrace] = useState(trace);
+  const [retryStatus, setRetryStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
+  const viewModel = useMemo(() => buildRadarRunTraceViewModel(currentTrace), [currentTrace]);
   const [selectedDetailId, setSelectedDetailId] = useState(viewModel.initialDetailId);
   const selectedDetail = viewModel.details.find((detail) => detail.id === selectedDetailId) ?? viewModel.details[0];
 
@@ -85,8 +87,28 @@ function RadarRunTraceDetails({ trace }: { trace: RadarRunTraceBundle }) {
     setSelectedDetailId(viewModel.initialDetailId);
   }, [viewModel.initialDetailId]);
 
+  useEffect(() => setCurrentTrace(trace), [trace]);
+
+  async function retryExtraction() {
+    setRetryStatus('loading');
+    try {
+      setCurrentTrace(await retryRadarRunSignalExtraction(currentTrace));
+      setRetryStatus('idle');
+      setSelectedDetailId('signal-extraction');
+    } catch {
+      setRetryStatus('failed');
+    }
+  }
+
   return (
     <section className="ai-run-details radar-run-details" aria-label="RadarRun trace details">
+      <div className="radar-run-trace-actions">
+        <button className="btn btn-sec btn-sm" type="button" disabled={retryStatus === 'loading'} onClick={() => void retryExtraction()}>
+          <Icon name="reset" size={16} />
+          {retryStatus === 'loading' ? 'Повторяем извлечение' : 'Повторить извлечение сигналов'}
+        </button>
+        {retryStatus === 'failed' ? <span className="muted">Повтор извлечения не выполнен. Проверьте backend trace.</span> : null}
+      </div>
       <RadarRunTraceSummary viewModel={viewModel} />
       <div className="ai-run-workbench radar-run-workbench">
         <RadarRunTimeline

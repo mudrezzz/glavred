@@ -134,6 +134,7 @@ export function useWorkspacePersistence() {
     authError: backend.authError,
     archiveProject,
     backendStatus: backend.backendStatus,
+    integrityError: backend.integrityError,
     changeAuthorNotes,
     createProject,
     login: backend.login,

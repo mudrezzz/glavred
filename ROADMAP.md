@@ -8190,152 +8190,309 @@ Status:
 
 ### Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction
 
-- Status: Ready
-- Goal: Convert `FoundMaterial` records into evidence-backed `SourceSignal` candidates without assigning topic/fabula ownership.
-- User value: The user receives editorially meaningful facts, changes, tensions, practices, and problems instead of a list of links.
+- Status: Done
+- Goal: Convert `FoundMaterial` into evidence-backed signal candidates while establishing the first layer of the Golden Editorial Opportunity Benchmark for the full material-to-candidate chain.
+- User value: The editor receives concrete facts, changes, tensions, practices, problems, and data points with exact evidence instead of links or plausible but unsupported summaries.
 - AS IS sources:
   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
-- TO BE necessity:
-  - Required because the upstream pipeline gains a new material-to-signal runtime boundary and trace contract.
+  - `glavred.md`, especially the editorial-model, insight-card, radar-signal, and topic-scoring requirements.
+- TO BE source and necessity:
+  - Extend `docs/architecture/RADAR_TO_CANDIDATE_PIPELINE_TO_BE_2_17_4_6_2.md` before runtime implementation with the complete `FoundMaterial -> SourceSignal -> SignalScore -> PostCandidate -> ranking/plan` contract.
+  - TO BE is mandatory because this slice adds a material-to-signal runtime stage, provider-input boundary, trace contract, and benchmark semantics.
+- Change intent:
+  - Separate factual signal extraction from later project-utility scoring and candidate composition.
+  - A signal answers what was found, what evidence proves it, why it may matter, and what uncertainty remains; it does not yet answer what post to publish.
 - Preserved AS IS invariants:
-  - Found materials remain durable and inspectable.
-  - Extraction does not create post candidates, plan slots, DraftRuns, or final topic/fabula ownership.
+  - `FoundMaterial` remains durable, inspectable, and linked to its RadarRun, source handle, URL, read outcome, and discovery trace.
+  - Extraction does not assign final topic, fabula, audience, value, goal, platform, or publication channel.
+  - Extraction does not create `PostCandidate`, plan slots, editorial work items, or DraftRun.
+  - Provider failure cannot silently manufacture a trusted signal.
 - Changed AS IS invariants:
-  - Real `FoundMaterial` can produce typed signal candidates and explicit noise rejections.
+  - Real materials can produce zero, one, or several typed signal candidates.
+  - Several materials can corroborate one signal; duplicates and contradictions remain visible.
+  - Every inspected material receives a terminal extraction decision.
+- Project and radar context contract:
+  - Build a bounded `SignalExtractionContext` from radar scope, active radar rules, source intent, evidence types, and typed radar-filter references.
+  - Project context may focus extraction on the project's domain and identify possible relevance, but full author/audience/goal/topic usefulness belongs to `2.17.4.7.1`.
+  - Fabulas, publication channels, content-plan demand, full project snapshots, full source pages, prior trace envelopes, and hidden runtime state are forbidden provider input.
 - Scope:
-  - Add `SignalExtractionReport`, extraction decisions, evidence fragments, source provenance, and rejection reasons.
-  - Extract zero, one, or several signals from one or several related materials.
-  - Keep deterministic checks and a bounded optional review-role provider call with structured retry/fallback trace.
-  - Preserve every material-to-signal and material-to-noise decision.
+  - Add typed signal categories covering event/fact, change, audience question, tension/counterargument, case, data point, practice, problem/failure mode, personal observation, and recurring pattern where supported by evidence.
+  - Add `SignalExtractionReport`, material decisions, evidence fragments, provenance handles, corroboration links, duplicate/noise decisions, uncertainty, and stable reason codes.
+  - Add deterministic eligibility, evidence-span validation, semantic duplicate checks, and conservative provider-result validation.
+  - Add a bounded optional review-role provider call with direct current-call budget proof, final-message size guard, retry/repair/backup trace, and safe fallback.
+  - Start the committed Golden Editorial Opportunity Benchmark with recorded strong, weak, duplicate, contradictory, promotional, off-domain, and evidence-insufficient materials.
 - Out of scope:
-  - Editorial scoring, human approval policy, topic/fabula matching, and candidate ranking.
+  - Final project usefulness score, human approval policy, topic/fabula matching, candidate composition, candidate ranking, plan handoff, and DraftRun.
+- Golden benchmark layer 1:
+  - Each fixture defines required signal classes, acceptable evidence spans, forbidden unsupported conclusions, and the expected terminal material decision.
+  - Benchmark assertions are semantic contracts and provenance invariants, not exact generated wording.
+  - Include an industrial case with mechanism/roles/outcome/limits, a benchmark or report, a vendor page without proof, generic AI news, an autonomy claim useful only as tension, an off-project item, a duplicate/corroborating source, and a no-signal material.
 - Proof evidence:
-  - Recorded extraction fixtures plus a fresh live RadarRun whose found materials produce traceable signal candidates and explicit noise decisions.
-- Tests:
-  - Fact/change/tension/practice/problem extraction tests.
-  - Duplicate, weak-source, no-signal, malformed-provider, fallback, and provenance tests.
-  - Guard tests preventing topic/fabula ownership and downstream artifact creation.
-- Docs:
-  - Update both AS IS contracts, active TO BE, SAO, developer guide, user guide, and demo.
+  - Recorded extraction fixtures plus a fresh industrial-AI RadarRun whose readable materials produce traceable signal candidates and explicit non-signal decisions.
+  - Trace-safe benchmark report containing decision coverage, evidence attribution, unsupported-signal violations, duplicate/corroboration results, provider incidents, and budget proof.
 - Definition of Done:
-  - Every produced signal resolves to source material and evidence fragments.
-  - Every inspected material is classified as signal-producing, insufficient, duplicate, or noise with a stable reason.
-  - Provider failure cannot fabricate a high-confidence signal.
-  - A live run demonstrates the material-to-signal handoff without creating candidates or DraftRun.
-  - AS IS is updated and relevant PDFs regenerated.
+  - One hundred percent of inspected materials have exactly one terminal decision: signal-producing, insufficient, duplicate/corroborating, contradiction, noise, or controlled extraction failure.
+  - Every produced signal resolves to at least one `FoundMaterial` and exact retained evidence fragments; unresolved material/evidence handles equal zero.
+  - Unsupported high-confidence signals and forbidden fabricated conclusions equal zero on the recorded benchmark.
+  - Extraction preserves mechanism, actors/roles, observed outcome, limitations, dates/numbers, and uncertainty when those facts exist in source evidence.
+  - A material may legitimately produce zero signals; signal count is never optimized at the expense of evidence fidelity.
+  - Radar relevance is traceable to radar rules/filter references, but no final topic/fabula/audience/value ownership appears on the signal.
+  - Provider input is a bounded dossier of selected fragments and handles. Full pages, full workspace, full prior traces, and copied rich artifacts are absent.
+  - Every primary/repair/backup attempt has direct budget proof and actual serialized-message proof; over-budget attempts do not call the provider.
+  - Malformed output, timeout, or provider unavailability leads to repair/backup or an explicit low-confidence/not-run result, never a fabricated trusted signal.
+  - Live proof creates signals or honest no-signal decisions without creating candidates, plan slots, or DraftRun.
+  - `AS IS updated`; RadarRun and broader upstream AS IS documents and relevant PDFs are regenerated.
+- Tests:
+  - Signal taxonomy, zero/one/many extraction, multi-material corroboration, contradiction, duplicate, weak source, noise, malformed provider, retry/backup/fallback, provenance, handle resolution, and project-isolation tests.
+  - Budget boundary and stress tests with long pages and many materials proving bounded provider context.
+  - Guard tests preventing topic/fabula ownership and all downstream artifact creation.
+  - Recorded benchmark, one fresh live proof, full backend regression, architecture audit, smoke, roadmap, PDF, and diff checks.
+- Docs and demo:
+  - Update both upstream AS IS contracts, active TO BE, SAO, developer guide, user guide, demo, and RadarRun diagnostics.
+  - Show extraction decisions and evidence links in technical trace; user-facing review remains candidate-state only until `2.17.4.7.1`.
 - Risks:
-  - Extraction can invent significance; evidence links and conservative failure semantics are mandatory.
+  - Extraction can invent significance or erase uncertainty. Exact evidence links, semantic validation, conservative failure, and bounded context are mandatory.
+- Completed: 2026-07-14
+
+### Slice 2.17.4.7.0.1: Workspace UTF-8 Integrity and Signals UI Recovery
+
+- Status: Done
+- Goal: Recover the corrupted `project-ai-design-patterns` workspace, reject invalid UTF-8/mojibake payloads before persistence, and make the Signals UI resistant to hostile text.
+- User value: The editor can trust saved Russian content and use Signals without corrupted copy, silent fallback, or page-level horizontal overflow.
+- Incident evidence:
+  - `var/glavred-portfolio.sqlite3` is structurally valid, but the latest `project-ai-design-patterns` JSON contains multiply encoded strings and amplified fields.
+  - The corruption entered through repeated unsafe PowerShell full-workspace `GET -> PUT` roundtrips.
+  - Existing design/visual checks used local demo fallback after unauthenticated backend requests, so they did not exercise the persisted workspace.
+- AS IS sources:
+  - Portfolio sections of `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md` and the portfolio ADR.
+  - `docs/architecture/BACKEND_ARCHITECTURE_AS_IS.md` and target bounded-context rules.
+  - Signals production UI and `ui-design-systems/START-HERE.md`.
+- TO BE necessity:
+  - A pipeline TO BE is not required because RadarRun/extraction semantics do not change.
+  - Add an ADR for workspace text integrity, controlled recovery, and authenticated visual acceptance.
+- Preserved invariants:
+  - Successful workspace HTTP payloads and SQLite schema remain compatible.
+  - RadarRun, FoundMaterial, SourceSignal, extraction, scoring, and candidate assembly behavior do not change.
+  - Clean projects and their latest snapshots are preserved.
+- Changed behavior:
+  - Workspace text integrity is checked on read and before save.
+  - Corrupt input returns controlled `422`; corrupt stored state returns controlled `409`.
+  - Frontend integrity errors are blocking and never become silent `localFallback`.
+  - Signals layout contains long valid text without page-level horizontal overflow.
+- Scope:
+  - Preserve the damaged SQLite with SHA-256 evidence and add a safe audit/recovery CLI.
+  - Atomically rebuild a clean working SQLite, reset only the affected demo workspace, and keep clean projects.
+  - Add backend integrity owners, UTF-8 response policy, safe Python roundtrip tooling, and structured diagnostics.
+  - Add frontend integrity state, local-storage guard, Signals text containment, and bounded readable previews.
+  - Add authenticated connected visual tests with real FastAPI and temporary SQLite.
+  - Update process guardrails, ADR, architecture/developer/user/demo docs, and incident evidence.
+- Out of scope:
+  - Automatic mojibake repair, RadarRun logic changes, signal scoring, candidate assembly, SQLite schema migration.
+- Proof evidence:
+  - Recovery report, backup hash, ten exact UTF-8 roundtrips, clean integrity reports, authenticated screenshots at five viewport widths, and a fresh UI-launched industrial-AI RadarRun.
+- Definition of Done:
+  - The damaged DB is backed up with SHA-256; only the affected project is reset and clean projects are preserved.
+  - Active SQLite and active workspaces pass structural and semantic integrity checks.
+  - Ten load/save cycles preserve Russian text and semantic hashes exactly.
+  - Mojibake is rejected before persistence without false positives for valid Cyrillic/mixed text.
+  - Integrity errors cannot render corrupt data or silently switch to local demo fallback.
+  - Signals has no page-level horizontal overflow at 390, 1180, 1440, 1904, and 2048 px; all actions remain reachable.
+  - Authenticated visual acceptance fails on 401, CORS, unavailable backend, or local fallback.
+  - Docker login works on both `127.0.0.1` and `localhost`; a fresh UI RadarRun persists clean materials/signals and its trace opens.
+  - Runtime changes after accepted proof require a new proof run.
+- Tests:
+  - Backend integrity/API/recovery/roundtrip tests; frontend integrity/layout tests; authenticated connected visual test; full backend/frontend/design/visual/architecture/smoke regression; SQLite/workspace checks; roadmap and diff checks.
+- Docs and demo:
+  - Add incident/recovery ADR and update SAO, developer guide, user guide, demo README, AGENTS and relevant repo-local skills.
+- Completion transition:
+  - `2.17.4.7.0.1 -> Done`; only then `2.17.4.7.1 -> Ready`.
+- Risks:
+  - Heuristic repair can change meaning, so recovery resets the affected demo workspace and never auto-decodes stored text.
+- Completed: 2026-07-16
 
 ### Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle
 
-- Status: Backlog
-- Goal: Add explainable editorial scoring and a complete human review lifecycle for extracted signals.
-- User value: The editor can understand, correct, approve, reject, archive, or revisit a signal based on explicit editorial dimensions.
+- Status: Ready
+- Goal: Determine whether an extracted signal is useful for a specific project through an explainable editorial-opportunity profile, typed radar filters, and a complete human review lifecycle.
+- User value: The editor sees not merely a credible fact, but why it matters or does not matter for this author, audience, positioning, goals, topics, and content history.
 - AS IS sources:
   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - The active Radar-to-Candidate TO BE created/extended in `2.17.4.7`.
+  - Current project editorial model, active atomic editorial rules, author memory/position assertions, topics, existing signals/posts/candidates, and radar filters.
 - TO BE necessity:
-  - Required because scoring and review decisions become persisted upstream behavior.
+  - Required because project-utility scoring, typed filter semantics, persisted review decisions, and cross-project benchmark behavior become canonical runtime contracts.
+- Change intent:
+  - Replace keyword-based filter evaluation and opaque generic fit with setting-backed dimension evidence.
+  - Keep factual evidence quality separate from editorial desirability so a credible but irrelevant signal and a relevant but weak signal cannot look equivalent.
 - Preserved AS IS invariants:
-  - Raw materials and extraction evidence remain unchanged and traceable.
-  - Scoring does not create post candidates or silently approve signals.
+  - Raw materials, evidence fragments, extraction decisions, uncertainty, and provenance remain immutable and traceable.
+  - Scoring does not assign final topic/fabula ownership, create post candidates, or silently approve signals.
+  - Human approval remains authoritative and reversible.
 - Changed AS IS invariants:
-  - Signals gain dimension-level scores, risks, review status, corrections, and decision history.
-- Scope:
-  - Score novelty, source credibility, author fit, audience value, positioning fit, topic affinity, evidence strength, and risk.
-  - Add statuses `candidate`, `approved`, `rejected`, `archived`, and `corrected` with transition rules.
-  - Persist explanations, manual corrections, and decision history.
+  - `SourceSignal` gains dimension-level project utility, blocking risks, setting references, review history, and correction history.
+  - Radar filters become executable typed criteria rather than labels backed mainly by hard-coded keywords.
+- Canonical project-settings projection:
+  - Add bounded `ProjectEditorialOpportunityProfile` built from active atomic `editorialRules`, author position assertions and relevant author memory, active topics, existing signals/posts/candidates, and project profile.
+  - `editorialModel` is a compatibility summary/fallback, not a second conflicting rule source when active atomic rules exist.
+  - Style and voice rules remain downstream drafting/review concerns unless they express an upstream author-position or prohibited-content boundary.
+  - Fabulas, channel mechanics, and content-plan demand remain outside signal scoring and enter in `2.17.4.8`/`2.17.4.8.1`.
+- Editorial utility dimensions:
+  - Evidence strength, factual specificity, source credibility/corroboration, novelty against project history, author fit, audience value, positioning contribution, project-goal contribution, topic affinity, productive tension, practical actionability, freshness where relevant, banality/duplication risk, and prohibited-content risk.
+  - Each dimension stores score/status, reason codes, setting references, material/evidence references, uncertainty, and whether it is blocking, weighted, or diagnostic.
+  - No aggregate score can hide missing evidence, a hard prohibited-content conflict, or unknown project context.
+- Radar filter contract:
+  - Extend filters with typed target references, importance (`blocking|weighted|diagnostic`), optional threshold, and stable reason codes while keeping backward compatibility.
+  - Add operational dimensions such as `evidenceStrength`, `novelty`, `freshness`, and `actionability` alongside author/audience/positioning/goals/forbidden/topics.
+  - `mustMatch` and `mustNotMatch` block only against active, resolvable project settings; `shouldMatch` affects recommendation; `seekTension` preserves a useful opposing claim without treating it as the author's endorsed position.
+  - The industrial-cases radar receives distinct filters for industrial scope, implementation evidence, positioning, vendor/generic-news noise, novelty, and productive tension instead of one shared generic topic filter.
+- Review lifecycle:
+  - Persist states `candidate`, `approved`, `rejected`, `archived`, and `corrected`, with transition policy, actor/time/reason, reversible decisions, and correction history.
+  - Automatic acceptance is forbidden for blocking risk, missing evidence, provider fallback, unresolved project settings, or low-confidence extraction.
+- Golden benchmark layer 2:
+  - Evaluate the same recorded signals against all three demo projects to prove that project settings change outcomes.
+  - Store ordering and blocking constraints rather than brittle exact scores.
+  - Add mutation cases: swap positioning, disable a topic, add/remove a forbidden rule, change audience/goal, change `mustMatch` to `seekTension`, and remove historical content used for novelty.
 - Out of scope:
-  - Topic/fabula candidate assembly and plan handoff.
+  - Final topic/fabula selection, post angle construction, candidate ranking, plan handoff, and DraftRun.
 - Proof evidence:
-  - Recorded good, weak, duplicate, off-position, risky, and corrected signals plus one live reviewed signal.
-- Tests:
-  - Dimension scoring, status transition, manual correction, provider recovery, and project-isolation tests.
-  - Tests proving low-confidence fallback cannot become automatic approval.
-- Docs:
-  - Update upstream AS IS/TO BE, SAO, developer guide, user guide, and demo.
+  - Recorded high-fit, credible-but-off-project, weak-evidence, duplicate, prohibited, productive-tension, stale, actionable, and corrected signals.
+  - One live extracted signal reviewed through the complete lifecycle with all score references resolvable.
 - Definition of Done:
-  - Every score has a reason and supporting material/evidence reference.
-  - Human decisions and corrections are reversible and trace-visible.
-  - No opaque aggregate score can hide a blocking risk.
-  - A reviewed live signal remains linked to its run, material, and extraction report.
-  - AS IS is updated and relevant PDFs regenerated.
+  - Every dimension result cites concrete project-setting ids plus source/evidence references where relevant; unresolved setting/evidence handles equal zero.
+  - The same signal receives predictably different usefulness outcomes under the three demo projects without hard-coded project names or industrial keywords.
+  - Changing a meaningful setting produces the benchmarked outcome change; irrelevant setting changes do not perturb unrelated dimensions.
+  - Credible but off-project material is not confused with weak evidence; relevant but weak evidence cannot be approved as trusted.
+  - A prohibited claim can be retained as a `seekTension` counterargument only with explicit non-endorsement and risk trace.
+  - No opaque aggregate score hides a blocking risk, missing required evidence, or unresolved project context.
+  - Human approve/reject/archive/correct transitions are reversible, actor/time/reason traceable, and never mutate source evidence.
+  - Low-confidence fallback or provider failure cannot become automatic approval.
+  - Provider input uses the bounded opportunity profile and signal dossier with direct budget and final-message proof; full project/workspace/history dumps are forbidden.
+  - `AS IS updated` and relevant PDFs regenerated.
+- Tests:
+  - Dimension ownership and evidence tests; hard/soft/diagnostic rule tests; `seekTension` tests; cross-project counterfactual and setting-mutation tests; review transitions; manual correction; project isolation; provider recovery/fallback; budget stress tests.
+  - Recorded benchmark, live review proof, full backend/frontend regression, architecture, smoke, roadmap, PDF, and diff checks.
+- Docs and demo:
+  - Update upstream AS IS/TO BE, SAO, developer/user guides, demo project filters, filter-editor documentation, and signal review UI/trace.
 - Risks:
-  - Scoring can look objective while remaining heuristic; dimension evidence and human authority stay visible.
+  - Scores can create false objectivity. Preserve dimension evidence, blockers, alternatives, uncertainty, and human authority.
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
 - Status: Backlog
-- Goal: Replace blind approved-signal x topic/fabula multiplication with explainable candidate assembly.
-- User value: The user receives fewer, stronger post concepts whose topic, fabula, audience value, and source basis are justified.
+- Goal: Replace blind approved-signal by topic/fabula multiplication with evidence-aware assembly of a small set of justified and meaningfully different post concepts.
+- User value: The editor receives fewer but stronger concepts that explain why this signal, topic, fabula, audience value, and editorial angle belong together.
 - AS IS sources:
   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
-  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for the preserved retrieval boundary.
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for the preserved retrieval/extraction boundary.
+  - The active Radar-to-Candidate TO BE and the signal-utility contract from `2.17.4.7.1`.
 - TO BE necessity:
-  - Required because the pipeline gains signal-to-candidate matching and rejection semantics.
+  - Required because signal-to-candidate matching, rejection semantics, context budgeting, and candidate provenance replace Cartesian pairing and `.slice(0, 3)`.
+- Change intent:
+  - Compose editorial opportunities only when a reviewed signal can support a specific topic and fabula without distorting evidence or inventing audience value.
 - Preserved AS IS invariants:
-  - RadarRun itself does not create candidates.
-  - SourceSignal remains the reviewed upstream input; DraftRun remains downstream.
+  - RadarRun does not create candidates.
+  - Only reviewed/approved signals enter canonical assembly; source evidence and signal wording remain traceable.
+  - Candidate approval is human-controlled and does not start DraftRun.
 - Changed AS IS invariants:
-  - Candidate assembly replaces Cartesian pairing and `.slice(0, 3)` as canonical behavior.
+  - Candidate assembly evaluates compatible `SourceSignal x Topic x Fabula` combinations and records accepted and rejected matches.
+  - Fixed first-three truncation and blind Cartesian multiplication are removed as canonical behavior.
+- Project-settings contract:
+  - Topic projection includes title, description, purpose, audience value, author stance, active rules, forbidden angles, status, and signal affinity evidence.
+  - Fabula projection includes description, dramaturgy, structure, proof requirements, active rules, size/research intent, and compatibility-matrix status.
+  - Candidate context may include author position, audience rules, positioning/goals, relevant channel constraints, signal utility dimensions, and evidence readiness.
+  - Full workspace, unrelated topics/fabulas, complete archives, complete materials, and prior trace objects are forbidden provider input.
 - Scope:
-  - Add `CandidateAssemblyReport` and accepted/rejected `Signal x Topic x Fabula` matches.
-  - Use signal scores, topic/fabula matrix, author position, audience, channel context, evidence, and risk.
-  - Produce multiple angles only when their editorial frames are meaningfully different.
-  - Keep stable candidate identities and full provenance.
+  - Add `CandidateAssemblyReport`, considered combinations, accepted/rejected match decisions, stable candidate identity, evidence/provenance handles, audience value, thesis, editorial promise, risks, missing proof, and differentiation rationale.
+  - Enforce topic/fabula compatibility matrix and fabula proof requirements before candidate creation.
+  - Produce multiple candidates only when their topic, dramaturgy, thesis, audience payoff, or practical artifact is meaningfully different.
+  - Detect duplicate angles and evidence distortion; retain rejected alternatives with stable reasons.
+  - Use deterministic prechecks plus a bounded optional provider role with direct budget and final-message proof.
+- Golden benchmark layer 3:
+  - For recorded signals, define allowed and rejected topic/fabula matches, required evidence/proof, minimum audience value, forbidden angles, and required semantic differences between accepted concepts.
+  - Include no-match, one-match, several genuinely distinct matches, matrix-disabled match, proof-insufficient fabula, duplicate-angle, and project-isolation scenarios.
+  - Evaluate the same signal against different project settings to prove that candidates are project compositions rather than generic rewrites.
 - Out of scope:
-  - Final candidate ranking, plan handoff, DraftRun generation, and multi-platform variants.
+  - Final ranking across accepted candidates, portfolio scheduling, plan handoff, DraftRun generation, and platform-specific draft variants.
 - Proof evidence:
-  - Three-project deterministic fixtures and a live reviewed signal producing justified matches and visible rejections.
-- Tests:
-  - Multi-topic/fabula matching, no-match, duplicate-angle, stable-id, provenance, project-isolation, and anti-Cartesian tests.
-- Docs:
-  - Update upstream AS IS/TO BE, SAO, developer guide, user guide, and demo.
+  - Three-project recorded benchmark plus one live reviewed industrial-AI signal producing justified matches and visible rejections.
 - Definition of Done:
-  - Blind pairing and fixed first-three truncation are no longer canonical.
-  - Every candidate and rejected match has a traceable rationale and risk set.
-  - Candidate evidence, signal, topic, and fabula references resolve without hidden state.
-  - A live signal produces a meaningful candidate set without auto-starting DraftRun.
-  - AS IS is updated and relevant PDFs regenerated.
+  - Blind Cartesian pairing and fixed first-three truncation no longer determine canonical candidates.
+  - Every considered combination has an accepted or rejected decision with stable reason codes and resolvable signal/topic/fabula/rule/evidence references.
+  - Disabled matrix pairs, inactive entities, missing fabula proof, blocking signal risks, and forbidden topic angles cannot silently produce candidates.
+  - Every accepted candidate states why it matters to the configured audience, what author/project position it advances or challenges, what evidence supports it, which practical artifact it promises, and what risk remains.
+  - Accepted candidates preserve source meaning and uncertainty; unsupported thesis inflation and evidence distortion equal zero on the golden benchmark.
+  - Multiple accepted candidates are meaningfully different, not paraphrases. Duplicate-angle violations equal zero.
+  - Candidate ids are stable under input ordering and unrelated project changes.
+  - Provider context is a bounded candidate-assembly dossier; all attempts have direct budget and actual message-size proof.
+  - A live reviewed signal produces a meaningful candidate set without auto-starting DraftRun.
+  - `AS IS updated` and relevant PDFs regenerated.
+- Tests:
+  - Multi-topic/fabula matching, matrix disabled, inactive entity, proof insufficiency, no-match, duplicate angle, stable id, provenance, evidence distortion, project isolation, setting mutation, budget stress, provider fallback, and anti-Cartesian tests.
+  - Recorded benchmark, live candidate proof, full backend/frontend regression, architecture, smoke, roadmap, PDF, and diff checks.
+- Docs and demo:
+  - Update upstream AS IS/TO BE, SAO, developer/user guides, candidate review UI, and the three-project demo benchmark.
 - Risks:
-  - Ranking pressure can remove useful alternatives; rejected matches remain inspectable.
+  - Assembly pressure can create plausible but unsupported post ideas. Evidence preservation, proof requirements, visible rejections, and human approval are mandatory.
 
 ### Slice 2.17.4.8.1: Candidate Ranking and Plan Handoff
 
 - Status: Backlog
-- Goal: Rank assembled post candidates transparently and hand an editor-approved candidate to the content plan without provenance loss.
-- User value: The editor can compare alternatives, understand the recommendation, and promote the chosen concept into planning with confidence.
+- Goal: Rank assembled post candidates transparently using editorial value, portfolio demand, urgency, readiness, and risk, then hand a human-approved candidate to the content plan without provenance loss.
+- User value: The editor understands not only which concept is recommended, but why it should be published now, what alternatives exist, and which project goals and content gaps it serves.
 - AS IS sources:
   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
-  - Current content-plan and candidate handoff contracts.
+  - Current content-plan, publication-channel, candidate-review, and editorial-work handoff contracts.
+  - The active Radar-to-Candidate TO BE and candidate assembly report from `2.17.4.8`.
 - TO BE necessity:
-  - Required because candidate ranking and plan handoff semantics change.
+  - Required because candidate comparison, portfolio-aware priority, manual override, and plan handoff become typed persisted behavior.
+- Change intent:
+  - Replace list position and formula confidence with dimension-level comparison that preserves blockers, trade-offs, alternatives, and human authority.
 - Preserved AS IS invariants:
-  - Human approval remains authoritative.
-  - Candidate promotion does not automatically run DraftRun.
+  - Human selection/override remains authoritative.
+  - Candidate promotion does not automatically start DraftRun.
+  - Source material, signal, evidence, project settings, topic, fabula, and assembly decisions remain resolvable.
 - Changed AS IS invariants:
-  - Candidate ranking becomes typed, explainable, and provenance-preserving instead of list position and formula confidence.
+  - Recommendation uses candidate quality plus current editorial portfolio state rather than insertion order.
+  - Plan handoff stores automated recommendation, alternatives, manual decision, and override reason.
+- Ranking dimensions and project settings:
+  - Evidence readiness, audience value, author/positioning contribution, project-goal contribution, topic/fabula fit, angle distinctiveness, practical actionability, freshness/urgency, discussion potential, reputation potential, commercial potential, content-plan demand/gap, topic/fabula balance, duplication/saturation, additional research cost, channel readiness, and blocking risk.
+  - Content history, existing candidates/posts, active plan, publication cadence, topic balance, channel constraints, and project goals enter through bounded typed projections.
+  - A single total score may order eligible candidates but cannot erase blockers or dimension trade-offs.
 - Scope:
-  - Add candidate comparison dimensions, ranking report, recommendation, alternatives, and risks.
-  - Persist editor selection, override reason, and stable handoff into the current plan contract.
-  - Preserve source, signal, evidence, topic, fabula, audience, value, and channel context.
+  - Add typed candidate comparison, `CandidateRankingReport`, recommendation, alternatives, blockers, confidence/uncertainty, and stable reason codes.
+  - Persist human selection, rejection, deferral, and override with actor/time/reason.
+  - Add provenance-preserving handoff into current plan contract and editorial work queue without auto-running DraftRun.
+  - Preserve rejected/deferred alternatives for later reconsideration when portfolio demand changes.
+- Golden benchmark layer 4:
+  - Define pairwise and ordering constraints rather than brittle exact aggregate scores.
+  - Include tie, blocking risk, urgent-but-weak, evergreen-and-strong, plan-gap fit, overused-topic penalty, commercial-vs-reputation trade-off, added-research-cost, and manual-override cases.
+  - Mutating project goals, plan deficit, topic saturation, channel, or cadence must predictably change only the relevant ranking dimensions.
+  - Complete benchmark lineage must resolve from selected plan item back through candidate, signal, materials, evidence fragments, RadarRun, and source URLs.
 - Out of scope:
-  - Draft generation and multi-platform variants.
+  - Draft generation, automatic publishing, performance-learning feedback, and multi-platform draft variants.
 - Proof evidence:
-  - Deterministic ranking fixtures, manual override replay, and one live candidate-to-plan handoff.
-- Tests:
-  - Ranking identity, tie, override, stable-id, provenance, plan-handoff, and no-auto-DraftRun tests.
-- Docs:
-  - Update upstream AS IS/TO BE, plan handoff docs, developer guide, user guide, and demo.
+  - Deterministic three-project ranking corpus, manual override replay, and one live candidate-to-plan handoff.
 - Definition of Done:
-  - Recommendation and alternatives are dimension-level explainable.
-  - Manual override is visible and does not erase automated reasoning.
-  - The selected plan item resolves back to candidate, signal, material, RadarRun, and source URL.
-  - No fixed-position confidence remains canonical.
-  - AS IS is updated and relevant PDFs regenerated.
+  - Every recommendation and alternative has dimension-level reasons, setting references, evidence/provenance references, blockers, and remaining risks.
+  - No fixed position or opaque confidence is canonical; a total score cannot promote a blocked candidate.
+  - Golden pairwise/ordering constraints pass, including cases where a setting or portfolio mutation deliberately changes the winner.
+  - Unrelated setting changes do not perturb ranking dimensions or candidate order.
+  - Manual override is reversible and visible and does not erase automated reasoning or alternatives.
+  - Deferred/rejected alternatives remain inspectable and can be reconsidered after a portfolio-state change.
+  - The selected plan item resolves to candidate, signal, extraction report, material, evidence fragments, RadarRun, source handle, and URL with zero unresolved lineage handles.
+  - Plan handoff preserves audience, value, goal, topic, fabula, channel context, evidence readiness, risks, and override history and does not auto-start DraftRun.
+  - Ranking context is bounded and directly budgeted; complete workspace/history/trace dumps are forbidden.
+  - One live handoff demonstrates user-visible recommendation, human decision, traceable plan entry, and no DraftRun side effect.
+  - `AS IS updated` and relevant PDFs regenerated.
+- Tests:
+  - Dimension ownership, blocker, tie, pairwise/order constraints, setting/portfolio mutation, stable id, manual override, reversible decisions, deferred reconsideration, provenance lineage, plan handoff, project isolation, budget stress, and no-auto-DraftRun tests.
+  - Recorded benchmark, live handoff proof, full backend/frontend regression, architecture, smoke, roadmap, PDF, and diff checks.
+- Docs and demo:
+  - Update upstream AS IS/TO BE, plan handoff architecture, SAO, developer/user guides, ranking/plan UI, and the three-project demo benchmark.
 - Risks:
-  - A single score can hide trade-offs; preserve dimension breakdown and alternatives.
+  - A single score can conceal editorial trade-offs or optimize for short-term output. Dimension evidence, blockers, alternatives, portfolio context, and human authority remain first-class.
 
 ### Slice 2.17.4.9: Signal Review and Candidate Workbench UX
 
@@ -8926,6 +9083,8 @@ Status:
 - Slice 2.17.4.6.1.3.9.1: Alternative-Angle Route Dossier Budget Repair. Completed 2026-07-12.
 - Slice 2.17.4.6.1.3.9.2: Pairwise Comparison Identity Trace Repair. Completed 2026-07-12.
 - Slice 2.17.4.6.2: Search Result Triage v2 and Selective Reading. Completed 2026-07-13.
+- Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction. Completed 2026-07-14.
+- Slice 2.17.4.7.0.1: Workspace UTF-8 Integrity and Signals UI Recovery. Completed 2026-07-16.
 
 
 ## Blocked Items
@@ -8954,4 +9113,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction`.
+Implement `Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle`.

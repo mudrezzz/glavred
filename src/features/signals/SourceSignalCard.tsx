@@ -60,6 +60,36 @@ export function SourceSignalCard({
             <dd>{signal.source}</dd>
             <dt>Что нашли</dt>
             <dd>{signal.rawNote}</dd>
+            {signal.confidence && (
+              <>
+                <dt>Уверенность</dt>
+                <dd>{signal.confidence}</dd>
+              </>
+            )}
+            {signal.uncertainty && (
+              <>
+                <dt>Неопределённость</dt>
+                <dd>{signal.uncertainty}</dd>
+              </>
+            )}
+            {signal.mechanism && (
+              <>
+                <dt>Механизм</dt>
+                <dd>{signal.mechanism}</dd>
+              </>
+            )}
+            {signal.outcome && (
+              <>
+                <dt>Результат</dt>
+                <dd>{signal.outcome}</dd>
+              </>
+            )}
+            {(signal.limitations ?? []).length > 0 && (
+              <>
+                <dt>Ограничения</dt>
+                <dd>{signal.limitations?.join('; ')}</dd>
+              </>
+            )}
             <dt>Поиск дублей</dt>
             <dd>{signal.searchNote ?? `Риск дубля: ${signal.duplicateRisk ?? 'low'}`}</dd>
             <dt>Правка автора</dt>
@@ -147,7 +177,7 @@ function FilterEvaluations({ signal }: { signal: SourceSignal }) {
 function EvidenceList({ signal }: { signal: SourceSignal }) {
   return (
     <div className="radar-config-section">
-      <h4>Evidence</h4>
+      <h4>Доказательства</h4>
       <div className="signal-evidence-list">
         {(signal.evidence ?? []).map((item) => (
           <div className="signal-evidence" key={item.id}>

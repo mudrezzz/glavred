@@ -19,6 +19,7 @@ import {
 } from '../application/editorialServices';
 import { runLocalRadar } from '../application/upstreamRadarRunService';
 import { runExternalRadar } from '../infrastructure/radarRunClient';
+import { applyRadarRunWorkspaceResult } from './radarRunWorkspacePatches';
 import type { WorkspaceSetter } from './useWorkspacePersistence';
 
 type SignalsWorkspaceActionsParams = {
@@ -99,14 +100,8 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }
   async function runRadar(radar: RadarDefinition) {
     try {
       const result = await runExternalRadar(workspace, radar.id);
-      setWorkspace((current) => ({
-        ...current,
-        radars: current.radars.map((item) => (item.id === radar.id ? result.radar : item)),
-        radarRuns: [result.run, ...current.radarRuns],
-        foundMaterials: [...result.foundMaterials, ...current.foundMaterials],
-        updatedAt: new Date().toISOString()
-      }));
-      setToast('Радар запущен: внешний поиск добавлен в трассу');
+      setWorkspace((current) => applyRadarRunWorkspaceResult(current, result, { prependRun: true }));
+      setToast(`Радар завершен: найдено сигналов-кандидатов ${result.sourceSignals.length}`);
     } catch {
       setWorkspace((current) => runLocalRadar(current, radar.id));
       setToast('Backend-поиск недоступен: создан локальный contract-run');

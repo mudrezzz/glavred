@@ -1,4 +1,5 @@
-import type { FoundMaterial, RadarDefinition, RadarRun, WorkspaceState } from '../domain/editorialWorkspace';
+import type { FoundMaterial, RadarDefinition, RadarRun, SourceSignal, WorkspaceState } from '../domain/editorialWorkspace';
+import type { RadarSignalExtractionReport } from '../domain/upstream-search/types';
 
 type FetchRadarRun = typeof fetch;
 
@@ -12,6 +13,29 @@ export interface ExternalRadarRunResponse {
   radar: RadarDefinition;
   run: RadarRun;
   foundMaterials: FoundMaterial[];
+  sourceSignals: SourceSignal[];
+  signalExtractionReport: RadarSignalExtractionReport;
+}
+
+export interface SignalExtractionRetryResponse {
+  run: RadarRun;
+  sourceSignals: SourceSignal[];
+  signalExtractionReport: RadarSignalExtractionReport;
+}
+
+export async function retryRadarSignalExtraction(
+  workspace: WorkspaceState,
+  runId: string,
+  forceRetry = true
+): Promise<SignalExtractionRetryResponse> {
+  const response = await radarRunFetch()(`${apiBaseUrl()}/api/radar-runs/${encodeURIComponent(runId)}/signal-extraction`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace, forceRetry })
+  });
+  if (!response.ok) throw new Error(`Signal extraction failed with HTTP ${response.status}`);
+  return await response.json() as SignalExtractionRetryResponse;
 }
 
 export async function runExternalRadar(workspace: WorkspaceState, radarId: string): Promise<ExternalRadarRunResponse> {

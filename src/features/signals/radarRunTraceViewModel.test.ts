@@ -164,6 +164,48 @@ describe('radarRunTraceViewModel', () => {
       ])
     );
   });
+
+  it('renders evidence fragments, terminal decisions, signals, and provider budget trace', () => {
+    const bundle = traceBundle({
+      signalExtraction: {
+        status: 'partial',
+        revision: 2,
+        retryOutcome: 'failed',
+        preservedPreviousSignalIds: ['signal-1'],
+        materialDecisions: [{ materialId: 'material-1', decision: 'signalProducing', reasonCodes: ['grounded'], signalIds: ['signal-1'] }],
+        providerAttempts: [{ attemptLabel: 'primary', model: 'test/model', status: 'accepted', messageCharCount: 3200, providerUsage: { total_tokens: 900 } }],
+        decisionCoverageComplete: true,
+        unresolvedEvidenceHandleCount: 0,
+        groundingViolations: []
+      }
+    });
+    bundle.foundMaterials = [{
+      ...bundle.foundMaterials[0],
+      id: 'material-1',
+      contentFragments: [{ id: 'fragment-1', ordinal: 1, text: 'Проверяемый факт.', startChar: 0, endChar: 17, hash: 'abc', kind: 'text' }]
+    }];
+    bundle.sourceSignals = [{
+      id: 'signal-1', type: 'case', title: 'Проверяемый кейс', source: 'Источник', capturedAt: '2026-07-14',
+      summary: 'Сводка', rawNote: 'Механизм', reviewStatus: 'candidate', confidence: 'medium', radarRunId: bundle.run.id,
+      evidenceRefs: [{ materialId: 'material-1', fragmentId: 'fragment-1', quote: 'Проверяемый факт.' }]
+    }];
+
+    const model = buildRadarRunTraceViewModel(bundle);
+
+    expect(model.details.find((detail) => detail.id === 'evidence-fragments')?.items).toHaveLength(1);
+    const extraction = model.details.find((detail) => detail.id === 'signal-extraction');
+    expect(extraction?.fields).toEqual(expect.arrayContaining([
+      { label: 'Сигналы-кандидаты', value: '1' },
+      { label: 'Результат повтора', value: 'failed' },
+      { label: 'Сохранены сигналы прошлой ревизии', value: '1' },
+      { label: 'Неразрешенные evidence handles', value: '0' }
+    ]));
+    expect(extraction?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'signal-1', status: 'medium' }),
+      expect.objectContaining({ id: 'decision-material-1', status: 'signalProducing' }),
+      expect.objectContaining({ id: 'attempt-0', status: 'accepted' })
+    ]));
+  });
 });
 
 function traceBundle(runOverrides = {}): RadarRunTraceBundle {
@@ -178,6 +220,7 @@ function traceBundle(runOverrides = {}): RadarRunTraceBundle {
     run,
     sourceHandles: workspace.sourceRegistry.handles,
     foundMaterials: workspace.foundMaterials,
+    sourceSignals: [],
     benchmarkReport: null,
     source: 'local'
   };

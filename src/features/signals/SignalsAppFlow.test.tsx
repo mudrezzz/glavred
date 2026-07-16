@@ -54,7 +54,7 @@ describe('Signals app flow', () => {
     if (!signalRow.classList.contains('expanded')) {
       fireEvent.click(within(signalRow).getAllByRole('button')[0]);
     }
-    expect(within(signalRow).getByText('Evidence')).toBeInTheDocument();
+    expect(within(signalRow).getByText('Доказательства')).toBeInTheDocument();
     expect(within(signalRow).getByTestId('signal-filter-evaluations')).toBeInTheDocument();
     expect(within(signalRow).getByText(/Фильтры отбора/i)).toBeInTheDocument();
     expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Все по фильтрам' })).toBeInTheDocument();

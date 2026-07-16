@@ -100,7 +100,7 @@ export function useSignalsController({
 
   const signalSummary = {
     total: workspace.sourceSignals.length,
-    new: workspace.sourceSignals.filter((signal) => !signal.reviewStatus || signal.reviewStatus === 'new').length,
+    new: workspace.sourceSignals.filter((signal) => !signal.reviewStatus || signal.reviewStatus === 'new' || signal.reviewStatus === 'candidate').length,
     approved: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved').length,
     archived: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'archived').length,
     highRisk: workspace.sourceSignals.filter((signal) => signal.duplicateRisk === 'high').length

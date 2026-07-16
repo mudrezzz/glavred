@@ -7,7 +7,12 @@ import {
 } from '../application/portfolioService';
 import type { AuthorNote } from '../domain/editorialWorkspace';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
-import { LEGACY_WORKSPACE_STORAGE_KEY, LocalPortfolioStore, PORTFOLIO_STORAGE_KEY } from './localPortfolioStore';
+import {
+  LEGACY_WORKSPACE_STORAGE_KEY,
+  LocalPortfolioStore,
+  PORTFOLIO_INTEGRITY_QUARANTINE_KEY,
+  PORTFOLIO_STORAGE_KEY
+} from './localPortfolioStore';
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -95,5 +100,35 @@ describe('LocalPortfolioStore', () => {
     expect(switched.activeUserId).toBe('user-product-editor');
     expect(switched.activeProjectId).toBe('project-glavred-blog');
     expect(getActiveWorkspace(switched).projectProfile.name).toBe('Главред: быть интересным');
+  });
+
+  it('quarantines a damaged local portfolio before parsing or rendering it', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(PORTFOLIO_STORAGE_KEY, JSON.stringify({ title: 'РџСЂРёРІРµС‚ РјРёСЂ РџСЂРёРІРµС‚' }));
+
+    const portfolio = new LocalPortfolioStore(storage).load();
+
+    expect(getActiveWorkspace(portfolio).projectProfile.name).toBe('Опытный цех «Сборочная»');
+    expect(storage.getItem(PORTFOLIO_STORAGE_KEY)).toBeNull();
+    expect(storage.getItem(PORTFOLIO_INTEGRITY_QUARANTINE_KEY)).toContain('portfolio-text-integrity-failed');
+    expect(storage.getItem(PORTFOLIO_INTEGRITY_QUARANTINE_KEY)).not.toContain('РџСЂРёРІРµС‚');
+  });
+
+  it('does not overwrite a clean local portfolio with damaged text', () => {
+    const storage = createMemoryStorage();
+    const store = new LocalPortfolioStore(storage);
+    store.save(store.load());
+    const cleanSnapshot = storage.getItem(PORTFOLIO_STORAGE_KEY);
+    const damaged = updateActiveProjectWorkspace(store.load(), (workspace) => ({
+      ...workspace,
+      insightCard: workspace.insightCard
+        ? { ...workspace.insightCard, title: 'РџСЂРёРІРµС‚ РјРёСЂ РџСЂРёРІРµС‚' }
+        : workspace.insightCard
+    }));
+
+    store.save(damaged);
+
+    expect(storage.getItem(PORTFOLIO_STORAGE_KEY)).toBe(cleanSnapshot);
+    expect(storage.getItem(PORTFOLIO_INTEGRITY_QUARANTINE_KEY)).toContain('portfolio-text-integrity-failed');
   });
 });

@@ -45,6 +45,13 @@ Implement one small, complete, tested, documented product increment.
   proven otherwise. Do not rewrite localized UI/test strings from mojibake output;
   use stable ASCII anchors, JSON/AST-aware reads, browser/UI assertions, or an
   explicit UTF-8-aware read path before editing localized text.
+- Never roundtrip a full portfolio workspace with PowerShell `Invoke-RestMethod`.
+  Use `python scripts/workspace_utf8_client.py` or an application-owned migration,
+  then compare semantic hashes. Full payloads and damaged text stay out of logs.
+- A slice that changes persisted workspace behavior or its user-facing rendering
+  needs an authenticated browser proof against real FastAPI and temporary SQLite.
+  `401`, CORS failure, backend unavailability, or `localFallback` invalidates that
+  proof even when fixture-only visual tests pass.
 - Follow OOP and single-responsibility principles.
 - Comment non-obvious code and tests.
 - Do not expand scope unless required for the slice to work.
