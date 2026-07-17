@@ -20,6 +20,7 @@ from backend.app.upstream.application.external_run_payloads import UpstreamRadar
 from backend.app.upstream.application.external_run_result_policy import ExternalRunResultPolicy
 from backend.app.upstream.application.external_search_operations import OpenWebQueryOperationRunner
 from backend.app.upstream.application.radar_benchmark_reporter import RadarRunBenchmarkReporter
+from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_planner import build_search_plan
 from backend.app.upstream.application.search_triage_service import SearchResultTriageService
 from backend.app.upstream.application.signal_extraction_run_coordinator import SignalExtractionRunCoordinator
@@ -52,8 +53,15 @@ class UpstreamRadarExternalRunService:
         self._benchmark_reporter = RadarRunBenchmarkReporter()
         self._triage_service = SearchResultTriageService()
         self._signal_extraction = SignalExtractionRunCoordinator(signal_extraction_service)
+        self._language_contexts = RadarLanguageContextFactory()
 
-    def run(self, *, workspace: dict[str, Any], radar_id: str) -> dict[str, Any]:
+    def run(
+        self,
+        *,
+        workspace: dict[str, Any],
+        radar_id: str,
+        project_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         radar = _find_by_id(workspace.get("radars"), radar_id)
         if not radar:
             raise ValueError("Radar was not found in workspace.")
@@ -61,7 +69,18 @@ class UpstreamRadarExternalRunService:
         started_at = self._payloads.now_iso()
         run_id = _run_id(workspace, radar_id)
         budget = self._budget_policy.for_mode(self._settings.draft_run_execution_mode)
-        search_plan = build_search_plan(radar=radar, handles=handles, budget=budget, workspace=workspace)
+        language_context = self._language_contexts.build(
+            project_context=project_context,
+            workspace=workspace,
+            radar=radar,
+        )
+        search_plan = build_search_plan(
+            radar=radar,
+            handles=handles,
+            budget=budget,
+            workspace=workspace,
+            language_context=language_context,
+        )
 
         batch = self._operations.collect(
             run_id=run_id,
@@ -76,6 +95,7 @@ class UpstreamRadarExternalRunService:
             workspace=workspace,
             radar=radar,
             max_reads=int(budget["maxUrlReads"]) - int(budget["usedUrlReads"]),
+            language_context=language_context,
         )
         raw_results = list(triage.raw_results)
         selected = list(triage.selected_for_read)
@@ -114,9 +134,11 @@ class UpstreamRadarExternalRunService:
             "selectedForRead": selected,
             "rejectedBeforeRead": rejected,
             "searchTriage": triage_report.to_payload(),
+            "languageContext": language_context.to_payload(),
         }
         self._benchmark_reporter.attach_if_matching(
             workspace=workspace,
+            project_id=language_context.project_id or None,
             radar_id=radar_id,
             run=run,
             found_materials=batch.found_materials,
@@ -126,6 +148,7 @@ class UpstreamRadarExternalRunService:
             radar=radar,
             run=run,
             materials=batch.found_materials,
+            language_context=language_context,
         )
         run["signalExtraction"] = extraction["signalExtractionReport"]
         run["operations"].append(extraction["operation"])
@@ -145,11 +168,20 @@ class UpstreamRadarExternalRunService:
         workspace: dict[str, Any],
         run_id: str,
         force_retry: bool,
+        project_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        run = _find_by_id(workspace.get("radarRuns"), run_id)
+        radar = _find_by_id(workspace.get("radars"), str((run or {}).get("radarId") or ""))
+        language_context = self._language_contexts.build(
+            project_context=project_context,
+            workspace=workspace,
+            radar=radar or {},
+        )
         return self._signal_extraction.retry(
             workspace=workspace,
             run_id=run_id,
             force_retry=force_retry,
+            language_context=language_context,
         )
 
 def _resolve_handles(workspace: dict[str, Any], radar: dict[str, Any]) -> list[dict[str, Any]]:

@@ -13,18 +13,24 @@ from typing import Any
 from backend.app.application.public_evidence_ports import PublicUrlReadResult
 from backend.app.upstream.application.search_result_normalization import SearchResultNormalizer
 from backend.app.upstream.application.signal_extraction_fragments import FoundMaterialFragmentPolicy
+from backend.app.upstream.domain.radar_language import SourceLanguageInspector
 
 
 class UpstreamRadarPayloadFactory:
     def __init__(self) -> None:
         self._normalizer = SearchResultNormalizer()
         self._fragments = FoundMaterialFragmentPolicy()
+        self._languages = SourceLanguageInspector()
 
     def raw_result(self, run_id: str, query: dict[str, Any], citation: Any, index: int) -> dict[str, Any]:
         original_url = str(citation.url or "")
         url, invalid_reason = self._normalizer.canonical_url(original_url)
         title = self._normalizer.bounded_text(str(citation.title or url), self._normalizer.TITLE_LIMIT)
         snippet = self._normalizer.bounded_text(str(citation.snippet or ""), self._normalizer.SNIPPET_LIMIT)
+        normalized = self._normalizer.normalize(
+            {"id": f"{run_id}-raw-{query['id']}-{index + 1}", "url": url, "title": title, "snippet": snippet},
+            query=query,
+        )
         return {
             "id": f"{run_id}-raw-{query['id']}-{index + 1}",
             "sourceHandleId": query["sourceHandleId"],
@@ -32,14 +38,13 @@ class UpstreamRadarPayloadFactory:
             "intentId": query.get("intentId"),
             "family": query.get("family"),
             "evidenceType": query.get("evidenceType"),
+            "queryLanguage": query.get("queryLanguage"),
             "query": self._normalizer.bounded_text(str(query.get("query") or ""), 1000),
             "title": title,
             "url": url,
             "snippet": snippet,
-            "domain": self._normalizer.normalize(
-                {"id": f"{run_id}-raw-{query['id']}-{index + 1}", "url": url, "title": title, "snippet": snippet},
-                query=query,
-            ).domain,
+            "domain": normalized.domain,
+            "sourceLanguage": normalized.to_payload()["sourceLanguage"],
             "duplicateKey": url,
             "provider": "openrouter:web_search",
             **({"invalidReason": invalid_reason} if invalid_reason else {}),
@@ -129,6 +134,7 @@ class UpstreamRadarPayloadFactory:
 
     def _material(self, **values: Any) -> dict[str, Any]:
         text = " ".join(str(values["text"]).split())
+        source_language = self._languages.inspect(str(values["title"]), text[:4000])
         payload = {
             "id": values["material_id"],
             "radarRunId": values["run_id"],
@@ -142,6 +148,7 @@ class UpstreamRadarPayloadFactory:
             "status": values["status"],
             "warnings": values["warnings"],
             "provenanceLabel": values["provenance"],
+            "sourceLanguage": source_language.to_payload(),
         }
         if values["status"] == "found":
             payload["contentFragments"] = self._fragments.from_read_text(

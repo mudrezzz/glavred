@@ -8311,72 +8311,246 @@ Status:
   - Heuristic repair can change meaning, so recovery resets the affected demo workspace and never auto-decodes stored text.
 - Completed: 2026-07-16
 
-### Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle
+### Slice 2.17.4.7.0.2: Radar Language Policy and Signal Evidence Presentation
 
-- Status: Ready
-- Goal: Determine whether an extracted signal is useful for a specific project through an explainable editorial-opportunity profile, typed radar filters, and a complete human review lifecycle.
-- User value: The editor sees not merely a credible fact, but why it matters or does not matter for this author, audience, positioning, goals, topics, and content history.
+- Status: Done
+- Goal: Связать язык проекта, языки поиска и язык редакционного представления сигнала, а также сделать доказательства и смысл полей сигнала понятными человеку до внедрения полноценного scoring.
+- User value: Редактор читает цельную русскую карточку сигнала, видит оригинальный источник и цитату, понимает происхождение каждого поля и не принимает временную эвристику за реальный редакционный отказ.
 - AS IS sources:
   - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
   - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
-  - The active Radar-to-Candidate TO BE created/extended in `2.17.4.7`.
-  - Current project editorial model, active atomic editorial rules, author memory/position assertions, topics, existing signals/posts/candidates, and radar filters.
+  - `docs/architecture/RADAR_TO_CANDIDATE_PIPELINE_TO_BE_2_17_4_6_2.md`.
+  - Portfolio `BlogProject.language`, publication-channel language, current `RadarDefinition`, `FoundMaterial`, `SourceSignal` and Signals UI contracts.
 - TO BE necessity:
-  - Required because project-utility scoring, typed filter semantics, persisted review decisions, and cross-project benchmark behavior become canonical runtime contracts.
+  - Required because this slice changes RadarRun input context, search-language trace, extraction output-language contract, SourceSignal presentation metadata and user-visible semantics.
+  - Extend the active Radar-to-Candidate TO BE before runtime changes; update RadarRun/upstream AS IS and regenerate relevant PDFs at completion.
 - Change intent:
-  - Replace keyword-based filter evaluation and opaque generic fit with setting-backed dimension evidence.
-  - Keep factual evidence quality separate from editorial desirability so a credible but irrelevant signal and a relevant but weak signal cannot look equivalent.
+  - Separate editorial language from source-search languages.
+  - Preserve evidence in the source language while localizing editorial interpretation.
+  - Remove the misleading impression that the legacy frontend keyword evaluator is a canonical project-utility verdict.
 - Preserved AS IS invariants:
-  - Raw materials, evidence fragments, extraction decisions, uncertainty, and provenance remain immutable and traceable.
-  - Scoring does not assign final topic/fabula ownership, create post candidates, or silently approve signals.
+  - Sources may be found in any language allowed by the radar policy.
+  - Evidence quotations remain exact source text and continue to resolve to material/fragment handles.
+  - Extraction still does not assign topic, fabula, audience, value, goal, platform or channel and does not create `PostCandidate`, plan slot or DraftRun.
+  - Project-utility scoring remains owned by `2.17.4.7.1`.
+- Changed AS IS invariants:
+  - `BlogProject.language` becomes the canonical editorial language and is passed explicitly to RadarRun instead of being guessed from a workspace fallback.
+  - `RadarDefinition` gains a source-language policy: `editorialOnly`, `editorialAndEnglish`, `any`, with a future-compatible explicit language list.
+  - Search plan, found materials and signal extraction trace expose requested/detected language and localization decisions.
+  - Localized signal fields are separated from original source title and evidence quote.
+- Scope:
+  - Add a bounded `RadarLanguageContext` containing project id, editorial language, allowed source languages and fallback reason; full portfolio metadata is forbidden provider input.
+  - Make the planner honor source-language policy in actual query text and trace. A `ru` label with an English-only query is not accepted as proof.
+  - Require `title`, `summary`, `uncertainty`, `mechanism`, `outcome` and `limitations` in the editorial language; preserve `sourceTitle` and evidence `quote` in the original language.
+  - Add `sourceLanguage`, `editorialLanguage` and localization status/reason codes without changing existing successful API fields.
+  - Render `Открыть источник` as a safe external link with domain and add `Показать в трассе` for the owning RadarRun/material/fragment.
+  - Make evidence ids unique for multiple quotes from one fragment; duplicate React keys are forbidden.
+  - Replace user-facing `candidate` copy with `На проверке` where it means an unreviewed SourceSignal rather than a PostCandidate.
+  - Explain signal fields in the UI and docs. Rename or hide redundant `Что нашли` when it merely duplicates `mechanism`, `outcome` or `summary`.
+  - Until `2.17.4.7.1`, new extracted signals show `Редакционная полезность не оценена`; the legacy TypeScript keyword evaluator must not silently produce a canonical `rejected` status.
+  - Correct historical score formatting so fractional values are never rendered as fake percentages such as `0.34%`.
+  - Localize the industrial radar title, scope, source labels and filter instructions while preserving technical ids.
+- Accepted problem coverage:
+  - Covers issue 1: mixed languages and missing search-language settings.
+  - Covers issue 2: source URL absent from the signal card.
+  - Covers issue 4 presentation defects: English filter copy and incorrect `0.34%` rendering.
+  - Covers issue 6 presentation semantics: unclear field meaning and redundant `Что нашли`.
+- Out of scope:
+  - Project-utility scoring, typed filter execution, search-to-filter alignment, candidate assembly and automatic translation of evidence quotations.
+- Definition of Done:
+  - The AI-design-patterns project resolves `editorialLanguage=ru` from canonical project metadata, not from an implicit default.
+  - Each radar stores one explicit source-language policy and the UI offers `Язык редакции`, `Язык редакции и английский`, and `Любые языки`.
+  - Recorded tests prove that each policy changes actual bounded query language/selection behavior and leaves a trace-visible reason.
+  - For an English industrial source, every editorial signal field is Russian while source title and exact evidence quote remain original; unsupported translation drift equals zero.
+  - Every displayed evidence item has a safe resolvable source URL and an internal trace link; unresolved URL/material/fragment handles equal zero.
+  - Multiple quotes from the same fragment have unique stable evidence ids and render without duplicate-key warnings.
+  - New signals cannot receive `rejected` from the legacy frontend keyword evaluator; they remain explicitly unscored until backend scoring completes.
+  - `0.34` is never displayed as `0.34%`; no uncalibrated fractional score is shown as objective precision.
+  - The UI explains confidence, uncertainty, mechanism, outcome and limitations and does not duplicate mechanism under `Что нашли`.
+  - Mixed Russian/English valid source content does not trigger workspace integrity errors.
+  - Provider input and messages remain inside the existing extraction budget; language metadata adds no full workspace/project dump.
+  - One Docker/UI live RadarRun using `editorialAndEnglish` saves a clean Russian signal card, opens its original source and technical trace, and preserves exact evidence.
+  - `AS IS updated`, active TO BE updated and relevant PDFs regenerated.
+- Tests:
+  - Project/radar language-policy tests for `editorialOnly`, `editorialAndEnglish`, `any`, unknown language and legacy radar fallback.
+  - Extraction language-contract, original-quote preservation, localization failure, unique evidence id and handle-resolution tests.
+  - UI tests for source/trace links, Russian field labels, unscored state, field explanations, long URLs and score formatting.
+  - Connected authenticated visual checks on desktop/mobile, recorded benchmark, one live UI run, budget audit, full backend/frontend regression, architecture/design/visual/smoke, roadmap and diff checks.
+- Docs and demo:
+  - Update RadarRun/upstream AS IS, Radar-to-Candidate TO BE, SAO, developer guide, user guide, demo README and industrial radar fixture.
+- Completion transition:
+  - `2.17.4.7.0.2 -> Done`; only then `2.17.4.7.1 -> Ready`.
+- Risks:
+  - Translation can distort evidence. Original quotations remain canonical and localization is limited to editorial interpretation fields with explicit status.
+- Completed: 2026-07-17
+
+### Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle
+
+- Status: Ready
+- Goal: Определять полезность извлеченного SourceSignal для конкретного проекта через объяснимый editorial-opportunity profile, исполняемые типизированные фильтры и полный жизненный цикл решения редактора.
+- User value: Редактор видит не абстрактный процент, а почему сигнал подходит или не подходит автору, аудитории, позиции, целям и темам, какие доказательства и риски влияют на вывод и что именно требует человеческого решения.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - Active Radar-to-Candidate TO BE including the language/evidence contract from `2.17.4.7.0.2`.
+  - Current project profile, active atomic editorial rules, author-position assertions, relevant author memory, topics, existing signals/posts/candidates and radar filters.
+- TO BE necessity:
+  - Required because project-utility scoring, typed filter semantics, persisted review decisions, provider context and benchmark behavior become canonical runtime contracts.
+  - Extend the active TO BE with `ProjectEditorialOpportunityProfile`, `SignalUtilityDossier`, dimension ownership, blocker policy, review lifecycle and trace proof before implementation.
+- Change intent:
+  - Remove `evaluateSignalAgainstRadarFilters` as canonical policy from TypeScript and replace keyword hits/fixed constants with backend-owned setting-backed evidence.
+  - Keep factual evidence quality separate from editorial desirability, so credible-but-irrelevant and relevant-but-weak signals cannot look equivalent.
+  - Make every filter result specific, localized, evidence-backed and actionable.
+- Preserved AS IS invariants:
+  - Raw materials, exact evidence fragments, extraction decisions, uncertainty and provenance remain immutable and traceable.
+  - Scoring does not assign final topic/fabula ownership, create PostCandidate or silently approve a signal.
   - Human approval remains authoritative and reversible.
 - Changed AS IS invariants:
-  - `SourceSignal` gains dimension-level project utility, blocking risks, setting references, review history, and correction history.
-  - Radar filters become executable typed criteria rather than labels backed mainly by hard-coded keywords.
+  - SourceSignal gains a versioned `SignalUtilityReport`, dimension evidence, blocking risks, setting references, recommendation, review history and correction history.
+  - Radar filters become executable typed criteria rather than labels backed by hard-coded keyword arrays.
+  - `filterStatus=rejected` can only come from a traceable blocking criterion, never from missing arbitrary substring matches.
 - Canonical project-settings projection:
-  - Add bounded `ProjectEditorialOpportunityProfile` built from active atomic `editorialRules`, author position assertions and relevant author memory, active topics, existing signals/posts/candidates, and project profile.
-  - `editorialModel` is a compatibility summary/fallback, not a second conflicting rule source when active atomic rules exist.
-  - Style and voice rules remain downstream drafting/review concerns unless they express an upstream author-position or prohibited-content boundary.
-  - Fabulas, channel mechanics, and content-plan demand remain outside signal scoring and enter in `2.17.4.8`/`2.17.4.8.1`.
+  - Add bounded `ProjectEditorialOpportunityProfile` from active atomic editorial rules, author position assertions and relevant author memory, active topics, existing signals/posts/candidates, project profile and editorial language.
+  - `editorialModel` is compatibility fallback, not a competing source when active atomic rules exist.
+  - Style/voice remain downstream unless they express author position or prohibited-content boundaries; fabulas, channel mechanics and plan demand remain in `2.17.4.8`/`2.17.4.8.1`.
 - Editorial utility dimensions:
-  - Evidence strength, factual specificity, source credibility/corroboration, novelty against project history, author fit, audience value, positioning contribution, project-goal contribution, topic affinity, productive tension, practical actionability, freshness where relevant, banality/duplication risk, and prohibited-content risk.
-  - Each dimension stores score/status, reason codes, setting references, material/evidence references, uncertainty, and whether it is blocking, weighted, or diagnostic.
-  - No aggregate score can hide missing evidence, a hard prohibited-content conflict, or unknown project context.
-- Radar filter contract:
-  - Extend filters with typed target references, importance (`blocking|weighted|diagnostic`), optional threshold, and stable reason codes while keeping backward compatibility.
-  - Add operational dimensions such as `evidenceStrength`, `novelty`, `freshness`, and `actionability` alongside author/audience/positioning/goals/forbidden/topics.
-  - `mustMatch` and `mustNotMatch` block only against active, resolvable project settings; `shouldMatch` affects recommendation; `seekTension` preserves a useful opposing claim without treating it as the author's endorsed position.
-  - The industrial-cases radar receives distinct filters for industrial scope, implementation evidence, positioning, vendor/generic-news noise, novelty, and productive tension instead of one shared generic topic filter.
+  - Evidence strength, factual specificity, source credibility/corroboration, novelty, author fit, audience value, positioning contribution, project-goal contribution, topic affinity, productive tension, actionability, freshness, banality/duplication risk and prohibited-content risk.
+  - Each result stores status (`matched`, `partial`, `notProven`, `conflict`), reason codes, setting ids, material/evidence refs, uncertainty and importance (`blocking`, `weighted`, `diagnostic`).
+  - A total score may summarize eligible signals but cannot hide blockers or missing required evidence; UI must not show uncalibrated fake precision.
+- Industrial radar filter set:
+  - `Промышленный контекст`: blocking `mustMatch`, linked to active industrial topics/rules.
+  - `Есть механизм внедрения`: weighted, based on grounded mechanism/actors/workflow evidence.
+  - `Есть наблюдаемый результат`: weighted or blocking according to radar configuration, based on outcome/data evidence.
+  - `Надежность источника`: weighted with explicit vendor/independent/corroborated distinction.
+  - `Соответствие позиции автора`: weighted against decision/workflow/HITL/reliability assertions.
+  - `Практическая применимость`: weighted from mechanism, roles, constraints and applicability.
+  - `Новизна для проекта`: weighted against prior signals/posts/candidates.
+  - `Рекламность и общий AI-шум`: blocking `mustNotMatch` only when mechanism/evidence is absent.
+  - `Продуктивное противоречие`: diagnostic `seekTension`, never treated as endorsed author position.
+- Field semantics:
+  - Confidence means support of the extracted claim by retained evidence, not source credibility or project usefulness.
+  - Uncertainty lists what evidence cannot establish.
+  - Mechanism explains how/why the observed effect occurs.
+  - Outcome is the observed event, result or metric.
+  - Limitations constrain applicability and confidence; they inform risk but do not automatically reject a useful signal.
+  - Source credibility and project utility are separate scoring dimensions.
 - Review lifecycle:
-  - Persist states `candidate`, `approved`, `rejected`, `archived`, and `corrected`, with transition policy, actor/time/reason, reversible decisions, and correction history.
-  - Automatic acceptance is forbidden for blocking risk, missing evidence, provider fallback, unresolved project settings, or low-confidence extraction.
+  - Persist `candidate`, `approved`, `rejected`, `archived`, `corrected` transitions with actor/time/reason, reversible decisions and correction history.
+  - User-facing candidate wording is `На проверке`; PostCandidate remains a separate downstream entity.
+  - Automatic acceptance is forbidden for blocking risk, missing evidence, provider fallback, unresolved settings or low evidence support.
 - Golden benchmark layer 2:
-  - Evaluate the same recorded signals against all three demo projects to prove that project settings change outcomes.
-  - Store ordering and blocking constraints rather than brittle exact scores.
-  - Add mutation cases: swap positioning, disable a topic, add/remove a forbidden rule, change audience/goal, change `mustMatch` to `seekTension`, and remove historical content used for novelty.
+  - Evaluate the same recorded signals against all three demo projects without project-name or industrial-keyword hardcoding.
+  - Include high-fit industrial case, credible off-project signal, weak evidence, duplicate, prohibited promotion, productive tension, stale signal, actionable practice and corrected signal.
+  - Add mutations: change positioning, disable topic, add/remove forbidden rule, change audience/goal, change `mustMatch` to `seekTension`, remove history used for novelty.
+- Accepted problem coverage:
+  - Covers issue 3: false zero passing signals and unclear radar value.
+  - Covers issue 4: identical reasons and fixed `0.34` outcomes.
+  - Covers issue 5 scoring side: richer filters beyond a single topic criterion.
+  - Covers issue 6 semantic influence: each extracted field feeds only explicit scoring dimensions.
 - Out of scope:
-  - Final topic/fabula selection, post angle construction, candidate ranking, plan handoff, and DraftRun.
-- Proof evidence:
-  - Recorded high-fit, credible-but-off-project, weak-evidence, duplicate, prohibited, productive-tension, stale, actionable, and corrected signals.
-  - One live extracted signal reviewed through the complete lifecycle with all score references resolvable.
+  - Query generation/search campaign alignment, final topic/fabula selection, post angle construction, candidate ranking, plan handoff and DraftRun.
 - Definition of Done:
-  - Every dimension result cites concrete project-setting ids plus source/evidence references where relevant; unresolved setting/evidence handles equal zero.
-  - The same signal receives predictably different usefulness outcomes under the three demo projects without hard-coded project names or industrial keywords.
-  - Changing a meaningful setting produces the benchmarked outcome change; irrelevant setting changes do not perturb unrelated dimensions.
-  - Credible but off-project material is not confused with weak evidence; relevant but weak evidence cannot be approved as trusted.
-  - A prohibited claim can be retained as a `seekTension` counterargument only with explicit non-endorsement and risk trace.
-  - No opaque aggregate score hides a blocking risk, missing required evidence, or unresolved project context.
-  - Human approve/reject/archive/correct transitions are reversible, actor/time/reason traceable, and never mutate source evidence.
-  - Low-confidence fallback or provider failure cannot become automatic approval.
-  - Provider input uses the bounded opportunity profile and signal dossier with direct budget and final-message proof; full project/workspace/history dumps are forbidden.
-  - `AS IS updated` and relevant PDFs regenerated.
+  - Canonical signal utility evaluation runs only in backend; frontend renders/edits the report and contains no project-utility keyword policy.
+  - Every dimension result cites concrete project-setting ids and material/evidence refs where relevant; unresolved setting/evidence handles equal zero.
+  - The current ArcelorMittal industrial case passes industrial scope, mechanism and outcome checks; vendor origin produces a visible source-credibility warning rather than a false topic rejection.
+  - The industrial failure-mode signal is not rejected merely because its text lacks an exact topic-title substring.
+  - Every enabled industrial radar filter has a distinct localized criterion, result, reason, evidence and importance; duplicated generic explanations equal zero.
+  - Blocking rejection is possible only for a failed active blocking criterion with resolvable setting/evidence proof.
+  - Credible but off-project is distinct from weak evidence; relevant but weak evidence cannot become trusted approval.
+  - Productive tension is preserved with explicit non-endorsement and risk trace.
+  - No uncalibrated fractional percentage is canonical; aggregate summary cannot hide blockers, unknown context or missing evidence.
+  - The same signal produces predictably different outcomes for the three demo projects, and relevant setting mutations change only related dimensions.
+  - Golden industrial corpus contains at least one recommended, one caution and one rejected result; a known high-fit signal receiving universal rejection fails the benchmark.
+  - Human approve/reject/archive/correct transitions are reversible, actor/time/reason traceable and never mutate source evidence.
+  - Provider input uses bounded opportunity profile and signal dossier with direct current-call budget and final-message proof; full project/workspace/history dumps are forbidden.
+  - One live extracted signal is scored and reviewed end-to-end from the authenticated UI with all references resolvable and editorial status no worse than `reviewWithCaution` when only vendor corroboration is missing.
+  - `AS IS updated`, active TO BE updated and relevant PDFs regenerated.
 - Tests:
-  - Dimension ownership and evidence tests; hard/soft/diagnostic rule tests; `seekTension` tests; cross-project counterfactual and setting-mutation tests; review transitions; manual correction; project isolation; provider recovery/fallback; budget stress tests.
-  - Recorded benchmark, live review proof, full backend/frontend regression, architecture, smoke, roadmap, PDF, and diff checks.
+  - Dimension ownership, field-semantic influence, hard/soft/diagnostic criteria, source-credibility and `seekTension` tests.
+  - Current-live replay proving the two industrial signals are not falsely rejected.
+  - Cross-project counterfactual and setting-mutation benchmark, stable reasons, review transitions, corrections, project isolation and provider recovery/fallback.
+  - Budget stress tests, connected UI review test, recorded/live proof, full backend/frontend regression, architecture/design/visual/smoke, roadmap/PDF/diff checks.
 - Docs and demo:
-  - Update upstream AS IS/TO BE, SAO, developer/user guides, demo project filters, filter-editor documentation, and signal review UI/trace.
+  - Update upstream AS IS/TO BE, SAO, developer/user guides, industrial radar filters, filter editor and signal review/trace UI.
+- Completion transition:
+  - `2.17.4.7.1 -> Done`; then `2.17.4.7.1.1 -> Ready`.
 - Risks:
-  - Scores can create false objectivity. Preserve dimension evidence, blockers, alternatives, uncertainty, and human authority.
+  - Scores can create false objectivity. Dimension evidence, blockers, alternatives, uncertainty and human authority remain first-class.
+
+### Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark
+
+- Status: Backlog
+- Goal: Связать типизированные требования радара с фактически исполняемыми поисковыми запросами и доказать, что контрольный радар дает полезный редакционный выход, а не повторяющийся нулевой yield.
+- User value: Редактор понимает, какие требования фильтров радар пытался покрыть поиском, где именно потерялась полезность — в запросе, чтении, extraction или scoring — и почему новый запуск стоит потраченного бюджета.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - Active Radar-to-Candidate TO BE and typed filter/utility contracts from `2.17.4.7.0.2` and `2.17.4.7.1`.
+- TO BE necessity:
+  - Required because search-plan inputs, query-family semantics, coverage trace, budget allocation and end-to-end benchmark verdict change.
+  - Extend the active TO BE with filter-to-search requirement projection and useful-yield diagnostics before runtime implementation.
+- Change intent:
+  - Make different query families different in actual query text and evidence target, not only in labels.
+  - Use active radar requirements to search for evidence capable of satisfying filters without letting filters predetermine approval.
+  - Treat repeated zero review-eligible output as a diagnosable quality failure, not a normal successful run.
+- Preserved AS IS invariants:
+  - Search, extraction and project-utility scoring remain separate stages with separate statuses.
+  - Search never fabricates a passing signal and scoring never rewrites source evidence.
+  - Provider calls remain bounded and traceable; deterministic planner remains canonical and LLM-assisted expansion stays in `2.17.4.6.4`.
+- Changed AS IS invariants:
+  - Active typed filters/evidence requirements generate bounded `SearchRequirement` handles consumed by deterministic query-family planning.
+  - Search trace connects requirement -> intent -> executed query -> raw result -> read -> material -> signal -> utility verdict.
+  - RadarRun reports useful-signal yield and identifies the first stage responsible for zero eligible output.
+- Scope:
+  - Add `RadarSearchRequirementProfile` with must-have evidence types, optional dimensions, exclusions, source-language policy and priority; full project settings are forbidden search-provider input.
+  - Differentiate `broadDiscovery`, `caseExample`, `benchmarkPaper`, `ossTooling` and `limitationCritique` through distinct terms, source hints and evidence expectations.
+  - Adapt query budget allocation so active blocking evidence requirements are executed or explicitly reported as uncovered; identical query strings across required families are a failure.
+  - Preserve filter independence: a search requirement can request industrial scope/mechanism/limitations, but cannot label a future signal approved.
+  - Add `SearchOpportunityCoverageReport`: planned/executed requirements, family coverage, selected/read materials, extracted signals, scored recommendations, yield and zero-yield root cause.
+  - Track `extractedSignalYield`, `reviewEligibleYield`, `rejectedYield` and reason distribution without optimizing raw signal count.
+  - Add a trace-visible diagnostic when a run has readable materials/signals but no review-eligible output; repeated zero yield recommends radar repair.
+  - Keep provider-input/query/message budgets direct, bounded and actual-size checked; growth in project settings cannot grow provider payload without profile limits.
+- Industrial radar target campaign:
+  - Search for practical industrial AI/ТОиР cases with mechanism, roles, outcome and applicability limits.
+  - Include at least one independent/report/benchmark direction and one limitations/failure direction within the accepted profile.
+  - Treat vendor case studies as admissible sources with credibility risk, not automatic noise, when they contain concrete mechanism and outcome.
+  - Exclude generic AI news, pricing pages and model leaderboards without industrial context from selected material when suitable alternatives exist.
+- Golden useful-yield benchmark:
+  - Recorded corpus contains a strong industrial case, implementation practice, independent report, vendor case with concrete evidence, generic news, pricing promotion, unsupported autonomy claim, limitation/critique and off-project material.
+  - Expected constraints: at least one `recommended`, at least one `reviewWithCaution`, at least one blocking rejection, no accepted noise and complete lineage.
+  - Benchmark asserts semantic ordering and coverage, not exact provider wording or brittle total scores.
+  - The same corpus is evaluated against all three demo projects after scoring to prove project-dependent yield.
+- Accepted problem coverage:
+  - Covers issue 5 search side: the radar must search for evidence required by more than one filter.
+  - Completes issue 3: zero passing output is traced to search, reading, extraction or scoring and fails the known high-fit benchmark.
+  - Completes issue 1 operationally: source-language policy affects actual multilingual query execution.
+- Out of scope:
+  - LLM-assisted query expansion/search critic, cross-run cache, candidate assembly, plan handoff and DraftRun.
+- Definition of Done:
+  - Required query families have semantically distinct actual query strings, evidence targets and requirement handles; duplicate required queries equal zero.
+  - Every active blocking search requirement is executed or appears in `uncoveredRequiredSearchRequirements` with a concrete budget/provider reason.
+  - Search-language policy produces the expected bounded Russian/English/any-language campaign and trace; labels alone are not proof.
+  - Every selected material and resulting signal resolves through requirement, query, raw result, read decision and exact evidence fragment; unresolved lineage handles equal zero.
+  - Golden industrial benchmark produces at least one recommended, one caution and one rejected signal, with accepted generic-news/pricing noise equal zero.
+  - A known strong industrial fixture yielding zero review-eligible signals fails the benchmark and cannot be reported as clean success.
+  - Live acceptance through the user UI produces at least one review-eligible industrial signal. External provider outage is `inconclusive`; a search/scoring zero-yield result is not hidden as provider failure.
+  - If a live run has zero eligible output, the report names the first failing stage and concrete requirement/reason; the slice remains incomplete until the defect is fixed or the golden expectation is corrected with evidence.
+  - Vendor evidence with mechanism/outcome may reach `reviewWithCaution`; source credibility remains visible and cannot become clean independent corroboration.
+  - Search/read/provider calls and serialized messages remain inside operation/run caps; 100 topics/rules/history items cannot expand provider input beyond the profile.
+  - No `PostCandidate`, plan slot or DraftRun is created.
+  - Comparison evidence records query differentiation, coverage, yield, token usage, accepted noise and recommendation distribution against the pre-slice live run.
+  - `AS IS updated`, active TO BE updated and relevant PDFs regenerated.
+- Tests:
+  - Requirement-profile projection, language modes, distinct family queries, budget prioritization, uncovered requirement and duplicate-query tests.
+  - End-to-end recorded lineage and zero-yield root-cause tests for search/read/extraction/scoring failures.
+  - Golden useful-yield constraints, cross-project outcomes, vendor caution, noise rejection and permutation invariance.
+  - Stress tests for large settings, direct budget/message guards, connected UI trace, one live run, full backend/frontend regression, architecture/design/visual/smoke, roadmap/PDF/diff checks.
+- Docs and demo:
+  - Update RadarRun/upstream AS IS, active TO BE, SAO, developer/user guides, industrial radar configuration, technical trace and demo benchmark.
+- Completion transition:
+  - `2.17.4.7.1.1 -> Done`; then `2.17.4.8 -> Ready`.
+- Risks:
+  - Optimizing for positive yield can weaken filters. Golden constraints require honest rejections and prohibit fabricated or weak signals from being promoted merely to avoid zero output.
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -9085,6 +9259,7 @@ Status:
 - Slice 2.17.4.6.2: Search Result Triage v2 and Selective Reading. Completed 2026-07-13.
 - Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction. Completed 2026-07-14.
 - Slice 2.17.4.7.0.1: Workspace UTF-8 Integrity and Signals UI Recovery. Completed 2026-07-16.
+- Slice 2.17.4.7.0.2: Radar Language Policy and Signal Evidence Presentation. Completed 2026-07-17.
 
 
 ## Blocked Items

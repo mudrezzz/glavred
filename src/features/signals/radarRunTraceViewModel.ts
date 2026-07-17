@@ -142,6 +142,11 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
     fields: compactFields([
       ['Strategy', plan?.strategy],
       ['Language', plan?.language],
+      ['Редакционный язык', plan?.languageContext?.editorialLanguage],
+      ['Политика языков источников', plan?.languageContext?.sourceLanguagePolicy],
+      ['Языки запросов', plan?.languageContext?.queryLanguages?.join(', ')],
+      ['Пробелы языкового покрытия', plan?.languageCoverageGaps?.map((gap) => `${gap.language}: ${gap.reason}`).join('\n')],
+      ['Причина fallback', plan?.languageContext?.fallbackReason],
       ['Planner version', plan?.trace?.plannerVersion],
       ['Ownership boundary', plan?.trace?.ownershipBoundary],
       ['Queries', plan?.queries.length],
@@ -155,7 +160,7 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         title: intent.label,
         body: [intent.evidenceType, intent.sourceHandleTitle, intent.rationale].filter(Boolean).join('\n'),
         status: intent.intentType,
-        meta: compactFields([['Priority', intent.priority], ['Handle', intent.sourceHandleId]])
+        meta: compactFields([['Priority', intent.priority], ['Handle', intent.sourceHandleId], ['Язык запроса', intent.queryLanguage]])
       })),
       ...(plan?.queries ?? []).map((query) => ({
         id: query.id,
@@ -163,7 +168,7 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         title: query.label,
         body: query.query,
         status: query.evidenceType,
-        meta: compactFields([['Intent', query.intentId ?? query.intent], ['Rationale', query.rationale]])
+        meta: compactFields([['Intent', query.intentId ?? query.intent], ['Язык запроса', query.queryLanguage], ['Rationale', query.rationale]])
       })),
       ...(plan?.skippedIntentDetails ?? []).map((skip) => ({
         id: skip.id,
@@ -264,6 +269,10 @@ function triageQualityDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         ['Новизна', candidate.scores?.novelty],
         ['Риск шума', candidate.scores?.noiseRisk],
         ['Домен', candidate.domain],
+        ['Язык источника', candidate.sourceLanguage?.language],
+        ['Уверенность языка', candidate.sourceLanguage?.confidence],
+        ['Допущен политикой', candidate.sourceLanguage?.allowed],
+        ['Решение по языку', candidate.sourceLanguage?.eligibilityReason],
         ['Сигналы', candidate.scores?.reasonCodes?.join(', ')]
       ])
     })),
@@ -368,7 +377,14 @@ function rawResultsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
       title: result.title,
       body: [result.url, result.snippet].filter(Boolean).join('\n'),
       status: `score ${result.score}`,
-      meta: compactFields([['Query', result.queryId], ['Provider', result.provider], ['Duplicate key', result.duplicateKey]])
+      meta: compactFields([
+        ['Query', result.queryId],
+        ['Язык запроса', result.queryLanguage],
+        ['Язык источника', result.sourceLanguage?.language],
+        ['Уверенность языка', result.sourceLanguage?.confidence],
+        ['Provider', result.provider],
+        ['Duplicate key', result.duplicateKey]
+      ])
     })),
     jsonPayload: rawResults
   };

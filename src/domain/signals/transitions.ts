@@ -205,6 +205,7 @@ export function createRadarDraft(): RadarDefinition {
     rules: [],
     sources: [],
     sourceDiscoveryMode: 'autonomous',
+    sourceLanguagePolicy: 'editorialAndEnglish',
     filters: createDefaultRadarEditorialFilters(id),
     acceptancePolicy: 'manual',
     triggerMode: 'manual',

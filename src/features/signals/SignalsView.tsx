@@ -5,6 +5,7 @@ import type {
   SourceSignal,
   WorkspaceState
 } from '../../domain/editorialWorkspace';
+import type { BlogProject } from '../../domain/portfolio/types';
 import { FoundSignalsTab } from './FoundSignalsTab';
 import { PostCandidatesPreviewTab } from './PostCandidatesPreviewTab';
 import { RadarsTab } from './RadarsTab';
@@ -13,6 +14,7 @@ import { SignalsTabs } from './SignalsTabs';
 import { useSignalsController } from './useSignalsController';
 
 export function SignalsView({
+  project,
   workspace,
   onSaveRadar,
   onDeleteRadar,
@@ -28,6 +30,7 @@ export function SignalsView({
   onCreateInsight,
   onPlan
 }: {
+  project: BlogProject;
   workspace: WorkspaceState;
   onSaveRadar: (radar: RadarDefinition, isNew: boolean) => void;
   onDeleteRadar: (radar: RadarDefinition) => void;
@@ -64,6 +67,7 @@ export function SignalsView({
 
       {controller.tab === 'signals' && (
         <FoundSignalsTab
+          projectId={project.id}
           workspace={workspace}
           controller={controller}
           onApproveSignal={onApproveSignal}

@@ -16,6 +16,7 @@ from backend.app.upstream.domain.search_campaign import (
     SearchQuery,
     SkippedSearchIntent,
 )
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class SearchCampaignTraceBuilder:
@@ -26,6 +27,8 @@ class SearchCampaignTraceBuilder:
         workspace: dict[str, Any],
         handles: list[dict[str, Any]],
         language: str,
+        language_context: RadarLanguageContext,
+        language_coverage_gaps: list[dict[str, Any]],
         research_depth: str,
         budget: dict[str, int],
         source_eligibility: list[dict[str, Any]],
@@ -40,6 +43,8 @@ class SearchCampaignTraceBuilder:
                 workspace=workspace,
                 handles=handles,
                 language=language,
+                language_context=language_context,
+                language_coverage_gaps=language_coverage_gaps,
                 research_depth=research_depth,
             ),
             intent_coverage=self._intent_coverage(intents=intents, queries=queries, skipped=skipped),
@@ -71,6 +76,8 @@ class SearchCampaignTraceBuilder:
         workspace: dict[str, Any],
         handles: list[dict[str, Any]],
         language: str,
+        language_context: RadarLanguageContext,
+        language_coverage_gaps: list[dict[str, Any]],
         research_depth: str,
     ) -> dict[str, Any]:
         profile = workspace.get("projectProfile") if isinstance(workspace.get("projectProfile"), dict) else {}
@@ -78,6 +85,8 @@ class SearchCampaignTraceBuilder:
             "radarId": radar.get("id"),
             "radarTitle": radar.get("title"),
             "language": language,
+            "languageContext": language_context.to_payload(),
+            "languageCoverageGaps": language_coverage_gaps,
             "researchDepth": research_depth,
             "sourceHandleCount": len(handles),
             "topicCount": len(workspace.get("topics", [])) if isinstance(workspace.get("topics"), list) else 0,
@@ -100,6 +109,7 @@ class SearchCampaignTraceBuilder:
                 "intentId": intent.id,
                 "family": intent.family,
                 "evidenceType": intent.evidence_type,
+                "queryLanguage": intent.query_language,
                 "sourceHandleId": intent.source_handle_id,
                 "queryCount": queries_by_intent[intent.id],
                 "skippedCount": skipped_by_intent[intent.id],

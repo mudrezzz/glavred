@@ -9,6 +9,7 @@ import {
   type RadarSearchRule,
   type RadarSearchSource,
   type RadarSourceDiscoveryMode,
+  type RadarSourceLanguagePolicy,
   type SignalFilterStatus,
   type SignalReviewStatus,
   type SourceSignal,
@@ -117,6 +118,28 @@ export function RadarEditor({
           </label>
         </div>
       </div>
+
+      <fieldset className="radar-language-policy">
+        <legend>Языки источников</legend>
+        <div className="radar-language-segments" role="radiogroup" aria-label="Языки источников">
+          {([
+            ['editorialOnly', 'Язык редакции'],
+            ['editorialAndEnglish', 'Язык редакции и английский'],
+            ['any', 'Любые языки']
+          ] as Array<[RadarSourceLanguagePolicy, string]>).map(([value, label]) => (
+            <label className={(radar.sourceLanguagePolicy ?? 'editorialAndEnglish') === value ? 'active' : ''} key={value}>
+              <input
+                type="radio"
+                name={`source-language-policy-${radar.id}`}
+                value={value}
+                checked={(radar.sourceLanguagePolicy ?? 'editorialAndEnglish') === value}
+                onChange={() => onPatch({ sourceLanguagePolicy: value })}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="radar-config-section">
         <div className="list-toolbar compact">

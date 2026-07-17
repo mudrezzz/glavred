@@ -18,12 +18,13 @@ class RadarRunBenchmarkReporter:
         self,
         *,
         workspace: dict[str, Any],
+        project_id: str | None = None,
         radar_id: str,
         run: dict[str, Any],
         found_materials: list[dict[str, Any]],
     ) -> None:
         scenario = find_golden_radar_benchmark_scenario(
-            project_id=self._project_id(workspace),
+            project_id=project_id or self._project_id(workspace),
             radar_id=radar_id,
         )
         if scenario:

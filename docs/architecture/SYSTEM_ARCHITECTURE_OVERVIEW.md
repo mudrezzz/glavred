@@ -289,6 +289,11 @@ approves editorial artifacts automatically.
 - `SignalExtraction`: implemented backend application policy that builds a bounded
   dossier, extracts zero or more evidence-backed signal candidates, validates exact
   material/fragment grounding, and records a terminal decision for every material.
+- `RadarLanguageContext`: implemented bounded contract that takes the canonical
+  editorial language from `BlogProject.language`, combines it with the radar's
+  source-language policy, and records actual query languages and source eligibility.
+  Signal editorial fields use the project language; original source titles and exact
+  evidence quotations remain unchanged and resolvable by material/fragment handles.
 - `SignalScoring`: the next application policy. It will explain novelty, source
   credibility, author fit, audience value, positioning fit, topic affinity, evidence
   strength and risk without changing source evidence.

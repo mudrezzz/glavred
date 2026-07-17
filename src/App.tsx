@@ -155,6 +155,7 @@ function CabinetApp() {
       )}
       {active === 'signals' && (
         <SignalsView
+          project={controller.activeProject}
           workspace={workspace}
           onSaveRadar={controller.saveRadar}
           onDeleteRadar={controller.removeRadar}

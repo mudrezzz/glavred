@@ -106,6 +106,7 @@ export type {
   RadarSearchSource,
   RadarSearchSourceType,
   RadarSourceDiscoveryMode,
+  RadarSourceLanguagePolicy,
   RadarSourceType,
   RadarStatus,
   RadarTriggerMode,

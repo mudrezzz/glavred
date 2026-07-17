@@ -22,6 +22,7 @@ from backend.app.upstream.application.signal_extraction_report import (
     SignalExtractionReportBuilder,
     SignalExtractionResultPresenter,
 )
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class SignalExtractionService:
@@ -48,13 +49,14 @@ class SignalExtractionService:
         run: dict[str, Any],
         materials: list[dict[str, Any]],
         previous_report: dict[str, Any] | None = None,
+        language_context: RadarLanguageContext | None = None,
     ) -> dict[str, Any]:
         profile = self._profiles.resolve(
             operation_id="signalExtraction",
             execution_mode=self._settings.draft_run_execution_mode,
         )
         dossier = self._dossiers.build(
-            context=self._context.build(workspace=workspace, radar=radar),
+            context=self._context.build(workspace=workspace, radar=radar, language_context=language_context),
             materials=materials,
             profile=profile,
         )
@@ -125,6 +127,7 @@ class SignalExtractionService:
             if attempt.attempt.get("status") == "blocked":
                 break
 
+        localization_failed = any("editorial-language-not-satisfied" in item for item in repair_errors)
         outcome = self._reports.build(
             materials=materials,
             dossier=dossier,
@@ -134,7 +137,10 @@ class SignalExtractionService:
             status="failed",
             revision=revision,
             prior_revisions=prior_revisions,
-            warnings=["signal-extraction-safe-no-signal-fallback"],
+            warnings=[
+                "signal-extraction-safe-no-signal-fallback",
+                *(["editorial-language-not-satisfied"] if localization_failed else []),
+            ],
             grounding_violations=grounding_violations,
         )
         return self._presenter.present(outcome=outcome, materials=materials, dossier=dossier, run=run)

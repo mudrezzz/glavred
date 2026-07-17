@@ -15,6 +15,7 @@ describe('SourceSignalCard extraction candidate', () => {
       summary: 'Система сопоставляет вибрацию с журналом ремонтов.',
       rawNote: 'Доказательный кандидат',
       radarId: 'radar-1',
+      radarRunId: 'run-1',
       reviewStatus: 'candidate' as const,
       confidence: 'high' as const,
       uncertainty: 'Зависит от качества истории отказов.',
@@ -36,6 +37,7 @@ describe('SourceSignalCard extraction candidate', () => {
 
     render(
       <SourceSignalCard
+        projectId="project-ai"
         signal={signal}
         workspace={workspace}
         controller={controller}
@@ -45,13 +47,60 @@ describe('SourceSignalCard extraction candidate', () => {
       />
     );
 
-    expect(screen.getByText('Уверенность')).toBeInTheDocument();
+    expect(screen.getByText('Уверенность извлечения')).toBeInTheDocument();
+    expect(screen.getByText('Высокая')).toBeInTheDocument();
     expect(screen.getByText('Зависит от качества истории отказов.')).toBeInTheDocument();
     expect(screen.getByText('Сопоставление двух производственных источников данных.')).toBeInTheDocument();
     expect(screen.getByText('Мастер получает предупреждение.')).toBeInTheDocument();
     expect(screen.getByText('Требуется качественная история отказов.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Доказательства' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Открыть источник/ })).toHaveAttribute('href', 'https://example.org/case');
+    expect(screen.getByRole('link', { name: 'Показать в трассе' })).toHaveAttribute(
+      'href',
+      '/radar-runs?runId=run-1&projectId=project-ai&detailId=signal-extraction&signalId=signal-1'
+    );
+    expect(screen.queryByText('Что нашли')).not.toBeInTheDocument();
+    expect(screen.getByText('Редакционная полезность не оценена')).toBeInTheDocument();
     fireEvent.click(screen.getByText(signal.title));
     expect(controller.setExpandedSignalId).toHaveBeenCalledWith('');
+  });
+
+  it('does not present a legacy fractional heuristic as an exact percentage', () => {
+    const workspace = { radars: [{ id: 'radar-1', title: 'Промышленные AI-кейсы' }] } as WorkspaceState;
+    const signal = {
+      ...({
+        id: 'signal-legacy', type: 'observation', title: 'Старый сигнал', capturedAt: '2026-07-14',
+        source: 'Архив', summary: 'Старое наблюдение.', rawNote: 'Заметка'
+      }),
+      radarId: 'radar-1',
+      reviewStatus: 'candidate' as const,
+      filterStatus: 'rejected' as const,
+      filterEvaluations: [{
+        filterId: 'filter-topic', dimension: 'topics' as const, status: 'failed' as const, score: 0.34,
+        summary: 'Связь требует проверки.', evidence: 'Предварительная локальная эвристика.'
+      }]
+    };
+    const controller = {
+      expandedSignalId: signal.id,
+      editingSignal: null,
+      setExpandedSignalId: vi.fn(),
+      startSignalEdit: vi.fn()
+    } as unknown as SignalsController;
+
+    render(
+      <SourceSignalCard
+        projectId="project-ai"
+        signal={signal}
+        workspace={workspace}
+        controller={controller}
+        onApproveSignal={vi.fn()}
+        onRejectSignal={vi.fn()}
+        onArchiveSignal={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Предварительная локальная оценка' })).toBeInTheDocument();
+    expect(screen.queryByText('0.34%')).not.toBeInTheDocument();
+    expect(screen.getByText('Связь требует проверки.')).toBeInTheDocument();
   });
 });

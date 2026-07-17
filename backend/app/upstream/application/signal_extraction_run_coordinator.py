@@ -12,6 +12,7 @@ from typing import Any
 
 from backend.app.upstream.application.signal_extraction_retry_policy import SignalExtractionRetryPolicy
 from backend.app.upstream.application.signal_extraction_service import SignalExtractionService
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class SignalExtractionRunCoordinator:
@@ -27,6 +28,7 @@ class SignalExtractionRunCoordinator:
         run: dict[str, Any],
         materials: list[dict[str, Any]],
         previous_report: dict[str, Any] | None = None,
+        language_context: RadarLanguageContext | None = None,
     ) -> dict[str, Any]:
         if self._service is not None:
             return self._service.extract(
@@ -35,6 +37,7 @@ class SignalExtractionRunCoordinator:
                 run=run,
                 materials=materials,
                 previous_report=previous_report,
+                language_context=language_context,
             )
         now = datetime.now(UTC).isoformat()
         return {
@@ -65,6 +68,7 @@ class SignalExtractionRunCoordinator:
         workspace: dict[str, Any],
         run_id: str,
         force_retry: bool,
+        language_context: RadarLanguageContext | None = None,
     ) -> dict[str, Any]:
         run = self._find(workspace.get("radarRuns"), run_id)
         if not run:
@@ -90,6 +94,7 @@ class SignalExtractionRunCoordinator:
             run=run,
             materials=materials,
             previous_report=existing,
+            language_context=language_context,
         )
         extraction = self._retry_policy.resolve(
             existing_report=existing,

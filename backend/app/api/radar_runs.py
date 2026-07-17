@@ -15,9 +15,19 @@ from backend.app.infrastructure.openrouter_signal_extraction_adapter import Open
 router = APIRouter(prefix="/api/radar-runs")
 
 
+class RadarProjectContext(BaseModel):
+    project_id: str = Field(alias="projectId")
+    editorial_language: str = Field(alias="editorialLanguage")
+
+    model_config = {"populate_by_name": True}
+
+
 class RadarRunExternalRequest(BaseModel):
     radar_id: str = Field(alias="radarId")
     workspace: dict[str, Any]
+    project_context: RadarProjectContext | None = Field(default=None, alias="projectContext")
+
+    model_config = {"populate_by_name": True}
 
 
 class RadarRunExternalResponse(BaseModel):
@@ -33,6 +43,7 @@ class RadarRunExternalResponse(BaseModel):
 class SignalExtractionRetryRequest(BaseModel):
     workspace: dict[str, Any]
     force_retry: bool = Field(default=False, alias="forceRetry")
+    project_context: RadarProjectContext | None = Field(default=None, alias="projectContext")
 
     model_config = {"populate_by_name": True}
 
@@ -70,7 +81,11 @@ def run_external_radar(
     service: UpstreamRadarExternalRunService = Depends(create_upstream_radar_external_run_service),
 ) -> RadarRunExternalResponse:
     try:
-        result = service.run(workspace=payload.workspace, radar_id=payload.radar_id)
+        result = service.run(
+            workspace=payload.workspace,
+            radar_id=payload.radar_id,
+            project_context=payload.project_context.model_dump(by_alias=True) if payload.project_context else None,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail={"message": str(exc)}) from exc
     return RadarRunExternalResponse(
@@ -93,6 +108,7 @@ def retry_signal_extraction(
             workspace=payload.workspace,
             run_id=run_id,
             force_retry=payload.force_retry,
+            project_context=payload.project_context.model_dump(by_alias=True) if payload.project_context else None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail={"message": str(exc)}) from exc

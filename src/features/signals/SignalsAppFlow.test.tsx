@@ -56,7 +56,7 @@ describe('Signals app flow', () => {
     }
     expect(within(signalRow).getByText('Доказательства')).toBeInTheDocument();
     expect(within(signalRow).getByTestId('signal-filter-evaluations')).toBeInTheDocument();
-    expect(within(signalRow).getByText(/Фильтры отбора/i)).toBeInTheDocument();
+    expect(within(signalRow).getByRole('heading', { name: /Редакционная полезность|Предварительная локальная оценка/i })).toBeInTheDocument();
     expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Все по фильтрам' })).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
@@ -100,6 +100,10 @@ describe('Signals app flow', () => {
     expect(screen.getByTestId('radar-list').previousElementSibling).not.toHaveClass('radar-editor');
     expect(within(inlineEditor as HTMLElement).getByTestId('radar-source-discovery-mode')).toBeInTheDocument();
     expect(within(inlineEditor as HTMLElement).getByTestId('radar-filter-section')).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByRole('radiogroup', { name: 'Языки источников' })).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByLabelText('Язык редакции и английский')).toBeChecked();
+    fireEvent.click(within(inlineEditor as HTMLElement).getByLabelText('Любые языки'));
+    expect(within(inlineEditor as HTMLElement).getByLabelText('Любые языки')).toBeChecked();
     expect((inlineEditor as HTMLElement).querySelector('.radar-filter-controls')).toBeInTheDocument();
     expect(within(inlineEditor as HTMLElement).queryByText(/^Заметка$/i)).not.toBeInTheDocument();
     expect(lastRadar.querySelectorAll('.radar-rule-edit textarea').length).toBeGreaterThan(0);

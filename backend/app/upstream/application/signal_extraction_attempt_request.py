@@ -14,7 +14,10 @@ from typing import Any
 from backend.app.shared.llm_operations.provider_message_budget_guard import ProviderMessageBudgetGuard
 from backend.app.upstream.application.provider_budget_profiles import UpstreamProviderBudgetProfile
 from backend.app.upstream.application.provider_input_budget_gate import UpstreamProviderInputBudgetGate
-from backend.app.upstream.application.signal_extraction_context import SignalExtractionDossier
+from backend.app.upstream.application.signal_extraction_context import (
+    SignalExtractionDossierFactory,
+)
+from backend.app.upstream.application.signal_extraction_dossier import SignalExtractionDossier
 
 
 @dataclass(frozen=True)
@@ -38,7 +41,17 @@ class SignalExtractionAttemptRequestBuilder:
         model: str,
         repair_errors: list[str],
     ) -> SignalExtractionAttemptRequest:
-        repair_context = self._repair_context(repair_errors) if label == "repair" else ""
+        base_input_chars = len(json.dumps(dossier.provider_input, ensure_ascii=False, sort_keys=True))
+        repair_limit = min(
+            SignalExtractionDossierFactory.MAX_REPAIR_CONTEXT_CHARS,
+            max(
+                0,
+                profile.max_provider_input_chars
+                - base_input_chars
+                - SignalExtractionDossierFactory.REPAIR_CONTEXT_OVERHEAD_CHARS,
+            ),
+        )
+        repair_context = self._repair_context(repair_errors, max_chars=repair_limit) if label in {"repair", "backup"} else ""
         provider_input = dict(dossier.provider_input)
         if repair_context:
             provider_input["repairContext"] = repair_context
@@ -86,17 +99,32 @@ class SignalExtractionAttemptRequestBuilder:
                     "Выбери не более трёх сильнейших сигналов на материал; слабый материал должен дать ноль сигналов. "
                     "Соблюдай fieldCharLimits из extractionContract. "
                     "Для каждого переданного material верни ровно одно materialDecision с materialId, decision и reasonCodes."
+                    " Поля title, summary, uncertainty, mechanism, outcome и limitations пиши на editorialLanguage из extractionContract."
+                    " Не переводи source metadata и точные evidenceRefs.quote: цитата обязана дословно присутствовать во fragment text."
                 ),
             },
             {"role": "user", "content": json.dumps(provider_input, ensure_ascii=False, sort_keys=True)},
         ]
 
-    def _repair_context(self, errors: list[str]) -> str:
-        return json.dumps(
-            {"errorType": "schema-or-grounding", "validationErrors": errors[:12]},
-            ensure_ascii=False,
-            sort_keys=True,
-        )[:1200]
+    def _repair_context(self, errors: list[str], *, max_chars: int) -> str:
+        if max_chars <= 0:
+            return ""
+        corrections: list[str] = []
+        joined = " ".join(errors)
+        if "editorial-language-not-satisfied" in joined:
+            corrections.append("Все редакционные поля перепиши на editorialLanguage; исходные цитаты не переводи.")
+        if "quote-not-in-fragment" in joined:
+            corrections.append("Каждую evidenceRefs.quote скопируй дословно из указанного fragment text.")
+        if "number-or-date-not-grounded" in joined:
+            corrections.append("Не используй число или дату, если их нет дословно в evidenceRefs.quote этого сигнала.")
+        if "missing-material-decision" in joined or "provider-did-not-return-decision" in joined:
+            corrections.append("Верни ровно одно materialDecision для каждого переданного materialId.")
+        payload = {
+            "errorType": "schema-or-grounding",
+            "requiredCorrections": corrections,
+            "validationErrors": errors[:12],
+        }
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True)[:max_chars]
 
 
 __all__ = ("SignalExtractionAttemptRequest", "SignalExtractionAttemptRequestBuilder")

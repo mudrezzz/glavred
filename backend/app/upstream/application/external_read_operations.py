@@ -160,6 +160,8 @@ class RadarUrlReadOperationRunner:
             "evidenceTypes": list(selection.get("evidenceTypes") or ([raw.get("evidenceType")] if raw.get("evidenceType") else [])),
             "duplicateGroupId": selection.get("duplicateGroupId"),
             "decisionReason": selection.get("reason"),
+            "queryLanguage": raw.get("queryLanguage"),
+            "sourceLanguage": selection.get("sourceLanguage") or raw.get("sourceLanguage"),
         }
 
 

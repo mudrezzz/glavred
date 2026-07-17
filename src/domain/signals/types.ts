@@ -8,6 +8,7 @@ export type RadarTriggerMode = 'scheduled' | 'manual' | 'deficitDriven';
 export type RadarStatus = 'active' | 'paused' | 'needsReview';
 export type RadarRuleOperator = 'and' | 'or';
 export type RadarSourceDiscoveryMode = 'specifiedOnly' | 'specifiedAndAdditional' | 'autonomous';
+export type RadarSourceLanguagePolicy = 'editorialOnly' | 'editorialAndEnglish' | 'any';
 export type RadarEditorialFilterDimension =
   | 'author'
   | 'audience'
@@ -39,6 +40,7 @@ export interface RadarDefinition {
   sources: RadarSearchSource[];
   sourceHandleIds?: string[];
   sourceDiscoveryMode?: RadarSourceDiscoveryMode;
+  sourceLanguagePolicy?: RadarSourceLanguagePolicy;
   filters?: RadarEditorialFilterRule[];
   acceptancePolicy: RadarAcceptancePolicy;
   triggerMode: RadarTriggerMode;
@@ -126,4 +128,8 @@ export interface SourceSignal {
   limitations?: string[];
   provenance?: { materialIds: string[] };
   reasonCodes?: string[];
+  editorialLanguage?: string;
+  sourceLanguage?: string;
+  localizationStatus?: 'original' | 'localized' | 'failed' | 'unverified';
+  localizationReasonCodes?: string[];
 }

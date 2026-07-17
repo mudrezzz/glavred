@@ -62,6 +62,9 @@ work, not watered down in new radar slices.
   limitation remains?" Project usefulness and human review are separate stages.
 - `SourceSignal` does not own topic, fabula, target audience, value, goal, platform,
   format, or publication channel. Those belong to candidate assembly and planning.
+- `BlogProject.language` owns the editorial language. `RadarDefinition` separately
+  owns source-language eligibility. Search queries, source text, and editorial signal
+  fields are not assumed to share one language.
 - `PostCandidate` is an editorial composition: `Signal x Topic x Fabula`, with
   audience value, thesis, evidence summary, risks, and ranking rationale.
 - React feature code renders and edits upstream read models. It must not own provider
@@ -82,6 +85,7 @@ later slices.
 | --- | --- | --- |
 | `SourceHandle` | Project-owned source descriptor: type, title, locator, status, notes. | Search execution, scoring, post idea selection. |
 | `SourceRegistry` | The set of internal and external source handles available to a project. | Cross-project sources or global author memory. |
+| `RadarLanguageContext` | Canonical editorial language, source-language policy, actual query languages, allowed source languages, unknown-language rule, and legacy fallback reason. | Full project metadata or translation of source evidence. |
 | `RadarRun` | One execution attempt for a radar: status, budget, operations, found material ids, errors. | Final signal approval or post candidate approval. |
 | `RadarRunOperation` | One read/search/import operation inside a run. | Domain scoring or candidate ranking. |
 | `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, bounded hashed fragments, capturedAt, warnings. | Topic/fabula assignment or approval. |
@@ -102,13 +106,18 @@ later slices.
 
 2. **Radar run**
    - A `RadarDefinition` supplies trigger rules, source handles or source discovery
-     mode, editorial filters, execution mode, and budget caps.
+     mode, editorial filters, source-language policy, execution mode, and budget caps.
+   - `RadarLanguageContext` assigns an actual language to each bounded query family
+     without adding provider operations and records language coverage gaps.
    - A `RadarRun` records what was attempted, skipped, failed, and found.
    - Runs may be manual, scheduled later, or deficit-driven later. V1 should start
      manual.
 
 3. **Found material**
    - The runner normalizes heterogeneous retrieval output into `FoundMaterial`.
+   - Bounded title/snippet/fragments receive a deterministic source-language
+     assessment. A confidently detected forbidden language is not read; unknown and
+     mixed content remains eligible with a trace warning.
    - Found material remains visible even when weak, duplicate, or failed-filter. It is
      not silently promoted and not silently dropped.
 
@@ -118,6 +127,9 @@ later slices.
      decision.
    - A retry reuses persisted fragments and creates a new extraction revision without
      repeating search or URL reading.
+   - Editorial signal fields use `BlogProject.language`; original source title and
+     exact evidence quotation remain unchanged. A terminal localization failure emits
+     no mixed-language signal.
    - Scoring and human lifecycle explain whether the material is useful for the
      project and remain owned by `2.17.4.7.1`.
 
@@ -316,6 +328,11 @@ python scripts/analyze_radar_signal_extraction.py --project-id <project-id> --ru
   fragments, extraction dossier, direct budgets, final-message guard,
   primary/repair/backup recovery, strict grounding, terminal material decisions,
   revision retry without retrieval, trace/UI, recorded benchmark and live proof.
+- `2.17.4.7.0.2`: Radar Language Policy and Signal Evidence Presentation. Done:
+  canonical editorial-language handoff, three source-language policies, bounded
+  query-language allocation, deterministic source eligibility, extraction
+  localization validation, original evidence links, trace links, and explicitly
+  unscored candidate presentation.
 - `2.17.4.7.1`: Signal Editorial Scoring and Review Lifecycle.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
 - `2.17.4.9`: Signal Review and Candidate Workbench UX.

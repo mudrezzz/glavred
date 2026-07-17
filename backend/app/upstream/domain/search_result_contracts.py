@@ -30,6 +30,12 @@ class SearchResultCandidate:
     fingerprint: str
     valid: bool = True
     invalid_reason: str | None = None
+    source_language: str = "unknown"
+    source_language_confidence: str = "low"
+    source_language_mixed: bool = False
+    source_language_reason_codes: tuple[str, ...] = ()
+    source_language_allowed: bool = True
+    source_language_eligibility_reason: str | None = None
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -48,6 +54,14 @@ class SearchResultCandidate:
             "provider": self.provider,
             "fingerprint": self.fingerprint,
             "valid": self.valid,
+            "sourceLanguage": {
+                "language": self.source_language,
+                "confidence": self.source_language_confidence,
+                "mixed": self.source_language_mixed,
+                "reasonCodes": list(self.source_language_reason_codes),
+                "allowed": self.source_language_allowed,
+                "eligibilityReason": self.source_language_eligibility_reason,
+            },
         }
         if self.invalid_reason:
             payload["invalidReason"] = self.invalid_reason

@@ -142,7 +142,7 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
   const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) => {
     const normalizedSignal = normalizeSourceSignal(signal, sourceSignal);
     const radar = radars.find((candidate) => candidate.id === normalizedSignal.radarId);
-    return radar
+    return radar && !isUnscoredBackendSignal(normalizedSignal)
       ? evaluateSignalAgainstRadarFilters(normalizedSignal, radar, { ...demo, ...saved, radars } as WorkspaceState)
       : normalizedSignal;
   });
@@ -272,6 +272,7 @@ function normalizePostVisual(visual: NonNullable<WorkspaceState['postVisual']>):
 }
 
 function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {
+  const unscoredBackendSignal = isUnscoredBackendSignal(signal);
   return {
     ...fallback,
     ...signal,
@@ -284,37 +285,65 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
         summary: signal.rawNote ?? fallback.rawNote
       }
     ],
-    searchNote: signal.searchNote ?? fallback.searchNote ?? '',
+    searchNote: unscoredBackendSignal ? signal.searchNote : signal.searchNote ?? fallback.searchNote ?? '',
     radarId: signal.radarId ?? fallback.radarId,
     reviewStatus: signal.reviewStatus ?? fallback.reviewStatus ?? 'new',
     suggestedTopicId: signal.suggestedTopicId ?? fallback.suggestedTopicId,
     suggestedFabulaId: signal.suggestedFabulaId ?? fallback.suggestedFabulaId,
     suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
-    duplicateRisk: signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
+    duplicateRisk: unscoredBackendSignal ? signal.duplicateRisk : signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
     authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? '',
-    filterEvaluations: signal.filterEvaluations ?? fallback.filterEvaluations ?? [],
-    filterStatus: signal.filterStatus ?? fallback.filterStatus ?? 'passed'
+    filterEvaluations: unscoredBackendSignal ? signal.filterEvaluations : signal.filterEvaluations ?? fallback.filterEvaluations ?? [],
+    filterStatus: unscoredBackendSignal ? signal.filterStatus : signal.filterStatus ?? fallback.filterStatus ?? 'passed'
   };
 }
 
+function isUnscoredBackendSignal(signal: SourceSignal): boolean {
+  return Boolean(
+    signal.radarRunId &&
+    (signal.editorialLanguage || signal.localizationStatus || (signal.evidenceRefs ?? []).length > 0) &&
+    signal.filterStatus === undefined
+  );
+}
+
 function normalizeRadar(radar: RadarDefinition): RadarDefinition {
+  const localizedRadar = localizeLegacyIndustrialRadar(radar);
   const sourceDiscoveryMode =
-    radar.sourceDiscoveryMode ??
-    (radar.sources && radar.sources.length > 0 ? 'specifiedAndAdditional' : 'autonomous');
+    localizedRadar.sourceDiscoveryMode ??
+    (localizedRadar.sources && localizedRadar.sources.length > 0 ? 'specifiedAndAdditional' : 'autonomous');
   return {
-    ...radar,
+    ...localizedRadar,
     sourceDiscoveryMode,
-    filters: radar.filters ?? createDefaultRadarEditorialFilters(radar.id, []),
-    rules: radar.rules ?? [
+    sourceLanguagePolicy: localizedRadar.sourceLanguagePolicy ?? 'editorialAndEnglish',
+    filters: localizedRadar.filters ?? createDefaultRadarEditorialFilters(localizedRadar.id, []),
+    rules: localizedRadar.rules ?? [
       {
-        id: `rule-${radar.id}`,
+        id: `rule-${localizedRadar.id}`,
         operator: 'and',
         negate: false,
-        statement: radar.scope,
+        statement: localizedRadar.scope,
         status: 'active'
       }
     ],
-    sources: radar.sources ?? []
+    sources: localizedRadar.sources ?? []
+  };
+}
+
+function localizeLegacyIndustrialRadar(radar: RadarDefinition): RadarDefinition {
+  if (radar.id !== 'ai-pattern-radar-industrial-cases' || radar.title !== 'Industrial AI cases') return radar;
+  return {
+    ...radar,
+    title: 'Промышленные AI-кейсы',
+    scope: 'Публичные кейсы industrial AI, материалы по ТОиР/EAM, инженерные блоги и технические заметки вендоров с достаточной детализацией.',
+    filters: (radar.filters ?? []).map((filter) =>
+      filter.id === 'ai-pattern-radar-industrial-cases-filter-industrial'
+        ? {
+            ...filter,
+            instruction: 'Сигнал должен быть полезен для разбора паттернов industrial AI, ТОиР/EAM, Decision Intelligence, гибридного AI или открытой книги паттернов.'
+          }
+        : filter
+    ),
+    notes: 'Контрольный радар для мастерской промышленных AI-паттернов «Сборочная».'
   };
 }
 

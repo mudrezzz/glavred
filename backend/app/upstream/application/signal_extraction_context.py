@@ -7,47 +7,37 @@ Architecture doc: docs/architecture/RADAR_TO_CANDIDATE_PIPELINE_TO_BE_2_17_4_6_2
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from backend.app.upstream.application.provider_budget_profiles import UpstreamProviderBudgetProfile
+from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.signal_extraction_compaction import SignalExtractionDossierCompactor
+from backend.app.upstream.application.signal_extraction_contract import SignalExtractionContractFactory
+from backend.app.upstream.application.signal_extraction_dossier import SignalExtractionDossier
 from backend.app.upstream.application.signal_extraction_fragments import FoundMaterialFragmentPolicy
-
-
-@dataclass(frozen=True)
-class SignalExtractionDossier:
-    provider_input: dict[str, Any]
-    fragment_index: dict[tuple[str, str], dict[str, Any]]
-    eligible_material_ids: tuple[str, ...]
-    deferred_material_ids: tuple[str, ...]
-    legacy_material_ids: tuple[str, ...]
-    readiness: str
-    suppressed_fields: tuple[str, ...]
-    trimmed_fragment_count: int = 0
-    trimmed_context_count: int = 0
-
-    def trace_payload(self) -> dict[str, Any]:
-        return {
-            "profileId": "upstream-signal-extraction-dossier-v1",
-            "readiness": self.readiness,
-            "eligibleMaterialIds": list(self.eligible_material_ids),
-            "deferredMaterialIds": list(self.deferred_material_ids),
-            "legacyMaterialIds": list(self.legacy_material_ids),
-            "fragmentCount": len(self.fragment_index),
-            "trimmedFragmentCount": self.trimmed_fragment_count,
-            "trimmedContextCount": self.trimmed_context_count,
-            "suppressedFields": list(self.suppressed_fields),
-            "neverSendToProvider": list(self.suppressed_fields),
-            "runtimeMigrated": True,
-        }
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class SignalExtractionContextFactory:
-    def build(self, *, workspace: dict[str, Any], radar: dict[str, Any]) -> dict[str, Any]:
+    def __init__(self, language_factory: RadarLanguageContextFactory | None = None) -> None:
+        self._languages = language_factory or RadarLanguageContextFactory()
+
+    def build(
+        self,
+        *,
+        workspace: dict[str, Any],
+        radar: dict[str, Any],
+        language_context: RadarLanguageContext | None = None,
+    ) -> dict[str, Any]:
+        language_context = language_context or self._languages.build(
+            project_context=None,
+            workspace=workspace,
+            radar=radar,
+        )
         return {
-            "projectId": str(workspace.get("projectId") or workspace.get("id") or ""),
+            "projectId": language_context.project_id,
             "radarId": str(radar.get("id") or ""),
+            "languageContext": language_context.to_payload(),
             "scope": str(radar.get("scope") or "")[:600],
             "rules": [
                 {"id": str(item.get("id") or ""), "statement": str(item.get("statement") or "")[:240]}
@@ -68,6 +58,8 @@ class SignalExtractionContextFactory:
 
 
 class SignalExtractionDossierFactory:
+    MAX_REPAIR_CONTEXT_CHARS = 1200
+    REPAIR_CONTEXT_OVERHEAD_CHARS = 64
     NEVER_SEND = (
         "workspace",
         "topics",
@@ -84,6 +76,7 @@ class SignalExtractionDossierFactory:
     def __init__(self, fragment_policy: FoundMaterialFragmentPolicy | None = None) -> None:
         self._fragments = fragment_policy or FoundMaterialFragmentPolicy()
         self._compactor = SignalExtractionDossierCompactor()
+        self._contract = SignalExtractionContractFactory()
 
     def build(
         self,
@@ -95,11 +88,15 @@ class SignalExtractionDossierFactory:
         eligible: list[dict[str, Any]] = []
         deferred: list[str] = []
         legacy: list[str] = []
+        language_excluded: list[str] = []
         fragment_index: dict[tuple[str, str], dict[str, Any]] = {}
 
         readable = [item for item in materials if item.get("status") not in {"metadataOnly", "skipped", "duplicate"}]
         for material in readable:
             material_id = str(material.get("id") or "")
+            if not self._source_language_allowed(material, context):
+                language_excluded.append(material_id)
+                continue
             if len(eligible) >= profile.max_materials:
                 deferred.append(material_id)
                 continue
@@ -132,6 +129,7 @@ class SignalExtractionDossierFactory:
                     "locator": str(material.get("locator") or "")[:2048],
                     "provenance": str(material.get("provenanceLabel") or "")[:300],
                     "legacySummaryOnly": is_legacy,
+                    "sourceLanguage": material.get("sourceLanguage") or {"language": "unknown", "confidence": "low", "mixed": False},
                     "fragments": selected_fragments,
                     "discovery": {
                         "families": list((material.get("discoveryTrace") or {}).get("families") or []),
@@ -145,36 +143,19 @@ class SignalExtractionDossierFactory:
             "operationId": "signalExtraction",
             "context": context,
             "materials": eligible,
-            "extractionContract": {
-                "signalTypes": [
-                    "eventFact", "change", "audienceQuestion", "tensionCounterargument", "case",
-                    "dataPoint", "practice", "problemFailureMode", "personalObservation", "recurringPattern",
-                ],
-                "materialDecisions": [
-                    "signalProducing", "insufficient", "duplicate", "corroborating",
-                    "contradiction", "noise", "extractionFailed",
-                ],
-                "requiredSignalFields": [
-                    "type", "title", "summary", "confidence", "uncertainty", "evidenceRefs",
-                    "mechanism", "actors", "outcome", "limitations", "reasonCodes",
-                ],
-                "confidenceValues": ["low", "medium", "high"],
-                "maxSignalsPerMaterial": 3,
-                "preferZeroSignalsOverWeakClaims": True,
-                "fieldCharLimits": {
-                    "title": 180,
-                    "summary": 500,
-                    "uncertainty": 300,
-                    "mechanism": 500,
-                    "outcome": 500,
-                    "evidenceQuote": 500,
-                },
-                "requiredDecisionFields": ["materialId", "decision", "reasonCodes"],
-                "evidenceRefFields": ["materialId", "fragmentId", "quote"],
-                "forbiddenOwnership": ["suggestedTopicId", "suggestedFabulaId", "audience", "value", "goal", "platform", "channel"],
-            },
+            "extractionContract": self._contract.build(
+                editorial_language=str((context.get("languageContext") or {}).get("editorialLanguage") or "ru"),
+            ),
         }
-        compacted = self._compactor.compact(provider_input, max_chars=profile.max_provider_input_chars)
+        compacted = self._compactor.compact(
+            provider_input,
+            max_chars=max(
+                0,
+                profile.max_provider_input_chars
+                - self.repair_context_reserve(profile)
+                - self.REPAIR_CONTEXT_OVERHEAD_CHARS,
+            ),
+        )
         provider_input = compacted.provider_input
         fragment_index = {
             (str(material["id"]), str(fragment["id"])): fragment
@@ -188,11 +169,28 @@ class SignalExtractionDossierFactory:
             eligible_material_ids=tuple(item["id"] for item in eligible),
             deferred_material_ids=tuple(deferred),
             legacy_material_ids=tuple(legacy),
+            language_excluded_material_ids=tuple(language_excluded),
             readiness="DEGRADED" if readiness == "READY" and compacted_context else readiness,
             suppressed_fields=self.NEVER_SEND,
             trimmed_fragment_count=compacted.trimmed_fragment_count,
             trimmed_context_count=compacted.trimmed_context_count,
         )
 
+    def _source_language_allowed(self, material: dict[str, Any], context: dict[str, Any]) -> bool:
+        language_context = context.get("languageContext") if isinstance(context.get("languageContext"), dict) else {}
+        if language_context.get("sourceLanguagePolicy") == "any":
+            return True
+        assessment = material.get("sourceLanguage") if isinstance(material.get("sourceLanguage"), dict) else {}
+        language = str(assessment.get("language") or "unknown")
+        confidence = str(assessment.get("confidence") or "low")
+        mixed = bool(assessment.get("mixed"))
+        if language in {"unknown", "mixed"} or mixed or confidence != "high":
+            return True
+        return language in set(language_context.get("allowedSourceLanguages") or [])
 
-__all__ = ("SignalExtractionContextFactory", "SignalExtractionDossier", "SignalExtractionDossierFactory")
+    @classmethod
+    def repair_context_reserve(cls, profile: UpstreamProviderBudgetProfile) -> int:
+        return min(cls.MAX_REPAIR_CONTEXT_CHARS, max(400, profile.max_provider_input_chars // 10))
+
+
+__all__ = ("SignalExtractionContextFactory", "SignalExtractionDossierFactory")

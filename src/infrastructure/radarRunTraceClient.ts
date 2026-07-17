@@ -55,13 +55,13 @@ export async function fetchRadarRunTrace(runId: string, projectId?: string): Pro
   const normalizedRunId = runId.trim();
   if (!normalizedRunId) throw new Error('RadarRun ID is required');
 
-  const localPortfolio = await tryLoadPortfolio(localPortfolioLoader);
-  const localMatch = localPortfolio ? findRadarRunTrace(localPortfolio, normalizedRunId, projectId, 'local') : null;
-  if (localMatch) return localMatch;
-
   const backendPortfolio = await tryLoadPortfolio(backendPortfolioLoader);
   const backendMatch = backendPortfolio ? findRadarRunTrace(backendPortfolio, normalizedRunId, projectId, 'backend') : null;
   if (backendMatch) return backendMatch;
+
+  const localPortfolio = await tryLoadPortfolio(localPortfolioLoader);
+  const localMatch = localPortfolio ? findRadarRunTrace(localPortfolio, normalizedRunId, projectId, 'local') : null;
+  if (localMatch) return localMatch;
 
   throw new Error('RadarRun not found');
 }
@@ -107,7 +107,10 @@ function findRadarRunTrace(
 }
 
 export async function retryRadarRunSignalExtraction(bundle: RadarRunTraceBundle): Promise<RadarRunTraceBundle> {
-  const result = await retryRadarSignalExtraction(bundle.workspace, bundle.run.id, true);
+  const result = await retryRadarSignalExtraction(bundle.workspace, bundle.run.id, true, {
+    projectId: bundle.project.id,
+    editorialLanguage: bundle.project.language
+  });
   const workspace = applyRadarRunWorkspaceResult(bundle.workspace, result);
   const portfolio = await (bundle.source === 'backend' ? backendPortfolioLoader() : localPortfolioLoader());
   const nextPortfolio: PortfolioState = {

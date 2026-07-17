@@ -33,6 +33,7 @@ class SearchTriageReport:
     read_plan: SearchReadPlan
     read_outcomes: tuple[SearchReadOutcome, ...] = ()
     decision_counts: dict[str, int] = field(default_factory=dict)
+    language_context: dict[str, Any] = field(default_factory=dict)
 
     def with_read_outcomes(self, outcomes: list[SearchReadOutcome]) -> "SearchTriageReport":
         return SearchTriageReport(
@@ -43,6 +44,7 @@ class SearchTriageReport:
             read_plan=self.read_plan,
             read_outcomes=tuple(outcomes),
             decision_counts=self.decision_counts,
+            language_context=self.language_context,
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -64,6 +66,7 @@ class SearchTriageReport:
             "readCoverageGaps": [dict(item) for item in self.read_plan.coverage_gaps],
             "readOutcomes": [item.to_payload() for item in self.read_outcomes],
             "decisionCounts": self.decision_counts,
+            "languageContext": self.language_context,
         }
 
 

@@ -12,7 +12,14 @@ describe('RadarRunTracePage', () => {
   });
 
   it('loads an enriched RadarRun by id and switches trace details', async () => {
-    setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio(), null);
+    setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio({
+      signalExtraction: {
+        status: 'succeeded',
+        revision: 1,
+        materialDecisions: [],
+        decisionCoverageComplete: true
+      }
+    }), null);
 
     const { container } = render(<RadarRunTracePage />);
 
@@ -128,5 +135,25 @@ describe('RadarRunTracePage', () => {
     await waitFor(() => expect(screen.getByText('Industrial AI cases')).toBeInTheDocument());
     expect(screen.getByTestId('radar-run-summary')).toBeInTheDocument();
     expect(screen.queryByText('Главред')).not.toBeInTheDocument();
+  });
+
+  it('opens a requested signal extraction detail from a deep link', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/radar-runs?runId=radar-run-industrial-1&projectId=project-ai-design-patterns&detailId=signal-extraction&signalId=signal-1'
+    );
+    setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio({
+      signalExtraction: {
+        status: 'succeeded',
+        revision: 1,
+        materialDecisions: [],
+        decisionCoverageComplete: true
+      }
+    }), null);
+
+    render(<RadarRunTracePage />);
+
+    await waitFor(() => expect(screen.getByTestId('radar-run-detail-panel')).toHaveTextContent('Извлечение сигналов'));
   });
 });

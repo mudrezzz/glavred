@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+import hashlib
 from typing import Any
 
 
@@ -61,14 +62,20 @@ class ExtractedSourceSignal:
     outcome: str = ""
     limitations: tuple[str, ...] = ()
     reason_codes: tuple[str, ...] = ()
+    editorial_language: str = "ru"
+    source_language: str = "unknown"
+    localization_status: str = "unverified"
+    localization_reason_codes: tuple[str, ...] = ()
 
     def to_payload(self, materials_by_id: dict[str, dict[str, Any]]) -> dict[str, Any]:
         evidence = []
         for ref in self.evidence_refs:
             material = materials_by_id.get(ref.material_id, {})
+            evidence_seed = f"{self.id}|{ref.material_id}|{ref.fragment_id}|{ref.quote}"
+            evidence_id = hashlib.sha256(evidence_seed.encode("utf-8")).hexdigest()[:20]
             evidence.append(
                 {
-                    "id": f"evidence-{self.id}-{ref.fragment_id}",
+                    "id": f"evidence-{evidence_id}",
                     "materialId": ref.material_id,
                     "fragmentId": ref.fragment_id,
                     "sourceTitle": str(material.get("title") or ref.material_id),
@@ -99,6 +106,10 @@ class ExtractedSourceSignal:
             "limitations": list(self.limitations),
             "provenance": {"materialIds": list(dict.fromkeys(ref.material_id for ref in self.evidence_refs))},
             "reasonCodes": list(self.reason_codes),
+            "editorialLanguage": self.editorial_language,
+            "sourceLanguage": self.source_language,
+            "localizationStatus": self.localization_status,
+            "localizationReasonCodes": list(self.localization_reason_codes),
         }
 
 

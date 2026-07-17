@@ -104,6 +104,7 @@ export interface RadarSearchQuery {
   family?: string;
   evidenceType?: string;
   priority?: number;
+  queryLanguage?: string;
 }
 
 export interface RadarSearchIntent {
@@ -117,6 +118,7 @@ export interface RadarSearchIntent {
   rationale: string;
   priority: number;
   queryTerms: string[];
+  queryLanguage?: string;
 }
 
 export interface RadarSkippedSearchIntent {
@@ -127,6 +129,7 @@ export interface RadarSkippedSearchIntent {
   intentId?: string;
   intentType?: string;
   family?: string;
+  queryLanguage?: string;
 }
 
 export interface RadarSearchCampaignTrace {
@@ -161,6 +164,27 @@ export interface RadarSearchPlan {
   };
   trace?: RadarSearchCampaignTrace;
   skippedIntentDetails?: RadarSkippedSearchIntent[];
+  languageContext?: RadarLanguageContextTrace;
+  languageCoverageGaps?: Array<{ language: string; reason: string }>;
+}
+
+export interface RadarLanguageContextTrace {
+  projectId: string;
+  editorialLanguage: string;
+  sourceLanguagePolicy: 'editorialOnly' | 'editorialAndEnglish' | 'any';
+  queryLanguages: string[];
+  allowedSourceLanguages: string[];
+  allowUnknownSourceLanguage: boolean;
+  fallbackReason?: string;
+}
+
+export interface RadarSourceLanguageTrace {
+  language: string;
+  confidence: string;
+  mixed: boolean;
+  reasonCodes: string[];
+  allowed?: boolean;
+  eligibilityReason?: string;
 }
 
 export interface RadarRawSearchResult {
@@ -181,6 +205,8 @@ export interface RadarRawSearchResult {
   candidateId?: string;
   duplicateGroupId?: string;
   dimensionScores?: RadarSearchResultDimensionScores;
+  queryLanguage?: string;
+  sourceLanguage?: RadarSourceLanguageTrace;
 }
 
 export interface RadarSearchResultDimensionScores {
@@ -209,6 +235,7 @@ export interface RadarReadDecision {
   duplicateRawResultIds?: string[];
   queryIds?: string[];
   intentIds?: string[];
+  sourceLanguage?: RadarSourceLanguageTrace;
 }
 
 export type RadarReadSelection = RadarReadDecision;
@@ -245,6 +272,7 @@ export interface RadarSearchTriageCandidate {
   valid: boolean;
   invalidReason?: string;
   scores?: RadarSearchResultDimensionScores | null;
+  sourceLanguage?: RadarSourceLanguageTrace;
 }
 
 export interface RadarSearchReadOutcome {
@@ -277,6 +305,7 @@ export interface RadarSearchTriageReport {
   readCoverageGaps: Array<{ family: string; reason: string }>;
   readOutcomes: RadarSearchReadOutcome[];
   decisionCounts: Record<string, number>;
+  languageContext?: RadarLanguageContextTrace;
 }
 
 export interface RadarBenchmarkReport {
@@ -315,6 +344,7 @@ export interface RadarRun {
   benchmarkReport?: RadarBenchmarkReport;
   searchTriage?: RadarSearchTriageReport;
   signalExtraction?: RadarSignalExtractionReport;
+  languageContext?: RadarLanguageContextTrace;
 }
 
 export type RadarMaterialExtractionDecision =
@@ -376,6 +406,7 @@ export interface FoundMaterial {
   status: FoundMaterialStatus;
   warnings: string[];
   provenanceLabel: string;
+  sourceLanguage?: RadarSourceLanguageTrace;
   contentFragments?: Array<{
     id: string;
     ordinal: number;
@@ -393,5 +424,7 @@ export interface FoundMaterial {
     evidenceTypes: string[];
     duplicateGroupId?: string;
     decisionReason?: string;
+    queryLanguage?: string;
+    sourceLanguage?: RadarSourceLanguageTrace;
   };
 }

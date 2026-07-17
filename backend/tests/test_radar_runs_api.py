@@ -80,7 +80,11 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     app.state.signal_extraction_provider = extraction
     client = TestClient(app)
 
-    response = client.post("/api/radar-runs/external", json={"radarId": "radar-1", "workspace": workspace()})
+    project_context = {"projectId": "project-api-test", "editorialLanguage": "ru"}
+    response = client.post(
+        "/api/radar-runs/external",
+        json={"radarId": "radar-1", "workspace": workspace(), "projectContext": project_context},
+    )
 
     assert response.status_code == 200
     payload = response.json()
@@ -102,7 +106,7 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     }
     retry = client.post(
         f"/api/radar-runs/{payload['run']['id']}/signal-extraction",
-        json={"workspace": retry_workspace, "forceRetry": True},
+        json={"workspace": retry_workspace, "forceRetry": True, "projectContext": project_context},
     )
     assert retry.status_code == 200
     assert retry.json()["signalExtractionReport"]["revision"] == 2
@@ -130,6 +134,7 @@ def workspace() -> dict[str, Any]:
             "title": "Industrial AI radar",
             "scope": "Find industrial AI implementation patterns",
             "sourceHandleIds": ["source-open-web"],
+            "sourceLanguagePolicy": "editorialAndEnglish",
             "rules": [{"statement": "Predictive maintenance with operational proof"}],
         }],
         "radarRuns": [],

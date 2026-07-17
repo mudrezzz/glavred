@@ -111,9 +111,13 @@ details are not committed. The public demo keeps only reusable editorial signals
 source descriptions, author-memory notes, and benchmark expectations.
 
 The live upstream demo uses `Опытный цех «Сборочная»` and radar
-`Industrial AI cases`. Open `Сигналы -> Радары`, run that radar, then inspect:
+`Кейсы промышленного ИИ`. Its default source policy is `Язык редакции и английский`:
+editorial fields are Russian, while original source titles and exact evidence quotes
+remain unchanged. Open `Сигналы -> Радары`, run that radar, then inspect:
 
 - `Найденные сигналы` for unreviewed evidence-backed candidates;
+- `Открыть источник` and `Показать в трассе` for original evidence and its owning
+  extraction detail;
 - `Открыть трассу` for search, reading, retained fragments, extraction decisions,
   provider recovery, budgets and actual usage;
 - `Повторить извлечение` to create a new extraction revision from saved fragments

@@ -103,6 +103,23 @@ source eligibility, and budget skips before provider search runs.
 Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
 URL reading belongs behind the public URL reader port.
 
+Radar language is an explicit bounded contract. The frontend passes only project id
+and `BlogProject.language`; `RadarLanguageContextFactory` combines it with
+`RadarDefinition.sourceLanguagePolicy`. Compatibility `searchPlan.language` means
+editorial language, while every intent and query has its own `queryLanguage`.
+`editorialAndEnglish` distributes existing query families across the editorial
+language and English without adding provider operations. A confidently detected
+forbidden source language is not read; `unknown` and `mixed` continue with a trace
+warning.
+
+Extraction localizes only editorial interpretation fields. Never translate or
+rewrite `sourceTitle` or exact `evidenceRefs.quote` values. New backend extraction
+signals enter the workspace as `reviewStatus=candidate` and remain unscored until the
+backend scoring slice. Do not call the legacy TypeScript filter evaluator while
+merging them. Signal cards must resolve every evidence handle to an external source
+URL and a `/radar-runs` detail link; confidence describes extraction reliability,
+not editorial utility.
+
 Search-result triage is deterministic and backend-owned. Keep normalization,
 duplicate grouping, quality assessment, read allocation, read execution, and payload
 construction in their role-owned modules under `backend/app/upstream/application`.

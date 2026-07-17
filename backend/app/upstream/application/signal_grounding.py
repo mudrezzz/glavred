@@ -11,7 +11,7 @@ import re
 from dataclasses import replace
 from typing import Any
 
-from backend.app.upstream.application.signal_extraction_context import SignalExtractionDossier
+from backend.app.upstream.application.signal_extraction_dossier import SignalExtractionDossier
 from backend.app.upstream.domain.signal_extraction_contracts import ExtractedSourceSignal
 
 

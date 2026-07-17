@@ -15,6 +15,7 @@ from backend.app.upstream.application.signal_extraction_context import (
     SignalExtractionContextFactory,
     SignalExtractionDossierFactory,
 )
+from backend.app.upstream.application.signal_extraction_attempt_request import SignalExtractionAttemptRequestBuilder
 from backend.app.upstream.application.signal_extraction_fragments import FoundMaterialFragmentPolicy
 from backend.app.upstream.application.signal_extraction_provider import SignalExtractionProviderResult
 from backend.app.upstream.application.signal_extraction_service import SignalExtractionService
@@ -113,6 +114,8 @@ def test_invalid_primary_is_repaired_without_copying_previous_response() -> None
     assert repository.runs[0].request_payload["providerInput"].get("repairContext") is None
     assert repository.runs[0].result_payload["providerUsage"]["total_tokens"] == 1180
     assert len(repository.runs[1].request_payload["providerInput"]["repairContext"]) <= 1200
+    repair_context = repository.runs[1].request_payload["providerInput"]["repairContext"]
+    assert "requiredCorrections" in repair_context
 
 
 def test_confidence_accepts_case_insensitive_and_bounded_numeric_values() -> None:
@@ -197,6 +200,8 @@ def test_primary_and_repair_failure_use_backup_then_preserve_usage() -> None:
     assert [item["attemptLabel"] for item in attempts] == ["primary", "repair", "backup"]
     assert attempts[-1]["status"] == "accepted"
     assert provider.calls[-1]["model"] == "backup/model"
+    assert "repairContext" in provider.calls[-1]["messages"][1]["content"]
+    assert repository.runs[-1].request_payload["payloadBudget"]["status"] == "directlyBudgeted"
     assert repository.runs[-1].fallback_used is True
 
 
@@ -311,7 +316,11 @@ def test_stress_dossier_is_compacted_inside_each_execution_mode_budget() -> None
         )
         serialized_size = len(json.dumps(dossier.provider_input, ensure_ascii=False, sort_keys=True))
 
-        assert serialized_size <= profile.max_provider_input_chars
+        assert serialized_size <= (
+            profile.max_provider_input_chars
+            - SignalExtractionDossierFactory.repair_context_reserve(profile)
+            - SignalExtractionDossierFactory.REPAIR_CONTEXT_OVERHEAD_CHARS
+        )
         assert len(dossier.eligible_material_ids) == expected_materials
         assert dossier.trimmed_fragment_count > 0
         assert dossier.readiness == "DEGRADED"
@@ -320,6 +329,16 @@ def test_stress_dossier_is_compacted_inside_each_execution_mode_budget() -> None
             for material in dossier.provider_input["materials"]
             for fragment in material["fragments"]
         ])
+        repair = SignalExtractionAttemptRequestBuilder().build(
+            dossier=dossier,
+            profile=profile,
+            label="repair",
+            model="recorded-model",
+            repair_errors=["grounding:quote-not-in-fragment:fragment-1"] * 12,
+        )
+        assert repair.blocked_reason is None
+        assert repair.fields["payloadBudget"]["providerInputCharEstimate"] <= profile.max_provider_input_chars
+        assert repair.fields["messageCharCount"] <= profile.max_message_chars
 
 
 def test_recorded_golden_signal_extraction_benchmark_passes_all_cases() -> None:
@@ -328,6 +347,97 @@ def test_recorded_golden_signal_extraction_benchmark_passes_all_cases() -> None:
     assert report["caseCount"] == 8
     assert report["passedCount"] == 8
     assert report["failures"] == []
+
+
+def test_english_source_is_localized_to_russian_without_translating_evidence_quote() -> None:
+    material = english_readable_material()
+    fragment = material["contentFragments"][0]
+    payload = valid_payload(material["id"], fragment["id"], fragment["text"])
+
+    result = service(RecordedExtractionProvider([payload]), MemoryAiRunRepository()).extract(
+        workspace=workspace(), radar=radar(), run=run(), materials=[material]
+    )
+
+    signal = result["sourceSignals"][0]
+    assert signal["editorialLanguage"] == "ru"
+    assert signal["sourceLanguage"] == "en"
+    assert signal["localizationStatus"] == "localized"
+    assert signal["evidence"][0]["sourceTitle"] == material["title"]
+    assert signal["evidence"][0]["quote"] == fragment["text"]
+
+
+def test_language_violation_runs_repair_then_accepts_localized_payload() -> None:
+    material = english_readable_material()
+    fragment = material["contentFragments"][0]
+    invalid = valid_payload(material["id"], fragment["id"], fragment["text"])
+    invalid["signals"][0].update({
+        "title": "Predictive maintenance connects vibration and maintenance history",
+        "summary": "The system alerts the engineer using two operational sources.",
+        "uncertainty": "The result depends on maintenance history quality.",
+        "mechanism": "The service matches vibration with repair logs.",
+        "outcome": "The engineer receives an alert.",
+        "limitations": ["The result depends on maintenance history quality."],
+    })
+    provider = RecordedExtractionProvider([
+        invalid,
+        valid_payload(material["id"], fragment["id"], fragment["text"]),
+    ])
+
+    result = service(provider, MemoryAiRunRepository()).extract(
+        workspace=workspace(), radar=radar(), run=run(), materials=[material]
+    )
+
+    attempts = result["signalExtractionReport"]["providerAttempts"]
+    assert [item["status"] for item in attempts] == ["failed", "accepted"]
+    assert "editorial-language-not-satisfied" in attempts[0]["error"]
+    assert len(provider.calls[1]["messages"][1]["content"]) <= 16000
+
+
+def test_total_localization_failure_creates_no_mixed_language_signal() -> None:
+    material = english_readable_material()
+    fragment = material["contentFragments"][0]
+    invalid = valid_payload(material["id"], fragment["id"], fragment["text"])
+    invalid["signals"][0].update({
+        "title": "Predictive maintenance implementation",
+        "summary": "The system combines vibration and maintenance records for operational alerts.",
+        "uncertainty": "Evidence comes from one implementation.",
+        "mechanism": "It compares vibration and repair history.",
+        "outcome": "The operator receives an alert.",
+        "limitations": ["The history must be complete."],
+    })
+
+    result = service(RecordedExtractionProvider([invalid, invalid, invalid]), MemoryAiRunRepository()).extract(
+        workspace=workspace(), radar=radar(), run=run(), materials=[material]
+    )
+
+    assert result["sourceSignals"] == []
+    assert result["signalExtractionReport"]["warnings"] == [
+        "signal-extraction-safe-no-signal-fallback",
+        "editorial-language-not-satisfied",
+    ]
+    assert result["signalExtractionReport"]["materialDecisions"][0]["reasonCodes"] == [
+        "editorial-language-not-satisfied"
+    ]
+
+
+def test_two_quotes_from_one_fragment_receive_unique_evidence_ids() -> None:
+    material = readable_material()
+    fragment = material["contentFragments"][0]
+    first_quote = "На сборочной линии инженеры внедрили систему предиктивного обслуживания."
+    second_quote = "Система сопоставляет вибрацию оборудования с журналом ремонтов"
+    payload = valid_payload(material["id"], fragment["id"], first_quote)
+    payload["signals"][0]["evidenceRefs"] = [
+        {"materialId": material["id"], "fragmentId": fragment["id"], "quote": first_quote},
+        {"materialId": material["id"], "fragmentId": fragment["id"], "quote": second_quote},
+    ]
+
+    result = service(RecordedExtractionProvider([payload]), MemoryAiRunRepository()).extract(
+        workspace=workspace(), radar=radar(), run=run(), materials=[material]
+    )
+
+    evidence = result["sourceSignals"][0]["evidence"]
+    assert len({item["id"] for item in evidence}) == 2
+    assert {item["quote"] for item in evidence} == {first_quote, second_quote}
 
 
 def service(provider: RecordedExtractionProvider, repository: MemoryAiRunRepository) -> SignalExtractionService:
@@ -364,6 +474,27 @@ def readable_material() -> dict[str, Any]:
         "provenanceLabel": "example.org",
         "contentFragments": FoundMaterialFragmentPolicy().from_read_text(material_id="material-case-1", text=text),
     }
+
+
+def english_readable_material() -> dict[str, Any]:
+    text = (
+        "Engineers deployed predictive maintenance on an assembly line. "
+        "The system matches equipment vibration with repair logs and alerts the maintenance lead. "
+        "The authors note a limitation: results depend on complete failure history."
+    )
+    material = {
+        **readable_material(),
+        "title": "Industrial predictive maintenance case",
+        "summary": text,
+        "sourceLanguage": {
+            "language": "en", "confidence": "high", "mixed": False,
+            "reasonCodes": ["dominant-language-en"],
+        },
+    }
+    material["contentFragments"] = FoundMaterialFragmentPolicy().from_read_text(
+        material_id=material["id"], text=text
+    )
+    return material
 
 
 def metadata_material() -> dict[str, Any]:

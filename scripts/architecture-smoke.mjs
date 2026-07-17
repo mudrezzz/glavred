@@ -1723,6 +1723,8 @@ const UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH =
   "backend/app/upstream/application/signal_extraction_service.py";
 const UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH =
   "backend/app/upstream/application/signal_extraction_context.py";
+const UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH =
+  "backend/app/upstream/application/signal_extraction_dossier.py";
 const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH =
   "backend/app/upstream/application/signal_extraction_attempts.py";
 const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH =
@@ -3508,7 +3510,10 @@ const upstreamWebSearchOperationSource = readText(UPSTREAM_WEB_SEARCH_OPERATION_
 const upstreamWebSearchInputOwnerSource = readText(UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH);
 const upstreamTriageStressTestSource = readText(UPSTREAM_TRIAGE_STRESS_TEST_PATH);
 const upstreamSignalExtractionServiceSource = readText(UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH);
-const upstreamSignalExtractionDossierSource = readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH);
+const upstreamSignalExtractionDossierSource = [
+  readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH),
+  readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH),
+].join("\n");
 const upstreamSignalExtractionAttemptSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH);
 const upstreamSignalExtractionAttemptRequestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH);
 const upstreamSignalExtractionTestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH);
@@ -3567,7 +3572,7 @@ for (const fragment of [
 ]) {
   assert(
     upstreamSignalExtractionDossierSource.includes(fragment),
-    `${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH} is missing signal extraction dossier fragment: ${fragment}`
+    `${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH} and ${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH} are missing signal extraction dossier fragment: ${fragment}`
   );
 }
 for (const fragment of [

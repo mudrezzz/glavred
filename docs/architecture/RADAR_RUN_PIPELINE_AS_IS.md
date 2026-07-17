@@ -1,6 +1,6 @@
 # RadarRun Pipeline AS IS
 
-Current as of Slice `2.17.4.6.2`.
+Current as of Slice `2.17.4.7.0.2`.
 
 This document is the factual runtime contract for the current RadarRun pipeline. It
 describes what the product does today, what evidence proves it, and which boundaries
@@ -62,8 +62,9 @@ why the contract remained valid, the slice is not ready to close.
 | Concept | Current role | Does not own |
 | --- | --- | --- |
 | `SourceHandle` | Project-scoped descriptor for a source that may be searchable, readable-only, paused, or needs review. | Provider execution, signal approval, candidate ranking. |
-| `RadarDefinition` | User-facing radar settings: scope, source handles, trigger rules, filters, execution mode, and budget caps. | Search result storage or downstream drafting. |
-| `SearchPlan` | Deterministic provider-free campaign plan with strategy, language, intents, queries, source strategy, budget, and skipped intents. | Provider calls or quality scoring. |
+| `RadarDefinition` | User-facing radar settings: scope, source handles, trigger rules, filters, source-language policy, execution mode, and budget caps. | Search result storage or downstream drafting. |
+| `RadarLanguageContext` | Bounded project/radar contract: canonical editorial language, source-language policy, query languages, allowed source languages, unknown-language policy, and legacy fallback reason. | Full project metadata, translation of evidence, or project-utility scoring. |
+| `SearchPlan` | Deterministic provider-free campaign plan with strategy, editorial language, per-intent/query language, language context, source strategy, budget, and skipped intents. | Provider calls or quality scoring. |
 | `SearchIntent` | One planned evidence direction such as broad discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, or freshness. | URL reading or material acceptance. |
 | `SearchQuery` | One provider-executable web-search query derived from an intent and eligible source strategy. | Search result quality judgment. |
 | `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, extraction revision, warnings, errors, and optional benchmark report. | Signal approval, project-utility scoring, `PostCandidate`, plan slot, or `DraftRun` creation. |
@@ -105,8 +106,9 @@ endpoint in this AS IS state.
 
 ## Current Step Order
 
-1. Resolve project, workspace, radar, source handles, language, research depth, and
-   execution mode.
+1. Resolve project, workspace, radar, source handles, canonical editorial language
+   from `BlogProject.language`, source-language policy, research depth, and execution
+   mode. Legacy requests use an explicit trace-visible fallback.
 2. Classify source handles by eligibility:
    - searchable;
    - readable-only;
@@ -121,17 +123,22 @@ endpoint in this AS IS state.
    - evidence types;
    - budget caps;
    - skipped intents and reasons.
+   Query families receive bounded query languages according to the radar policy;
+   this allocation does not increase the number of provider operations.
 4. Apply `maxExternalQueries` and produce provider-executable `queries[]`.
 5. Apply the direct `openWebQuery` input budget and final serialized-message guard.
 6. Run provider web-search operations for executable queries and record provider usage
    when OpenRouter returns it.
 7. Normalize and bound provider citations into `rawResults[]` with `queryId`
-   provenance.
+   provenance. Inspect bounded title/snippet text for source language, confidence,
+   mixed-language state, and reason codes.
 8. Build stable duplicate groups that retain every query, intent, family, and evidence
    handle.
 9. Assess representatives by relevance, evidence fit, project fit, source quality,
    novelty, and noise risk.
-10. Build a coverage-aware read plan within the active `1/2/4` read cap.
+10. Build a coverage-aware read plan within the active `1/2/4` read cap. A confidently
+    detected disallowed language is rejected before reading; `unknown` and `mixed`
+    continue with a warning.
 11. Give every raw result exactly one terminal decision: selected, rejected,
    duplicate, invalid, or deferred by budget.
 12. Read selected URLs when the format is supported and URL reading is available.
@@ -143,7 +150,13 @@ endpoint in this AS IS state.
     active rules and enabled filter references.
 16. Run `signalExtraction` through primary, same-model repair, backup, or a safe
     no-signal fallback. Validate exact material/fragment handles, quotations,
-    numbers, dates and confidence before accepting signals.
+    numbers, dates, confidence, and editorial language before accepting signals.
+    Editorial interpretation fields use the project language; source title and exact
+    evidence quote remain original.
+    The dossier reserves bounded capacity inside the existing provider-input cap for
+    structured correction context. Repair and backup receive only applicable
+    validation codes and compact correction instructions; full failed responses are
+    never copied into the next attempt.
 17. Give every inspected material one extraction decision and persist zero or more
     `SourceSignal` candidates with `reviewStatus=candidate`.
 18. Attach `benchmarkReport` when the run matches a golden scenario.
@@ -159,13 +172,14 @@ workspace snapshot and in the run payload.
 | Stage | Input artifacts | Output artifacts | Required proof |
 | --- | --- | --- | --- |
 | Source eligibility | Project workspace, `RadarDefinition`, source handles | `searchPlan.sourceStrategy`, skipped source reasons | Trace shows searchable, readable-only, paused, and needs-review handles. |
-| Campaign planning | Radar scope, language, topics/fabulas as context, publisher/editorial rules, source strategy, budget mode | `searchPlan.intents`, `queries`, `skippedIntentDetails`, campaign trace | Planned intents and skipped reasons are visible in `searchPlan`. |
+| Language context | Bounded `projectContext`, `BlogProject.language`, `RadarDefinition.sourceLanguagePolicy` | `languageContext`, per-intent/query language, fallback reason | Editorial and source languages remain separate; legacy fallback is visible and no full project enters provider input. |
+| Campaign planning | Radar scope, editorial language, topics/fabulas as context, publisher/editorial rules, source strategy, budget mode | `searchPlan.intents`, `queries`, `skippedIntentDetails`, language coverage gaps, campaign trace | Planned intents, query languages, skipped reasons, and language gaps are visible in `searchPlan`. |
 | Query budgeting | Planned intents, `maxExternalQueries` | Bounded `queries[]`, skipped intent reasons | Required directions skipped by budget appear as skipped coverage. |
 | Provider search | Executable `queries[]`, provider config, upstream budget profile | `RadarRunOperation`, provider citations, raw results | Direct `providerInput`, `payloadBudget`, `messageCharCount`, operation status, provider usage, errors, warnings, and provenance. |
-| Triage and dedupe | Bounded `rawResults[]`, read budget, project/search context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, dimension scores, one terminal decision per raw result, coverage, and gaps. |
+| Triage and dedupe | Bounded `rawResults[]`, read budget, project/search/language context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, language eligibility, dimension scores, one terminal decision per raw result, coverage, and gaps. |
 | URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
 | Material output | Search/read payloads | `FoundMaterial`, `contentFragments`, `foundMaterialIds` | Workspace contains the material, bounded fragments retain offsets/hash, and run links it by id. |
-| Signal extraction | Readable materials, bounded radar context, extraction taxonomy | terminal material decisions, candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact evidence handles, grounding incidents and downstream-leak counters. |
+| Signal extraction | Readable materials, bounded radar/language context, extraction taxonomy | terminal material decisions, localized candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact original evidence, editorial-language validation, localization status, grounding incidents and downstream-leak counters. |
 | Benchmark evaluation | Scenario, run, found materials | `benchmarkReport` | Recorded/live status, provider health, coverage, missing expectations, and noise hits. |
 
 ## Hard Output Boundaries
@@ -195,13 +209,16 @@ collapse it into a single "results" blob.
 | Trace field | Meaning | Why it matters |
 | --- | --- | --- |
 | `searchPlan.strategy` | Campaign strategy chosen by the deterministic planner. | Explains why this run searched in this shape. |
-| `searchPlan.language` | Query language. | Prevents hidden RU/EN drift. |
+| `searchPlan.language` | Compatibility editorial-language field. | Keeps old readers working without hiding per-query language. |
+| `searchPlan.languageContext` | Editorial language, source policy, allowed/query languages, unknown-language rule and fallback reason. | Proves which language contract governed the run. |
 | `searchPlan.intents[]` | Planned evidence directions. | Proves what the radar wanted to cover. |
+| `searchPlan.intents[].queryLanguage` and `queries[].queryLanguage` | Actual language assigned to each planned/executable direction. | Proves that the query text and trace follow the selected policy. |
 | `searchPlan.queries[]` | Provider-executable queries. | Proves what could actually run under budget. |
 | `searchPlan.sourceStrategy` | Source handle eligibility and use. | Explains searchable versus readable-only sources. |
 | `searchPlan.skippedIntents[]` and `skippedIntentDetails[]` | Directions not executed and why. | Makes budget and source gaps visible. |
 | `operations[]` | Provider and read operations. | Separates provider/runtime health from quality. |
 | `rawResults[]` | Normalized provider citations. | Shows what the provider returned before triage. |
+| `rawResults[].sourceLanguage` | Deterministic bounded source-language assessment. | Explains eligibility without sending or storing full pages in triage. |
 | `searchTriage` | Versioned candidates, scores, duplicate groups, read plan, coverage gaps, decisions, counts, and read outcomes. | Proves that no result disappeared and explains why each read slot was allocated. |
 | `selectedForRead[]` | Raw results chosen for URL reading. | Shows read-budget choices. |
 | `rejectedBeforeRead[]` | Raw results rejected before read. | Shows duplicates, noise, and budget skips. |
@@ -209,9 +226,11 @@ collapse it into a single "results" blob.
 | `operations[].messageCharCount` and `providerUsage` | Actual serialized message size and provider-reported usage when available. | Separates Glavred context size from provider-owned web-tool usage. |
 | `foundMaterialIds[]` | Materials created by this run. | Links run trace to stored source material. |
 | `FoundMaterial.contentFragments[]` | Bounded evidence text with offsets and hashes. | Lets extraction cite durable evidence without retaining or sending full pages. |
+| `FoundMaterial.sourceLanguage` | Source language, confidence, mixed state and reason codes. | Keeps original-source language separate from editorial localization. |
 | `run.signalExtraction` | Versioned extraction report and current revision. | Separates retrieval health from extraction health and records every material decision. |
 | `signalExtraction.providerAttempts[]` | Primary/repair/backup outcomes, budgets and usage. | Proves recovery and prevents a rejected payload from becoming a trusted signal. |
 | `sourceSignals[].evidenceRefs[]` | Exact material and fragment handles. | Makes every accepted signal resolvable to retained evidence. |
+| `sourceSignals[].editorialLanguage`, `sourceLanguage`, and `localizationStatus` | Language of editorial interpretation, original source, and localization outcome. | Prevents a mixed-language card from being accepted silently. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
 
@@ -256,8 +275,8 @@ Use:
 The trace should be read in this order:
 
 1. Summary cards: status, budget, source coverage, material output, warnings/errors.
-2. Campaign plan: strategy, language, source strategy, intent families, skipped
-   intents.
+2. Campaign plan: strategy, editorial and query languages, source-language policy,
+   source strategy, intent families, language gaps, and skipped intents.
 3. Operations: provider query and URL-read statuses.
 4. Search triage: result scores, duplicate groups, terminal decisions, read coverage,
    and gaps.
@@ -294,12 +313,19 @@ These are current facts, not target architecture:
   and reuse belong to Slice `2.17.4.6.6`.
 - Query family wording can still be too similar across broad discovery, case/example,
   and benchmark/paper directions.
+- Source-language inspection is deliberately deterministic and bounded. It reliably
+  separates Russian, English, mixed, unknown, and other writing systems for current
+  policy enforcement, but it is not a general linguistic classifier for every
+  language that uses the Latin alphabet.
 - Signal extraction is implemented, but project-specific utility scoring, human review
   policy, candidate assembly and plan handoff remain downstream. A candidate signal is
   not an approved editorial opportunity.
 - Successful extraction retry replaces the current signal revision. Stable IDs are
   preserved only when type and exact evidence handles still describe the same signal;
   semantically different model output receives new IDs instead of a false match.
+- The authorized trace client prefers the backend portfolio and persists retries there;
+  a local trace is used only when the backend is unavailable. This prevents a locally
+  successful retry from disappearing after navigation back to the project workspace.
 - The frontend trace page can display historical/minimal runs, but older runs may not
   contain all enriched fields.
 

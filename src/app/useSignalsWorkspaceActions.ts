@@ -13,6 +13,7 @@ import {
   type SourceSignal,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
+import type { BlogProject } from '../domain/portfolio/types';
 import {
   createAuthorMemoryEvent,
   inferAuthorPositionAssertions
@@ -23,12 +24,13 @@ import { applyRadarRunWorkspaceResult } from './radarRunWorkspacePatches';
 import type { WorkspaceSetter } from './useWorkspacePersistence';
 
 type SignalsWorkspaceActionsParams = {
+  activeProject: BlogProject;
   setToast: (message: string) => void;
   setWorkspace: WorkspaceSetter;
   workspace: WorkspaceState;
 };
 
-export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }: SignalsWorkspaceActionsParams) {
+export function useSignalsWorkspaceActions({ activeProject, setToast, setWorkspace, workspace }: SignalsWorkspaceActionsParams) {
   function applySignalUpdate(nextSignal: SourceSignal, message: string, selectAsCurrent = false) {
     setWorkspace((current) => {
       const sourceSignals = current.sourceSignals.map((signal) =>
@@ -60,7 +62,9 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }
     setWorkspace((current) => {
       const radars = isNew ? addRadar(current.radars, nextRadar) : updateRadar(current.radars, nextRadar);
       const sourceSignals = current.sourceSignals.map((signal) =>
-        signal.radarId === nextRadar.id ? evaluateSignalAgainstRadarFilters(signal, nextRadar, { ...current, radars }) : signal
+        signal.radarId === nextRadar.id && signal.filterStatus !== undefined
+          ? evaluateSignalAgainstRadarFilters(signal, nextRadar, { ...current, radars })
+          : signal
       );
       const sourceSignal =
         current.sourceSignal.radarId === nextRadar.id
@@ -99,7 +103,10 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }
 
   async function runRadar(radar: RadarDefinition) {
     try {
-      const result = await runExternalRadar(workspace, radar.id);
+      const result = await runExternalRadar(workspace, radar.id, {
+        projectId: activeProject.id,
+        editorialLanguage: activeProject.language
+      });
       setWorkspace((current) => applyRadarRunWorkspaceResult(current, result, { prependRun: true }));
       setToast(`Радар завершен: найдено сигналов-кандидатов ${result.sourceSignals.length}`);
     } catch {

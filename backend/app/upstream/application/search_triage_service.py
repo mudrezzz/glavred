@@ -7,13 +7,16 @@ Architecture doc: docs/architecture/RADAR_TO_CANDIDATE_PIPELINE_TO_BE_2_17_4_6_2
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
+from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_duplicate_policy import SearchDuplicateGroupingPolicy
 from backend.app.upstream.application.search_read_allocator import SearchReadBudgetAllocator
 from backend.app.upstream.application.search_result_normalization import SearchResultNormalizer
 from backend.app.upstream.application.search_result_scoring import SearchResultQualityPolicy
 from backend.app.upstream.domain.search_triage_contracts import SearchTriageReport, SearchTriageResult
+from backend.app.upstream.domain.radar_language import RadarLanguageContext, SourceLanguageAssessment
 
 
 class SearchResultTriageService:
@@ -26,11 +29,13 @@ class SearchResultTriageService:
         duplicate_policy: SearchDuplicateGroupingPolicy | None = None,
         quality_policy: SearchResultQualityPolicy | None = None,
         read_allocator: SearchReadBudgetAllocator | None = None,
+        language_factory: RadarLanguageContextFactory | None = None,
     ) -> None:
         self._normalizer = normalizer or SearchResultNormalizer()
         self._duplicate_policy = duplicate_policy or SearchDuplicateGroupingPolicy()
         self._quality_policy = quality_policy or SearchResultQualityPolicy()
         self._read_allocator = read_allocator or SearchReadBudgetAllocator()
+        self._language_factory = language_factory or RadarLanguageContextFactory()
 
     def triage(
         self,
@@ -40,16 +45,23 @@ class SearchResultTriageService:
         workspace: dict[str, Any],
         radar: dict[str, Any],
         max_reads: int,
+        language_context: RadarLanguageContext | None = None,
     ) -> SearchTriageResult:
+        language_context = language_context or self._language_factory.build(
+            project_context=None,
+            workspace=workspace,
+            radar=radar,
+        )
         queries = {
             str(item.get("id")): item
             for item in search_plan.get("queries", [])
             if isinstance(item, dict) and item.get("id")
         }
-        candidates = [
+        normalized = [
             self._normalizer.normalize(raw, query=queries.get(str(raw.get("queryId"))))
             for raw in raw_results
         ]
+        candidates = [self._apply_language_policy(item, language_context) for item in normalized]
         project_context = self._project_context(workspace=workspace, radar=radar)
         scores = {
             candidate.id: self._quality_policy.assess(candidate, project_context=project_context)
@@ -71,6 +83,7 @@ class SearchResultTriageService:
             duplicate_groups=tuple(duplicate_groups),
             read_plan=read_plan,
             decision_counts=self._read_allocator.decision_counts(read_plan),
+            language_context=language_context.to_payload(),
         )
         candidate_by_raw = {item.raw_result_id: item for item in candidates}
         score_by_raw = {item.raw_result_id: scores[item.id] for item in candidates}
@@ -91,6 +104,7 @@ class SearchResultTriageService:
                 "duplicateGroupId": group_by_raw.get(str(raw.get("id"))).id if group_by_raw.get(str(raw.get("id"))) else None,
                 "score": score_by_raw[str(raw.get("id"))].total,
                 "dimensionScores": score_by_raw[str(raw.get("id"))].to_payload(),
+                "sourceLanguage": candidate_by_raw[str(raw.get("id"))].to_payload()["sourceLanguage"],
             }
             for raw in raw_results
         )
@@ -110,6 +124,20 @@ class SearchResultTriageService:
             raw_results=enriched_raw,
             selected_for_read=selected,
             rejected_before_read=rejected,
+        )
+
+    def _apply_language_policy(self, candidate, context: RadarLanguageContext):
+        assessment = SourceLanguageAssessment(
+            language=candidate.source_language,
+            confidence=candidate.source_language_confidence,
+            mixed=candidate.source_language_mixed,
+            reason_codes=candidate.source_language_reason_codes,
+        )
+        allowed, reason = context.allows(assessment)
+        return replace(
+            candidate,
+            source_language_allowed=allowed,
+            source_language_eligibility_reason=reason,
         )
 
     def _required_families(self, search_plan: dict[str, Any]) -> list[str]:

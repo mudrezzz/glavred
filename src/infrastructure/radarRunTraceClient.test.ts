@@ -5,9 +5,9 @@ import { createRadarTracePortfolio } from '../features/signals/radarRunTraceTest
 describe('radarRunTraceClient', () => {
   afterEach(() => setRadarRunTracePortfolioLoadersForTests(null, null));
 
-  it('finds a RadarRun in the local portfolio snapshot', async () => {
+  it('falls back to a local RadarRun when the backend portfolio is unavailable', async () => {
     setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio(), () => {
-      throw new Error('backend should not be used');
+      throw new Error('backend unavailable');
     });
 
     const trace = await fetchRadarRunTrace('radar-run-industrial-1');
@@ -19,9 +19,9 @@ describe('radarRunTraceClient', () => {
     expect(trace.foundMaterials.map((material) => material.id)).toEqual(['material-case']);
   });
 
-  it('falls back to the backend portfolio when the local snapshot does not contain the run', async () => {
+  it('prefers the authenticated backend trace over a stale local copy', async () => {
     setRadarRunTracePortfolioLoadersForTests(
-      () => createRadarTracePortfolio({ id: 'other-run' }),
+      () => createRadarTracePortfolio({ status: 'partial' }),
       () => createRadarTracePortfolio()
     );
 
@@ -29,6 +29,7 @@ describe('radarRunTraceClient', () => {
 
     expect(trace.source).toBe('backend');
     expect(trace.run.id).toBe('radar-run-industrial-1');
+    expect(trace.run.status).not.toBe('partial');
   });
 
   it('reports missing and blank run ids with readable errors', async () => {

@@ -330,9 +330,9 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
   radars: [
     radar(
       'ai-pattern-radar-industrial-cases',
-      'Industrial AI cases',
+      'Промышленные AI-кейсы',
       'Искать практические кейсы industrial AI, где есть данные, роли пользователя, ограничения и результат.',
-      'Public industrial AI cases, ТОиР/EAM materials, engineering blogs, vendor technical notes with enough detail.'
+      'Публичные кейсы industrial AI, материалы по ТОиР/EAM, инженерные блоги и технические заметки вендоров с достаточной детализацией.'
     ),
     radar(
       'ai-pattern-radar-papers',
@@ -544,9 +544,9 @@ function radar(id: string, title: string, ruleStatement: string, scope: string):
       {
         id: `${id}-source`,
         type: id.includes('author') ? 'manualSource' : 'openWeb',
-        title: `${title} source`,
+        title: `Источники: ${title}`,
         value: scope,
-        notes: 'Sanitized benchmark seed; private source documents are not committed.',
+        notes: 'Безопасная настройка демонстрационного радара; приватные документы источников не хранятся в репозитории.',
         status: 'active'
       }
     ],
@@ -556,15 +556,16 @@ function radar(id: string, title: string, ruleStatement: string, scope: string):
         dimension: 'topics',
         enabled: true,
         mode: 'mustMatch',
-        instruction: 'Signal must be useful for industrial AI patterns, ТОиР/EAM, Decision Intelligence, hybrid AI, or pattern-book discussion.'
+        instruction: 'Сигнал должен быть полезен для разбора паттернов industrial AI, ТОиР/EAM, Decision Intelligence, гибридного AI или открытой книги паттернов.'
       }
     ],
     sourceDiscoveryMode: 'specifiedAndAdditional',
+    sourceLanguagePolicy: 'editorialAndEnglish',
     acceptancePolicy: 'manual',
     triggerMode: 'deficitDriven',
     status: 'active',
     lastRunAt: '2026-07-02T10:00:00.000Z',
-    notes: 'Benchmark radar for Sborochnaya industrial AI workshop rework.'
+    notes: 'Контрольный радар для мастерской промышленных AI-паттернов «Сборочная».'
   };
 }
 

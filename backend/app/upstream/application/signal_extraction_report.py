@@ -11,7 +11,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
 
-from backend.app.upstream.application.signal_extraction_context import SignalExtractionDossier
+from backend.app.upstream.application.signal_extraction_dossier import SignalExtractionDossier
 from backend.app.upstream.domain.signal_extraction_contracts import (
     ExtractedSourceSignal,
     MaterialDecisionRecord,
@@ -54,12 +54,16 @@ class SignalExtractionReportBuilder:
                     decision = replace(decision, decision=MaterialExtractionDecision.SIGNAL_PRODUCING)
                 decisions_by_id[material_id] = replace(decision, signal_ids=signal_ids)
                 continue
-            if material.get("status") in {"metadataOnly", "skipped", "duplicate"}:
+            if material_id in dossier.language_excluded_material_ids:
+                reason = "source-language-not-allowed"
+            elif material.get("status") in {"metadataOnly", "skipped", "duplicate"}:
                 reason = "material-not-readable"
             elif material_id in dossier.deferred_material_ids:
                 reason = "extraction-material-budget"
             elif dossier.readiness == "BLOCKED":
                 reason = "no-eligible-evidence-fragments"
+            elif "editorial-language-not-satisfied" in (warnings or []):
+                reason = "editorial-language-not-satisfied"
             else:
                 reason = "provider-did-not-return-decision"
             terminal = (

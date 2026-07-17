@@ -5,6 +5,7 @@ import { SourceSignalCard } from './SourceSignalCard';
 import type { SignalsController } from './useSignalsController';
 
 export function FoundSignalsTab({
+  projectId,
   workspace,
   controller,
   onApproveSignal,
@@ -13,6 +14,7 @@ export function FoundSignalsTab({
   onCreateInsight,
   onPlan
 }: {
+  projectId: string;
   workspace: WorkspaceState;
   controller: SignalsController;
   onApproveSignal: (signal: SourceSignal) => void;
@@ -28,6 +30,7 @@ export function FoundSignalsTab({
         <div className="entity-list signals-entity-list" data-testid="source-signal-list">
           {controller.filteredSignals.map((signal) => (
             <SourceSignalCard
+              projectId={projectId}
               key={signal.id}
               signal={signal}
               workspace={workspace}

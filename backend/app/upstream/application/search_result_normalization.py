@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from backend.app.upstream.domain.search_triage_contracts import SearchResultCandidate
+from backend.app.upstream.domain.radar_language import SourceLanguageInspector
 
 
 class SearchResultNormalizer:
@@ -22,6 +23,9 @@ class SearchResultNormalizer:
     DIAGNOSTIC_LIMIT = 320
     _TRACKING_KEYS = {"gclid", "fbclid", "ref"}
 
+    def __init__(self, language_inspector: SourceLanguageInspector | None = None) -> None:
+        self._languages = language_inspector or SourceLanguageInspector()
+
     def normalize(self, raw_result: dict[str, Any], *, query: dict[str, Any] | None = None) -> SearchResultCandidate:
         original_url = str(raw_result.get("url") or "").strip()
         raw_url = self.bounded_text(original_url, self.URL_LIMIT)
@@ -29,6 +33,7 @@ class SearchResultNormalizer:
         invalid_reason = str(raw_result.get("invalidReason") or invalid_reason or "") or None
         title = self.bounded_text(str(raw_result.get("title") or canonical_url or raw_url), self.TITLE_LIMIT)
         snippet = self.bounded_text(str(raw_result.get("snippet") or ""), self.SNIPPET_LIMIT)
+        source_language = self._languages.inspect(title, snippet)
         query_payload = query or {}
         query_id = str(raw_result.get("queryId") or query_payload.get("id") or "")
         candidate_seed = "|".join(
@@ -53,6 +58,10 @@ class SearchResultNormalizer:
             fingerprint=self.content_fingerprint(title=title, snippet=snippet),
             valid=invalid_reason is None,
             invalid_reason=invalid_reason,
+            source_language=source_language.language,
+            source_language_confidence=source_language.confidence,
+            source_language_mixed=source_language.mixed,
+            source_language_reason_codes=source_language.reason_codes,
         )
 
     def canonical_url(self, value: str) -> tuple[str, str | None]:

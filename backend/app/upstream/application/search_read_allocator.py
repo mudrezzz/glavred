@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from backend.app.upstream.application.search_read_coverage import SearchReadCoverageGapPolicy
 from backend.app.upstream.application.search_result_readability import SearchResultReadabilityPolicy
 from backend.app.upstream.domain.search_triage_contracts import (
     SearchDuplicateGroup,
@@ -23,8 +24,13 @@ class SearchReadBudgetAllocator:
     QUALITY_FLOOR = 45
     DIVERSITY_SCORE_WINDOW = 10
 
-    def __init__(self, readability: SearchResultReadabilityPolicy | None = None) -> None:
+    def __init__(
+        self,
+        readability: SearchResultReadabilityPolicy | None = None,
+        coverage_gaps: SearchReadCoverageGapPolicy | None = None,
+    ) -> None:
         self._readability = readability or SearchResultReadabilityPolicy()
+        self._coverage_gaps = coverage_gaps or SearchReadCoverageGapPolicy(self._readability)
 
     def allocate(
         self,
@@ -48,7 +54,9 @@ class SearchReadBudgetAllocator:
         eligible = [
             item
             for item in representatives
-            if scores[item.id].total >= self.QUALITY_FLOOR and self._readability.can_read(item)
+            if item.source_language_allowed
+            and scores[item.id].total >= self.QUALITY_FLOOR
+            and self._readability.can_read(item)
         ]
         selected: list[SearchResultCandidate] = []
 
@@ -80,6 +88,8 @@ class SearchReadBudgetAllocator:
             elif group and candidate.id != group.representative_candidate_id:
                 status = "duplicate"
                 reason = "duplicate-url" if "canonical-url" in group.match_reasons else "duplicate-content"
+            elif not candidate.source_language_allowed:
+                status, reason = "rejected", candidate.source_language_eligibility_reason or "source-language-not-allowed"
             elif not self._readability.can_read(candidate):
                 status, reason = "rejected", "unsupported-read-format"
             elif candidate.id in selected_ids:
@@ -103,6 +113,11 @@ class SearchReadBudgetAllocator:
                     duplicate_raw_result_ids=group.raw_result_ids if group else (candidate.raw_result_id,),
                     query_ids=group.query_ids if group else ((candidate.query_id,) if candidate.query_id else ()),
                     intent_ids=group.intent_ids if group else ((candidate.intent_id,) if candidate.intent_id else ()),
+                    source_language=candidate.source_language,
+                    source_language_confidence=candidate.source_language_confidence,
+                    source_language_mixed=candidate.source_language_mixed,
+                    source_language_reason_codes=candidate.source_language_reason_codes,
+                    source_language_eligibility_reason=candidate.source_language_eligibility_reason,
                 )
             )
 
@@ -111,12 +126,13 @@ class SearchReadBudgetAllocator:
             for candidate in selected
             for family in group_by_candidate[candidate.id].families
         )
-        gaps = self._coverage_gaps(
+        gaps = self._coverage_gaps.explain(
             required_families=self._unique(required_families),
             candidates=candidates,
             duplicate_groups=duplicate_groups,
             scores=scores,
             covered_families=covered,
+            quality_floor=self.QUALITY_FLOOR,
         )
         return SearchReadPlan(
             max_reads=max(0, max_reads),
@@ -163,37 +179,6 @@ class SearchReadBudgetAllocator:
                 self._stable_key(item),
             ),
         )
-
-    def _coverage_gaps(
-        self,
-        *,
-        required_families: list[str],
-        candidates: list[SearchResultCandidate],
-        duplicate_groups: list[SearchDuplicateGroup],
-        scores: dict[str, SearchResultDimensionScores],
-        covered_families: list[str],
-    ) -> list[dict[str, str]]:
-        gaps: list[dict[str, str]] = []
-        covered = set(covered_families)
-        for family in required_families:
-            if family in covered:
-                continue
-            matching = [group for group in duplicate_groups if family in group.families]
-            if not matching:
-                reason = "no-candidate"
-            elif all(
-                not self._readability.can_read(
-                    next(item for item in candidates if item.id == group.representative_candidate_id)
-                )
-                for group in matching
-            ):
-                reason = "unsupported-read-format"
-            elif all(scores[group.representative_candidate_id].total < self.QUALITY_FLOOR for group in matching):
-                reason = "below-quality-floor"
-            else:
-                reason = "read-budget"
-            gaps.append({"family": family, "reason": reason})
-        return gaps
 
     def _stable_key(self, candidate: SearchResultCandidate) -> tuple[str, str, str, str]:
         return (

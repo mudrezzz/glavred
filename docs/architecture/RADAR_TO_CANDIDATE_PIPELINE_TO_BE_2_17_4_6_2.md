@@ -2,7 +2,9 @@
 
 Status: Slices `2.17.4.6.2` and `2.17.4.7` define the implemented retrieval and
 evidence-backed signal-extraction boundary. Project-utility scoring and candidate
-assembly remain the approved target.
+assembly remain the approved target. Slice `2.17.4.7.0.2` adds the approved
+editorial-language, source-language eligibility, localization, and evidence
+presentation contract without changing project-utility scoring.
 
 AS IS sources:
 
@@ -70,6 +72,9 @@ implemented by their tracker-backed slices.
 | Evidence fragments | NEW | Readable materials retain bounded, hashed fragments with offsets before full page text is discarded. | Fragment stability, bounds, and replay tests in Slice `2.17.4.7`. |
 | Signal extraction | CHANGED vs AS IS | A backend-owned provider operation receives a bounded extraction dossier, validates exact grounding, and emits zero or more candidate SourceSignals. | Recorded benchmark, provider trace, retry replay, and live proof in Slice `2.17.4.7`. |
 | Extraction retry | NEW | A new extraction revision reuses persisted fragments and cannot repeat search or URL reading. | API integration and idempotency proof in Slice `2.17.4.7`. |
+| Editorial language context | NEW | `BlogProject.language` is passed as a bounded project context and remains distinct from source-search languages. | Request-contract, fallback, and trace tests in Slice `2.17.4.7.0.2`. |
+| Source-language policy | NEW | Each radar selects editorial-only, editorial-and-English, or unrestricted source eligibility without increasing query count. | Planner allocation, language inspection, triage, and live trace proof in Slice `2.17.4.7.0.2`. |
+| Signal localization | CHANGED vs AS IS | Editorial interpretation fields use the project language while source titles and exact evidence quotes remain original. A failed localization emits no mixed-language signal. | Primary/repair/backup language-validation tests and live evidence in Slice `2.17.4.7.0.2`. |
 | Signal scoring | NOT THIS SLICE | Future scoring receives a bounded signal dossier and direct budget proof. | Slice `2.17.4.7.1`. |
 | Candidate assembly and ranking | NOT THIS SLICE | Future assembly receives bounded approved-signal projections. | Slices `2.17.4.8` and `2.17.4.8.1`. |
 | Cross-run search memory | NOT THIS SLICE | Reuse of discovered results is owned by a separate durable memory policy. | Slice `2.17.4.6.6`. |
@@ -212,6 +217,32 @@ usage/cost telemetry, but it is not confused with the Glavred-controlled provide
 input. Production limits for provider-owned search cost and reuse belong to Slice
 `2.17.4.6.6`.
 
+### 6.1 Editorial and source language boundary
+
+The project-owned editorial language and the radar-owned source-language policy are
+separate inputs. The API passes only `projectId` and `editorialLanguage`; a provider
+never receives the complete portfolio project. A legacy request without this bounded
+context uses a trace-visible fallback rather than silently claiming canonical project
+metadata.
+
+Each radar resolves one policy:
+
+- `editorialOnly`: all query families use the editorial language and a confidently
+  detected different source language is ineligible;
+- `editorialAndEnglish`: broad discovery, limitations, and freshness use the
+  editorial language, while case, benchmark, and OSS families use English; when the
+  editorial language is English, all families use English;
+- `any`: the same bounded query allocation is used, but source language does not
+  restrict eligibility.
+
+The allocation never duplicates a query family and never increases
+`maxExternalQueries`. A budget that cannot execute every planned query language
+records `languageCoverageGaps`. A deterministic inspector classifies bounded search
+metadata and retained fragments as a primary language, confidence, and mixed/unknown
+state. Only a high-confidence disallowed language is rejected; mixed and unknown
+content continue with a warning so that detection uncertainty cannot silently remove
+evidence.
+
 ## 7. Signal Extraction Contract
 
 Signal extraction is a backend upstream operation owned separately from project
@@ -222,7 +253,8 @@ publication channel.
 
 The rich input is the persisted set of readable `FoundMaterial` records and their
 fragments. `SignalExtractionContextFactory` produces a bounded radar context from
-scope, active rules, source intent, evidence types, and filter references.
+scope, active rules, source intent, evidence types, filter references, and the
+language context.
 `SignalExtractionDossierFactory` then retains only:
 
 - material IDs, source metadata, and selected bounded fragments;
@@ -272,6 +304,25 @@ included in both checks. An over-budget attempt never calls the provider. Actual
 OpenRouter usage is stored when supplied; missing provider usage remains explicitly
 unknown.
 
+### 7.4 Editorial localization and original evidence
+
+`title`, `summary`, `uncertainty`, `mechanism`, `outcome`, and `limitations` are
+editorial interpretation fields and must use `editorialLanguage`. Source titles and
+exact evidence quotations remain in the original source language and are never
+translated by this operation.
+
+A deterministic language policy validates non-empty editorial prose while ignoring
+URLs, IDs, numbers, model names, and short technical abbreviations. A language
+violation is a structured payload error: primary is followed by same-model repair and
+then backup under the existing attempt and budget policy. If all attempts violate the
+contract, no `SourceSignal` is emitted; the material remains in the extraction report
+as `extractionFailed` with `editorial-language-not-satisfied` and can be retried from
+persisted fragments.
+
+Accepted signals expose editorial language, detected source language, localization
+status, and reason codes. Evidence IDs include signal, material, fragment, and quote
+identity so multiple exact quotes from one fragment remain stable and unique.
+
 ## 8. Future Provider Context Rule
 
 Every future upstream provider-heavy stage must declare before implementation:
@@ -303,6 +354,11 @@ RadarRun keeps existing fields and adds `searchTriage`:
 Existing `rawResults`, `selectedForRead`, and `rejectedBeforeRead` remain compatible.
 Old runs without `searchTriage` remain readable in the UI.
 
+Slice `2.17.4.7.0.2` additionally records the bounded language context, per-intent and
+per-query language, source-language inspection, eligibility reasons, query-language
+coverage gaps, and signal localization status. Compatibility `searchPlan.language`
+continues to mean editorial language.
+
 Slice `2.17.4.7` additionally stores `run.signalExtraction`,
 `signalExtractionReport`, and `sourceSignals`. The report includes revision history,
 material decisions, grounding violations, duplicate/corroboration/contradiction
@@ -329,6 +385,14 @@ trace prose.
 - Manual extraction retry is idempotent and never repeats search or URL reading.
 - Unsupported certainty, altered numbers/dates, and unresolved evidence handles are
   zero in the accepted benchmark and live proof.
+- The canonical editorial language comes from `BlogProject.language`; source search
+  policy and source language are separate trace fields.
+- Language policy changes actual bounded query allocation without adding provider
+  calls, and every skipped query language has an explicit coverage gap.
+- Accepted editorial fields use the project language while exact source titles and
+  evidence quotes remain original.
+- A terminal localization failure creates no mixed-language signal, and every
+  displayed evidence item resolves to a safe source URL plus material/fragment trace.
 - Recorded and comparable live proof show no quality regression relative to the
   pre-change industrial-AI baseline.
 
@@ -338,6 +402,9 @@ trace prose.
   boundary, UI trace, recorded/live proof. `IMPLEMENTED`.
 - Slice `2.17.4.7`: evidence fragments, bounded provider extraction, grounding,
   material decisions, retry, UI trace, recorded/live proof. `IMPLEMENTED`.
+- Slice `2.17.4.7.0.2`: project/editorial language handoff, radar source-language
+  policy, query allocation, source-language eligibility, signal localization, and
+  evidence presentation. `IMPLEMENTED`; accepted live proof is recorded below.
 - Signal scoring, candidate assembly, candidate ranking, and cross-run search memory:
   `NOT THIS SLICE`.
 
@@ -372,3 +439,25 @@ skipped `limitationCritique`.
 
 Trace-safe evidence is committed in
 `docs/evidence/radar-runs/2.17.4.7/BASELINE.md` and `LIVE_PROOF.md` with JSON peers.
+
+The accepted language-policy proof is RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-3`, extraction revision `4`. The bounded
+project context resolved `editorialLanguage=ru` and
+`sourceLanguagePolicy=editorialAndEnglish`. The unchanged three-query budget assigned
+Russian to broad discovery and English to case and benchmark families; it added no
+provider call and reported no language coverage gap.
+
+The run retained one Russian and one English readable material. The English source
+produced three Russian candidate signals while preserving the original source title,
+exact English quotes, URLs, and resolvable material/fragment handles. The first
+extraction response was rejected because one quote did not exactly match its source
+fragment. Same-model repair was accepted after receiving a 304-character structured
+correction context. The two attempts used 11,972 and 12,337 serialized characters
+against the unchanged 16,000 cap, with 8,367 actual tokens in total and no budget
+incident. The rejected grounding incident remains visible in attempt diagnostics,
+while the accepted signals have no unresolved or unsupported evidence handles.
+
+The authorized UI proof also verified backend persistence, `На проверке`, the
+unscored utility state, original source navigation, deep trace navigation, and the
+localized demo radar. Trace-safe evidence is committed in
+`docs/evidence/radar-runs/2.17.4.7.0.2/`.

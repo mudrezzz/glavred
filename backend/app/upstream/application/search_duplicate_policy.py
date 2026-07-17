@@ -49,7 +49,11 @@ class SearchDuplicateGroupingPolicy:
             ordered = sorted(members, key=self._candidate_key)
             representative = min(
                 ordered,
-                key=lambda item: (-scores[item.id].total, self._candidate_key(item)),
+                key=lambda item: (
+                    -int(item.source_language_allowed),
+                    -scores[item.id].total,
+                    self._candidate_key(item),
+                ),
             )
             urls = {item.canonical_url for item in ordered}
             fingerprints = {item.fingerprint for item in ordered if item.fingerprint}

@@ -14,7 +14,7 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.domain.ai_run import AiRunCapability, AiRunProvider
 from backend.app.upstream.application.provider_budget_profiles import UpstreamProviderBudgetProfile
 from backend.app.upstream.application.signal_extraction_attempt_request import SignalExtractionAttemptRequestBuilder
-from backend.app.upstream.application.signal_extraction_context import SignalExtractionDossier
+from backend.app.upstream.application.signal_extraction_dossier import SignalExtractionDossier
 from backend.app.upstream.application.signal_deduplication import SignalDeduplicationPolicy
 from backend.app.upstream.application.signal_extraction_provider import SignalExtractionProvider
 from backend.app.upstream.application.signal_extraction_validation import SignalExtractionPayloadError, SignalExtractionPayloadMapper

@@ -36,6 +36,11 @@ class SearchReadDecision:
     duplicate_raw_result_ids: tuple[str, ...] = ()
     query_ids: tuple[str, ...] = ()
     intent_ids: tuple[str, ...] = ()
+    source_language: str = "unknown"
+    source_language_confidence: str = "low"
+    source_language_mixed: bool = False
+    source_language_reason_codes: tuple[str, ...] = ()
+    source_language_eligibility_reason: str | None = None
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -52,6 +57,13 @@ class SearchReadDecision:
             "duplicateRawResultIds": list(self.duplicate_raw_result_ids),
             "queryIds": list(self.query_ids),
             "intentIds": list(self.intent_ids),
+            "sourceLanguage": {
+                "language": self.source_language,
+                "confidence": self.source_language_confidence,
+                "mixed": self.source_language_mixed,
+                "reasonCodes": list(self.source_language_reason_codes),
+                "eligibilityReason": self.source_language_eligibility_reason,
+            },
         }
 
 
