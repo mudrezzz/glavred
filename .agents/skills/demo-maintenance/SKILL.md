@@ -15,6 +15,9 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Keep a realistic demo that shows the current working product clearly and convincingly.
 
+Run demo tests and browser acceptance through
+`.agents/skills/remote-docker-testing/SKILL.md`; local Docker is not acceptance proof.
+
 ## Demo principles
 
 The demo must be:

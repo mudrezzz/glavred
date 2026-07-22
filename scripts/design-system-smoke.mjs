@@ -9,6 +9,7 @@ function runDevServer() {
   const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   return spawn(npmCommand, ['run', 'dev', '--', '--host', '127.0.0.1', '--port', port, '--strictPort'], {
     cwd: rootDir,
+    detached: process.platform !== 'win32',
     env: { ...process.env, BROWSER: 'none' },
     shell: process.platform === 'win32',
     stdio: ['ignore', 'pipe', 'pipe']
@@ -20,7 +21,12 @@ function stopDevServer(server) {
     spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
     return;
   }
-  server.kill();
+  if (!server.pid) return;
+  try {
+    process.kill(-server.pid, 'SIGTERM');
+  } catch {
+    server.kill();
+  }
 }
 
 async function waitForServer() {
@@ -495,6 +501,9 @@ async function assertEditingDesign(page) {
 }
 
 async function captureSignalsLayout(page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
   return page.evaluate(() => {
     const selectors = {
       header: '[data-testid="signals-section-header"]',
@@ -703,6 +712,7 @@ async function main() {
     await waitForServer();
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1440, height: 1024 } });
+    await page.route(/https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/, (route) => route.abort());
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => window.localStorage.clear());
     await page.reload({ waitUntil: 'domcontentloaded' });

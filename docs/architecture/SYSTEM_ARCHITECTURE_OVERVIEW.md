@@ -1543,7 +1543,7 @@ Concrete portfolio backend files:
 - `backend/app/domain/portfolio.py`
 - `backend/app/infrastructure/sqlite_portfolio_repository.py`
 
-The Dockerized local stack is an execution wrapper around the same boundaries:
+The Dockerized local stack remains the base execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.
 - `docker/frontend.Dockerfile` builds only the Vite frontend and Node dependencies.
@@ -1552,6 +1552,22 @@ The Dockerized local stack is an execution wrapper around the same boundaries:
   `./var` for SQLite audit/run state.
 - `.dockerignore` excludes `.env`, local caches, `node_modules`, build outputs, and
   audit data from the Docker build context.
+
+Acceptance uses the isolated remote runtime defined by
+`compose.remote.yaml`, `docker/qa.Dockerfile`, and
+`scripts/remote_docker_runtime.py`. Source stays local and is streamed to the Docker
+daemon at `ssh://flowise`; tests, browser checks, and provider-backed proofs execute in
+the remote containers. The override uses Compose project `glavred`, loopback-only UI
+and API bindings, an internal-only Redis, resource limits, and Glavred-owned named
+volumes. Power Web resources on the same host are an explicit non-owned boundary.
+The on-demand QA container alone uses host networking so Chromium can verify the
+loopback-only public bindings from the server itself; it does not publish ports.
+
+Secrets cross this boundary only as allowlisted SSH-stdin transfers into protected
+remote files. Backend, worker, and QA consume read-only secret files rather than
+secret-bearing environment values. This execution change does not alter DraftRun or
+RadarRun AS IS contracts. See ADR
+`docs/adr/2026-07-22-use-isolated-remote-docker-for-test-runtime.md`.
 
 Docker does not change ownership rules. API handlers remain thin, provider calls stay
 under `backend/app/infrastructure`, workspace state remains local-first, and future DB,

@@ -549,7 +549,7 @@ const BACKEND_SOURCE_BASELINES = [
   },
   {
     path: "backend/app/settings.py",
-    limit: 100,
+    limit: 110,
     next: "Backend settings should stay focused on typed environment configuration.",
   },
   {
@@ -2379,8 +2379,12 @@ assert(
 const requiredDockerFiles = [
   ".dockerignore",
   "compose.yaml",
+  "compose.remote.yaml",
   "docker/backend.Dockerfile",
   "docker/frontend.Dockerfile",
+  "docker/qa.Dockerfile",
+  "scripts/remote_docker_runtime.py",
+  ".agents/skills/remote-docker-testing/SKILL.md",
 ];
 
 for (const requiredFile of requiredDockerFiles) {
@@ -2390,6 +2394,76 @@ for (const requiredFile of requiredDockerFiles) {
 const composeSource = fileExists("compose.yaml") ? readText("compose.yaml") : "";
 for (const fragment of ["redis:", "worker:", "REDIS_URL: redis://redis:6379/0"]) {
   assert(composeSource.includes(fragment), `compose.yaml is missing queued-run fragment: ${fragment}`);
+}
+
+const remoteComposeSource = readText("compose.remote.yaml");
+for (const fragment of [
+  "ports: !reset []",
+  "127.0.0.1:${GLAVRED_REMOTE_API_PORT:-8000}:8000",
+  "127.0.0.1:${GLAVRED_REMOTE_FRONTEND_PORT:-5176}:5173",
+  "/run/secrets/openrouter_api_key",
+  "network_mode: host",
+  "qa:",
+  "qa-live:",
+  "runtime:/runtime-var:ro",
+]) {
+  assert(
+    remoteComposeSource.includes(fragment),
+    `compose.remote.yaml is missing remote isolation fragment: ${fragment}`
+  );
+}
+
+const remoteRuntimeSource = readText("scripts/remote_docker_runtime.py");
+for (const fragment of [
+  "ssh://flowise",
+  "POWER_WEB_PORTS",
+  "sync-secrets",
+  "Remote Glavred runtime is locked",
+  '"live-radar"',
+]) {
+  assert(
+    remoteRuntimeSource.includes(fragment),
+    `Remote Docker runtime is missing guardrail fragment: ${fragment}`
+  );
+}
+
+const qaDockerfileSource = readText("docker/qa.Dockerfile");
+for (const fragment of ["FROM node:20", "FROM python:3.12", "playwright:v1.60.0"]) {
+  assert(qaDockerfileSource.includes(fragment), `QA image is missing runtime pin: ${fragment}`);
+}
+
+const remoteSkillPath = ".agents/skills/remote-docker-testing/SKILL.md";
+const remoteSkillSource = readText(remoteSkillPath);
+for (const fragment of ["ssh://flowise", "power-web-os", "sync-secrets", "local test result"]) {
+  assert(remoteSkillSource.includes(fragment), `${remoteSkillPath} is missing: ${fragment}`);
+}
+
+const remoteRuntimeSkillPaths = [
+  ".agents/skills/slice-implementation/SKILL.md",
+  ".agents/skills/regression-and-test-strategy/SKILL.md",
+  ".agents/skills/frontend-design-system/SKILL.md",
+  ".agents/skills/draft-run-pipeline-evaluation/SKILL.md",
+  ".agents/skills/draft-run-pipeline-autofix/SKILL.md",
+  ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md",
+  ".agents/skills/project-onboarding/SKILL.md",
+  ".agents/skills/glavred-project-immersion/SKILL.md",
+  ".agents/skills/demo-maintenance/SKILL.md",
+  ".agents/skills/project-blueprint-creation/SKILL.md",
+];
+for (const skillPath of remoteRuntimeSkillPaths) {
+  const source = readText(skillPath);
+  assert(source.includes(remoteSkillPath), `${skillPath} must route tests through remote Docker.`);
+  assert(!source.includes("docker compose "), `${skillPath} must route Compose through the remote owner.`);
+}
+
+const remoteAgentSource = readText("AGENTS.md");
+for (const fragment of [remoteSkillPath, "flowise", "tests are not acceptance evidence"]) {
+  assert(remoteAgentSource.includes(fragment), `AGENTS.md is missing remote runtime rule: ${fragment}`);
+}
+
+const backendSettingsSource = readText("backend/app/settings.py");
+for (const fragment of ["OPENROUTER_API_KEY_FILE", "GLAVRED_DEV_AUTH_PASSWORD_FILE"]) {
+  assert(backendSettingsSource.includes(fragment), `Backend settings are missing file secret: ${fragment}`);
 }
 
 const requiredSourceFiles = [

@@ -35,9 +35,8 @@ For an existing run id, use `$draft-run-pipeline-diagnostics`.
   correction proposal instead.
 - Do not call `/api/drafts/generate` as a timeout fallback for a live `DraftRun`.
 - Do not commit or push unless the user explicitly asks.
-- For live provider runs, use OpenRouter configuration from `.env` without printing
-  secret values. If Glavred is not running in Docker, start `docker compose up -d
-  --build`; unrelated Docker projects already running do not block this.
+- For live provider runs, use `.agents/skills/remote-docker-testing/SKILL.md`.
+  Run the isolated `glavred` project on `flowise`; never start local Glavred Docker.
 
 ## Required Inputs
 

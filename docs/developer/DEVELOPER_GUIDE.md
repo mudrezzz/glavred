@@ -741,21 +741,39 @@ tokens and other secrets must be redacted before persistence.
 
 ## Commands
 
-Start the full Dockerized local stack:
+Validate and start the remote Docker test runtime:
 
-```bash
-docker compose up --build
+```powershell
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py sync-secrets
+python scripts/remote_docker_runtime.py build
+python scripts/remote_docker_runtime.py up
+python scripts/remote_docker_runtime.py ps
 ```
 
-This starts:
+This starts the Compose project `glavred` on the Docker daemon behind
+`ssh://flowise`:
 
-- `backend`: FastAPI on `http://localhost:8000`, with `./var` mounted for local
-  SQLite AI run audit data.
-- `frontend`: Vite on `http://localhost:5176`, configured to call the backend through
-  `VITE_API_BASE_URL=http://localhost:8000`.
+- `backend`: FastAPI bound to remote loopback port `8000`;
+- `frontend`: Vite bound to remote loopback port `5176`;
+- `worker`: Celery on the Glavred queue;
+- `redis`: reachable only inside the Glavred network;
+- `qa`: a clean on-demand Playwright/Python/Node test image without live runtime
+  settings or secrets;
+- `qa-live`: the same image with sanitized runtime settings, read-only secret files,
+  and read-only runtime-state access for authenticated/live checks.
 
-Docker Compose reads local secrets from `.env`, but `.env` is ignored by Git and
-excluded from the Docker build context by `.dockerignore`.
+Use `python scripts/remote_docker_runtime.py tunnel-command` and run its output in a
+separate terminal to expose UI/API locally. The CLI keeps the Docker host and Compose
+project explicit, checks ownership of ports `5176/8000`, serializes stateful commands,
+and must be used instead of direct Compose commands. Never change the global Docker
+context or run a global prune on the shared host.
+
+`sync-secrets` reads local `.env`, writes a secret-free ignored runtime env, and sends
+only allowlisted secret values over SSH stdin. The complete `.env` is never uploaded.
+Provider and dev-auth secrets are mounted read-only and consumed through
+`OPENROUTER_API_KEY_FILE` and `GLAVRED_DEV_AUTH_PASSWORD_FILE`. Do not print Compose
+interpolation, container environment, or remote secret contents.
 
 Install dependencies:
 
@@ -776,29 +794,34 @@ Start the backend:
 npm run dev:backend
 ```
 
-Run tests:
+Run tests in the remote QA image:
 
-```bash
-npm test
+```powershell
+python scripts/remote_docker_runtime.py test --suite frontend
+python scripts/remote_docker_runtime.py test --suite backend
+python scripts/remote_docker_runtime.py test --suite architecture
+python scripts/remote_docker_runtime.py test --suite design
+python scripts/remote_docker_runtime.py test --suite visual
+python scripts/remote_docker_runtime.py test --suite smoke
+python scripts/remote_docker_runtime.py test --suite auth
+python scripts/remote_docker_runtime.py test --suite workspace-integrity
+python scripts/remote_docker_runtime.py test --suite live-radar
+python scripts/remote_docker_runtime.py test --suite full
 ```
 
-Run backend tests:
+If a fresh provider-backed RadarRun was persisted but the browser assertions failed
+afterward, repeat only the acceptance layer with:
 
-```bash
-npm run test:backend
+```powershell
+python scripts/remote_docker_runtime.py test --suite live-radar --reuse-live-run
 ```
 
-Run build smoke test:
+This mode selects the latest successful saved run and may still execute the explicit
+manual rescore covered by the scenario. It does not satisfy a slice's fresh-live-run
+requirement on its own.
 
-```bash
-npm run smoke
-```
-
-Run React architecture guardrails:
-
-```bash
-npm run test:architecture
-```
+Local test commands may be used for narrow diagnosis, but they are not acceptance
+evidence. Local Docker requires an explicit user request.
 
 Run browser visual smoke checks for operational UI guardrails:
 

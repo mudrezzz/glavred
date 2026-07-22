@@ -12,6 +12,7 @@ function runDevServer() {
     ['run', 'dev', '--', '--host', '127.0.0.1', '--port', port, '--strictPort'],
     {
       cwd: rootDir,
+      detached: process.platform !== 'win32',
       env: { ...process.env, BROWSER: 'none' },
       shell: process.platform === 'win32',
       stdio: ['ignore', 'pipe', 'pipe']
@@ -25,7 +26,12 @@ function stopDevServer(server) {
     return;
   }
 
-  server.kill();
+  if (!server.pid) return;
+  try {
+    process.kill(-server.pid, 'SIGTERM');
+  } catch {
+    server.kill();
+  }
 }
 
 async function waitForServer() {
@@ -544,6 +550,7 @@ async function main() {
     await waitForServer();
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1440, height: 1024 }, locale: 'ru-RU' });
+    await page.route(/https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/, (route) => route.abort());
 
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
     await page.evaluate(() => window.localStorage.clear());

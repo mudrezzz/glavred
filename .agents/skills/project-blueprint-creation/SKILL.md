@@ -15,6 +15,9 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Turn an approved blog-project blueprint into consistent Glavred project data. Keep the blueprint as the planning source, write UTF-8 fixtures/docs first, then refresh backend-visible snapshots through safe application paths.
 
+Run fixture, workspace-integrity, Docker, and browser acceptance through
+`.agents/skills/remote-docker-testing/SKILL.md`; local Docker is not acceptance proof.
+
 ## Required Context
 
 Before editing, read:

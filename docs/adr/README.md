@@ -56,3 +56,4 @@ external integrations, deployment, or user-visible product behavior.
 - [2026-07-03-upstream-search-and-signal-boundary.md](2026-07-03-upstream-search-and-signal-boundary.md)
 - [2026-07-17-signal-utility-recommendation-and-human-review.md](2026-07-17-signal-utility-recommendation-and-human-review.md)
 - [2026-07-21-signal-criteria-and-relationship-integrity.md](2026-07-21-signal-criteria-and-relationship-integrity.md)
+- [2026-07-22-use-isolated-remote-docker-for-test-runtime.md](2026-07-22-use-isolated-remote-docker-for-test-runtime.md)

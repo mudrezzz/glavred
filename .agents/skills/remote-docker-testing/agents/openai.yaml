@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remote Docker Testing"
+  short_description: "Run Glavred tests safely on flowise Docker."
+  default_prompt: "Use the remote flowise Docker runtime for Glavred tests, browser acceptance, and live proof without exposing secrets or touching other projects."

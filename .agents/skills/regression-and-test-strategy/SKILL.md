@@ -15,6 +15,10 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Choose and execute the right validation scope for the current change.
 
+Run all selected Glavred tests through
+`.agents/skills/remote-docker-testing/SKILL.md`. Local execution may diagnose a
+bootstrap failure but cannot satisfy acceptance.
+
 ## Test layers
 
 Consider:

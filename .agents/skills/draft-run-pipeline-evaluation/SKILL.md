@@ -19,10 +19,9 @@ for a fresh run, not when they only provide an existing `DraftRun ID`.
 
 For existing ids, use `$draft-run-pipeline-diagnostics` directly.
 
-Live-run environment rule: take OpenRouter configuration from the repo `.env` without
-printing secret values. If Glavred is not already running in Docker, start it with
-`docker compose up -d --build`. Other running Docker projects are irrelevant; they do
-not replace the Glavred compose stack and are not a reason to skip Docker validation.
+Live-run environment rule: use `.agents/skills/remote-docker-testing/SKILL.md`.
+Run `doctor`, secure secret sync, remote stack startup, and tunnel-based health checks
+before creating a DraftRun. Never start the local Glavred compose stack.
 
 ## Workflow
 

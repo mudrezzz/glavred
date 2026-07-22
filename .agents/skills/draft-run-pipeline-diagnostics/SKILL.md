@@ -51,10 +51,9 @@ Do not diagnose from screenshots alone when a run id is available.
 4. If the helper reports missing or ambiguous data, query SQLite directly:
    - parent DB: `var/glavred-draft-runs.sqlite3`
    - child AI DB: `var/glavred-ai-runs.sqlite3`
-   - when a live Docker DraftRun is still running on Windows, do not read these
-     SQLite files directly from the host. Poll `GET /api/draft-runs/{id}` and worker
-     logs during execution, then run host-side SQLite diagnostics only after terminal
-     status or after stopping backend/worker.
+   - use `.agents/skills/remote-docker-testing/SKILL.md`; while a remote DraftRun is
+     running, poll the tunneled API and remote worker logs. Read SQLite only through
+     the owning remote container after terminal status.
 5. Inspect current code only for the components implicated by the trace:
    - source intent / public evidence;
    - source ledger / feasibility / post contract;
@@ -87,10 +86,8 @@ Check these failure classes explicitly:
   quality failure. Backup model success is accepted but diagnostic. Deterministic
   fallback lowers fidelity only where the owning step already has a domain-safe
   fallback.
-  For local live diagnostics, take OpenRouter configuration from `.env` without
-  printing secret values. Do not report "missing key" merely because Docker was not
-  running or another project's containers were active; start the Glavred compose stack
-  when needed and diagnose the actual provider/runtime response.
+  For live diagnostics, use the remote runtime skill and its file-backed secrets.
+  Do not print secrets or operate on another compose project.
   Inspect `generationParams` (`generationParamProfile`, `temperature`, `topP`) for
   writer, revision, JSON repair, and another-angle calls before judging model quality.
   For migrated operations, inspect `operationEnvelope`, `incident`, `inputStats`,

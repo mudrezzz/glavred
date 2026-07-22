@@ -232,19 +232,33 @@ Before committing roadmap changes, run `check`, `render`, `export`, and
 
 ## Quick Start
 
-Run the full local stack with Docker:
+Run the isolated test stack on the `flowise` Docker host:
 
-```bash
-docker compose up --build
+```powershell
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py sync-secrets
+python scripts/remote_docker_runtime.py build
+python scripts/remote_docker_runtime.py up
+python scripts/remote_docker_runtime.py tunnel-command
 ```
 
-Then open `http://localhost:5176`. The backend is published at
-`http://localhost:8000`, Redis is published at `localhost:6379`, and local AI/DraftRun
-audit data is written under `var/`.
-Docker Compose reads local secrets from `.env`; `.env` is ignored by Git and is not
-copied into the Docker build context.
+Run the printed SSH tunnel in a separate terminal, then open
+`http://localhost:5176`. The API is available through the same tunnel at
+`http://localhost:8000`; Redis is not published on the remote host. The helper sends
+the current local source tree, including uncommitted changes, to the remote Docker
+daemon. It does not upload `.env`; allowlisted secrets are installed as protected,
+read-only files. Do not switch the global Docker context.
 
-Run without Docker:
+Run acceptance suites through the same owner, for example:
+
+```powershell
+python scripts/remote_docker_runtime.py test --suite backend
+python scripts/remote_docker_runtime.py test --suite full
+```
+
+Local Docker is not an acceptance path and may only be used when explicitly requested.
+
+For lightweight local editing and interactive development without Docker:
 
 ```bash
 npm install

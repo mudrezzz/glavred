@@ -3,6 +3,10 @@ from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from backend.app.shared.runtime_secrets import apply_file_backed_secrets
+
+
 class BackendSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -18,6 +22,7 @@ class BackendSettings(BaseSettings):
     portfolio_db_path: Path = Field(default=Path("var/glavred-portfolio.sqlite3"), validation_alias="PORTFOLIO_DB_PATH")
     glavred_auth_mode: str = Field(default="dev-password", validation_alias="GLAVRED_AUTH_MODE")
     glavred_dev_auth_password: SecretStr = Field(default=SecretStr("glavred-demo"), validation_alias="GLAVRED_DEV_AUTH_PASSWORD")
+    glavred_dev_auth_password_file: Path | None = Field(default=None, validation_alias="GLAVRED_DEV_AUTH_PASSWORD_FILE")
     glavred_session_cookie_name: str = Field(default="glavred_session", validation_alias="GLAVRED_SESSION_COOKIE_NAME")
     glavred_session_ttl_hours: int = Field(default=168, validation_alias="GLAVRED_SESSION_TTL_HOURS")
     draft_revision_max_iterations: int = Field(default=3, validation_alias="DRAFT_REVISION_MAX_ITERATIONS")
@@ -26,6 +31,7 @@ class BackendSettings(BaseSettings):
     draft_run_smoke_budget_overrides: str = Field(default="", validation_alias="DRAFT_RUN_SMOKE_BUDGET_OVERRIDES")
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
     openrouter_api_key: SecretStr | None = Field(default=None, validation_alias="OPENROUTER_API_KEY")
+    openrouter_api_key_file: Path | None = Field(default=None, validation_alias="OPENROUTER_API_KEY_FILE")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", validation_alias="OPENROUTER_BASE_URL")
     openrouter_default_model: str = Field(default="", validation_alias="OPENROUTER_DEFAULT_MODEL")
     openrouter_backup_model: str = Field(default="", validation_alias="OPENROUTER_BACKUP_MODEL")
@@ -51,6 +57,9 @@ class BackendSettings(BaseSettings):
     openrouter_web_search_max_results: int = Field(default=5, validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS")
     upstream_signal_extraction_model: str = Field(default="", validation_alias="UPSTREAM_SIGNAL_EXTRACTION_MODEL")
     upstream_signal_scoring_model: str = Field(default="", validation_alias="UPSTREAM_SIGNAL_SCORING_MODEL")
+
+    def model_post_init(self, __context: object) -> None:
+        apply_file_backed_secrets(self)
 
     @property
     def has_openrouter_api_key(self) -> bool:

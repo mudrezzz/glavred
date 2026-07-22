@@ -5,7 +5,10 @@ const frontendUrl = process.env.AUTH_SMOKE_FRONTEND_URL ?? 'http://127.0.0.1:517
 const backendUrl = process.env.AUTH_SMOKE_BACKEND_URL ?? 'http://127.0.0.1:8000';
 
 async function main() {
-  const password = process.env.GLAVRED_DEV_AUTH_PASSWORD ?? await envValue('GLAVRED_DEV_AUTH_PASSWORD') ?? 'glavred-demo';
+  const password = process.env.GLAVRED_DEV_AUTH_PASSWORD
+    ?? await secretFileValue(process.env.GLAVRED_DEV_AUTH_PASSWORD_FILE)
+    ?? await envValue('GLAVRED_DEV_AUTH_PASSWORD')
+    ?? 'glavred-demo';
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('requestfailed', (request) => {
@@ -32,6 +35,12 @@ async function main() {
   } finally {
     await browser.close();
   }
+}
+
+async function secretFileValue(path) {
+  if (!path) return null;
+  const value = (await readFile(path, 'utf8')).trim();
+  return value || null;
 }
 
 async function login(page, email, password) {

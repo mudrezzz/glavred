@@ -8497,6 +8497,67 @@ Status:
   - Backend/API compatibility, frontend canonical grouping, no-raw-id assertions, five-width authenticated visual acceptance, full regression and live diagnostics.
 - Completed: 2026-07-22
 
+### Slice 2.17.4.7.1.0.1: Remote Docker Test Runtime and Skill Guardrails
+
+- Status: Done
+- Goal: Move all Glavred Docker, automated-test, authenticated-browser, and provider-backed live-proof execution to the isolated `flowise` remote Docker runtime while the current local source tree remains the build source.
+- User value: Glavred validation no longer depends on local Docker capacity and cannot silently interfere with Power Web or expose OpenRouter credentials.
+- AS IS sources:
+  - `docs/architecture/SYSTEM_ARCHITECTURE_OVERVIEW.md` deployment boundary.
+  - `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md` and `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md` for explicit no-semantic-change validation.
+- TO BE necessity:
+  - Pipeline TO BE is not required because pipeline order, provider operations, trace semantics, HTTP API, and SQLite schema do not change.
+  - Infrastructure target and security boundary are recorded in ADR `docs/adr/2026-07-22-use-isolated-remote-docker-for-test-runtime.md`.
+- Preserved AS IS invariants:
+  - DraftRun and RadarRun behavior, provider contracts, retry order, public API, and persistence schema remain unchanged.
+  - Source is edited locally and uncommitted changes remain testable.
+- Changed operational contract:
+  - All tests, Docker stacks, browser acceptance, and live proofs execute through `ssh://flowise` under Compose project `glavred`.
+  - Local Docker is not acceptance evidence and is used only on explicit user request.
+  - Secrets use allowlisted file transport and never enter build context or container environment.
+- Scope:
+  - Add `compose.remote.yaml`, a Playwright/Python/Node QA image, named runtime/artifact volumes, loopback-only API/UI bindings, internal-only Redis, resource limits, and project isolation.
+  - Add `scripts/remote_docker_runtime.py` with doctor, secret sync, build/up/ps/exec/test/artifact/log/down/tunnel commands, port ownership checks, remote lock, controlled errors, and redaction.
+  - Add `OPENROUTER_API_KEY_FILE` and dev-auth password file support.
+  - Add `$remote-docker-testing`; route all runtime-oriented skills and `AGENTS.md` through it.
+  - Add architecture smoke rules preventing local/unscoped Docker workflow drift.
+- Out of scope:
+  - Rootless Docker, a dedicated remote Unix user, production deployment, pipeline changes, and Power Web administration.
+- Public developer contracts:
+  - `GLAVRED_REMOTE_DOCKER_HOST=ssh://flowise` and `GLAVRED_REMOTE_PROJECT=glavred`.
+  - Glavred loopback ports `5176/8000`; Power Web reserved ports `5173/8001/6380`.
+  - Secrets under `/opt/glavred-secrets`, mounted read-only through `_FILE` settings.
+- Definition of Done:
+  - Doctor proves alias `flowise` resolves to `root@213.148.13.45:22`, Docker is reachable, resource floors are met, Glavred ports are available/owned correctly, and existing secret permissions are `0600`.
+  - A remote build contains a temporary uncommitted source probe, proving the current local tree is streamed to the daemon.
+  - Every Glavred container has Compose project `glavred`; UI/API bind only to remote loopback; Redis has no host port; Glavred uses only its named network and volumes.
+  - Power Web container IDs, states, bindings, network set, volume set, and `/opt/power-web-os` remain unchanged across the complete Glavred cycle.
+  - `.env` is absent from build context, image layers, and remote project storage. Unknown secret-like values or credential-bearing URLs fail before runtime creation.
+  - OpenRouter and dev-auth secrets are transferred through SSH stdin using atomic replacement, directory `0700`, file `0600`, read-only mounts, and `_FILE` settings; values are absent from command output, logs, and container environment.
+  - A concurrent stateful command receives a controlled lock error and every normal/failing command releases its lock in `finally`.
+  - `down` addresses only Compose project `glavred`, preserves runtime volumes, and never performs global prune.
+  - All required skills reference `$remote-docker-testing`; `AGENTS.md` requires remote acceptance and command/skill reporting; architecture smoke blocks direct local Compose workflows in runtime-oriented skills.
+  - Remote backend, frontend, architecture, design, visual, smoke, workspace-integrity, and backend-architecture suites pass.
+  - An authenticated browser flow uses the real remote FastAPI session and fails on `401`, CORS, unavailable backend, or local fallback.
+  - Celery worker responds to ping and processes the Glavred queue.
+  - One provider-backed RadarRun records trace and actual usage without exposing the API key.
+  - UI/API are usable through the documented SSH tunnel and are not publicly bound on the server.
+  - Local Glavred Docker containers are stopped after acceptance without deleting local `var/`.
+  - DraftRun/RadarRun AS IS outcome is explicitly `unchanged` because only the execution environment changed.
+  - `2.17.4.7.1.0.1 -> Done`, `2.17.4.7.1.1 -> Ready`, and `roadmap next` returns `2.17.4.7.1.1`.
+- Tests:
+  - CLI unit tests for target validation, port/project ownership, lock cleanup/contention, env sanitization, secret stdin transport, redaction, artifact cleanup, and tunnel output.
+  - Compose merge validation for loopback ports, internal Redis, named volumes, limits, file secrets, and QA image.
+  - Remote source probe, secret permissions/precedence, Power Web before/after snapshot, worker ping, authenticated browser flow, provider RadarRun, and artifact collection.
+  - Remote full regression plus roadmap render/export/check, skill validation, and `git diff --check`.
+- Docs:
+  - Update README, SAO, ADR index/new ADR, contributor guide, developer guide, `.env.example`, `AGENTS.md`, affected skills, and generated roadmap artifacts.
+- Completion transition:
+  - Mark this slice Done only after the final remote live proof; then return `2.17.4.7.1.1` to Ready.
+- Risks:
+  - Shared-host isolation is the primary safety boundary. A future dedicated user/rootless daemon is recommended but is not required for this slice.
+- Completed: 2026-07-22
+
 ### Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark
 
 - Status: Ready
@@ -9281,6 +9342,7 @@ Status:
 - Slice 2.17.4.7.0.1: Workspace UTF-8 Integrity and Signals UI Recovery. Completed 2026-07-16.
 - Slice 2.17.4.7.0.2: Radar Language Policy and Signal Evidence Presentation. Completed 2026-07-17.
 - Slice 2.17.4.7.1: Signal Editorial Scoring, Explainability and Relationship Integrity. Completed 2026-07-22.
+- Slice 2.17.4.7.1.0.1: Remote Docker Test Runtime and Skill Guardrails. Completed 2026-07-22.
 
 
 ## Blocked Items

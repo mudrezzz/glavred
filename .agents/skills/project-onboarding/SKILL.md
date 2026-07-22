@@ -68,10 +68,9 @@ Instead:
    remaining explicit debt before treating a legacy file as an owner. If backend
    package quality or structural debt is part of the next task, use
    `.agents/skills/backend-architecture-audit/SKILL.md`.
-7. For live provider checks, use `.env` as the authoritative local OpenRouter source
-   without printing secret values. If Glavred is not running in Docker, start the
-   Glavred compose stack with `docker compose up -d --build`; unrelated running
-   Docker projects do not block or replace that step.
+7. For tests, Docker, browser acceptance, and live provider checks, use
+   `.agents/skills/remote-docker-testing/SKILL.md`. Run its `doctor` during onboarding;
+   never start local Glavred Docker without an explicit user request.
 8. For complex pipeline slices, check that the slice follows
    `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`.
    If runtime order, trace shape, provider input, retry/backup/fallback,

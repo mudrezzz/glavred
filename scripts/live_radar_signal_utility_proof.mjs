@@ -7,14 +7,24 @@ const proofDir = path.join(rootDir, 'var', 'visual-proof', '2.17.4.7.1', 'live')
 const projectId = 'project-ai-design-patterns';
 const replayRunId = 'radar-run-ai-pattern-radar-industrial-cases-7';
 const reuseExistingRun = process.env.GLAVRED_LIVE_PROOF_REUSE === '1';
+const skipReplay = process.env.GLAVRED_LIVE_PROOF_SKIP_REPLAY === '1';
 const password = await readDevPassword();
 const browser = await chromium.launch({ headless: true });
 
 async function readDevPassword() {
-  const source = await readFile(path.join(rootDir, '.env'), 'utf8');
-  const line = source.split(/\r?\n/u).find((candidate) => candidate.startsWith('GLAVRED_DEV_AUTH_PASSWORD='));
-  if (!line) return 'glavred-demo';
-  return line.slice(line.indexOf('=') + 1).trim().replace(/^(['"])(.*)\1$/u, '$2');
+  if (process.env.GLAVRED_DEV_AUTH_PASSWORD) return process.env.GLAVRED_DEV_AUTH_PASSWORD;
+  if (process.env.GLAVRED_DEV_AUTH_PASSWORD_FILE) {
+    const secret = (await readFile(process.env.GLAVRED_DEV_AUTH_PASSWORD_FILE, 'utf8')).trim();
+    if (secret) return secret;
+  }
+  try {
+    const source = await readFile(path.join(rootDir, '.env'), 'utf8');
+    const line = source.split(/\r?\n/u).find((candidate) => candidate.startsWith('GLAVRED_DEV_AUTH_PASSWORD='));
+    if (line) return line.slice(line.indexOf('=') + 1).trim().replace(/^(['"])(.*)\1$/u, '$2');
+  } catch {
+    // Remote QA intentionally excludes the complete local .env file.
+  }
+  return 'glavred-demo';
 }
 
 async function login(page, baseUrl) {
@@ -153,17 +163,21 @@ try {
     if (!response.ok) throw new Error(`Workspace load failed with HTTP ${response.status}.`);
     return (await response.json()).workspace;
   });
-  const replayResponse = await page.evaluate(async ({ replayId, project }) => {
-    const response = await fetch(`http://127.0.0.1:8000/api/projects/${project}/radar-runs/${replayId}/signal-scoring`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return { status: response.status, payload: await response.json() };
-  }, { replayId: replayRunId, project: projectId });
-  if (replayResponse.status !== 200) throw new Error(`Replay scoring failed with HTTP ${replayResponse.status}.`);
-  const replayProof = assertScoring(replayResponse.payload, 'digital-advisor-replay');
-  const replayResult = assertDigitalAdvisorReplay(replayProof);
+  let replayProof = null;
+  let replayResult = null;
+  if (!skipReplay) {
+    const replayResponse = await page.evaluate(async ({ replayId, project }) => {
+      const response = await fetch(`http://127.0.0.1:8000/api/projects/${project}/radar-runs/${replayId}/signal-scoring`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return { status: response.status, payload: await response.json() };
+    }, { replayId: replayRunId, project: projectId });
+    if (replayResponse.status !== 200) throw new Error(`Replay scoring failed with HTTP ${replayResponse.status}.`);
+    replayProof = assertScoring(replayResponse.payload, 'digital-advisor-replay');
+    replayResult = assertDigitalAdvisorReplay(replayProof);
+  }
   const reusableRun = reuseExistingRun ? [...persistedWorkspace.radarRuns]
     .sort((left, right) => String(right.startedAt).localeCompare(String(left.startedAt)))
     .find((run) =>
@@ -217,7 +231,21 @@ try {
 
   await signalRow.getByRole('button', { name: 'Корректировать' }).click();
   await signalRow.locator('[data-testid="signal-edit-form"]').waitFor();
-  await signalRow.locator('.signal-facts dt').filter({ hasText: /^(Как это работает|Механизм)$/u }).waitFor();
+  const editContextText = await signalRow.locator('.signal-facts').innerText();
+  const mechanismApplicable = selectedSignal.utilityReport?.qualityChecks
+    ?.find((item) => item.checkId === 'mechanism-support')?.applicable
+    ?? ['case', 'practice', 'change', 'problemFailureMode', 'recurringPattern'].includes(selectedSignal.type);
+  const requiredEditContext = [
+    selectedSignal.source,
+    selectedSignal.uncertainty,
+    ...(selectedSignal.limitations ?? []),
+    mechanismApplicable ? selectedSignal.mechanism : null
+  ].filter(Boolean);
+  for (const value of requiredEditContext) {
+    if (!editContextText.includes(value)) {
+      throw new Error(`Signal edit mode lost applicable read-only context: ${String(value).slice(0, 80)}`);
+    }
+  }
   await signalRow.getByRole('heading', { name: 'Доказательства', exact: true }).waitFor();
   await signalRow.getByRole('button', { name: 'Отменить' }).click();
 
@@ -285,14 +313,14 @@ try {
   await page.screenshot({ path: path.join(proofDir, 'trace-desktop.png'), fullPage: true });
 
   report = {
-    replayRunId,
-    replaySignalCount: replayProof.signals.length,
-    digitalAdvisorSignalId: replayResult.advisor.id,
-    digitalAdvisorRecommendation: replayResult.advisor.utilityReport.recommendation,
-    digitalAdvisorResultSupport: replayResult.advisor.utilityReport.qualityChecks.find((item) => item.checkId === 'outcome-support')?.classification,
-    digitalAdvisorSourcePosture: replayResult.advisor.utilityReport.qualityChecks.find((item) => item.checkId === 'source-posture')?.classification,
-    digitalAdvisorRelatedSameSource: replayResult.relatedSameSource,
-    relatedRiskSignalId: replayResult.risk?.id ?? null,
+    replayRunId: replayProof ? replayRunId : null,
+    replaySignalCount: replayProof?.signals.length ?? 0,
+    digitalAdvisorSignalId: replayResult?.advisor.id ?? null,
+    digitalAdvisorRecommendation: replayResult?.advisor.utilityReport.recommendation ?? null,
+    digitalAdvisorResultSupport: replayResult?.advisor.utilityReport.qualityChecks.find((item) => item.checkId === 'outcome-support')?.classification ?? null,
+    digitalAdvisorSourcePosture: replayResult?.advisor.utilityReport.qualityChecks.find((item) => item.checkId === 'source-posture')?.classification ?? null,
+    digitalAdvisorRelatedSameSource: replayResult?.relatedSameSource ?? null,
+    relatedRiskSignalId: replayResult?.risk?.id ?? null,
     runId,
     runStatus: payload.run.status,
     signalCount: freshProof.signals.length,

@@ -39,17 +39,22 @@ npm run dev
 
 ## Validation
 
-Run targeted tests:
+All acceptance tests run in the isolated remote Docker runtime. Validate the endpoint
+and secret readiness first, then select the smallest useful suite:
 
-```bash
-npm test
+```powershell
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py sync-secrets
+python scripts/remote_docker_runtime.py build
+python scripts/remote_docker_runtime.py test --suite frontend
 ```
 
-Run the build smoke test:
+Use `--suite full` before completing a risky slice. Local test commands may help with
+diagnosis, but they are not acceptance evidence. Do not switch the global Docker
+context, touch Power Web resources, or start local Docker unless the user explicitly
+requests it. The complete process is owned by
+`.agents/skills/remote-docker-testing/SKILL.md`.
 
-```bash
-npm run smoke
-```
 
 ## Documentation
 

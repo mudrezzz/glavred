@@ -68,9 +68,10 @@ For screens and visible component work:
 2. Compare screen behavior with `ui-design-systems/app-prototype/index.html`.
 3. Check focus states, hover/press behavior, reduced motion, and text overflow.
 4. Report any known deviation from the design system before finishing.
-5. Run `npm run test:design` and `npm run test:visual` for visible frontend changes.
-6. Run `npm run test:architecture` when the change touches `src/app`, `src/features`,
-   or shared frontend primitives.
+5. Use `.agents/skills/remote-docker-testing/SKILL.md` and run remote `design` and
+   `visual` suites for visible frontend changes.
+6. Run the remote `architecture` suite when the change touches `src/app`,
+   `src/features`, or shared frontend primitives.
 
 ## Final Response Requirements
 

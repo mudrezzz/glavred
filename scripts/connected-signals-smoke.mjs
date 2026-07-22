@@ -17,6 +17,7 @@ const logs = { backend: '', frontend: '' };
 function startProcess(command, args, env, logKey, shell = false) {
   const child = spawn(command, args, {
     cwd: rootDir,
+    detached: process.platform !== 'win32',
     env: { ...process.env, ...env },
     shell,
     stdio: ['ignore', 'pipe', 'pipe']
@@ -35,7 +36,12 @@ function stopProcess(child) {
   if (process.platform === 'win32' && child.pid) {
     spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
   } else {
-    child.kill('SIGTERM');
+    if (!child.pid) return;
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch {
+      child.kill('SIGTERM');
+    }
   }
 }
 
@@ -180,6 +186,7 @@ try {
   await waitFor(uiUrl, 'Vite');
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
+  await context.route(/https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/, (route) => route.abort());
   const page = await context.newPage();
   await page.goto(uiUrl, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Войти' }).waitFor();

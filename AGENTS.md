@@ -226,6 +226,45 @@ During changes:
 - Prefer minimal, localized changes.
 - Preserve existing behavior unless the task explicitly changes it.
 
+## Remote Docker test runtime
+
+All Glavred tests, Docker operations, authenticated browser acceptance, and live
+provider proof run on `flowise` through
+`.agents/skills/remote-docker-testing/SKILL.md`. Local execution is allowed for source
+inspection, editing, Git, roadmap render/export, and document generation, but local
+tests are not acceptance evidence. Do not start local Glavred Docker unless the user
+explicitly requests it.
+
+Run `python scripts/remote_docker_runtime.py doctor` before remote work. Use compose
+project `glavred`, preserve Power Web resources, transfer secrets only through the
+repository CLI, and never print tokens, passwords, interpolated Compose config, or
+container environment values.
+
+## Execution transparency
+
+Make the applied workflow visible to the user instead of leaving skills and commands
+implicit.
+
+- In the first substantive progress update, state which repo-local or plugin skills
+  will be used and why. If no skill applies, say `Skills: none`.
+- When the selected skill set changes during the task, announce the newly used skill
+  in the next progress update.
+- In the final response, include a `Skills used` section listing only skills whose
+  instructions were actually opened or applied. Do not list skills merely because
+  they were available.
+- In the final response, include a `Commands run` section with the executed
+  user-relevant shell/application commands and their outcome. This includes tests,
+  builds, architecture checks, Docker operations, migrations, roadmap commands, and
+  Git operations.
+- Keep the command ledger exact enough to reproduce the work. Identical retries or
+  polling commands may be grouped with a count, and routine read-only exploration
+  may be summarized when listing every file-read command would obscure the result.
+- Never expose secrets, access tokens, passwords, full sensitive payloads, or command
+  arguments containing them. Replace sensitive values with `<redacted>` while still
+  naming the command and its purpose.
+- A task is not considered fully reported until the skills and command ledger are
+  present, even when all tests pass.
+
 ## Workspace text integrity
 
 Never perform a full workspace `GET -> PUT` roundtrip with PowerShell
@@ -279,6 +318,8 @@ Before finishing:
    - which slice was completed or advanced
    - which tests were run
    - which docs were updated
+   - which skills were used
+   - which commands were executed and their outcomes
    - remaining risks or next tasks
 
 ## Skills routing
@@ -314,5 +355,7 @@ Use these skills when available:
 - `$docs-sync` for keeping README, architecture docs, ADRs, contributor docs, developer docs, user docs, and demo docs current.
 - `$regression-and-test-strategy` for deciding and running the correct test scope.
 - `$demo-maintenance` for creating or updating the realistic demo example.
+- `$remote-docker-testing` for every Glavred test, Docker operation, authenticated
+  browser acceptance, remote diagnostics, or live provider proof.
 
 Do not duplicate full skill workflows here. The `SKILL.md` files are the source of truth for task-specific procedures.
