@@ -24,6 +24,7 @@ def test_mojibake_replacement_and_question_mark_runs_are_rejected() -> None:
         "cyrillic": "РџСЂРёРІРµС‚ РџСЂРёРІРµС‚ РџСЂРёРІРµС‚",
         "replacement": "данные \ufffd потеряны",
         "questions": "industrial ???? evidence",
+        "observed": "Public industrial AI cases, вЮша/EAM materials",
     }
 
     report = WorkspaceTextIntegrityInspector().inspect(payload, project_id="project-test")

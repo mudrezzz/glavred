@@ -23,6 +23,9 @@ export function SignalsView({
   onApproveSignal,
   onRejectSignal,
   onArchiveSignal,
+  onReopenSignal,
+  onRestoreSignal,
+  onRescoreSignal,
   onCorrectSignal,
   onApprovePostCandidate,
   onEditPostCandidate,
@@ -39,6 +42,9 @@ export function SignalsView({
   onApproveSignal: (signal: SourceSignal) => void;
   onRejectSignal: (signal: SourceSignal) => void;
   onArchiveSignal: (signal: SourceSignal) => void;
+  onReopenSignal: (signal: SourceSignal) => void;
+  onRestoreSignal: (signal: SourceSignal) => void;
+  onRescoreSignal: (signal: SourceSignal) => void;
   onCorrectSignal: (signal: SourceSignal, patch: Partial<SourceSignal>) => void;
   onApprovePostCandidate: (candidate: PostCandidate) => void;
   onEditPostCandidate: (candidate: PostCandidate, patch: PostCandidateEditPatch) => void;
@@ -73,6 +79,9 @@ export function SignalsView({
           onApproveSignal={onApproveSignal}
           onRejectSignal={onRejectSignal}
           onArchiveSignal={onArchiveSignal}
+          onReopenSignal={onReopenSignal}
+          onRestoreSignal={onRestoreSignal}
+          onRescoreSignal={onRescoreSignal}
           onCreateInsight={onCreateInsight}
           onPlan={onPlan}
         />

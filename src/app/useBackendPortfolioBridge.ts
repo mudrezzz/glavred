@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { PortfolioState } from '../domain/portfolio/types';
 import {
   BackendPortfolioAuthRequiredError,
@@ -7,19 +7,16 @@ import {
   type BackendProjectCreateInput,
   type BackendProjectUpdateInput
 } from '../infrastructure/backendPortfolioStore';
-import { LocalPortfolioStore } from '../infrastructure/localPortfolioStore';
 
 export type PortfolioBackendStatus = 'checking' | 'authenticated' | 'loginRequired' | 'localFallback' | 'integrityError';
 
 const backendStore = new BackendPortfolioStore();
 
 export function useBackendPortfolioBridge({
-  localStore,
   portfolio,
   setPortfolio,
   setToast
 }: {
-  localStore: LocalPortfolioStore;
   portfolio: PortfolioState;
   setPortfolio: Dispatch<SetStateAction<PortfolioState>>;
   setToast: (message: string) => void;
@@ -27,19 +24,21 @@ export function useBackendPortfolioBridge({
   const [backendStatus, setBackendStatus] = useState<PortfolioBackendStatus>('checking');
   const [authError, setAuthError] = useState('');
   const [integrityError, setIntegrityError] = useState('');
+  const sessionRevision = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    const revision = sessionRevision.current;
     backendStore
       .load()
       .then((loadedPortfolio) => {
-        if (cancelled) return;
+        if (cancelled || revision !== sessionRevision.current) return;
         setPortfolio(loadedPortfolio);
         setBackendStatus('authenticated');
         setAuthError('');
       })
       .catch((error) => {
-        if (cancelled) return;
+        if (cancelled || revision !== sessionRevision.current) return;
         if (error instanceof BackendPortfolioIntegrityError) {
           setBackendStatus('integrityError');
           setIntegrityError(integrityMessage(error));
@@ -54,7 +53,9 @@ export function useBackendPortfolioBridge({
 
   useEffect(() => {
     if (backendStatus !== 'authenticated') return;
+    const revision = sessionRevision.current;
     backendStore.save(portfolio).catch((error) => {
+      if (revision !== sessionRevision.current) return;
       if (error instanceof BackendPortfolioIntegrityError) {
         setBackendStatus('integrityError');
         setIntegrityError(integrityMessage(error));
@@ -66,13 +67,19 @@ export function useBackendPortfolioBridge({
   }, [backendStatus, portfolio, setToast]);
 
   async function login(email: string, password: string) {
+    const revision = sessionRevision.current + 1;
+    sessionRevision.current = revision;
     setAuthError('');
+    setBackendStatus('checking');
     try {
-      setPortfolio(await backendStore.login(email, password));
+      const loadedPortfolio = await backendStore.login(email, password);
+      if (revision !== sessionRevision.current) return;
+      setPortfolio(loadedPortfolio);
       setBackendStatus('authenticated');
       setIntegrityError('');
       setToast('Вход выполнен');
     } catch (error) {
+      if (revision !== sessionRevision.current) return;
       if (error instanceof BackendPortfolioAuthRequiredError) {
         setBackendStatus('loginRequired');
         setAuthError('Неверный email или пароль');
@@ -89,10 +96,18 @@ export function useBackendPortfolioBridge({
   }
 
   async function logout() {
-    await backendStore.logout().catch(() => undefined);
-    setPortfolio(localStore.load());
-    setBackendStatus('loginRequired');
-    setToast('Вы вышли из backend-сессии');
+    sessionRevision.current += 1;
+    setBackendStatus('checking');
+    setAuthError('');
+    setIntegrityError('');
+    try {
+      await backendStore.logout();
+      setToast('Вы вышли из аккаунта');
+    } catch {
+      setAuthError('Локальный выход выполнен. Backend-сессию не удалось завершить; войдите в нужный аккаунт, чтобы заменить ее.');
+    } finally {
+      setBackendStatus('loginRequired');
+    }
   }
 
   function reloadBackendPortfolio(): boolean {

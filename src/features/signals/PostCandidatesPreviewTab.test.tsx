@@ -11,7 +11,7 @@ function createController(workspace = createDemoWorkspace()): SignalsController 
       new: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'new').length,
       approved: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved').length,
       archived: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'archived').length,
-      highRisk: workspace.sourceSignals.filter((signal) => signal.duplicateRisk === 'high').length
+      relationshipGroups: 0
     }
   } as SignalsController;
 }

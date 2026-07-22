@@ -205,6 +205,58 @@ describe('radarRunTraceViewModel', () => {
       expect.objectContaining({ id: 'decision-material-1', status: 'signalProducing' }),
       expect.objectContaining({ id: 'attempt-0', status: 'accepted' })
     ]));
+    expect(model.timeline.find((item) => item.detailId === 'signal-extraction')?.status).toBe(bundle.run.signalExtraction?.status);
+  });
+
+  it('renders signal utility scoring, provider recovery, and human review separately', () => {
+    const bundle = traceBundle({
+      signalScoring: {
+        version: 1,
+        runId: 'radar-run-industrial-1',
+        status: 'succeeded',
+        revision: 2,
+        signalIds: ['signal-1'],
+        evaluations: [],
+        providerAttempts: [{ attemptLabel: 'repair', model: 'test/model', status: 'accepted', messageCharCount: 16887 }],
+        unresolvedSettingRefCount: 0,
+        unresolvedEvidenceRefCount: 0,
+        decisionCoverageComplete: true
+      }
+    });
+    bundle.sourceSignals = [{
+      id: 'signal-1', type: 'case', title: 'Промышленный кейс', source: 'Источник', capturedAt: '2026-07-17',
+      summary: 'Сводка', rawNote: 'Механизм', reviewStatus: 'approved', reviewRevision: 1, reviewHistory: [],
+      utilityRevision: 2, utilityReport: {
+        version: 1, revision: 2, status: 'complete', recommendation: 'reviewWithCaution',
+        dimensions: [{ dimension: 'sourceCredibility', status: 'partial', importance: 'weighted', summary: 'Источник вендорский.', reasonCodes: ['vendor-only'], settingRefs: [], evidenceRefs: [] }],
+        blockingReasons: [], warnings: ['vendor-only']
+      }
+    }];
+    bundle.run.operations.push({
+      id: 'signal-scoring-revision-2',
+      runId: bundle.run.id,
+      sourceHandleId: '',
+      kind: 'signalScoring',
+      label: 'Signal utility scoring',
+      status: 'succeeded'
+    } as (typeof bundle.run.operations)[number]);
+
+    const model = buildRadarRunTraceViewModel(bundle);
+    const scoring = model.details.find((detail) => detail.id === 'signal-scoring');
+
+    expect(scoring?.fields).toEqual(expect.arrayContaining([
+      { label: 'Сигналов оценено', value: '1' },
+      { label: 'Неразрешенные настройки', value: '0' },
+      { label: 'Неразрешенные доказательства', value: '0' }
+    ]));
+    expect(scoring?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'utility-signal-1', status: 'reviewWithCaution' }),
+      expect.objectContaining({ id: 'scoring-attempt-0', status: 'accepted' })
+    ]));
+    expect(model.details.find((detail) => detail.id === 'operations')?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'signal-scoring-revision-2', status: 'succeeded' })
+    ]));
+    expect(model.timeline.find((item) => item.detailId === 'signal-scoring')?.status).toBe('succeeded');
   });
 });
 

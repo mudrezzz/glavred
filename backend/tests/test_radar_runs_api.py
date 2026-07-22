@@ -7,6 +7,7 @@ from backend.app.infrastructure.openrouter_web_search_adapter import OpenRouterW
 from backend.app.main import create_app
 from backend.app.settings import BackendSettings
 from backend.app.upstream.application.signal_extraction_provider import SignalExtractionProviderResult
+from backend.app.upstream.application.signal_utility_provider import SignalUtilityProviderResult
 import json
 
 
@@ -64,6 +65,36 @@ class ApiFakeSignalExtractionProvider:
         )
 
 
+class ApiFakeSignalUtilityProvider:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def complete(self, **kwargs: Any) -> SignalUtilityProviderResult:
+        self.calls += 1
+        provider_input = json.loads(kwargs["messages"][1]["content"])
+        signal = provider_input["signals"][0]
+        evidence_ref = signal["evidenceRefs"][0]
+        return SignalUtilityProviderResult(
+            payload={
+                "signalEvaluations": [{
+                    "signalId": signal["id"],
+                    "dimensions": [{
+                        "dimension": "factualSpecificity",
+                        "status": "matched",
+                        "summary": "Сигнал описывает конкретный механизм и наблюдаемый результат.",
+                        "reasonCodes": ["specific-mechanism-and-outcome"],
+                        "settingRefs": [],
+                        "evidenceRefs": [evidence_ref],
+                        "uncertainty": "Источник требует редакционной проверки.",
+                    }],
+                }],
+            },
+            usage={"prompt_tokens": 420, "completion_tokens": 160, "total_tokens": 580},
+            request_id=f"utility-api-{self.calls}",
+            model=kwargs["model"],
+        )
+
+
 def test_external_radar_run_api_returns_trace_contract_and_retries_without_retrieval(tmp_path) -> None:
     app = create_app(settings=BackendSettings(
         _env_file=None,
@@ -75,9 +106,11 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     search = ApiFakeWebSearchAdapter()
     reader = ApiFakeUrlReader()
     extraction = ApiFakeSignalExtractionProvider()
+    utility = ApiFakeSignalUtilityProvider()
     app.state.openrouter_web_search_adapter = search
     app.state.public_url_reader = reader
     app.state.signal_extraction_provider = extraction
+    app.state.signal_utility_provider = utility
     client = TestClient(app)
 
     project_context = {"projectId": "project-api-test", "editorialLanguage": "ru"}
@@ -97,6 +130,10 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     assert payload["sourceSignals"][0]["reviewStatus"] == "candidate"
     assert payload["signalExtractionReport"]["status"] == "succeeded"
     assert payload["run"]["signalExtraction"]["decisionCoverageComplete"] is True
+    assert payload["signalScoringReport"]["status"] == "succeeded"
+    assert payload["sourceSignals"][0]["utilityReport"]["recommendation"] in {
+        "recommended", "reviewWithCaution",
+    }
 
     retry_workspace = {
         **workspace(),
@@ -114,6 +151,7 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     assert search.calls == 3
     assert reader.calls == 1
     assert extraction.calls == 2
+    assert utility.calls == 2
 
 
 def workspace() -> dict[str, Any]:

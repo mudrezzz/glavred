@@ -18,7 +18,7 @@ const projectId: DemoBenchmarkProjectId = 'project-ai-design-patterns';
 export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
   projectProfile: {
     name: 'Опытный цех «Сборочная»',
-    description: 'Telegram-first workshop for industrial AI patterns: cases, test protocols, hybrid contours and reliable decision support.',
+    description: 'Telegram-блог о промышленных AI-паттернах: кейсы, протоколы испытаний, гибридные контуры и надежная поддержка решений.',
     setupStatus: 'needsReview'
   },
   editorialModel: {
@@ -336,21 +336,21 @@ export const aiDesignPatternsBenchmarkSeed: BenchmarkWorkspaceSeed = {
     ),
     radar(
       'ai-pattern-radar-papers',
-      'Papers and benchmarks',
-      'Искать papers/reports не про лидерборды моделей, а про применимость паттернов, фреймворков и архитектур.',
-      'arXiv, ACM/IEEE-style reports, benchmark papers, technical reports.'
+      'Исследования и бенчмарки',
+      'Искать исследования и отчеты не про лидерборды моделей, а про применимость паттернов, фреймворков и архитектур.',
+      'arXiv, отчеты ACM/IEEE, бенчмарки и технические исследования.'
     ),
     radar(
       'ai-pattern-radar-oss',
-      'OSS industrial AI patterns',
-      'Искать OSS/frameworks, которые можно разобрать как практический паттерн для industrial AI.',
-      'GitHub projects, docs, technical blogs, community examples.'
+      'Открытые industrial AI-проекты',
+      'Искать открытые проекты и фреймворки, которые можно разобрать как практический паттерн industrial AI.',
+      'GitHub-проекты, документация, технические блоги и примеры сообщества.'
     ),
     radar(
       'ai-pattern-radar-author-materials',
-      'Sanitized author materials',
+      'Материалы автора',
       'Извлекать паттерны из авторских материалов про прикладной ИИ, ТОиР, Decision Intelligence и AI Product Management.',
-      'User-provided sanitized docs and author-validated Telegram materials.'
+      'Обезличенные документы пользователя и проверенные автором материалы Telegram.'
     )
   ],
   sourceSignals: [
@@ -550,13 +550,29 @@ function radar(id: string, title: string, ruleStatement: string, scope: string):
         status: 'active'
       }
     ],
-    filters: [
+    filters: id === 'ai-pattern-radar-industrial-cases' ? [
       {
-        id: `${id}-filter-industrial`,
+        id: `${id}-filter-context`,
         dimension: 'topics',
         enabled: true,
         mode: 'mustMatch',
-        instruction: 'Сигнал должен быть полезен для разбора паттернов industrial AI, ТОиР/EAM, Decision Intelligence, гибридного AI или открытой книги паттернов.'
+        instruction: 'Должен быть доказан промышленный контекст: производство, ТОиР/EAM, диагностика, оборудование, регламент, надежность или операционный workflow.'
+      },
+      { id: `${id}-filter-mechanism`, dimension: 'mechanism', enabled: true, mode: 'shouldMatch', instruction: 'Нужен понятный механизм внедрения: данные, роли, этапы решения или архитектурная сборка.' },
+      { id: `${id}-filter-outcome`, dimension: 'observableOutcome', enabled: true, mode: 'shouldMatch', instruction: 'Желателен наблюдаемый результат, метрика, изменение процесса или проверяемый failure mode.' },
+      { id: `${id}-filter-source`, dimension: 'sourceCredibility', enabled: true, mode: 'shouldMatch', instruction: 'Различать независимый источник, подтвержденный кейс и заявление заинтересованного вендора.' },
+      { id: `${id}-filter-author`, dimension: 'author', enabled: true, mode: 'shouldMatch', instruction: 'Сигнал должен поддерживать инженерную позицию автора: workflow, надежность, ответственность и ограничения вместо AI-магии.' },
+      { id: `${id}-filter-action`, dimension: 'actionability', enabled: true, mode: 'shouldMatch', instruction: 'Из сигнала должен следовать практический критерий, паттерн, анти-паттерн или вопрос к внедрению.' },
+      { id: `${id}-filter-novelty`, dimension: 'novelty', enabled: true, mode: 'shouldMatch', instruction: 'Сигнал должен добавлять новый механизм, кейс, ограничение или контраргумент относительно уже разобранного.' },
+      { id: `${id}-filter-noise`, dimension: 'promotionalNoise', enabled: true, mode: 'mustNotMatch', instruction: 'Отсекать рекламный или общий AI-шум только когда нет доказанного механизма, результата и ограничений.' },
+      { id: `${id}-filter-tension`, dimension: 'productiveTension', enabled: true, mode: 'seekTension', instruction: 'Сохранять полезное противоречие позиции автора как предмет проверки, не выдавая его за поддержанную позицию.' }
+    ] : [
+      {
+        id: `${id}-filter-topic`,
+        dimension: 'topics',
+        enabled: true,
+        mode: 'mustMatch',
+        instruction: 'Сигнал должен соответствовать предметной области и цели этого радара.'
       }
     ],
     sourceDiscoveryMode: 'specifiedAndAdditional',

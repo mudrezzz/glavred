@@ -74,12 +74,12 @@ work, not watered down in new radar slices.
 
 ## Core Contracts
 
-These contracts are the upstream boundary. Slices 2.17.4.6-2.17.4.7 implement the
-provider-backed retrieval and extraction pass: project-scoped `SourceRegistry`,
+These contracts are the upstream boundary. Slices 2.17.4.6-2.17.4.7.1 implement the
+provider-backed retrieval, extraction, utility scoring, and review pass: project-scoped `SourceRegistry`,
 `RadarRun`, typed search plan, OpenRouter web-search operations, selective URL reads,
 raw result triage, normalized `FoundMaterial`, bounded evidence fragments and
-candidate `SourceSignal`. Project utility scoring and candidate assembly v2 remain
-later slices.
+candidate `SourceSignal`, bounded project utility reports, and human review history.
+Candidate assembly v2 remains a later slice.
 
 | Contract | Owns | Does Not Own |
 | --- | --- | --- |
@@ -91,7 +91,8 @@ later slices.
 | `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, bounded hashed fragments, capturedAt, warnings. | Topic/fabula assignment or approval. |
 | `SignalExtractionReport` | Versioned terminal decisions, provider attempts, grounding incidents, budgets, usage and signal ids. | Project usefulness scoring or final post candidate ranking. |
 | `SourceSignal` candidate | Evidence-backed extracted observation with uncertainty, reason codes and exact material/fragment handles. | Automatic approval or topic/fabula/audience/value ownership. |
-| `SignalScore` | Dimension-level editorial fit: novelty, source credibility, author fit, audience value, positioning fit, topic affinity, evidence strength, risk. | Draft text quality. |
+| `SignalUtilityReport` | Dimension-level editorial utility, setting/evidence refs, deterministic recommendation, provider proof and revision. | Human approval, evidence mutation, topic/fabula ownership, or draft quality. |
+| `SourceSignalReviewEvent` | Authenticated reversible human decision with revision, reason and changed editorial fields. | Automatic recommendation or evidence mutation. |
 | `CandidateAssemblyReport` | Accepted/rejected `Signal x Topic x Fabula` matches, candidate ranking, rationale, and risks. | DraftRun generation or publication variants. |
 
 ## Data Flow
@@ -121,7 +122,7 @@ later slices.
    - Found material remains visible even when weak, duplicate, or failed-filter. It is
      not silently promoted and not silently dropped.
 
-4. **Signal extraction and scoring**
+4. **Signal extraction, scoring and review**
    - Implemented extraction turns one or more readable found materials into zero or
      more grounded candidate source signals and gives every material a terminal
      decision.
@@ -130,8 +131,12 @@ later slices.
    - Editorial signal fields use `BlogProject.language`; original source title and
      exact evidence quotation remain unchanged. A terminal localization failure emits
      no mixed-language signal.
-   - Scoring and human lifecycle explain whether the material is useful for the
-     project and remain owned by `2.17.4.7.1`.
+   - Implemented utility scoring uses a bounded project profile and signal dossier,
+     validates setting/evidence refs, and applies a deterministic categorical
+     recommendation after provider semantic evaluation.
+   - Recommendation never changes the human status. Review actions are authenticated,
+     reversible and revision-checked; correction may change only editorial title,
+     summary and author comment and then triggers a rescore.
 
 5. **Candidate assembly**
    - Candidate assembly evaluates `approved SourceSignal x active Topic x active Fabula`.
@@ -333,7 +338,12 @@ python scripts/analyze_radar_signal_extraction.py --project-id <project-id> --ru
   query-language allocation, deterministic source eligibility, extraction
   localization validation, original evidence links, trace links, and explicitly
   unscored candidate presentation.
-- `2.17.4.7.1`: Signal Editorial Scoring and Review Lifecycle.
+- `2.17.4.7.1`: Signal Editorial Scoring, Explainability and Relationship Integrity.
+  Done: bounded project profile/dossier, batch provider recovery and budgets,
+  mode-aware radar/project criteria, type-aware system quality checks, categorical
+  recommendation, human-readable evidence resolution, non-destructive canonical
+  signal relationships, reversible authenticated review and legacy integrity
+  separation.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
 - `2.17.4.9`: Signal Review and Candidate Workbench UX.
 

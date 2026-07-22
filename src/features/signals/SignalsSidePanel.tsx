@@ -1,39 +1,6 @@
-import { useMemo, useState } from 'react';
-import {
-  createRadarDraft,
-  isRadarSourceConfigurationValid,
-  type ImportRiskLevel,
-  type RadarDefinition,
-  type RadarEditorialFilterMode,
-  type RadarEditorialFilterRule,
-  type RadarSearchRule,
-  type RadarSearchSource,
-  type RadarSourceDiscoveryMode,
-  type SignalFilterStatus,
-  type SignalReviewStatus,
-  type SourceSignal,
-  type WorkspaceState
-} from '../../domain/editorialWorkspace';
+import type { WorkspaceState } from '../../domain/editorialWorkspace';
 import { Icon } from '../../shared/ui/Icon';
-import {
-  EmptyState,
-  SummaryItem,
-  duplicateRiskLabel,
-  formatDate,
-  radarAcceptancePolicyLabel,
-  radarFilterDimensionLabel,
-  radarFilterModeLabel,
-  radarRuleOperatorLabel,
-  radarSearchSourceTypeLabel,
-  radarSourceDiscoveryModeLabel,
-  radarSourceTypeLabel,
-  radarStatusLabel,
-  radarTriggerModeLabel,
-  signalFilterEvaluationLabel,
-  signalFilterStatusLabel,
-  signalReviewStatusLabel,
-  type SignalsTab
-} from './helpers';
+import { SummaryItem } from './helpers';
 
 export function SignalsSidePanel({
   workspace,
@@ -42,7 +9,7 @@ export function SignalsSidePanel({
   onPlan
 }: {
   workspace: WorkspaceState;
-  summary: { total: number; new: number; approved: number; archived: number; highRisk: number };
+  summary: { total: number; new: number; approved: number; archived: number; relationshipGroups: number };
   onCreateInsight: () => void;
   onPlan: () => void;
 }) {
@@ -56,7 +23,7 @@ export function SignalsSidePanel({
           <SummaryItem label="Новые" value={summary.new} />
           <SummaryItem label="Утверждено" value={summary.approved} />
           <SummaryItem label="В архиве" value={summary.archived} />
-          <SummaryItem label="High duplicate" value={summary.highRisk} />
+          <SummaryItem label="Групп тезисов" value={summary.relationshipGroups} />
         </div>
         {workspace.postCandidate && (
           <div className="context-empty">

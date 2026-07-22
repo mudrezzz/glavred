@@ -29,6 +29,8 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     warning:
       '<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    logout:
+      '<path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>',
     caret: '<path d="M4 16 L12 7 L20 16"/>'
   };
 

@@ -64,9 +64,12 @@ export function attachRadarSourceHandles(radar: RadarDefinition, registry: Sourc
 export function normalizeRadarRuns(runs: RadarRun[] | undefined, registry: SourceRegistry): RadarRun[] {
   if (!runs?.length) return [];
   const handleIds = new Set(registry.handles.map((handle) => handle.id));
+  const lifecycleOperationKinds = new Set(['signalExtraction', 'signalScoring']);
   return runs.map((run) => ({
     ...run,
-    operations: run.operations.filter((operation) => handleIds.has(operation.sourceHandleId)),
+    operations: run.operations.filter((operation) =>
+      handleIds.has(operation.sourceHandleId) || lifecycleOperationKinds.has(operation.kind)
+    ),
     foundMaterialIds: run.foundMaterialIds ?? [],
     skippedReasons: run.skippedReasons ?? [],
     warnings: run.warnings ?? [],

@@ -18,6 +18,7 @@ export type RadarTraceDetail = {
   id: string;
   title: string;
   kicker: string;
+  lifecycleStatus?: string;
   fields: RadarTraceField[];
   items: RadarTraceItem[];
   jsonPayload: unknown;
@@ -73,6 +74,7 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
       ? [evidenceFragmentsDetail(bundle)]
       : []),
     ...(bundle.run.signalExtraction ? [signalExtractionDetail(bundle)] : []),
+    ...(bundle.run.signalScoring ? [signalScoringDetail(bundle)] : []),
     ...(bundle.benchmarkReport ? [benchmarkDetail(bundle.benchmarkReport)] : []),
     ...(warnings > 0 ? [warningsDetail(bundle)] : []),
     rawDetail(bundle)
@@ -230,7 +232,7 @@ function operationsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         ['Handle', operation.sourceHandleId],
         ['Started', operation.startedAt],
         ['Completed', operation.completedAt],
-        ['Materials', operation.foundMaterialIds.join(', ')],
+        ['Materials', operation.foundMaterialIds?.join(', ')],
         ['Model', operation.selectedModel],
         ['Message chars', operation.messageCharCount],
         ['Provider usage', operation.providerUsage]
@@ -481,6 +483,7 @@ function signalExtractionDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
     id: 'signal-extraction',
     title: 'Извлечение сигналов',
     kicker: `${report.status}, ревизия ${report.revision}`,
+    lifecycleStatus: report.status,
     fields: compactFields([
       ['Статус', report.status],
       ['Ревизия', report.revision],
@@ -532,6 +535,72 @@ function signalExtractionDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
     ],
     jsonPayload: { report, sourceSignals: bundle.sourceSignals }
   };
+}
+
+function signalScoringDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const report = bundle.run.signalScoring!;
+  const attempts = report.providerAttempts ?? [];
+  return {
+    id: 'signal-scoring',
+    title: 'Редакционная полезность',
+    kicker: `${report.status}, ревизия ${report.revision}`,
+    lifecycleStatus: report.status,
+    fields: compactFields([
+      ['Статус', report.status],
+      ['Ревизия', report.revision],
+      ['Сигналов оценено', report.signalIds.length],
+      ['Полное покрытие решений', report.decisionCoverageComplete],
+      ['Неразрешенные настройки', report.unresolvedSettingRefCount],
+      ['Неразрешенные доказательства', report.unresolvedEvidenceRefCount],
+      ['Попытки провайдера', attempts.length]
+    ]),
+    items: [
+      ...bundle.sourceSignals.map((signal) => ({
+        id: `utility-${signal.id}`,
+        label: signal.reviewStatus ?? 'candidate',
+        title: signal.title,
+        body: signalUtilityTraceSummary(signal),
+        status: signal.utilityReport?.recommendation ?? 'unscored',
+        meta: compactFields([
+          ['Utility revision', signal.utilityRevision],
+          ['Review revision', signal.reviewRevision],
+          ['Review events', signal.reviewHistory?.length ?? 0],
+          ['Relationship status', signal.relationshipReport?.status ?? signal.utilityReport?.relationshipReport?.status],
+          ['Canonical signal', signal.relationshipReport?.canonicalSignalId ?? signal.utilityReport?.relationshipReport?.canonicalSignalId]
+        ])
+      })),
+      ...attempts.map((attempt, index) => ({
+        id: `scoring-attempt-${index}`,
+        label: String(attempt.attemptLabel ?? 'attempt'),
+        title: String(attempt.model ?? 'provider'),
+        body: String(attempt.error ?? ''),
+        status: String(attempt.status ?? ''),
+        meta: compactFields([
+          ['AiRun', attempt.aiRunId],
+          ['Размер сообщений', attempt.messageCharCount],
+          ['Repair context', attempt.repairContextCharCount],
+          ['Usage', attempt.providerUsage]
+        ])
+      }))
+    ],
+    jsonPayload: { report, sourceSignals: bundle.sourceSignals }
+  };
+}
+
+function signalUtilityTraceSummary(signal: RadarRunTraceBundle['sourceSignals'][number]): string {
+  const utility = signal.utilityReport;
+  if (!utility) return '';
+  if (utility.version < 2) return utility.dimensions.map((item) => `${item.dimension}: ${item.summary}`).join('\n');
+  return [
+    ...(utility.radarCriteria ?? []).map((item) => `Радар · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.projectCriteria ?? []).map((item) => `Проект · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.qualityChecks ?? [])
+      .filter((item) => item.applicable)
+      .map((item) => `Система · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.relationshipReport?.relations ?? [])
+      .filter((item) => item.kind !== 'distinct')
+      .map((item) => `Связь · ${item.kind}: ${item.summary}`)
+  ].join('\n');
 }
 
 function benchmarkDetail(report: NonNullable<RadarRunTraceBundle['benchmarkReport']>): RadarTraceDetail {
@@ -602,6 +671,7 @@ function budgetValue(value: RadarTraceBudget): string {
 }
 
 function timelineStatus(detail: RadarTraceDetail): string {
+  if (detail.lifecycleStatus) return detail.lifecycleStatus;
   if (detail.id === 'warnings-errors' && detail.items.some((item) => item.label === 'error')) return 'failed';
   if (detail.id === 'warnings-errors' && detail.items.length > 0) return 'warn';
   if (detail.items.some((item) => item.status === 'failed')) return 'failed';

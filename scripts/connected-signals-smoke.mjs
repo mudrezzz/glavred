@@ -59,7 +59,7 @@ async function openProject(page) {
   await page.getByRole('button', { name: /^Сигналы/i }).first().waitFor();
   const switcher = page.locator('[data-testid="portfolio-switcher"] .sidebar-portfolio-trigger');
   await switcher.click();
-  await page.getByText('backend session', { exact: true }).waitFor();
+  await page.getByText('Сессия активна', { exact: true }).waitFor();
   await switcher.click();
 }
 

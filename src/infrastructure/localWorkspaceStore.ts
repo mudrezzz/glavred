@@ -2,7 +2,6 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   completeTopicFabulaMatrix,
   createDefaultRadarEditorialFilters,
-  evaluateSignalAgainstRadarFilters,
   getValidatorRunScore,
   getValidatorRunStatus,
   normalizeContentPlanSettings,
@@ -138,14 +137,18 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     updatedAt: saved.updatedAt ?? demo.updatedAt
   });
   const radars = baseRadars.map((radar) => attachRadarSourceHandles(radar, sourceRegistry));
-  const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
-  const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) => {
-    const normalizedSignal = normalizeSourceSignal(signal, sourceSignal);
-    const radar = radars.find((candidate) => candidate.id === normalizedSignal.radarId);
-    return radar && !isUnscoredBackendSignal(normalizedSignal)
-      ? evaluateSignalAgainstRadarFilters(normalizedSignal, radar, { ...demo, ...saved, radars } as WorkspaceState)
-      : normalizedSignal;
-  });
+  const demoSignalsById = new Map(demo.sourceSignals.map((signal) => [signal.id, signal]));
+  const selectedSignalSource = saved.sourceSignal ?? demo.sourceSignal;
+  const sourceSignal = normalizeSourceSignal(
+    selectedSignalSource,
+    demoSignalsById.get(selectedSignalSource.id) ?? selectedSignalSource
+  );
+  const sourceSignals = removeCrossRunSignalContamination(
+    (saved.sourceSignals ?? demo.sourceSignals).map((signal) =>
+      normalizeSourceSignal(signal, demoSignalsById.get(signal.id) ?? signal)
+    ),
+    saved.radarRuns ?? demo.radarRuns
+  );
   const activeSection = normalizeWorkspaceSection(saved.activeSection);
   const postCandidates = (saved.postCandidates ?? []).map((candidate) => normalizePostCandidate(candidate));
   const postCandidate = saved.postCandidate ? normalizePostCandidate(saved.postCandidate) : null;
@@ -272,7 +275,16 @@ function normalizePostVisual(visual: NonNullable<WorkspaceState['postVisual']>):
 }
 
 function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {
-  const unscoredBackendSignal = isUnscoredBackendSignal(signal);
+  const declaredLegacy = signal.legacyIntegrityStatus === 'needsReExtraction';
+  const currentContract = !declaredLegacy && Boolean(signal.editorialLanguage && signal.utilityReport);
+  const legacyUtilityEvaluation = !currentContract && (signal.filterStatus || (signal.filterEvaluations ?? []).length > 0)
+    ? {
+        status: signal.filterStatus,
+        evaluations: signal.filterEvaluations ?? [],
+        source: 'legacy-client-keyword-evaluator' as const,
+        canonical: false as const
+      }
+    : signal.legacyUtilityEvaluation;
   return {
     ...fallback,
     ...signal,
@@ -285,25 +297,42 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
         summary: signal.rawNote ?? fallback.rawNote
       }
     ],
-    searchNote: unscoredBackendSignal ? signal.searchNote : signal.searchNote ?? fallback.searchNote ?? '',
+    searchNote: signal.searchNote ?? fallback.searchNote ?? '',
     radarId: signal.radarId ?? fallback.radarId,
     reviewStatus: signal.reviewStatus ?? fallback.reviewStatus ?? 'new',
     suggestedTopicId: signal.suggestedTopicId ?? fallback.suggestedTopicId,
     suggestedFabulaId: signal.suggestedFabulaId ?? fallback.suggestedFabulaId,
     suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
-    duplicateRisk: unscoredBackendSignal ? signal.duplicateRisk : signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
+    duplicateRisk: signal.duplicateRisk,
     authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? '',
-    filterEvaluations: unscoredBackendSignal ? signal.filterEvaluations : signal.filterEvaluations ?? fallback.filterEvaluations ?? [],
-    filterStatus: unscoredBackendSignal ? signal.filterStatus : signal.filterStatus ?? fallback.filterStatus ?? 'passed'
+    filterEvaluations: currentContract ? signal.filterEvaluations ?? [] : undefined,
+    filterStatus: currentContract ? signal.filterStatus : undefined,
+    utilityReport: currentContract ? signal.utilityReport : undefined,
+    relationshipReport: currentContract
+      ? signal.relationshipReport ?? signal.utilityReport?.relationshipReport ?? undefined
+      : undefined,
+    utilityRevision: currentContract ? signal.utilityRevision : undefined,
+    reviewRevision: signal.reviewRevision ?? 0,
+    reviewHistory: signal.reviewHistory ?? [],
+    legacyIntegrityStatus: currentContract ? signal.legacyIntegrityStatus ?? 'current' : 'needsReExtraction',
+    legacyUtilityEvaluation
   };
 }
 
-function isUnscoredBackendSignal(signal: SourceSignal): boolean {
-  return Boolean(
-    signal.radarRunId &&
-    (signal.editorialLanguage || signal.localizationStatus || (signal.evidenceRefs ?? []).length > 0) &&
-    signal.filterStatus === undefined
-  );
+function removeCrossRunSignalContamination(signals: SourceSignal[], runs: WorkspaceState['radarRuns']): SourceSignal[] {
+  const radarByRunId = new Map(runs.map((run) => [run.id, run.radarId]));
+  return signals.map((signal) => {
+    const runRadarId = signal.radarRunId ? radarByRunId.get(signal.radarRunId) : undefined;
+    if (!runRadarId || !signal.radarId || runRadarId === signal.radarId) return signal;
+    return {
+      ...signal,
+      radarRunId: undefined,
+      utilityReport: undefined,
+      relationshipReport: undefined,
+      utilityRevision: undefined,
+      legacyIntegrityStatus: 'needsReExtraction'
+    };
+  });
 }
 
 function normalizeRadar(radar: RadarDefinition): RadarDefinition {

@@ -4,13 +4,12 @@ import {
   isRadarSourceConfigurationValid,
   summarizeRadarRun,
   type FoundMaterial,
-  type ImportRiskLevel,
   type RadarDefinition,
   type RadarRun,
   type RadarEditorialFilterRule,
   type RadarSearchRule,
   type RadarSearchSource,
-  type SignalFilterStatus,
+  type SignalUtilityRecommendation,
   type SignalReviewStatus,
   type SourceHandle,
   type SourceSignal,
@@ -35,8 +34,7 @@ export function useSignalsController({
   const [editingSignal, setEditingSignal] = useState<SourceSignal | null>(null);
   const [radarFilter, setRadarFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | SignalReviewStatus>('all');
-  const [filterStatusFilter, setFilterStatusFilter] = useState<'all' | SignalFilterStatus>('all');
-  const [riskFilter, setRiskFilter] = useState<'all' | ImportRiskLevel>('all');
+  const [filterStatusFilter, setFilterStatusFilter] = useState<'all' | SignalUtilityRecommendation | 'unscored' | 'legacy'>('all');
   const [query, setQuery] = useState('');
 
   const signalCountsByRadar = useMemo(() => {
@@ -92,8 +90,10 @@ export function useSignalsController({
 
     if (radarFilter !== 'all' && signal.radarId !== radarFilter) return false;
     if (statusFilter !== 'all' && signal.reviewStatus !== statusFilter) return false;
-    if (filterStatusFilter !== 'all' && signal.filterStatus !== filterStatusFilter) return false;
-    if (riskFilter !== 'all' && signal.duplicateRisk !== riskFilter) return false;
+    const utilityState = signal.legacyIntegrityStatus === 'needsReExtraction'
+      ? 'legacy'
+      : signal.utilityReport?.recommendation ?? 'unscored';
+    if (filterStatusFilter !== 'all' && utilityState !== filterStatusFilter) return false;
     if (query.trim() && !haystack.includes(query.trim().toLowerCase())) return false;
     return true;
   });
@@ -103,7 +103,13 @@ export function useSignalsController({
     new: workspace.sourceSignals.filter((signal) => !signal.reviewStatus || signal.reviewStatus === 'new' || signal.reviewStatus === 'candidate').length,
     approved: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'approved').length,
     archived: workspace.sourceSignals.filter((signal) => signal.reviewStatus === 'archived').length,
-    highRisk: workspace.sourceSignals.filter((signal) => signal.duplicateRisk === 'high').length
+    relationshipGroups: new Set(
+      workspace.sourceSignals
+        .map((signal) => signal.relationshipReport ?? signal.utilityReport?.relationshipReport)
+        .filter((report) => report?.status === 'checked')
+        .map((report) => report?.canonicalSignalId)
+        .filter(Boolean)
+    ).size
   };
 
   function openNewRadar() {
@@ -179,8 +185,6 @@ export function useSignalsController({
     onCorrectSignal(editingSignal, {
       title: editingSignal.title,
       summary: editingSignal.summary,
-      rawNote: editingSignal.rawNote,
-      searchNote: editingSignal.searchNote,
       authorCorrection: editingSignal.authorCorrection
     });
     setEditingSignal(null);
@@ -190,7 +194,7 @@ export function useSignalsController({
     tab, setTab, expandedRadarId, setExpandedRadarId, expandedSignalId, setExpandedSignalId,
     editingRadar, isNewRadar, editingSignal, setEditingSignal,
     radarFilter, setRadarFilter, statusFilter, setStatusFilter, filterStatusFilter,
-    setFilterStatusFilter, riskFilter, setRiskFilter, query, setQuery,
+    setFilterStatusFilter, query, setQuery,
     signalCountsByRadar, filteredSignals, signalSummary, openNewRadar, startRadarEdit,
     latestRunsByRadar, sourceHandlesByRadar, foundMaterialsByRun, radarRunSummaries,
     saveRadarDraft, cancelRadarDraft, patchRadarDraft, patchRadarRule, patchRadarFilter,

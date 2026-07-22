@@ -112,6 +112,18 @@ describe('BackendPortfolioStore', () => {
     );
   });
 
+  it('ends the backend session with credentials included', async () => {
+    const fetcher = vi.fn().mockResolvedValue(jsonResponse({ status: 'ok' }));
+    vi.stubGlobal('fetch', fetcher);
+
+    await new BackendPortfolioStore().logout();
+
+    expect(fetcher).toHaveBeenCalledWith(
+      'http://localhost:8000/api/auth/logout',
+      expect.objectContaining({ method: 'POST', credentials: 'include' })
+    );
+  });
+
   it('uses the browser loopback hostname so the session cookie remains same-site', async () => {
     vi.stubGlobal('location', { hostname: '127.0.0.1' });
     const fetcher = vi

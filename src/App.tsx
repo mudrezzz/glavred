@@ -164,6 +164,9 @@ function CabinetApp() {
           onApproveSignal={controller.approveSourceSignal}
           onRejectSignal={controller.rejectSourceSignal}
           onArchiveSignal={controller.archiveSourceSignal}
+          onReopenSignal={controller.reopenSourceSignal}
+          onRestoreSignal={controller.restoreSourceSignal}
+          onRescoreSignal={controller.rescoreSourceSignal}
           onCorrectSignal={controller.correctSourceSignal}
           onApprovePostCandidate={controller.approveCandidate}
           onEditPostCandidate={controller.editCandidate}

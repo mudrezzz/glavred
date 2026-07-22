@@ -14,16 +14,42 @@ def portfolio_settings(request: Request) -> BackendSettings:
 
 
 def portfolio_repository(request: Request) -> SQLitePortfolioRepository:
+    cached = getattr(request.app.state, "portfolio_repository", None)
+    if cached is not None:
+        return cached
     settings = portfolio_settings(request)
-    return SQLitePortfolioRepository(settings.portfolio_db_path)
+    with request.app.state.portfolio_components_lock:
+        cached = getattr(request.app.state, "portfolio_repository", None)
+        if cached is None:
+            cached = SQLitePortfolioRepository(settings.portfolio_db_path)
+            request.app.state.portfolio_repository = cached
+    return cached
 
 
 def portfolio_auth_service(request: Request) -> PortfolioAuthService:
-    return PortfolioAuthService(portfolio_repository(request), portfolio_settings(request))
+    cached = getattr(request.app.state, "portfolio_auth_service", None)
+    if cached is not None:
+        return cached
+    repository = portfolio_repository(request)
+    with request.app.state.portfolio_components_lock:
+        cached = getattr(request.app.state, "portfolio_auth_service", None)
+        if cached is None:
+            cached = PortfolioAuthService(repository, portfolio_settings(request))
+            request.app.state.portfolio_auth_service = cached
+    return cached
 
 
 def portfolio_service(request: Request) -> PortfolioService:
-    return PortfolioService(portfolio_repository(request))
+    cached = getattr(request.app.state, "portfolio_service", None)
+    if cached is not None:
+        return cached
+    repository = portfolio_repository(request)
+    with request.app.state.portfolio_components_lock:
+        cached = getattr(request.app.state, "portfolio_service", None)
+        if cached is None:
+            cached = PortfolioService(repository)
+            request.app.state.portfolio_service = cached
+    return cached
 
 
 def current_user(

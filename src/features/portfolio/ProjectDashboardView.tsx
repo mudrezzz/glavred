@@ -4,6 +4,7 @@ import type { ProjectLifecycleInput } from '../../application/portfolioLifecycle
 import type { BlogProject, PortfolioState, UserAccount } from '../../domain/portfolio/types';
 import type { WorkspaceState } from '../../domain/workspace/types';
 import { Icon } from '../../shared/ui/Icon';
+import { AccountLogoutButton } from './AccountLogoutButton';
 
 interface ProjectDashboardViewProps {
   activeProjects: BlogProject[];
@@ -13,7 +14,7 @@ interface ProjectDashboardViewProps {
   portfolio: PortfolioState;
   onArchiveProject: (projectId: string) => Promise<void>;
   onCreateProject: (input: ProjectLifecycleInput) => Promise<void>;
-  onLogout: () => void;
+  onLogout: () => Promise<void>;
   onOpenProject: (projectId: string) => void;
   onRenameProject: (projectId: string, title: string, description: string) => Promise<void>;
 }
@@ -51,7 +52,6 @@ export function ProjectDashboardView({
         activeUser={activeUser}
         archivedProjectsCount={archivedProjects.length}
         backendStatus={backendStatus}
-        onLogout={onLogout}
       />
       <main className="main">
         <header className="topbar project-dashboard-topbar">
@@ -59,6 +59,10 @@ export function ProjectDashboardView({
             Проекты <small>Портфель блогов</small>
           </div>
           <span className="spacer" />
+          <div className="project-dashboard-session-actions">
+            <span>{activeUser.email}</span>
+            <AccountLogoutButton className="project-dashboard-logout" onLogout={onLogout} />
+          </div>
         </header>
 
         <div className="scroll">
@@ -146,14 +150,12 @@ function ProjectDashboardSidebar({
   activeProjectsCount,
   activeUser,
   archivedProjectsCount,
-  backendStatus,
-  onLogout
+  backendStatus
 }: {
   activeProjectsCount: number;
   activeUser: UserAccount;
   archivedProjectsCount: number;
   backendStatus: PortfolioBackendStatus;
-  onLogout: () => void;
 }) {
   return (
     <aside className="side project-dashboard-side" aria-label="Управление портфелем">
@@ -201,11 +203,6 @@ function ProjectDashboardSidebar({
             <span>{backendStatus === 'authenticated' ? 'Backend session' : 'Local fallback'}</span>
             <span>Архив · {archivedProjectsCount}</span>
           </div>
-          {backendStatus === 'authenticated' ? (
-            <button type="button" className="btn btn-sec project-dashboard-logout" onClick={onLogout}>
-              Выйти
-            </button>
-          ) : null}
         </div>
       </div>
     </aside>

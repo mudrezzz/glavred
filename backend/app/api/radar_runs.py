@@ -11,6 +11,8 @@ from backend.app.application.ai_run_service import AiRunService
 from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
 from backend.app.upstream.application.signal_extraction_service import SignalExtractionService
 from backend.app.infrastructure.openrouter_signal_extraction_adapter import OpenRouterSignalExtractionAdapter
+from backend.app.infrastructure.openrouter_signal_utility_adapter import OpenRouterSignalUtilityAdapter
+from backend.app.upstream.application.signal_utility_service import SignalUtilityScoringService
 
 router = APIRouter(prefix="/api/radar-runs")
 
@@ -36,6 +38,7 @@ class RadarRunExternalResponse(BaseModel):
     found_materials: list[dict[str, Any]] = Field(alias="foundMaterials")
     source_signals: list[dict[str, Any]] = Field(default_factory=list, alias="sourceSignals")
     signal_extraction_report: dict[str, Any] = Field(default_factory=dict, alias="signalExtractionReport")
+    signal_scoring_report: dict[str, Any] = Field(default_factory=dict, alias="signalScoringReport")
 
     model_config = {"populate_by_name": True}
 
@@ -52,6 +55,7 @@ class SignalExtractionRetryResponse(BaseModel):
     run: dict[str, Any]
     source_signals: list[dict[str, Any]] = Field(alias="sourceSignals")
     signal_extraction_report: dict[str, Any] = Field(alias="signalExtractionReport")
+    signal_scoring_report: dict[str, Any] = Field(alias="signalScoringReport")
 
     model_config = {"populate_by_name": True}
 
@@ -66,12 +70,19 @@ def create_upstream_radar_external_run_service(request: Request) -> UpstreamRada
         provider=signal_provider,
         ai_run_service=AiRunService(repository=SqliteAiRunRepository(settings.ai_run_audit_db_path)),
     )
+    utility_provider = getattr(request.app.state, "signal_utility_provider", None) or OpenRouterSignalUtilityAdapter(settings=settings)
+    utility_service = SignalUtilityScoringService(
+        settings=settings,
+        provider=utility_provider,
+        ai_run_service=AiRunService(repository=SqliteAiRunRepository(settings.ai_run_audit_db_path)),
+    )
     return UpstreamRadarExternalRunService(
         settings=settings,
         web_search_adapter=web_search_adapter,
         url_reader=url_reader,
         openrouter_validator=OpenRouterConfigValidator(),
         signal_extraction_service=signal_service,
+        signal_utility_service=utility_service,
     )
 
 
@@ -94,6 +105,7 @@ def run_external_radar(
         foundMaterials=result["foundMaterials"],
         sourceSignals=result["sourceSignals"],
         signalExtractionReport=result["signalExtractionReport"],
+        signalScoringReport=result.get("signalScoringReport", {}),
     )
 
 
@@ -116,4 +128,5 @@ def retry_signal_extraction(
         run=result["run"],
         sourceSignals=result["sourceSignals"],
         signalExtractionReport=result["signalExtractionReport"],
+        signalScoringReport=result.get("signalScoringReport", {}),
     )

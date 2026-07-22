@@ -50,6 +50,7 @@ export type RadarRunOperationKind =
   | 'importDocument'
   | 'metadataOnly'
   | 'signalExtraction'
+  | 'signalScoring'
   | 'skip';
 
 export interface RadarRunBudget {
@@ -344,7 +345,24 @@ export interface RadarRun {
   benchmarkReport?: RadarBenchmarkReport;
   searchTriage?: RadarSearchTriageReport;
   signalExtraction?: RadarSignalExtractionReport;
+  signalScoring?: RadarSignalScoringReport;
   languageContext?: RadarLanguageContextTrace;
+}
+
+export interface RadarSignalScoringReport {
+  version: number;
+  runId: string;
+  status: 'succeeded' | 'inconclusive' | 'notRun';
+  revision: number;
+  signalIds: string[];
+  evaluations: Array<Record<string, unknown>>;
+  providerAttempts: Array<Record<string, unknown>>;
+  dossier?: Record<string, unknown>;
+  dossiers?: Array<Record<string, unknown>>;
+  batchCount?: number;
+  unresolvedSettingRefCount?: number;
+  unresolvedEvidenceRefCount?: number;
+  decisionCoverageComplete?: boolean;
 }
 
 export type RadarMaterialExtractionDecision =

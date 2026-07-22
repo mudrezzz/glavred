@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { BlogProject, PortfolioState, UserAccount } from '../../domain/portfolio/types';
 import type { PortfolioBackendStatus } from '../../app/useBackendPortfolioBridge';
 import { Icon } from '../../shared/ui/Icon';
+import { AccountLogoutButton } from './AccountLogoutButton';
 
 export function SidebarPortfolioSwitcher({
   activeProject,
@@ -19,7 +20,7 @@ export function SidebarPortfolioSwitcher({
   accessibleProjects: BlogProject[];
   backendStatus?: PortfolioBackendStatus;
   portfolio: PortfolioState;
-  onLogout?: () => void;
+  onLogout?: () => Promise<void>;
   onOpenDashboard?: () => void;
   onProjectChange: (projectId: string) => void;
   onUserChange: (userId: string) => void;
@@ -68,16 +69,20 @@ export function SidebarPortfolioSwitcher({
             <span>{activeProject.benchmarkRole === 'demo' ? 'demo' : activeProject.status}</span>
           </div>
           <div className="sidebar-portfolio-session">
-            <span>{backendStatus === 'authenticated' ? 'backend session' : 'local fallback'}</span>
+            <span>{sessionStatusLabel(backendStatus)}</span>
             {onOpenDashboard ? (
               <button type="button" onClick={onOpenDashboard}>
                 Все проекты
               </button>
             ) : null}
             {onLogout ? (
-              <button type="button" onClick={onLogout}>
-                Выйти
-              </button>
+              <AccountLogoutButton
+                className="sidebar-portfolio-logout"
+                onLogout={async () => {
+                  await onLogout();
+                  setOpen(false);
+                }}
+              />
             ) : null}
           </div>
         </div>
@@ -100,6 +105,13 @@ export function SidebarPortfolioSwitcher({
       </button>
     </div>
   );
+}
+
+function sessionStatusLabel(status?: PortfolioBackendStatus): string {
+  if (status === 'authenticated') return 'Сессия активна';
+  if (status === 'checking') return 'Проверяем сессию';
+  if (status === 'integrityError') return 'Данные заблокированы';
+  return 'Локальный режим';
 }
 
 function projectInitials(title: string): string {

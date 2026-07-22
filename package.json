@@ -17,6 +17,7 @@
     "test:design": "node scripts/design-system-smoke.mjs",
     "test:visual": "node scripts/visual-smoke.mjs && node scripts/connected-signals-smoke.mjs",
     "test:signals:connected": "node scripts/connected-signals-smoke.mjs",
+    "test:auth-session": "node scripts/auth-session-smoke.mjs",
     "test:watch": "vitest",
     "smoke": "npm run build"
   },

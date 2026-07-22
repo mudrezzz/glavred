@@ -227,4 +227,23 @@ CURRENT_LLM_OPERATION_INVENTORY: tuple[LlmOperationInventoryEntry, ...] = (
         payload_budget_status="enforced",
         budget_policy_id="upstream-signal-extraction-v1",
     ),
+    LlmOperationInventoryEntry(
+        operation_id="signalScoring",
+        owner="backend.app.upstream.application.signal_utility_service",
+        current_module="backend/app/upstream/application/signal_utility_service.py",
+        operation_kind="upstreamSignalScoring",
+        status="migrated",
+        reason_not_migrated="",
+        removal_slice="",
+        expected_incident_coverage=(
+            "payloadTooLarge",
+            "malformedJson",
+            "schemaFailure",
+            "networkError",
+            "notConfigured",
+            "backupAccepted",
+        ),
+        payload_budget_status="enforced",
+        budget_policy_id="upstream-signal-scoring-v1",
+    ),
 )

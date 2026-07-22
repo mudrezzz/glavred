@@ -23,8 +23,11 @@ from backend.app.upstream.application.radar_benchmark_reporter import RadarRunBe
 from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_planner import build_search_plan
 from backend.app.upstream.application.search_triage_service import SearchResultTriageService
+from backend.app.upstream.application.signal_lifecycle_coordinator import RadarSignalLifecycleCoordinator
 from backend.app.upstream.application.signal_extraction_run_coordinator import SignalExtractionRunCoordinator
 from backend.app.upstream.application.signal_extraction_service import SignalExtractionService
+from backend.app.upstream.application.signal_utility_run_coordinator import SignalUtilityRunCoordinator
+from backend.app.upstream.application.signal_utility_service import SignalUtilityScoringService
 
 
 class UpstreamRadarExternalRunService:
@@ -36,6 +39,7 @@ class UpstreamRadarExternalRunService:
         url_reader: PublicUrlReader,
         openrouter_validator: OpenRouterConfigValidator,
         signal_extraction_service: SignalExtractionService | None = None,
+        signal_utility_service: SignalUtilityScoringService | None = None,
     ) -> None:
         self._settings = settings
         self._result_policy = ExternalRunResultPolicy()
@@ -52,8 +56,12 @@ class UpstreamRadarExternalRunService:
         )
         self._benchmark_reporter = RadarRunBenchmarkReporter()
         self._triage_service = SearchResultTriageService()
-        self._signal_extraction = SignalExtractionRunCoordinator(signal_extraction_service)
         self._language_contexts = RadarLanguageContextFactory()
+        self._signal_lifecycle = RadarSignalLifecycleCoordinator(
+            extraction=SignalExtractionRunCoordinator(signal_extraction_service),
+            utility=SignalUtilityRunCoordinator(signal_utility_service),
+            language_contexts=self._language_contexts,
+        )
 
     def run(
         self,
@@ -143,23 +151,20 @@ class UpstreamRadarExternalRunService:
             run=run,
             found_materials=batch.found_materials,
         )
-        extraction = self._signal_extraction.extract(
+        signals = self._signal_lifecycle.process_materials(
             workspace=workspace,
             radar=radar,
             run=run,
             materials=batch.found_materials,
             language_context=language_context,
+            project_context=project_context,
         )
-        run["signalExtraction"] = extraction["signalExtractionReport"]
-        run["operations"].append(extraction["operation"])
-        run["budget"]["usedOperations"] = len(run["operations"])
         run["completedAt"] = self._payloads.now_iso()
         return {
             "radar": {**radar, "lastRunAt": run["completedAt"]},
             "run": run,
             "foundMaterials": batch.found_materials,
-            "sourceSignals": extraction["sourceSignals"],
-            "signalExtractionReport": extraction["signalExtractionReport"],
+            **signals,
         }
 
     def retry_signal_extraction(
@@ -170,18 +175,24 @@ class UpstreamRadarExternalRunService:
         force_retry: bool,
         project_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        run = _find_by_id(workspace.get("radarRuns"), run_id)
-        radar = _find_by_id(workspace.get("radars"), str((run or {}).get("radarId") or ""))
-        language_context = self._language_contexts.build(
-            project_context=project_context,
-            workspace=workspace,
-            radar=radar or {},
-        )
-        return self._signal_extraction.retry(
+        return self._signal_lifecycle.retry_extraction(
             workspace=workspace,
             run_id=run_id,
             force_retry=force_retry,
-            language_context=language_context,
+            project_context=project_context,
+        )
+
+    def retry_signal_scoring(
+        self,
+        *,
+        workspace: dict[str, Any],
+        run_id: str,
+        project_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self._signal_lifecycle.retry_scoring(
+            workspace=workspace,
+            run_id=run_id,
+            project_context=project_context,
         )
 
 def _resolve_handles(workspace: dict[str, Any], radar: dict[str, Any]) -> list[dict[str, Any]]:

@@ -1731,6 +1731,12 @@ const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH =
   "backend/app/upstream/application/signal_extraction_attempt_request.py";
 const UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH =
   "backend/tests/test_upstream_signal_extraction.py";
+const UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH =
+  "backend/app/upstream/application/signal_utility_dossier.py";
+const UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH =
+  "backend/app/upstream/application/signal_utility_attempt_request.py";
+const UPSTREAM_SIGNAL_UTILITY_TEST_PATH =
+  "backend/tests/test_signal_utility_scoring.py";
 const SHARED_LLM_OPERATION_OWNER_PATHS = [
   SHARED_LLM_OPERATION_CONTRACT_PATH,
   "backend/app/shared/llm_operations/statuses.py",
@@ -2152,12 +2158,14 @@ const LLM_OPERATION_INVENTORY_IDS = [
   "humanCommentRevisionQualityCheck",
   "openWebQuery",
   "signalExtraction",
+  "signalScoring",
 ];
 
 const RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES = new Set([
   "backend/app/shared/llm_operations/contracts.py",
   "backend/app/shared/llm_operations/inventory.py",
   "backend/app/infrastructure/openrouter_signal_extraction_adapter.py",
+  "backend/app/infrastructure/openrouter_signal_utility_adapter.py",
 ]);
 
 const LEGACY_FLAT_DRAFT_DOMAIN_FILES = new Set([
@@ -3517,6 +3525,9 @@ const upstreamSignalExtractionDossierSource = [
 const upstreamSignalExtractionAttemptSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH);
 const upstreamSignalExtractionAttemptRequestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH);
 const upstreamSignalExtractionTestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH);
+const upstreamSignalUtilityDossierSource = readText(UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH);
+const upstreamSignalUtilityAttemptRequestSource = readText(UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH);
+const upstreamSignalUtilityTestSource = readText(UPSTREAM_SIGNAL_UTILITY_TEST_PATH);
 for (const fragment of [
   "class UpstreamProviderBudgetProfileRegistry",
   "max_provider_input_chars",
@@ -3599,6 +3610,23 @@ assert(
   upstreamSignalExtractionTestSource.includes("test_standard_profile_bounds_materials_fragments_input_and_output") &&
     upstreamSignalExtractionTestSource.includes("test_recorded_golden_signal_extraction_benchmark_passes_all_cases"),
   `${UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH} must prove bounded and golden signal extraction behavior.`
+);
+for (const fragment of ["class SignalUtilityDossierFactory", "NEVER_SEND", "suppressed_fields"]) {
+  assert(
+    upstreamSignalUtilityDossierSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH} is missing signal utility dossier fragment: ${fragment}`
+  );
+}
+for (const fragment of ["UpstreamProviderInputBudgetGate", "ProviderMessageBudgetGuard", "signalScoring", "max_output_tokens"]) {
+  assert(
+    upstreamSignalUtilityAttemptRequestSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH} is missing governed signal utility request fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamSignalUtilityTestSource.includes("test_arcelor_vendor_case_is_review_with_caution_not_false_topic_rejection") &&
+    upstreamSignalUtilityTestSource.includes("test_invalid_primary_uses_structured_repair_and_keeps_direct_budget_proof"),
+  `${UPSTREAM_SIGNAL_UTILITY_TEST_PATH} must prove the industrial utility verdict and direct budget recovery.`
 );
 
 for (const backendFile of backendPythonFiles) {

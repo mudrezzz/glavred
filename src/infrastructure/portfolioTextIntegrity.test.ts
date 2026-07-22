@@ -20,4 +20,12 @@ describe('inspectPortfolioText', () => {
       valueHash: expect.any(String)
     }));
   });
+
+  it('detects the observed short mixed-script corruption signature', () => {
+    const value = JSON.stringify({ source: 'Public industrial AI cases, вЮша/EAM materials' });
+
+    expect(inspectPortfolioText(value)).toEqual(expect.objectContaining({
+      code: 'portfolio-text-integrity-failed'
+    }));
+  });
 });

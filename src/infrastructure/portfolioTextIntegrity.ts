@@ -5,6 +5,7 @@ export interface PortfolioTextIntegrityDiagnostic {
 }
 
 const LATIN_MOJIBAKE_MARKERS = ['Ã', 'Â', 'Ð', 'Ñ', 'â€', 'ï¿½'];
+const KNOWN_MOJIBAKE_MARKERS = ['вЮша'];
 const CYRILLIC_MOJIBAKE_MARKERS = [
   'Рђ', 'Р‘', 'Р’', 'Р“', 'Р”', 'Р•', 'Р–', 'Р—', 'Р', 'Р™', 'Рљ', 'Р›', 'Рњ', 'Рќ', 'Рћ',
   'Рџ', 'Р ', 'РЎ', 'Рў', 'РЈ', 'Р¤', 'РҐ', 'Р¦', 'Р§', 'РЁ', 'Р©', 'Р­', 'Р®', 'РЇ', 'СЃ',
@@ -14,11 +15,12 @@ const CYRILLIC_MOJIBAKE_MARKERS = [
 
 export function inspectPortfolioText(raw: string): PortfolioTextIntegrityDiagnostic | null {
   const latinMojibake = LATIN_MOJIBAKE_MARKERS.some((marker) => raw.includes(marker));
+  const knownMojibake = KNOWN_MOJIBAKE_MARKERS.some((marker) => raw.includes(marker));
   const cyrillicHits = CYRILLIC_MOJIBAKE_MARKERS.reduce(
     (count, marker) => count + countOccurrences(raw, marker),
     0
   );
-  if (!latinMojibake && cyrillicHits < 3 && !raw.includes('\ufffd') && !/\?{4,}/u.test(raw)) return null;
+  if (!latinMojibake && !knownMojibake && cyrillicHits < 3 && !raw.includes('\ufffd') && !/\?{4,}/u.test(raw)) return null;
   return {
     code: 'portfolio-text-integrity-failed',
     charCount: raw.length,

@@ -128,7 +128,8 @@ describe('RadarRunTracePage', () => {
 
   it('opens as a standalone app route and auto-loads from URL', async () => {
     window.history.pushState({}, '', '/radar-runs?runId=radar-run-industrial-1');
-    setRadarRunTracePortfolioLoadersForTests(() => createRadarTracePortfolio(), null);
+    const portfolio = createRadarTracePortfolio();
+    setRadarRunTracePortfolioLoadersForTests(() => portfolio, () => portfolio);
 
     render(<App />);
 

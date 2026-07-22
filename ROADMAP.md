@@ -8384,9 +8384,9 @@ Status:
   - Translation can distort evidence. Original quotations remain canonical and localization is limited to editorial interpretation fields with explicit status.
 - Completed: 2026-07-17
 
-### Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle
+### Slice 2.17.4.7.1: Signal Editorial Scoring, Explainability and Relationship Integrity
 
-- Status: Ready
+- Status: Done
 - Goal: Определять полезность извлеченного SourceSignal для конкретного проекта через объяснимый editorial-opportunity profile, исполняемые типизированные фильтры и полный жизненный цикл решения редактора.
 - User value: Редактор видит не абстрактный процент, а почему сигнал подходит или не подходит автору, аудитории, позиции, целям и темам, какие доказательства и риски влияют на вывод и что именно требует человеческого решения.
 - AS IS sources:
@@ -8476,10 +8476,30 @@ Status:
   - `2.17.4.7.1 -> Done`; then `2.17.4.7.1.1 -> Ready`.
 - Risks:
   - Scores can create false objectivity. Dimension evidence, blockers, alternatives, uncertainty and human authority remain first-class.
+- Reopened integrity repair (2026-07-21):
+  - Replace the v1 flat dimensions report with `SignalUtilityReport v2`: `radarCriteria`, `projectCriteria`, `qualityChecks`, explicit exclusions, and a separate `SignalRelationshipReport`.
+  - Add type-aware signal semantics, result support (`observed`, `reported`, `capabilityOnly`, `expected`, `missing`, `notApplicable`) and source posture (`independent`, `corroborated`, `firstParty`, `vendor`, `unknown`).
+  - Resolve evidence and setting handles into human-readable titles, statements, exact quotes, source URLs and trace links; raw ids remain trace-only.
+  - Replace default duplicate risk with evidence-backed relationships: `exactDuplicate`, `sameClaim`, `relatedSameSource`, `corroborates`, `contradicts`, `distinct`, `inconclusive`.
+  - Preserve one canonical card for exact/same-claim aliases without deleting original signals or provenance.
+- Reopened Definition of Done:
+  - Signal fields and quality checks are selected by signal type; a non-empty mechanism/outcome is not proof.
+  - Every enabled radar filter has exactly one mode-specific verdict, explanation and resolvable evidence; each retained project setting is evaluated or explicitly excluded.
+  - Only a proven conflict with an active blocking criterion can produce `notRecommended`; human review status never changes automatically.
+  - User UI never presents material, fragment or setting ids as evidence and never defaults duplicate risk to low.
+  - Near-identical digital-advisor signals become `sameClaim`; the automated-risk signal from the same article remains `relatedSameSource`; corroboration and contradiction stay separate.
+  - Digital-advisor replay shows industrial topic match, concrete mechanism evidence, capability-only or unproven result, non-independent source posture and recommendation no better than caution.
+  - Existing scoring caps remain unchanged; relationship context shares the same direct current-call and final-message budget gate.
+  - Authenticated live proof after the final runtime change verifies scoring, evidence links, relationships, responsive layout and zero unresolved handles.
+- Reopened test proof:
+  - Type semantics for all signal types, four criterion modes, result-support and source-posture tests.
+  - Relationship fixtures for duplicates, same claim, related source, corroboration, contradiction, distinct and provider failure.
+  - Backend/API compatibility, frontend canonical grouping, no-raw-id assertions, five-width authenticated visual acceptance, full regression and live diagnostics.
+- Completed: 2026-07-22
 
 ### Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark
 
-- Status: Backlog
+- Status: Ready
 - Goal: Связать типизированные требования радара с фактически исполняемыми поисковыми запросами и доказать, что контрольный радар дает полезный редакционный выход, а не повторяющийся нулевой yield.
 - User value: Редактор понимает, какие требования фильтров радар пытался покрыть поиском, где именно потерялась полезность — в запросе, чтении, extraction или scoring — и почему новый запуск стоит потраченного бюджета.
 - AS IS sources:
@@ -9260,6 +9280,7 @@ Status:
 - Slice 2.17.4.7: FoundMaterial to SourceSignal Extraction. Completed 2026-07-14.
 - Slice 2.17.4.7.0.1: Workspace UTF-8 Integrity and Signals UI Recovery. Completed 2026-07-16.
 - Slice 2.17.4.7.0.2: Radar Language Policy and Signal Evidence Presentation. Completed 2026-07-17.
+- Slice 2.17.4.7.1: Signal Editorial Scoring, Explainability and Relationship Integrity. Completed 2026-07-22.
 
 
 ## Blocked Items
@@ -9288,4 +9309,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.7.1: Signal Editorial Scoring and Review Lifecycle`.
+Implement `Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark`.

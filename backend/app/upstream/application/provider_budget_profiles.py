@@ -66,6 +66,27 @@ class UpstreamProviderBudgetProfileRegistry:
                 max_fragment_chars=fragment_chars,
                 max_output_tokens=output_tokens,
             )
+        if operation_id == "signalScoring":
+            limits = {
+                "smoke": (1, 6000, 9000, 2250, 1200),
+                "standard": (6, 16000, 22000, 5500, 3200),
+                "full": (12, 28000, 36000, 9000, 5000),
+            }[mode]
+            signals, input_chars, message_chars, tokens, output_tokens = limits
+            return UpstreamProviderBudgetProfile(
+                id=f"upstream-signal-scoring-v1-{mode}",
+                operation_id=operation_id,
+                execution_mode=mode,
+                max_query_chars=0,
+                max_provider_input_chars=input_chars,
+                max_message_chars=message_chars,
+                max_approx_tokens=tokens,
+                max_run_input_chars=input_chars,
+                max_run_approx_tokens=tokens,
+                max_results_per_query=0,
+                max_materials=signals,
+                max_output_tokens=output_tokens,
+            )
         if operation_id != "openWebQuery":
             raise KeyError(f"Unknown upstream provider budget operation: {operation_id}")
         run_chars, run_tokens, profile_results = self._RUN_LIMITS[mode]

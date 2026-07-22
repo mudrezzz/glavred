@@ -3,16 +3,12 @@ import type { RadarDefinition } from '../../domain/editorialWorkspace';
 import {
   formatDate,
   radarAcceptancePolicyLabel,
-  radarFilterDimensionLabel,
-  radarFilterModeLabel,
-  radarRuleOperatorLabel,
-  radarSearchSourceTypeLabel,
-  radarSourceDiscoveryModeLabel,
   radarSourceTypeLabel,
   radarStatusLabel,
   radarTriggerModeLabel
 } from './helpers';
 import { RadarEditor } from './RadarEditor';
+import { RadarFiltersSection, RadarRulesSection, RadarSourcesSection } from './RadarConfigSections';
 import { RadarRunTraceSection } from './RadarRunTraceSection';
 import type { SignalsController } from './useSignalsController';
 
@@ -52,21 +48,23 @@ export function RadarCard({
           controller.setExpandedRadarId(expanded ? '' : radar.id);
         }}
       >
-        <span className="sig radar-type">{radarSourceTypeLabel(radar.sourceType)}</span>
-        <span className="radar-row-body">
-          <strong className="radar-title">{radar.title}</strong>
-          <span className="radar-row-sub">{radar.scope}</span>
-        </span>
-        <span className="radar-row-meta">
+        <span className="radar-row-heading">
+          <span className="sig radar-type">{radarSourceTypeLabel(radar.sourceType)}</span>
+          <span className="radar-row-body">
+            <strong className="radar-title">{radar.title}</strong>
+            <span className="radar-row-sub">{radar.scope}</span>
+          </span>
           <span className={`pill radar-status ${radar.status === 'active' ? 'ok' : 'pin'}`}>
             <i />
             <span>{radarStatusLabel(radar.status)}</span>
           </span>
-          <span className="count-dot radar-count">{signalCount}</span>
-          <span className="count-dot radar-count radar-run-count" title={`Материалы: ${runSummary?.found ?? 0}; пропущено: ${runSummary?.skipped ?? 0}`}>
-            мат. {runSummary?.found ?? 0}/{runSummary?.skipped ?? 0}
+        </span>
+        <span className="radar-row-meta">
+          <span><b>{signalCount}</b> сигналов</span>
+          <span title={`Найдено: ${runSummary?.found ?? 0}; пропущено: ${runSummary?.skipped ?? 0}`}>
+            <b>{runSummary?.found ?? 0}</b> материалов · {runSummary?.skipped ?? 0} пропущено
           </span>
-          <span className="radar-date">last run {radar.lastRunAt ? formatDate(radar.lastRunAt) : 'не запускался'}</span>
+          <span className="radar-date">Последний запуск: {radar.lastRunAt ? formatDate(radar.lastRunAt) : 'не запускался'}</span>
         </span>
       </button>
 
@@ -156,71 +154,5 @@ export function RadarCard({
         </div>
       )}
     </article>
-  );
-}
-
-function RadarRulesSection({ radar }: { radar: RadarDefinition }) {
-  return (
-    <div className="radar-config-section">
-      <h4>Правила срабатывания</h4>
-      <div className="radar-object-list">
-        {radar.rules.map((rule) => (
-          <div className="radar-object" key={rule.id}>
-            <span className="sig">{rule.negate ? 'NOT' : radarRuleOperatorLabel(rule.operator)}</span>
-            <p>{rule.statement}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RadarSourcesSection({ radar }: { radar: RadarDefinition }) {
-  return (
-    <div className="radar-config-section">
-      <h4>Источники поиска</h4>
-      <p className="muted">Поверхность поиска: {radarSourceDiscoveryModeLabel(radar.sourceDiscoveryMode)}</p>
-      {radar.sources.length > 0 ? (
-        <div className="radar-object-list">
-          {radar.sources.map((source) => (
-            <div className="radar-object" key={source.id}>
-              <span className="sig">{radarSearchSourceTypeLabel(source.type)}</span>
-              <p>
-                <strong>{source.title}</strong>
-                <br />
-                {source.value || source.notes}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="muted">Источники не заданы: будущий AI-адаптер сможет сам выбрать поверхность поиска по правилам.</p>
-      )}
-    </div>
-  );
-}
-
-function RadarFiltersSection({ radar }: { radar: RadarDefinition }) {
-  const filters = (radar.filters ?? []).filter((filter) => filter.enabled);
-  return (
-    <div className="radar-config-section">
-      <h4>Фильтры отбора</h4>
-      {filters.length > 0 ? (
-        <div className="radar-object-list">
-          {filters.map((filter) => (
-            <div className="radar-object" key={filter.id}>
-              <span className="sig">{radarFilterDimensionLabel(filter.dimension)}</span>
-              <p>
-                <strong>{radarFilterModeLabel(filter.mode)}</strong>
-                <br />
-                {filter.instruction}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="muted">Фильтры не включены: радар покажет найденный материал без редакционного отсева.</p>
-      )}
-    </div>
   );
 }

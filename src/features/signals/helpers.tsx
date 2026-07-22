@@ -7,7 +7,9 @@ import type {
   RadarSourceDiscoveryMode,
   SignalFilterEvaluationStatus,
   SignalFilterStatus,
-  SignalReviewStatus
+  SignalReviewStatus,
+  SignalUtilityDimensionStatus,
+  SignalUtilityRecommendation
 } from '../../domain/editorialWorkspace';
 
 export type SignalsTab = 'radars' | 'signals' | 'candidates';
@@ -17,9 +19,9 @@ export function formatDate(value: string): string {
 }
 
 export function duplicateRiskLabel(risk: string): string {
-  if (risk === 'high') return 'high';
-  if (risk === 'medium') return 'medium';
-  return 'low';
+  if (risk === 'high') return 'высокий';
+  if (risk === 'medium') return 'средний';
+  return 'низкий';
 }
 
 export function SummaryItem({ label, value }: { label: string; value: number }) {
@@ -93,9 +95,57 @@ export function radarFilterDimensionLabel(dimension: RadarEditorialFilterRule['d
     positioning: 'Позиция',
     goals: 'Цели',
     forbiddenTopics: 'Запреты',
-    topics: 'Темы'
+    topics: 'Темы',
+    evidenceStrength: 'Сила доказательств',
+    factualSpecificity: 'Фактическая конкретность',
+    sourceCredibility: 'Надежность источника',
+    mechanism: 'Механизм',
+    observableOutcome: 'Наблюдаемый результат',
+    actionability: 'Практическая применимость',
+    novelty: 'Новизна',
+    productiveTension: 'Продуктивное противоречие',
+    freshness: 'Свежесть',
+    duplicationRisk: 'Риск повтора',
+    promotionalNoise: 'Рекламность и AI-шум'
   };
   return labels[dimension];
+}
+
+export function signalUtilityRecommendationLabel(value: SignalUtilityRecommendation): string {
+  if (value === 'recommended') return 'Рекомендуется';
+  if (value === 'reviewWithCaution') return 'Проверить с осторожностью';
+  if (value === 'notRecommended') return 'Не рекомендуется';
+  return 'Оценка не завершена';
+}
+
+export function signalUtilityDimensionStatusLabel(value: SignalUtilityDimensionStatus): string {
+  if (value === 'matched') return 'Подтверждено';
+  if (value === 'partial') return 'Частично';
+  if (value === 'conflict') return 'Конфликт';
+  return 'Не доказано';
+}
+
+export function signalUtilityDimensionLabel(value: string): string {
+  const labels: Record<string, string> = {
+    evidenceStrength: 'Сила доказательств',
+    factualSpecificity: 'Фактическая конкретность',
+    sourceCredibility: 'Надежность источника',
+    mechanism: 'Механизм',
+    observableOutcome: 'Наблюдаемый результат',
+    actionability: 'Практическая применимость',
+    topicAffinity: 'Соответствие темам',
+    authorFit: 'Соответствие автору',
+    audienceValue: 'Ценность для аудитории',
+    positioningContribution: 'Вклад в позиционирование',
+    projectGoalContribution: 'Вклад в цели проекта',
+    novelty: 'Новизна',
+    productiveTension: 'Продуктивное противоречие',
+    freshness: 'Свежесть',
+    duplicationRisk: 'Риск повтора',
+    promotionalNoise: 'Рекламность и AI-шум',
+    prohibitedContent: 'Запрещенный контент'
+  };
+  return labels[value] ?? value;
 }
 
 export function radarFilterModeLabel(mode: RadarEditorialFilterMode): string {

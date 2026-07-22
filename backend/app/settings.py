@@ -3,15 +3,12 @@ from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
 class BackendSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
-
     environment: str = Field(default="local", validation_alias="GLAVRED_ENV")
     api_host: str = Field(default="127.0.0.1", validation_alias="GLAVRED_API_HOST")
     api_port: int = Field(default=8000, validation_alias="GLAVRED_API_PORT")
@@ -28,7 +25,6 @@ class BackendSettings(BaseSettings):
     draft_research_budget_overrides: str = Field(default="", validation_alias="DRAFT_RESEARCH_BUDGET_OVERRIDES")
     draft_run_smoke_budget_overrides: str = Field(default="", validation_alias="DRAFT_RUN_SMOKE_BUDGET_OVERRIDES")
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
-
     openrouter_api_key: SecretStr | None = Field(default=None, validation_alias="OPENROUTER_API_KEY")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", validation_alias="OPENROUTER_BASE_URL")
     openrouter_default_model: str = Field(default="", validation_alias="OPENROUTER_DEFAULT_MODEL")
@@ -54,6 +50,7 @@ class BackendSettings(BaseSettings):
     openrouter_web_search_model: str = Field(default="", validation_alias="OPENROUTER_WEB_SEARCH_MODEL")
     openrouter_web_search_max_results: int = Field(default=5, validation_alias="OPENROUTER_WEB_SEARCH_MAX_RESULTS")
     upstream_signal_extraction_model: str = Field(default="", validation_alias="UPSTREAM_SIGNAL_EXTRACTION_MODEL")
+    upstream_signal_scoring_model: str = Field(default="", validation_alias="UPSTREAM_SIGNAL_SCORING_MODEL")
 
     @property
     def has_openrouter_api_key(self) -> bool:
@@ -78,6 +75,15 @@ class BackendSettings(BaseSettings):
     def upstream_signal_extraction_model_or_default(self) -> str:
         return (
             self.upstream_signal_extraction_model.strip()
+            or self.draft_review_model.strip()
+            or self.openrouter_default_model.strip()
+        )
+
+    @property
+    def upstream_signal_scoring_model_or_default(self) -> str:
+        return (
+            self.upstream_signal_scoring_model.strip()
+            or self.upstream_signal_extraction_model.strip()
             or self.draft_review_model.strip()
             or self.openrouter_default_model.strip()
         )

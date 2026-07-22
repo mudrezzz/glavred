@@ -1,10 +1,9 @@
 # Radar-to-Candidate Pipeline TO BE 2.17.4.6.2
 
-Status: Slices `2.17.4.6.2` and `2.17.4.7` define the implemented retrieval and
-evidence-backed signal-extraction boundary. Project-utility scoring and candidate
-assembly remain the approved target. Slice `2.17.4.7.0.2` adds the approved
-editorial-language, source-language eligibility, localization, and evidence
-presentation contract without changing project-utility scoring.
+Status: Slices `2.17.4.6.2`, `2.17.4.7`, and `2.17.4.7.0.2` define the implemented
+retrieval, extraction, language, and evidence boundary. Slice `2.17.4.7.1` adds the
+approved project-utility scoring and human review lifecycle. Candidate assembly and
+ranking remain the next target and are not part of scoring.
 
 AS IS sources:
 
@@ -52,9 +51,10 @@ flowchart TD
 ```
 
 Nodes through `FoundMaterial` are implemented by Slice `2.17.4.6.2`. Slice
-`2.17.4.7` implements `Signal extraction dossier -> SourceSignal`. Scoring,
-candidate assembly, and candidate ranking remain `NOT THIS SLICE` and must be
-implemented by their tracker-backed slices.
+`2.17.4.7` implements `Signal extraction dossier -> SourceSignal`. Slice
+`2.17.4.7.1` implements `SourceSignal -> Signal scoring dossier -> SignalScore`
+and the human review lifecycle. Candidate assembly and ranking remain
+`NOT THIS SLICE` and must be implemented by their tracker-backed slices.
 
 ## 3. AS IS to TO BE Mapping
 
@@ -75,7 +75,10 @@ implemented by their tracker-backed slices.
 | Editorial language context | NEW | `BlogProject.language` is passed as a bounded project context and remains distinct from source-search languages. | Request-contract, fallback, and trace tests in Slice `2.17.4.7.0.2`. |
 | Source-language policy | NEW | Each radar selects editorial-only, editorial-and-English, or unrestricted source eligibility without increasing query count. | Planner allocation, language inspection, triage, and live trace proof in Slice `2.17.4.7.0.2`. |
 | Signal localization | CHANGED vs AS IS | Editorial interpretation fields use the project language while source titles and exact evidence quotes remain original. A failed localization emits no mixed-language signal. | Primary/repair/backup language-validation tests and live evidence in Slice `2.17.4.7.0.2`. |
-| Signal scoring | NOT THIS SLICE | Future scoring receives a bounded signal dossier and direct budget proof. | Slice `2.17.4.7.1`. |
+| Project editorial opportunity profile | NEW | A bounded, versioned projection exposes only active project settings and history fingerprints needed for signal utility. | Profile caps, forbidden-field tests, handle resolution, and cross-project benchmark in Slice `2.17.4.7.1`. |
+| Signal scoring | CHANGED vs AS IS | Backend-owned batch scoring receives a bounded signal dossier, validates setting/evidence references, and applies a deterministic recommendation policy. | Provider recovery, budget, golden corpus, replay, and live proof in Slice `2.17.4.7.1`. |
+| Human signal review | NEW | Utility recommendation and human status remain separate; reversible review events preserve actor, time, reason, revisions, and immutable evidence. | Lifecycle, optimistic-concurrency, API, and authenticated UI tests in Slice `2.17.4.7.1`. |
+| Legacy signal integrity | NEW | Old client-evaluated signals are explicitly marked for re-extraction and never displayed as current backend verdicts. | Legacy normalization and UI recovery tests in Slice `2.17.4.7.1`. |
 | Candidate assembly and ranking | NOT THIS SLICE | Future assembly receives bounded approved-signal projections. | Slices `2.17.4.8` and `2.17.4.8.1`. |
 | Cross-run search memory | NOT THIS SLICE | Reuse of discovered results is owned by a separate durable memory policy. | Slice `2.17.4.6.6`. |
 
@@ -323,7 +326,148 @@ Accepted signals expose editorial language, detected source language, localizati
 status, and reason codes. Evidence IDs include signal, material, fragment, and quote
 identity so multiple exact quotes from one fragment remain stable and unique.
 
-## 8. Future Provider Context Rule
+## 8. Signal Utility Scoring and Review Contract
+
+Signal scoring answers whether an extracted, evidence-backed signal is useful for a
+specific editorial project. It does not change source evidence, approve the signal,
+select a topic or fabula, create a `PostCandidate`, or reserve a plan slot.
+
+The runtime chain is:
+
+`SourceSignal -> ProjectEditorialOpportunityProfile -> SignalUtilityDossier -> provider evaluation -> deterministic decision policy -> SignalUtilityReport -> human review lifecycle`.
+
+### 8.1 Bounded project profile and signal dossier
+
+`ProjectEditorialOpportunityProfileFactory` derives a traceable projection from the
+canonical workspace. Standard mode retains at most 24 active editorial rules, 16
+confirmed author-position assertions, 12 active topics, and 20 fingerprints from
+previous signals, candidates, and publications. Every retained setting has a stable
+ID that resolves to the workspace. Disabled settings are not silently promoted.
+
+`SignalUtilityDossierFactory` adds at most six signals per standard batch and four
+evidence references per signal. The provider sees only editorial language, a short
+project profile, active bounded settings, filter contracts, signal interpretation
+fields, and resolvable evidence handles. The full workspace, fabulas, content plan,
+complete publications, old traces, and provider envelopes are forbidden.
+
+Each utility dimension has one owner and one result status: `matched`, `partial`,
+`notProven`, or `conflict`. The supported dimensions cover evidence strength,
+factual specificity, source credibility, mechanism, observable outcome,
+actionability, topic/author/audience/positioning/goal fit, novelty, productive
+tension, freshness, duplication/banality, promotional noise, and prohibited
+content. Legacy dimensions are mapped to these owners only for compatibility.
+
+### 8.2 Deterministic recommendation policy
+
+The provider performs semantic comparison and returns dimension evidence. It cannot
+approve, reject, archive, or correct a signal. The backend validates signal IDs,
+setting IDs, material/fragment evidence handles, dimension ownership, and required
+reasons before computing one terminal recommendation:
+
+- `recommended`: evidence is sufficient and all blocking criteria are satisfied;
+- `reviewWithCaution`: no proven blocker exists, but evidence, source independence,
+  optional fit, or uncertainty needs editorial attention;
+- `notRecommended`: an active blocking criterion has a proven `conflict`;
+- `inconclusive`: provider recovery failed or references are insufficient for an
+  honest decision.
+
+Filter modes determine importance: `mustMatch` and `mustNotMatch` are blocking,
+`shouldMatch` is weighted, and `seekTension` is diagnostic. `notProven` is never a
+blocking rejection by itself. No aggregate percentage may hide blockers, missing
+proof, or uncertainty.
+
+### 8.3 Provider recovery and budget boundary
+
+Scoring uses one bounded provider batch per revision, followed when necessary by a
+same-model repair and backup attempt. Repair context contains only structured
+validation errors and is capped at 1200 characters. Exhausted recovery yields
+`inconclusive`; retrieval and extraction remain successful.
+
+| Mode | Signals | Provider input | Serialized messages | Approximate input tokens | Max output tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| smoke | 1 | 6000 | 9000 | 2250 | 1200 |
+| standard | 6 | 16000 | 22000 | 5500 | 3200 |
+| full | 12 | 28000 | 36000 | 9000 | 5000 |
+
+Every primary, repair, and backup attempt has direct current-call input proof and a
+final serialized-message check. An over-budget or blocked dossier never calls the
+provider. Trace stores the exact bounded provider input, profile/dossier metadata,
+retained/trimmed/suppressed counts, message size, actual provider usage when
+available, validation incidents, unresolved-reference counts, and policy result.
+
+The provider response uses compact aliases declared by the dossier: `signalKey`,
+`criterionKey`, and `evidenceKeys`. The backend resolves them to persisted signal,
+setting, material, and fragment handles before accepting the response. Aliases reduce
+output growth but never weaken identity validation or allow positional inference.
+
+### 8.4 Human review lifecycle
+
+Human status is independent of utility recommendation. The initial status is
+`candidate` (`На проверке`). Allowed transitions are candidate or corrected to
+approved/rejected/archived, approved or rejected back to candidate, and archived
+back to candidate. Correction changes only editorial title, summary, and author
+comment. Rejection, archive, and correction require a reason.
+
+Each immutable event records ID, authenticated actor, timestamp, action, from/to
+status, reason, changed fields, and expected review revision. Evidence, exact quotes,
+mechanism, outcome, limitations, and provenance cannot be edited. A correction marks
+the utility report stale and triggers a bounded rescore; failed rescore does not undo
+the saved correction.
+
+### 8.5 Legacy and presentation integrity
+
+Loading a legacy signal never triggers a hidden provider call. A signal without the
+language/scoring contract is marked `needsReExtraction`; any old client keyword
+evaluation is retained only as explicitly historical diagnostics. It cannot be
+rendered as the current recommendation or human decision.
+
+The Signals UI keeps source, evidence, extraction semantics, utility dimensions,
+and review history visible while editing. Only editorial title, summary, and author
+comment are editable. Source titles, quotations, and radar names wrap inside their
+owners and remain fully reachable at supported desktop and mobile widths. Radar
+rows present full title/status, description, and operational metadata as separate
+layout levels rather than squeezing them into one line.
+
+### 8.6 Explainable criteria and signal relationships
+
+`SignalUtilityReport` version 2 no longer presents one flat list of dimensions as if
+all checks had the same origin. It separates:
+
+- one criterion for every enabled radar filter;
+- applicable author, audience, positioning, project-goal, topic, and prohibition
+  criteria from the bounded project profile;
+- type-aware system checks for evidence grounding, result support, source posture,
+  freshness, and relationship integrity.
+
+Every criterion snapshots its human-readable title, statement, mode, verdict, effect,
+explanation, setting handles, evidence handles, and uncertainty. Retained settings
+that are not applicable to signal utility are listed explicitly as `notApplicable`
+or `notThisStage`. Style, channel, fabula, and plan mechanics remain downstream.
+
+The signal type owns which semantic fields and system checks are applicable. A
+non-empty `mechanism` or `outcome` is not proof by itself. Result support distinguishes
+`observed`, `reported`, `capabilityOnly`, `expected`, `missing`, and `notApplicable`.
+Absence of a known vendor marker never proves source independence; source posture is
+reported as `independent`, `corroborated`, `firstParty`, `vendor`, or `unknown`.
+
+Internal material, fragment, and setting IDs remain trace handles. The user-facing
+report resolves them to the criterion text, source title/domain, exact quotation,
+source URL, and trace link. An unresolved handle makes the affected result
+`inconclusive`; raw IDs are not presented as editorial evidence.
+
+Signal relationship analysis is independent from project utility. A bounded hybrid
+policy classifies candidate pairs as `exactDuplicate`, `sameClaim`,
+`relatedSameSource`, `corroborates`, `contradicts`, `distinct`, or `inconclusive`.
+Exact duplicates and same-claim aliases share one canonical presentation while all
+source records and evidence remain persisted. Related claims from the same material
+remain separate and visibly linked. Missing relationship proof is `notChecked` or
+`inconclusive`, never an invented low duplicate risk.
+
+Relationship candidates reuse the existing scoring provider attempt and budget.
+They do not add an unbounded provider call or raise the current provider-input and
+serialized-message limits.
+
+## 9. Future Provider Context Rule
 
 Every future upstream provider-heavy stage must declare before implementation:
 
@@ -339,7 +483,7 @@ Every future upstream provider-heavy stage must declare before implementation:
 Architecture smoke rejects a new operation that does not satisfy this inventory or
 carry an explicit tracker-backed debt exception.
 
-## 9. Trace Contract
+## 10. Trace Contract
 
 RadarRun keeps existing fields and adds `searchTriage`:
 
@@ -366,7 +510,12 @@ links, provider attempts, direct budgets, final message sizes, usage, and suppre
 fields. `FoundMaterial.contentFragments` are persisted evidence artifacts, not copied
 trace prose.
 
-## 10. Success Criteria
+Slice `2.17.4.7.1` additionally stores `run.signalScoring`,
+`signalScoringReport`, source-signal utility reports, review revisions, and immutable
+review events. Manual scoring reuses stored signals/materials and performs no search,
+URL read, or extraction. Legacy heuristic results remain explicitly historical.
+
+## 11. Success Criteria
 
 - Every raw result has one terminal decision.
 - Selection and duplicate representatives are invariant under provider result order.
@@ -393,10 +542,23 @@ trace prose.
   evidence quotes remain original.
 - A terminal localization failure creates no mixed-language signal, and every
   displayed evidence item resolves to a safe source URL plus material/fragment trace.
+- Every scored signal has one terminal recommendation or explicit `inconclusive`;
+  every dimension has a specific reason and resolvable setting/evidence references.
+- A signal is `notRecommended` only for a proven conflict with an active blocking
+  criterion. Missing keyword overlap and `notProven` never become automatic rejection.
+- Vendor-only evidence, credible off-project evidence, weak evidence, productive
+  tension, and prohibited content remain distinguishable outcomes.
+- Utility recommendations never change human review status. Review transitions are
+  authenticated, reversible, revision-checked, and preserve evidence exactly.
+- Provider scoring remains within direct input and final-message caps, and manual
+  rescore performs no retrieval or extraction work.
+- Legacy client evaluations are not displayed as current backend recommendations.
+- Signals and radar rows preserve complete readable information without page-level
+  horizontal overflow at the supported five viewport widths.
 - Recorded and comparable live proof show no quality regression relative to the
   pre-change industrial-AI baseline.
 
-## 11. Implementation Status
+## 12. Implementation Status
 
 - Slice `2.17.4.6.2`: triage v2, selective reading, read-outcome trace, upstream budget
   boundary, UI trace, recorded/live proof. `IMPLEMENTED`.
@@ -405,10 +567,13 @@ trace prose.
 - Slice `2.17.4.7.0.2`: project/editorial language handoff, radar source-language
   policy, query allocation, source-language eligibility, signal localization, and
   evidence presentation. `IMPLEMENTED`; accepted live proof is recorded below.
-- Signal scoring, candidate assembly, candidate ranking, and cross-run search memory:
-  `NOT THIS SLICE`.
+- Slice `2.17.4.7.1`: bounded project profile, utility dossier, backend-owned scoring,
+  deterministic recommendation, human review lifecycle, legacy/UI integrity repair.
+  `IMPLEMENTED`; accepted runtime proof is recorded in
+  `docs/evidence/radar-runs/2.17.4.7.1/`.
+- Candidate assembly, candidate ranking, and cross-run search memory: `NOT THIS SLICE`.
 
-## 12. Implementation Proof
+## 13. Implementation Proof
 
 The final live proof on 2026-07-13 returned 52 raw results and exactly 52 terminal
 decisions: 2 selected, 7 rejected, 17 duplicate, and 26 deferred by budget. It built
@@ -461,3 +626,24 @@ The authorized UI proof also verified backend persistence, `На проверк�
 unscored utility state, original source navigation, deep trace navigation, and the
 localized demo radar. Trace-safe evidence is committed in
 `docs/evidence/radar-runs/2.17.4.7.0.2/`.
+
+The accepted scoring/explainability proof on 2026-07-22 uses fresh RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-9`. It produced three Russian signals;
+all three matched the industrial radar and received `reviewWithCaution`. Automatic
+scoring was accepted on the primary attempt with 17,166 serialized characters against
+the 22,000 cap and 4,502/1,308 input/output tokens. Setting and evidence references
+resolved with zero errors. Manual rescore created revision 2 without search, read, or
+extraction work, and one authenticated review event approved a signal without mutating
+its evidence.
+
+Retrieval was `partial` because one search response contained malformed JSON and one
+OpenReview URL returned HTTP 403. Both incidents remain explicit in operation and
+benchmark trace; they did not turn successful extraction or scoring into a false clean
+retrieval result.
+
+Replay `radar-run-ai-pattern-radar-industrial-cases-7` classified the digital-advisor
+result as `capabilityOnly`, kept source posture `unknown`, and linked it to the separate
+automated-risk thesis as `relatedSameSource`. Product UI hid raw handles, opened source
+and trace links, and stayed within the page width at 390, 1180, 1440, 1904, and 2048
+pixels. Trace-safe evidence is committed in
+`docs/evidence/radar-runs/2.17.4.7.1/`.

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from threading import RLock
 
 from backend.app.api.ai_runs import router as ai_runs_router
 from backend.app.api.draft_runs import router as draft_runs_router
@@ -21,6 +22,7 @@ def create_app(
 ) -> FastAPI:
     app = FastAPI(title="Glavred Backend", version="0.1.0")
     app.state.settings = settings or get_settings()
+    app.state.portfolio_components_lock = RLock()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app.state.settings.cors_origin_list,

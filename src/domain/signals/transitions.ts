@@ -97,7 +97,7 @@ function signalText(signal: SourceSignal): string {
 function dimensionKeywords(workspace: WorkspaceState, dimension: RadarEditorialFilterDimension): string[] {
   const topicTitles = workspace.topics.map((topic) => topic.title.toLowerCase());
   const model = workspace.editorialModel;
-  const map: Record<RadarEditorialFilterDimension, string[]> = {
+  const map: Partial<Record<RadarEditorialFilterDimension, string[]>> = {
     author: ['исслед', 'product', 'workflow', 'практик', 'trade-off', model.author.toLowerCase()],
     audience: ['pm', 'founder', 'cpo', 'b2b', 'enterprise', 'audience', model.audience.toLowerCase()],
     positioning: ['workflow', 'eval', 'trust', 'adoption', 'rollout', 'demo', 'позици', model.positioning.toLowerCase()],
@@ -105,7 +105,7 @@ function dimensionKeywords(workspace: WorkspaceState, dimension: RadarEditorialF
     forbiddenTopics: ['hype', 'магич', 'universal', 'гарантир', 'model-first', ...model.forbiddenTopics.map((topic) => topic.toLowerCase())],
     topics: [...topicTitles, 'discovery', 'eval', 'quality', 'trust', 'gtm', 'adoption', 'workflow']
   };
-  return map[dimension];
+  return map[dimension] ?? [];
 }
 
 function hasAnyKeyword(text: string, keywords: string[]): boolean {

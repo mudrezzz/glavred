@@ -123,12 +123,14 @@ remain unchanged. Open `Сигналы -> Радары`, run that radar, then in
 - `Повторить извлечение` to create a new extraction revision from saved fragments
   without repeating search or URL reads.
 
-The accepted Slice `2.17.4.7` proof is
+The accepted Slice `2.17.4.7` extraction proof is
 `radar-run-ai-pattern-radar-industrial-cases-8`. It produced two readable materials
 and three candidate signals with exact evidence refs. The benchmark remains warning
 only because the current three-query budget skips `limitationCritique`. Signal
-project-utility scoring and full review lifecycle are intentionally deferred to
-`2.17.4.7.1`.
+project-utility scoring and full review lifecycle are implemented in `2.17.4.7.1`.
+The current Signals UI separates extraction confidence, backend utility recommendation,
+and reversible human status; the accepted scoring/review proof is recorded in
+`docs/evidence/radar-runs/2.17.4.7.1/`.
 
 New and reworked benchmark projects should be created through
 `$project-blueprint-creation`. The workflow starts from an approved project blueprint,
@@ -244,8 +246,8 @@ now records typed search intents, query families, evidence types, source strateg
 campaign-trace rationale, and skipped-intent details while preserving the existing
 `searchPlan.queries[]` payload used by query operations.
 
-Until extraction/scoring slices are implemented, seeded reviewed signals remain
-fixture data rather than proof of live search.
+Seeded legacy signals remain fixture data and are explicitly grouped as requiring
+re-extraction. They are not displayed as current backend utility verdicts.
 
 The first upstream benchmark is deliberately narrow: one golden scenario for
 `Опытный цех «Сборочная»` and the industrial AI maintenance-cases radar. It runs from
@@ -567,3 +569,9 @@ The SaaS-style blog portfolio benchmark is now seeded:
 Real provider-backed drafts already exist through the local backend/OpenRouter path.
 Backend auth, publication automation, platform metrics, real attachment parsing, and
 broader AI analysis remain later steps.
+
+For the industrial radar demo, open an expanded signal and verify five distinct
+information layers: source claim, radar criteria, project criteria, system quality
+checks and signal relationships. The digital-advisor examples intentionally exercise
+`sameClaim` canonical grouping and `relatedSameSource`; the UI must show readable
+source quotes and links instead of material/fragment identifiers.

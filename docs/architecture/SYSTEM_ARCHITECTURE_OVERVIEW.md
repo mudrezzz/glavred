@@ -294,9 +294,13 @@ approves editorial artifacts automatically.
   source-language policy, and records actual query languages and source eligibility.
   Signal editorial fields use the project language; original source titles and exact
   evidence quotations remain unchanged and resolvable by material/fragment handles.
-- `SignalScoring`: the next application policy. It will explain novelty, source
-  credibility, author fit, audience value, positioning fit, topic affinity, evidence
-  strength and risk without changing source evidence.
+- `SignalUtilityScoring`: implemented backend application policy. It builds a bounded
+  project opportunity profile and signal dossier, obtains semantic dimension evidence,
+  validates all setting/evidence handles, and applies the deterministic categorical
+  recommendation without changing source evidence or human status.
+- `SourceSignalReviewLifecycle`: implemented authenticated and reversible human
+  decision policy with optimistic revision checks. Correction can change only
+  editorial title, summary and author comment; evidence and provenance are immutable.
 - Slice 1.5.1 correction: `EditorialRadar` owns atomic search rules and optional
   search sources. `SourceSignal` remains raw material with radar provenance, date,
   finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
@@ -2191,9 +2195,9 @@ is unavailable.
   selected/rejected read decisions, `FoundMaterial` and retained fragments before the
   extraction application service creates candidate `SourceSignal`. OpenRouter search,
   extraction, URL reading, future RSS, social, document, API and MCP adapters belong
-  in infrastructure; extraction orchestration, grounding, scoring and candidate
-  assembly belong in application services. Extraction candidates remain unapproved
-  until the scoring/review lifecycle.
+  in infrastructure; extraction orchestration, grounding, utility scoring and
+  candidate assembly belong in application services. Utility recommendation and human
+  review remain separate; only the latter changes the signal's review status.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
 - Context chat can open draft flows for structured entities, but should not bypass

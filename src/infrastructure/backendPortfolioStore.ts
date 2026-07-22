@@ -5,6 +5,7 @@ import type {
   ProjectMembership,
   UserAccount
 } from '../domain/portfolio/types';
+import { resolveApiBaseUrl } from './apiBaseUrl';
 import type { WorkspaceState } from '../domain/workspace/types';
 import { createDemoPortfolio } from '../fixtures/demoPortfolio';
 import { normalizeWorkspace } from './localWorkspaceStore';
@@ -185,23 +186,5 @@ function mergeWorkspace(fallback: WorkspaceState, snapshot: Partial<WorkspaceSta
 function apiBaseUrl(): string {
   const env = (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env;
   const configuredUrl = env?.VITE_API_BASE_URL ?? 'http://localhost:8000';
-  return alignLoopbackApiHost(configuredUrl).replace(/\/$/, '');
-}
-
-function alignLoopbackApiHost(configuredUrl: string): string {
-  const browserHost = globalThis.location?.hostname;
-  if (!browserHost || !isLoopbackHost(browserHost)) return configuredUrl;
-
-  try {
-    const apiUrl = new URL(configuredUrl);
-    if (!isLoopbackHost(apiUrl.hostname)) return configuredUrl;
-    apiUrl.hostname = browserHost;
-    return apiUrl.toString();
-  } catch {
-    return configuredUrl;
-  }
-}
-
-function isLoopbackHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1';
+  return resolveApiBaseUrl(configuredUrl);
 }

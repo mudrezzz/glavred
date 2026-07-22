@@ -1,6 +1,6 @@
 # RadarRun Pipeline AS IS
 
-Current as of Slice `2.17.4.7.0.2`.
+Current as of Slice `2.17.4.7.1`.
 
 This document is the factual runtime contract for the current RadarRun pipeline. It
 describes what the product does today, what evidence proves it, and which boundaries
@@ -51,6 +51,8 @@ from subjective inspection:
 - `rawResults`, `selectedForRead`, `rejectedBeforeRead`, URL-read outcomes, and
   `foundMaterialIds`;
 - `FoundMaterial` records stored in the project workspace;
+- `run.signalExtraction`, `run.signalScoring`, source-signal utility reports, and
+  immutable review events;
 - `benchmarkReport` when a matching scenario exists;
 - `/radar-runs?runId=<id>` trace page rendering for human diagnostics.
 
@@ -67,15 +69,18 @@ why the contract remained valid, the slice is not ready to close.
 | `SearchPlan` | Deterministic provider-free campaign plan with strategy, editorial language, per-intent/query language, language context, source strategy, budget, and skipped intents. | Provider calls or quality scoring. |
 | `SearchIntent` | One planned evidence direction such as broad discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, or freshness. | URL reading or material acceptance. |
 | `SearchQuery` | One provider-executable web-search query derived from an intent and eligible source strategy. | Search result quality judgment. |
-| `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, extraction revision, warnings, errors, and optional benchmark report. | Signal approval, project-utility scoring, `PostCandidate`, plan slot, or `DraftRun` creation. |
+| `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, extraction/scoring revisions, warnings, errors, and optional benchmark report. | Human signal approval, `PostCandidate`, plan slot, or `DraftRun` creation. |
 | `RadarRunOperation` | One provider/search/read operation with status and trace-safe payload. | Editorial approval. |
 | `RawSearchResult` | Normalized provider search result with query/run provenance. | Durable source memory or signal ownership. |
 | `SearchTriageReport` | Deterministic normalization, duplicate groups, six-dimensional quality assessment, read plan, coverage gaps, terminal decisions, and read outcomes. | Provider search, URL parsing, or editorial approval. |
 | `selectedForRead` | Search results chosen for URL reading within budget. | Proof that the material is accepted. |
 | `rejectedBeforeRead` | Results rejected before URL reading, including duplicates, budget skips, and noise. | Permanent deletion from future search memory. |
 | `FoundMaterial` | Retrieval output with provenance, title, URL/source ref, snippet/summary, bounded evidence fragments, warnings, and captured timestamp. | Topic/fabula ownership or final post candidate approval. |
-| `SignalExtractionReport` | Versioned decisions for every inspected material, provider attempts, grounding incidents, budgets, usage and downstream-leak proof. | Project usefulness scoring or human review decisions. |
+| `SignalExtractionReport` | Versioned decisions for every inspected material, provider attempts, grounding incidents, budgets, usage and downstream-leak proof. | Project usefulness recommendation or human review decisions. |
 | `SourceSignal` candidate | Evidence-backed fact, change, tension, case, data point, practice, failure mode, observation, question or pattern in `reviewStatus=candidate`. | Topic/fabula/audience/value/goal/platform/channel ownership or automatic approval. |
+| `ProjectEditorialOpportunityProfile` | Bounded projection of active project rules, author positions, topics, radar filters and history fingerprints. | Full workspace, fabulas, content plan, publications, or provider trace. |
+| `SignalUtilityReport` | Backend-owned dimension results, resolvable setting/evidence references, deterministic recommendation, warnings and provider proof. | Human approval or mutation of source evidence. |
+| `SourceSignalReviewEvent` | Immutable authenticated transition with actor, time, reason, revision and changed editorial fields. | Rewriting evidence, mechanism, outcome, limitations, or provenance. |
 | `RadarBenchmarkReport` | Recorded or live evaluation against a golden scenario. | Search execution or UI-side scoring. |
 | `RadarRunTracePage` | Frontend read model for inspecting one run. | Recomputing live quality or mutating the run. |
 
@@ -96,8 +101,11 @@ flowchart TD
     K --> L[Bounded evidence fragments]
     L --> M[Signal extraction dossier]
     M --> N[Grounding validation and SourceSignal candidates]
-    N --> O[RadarBenchmarkReport]
-    O --> P[Workspace snapshot and trace page]
+    N --> O[Bounded project profile and utility dossier]
+    O --> P[Provider evaluation and deterministic recommendation]
+    P --> Q[Human review lifecycle]
+    Q --> R[RadarBenchmarkReport]
+    R --> S[Workspace snapshot and trace page]
 ```
 
 The current implementation stores RadarRun and FoundMaterial data in the workspace
@@ -159,9 +167,17 @@ endpoint in this AS IS state.
     never copied into the next attempt.
 17. Give every inspected material one extraction decision and persist zero or more
     `SourceSignal` candidates with `reviewStatus=candidate`.
-18. Attach `benchmarkReport` when the run matches a golden scenario.
-19. Persist the updated workspace snapshot.
-20. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
+18. Build a bounded project opportunity profile and score eligible signals in batches
+    through primary, same-model repair, backup, or terminal `inconclusive`.
+19. Validate signal, setting and evidence handles, then compute the categorical
+    recommendation in deterministic backend policy. The provider cannot approve or
+    reject a signal.
+20. Persist utility revisions independently from the reversible human review status.
+    Manual rescore reuses stored signals/materials and performs no search, read, or
+    extraction operations.
+21. Attach `benchmarkReport` when the run matches a golden scenario.
+22. Persist the updated workspace snapshot.
+23. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
     page.
 
 ## Context Handoff and Execution Contract
@@ -180,13 +196,15 @@ workspace snapshot and in the run payload.
 | URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
 | Material output | Search/read payloads | `FoundMaterial`, `contentFragments`, `foundMaterialIds` | Workspace contains the material, bounded fragments retain offsets/hash, and run links it by id. |
 | Signal extraction | Readable materials, bounded radar/language context, extraction taxonomy | terminal material decisions, localized candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact original evidence, editorial-language validation, localization status, grounding incidents and downstream-leak counters. |
+| Signal utility scoring | Candidate signals, bounded project opportunity profile, active typed filters, evidence handles, bounded relationship candidates | Compact provider aliases resolved into `SignalUtilityReport v2`, `radarCriteria`, `projectCriteria`, type-aware `qualityChecks`, `SignalRelationshipReport`, scoring revision and terminal recommendation | Direct dossier/budget/message proof, provider attempts/usage, one result per retained criterion, resolvable signal/setting/evidence aliases, deterministic decision-policy result and no retrieval/extraction operations during rescore. |
+| Human signal review | Current signal, authenticated actor, expected review revision, action/reason and optional editorial patch | immutable review event, new review status/revision | Evidence hash-equivalence, actor/time/reason, optimistic concurrency and utility rescore after correction. |
 | Benchmark evaluation | Scenario, run, found materials | `benchmarkReport` | Recorded/live status, provider health, coverage, missing expectations, and noise hits. |
 
 ## Hard Output Boundaries
 
-RadarRun is a retrieval, evidence extraction and trace pipeline. It may create
-`FoundMaterial` and unreviewed `SourceSignal` candidates through the dedicated
-backend extraction owner.
+RadarRun is a retrieval, evidence extraction, project-utility recommendation and
+trace pipeline. It may create `FoundMaterial`, unreviewed `SourceSignal` candidates,
+and backend-owned utility reports through dedicated owners.
 
 It must not create:
 
@@ -231,6 +249,12 @@ collapse it into a single "results" blob.
 | `signalExtraction.providerAttempts[]` | Primary/repair/backup outcomes, budgets and usage. | Proves recovery and prevents a rejected payload from becoming a trusted signal. |
 | `sourceSignals[].evidenceRefs[]` | Exact material and fragment handles. | Makes every accepted signal resolvable to retained evidence. |
 | `sourceSignals[].editorialLanguage`, `sourceLanguage`, and `localizationStatus` | Language of editorial interpretation, original source, and localization outcome. | Prevents a mixed-language card from being accepted silently. |
+| `run.signalScoring` | Versioned scoring report, batch count, provider attempts, references, recommendation distribution and downstream-leak proof. | Separates scoring availability from retrieval/extraction health and human status. |
+| `sourceSignals[].utilityReport.radarCriteria[]` | One mode-aware result for each retained enabled radar filter. | Shows what the radar explicitly required and why the signal matches, partially matches, lacks proof, or conflicts. |
+| `sourceSignals[].utilityReport.projectCriteria[]` | Applicable author, audience, positioning, goal, topic and prohibition checks. | Separates project fit from radar-specific selection. |
+| `sourceSignals[].utilityReport.qualityChecks[]` | Type-aware grounding, mechanism/result support, source posture and freshness checks. | Separates system evidence hygiene from user-configured filters and distinguishes observed, reported, capability-only and expected outcomes. |
+| `sourceSignals[].relationshipReport` | Exact duplicate, same claim, related same-source claim, corroboration, contradiction, distinct or inconclusive relationships plus canonical signal id. | Replaces the unsupported default `duplicateRisk=low` and preserves provenance when aliases share one visible card. |
+| `sourceSignals[].reviewRevision` and `reviewHistory[]` | Current optimistic-concurrency revision and immutable human decisions. | Proves that automation did not silently approve or rewrite evidence. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
 
@@ -285,11 +309,14 @@ The trace should be read in this order:
    rejected, duplicated, invalid, or deferred.
 7. Found materials and read outcomes: what became readable upstream material and what
    remained metadata-only.
-8. Evidence fragments, extraction decisions, signal candidates, provider attempts,
-   message budget and actual usage.
-9. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
+8. Evidence fragments, extraction decisions, signal candidates, extraction/scoring
+   provider attempts, message budgets and actual usage.
+9. Radar criteria, project criteria, type-aware quality checks, signal relationships,
+   recommendation, human status and review history. Product UI resolves handles to
+   setting text, source title/domain, exact quote and links; raw ids remain trace-only.
+10. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
    `failed`, or `inconclusive`.
-10. Raw JSON fallback when a legacy/minimal run lacks richer fields.
+11. Raw JSON fallback when a legacy/minimal run lacks richer fields.
 
 ## Known AS IS Limitations
 
@@ -317,9 +344,15 @@ These are current facts, not target architecture:
   separates Russian, English, mixed, unknown, and other writing systems for current
   policy enforcement, but it is not a general linguistic classifier for every
   language that uses the Latin alphabet.
-- Signal extraction is implemented, but project-specific utility scoring, human review
-  policy, candidate assembly and plan handoff remain downstream. A candidate signal is
-  not an approved editorial opportunity.
+- Project-specific utility scoring and human review are implemented, but candidate
+  assembly and plan handoff remain downstream. A positive recommendation is not a
+  human approval and does not create a `PostCandidate`.
+- Relationship classification is bounded to the active scoring set. Deterministic
+  exact/same-source evidence remains available during provider failure, while an
+  ambiguous semantic pair stays `inconclusive`; cross-run relationship memory remains
+  future work.
+- Search queries are not yet aligned one-to-one with every typed utility filter. That
+  useful-yield repair belongs to Slice `2.17.4.7.1.1`.
 - Successful extraction retry replaces the current signal revision. Stable IDs are
   preserved only when type and exact evidence handles still describe the same signal;
   semantically different model output receives new IDs instead of a false match.

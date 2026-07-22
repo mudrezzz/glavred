@@ -35,7 +35,7 @@ const portfolio = {
 
 describe('SidebarPortfolioSwitcher', () => {
   it('shows backend status, dashboard action, and logout action', () => {
-    const onLogout = vi.fn();
+    const onLogout = vi.fn().mockResolvedValue(undefined);
     const onOpenDashboard = vi.fn();
 
     render(
@@ -53,16 +53,16 @@ describe('SidebarPortfolioSwitcher', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Опытный цех/i }));
+    expect(screen.getByText('Сессия активна')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Все проекты' }));
     fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
 
-    expect(screen.getByText('backend session')).toBeInTheDocument();
     expect(onOpenDashboard).toHaveBeenCalledTimes(1);
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
   it('keeps logout action available when backend state falls back after login', () => {
-    const onLogout = vi.fn();
+    const onLogout = vi.fn().mockResolvedValue(undefined);
 
     render(
       <SidebarPortfolioSwitcher

@@ -15,7 +15,18 @@ export type RadarEditorialFilterDimension =
   | 'positioning'
   | 'goals'
   | 'forbiddenTopics'
-  | 'topics';
+  | 'topics'
+  | 'evidenceStrength'
+  | 'factualSpecificity'
+  | 'sourceCredibility'
+  | 'mechanism'
+  | 'observableOutcome'
+  | 'actionability'
+  | 'novelty'
+  | 'productiveTension'
+  | 'freshness'
+  | 'duplicationRisk'
+  | 'promotionalNoise';
 export type RadarEditorialFilterMode = 'mustMatch' | 'shouldMatch' | 'mustNotMatch' | 'seekTension';
 export type SignalFilterEvaluationStatus = 'passed' | 'warning' | 'failed' | 'tension';
 export type SignalFilterStatus = 'passed' | 'warning' | 'rejected';
@@ -99,6 +110,109 @@ export interface SignalEvidenceRef {
   quote: string;
 }
 
+export type SignalUtilityDimensionStatus = 'matched' | 'partial' | 'notProven' | 'conflict';
+export type SignalUtilityImportance = 'blocking' | 'weighted' | 'diagnostic';
+export type SignalUtilityRecommendation = 'recommended' | 'reviewWithCaution' | 'notRecommended' | 'inconclusive';
+export type SignalCriterionOrigin = 'radar' | 'project' | 'system';
+export type SignalCriterionEffect = 'pass' | 'caution' | 'block' | 'diagnostic';
+export type SignalRelationshipKind =
+  | 'exactDuplicate'
+  | 'sameClaim'
+  | 'relatedSameSource'
+  | 'corroborates'
+  | 'contradicts'
+  | 'distinct'
+  | 'inconclusive';
+
+export interface SignalUtilityDimensionResult {
+  dimension: string;
+  status: SignalUtilityDimensionStatus;
+  importance: SignalUtilityImportance;
+  summary: string;
+  reasonCodes: string[];
+  settingRefs: string[];
+  evidenceRefs: Array<{ materialId: string; fragmentId: string }>;
+  uncertainty?: string;
+}
+
+export interface SignalUtilityCriterionResult {
+  criterionId: string;
+  origin: SignalCriterionOrigin;
+  dimension: string;
+  title: string;
+  statement: string;
+  mode: RadarEditorialFilterMode;
+  status: SignalUtilityDimensionStatus;
+  verdict: string;
+  effect: SignalCriterionEffect;
+  summary: string;
+  settingRefs: string[];
+  evidenceRefs: Array<{ materialId: string; fragmentId: string }>;
+  uncertainty?: string;
+}
+
+export interface SignalQualityCheck {
+  checkId: string;
+  title: string;
+  status: string;
+  verdict: string;
+  effect: SignalCriterionEffect;
+  summary: string;
+  classification?: string | null;
+  applicable: boolean;
+  evidenceRefs: Array<{ materialId: string; fragmentId: string }>;
+}
+
+export interface SignalRelationship {
+  otherSignalId: string;
+  kind: SignalRelationshipKind;
+  summary: string;
+  evidenceRefs: Array<{ materialId: string; fragmentId: string }>;
+}
+
+export interface SignalRelationshipReport {
+  version: number;
+  status: 'checked' | 'notChecked' | 'inconclusive';
+  canonicalSignalId: string;
+  relations: SignalRelationship[];
+}
+
+export interface SignalUtilityReport {
+  version: number;
+  revision: number;
+  status: 'complete' | 'inconclusive' | 'stale';
+  recommendation: SignalUtilityRecommendation;
+  dimensions: SignalUtilityDimensionResult[];
+  blockingReasons: string[];
+  warnings: string[];
+  evaluationPlanVersion?: number;
+  radarCriteria?: SignalUtilityCriterionResult[];
+  projectCriteria?: SignalUtilityCriterionResult[];
+  qualityChecks?: SignalQualityCheck[];
+  notApplicableSettings?: Array<{ settingId: string; title: string; reason: string }>;
+  relationshipReport?: SignalRelationshipReport | null;
+  staleReason?: string;
+}
+
+export interface SignalReviewEvent {
+  id: string;
+  actorId: string;
+  occurredAt: string;
+  action: string;
+  fromStatus: SignalReviewStatus;
+  toStatus: SignalReviewStatus;
+  reason: string;
+  changedFields: string[];
+  reviewRevision: number;
+}
+
+export interface LegacySignalUtilityEvaluation {
+  status?: SignalFilterStatus;
+  evaluations: SignalFilterEvaluation[];
+  source: 'legacy-client-keyword-evaluator';
+  canonical: false;
+}
+
 export interface SourceSignal {
   id: string;
   type: string;
@@ -132,4 +246,11 @@ export interface SourceSignal {
   sourceLanguage?: string;
   localizationStatus?: 'original' | 'localized' | 'failed' | 'unverified';
   localizationReasonCodes?: string[];
+  utilityReport?: SignalUtilityReport;
+  relationshipReport?: SignalRelationshipReport | null;
+  utilityRevision?: number;
+  reviewRevision?: number;
+  reviewHistory?: SignalReviewEvent[];
+  legacyIntegrityStatus?: 'current' | 'needsReExtraction';
+  legacyUtilityEvaluation?: LegacySignalUtilityEvaluation | null;
 }

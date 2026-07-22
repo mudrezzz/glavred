@@ -65,7 +65,7 @@ describe('SourceSignalCard extraction candidate', () => {
     expect(controller.setExpandedSignalId).toHaveBeenCalledWith('');
   });
 
-  it('does not present a legacy fractional heuristic as an exact percentage', () => {
+  it('separates a legacy heuristic from the current utility verdict', () => {
     const workspace = { radars: [{ id: 'radar-1', title: 'Промышленные AI-кейсы' }] } as WorkspaceState;
     const signal = {
       ...({
@@ -74,11 +74,16 @@ describe('SourceSignalCard extraction candidate', () => {
       }),
       radarId: 'radar-1',
       reviewStatus: 'candidate' as const,
-      filterStatus: 'rejected' as const,
-      filterEvaluations: [{
-        filterId: 'filter-topic', dimension: 'topics' as const, status: 'failed' as const, score: 0.34,
-        summary: 'Связь требует проверки.', evidence: 'Предварительная локальная эвристика.'
-      }]
+      legacyIntegrityStatus: 'needsReExtraction' as const,
+      legacyUtilityEvaluation: {
+        status: 'rejected' as const,
+        source: 'legacy-client-keyword-evaluator' as const,
+        canonical: false as const,
+        evaluations: [{
+          filterId: 'filter-topic', dimension: 'topics' as const, status: 'failed' as const, score: 0.34,
+          summary: 'Связь требует проверки.', evidence: 'Предварительная локальная эвристика.'
+        }]
+      }
     };
     const controller = {
       expandedSignalId: signal.id,
@@ -99,8 +104,61 @@ describe('SourceSignalCard extraction candidate', () => {
       />
     );
 
-    expect(screen.getByRole('heading', { name: 'Предварительная локальная оценка' })).toBeInTheDocument();
+    expect(screen.getAllByText('Требуется повторное извлечение')).toHaveLength(2);
     expect(screen.queryByText('0.34%')).not.toBeInTheDocument();
-    expect(screen.getByText('Связь требует проверки.')).toBeInTheDocument();
+    expect(screen.queryByText('Связь требует проверки.')).not.toBeInTheDocument();
+  });
+
+  it('keeps immutable context visible while editorial fields are edited', () => {
+    const signal = {
+      id: 'signal-edit', type: 'case', title: 'Промышленный пилот', source: 'Отчет',
+      capturedAt: '2026-07-17', summary: 'Краткая сводка.', rawNote: '', radarId: 'radar-1',
+      reviewStatus: 'candidate' as const, confidence: 'high' as const,
+      uncertainty: 'Один источник.', mechanism: 'Мониторинг отклонений.',
+      outcome: 'Раннее вмешательство.', limitations: ['Один пилот.'],
+      evidence: [{
+        id: 'e-1', materialId: 'm-1', fragmentId: 'f-1', sourceTitle: 'Полное название источника',
+        sourceUrl: 'https://example.org/report', quote: 'Exact source quote.', summary: ''
+      }],
+      utilityReport: {
+        version: 2, revision: 1, status: 'complete' as const, recommendation: 'reviewWithCaution' as const,
+        blockingReasons: [], warnings: ['vendor-only'], dimensions: [], evaluationPlanVersion: 2,
+        radarCriteria: [{
+          criterionId: 'filter-topic', origin: 'radar' as const, dimension: 'topicAffinity',
+          title: 'Промышленный контекст', statement: 'Сигнал относится к промышленному ТОиР.',
+          mode: 'mustMatch' as const, status: 'matched' as const, verdict: 'СОВПАДАЕТ', effect: 'pass' as const,
+          summary: 'Кейс описывает обслуживание промышленного оборудования.', settingRefs: ['filter-topic'],
+          evidenceRefs: [{ materialId: 'm-1', fragmentId: 'f-1' }]
+        }],
+        projectCriteria: [],
+        qualityChecks: [{
+          checkId: 'source-posture', title: 'Позиция источника', status: 'partial', verdict: 'ТРЕБУЕТ ПРОВЕРКИ',
+          effect: 'caution' as const, summary: 'Источник принадлежит поставщику.', classification: 'vendor',
+          applicable: true, evidenceRefs: [{ materialId: 'm-1', fragmentId: 'f-1' }]
+        }],
+        notApplicableSettings: [],
+        relationshipReport: { version: 1, status: 'notChecked' as const, canonicalSignalId: 'signal-edit', relations: [] }
+      }
+    };
+    const controller = {
+      expandedSignalId: signal.id,
+      editingSignal: { ...signal, authorCorrection: '' },
+      setExpandedSignalId: vi.fn(), startSignalEdit: vi.fn(), patchSignalDraft: vi.fn(),
+      saveSignalDraft: vi.fn(), setEditingSignal: vi.fn()
+    } as unknown as SignalsController;
+    const workspace = { radars: [{ id: 'radar-1', title: 'Промышленные AI-кейсы' }] } as WorkspaceState;
+
+    render(<SourceSignalCard projectId="project-ai" signal={signal} workspace={workspace} controller={controller}
+      onApproveSignal={vi.fn()} onRejectSignal={vi.fn()} onArchiveSignal={vi.fn()} />);
+
+    expect(screen.getByText('Мониторинг отклонений.')).toBeInTheDocument();
+    expect(screen.getByText('Раннее вмешательство.')).toBeInTheDocument();
+    expect(screen.getByText('Один пилот.')).toBeInTheDocument();
+    expect(screen.getAllByText('Exact source quote.').length).toBeGreaterThan(0);
+    expect(screen.getByText('Источник принадлежит поставщику.')).toBeInTheDocument();
+    expect(screen.getByText('СОВПАДАЕТ')).toBeInTheDocument();
+    expect(screen.queryByText('m-1/f-1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('signal-edit-form')).toBeInTheDocument();
+    expect(screen.getAllByRole('textbox')).toHaveLength(3);
   });
 });

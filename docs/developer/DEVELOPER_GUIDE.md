@@ -29,6 +29,17 @@ adds the project dashboard and lifecycle UX. Frontend runtime still keeps
 authenticated sessions load backend projects/workspaces, `401` shows the login
 panel, and network failure keeps the local demo portfolio.
 
+Logout is an authentication boundary, not a workspace persistence action. The UI
+must switch to `loginRequired` immediately, request `/api/auth/logout` with cookies,
+and invalidate earlier load/save callbacks. A late autosave failure must never move a
+logged-out client back to `localFallback` or reveal the previous account workspace.
+Both the project dashboard topbar and the opened-project account switcher expose the
+same logout command.
+
+With the Docker stack running, verify both real logout surfaces and account switching
+with `npm run test:auth-session`. The smoke requires `/api/users/me=401` after each
+logout, so a visual transition without cookie invalidation cannot pass.
+
 Workspace integrity is stricter than network fallback. A stored workspace with
 probable mojibake returns controlled `409`; an unsafe write returns `422` with
 `workspace-text-integrity-failed`. The frontend stops autosave and shows a blocking
@@ -114,11 +125,45 @@ warning.
 
 Extraction localizes only editorial interpretation fields. Never translate or
 rewrite `sourceTitle` or exact `evidenceRefs.quote` values. New backend extraction
-signals enter the workspace as `reviewStatus=candidate` and remain unscored until the
-backend scoring slice. Do not call the legacy TypeScript filter evaluator while
-merging them. Signal cards must resolve every evidence handle to an external source
-URL and a `/radar-runs` detail link; confidence describes extraction reliability,
-not editorial utility.
+signals enter the workspace as `reviewStatus=candidate`; automatic utility scoring
+then builds a bounded project profile and signal dossier. Do not call the legacy
+TypeScript filter evaluator while merging them. Signal cards must resolve every
+evidence handle to an external source URL and a `/radar-runs` detail link; confidence
+describes extraction reliability, not editorial utility.
+
+Signal utility is backend-owned. `ProjectEditorialOpportunityProfileFactory` projects
+only bounded active settings and history fingerprints; `SignalUtilityScoringService`
+performs batch provider recovery under direct input/message budgets; the deterministic
+decision policy owns `recommended`, `reviewWithCaution`, `notRecommended`, and
+`inconclusive`. A blocking rejection requires a proven conflict with an active
+blocking filter. Manual rescore reuses saved signals/materials and must not add search,
+read, or extraction operations.
+
+The canonical report is `SignalUtilityReport v2`. Keep its ownership layers separate:
+
+- `radarCriteria` comes only from enabled radar filters and preserves filter mode;
+- `projectCriteria` comes from retained author, audience, positioning, goal, topic and
+  prohibition settings;
+- `qualityChecks` comes from `SignalTypeSemanticsRegistry`, not from project settings;
+- `SignalRelationshipReport` is independent from project utility and never defaults
+  an unverified pair to low duplicate risk.
+
+The scoring dossier assigns short `signalKey`, `criterionKey`, and `evidenceKeys`
+aliases for provider output. Resolve them through `SignalUtilityPayloadMapper`; never
+recover missing identities from array position and never accept an unknown alias.
+
+Do not treat a non-empty `mechanism` or `outcome` as proof. Result support must remain
+typed as observed, reported, capability-only, expected, missing or not applicable.
+Do not render `settingId`, `materialId` or `fragmentId` as user evidence: resolve them
+to the saved setting statement, source title/domain, exact quote, source URL and trace
+link. Canonical duplicate grouping is presentation-only; original signals and evidence
+must remain in persisted trace.
+
+Human review is independent from utility recommendation. Use the authenticated review
+endpoint with `expectedReviewRevision`; reject, archive, and correct require a reason.
+Correction can update only title, summary, and author comment, preserves evidence, and
+triggers a new utility revision. Legacy client evaluations are diagnostic history,
+never a current backend verdict.
 
 Search-result triage is deterministic and backend-owned. Keep normalization,
 duplicate grouping, quality assessment, read allocation, read execution, and payload

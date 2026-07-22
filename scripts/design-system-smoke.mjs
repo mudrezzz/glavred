@@ -263,10 +263,11 @@ async function assertSignalsDesign(page, viewportName) {
       const rowRect = row.getBoundingClientRect();
       const meta = row.querySelector('.radar-row-meta');
       const status = row.querySelector('.radar-status');
-      const count = row.querySelector('.radar-count');
       const date = row.querySelector('.radar-date');
-      if (!meta || !status || !count || !date) {
-        failures.push('radar row is missing status/count/date metadata slots.');
+      const title = row.querySelector('.radar-title');
+      const description = row.querySelector('.radar-row-sub');
+      if (!meta || !status || !date || !title || !description || meta.children.length < 3) {
+        failures.push('radar row is missing title/description/status/count/date structure.');
         return;
       }
       const dateText = date.textContent?.trim() ?? '';
@@ -278,10 +279,13 @@ async function assertSignalsDesign(page, viewportName) {
         failures.push('radar row metadata overflows the row.');
       }
       const statusRect = status.getBoundingClientRect();
-      const countRect = count.getBoundingClientRect();
       const dateRect = date.getBoundingClientRect();
-      if (statusRect.right > countRect.left - 6 || countRect.right > dateRect.left - 6) {
-        failures.push('radar row metadata slots overlap or touch each other.');
+      if (statusRect.right > rowRect.right + 1 || dateRect.right > metaRect.right + 1) {
+        failures.push('radar row status or date overflows its owner.');
+      }
+      const titleStyle = getComputedStyle(title);
+      if (titleStyle.textOverflow === 'ellipsis' || titleStyle.whiteSpace === 'nowrap') {
+        failures.push('radar title is truncated instead of wrapping to its full value.');
       }
     });
 
@@ -621,7 +625,7 @@ async function installAiRunTraceMocks(page) {
 }
 
 async function assertAiRunTraceDesign(page) {
-  await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'networkidle' });
+  await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'domcontentloaded' });
   await page.locator('[data-testid="ai-run-timeline"]').waitFor();
   const failures = await page.evaluate(() => {
     const result = [];
@@ -699,9 +703,9 @@ async function main() {
     await waitForServer();
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1440, height: 1024 } });
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => window.localStorage.clear());
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await openDefaultProjectCabinet(page);
 
     await page.locator('.nav-item').nth(1).click();
@@ -749,18 +753,18 @@ async function main() {
 
     await installAiRunTraceMocks(page);
     await assertAiRunTraceDesign(page);
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
     await openDefaultProjectCabinet(page);
 
     await page.setViewportSize({ width: 2048, height: 1100 });
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await openDefaultProjectCabinet(page);
     await page.locator('.nav-item').nth(2).click();
     await page.locator('[data-testid="signals-section-header"]').waitFor();
     await assertSignalsDesign(page, 'wide desktop');
 
     await page.setViewportSize({ width: 1180, height: 820 });
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await openDefaultProjectCabinet(page);
     await page.locator('.nav-item').nth(2).click();
     await page.locator('[data-testid="radar-row"]').first().waitFor();

@@ -47,7 +47,7 @@ async function clickNavItem(page, label) {
   if ((await item.count()) === 0) {
     let bodyText = await page.locator('body').innerText().catch(() => '');
     if (!bodyText.trim()) {
-      await page.goto(baseUrl, { waitUntil: 'networkidle' });
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
       await page.locator('.app').waitFor({ timeout: 10000 });
       item = page.locator('.nav-item').filter({ hasText: label }).first();
       bodyText = await page.locator('body').innerText().catch(() => '');
@@ -202,7 +202,7 @@ async function assertAiRunTraceAtViewport(page, viewport, viewportName) {
     };
     await page.route('**/api/draft-runs/**', (route) => route.fulfill({ status: 200, json: draftRun }));
     await page.route('**/api/ai-runs/**', (route) => route.fulfill({ status: 200, json: aiRun('ai-material') }));
-    await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}/ai-runs?runId=draft-run-smoke`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
     await page.locator('[data-testid="ai-run-timeline"]').waitFor();
 
     const result = await page.evaluate((name) => {
@@ -265,9 +265,9 @@ async function assertPlanAtViewport(page, viewport, viewportName) {
   page = await page.context().browser().newPage();
   try {
   await page.setViewportSize(viewport);
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.evaluate(() => window.localStorage.clear());
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 90_000 });
   await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'План');
   await page.locator('[data-testid="broadcast-filter-toolbar"]').waitFor();
@@ -329,9 +329,9 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
   page = await page.context().browser().newPage();
   try {
   await page.setViewportSize(viewport);
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.evaluate(() => window.localStorage.clear());
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 90_000 });
   await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'Сигналы');
   await page.locator('[data-testid="radar-row"]').first().waitFor();
@@ -476,9 +476,9 @@ async function assertSignalsAtViewport(page, viewport, viewportName) {
 
 async function assertContextChatAtViewport(page, viewport, options) {
   await page.setViewportSize(viewport);
-  await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.evaluate(() => window.localStorage.clear());
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 90_000 });
   await openDefaultProjectCabinet(page);
   await clickNavItem(page, 'Редакционная модель');
   await page.locator('.validation-panel').waitFor();
@@ -545,9 +545,9 @@ async function main() {
     const browser = await chromium.launch();
     const page = await browser.newPage({ viewport: { width: 1440, height: 1024 }, locale: 'ru-RU' });
 
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 90_000 });
     await page.evaluate(() => window.localStorage.clear());
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 90_000 });
   await openDefaultProjectCabinet(page);
     await page.locator('[role="tab"]').nth(1).click();
     await page.locator('[data-testid="source-row"]').first().waitFor();

@@ -79,6 +79,7 @@ class WorkspaceTextIntegrityInspector:
 
     _QUESTION_REPLACEMENT = re.compile(r"\?{4,}")
     _LATIN_MOJIBAKE = ("Ã", "Â", "Ð", "Ñ", "â€", "ï¿½")
+    _KNOWN_MOJIBAKE = ("вЮша",)
     _CYRILLIC_MOJIBAKE = (
         "Рђ", "Р‘", "Р’", "Р“", "Р”", "Р•", "Р–", "Р—", "Р", "Р™",
         "Рљ", "Р›", "Рњ", "Рќ", "Рћ", "Рџ", "Р ", "РЎ", "Рў", "РЈ",
@@ -139,6 +140,8 @@ class WorkspaceTextIntegrityInspector:
         if "\ufffd" in value:
             return "unicode-replacement-character"
         if any(marker in value for marker in self._LATIN_MOJIBAKE):
+            return "probable-mojibake"
+        if any(marker in value for marker in self._KNOWN_MOJIBAKE):
             return "probable-mojibake"
         cyrillic_hits = sum(value.count(marker) for marker in self._CYRILLIC_MOJIBAKE)
         if cyrillic_hits >= 3:

@@ -20,8 +20,8 @@ export function useWorkspaceController() {
     changeAuthorNotes,
     createProject,
     integrityError,
-    login,
-    logout,
+    login: backendLogin,
+    logout: backendLogout,
     patchEditorialSetup,
     patchWorkspace,
     portfolio,
@@ -72,6 +72,16 @@ export function useWorkspaceController() {
 
   function goProjectDashboard() {
     setPortfolioMode('projectDashboard');
+  }
+
+  async function login(email: string, password: string) {
+    setPortfolioMode('projectDashboard');
+    await backendLogin(email, password);
+  }
+
+  async function logout() {
+    setPortfolioMode('projectDashboard');
+    await backendLogout();
   }
 
   return {
