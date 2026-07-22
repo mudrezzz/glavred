@@ -230,7 +230,9 @@ describe('LocalWorkspaceStore', () => {
     expect(loaded.foundMaterials.length).toBeGreaterThan(0);
     expect(loaded.radars[0].filters?.length).toBeGreaterThan(0);
     expect(loaded.sourceSignals.length).toBeGreaterThan(5);
-    expect(loaded.sourceSignals[0].filterStatus).toBeDefined();
+    expect(loaded.sourceSignals[0].filterStatus).toBeUndefined();
+    expect(loaded.sourceSignals[0].legacyIntegrityStatus).toBe('needsReExtraction');
+    expect(loaded.sourceSignals[0].legacyUtilityEvaluation?.canonical).toBe(false);
     expect(loaded.sourceSignal.id).toBe(workspace.sourceSignal.id);
   });
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemoWorkspace } from '../fixtures/demoWorkspace';
-import { runExternalRadar, setRadarRunFetchForTests } from './radarRunClient';
+import { retryRadarSignalExtraction, runExternalRadar, setRadarRunFetchForTests } from './radarRunClient';
 
 describe('radar run client', () => {
   afterEach(() => setRadarRunFetchForTests(null));
@@ -16,7 +16,7 @@ describe('radar run client', () => {
     });
     setRadarRunFetchForTests(fetcher as unknown as typeof fetch);
 
-    await runExternalRadar(workspace, workspace.radars[0].id);
+    await runExternalRadar(workspace, workspace.radars[0].id, { projectId: 'project-ai', editorialLanguage: 'ru' });
 
     expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/api/radar-runs/external'), expect.objectContaining({
       method: 'POST',
@@ -25,5 +25,25 @@ describe('radar run client', () => {
     const sent = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
     expect(sent.radarId).toBe(workspace.radars[0].id);
     expect(sent.workspace.radars.length).toBeGreaterThan(0);
+    expect(sent.projectContext).toEqual({ projectId: 'project-ai', editorialLanguage: 'ru' });
+  });
+
+  it('retries signal extraction without calling the external search endpoint', async () => {
+    const workspace = createDemoWorkspace({ includeSeededHitlLearning: false });
+    const run = workspace.radarRuns[0];
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({
+      run: { ...run, signalExtraction: { status: 'succeeded', revision: 2, materialDecisions: [] } },
+      sourceSignals: [],
+      signalExtractionReport: { status: 'succeeded', revision: 2, materialDecisions: [] }
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    setRadarRunFetchForTests(fetcher as unknown as typeof fetch);
+
+    await retryRadarSignalExtraction(workspace, run.id, true, { projectId: 'project-ai', editorialLanguage: 'ru' });
+
+    expect(fetcher.mock.calls[0][0]).toContain(`/api/radar-runs/${run.id}/signal-extraction`);
+    expect(fetcher.mock.calls[0][0]).not.toContain('/external');
+    const sent = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    expect(sent.forceRetry).toBe(true);
+    expect(sent.projectContext).toEqual({ projectId: 'project-ai', editorialLanguage: 'ru' });
   });
 });

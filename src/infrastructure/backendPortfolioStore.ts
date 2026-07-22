@@ -5,6 +5,7 @@ import type {
   ProjectMembership,
   UserAccount
 } from '../domain/portfolio/types';
+import { resolveApiBaseUrl } from './apiBaseUrl';
 import type { WorkspaceState } from '../domain/workspace/types';
 import { createDemoPortfolio } from '../fixtures/demoPortfolio';
 import { normalizeWorkspace } from './localWorkspaceStore';
@@ -18,6 +19,20 @@ export class BackendPortfolioAuthRequiredError extends Error {
 export class BackendPortfolioUnavailableError extends Error {
   constructor() {
     super('backend-unavailable');
+  }
+}
+
+export interface BackendPortfolioIntegrityDiagnostic {
+  code: 'workspace-text-integrity-failed';
+  operation: 'read' | 'save';
+  projectId: string;
+  snapshotId?: string | null;
+  blockingIssueCount: number;
+}
+
+export class BackendPortfolioIntegrityError extends Error {
+  constructor(readonly diagnostic: BackendPortfolioIntegrityDiagnostic) {
+    super('workspace-text-integrity-failed');
   }
 }
 
@@ -135,6 +150,12 @@ export class BackendPortfolioStore {
       throw new BackendPortfolioUnavailableError();
     }
     if (response.status === 401) throw new BackendPortfolioAuthRequiredError();
+    if (response.status === 409 || response.status === 422) {
+      const payload = (await response.json().catch(() => null)) as { detail?: BackendPortfolioIntegrityDiagnostic } | null;
+      if (payload?.detail?.code === 'workspace-text-integrity-failed') {
+        throw new BackendPortfolioIntegrityError(payload.detail);
+      }
+    }
     if (!response.ok) throw new Error(`backend-portfolio-error-${response.status}`);
     return (await response.json()) as T;
   }
@@ -164,5 +185,6 @@ function mergeWorkspace(fallback: WorkspaceState, snapshot: Partial<WorkspaceSta
 
 function apiBaseUrl(): string {
   const env = (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env;
-  return (env?.VITE_API_BASE_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+  const configuredUrl = env?.VITE_API_BASE_URL ?? 'http://localhost:8000';
+  return resolveApiBaseUrl(configuredUrl);
 }

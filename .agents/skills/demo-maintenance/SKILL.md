@@ -15,6 +15,9 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Keep a realistic demo that shows the current working product clearly and convincingly.
 
+Run demo tests and browser acceptance through
+`.agents/skills/remote-docker-testing/SKILL.md`; local Docker is not acceptance proof.
+
 ## Demo principles
 
 The demo must be:
@@ -37,6 +40,10 @@ Avoid toy scenarios when a real-world scenario is possible.
 5. Update demo data, scripts, documentation, or flows.
 6. Ensure demo instructions are clear.
 7. Validate the demo if possible.
+   - If the demo uses backend workspace snapshots, validate one authenticated flow
+     against real FastAPI. Fixture-only or local-fallback rendering is insufficient.
+   - Refresh complete workspaces only through UTF-8-safe Python/application clients,
+     never through a PowerShell `Invoke-RestMethod` `GET -> PUT` cycle.
 
 ## Demo README should include
 

@@ -51,6 +51,13 @@ independent blog project containers. With FastAPI running, the frontend uses
 dev-password backend login and project-scoped SQLite workspace snapshots. Without
 FastAPI, the same shell falls back to local browser storage.
 
+The connected Signals acceptance test is `npm run test:signals:connected`. It starts
+real FastAPI with temporary SQLite, logs in as `founder@example.test`, verifies the
+backend session, injects long valid Russian content, rejects a damaged write, and
+checks `390/1180/1440/1904/2048` pixel widths. A fallback-only page is a failure.
+Full workspace refreshes use `scripts/workspace_utf8_client.py`; PowerShell
+read-modify-write is intentionally not part of the demo workflow.
+
 The default post-login entry point is the `Project Dashboard`: choose a blog card,
 click `Открыть кабинет`, or create/rename/archive a project. The lower-left sidebar
 identity block remains inside an opened project for quick switching and has `Все
@@ -102,6 +109,28 @@ The seeded fixtures are intentionally sanitized. They are derived from real work
 materials supplied by the product owner, but the source PDFs/resume and private
 details are not committed. The public demo keeps only reusable editorial signals,
 source descriptions, author-memory notes, and benchmark expectations.
+
+The live upstream demo uses `Опытный цех «Сборочная»` and radar
+`Кейсы промышленного ИИ`. Its default source policy is `Язык редакции и английский`:
+editorial fields are Russian, while original source titles and exact evidence quotes
+remain unchanged. Open `Сигналы -> Радары`, run that radar, then inspect:
+
+- `Найденные сигналы` for unreviewed evidence-backed candidates;
+- `Открыть источник` and `Показать в трассе` for original evidence and its owning
+  extraction detail;
+- `Открыть трассу` for search, reading, retained fragments, extraction decisions,
+  provider recovery, budgets and actual usage;
+- `Повторить извлечение` to create a new extraction revision from saved fragments
+  without repeating search or URL reads.
+
+The accepted Slice `2.17.4.7` extraction proof is
+`radar-run-ai-pattern-radar-industrial-cases-8`. It produced two readable materials
+and three candidate signals with exact evidence refs. The benchmark remains warning
+only because the current three-query budget skips `limitationCritique`. Signal
+project-utility scoring and full review lifecycle are implemented in `2.17.4.7.1`.
+The current Signals UI separates extraction confidence, backend utility recommendation,
+and reversible human status; the accepted scoring/review proof is recorded in
+`docs/evidence/radar-runs/2.17.4.7.1/`.
 
 New and reworked benchmark projects should be created through
 `$project-blueprint-creation`. The workflow starts from an approved project blueprint,
@@ -217,8 +246,8 @@ now records typed search intents, query families, evidence types, source strateg
 campaign-trace rationale, and skipped-intent details while preserving the existing
 `searchPlan.queries[]` payload used by query operations.
 
-Until extraction/scoring slices are implemented, seeded reviewed signals remain
-fixture data rather than proof of live search.
+Seeded legacy signals remain fixture data and are explicitly grouped as requiring
+re-extraction. They are not displayed as current backend utility verdicts.
 
 The first upstream benchmark is deliberately narrow: one golden scenario for
 `Опытный цех «Сборочная»` and the industrial AI maintenance-cases radar. It runs from
@@ -230,6 +259,14 @@ radar card keeps a short `Трасса запуска` preview; use `Откры�
 `/radar-runs?runId=<id>` to show the full search campaign outside the card, including
 source strategy, operations, raw results, selected/rejected reads, found materials,
 warnings/errors, and any benchmark verdict stored on the run.
+
+Slice `2.17.4.6.2` makes this trace an explainable retrieval-quality surface. The
+industrial-AI radar now records bounded normalized candidates, stable duplicate
+groups, six deterministic score dimensions, a coverage-aware read plan, one terminal
+decision for every raw result, and explicit read outcomes. Failed or unsupported
+binary reads remain `metadataOnly`; they do not pass as readable evidence. The
+recorded benchmark and trace-safe live comparison are documented in
+`docs/evidence/radar-runs/2.17.4.6.2/COMPARISON.md`.
 
 Live provider-backed runs for that same radar now reuse the golden expectations without
 requiring exact URL matches. The live report is attached as `benchmarkReport` on the
@@ -532,3 +569,9 @@ The SaaS-style blog portfolio benchmark is now seeded:
 Real provider-backed drafts already exist through the local backend/OpenRouter path.
 Backend auth, publication automation, platform metrics, real attachment parsing, and
 broader AI analysis remain later steps.
+
+For the industrial radar demo, open an expanded signal and verify five distinct
+information layers: source claim, radar criteria, project criteria, system quality
+checks and signal relationships. The digital-advisor examples intentionally exercise
+`sameClaim` canonical grouping and `relatedSameSource`; the UI must show readable
+source quotes and links instead of material/fragment identifiers.

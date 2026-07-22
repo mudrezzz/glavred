@@ -549,7 +549,7 @@ const BACKEND_SOURCE_BASELINES = [
   },
   {
     path: "backend/app/settings.py",
-    limit: 100,
+    limit: 110,
     next: "Backend settings should stay focused on typed environment configuration.",
   },
   {
@@ -1707,6 +1707,36 @@ const DRAFTING_BACKEND_COMPONENT_MAP_PATH =
   "backend/app/drafting/DRAFTING_BACKEND_COMPONENT_MAP.md";
 const SHARED_LLM_OPERATION_CONTRACT_PATH = "backend/app/shared/llm_operations/contracts.py";
 const SHARED_LLM_OPERATION_INVENTORY_PATH = "backend/app/shared/llm_operations/inventory.py";
+const SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH =
+  "backend/app/shared/llm_operations/provider_message_budget_guard.py";
+const UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH =
+  "backend/app/upstream/application/provider_budget_profiles.py";
+const UPSTREAM_PROVIDER_INPUT_GATE_PATH =
+  "backend/app/upstream/application/provider_input_budget_gate.py";
+const UPSTREAM_WEB_SEARCH_OPERATION_PATH =
+  "backend/app/upstream/application/external_search_operations.py";
+const UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH =
+  "backend/app/upstream/application/open_web_query_input.py";
+const UPSTREAM_TRIAGE_STRESS_TEST_PATH =
+  "backend/tests/test_upstream_search_result_triage_v2.py";
+const UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH =
+  "backend/app/upstream/application/signal_extraction_service.py";
+const UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH =
+  "backend/app/upstream/application/signal_extraction_context.py";
+const UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH =
+  "backend/app/upstream/application/signal_extraction_dossier.py";
+const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH =
+  "backend/app/upstream/application/signal_extraction_attempts.py";
+const UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH =
+  "backend/app/upstream/application/signal_extraction_attempt_request.py";
+const UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH =
+  "backend/tests/test_upstream_signal_extraction.py";
+const UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH =
+  "backend/app/upstream/application/signal_utility_dossier.py";
+const UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH =
+  "backend/app/upstream/application/signal_utility_attempt_request.py";
+const UPSTREAM_SIGNAL_UTILITY_TEST_PATH =
+  "backend/tests/test_signal_utility_scoring.py";
 const SHARED_LLM_OPERATION_OWNER_PATHS = [
   SHARED_LLM_OPERATION_CONTRACT_PATH,
   "backend/app/shared/llm_operations/statuses.py",
@@ -2126,11 +2156,16 @@ const LLM_OPERATION_INVENTORY_IDS = [
   "finalQualityReviewRepair",
   "humanCommentRevision",
   "humanCommentRevisionQualityCheck",
+  "openWebQuery",
+  "signalExtraction",
+  "signalScoring",
 ];
 
 const RAW_COMPLETE_JSON_ALLOWED_BOUNDED_FILES = new Set([
   "backend/app/shared/llm_operations/contracts.py",
   "backend/app/shared/llm_operations/inventory.py",
+  "backend/app/infrastructure/openrouter_signal_extraction_adapter.py",
+  "backend/app/infrastructure/openrouter_signal_utility_adapter.py",
 ]);
 
 const LEGACY_FLAT_DRAFT_DOMAIN_FILES = new Set([
@@ -2344,8 +2379,12 @@ assert(
 const requiredDockerFiles = [
   ".dockerignore",
   "compose.yaml",
+  "compose.remote.yaml",
   "docker/backend.Dockerfile",
   "docker/frontend.Dockerfile",
+  "docker/qa.Dockerfile",
+  "scripts/remote_docker_runtime.py",
+  ".agents/skills/remote-docker-testing/SKILL.md",
 ];
 
 for (const requiredFile of requiredDockerFiles) {
@@ -2355,6 +2394,76 @@ for (const requiredFile of requiredDockerFiles) {
 const composeSource = fileExists("compose.yaml") ? readText("compose.yaml") : "";
 for (const fragment of ["redis:", "worker:", "REDIS_URL: redis://redis:6379/0"]) {
   assert(composeSource.includes(fragment), `compose.yaml is missing queued-run fragment: ${fragment}`);
+}
+
+const remoteComposeSource = readText("compose.remote.yaml");
+for (const fragment of [
+  "ports: !reset []",
+  "127.0.0.1:${GLAVRED_REMOTE_API_PORT:-8000}:8000",
+  "127.0.0.1:${GLAVRED_REMOTE_FRONTEND_PORT:-5176}:5173",
+  "/run/secrets/openrouter_api_key",
+  "network_mode: host",
+  "qa:",
+  "qa-live:",
+  "runtime:/runtime-var:ro",
+]) {
+  assert(
+    remoteComposeSource.includes(fragment),
+    `compose.remote.yaml is missing remote isolation fragment: ${fragment}`
+  );
+}
+
+const remoteRuntimeSource = readText("scripts/remote_docker_runtime.py");
+for (const fragment of [
+  "ssh://flowise",
+  "POWER_WEB_PORTS",
+  "sync-secrets",
+  "Remote Glavred runtime is locked",
+  '"live-radar"',
+]) {
+  assert(
+    remoteRuntimeSource.includes(fragment),
+    `Remote Docker runtime is missing guardrail fragment: ${fragment}`
+  );
+}
+
+const qaDockerfileSource = readText("docker/qa.Dockerfile");
+for (const fragment of ["FROM node:20", "FROM python:3.12", "playwright:v1.60.0"]) {
+  assert(qaDockerfileSource.includes(fragment), `QA image is missing runtime pin: ${fragment}`);
+}
+
+const remoteSkillPath = ".agents/skills/remote-docker-testing/SKILL.md";
+const remoteSkillSource = readText(remoteSkillPath);
+for (const fragment of ["ssh://flowise", "power-web-os", "sync-secrets", "local test result"]) {
+  assert(remoteSkillSource.includes(fragment), `${remoteSkillPath} is missing: ${fragment}`);
+}
+
+const remoteRuntimeSkillPaths = [
+  ".agents/skills/slice-implementation/SKILL.md",
+  ".agents/skills/regression-and-test-strategy/SKILL.md",
+  ".agents/skills/frontend-design-system/SKILL.md",
+  ".agents/skills/draft-run-pipeline-evaluation/SKILL.md",
+  ".agents/skills/draft-run-pipeline-autofix/SKILL.md",
+  ".agents/skills/draft-run-pipeline-diagnostics/SKILL.md",
+  ".agents/skills/project-onboarding/SKILL.md",
+  ".agents/skills/glavred-project-immersion/SKILL.md",
+  ".agents/skills/demo-maintenance/SKILL.md",
+  ".agents/skills/project-blueprint-creation/SKILL.md",
+];
+for (const skillPath of remoteRuntimeSkillPaths) {
+  const source = readText(skillPath);
+  assert(source.includes(remoteSkillPath), `${skillPath} must route tests through remote Docker.`);
+  assert(!source.includes("docker compose "), `${skillPath} must route Compose through the remote owner.`);
+}
+
+const remoteAgentSource = readText("AGENTS.md");
+for (const fragment of [remoteSkillPath, "flowise", "tests are not acceptance evidence"]) {
+  assert(remoteAgentSource.includes(fragment), `AGENTS.md is missing remote runtime rule: ${fragment}`);
+}
+
+const backendSettingsSource = readText("backend/app/settings.py");
+for (const fragment of ["OPENROUTER_API_KEY_FILE", "GLAVRED_DEV_AUTH_PASSWORD_FILE"]) {
+  assert(backendSettingsSource.includes(fragment), `Backend settings are missing file secret: ${fragment}`);
 }
 
 const requiredSourceFiles = [
@@ -3462,6 +3571,149 @@ for (const fragment of [
   );
 }
 
+const sharedProviderMessageBudgetGuardSource = readText(
+  SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH
+);
+for (const fragment of [
+  "class ProviderMessageBudgetGuard",
+  "messageCharCount",
+  "provider-message-budget-exceeded",
+  "maxMessageChars",
+]) {
+  assert(
+    sharedProviderMessageBudgetGuardSource.includes(fragment),
+    `${SHARED_PROVIDER_MESSAGE_BUDGET_GUARD_PATH} is missing shared final-message budget fragment: ${fragment}`
+  );
+}
+
+const upstreamProviderBudgetProfileSource = readText(UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH);
+const upstreamProviderInputGateSource = readText(UPSTREAM_PROVIDER_INPUT_GATE_PATH);
+const upstreamWebSearchOperationSource = readText(UPSTREAM_WEB_SEARCH_OPERATION_PATH);
+const upstreamWebSearchInputOwnerSource = readText(UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH);
+const upstreamTriageStressTestSource = readText(UPSTREAM_TRIAGE_STRESS_TEST_PATH);
+const upstreamSignalExtractionServiceSource = readText(UPSTREAM_SIGNAL_EXTRACTION_SERVICE_PATH);
+const upstreamSignalExtractionDossierSource = [
+  readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH),
+  readText(UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH),
+].join("\n");
+const upstreamSignalExtractionAttemptSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH);
+const upstreamSignalExtractionAttemptRequestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH);
+const upstreamSignalExtractionTestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH);
+const upstreamSignalUtilityDossierSource = readText(UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH);
+const upstreamSignalUtilityAttemptRequestSource = readText(UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH);
+const upstreamSignalUtilityTestSource = readText(UPSTREAM_SIGNAL_UTILITY_TEST_PATH);
+for (const fragment of [
+  "class UpstreamProviderBudgetProfileRegistry",
+  "max_provider_input_chars",
+  "max_message_chars",
+  "max_run_input_chars",
+  "max_results_per_query",
+]) {
+  assert(
+    upstreamProviderBudgetProfileSource.includes(fragment),
+    `${UPSTREAM_PROVIDER_BUDGET_PROFILE_PATH} is missing upstream provider budget fragment: ${fragment}`
+  );
+}
+for (const fragment of ["class OpenWebQueryInputBuilder", "provider_input", "messages"]) {
+  assert(
+    upstreamWebSearchInputOwnerSource.includes(fragment),
+    `${UPSTREAM_WEB_SEARCH_INPUT_OWNER_PATH} is missing upstream provider-input owner fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class UpstreamProviderInputBudgetGate",
+  "providerInput",
+  "payloadBudget",
+  "provider-input-over-budget",
+  "payloadTooLarge",
+]) {
+  assert(
+    upstreamProviderInputGateSource.includes(fragment),
+    `${UPSTREAM_PROVIDER_INPUT_GATE_PATH} is missing upstream direct budget fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "UpstreamProviderInputBudgetGate",
+  "ProviderMessageBudgetGuard",
+  "run_budget",
+  "providerUsage",
+  "messageCharCount",
+]) {
+  assert(
+    upstreamWebSearchOperationSource.includes(fragment),
+    `${UPSTREAM_WEB_SEARCH_OPERATION_PATH} is missing governed openWebQuery fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamTriageStressTestSource.includes("100") &&
+    upstreamTriageStressTestSource.includes("test_triage_stress"),
+  `${UPSTREAM_TRIAGE_STRESS_TEST_PATH} must prove bounded triage behavior with 100 raw results.`
+);
+for (const fragment of [
+  "class SignalExtractionDossierFactory",
+  "neverSendToProvider",
+  "runtimeMigrated",
+  "contentFragments",
+]) {
+  assert(
+    upstreamSignalExtractionDossierSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_PATH} and ${UPSTREAM_SIGNAL_EXTRACTION_DOSSIER_CONTRACT_PATH} are missing signal extraction dossier fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "UpstreamProviderInputBudgetGate",
+  "ProviderMessageBudgetGuard",
+  "signalExtraction",
+  "max_output_tokens",
+]) {
+  assert(
+    upstreamSignalExtractionAttemptRequestSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_REQUEST_PATH} is missing governed signal extraction request fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "create_failed_run",
+  "SignalExtractionAttemptRequestBuilder",
+]) {
+  assert(
+    upstreamSignalExtractionAttemptSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_EXTRACTION_ATTEMPT_PATH} is missing governed signal extraction fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamSignalExtractionTestSource.includes("test_standard_profile_bounds_materials_fragments_input_and_output") &&
+    upstreamSignalExtractionTestSource.includes("test_recorded_golden_signal_extraction_benchmark_passes_all_cases"),
+  `${UPSTREAM_SIGNAL_EXTRACTION_TEST_PATH} must prove bounded and golden signal extraction behavior.`
+);
+for (const fragment of ["class SignalUtilityDossierFactory", "NEVER_SEND", "suppressed_fields"]) {
+  assert(
+    upstreamSignalUtilityDossierSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH} is missing signal utility dossier fragment: ${fragment}`
+  );
+}
+for (const fragment of ["UpstreamProviderInputBudgetGate", "ProviderMessageBudgetGuard", "signalScoring", "max_output_tokens"]) {
+  assert(
+    upstreamSignalUtilityAttemptRequestSource.includes(fragment),
+    `${UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH} is missing governed signal utility request fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamSignalUtilityTestSource.includes("test_arcelor_vendor_case_is_review_with_caution_not_false_topic_rejection") &&
+    upstreamSignalUtilityTestSource.includes("test_invalid_primary_uses_structured_repair_and_keeps_direct_budget_proof"),
+  `${UPSTREAM_SIGNAL_UTILITY_TEST_PATH} must prove the industrial utility verdict and direct budget recovery.`
+);
+
+for (const backendFile of backendPythonFiles) {
+  if (!backendFile.startsWith("backend/app/upstream/") || backendFile === UPSTREAM_WEB_SEARCH_OPERATION_PATH) {
+    continue;
+  }
+  const source = readText(backendFile);
+  assert(
+    !source.includes("web_search_adapter.search("),
+    `${backendFile} introduces an upstream provider-heavy web search outside the governed operation owner.`
+  );
+}
+
 assert(
   fileExists(DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH),
   `${DRAFTRUN_PROVIDER_INPUT_AUDIT_SCRIPT_PATH} is required for replayable DraftRun provider input audits.`
@@ -4201,6 +4453,36 @@ for (const fragment of requiredSaoFragments) {
     `SAO is missing required React architecture fragment: ${fragment}`
   );
 }
+
+const workspaceIntegritySource = readText("backend/app/portfolio/application/workspace_integrity.py");
+const portfolioServiceSource = readText("backend/app/application/portfolio_service.py");
+const connectedSignalsSmokeSource = readText("scripts/connected-signals-smoke.mjs");
+const packageSource = readText("package.json");
+const agentSource = readText("AGENTS.md");
+
+assert(
+  workspaceIntegritySource.includes("class WorkspaceTextIntegrityInspector") &&
+    workspaceIntegritySource.includes("class WorkspaceIntegrityPolicy"),
+  "Portfolio workspace text-integrity owners are missing."
+);
+assert(
+  portfolioServiceSource.includes("ensure_readable") && portfolioServiceSource.includes("ensure_saveable"),
+  "PortfolioService must apply workspace integrity on both read and save."
+);
+assert(
+  connectedSignalsSmokeSource.includes("/api/users/me") &&
+    connectedSignalsSmokeSource.includes("local fallback") &&
+    connectedSignalsSmokeSource.includes("project-ai-design-patterns"),
+  "Connected Signals smoke must prove authenticated backend workspace behavior."
+);
+assert(
+  packageSource.includes('"test:visual": "node scripts/visual-smoke.mjs && node scripts/connected-signals-smoke.mjs"'),
+  "Visual tests must include the connected authenticated Signals scenario."
+);
+assert(
+  agentSource.includes("workspace_utf8_client.py") && agentSource.includes("Invoke-RestMethod"),
+  "AGENTS.md must keep the UTF-8-safe full-workspace roundtrip rule."
+);
 
 if (failures.length > 0) {
   if (warnings.length > 0) {

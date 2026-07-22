@@ -94,10 +94,9 @@ Use this structure:
      `.agents/skills/backend-architecture-audit/SKILL.md` before broad backend
      cleanup or package-quality claims.
    - new LLM/provider-heavy work must use the current operation governance rules or be tracked as debt.
-   - live provider checks must take OpenRouter configuration from `.env` without
-     printing secrets; if Glavred is not running in Docker, start the Glavred
-     `docker compose up -d --build` stack even when unrelated Docker projects are
-     already running.
+   - tests, Docker, browser acceptance, and live provider checks must use
+     `.agents/skills/remote-docker-testing/SKILL.md`; run its `doctor` and never start
+     local Glavred Docker without an explicit user request.
    - complex pipeline slices must follow
      `AS IS -> Change Intent -> TO BE -> DoD -> Implementation -> AS IS Update`;
      DraftRun uses `docs/architecture/DRAFT_RUN_PIPELINE_AS_IS.md`, RadarRun uses
@@ -120,11 +119,11 @@ python -m backend.app.roadmap list --status Ready
 python -m backend.app.roadmap check
 python -m backend.app.roadmap render
 python -m backend.app.roadmap export
-npm run test:architecture
-npm run smoke
-npm test -- --run --pool=threads --maxWorkers=4
-python -m pytest backend/tests
-docker compose config --quiet
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py test --suite architecture
+python scripts/remote_docker_runtime.py test --suite smoke
+python scripts/remote_docker_runtime.py test --suite frontend
+python scripts/remote_docker_runtime.py test --suite backend
 git diff --check
 ```
 

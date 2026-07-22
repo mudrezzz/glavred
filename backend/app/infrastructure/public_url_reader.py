@@ -1,50 +1,30 @@
-from html.parser import HTMLParser
+"""Owner: infrastructure
+
+Used by: DraftRun public evidence retrieval and RadarRun selective URL reading.
+Does not own: PDF extraction, search-result triage, provider search, or material scoring.
+Architecture doc: docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md
+"""
 
 import httpx
 
 from backend.app.drafting.application.evidence.public_evidence_ports import PublicUrlReadResult
-
-
-class HtmlTextExtractor(HTMLParser):
-    def __init__(self, *, max_chars: int) -> None:
-        super().__init__()
-        self._max_chars = max_chars
-        self._skip_depth = 0
-        self._capture_title = False
-        self.title_parts: list[str] = []
-        self.text_parts: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag in {"script", "style", "noscript", "svg"}:
-            self._skip_depth += 1
-        if tag == "title":
-            self._capture_title = True
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {"script", "style", "noscript", "svg"} and self._skip_depth:
-            self._skip_depth -= 1
-        if tag == "title":
-            self._capture_title = False
-
-    def handle_data(self, data: str) -> None:
-        value = data.strip()
-        if not value:
-            return
-        if self._capture_title:
-            self.title_parts.append(value)
-        if self._skip_depth == 0 and self.text_length < self._max_chars:
-            self.text_parts.append(value)
-
-    @property
-    def text_length(self) -> int:
-        return sum(len(part) for part in self.text_parts)
+from backend.app.infrastructure.html_text_extractor import HtmlTextExtractor
+from backend.app.infrastructure.public_url_content_policy import PublicUrlContentPolicy
 
 
 class HttpxPublicUrlReader:
-    def __init__(self, *, timeout_seconds: float = 12.0, max_bytes: int = 600_000, max_text_chars: int = 12_000) -> None:
+    def __init__(
+        self,
+        *,
+        timeout_seconds: float = 12.0,
+        max_bytes: int = 600_000,
+        max_text_chars: int = 12_000,
+        content_policy: PublicUrlContentPolicy | None = None,
+    ) -> None:
         self._timeout_seconds = timeout_seconds
         self._max_bytes = max_bytes
         self._max_text_chars = max_text_chars
+        self._content_policy = content_policy or PublicUrlContentPolicy()
 
     def read(self, url: str) -> PublicUrlReadResult:
         response = httpx.get(
@@ -55,6 +35,10 @@ class HttpxPublicUrlReader:
         )
         response.raise_for_status()
         content = response.content[: self._max_bytes]
+        self._content_policy.ensure_readable(
+            content_type=response.headers.get("content-type", ""),
+            content=content,
+        )
         text = content.decode(response.encoding or "utf-8", errors="replace")
         extractor = HtmlTextExtractor(max_chars=self._max_text_chars)
         extractor.feed(text)

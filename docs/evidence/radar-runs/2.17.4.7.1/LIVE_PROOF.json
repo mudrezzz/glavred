@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-07-22",
+  "projectId": "project-ai-design-patterns",
+  "radarId": "ai-pattern-radar-industrial-cases",
+  "replay": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-7",
+    "digitalAdvisorSignalId": "signal-8fac38e04f259d709e2d",
+    "recommendation": "reviewWithCaution",
+    "resultSupport": "capabilityOnly",
+    "sourcePosture": "unknown",
+    "relatedSameSourceSignalId": "signal-80a80e94891c474a8984"
+  },
+  "live": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-9",
+    "runStatus": "partial",
+    "retrievalIncidents": [
+      "open-web-query-malformed-json",
+      "openreview-read-403"
+    ],
+    "scoringStatus": "succeeded",
+    "signalCount": 3,
+    "recommendations": {
+      "reviewWithCaution": 3
+    },
+    "automaticScoring": {
+      "aiRunId": "1f64761b-3d05-402a-947a-343183ebbc56",
+      "attempt": "primary",
+      "status": "accepted",
+      "messageCharCount": 17166,
+      "messageCharCap": 22000,
+      "inputTokens": 4502,
+      "outputTokens": 1308,
+      "totalTokens": 5810,
+      "budgetRespected": true
+    },
+    "manualRescoreRevision": 2,
+    "reviewStatus": "approved",
+    "reviewRevision": 1,
+    "reviewEventCount": 1,
+    "unresolvedSettingRefCount": 0,
+    "unresolvedEvidenceRefCount": 0,
+    "rawEvidenceHandlesHidden": true,
+    "sourceUrlVerified": true,
+    "traceOpened": true,
+    "scoringTraceOpened": true,
+    "viewportOverflowChecks": [390, 1180, 1440, 1904, 2048]
+  }
+}

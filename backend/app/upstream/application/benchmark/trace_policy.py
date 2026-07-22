@@ -18,7 +18,7 @@ from backend.app.upstream.application.benchmark.scenarios import (
 class RadarBenchmarkTracePolicy:
     def trace_complete(self, run: dict[str, Any]) -> bool:
         plan = run.get("searchPlan", {}) if isinstance(run.get("searchPlan"), dict) else {}
-        return all(
+        base_complete = all(
             [
                 bool(plan.get("intents")),
                 bool(plan.get("queries")),
@@ -29,6 +29,16 @@ class RadarBenchmarkTracePolicy:
                 bool(run.get("foundMaterialIds")),
             ]
         )
+        triage = run.get("searchTriage") if isinstance(run.get("searchTriage"), dict) else None
+        if not triage:
+            return base_complete
+        read_plan = triage.get("readPlan") if isinstance(triage.get("readPlan"), dict) else {}
+        decisions = read_plan.get("decisions") if isinstance(read_plan.get("decisions"), list) else []
+        outcomes = triage.get("readOutcomes") if isinstance(triage.get("readOutcomes"), list) else []
+        selected_count = sum(
+            1 for item in decisions if isinstance(item, dict) and item.get("status") == "selected"
+        )
+        return base_complete and len(decisions) == len(run.get("rawResults", [])) and len(outcomes) == selected_count
 
     def provider_health(self, run: dict[str, Any]) -> BenchmarkProviderHealth:
         operations = [item for item in run.get("operations", []) if isinstance(item, dict)]

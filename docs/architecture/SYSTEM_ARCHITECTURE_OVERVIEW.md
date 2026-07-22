@@ -81,6 +81,14 @@ brief, but it is not the first discovery layer for what the author should write 
 
 The next SaaS-ready model wraps that loop in a portfolio boundary:
 
+Workspace snapshot persistence has a text-integrity boundary defined by
+`docs/adr/2026-07-16-workspace-text-integrity-and-connected-ui-acceptance.md`.
+`WorkspaceTextIntegrityInspector` checks the latest snapshot before it reaches the
+frontend and checks new payloads before persistence. It reports only paths, reason
+codes, lengths, and hashes. Corrupt backend data is a blocking integrity state, not a
+network failure and not a reason to silently render the local demo. Complete
+workspace roundtrips use the UTF-8-safe Python client and semantic hash verification.
+
 `UserAccount -> BlogProject -> PublicationChannels -> Project-scoped EditorialSystem -> PlatformVariants -> Learning`
 
 - `UserAccount`: the future authenticated principal. It may own or access several
@@ -271,16 +279,28 @@ approves editorial artifacts automatically.
 - `SearchCampaignTrace`: provider-free explanation of the radar's query intents,
   query families, evidence types, source eligibility, budget skips, and the boundary
   that raw material does not own topic/fabula decisions.
-- `RadarRunTrace`: planned read-model page for one run id. It should render the full
-  upstream search campaign and benchmark verdict without turning `RadarCard` into a
-  diagnostics god component.
+- `RadarRunTrace`: implemented read-model page for one run id. It renders the search
+  campaign, triage, read outcomes, evidence fragments, signal extraction attempts,
+  budgets, material decisions, signal candidates and benchmark verdict without
+  turning `RadarCard` into a diagnostics god component.
 - `FoundMaterial`: retrieval output from an internal or external source, with source
-  and run provenance. It is not yet a reviewed source signal and does not own topic or
-  fabula.
-- `SignalExtraction` and `SignalScoring`: application-layer policies that turn found
-  material into reviewed source-signal candidates and explain novelty, source
-  credibility, author fit, audience value, positioning fit, topic affinity, evidence
-  strength, and risk.
+  and run provenance plus bounded hashed evidence fragments. It is not yet a reviewed
+  source signal and does not own topic or fabula.
+- `SignalExtraction`: implemented backend application policy that builds a bounded
+  dossier, extracts zero or more evidence-backed signal candidates, validates exact
+  material/fragment grounding, and records a terminal decision for every material.
+- `RadarLanguageContext`: implemented bounded contract that takes the canonical
+  editorial language from `BlogProject.language`, combines it with the radar's
+  source-language policy, and records actual query languages and source eligibility.
+  Signal editorial fields use the project language; original source titles and exact
+  evidence quotations remain unchanged and resolvable by material/fragment handles.
+- `SignalUtilityScoring`: implemented backend application policy. It builds a bounded
+  project opportunity profile and signal dossier, obtains semantic dimension evidence,
+  validates all setting/evidence handles, and applies the deterministic categorical
+  recommendation without changing source evidence or human status.
+- `SourceSignalReviewLifecycle`: implemented authenticated and reversible human
+  decision policy with optimistic revision checks. Correction can change only
+  editorial title, summary and author comment; evidence and provenance are immutable.
 - Slice 1.5.1 correction: `EditorialRadar` owns atomic search rules and optional
   search sources. `SourceSignal` remains raw material with radar provenance, date,
   finding, evidence, search note, duplicate risk, and review status. Topic/fabula/
@@ -1523,7 +1543,7 @@ Concrete portfolio backend files:
 - `backend/app/domain/portfolio.py`
 - `backend/app/infrastructure/sqlite_portfolio_repository.py`
 
-The Dockerized local stack is an execution wrapper around the same boundaries:
+The Dockerized local stack remains the base execution wrapper around the same boundaries:
 
 - `docker/backend.Dockerfile` builds only the FastAPI backend and Python dependencies.
 - `docker/frontend.Dockerfile` builds only the Vite frontend and Node dependencies.
@@ -1532,6 +1552,22 @@ The Dockerized local stack is an execution wrapper around the same boundaries:
   `./var` for SQLite audit/run state.
 - `.dockerignore` excludes `.env`, local caches, `node_modules`, build outputs, and
   audit data from the Docker build context.
+
+Acceptance uses the isolated remote runtime defined by
+`compose.remote.yaml`, `docker/qa.Dockerfile`, and
+`scripts/remote_docker_runtime.py`. Source stays local and is streamed to the Docker
+daemon at `ssh://flowise`; tests, browser checks, and provider-backed proofs execute in
+the remote containers. The override uses Compose project `glavred`, loopback-only UI
+and API bindings, an internal-only Redis, resource limits, and Glavred-owned named
+volumes. Power Web resources on the same host are an explicit non-owned boundary.
+The on-demand QA container alone uses host networking so Chromium can verify the
+loopback-only public bindings from the server itself; it does not publish ports.
+
+Secrets cross this boundary only as allowlisted SSH-stdin transfers into protected
+remote files. Backend, worker, and QA consume read-only secret files rather than
+secret-bearing environment values. This execution change does not alter DraftRun or
+RadarRun AS IS contracts. See ADR
+`docs/adr/2026-07-22-use-isolated-remote-docker-for-test-runtime.md`.
 
 Docker does not change ownership rules. API handlers remain thin, provider calls stay
 under `backend/app/infrastructure`, workspace state remains local-first, and future DB,
@@ -2171,11 +2207,13 @@ is unavailable.
 - Bulk import can accept many historical items into archive, while preserving
   provenance, acceptance mode, and evidence policy.
 - Source ingestion adapters can later replace manual signal entry.
-- Upstream search adapters should populate `RadarRun`, `searchPlan`, raw results,
-  selected/rejected read decisions, and `FoundMaterial` before promoting anything
-  into `SourceSignal`. OpenRouter search, URL reading, future RSS, social, document,
-  API, and MCP adapters belong in infrastructure; signal extraction, scoring, and
-  candidate assembly belong in application services.
+- Upstream search adapters populate `RadarRun`, `searchPlan`, raw results,
+  selected/rejected read decisions, `FoundMaterial` and retained fragments before the
+  extraction application service creates candidate `SourceSignal`. OpenRouter search,
+  extraction, URL reading, future RSS, social, document, API and MCP adapters belong
+  in infrastructure; extraction orchestration, grounding, utility scoring and
+  candidate assembly belong in application services. Utility recommendation and human
+  review remain separate; only the latter changes the signal's review status.
 - Validator adapters can later replace deterministic checks while preserving
   evidence-backed `ValidatorResult` contracts.
 - Context chat can open draft flows for structured entities, but should not bypass

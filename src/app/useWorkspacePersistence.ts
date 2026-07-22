@@ -32,7 +32,7 @@ export type WorkspaceSetter = Dispatch<SetStateAction<WorkspaceState>>;
 export function useWorkspacePersistence() {
   const [portfolio, setPortfolio] = useState(() => store.load());
   const [toast, setToast] = useState('');
-  const backend = useBackendPortfolioBridge({ localStore: store, portfolio, setPortfolio, setToast });
+  const backend = useBackendPortfolioBridge({ portfolio, setPortfolio, setToast });
   const activeUser = getActiveUser(portfolio);
   const activeProject = getActiveProject(portfolio);
   const accessibleProjects = getAccessibleProjects(portfolio);
@@ -134,6 +134,7 @@ export function useWorkspacePersistence() {
     authError: backend.authError,
     archiveProject,
     backendStatus: backend.backendStatus,
+    integrityError: backend.integrityError,
     changeAuthorNotes,
     createProject,
     login: backend.login,

@@ -145,7 +145,7 @@ The largest backend files are a useful smell list, not an automatic failure list
 | ---: | --- | --- |
 | 325 | `backend/app/drafting/application/planning/material_plan_retry_orchestrator.py` | Complex retry/orchestration logic outside a drafting package. |
 | 291 | `backend/app/infrastructure/sqlite_portfolio_repository.py` | Persistence adapter may need split by table/use-case if it grows further. |
-| 216 | `backend/app/upstream/application/external_run_service.py` | First upstream runner is now below the large-module audit threshold after search operation, benchmark-report, and result-status owners were extracted. |
+| 215 | `backend/app/upstream/application/external_run_service.py` | Upstream orchestration stays below the large-module audit threshold after search, triage, read, payload, budget, benchmark, and result-status owners were extracted. |
 | 220+ | `backend/app/drafting/application/*` migrated DraftRun modules | Some owner modules remain intentionally large after behavior-preserving migration; follow-up refactors should split by service/policy/component role, not move behavior back to flat legacy paths. |
 
 The recovery goal is not to split every large file immediately. The goal is to stop
@@ -157,7 +157,9 @@ Slice 2.17.4.6.0.3.2 adds `backend/app/shared/llm_operations` as a factual AS IS
 contract layer while most DraftRun provider-heavy services still live in flat legacy
 modules. The shared package now owns `LlmOperationEnvelope`, `JsonOperationEnvelope`,
 attempt/result DTOs, incident taxonomy, input/payload stats, retry policy, timeout
-profile, and `CURRENT_LLM_OPERATION_INVENTORY`.
+profile, provider-neutral final-message budget guard, and
+`CURRENT_LLM_OPERATION_INVENTORY`. DraftRun keeps a compatibility re-export of the
+shared message guard; upstream uses the shared owner directly.
 
 Representative migrated operations now emit `operationEnvelope` or an equivalent
 nested shared envelope payload:
@@ -171,6 +173,10 @@ nested shared envelope payload:
 Other provider-heavy operations are still legacy debt, but they are explicitly
 listed in the inventory with owner, current module, operation kind, migration status,
 reason not migrated, removal slice, and expected incident coverage.
+
+Slice `2.17.4.6.2` adds `openWebQuery` to that inventory. Its upstream-owned input
+builder, direct budget gate, per-mode profile registry, final-message guard, and
+provider usage trace prevent new web-search calls from bypassing operation governance.
 
 ## DraftRun Provider-Input Payload Budgets
 

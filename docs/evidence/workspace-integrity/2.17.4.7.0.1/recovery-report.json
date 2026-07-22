@@ -1,0 +1,50 @@
+{
+  "sliceId": "2.17.4.7.0.1",
+  "affectedProjectId": "project-ai-design-patterns",
+  "sourceIntegrity": "ok",
+  "latestBlockingIssueCount": 1817,
+  "targetSnapshotCount": 50,
+  "targetFirstAt": "2026-07-02T14:03:22.822964Z",
+  "targetLastAt": "2026-07-16T13:00:22.662869Z",
+  "allSnapshotCount": 74,
+  "backupBytes": 82432000,
+  "backupSha256": "4aa7049af653d3c253224851c547f1de729b8974d210d3b2813ed9657570f6dd",
+  "preservedProjectIds": [
+    "project-glavred-blog",
+    "project-kasha-iz-topora"
+  ],
+  "resetProjectIds": [
+    "project-ai-design-patterns"
+  ],
+  "recoveredIntegrity": "ok",
+  "activeBlockingIssueCount": 0,
+  "automaticTextRepairAttempted": false,
+  "roundtripCycles": 10,
+  "roundtripSemanticHash": "acda48d572b32a128394fe2ffa34e3ecaf4698b22e9d74e66f4e881890d2e5a5",
+  "postLiveDatabaseIntegrity": {
+    "portfolio": "ok",
+    "draftRuns": "ok",
+    "aiRuns": "ok"
+  },
+  "connectedAcceptance": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-1",
+    "retrievalStatus": "succeeded",
+    "extractionStatus": "succeeded",
+    "foundMaterialCount": 2,
+    "sourceSignalCount": 2,
+    "materialDecisionCoverageComplete": true,
+    "unresolvedEvidenceRefCount": 0,
+    "groundingViolationCount": 0,
+    "downstreamLeakFree": true,
+    "providerInputTokens": 3020,
+    "providerOutputTokens": 792,
+    "messageCharCount": 12742,
+    "messageCharLimit": 16000,
+    "persistedByUi": true,
+    "technicalTraceOpened": true,
+    "authenticatedHosts": [
+      "127.0.0.1:5176",
+      "localhost:5176"
+    ]
+  }
+}

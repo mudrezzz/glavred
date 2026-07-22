@@ -14,6 +14,9 @@ describe('radarRunTraceViewModel', () => {
       'Стратегия источников',
       'Операции',
       'Сырые результаты',
+      'Оценка результатов',
+      'Группы дублей',
+      'План чтения',
       'Отбор перед чтением',
       'Найденные материалы',
       'Предупреждения и ошибки',
@@ -32,6 +35,32 @@ describe('radarRunTraceViewModel', () => {
         expect.objectContaining({ label: 'skip', title: 'vendor-pricing-noise' })
       ])
     );
+    expect(viewModel.details.find((detail) => detail.id === 'triage-quality')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Maintenance workbench case', status: 'score 79' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'duplicate-groups')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'canonical-url', title: '2 результатов' })
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'read-plan')?.fields).toEqual(
+      expect.arrayContaining([
+        { label: 'Пробелы покрытия', value: 'limitationCritique: no-candidate' },
+        { label: 'Успешно прочитано', value: '1' }
+      ])
+    );
+    expect(viewModel.details.find((detail) => detail.id === 'found-materials')?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          meta: expect.arrayContaining([
+            { label: 'Группа дублей', value: 'duplicate-group-case' },
+            { label: 'Причина выбора', value: 'coverage-aware-best-result' }
+          ])
+        })
+      ])
+    );
   });
 
   it('keeps minimal legacy RadarRun payloads readable', () => {
@@ -40,6 +69,7 @@ describe('radarRunTraceViewModel', () => {
       rawResults: undefined,
       selectedForRead: undefined,
       rejectedBeforeRead: undefined,
+      searchTriage: undefined,
       warnings: [],
       errors: []
     }));
@@ -134,6 +164,100 @@ describe('radarRunTraceViewModel', () => {
       ])
     );
   });
+
+  it('renders evidence fragments, terminal decisions, signals, and provider budget trace', () => {
+    const bundle = traceBundle({
+      signalExtraction: {
+        status: 'partial',
+        revision: 2,
+        retryOutcome: 'failed',
+        preservedPreviousSignalIds: ['signal-1'],
+        materialDecisions: [{ materialId: 'material-1', decision: 'signalProducing', reasonCodes: ['grounded'], signalIds: ['signal-1'] }],
+        providerAttempts: [{ attemptLabel: 'primary', model: 'test/model', status: 'accepted', messageCharCount: 3200, providerUsage: { total_tokens: 900 } }],
+        decisionCoverageComplete: true,
+        unresolvedEvidenceHandleCount: 0,
+        groundingViolations: []
+      }
+    });
+    bundle.foundMaterials = [{
+      ...bundle.foundMaterials[0],
+      id: 'material-1',
+      contentFragments: [{ id: 'fragment-1', ordinal: 1, text: 'Проверяемый факт.', startChar: 0, endChar: 17, hash: 'abc', kind: 'text' }]
+    }];
+    bundle.sourceSignals = [{
+      id: 'signal-1', type: 'case', title: 'Проверяемый кейс', source: 'Источник', capturedAt: '2026-07-14',
+      summary: 'Сводка', rawNote: 'Механизм', reviewStatus: 'candidate', confidence: 'medium', radarRunId: bundle.run.id,
+      evidenceRefs: [{ materialId: 'material-1', fragmentId: 'fragment-1', quote: 'Проверяемый факт.' }]
+    }];
+
+    const model = buildRadarRunTraceViewModel(bundle);
+
+    expect(model.details.find((detail) => detail.id === 'evidence-fragments')?.items).toHaveLength(1);
+    const extraction = model.details.find((detail) => detail.id === 'signal-extraction');
+    expect(extraction?.fields).toEqual(expect.arrayContaining([
+      { label: 'Сигналы-кандидаты', value: '1' },
+      { label: 'Результат повтора', value: 'failed' },
+      { label: 'Сохранены сигналы прошлой ревизии', value: '1' },
+      { label: 'Неразрешенные evidence handles', value: '0' }
+    ]));
+    expect(extraction?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'signal-1', status: 'medium' }),
+      expect.objectContaining({ id: 'decision-material-1', status: 'signalProducing' }),
+      expect.objectContaining({ id: 'attempt-0', status: 'accepted' })
+    ]));
+    expect(model.timeline.find((item) => item.detailId === 'signal-extraction')?.status).toBe(bundle.run.signalExtraction?.status);
+  });
+
+  it('renders signal utility scoring, provider recovery, and human review separately', () => {
+    const bundle = traceBundle({
+      signalScoring: {
+        version: 1,
+        runId: 'radar-run-industrial-1',
+        status: 'succeeded',
+        revision: 2,
+        signalIds: ['signal-1'],
+        evaluations: [],
+        providerAttempts: [{ attemptLabel: 'repair', model: 'test/model', status: 'accepted', messageCharCount: 16887 }],
+        unresolvedSettingRefCount: 0,
+        unresolvedEvidenceRefCount: 0,
+        decisionCoverageComplete: true
+      }
+    });
+    bundle.sourceSignals = [{
+      id: 'signal-1', type: 'case', title: 'Промышленный кейс', source: 'Источник', capturedAt: '2026-07-17',
+      summary: 'Сводка', rawNote: 'Механизм', reviewStatus: 'approved', reviewRevision: 1, reviewHistory: [],
+      utilityRevision: 2, utilityReport: {
+        version: 1, revision: 2, status: 'complete', recommendation: 'reviewWithCaution',
+        dimensions: [{ dimension: 'sourceCredibility', status: 'partial', importance: 'weighted', summary: 'Источник вендорский.', reasonCodes: ['vendor-only'], settingRefs: [], evidenceRefs: [] }],
+        blockingReasons: [], warnings: ['vendor-only']
+      }
+    }];
+    bundle.run.operations.push({
+      id: 'signal-scoring-revision-2',
+      runId: bundle.run.id,
+      sourceHandleId: '',
+      kind: 'signalScoring',
+      label: 'Signal utility scoring',
+      status: 'succeeded'
+    } as (typeof bundle.run.operations)[number]);
+
+    const model = buildRadarRunTraceViewModel(bundle);
+    const scoring = model.details.find((detail) => detail.id === 'signal-scoring');
+
+    expect(scoring?.fields).toEqual(expect.arrayContaining([
+      { label: 'Сигналов оценено', value: '1' },
+      { label: 'Неразрешенные настройки', value: '0' },
+      { label: 'Неразрешенные доказательства', value: '0' }
+    ]));
+    expect(scoring?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'utility-signal-1', status: 'reviewWithCaution' }),
+      expect.objectContaining({ id: 'scoring-attempt-0', status: 'accepted' })
+    ]));
+    expect(model.details.find((detail) => detail.id === 'operations')?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'signal-scoring-revision-2', status: 'succeeded' })
+    ]));
+    expect(model.timeline.find((item) => item.detailId === 'signal-scoring')?.status).toBe('succeeded');
+  });
 });
 
 function traceBundle(runOverrides = {}): RadarRunTraceBundle {
@@ -148,6 +272,7 @@ function traceBundle(runOverrides = {}): RadarRunTraceBundle {
     run,
     sourceHandles: workspace.sourceRegistry.handles,
     foundMaterials: workspace.foundMaterials,
+    sourceSignals: [],
     benchmarkReport: null,
     source: 'local'
   };

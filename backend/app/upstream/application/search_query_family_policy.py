@@ -27,6 +27,9 @@ class SearchQueryFamilyPolicy:
             families.append(self._freshness_family(language, priority=len(families) + 1))
         return families
 
+    def for_family(self, family: str, *, language: str, include_freshness: bool) -> SearchQueryFamily:
+        return next(item for item in self.families(language=language, include_freshness=include_freshness) if item.family == family)
+
     def _base_families(self, language: str) -> list[SearchQueryFamily]:
         if language == "ru":
             return [

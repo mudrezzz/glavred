@@ -15,6 +15,10 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Choose and execute the right validation scope for the current change.
 
+Run all selected Glavred tests through
+`.agents/skills/remote-docker-testing/SKILL.md`. Local execution may diagnose a
+bootstrap failure but cannot satisfy acceptance.
+
 ## Test layers
 
 Consider:
@@ -60,6 +64,9 @@ Consider:
    - `npm run test:architecture` for every refactor, domain, application, app, or
      frontend slice
    - backend unit/contract tests for backend slices when the command exists
+   - for persisted workspace or portfolio UI changes, an authenticated browser test
+     against real FastAPI and temporary SQLite; assert `/api/users/me` returns `200`
+     after login and fail on `localFallback`, CORS, or backend unavailability
 6. Run the selected commands if available.
 7. Report results clearly.
 

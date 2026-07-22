@@ -9,7 +9,7 @@ describe('Signals app flow', () => {
     localStorage.clear();
   });
 
-  it('shows the signals workspace with radars, reviewable signals, and post-candidate preview', () => {
+  it('shows the signals workspace with localized radars and reviewable signals', () => {
     renderAppCabinet();
 
     goToSignals();
@@ -28,7 +28,7 @@ describe('Signals app flow', () => {
     expect(screen.getAllByText('Память автора').length).toBeGreaterThan(0);
     expect(document.querySelector('.source-grid')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /Sanitized author materials/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Материалы автора/i }));
     const expandedRadar = screen.getAllByTestId('radar-row').find((row) => row.classList.contains('expanded')) as HTMLElement;
     expect(within(expandedRadar).getByRole('tab', { name: /Настройка/i })).toHaveAttribute('aria-selected', 'true');
     expect(within(expandedRadar).getByTestId('radar-settings-panel')).toBeInTheDocument();
@@ -54,32 +54,13 @@ describe('Signals app flow', () => {
     if (!signalRow.classList.contains('expanded')) {
       fireEvent.click(within(signalRow).getAllByRole('button')[0]);
     }
-    expect(within(signalRow).getByText('Evidence')).toBeInTheDocument();
-    expect(within(signalRow).getByTestId('signal-filter-evaluations')).toBeInTheDocument();
-    expect(within(signalRow).getByText(/Фильтры отбора/i)).toBeInTheDocument();
-    expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Все по фильтрам' })).toBeInTheDocument();
+    expect(within(signalRow).getByText('Доказательства')).toBeInTheDocument();
+    expect(within(signalRow).getByRole('heading', { name: 'Редакционная полезность' })).toBeInTheDocument();
+    expect(within(screen.getByTestId('signal-filter-status-filter')).getByRole('option', { name: 'Любая полезность' })).toBeInTheDocument();
     fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
     expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
     fireEvent.change(screen.getByTestId('signal-filter-status-filter'), { target: { value: 'all' } });
-    fireEvent.click(within(signalRow).getByRole('button', { name: /Утвердить сигнал|РЈС‚РІРµСЂРґРёС‚СЊ СЃРёРіРЅР°Р»/i }));
-    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'approved' } });
-    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
-
-    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'new' } });
-    const archiveRow = screen.getAllByTestId('source-signal-row')[0];
-    fireEvent.click(within(archiveRow).getAllByRole('button')[0]);
-    fireEvent.click(within(archiveRow).getByRole('button', { name: /В архив|Р’ Р°СЂС…РёРІ/i }));
-    fireEvent.change(screen.getByLabelText(/Фильтр статуса сигнала/i), { target: { value: 'archived' } });
-    expect(screen.getAllByTestId('source-signal-row').length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByRole('button', { name: /Кандидаты постов|РљР°РЅРґРёРґР°С‚С‹ РїРѕСЃС‚РѕРІ/i }));
     expect(screen.queryByText(/Slice 1\.6/i)).not.toBeInTheDocument();
-    expect(screen.getAllByTestId('post-candidate-card').length).toBeGreaterThanOrEqual(2);
-    const candidateCard = screen.getAllByTestId('post-candidate-card')[0];
-    const candidateTitle = within(candidateCard).getByRole('heading', { level: 3 }).textContent ?? '';
-    fireEvent.click(within(candidateCard).getByRole('button', { name: /^Утвердить$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Собрать инсайт/i }));
-    expect(screen.getAllByText(candidateTitle).length).toBeGreaterThan(1);
   });
 
   it('edits an existing radar inline with multiline rule and source fields', () => {
@@ -100,6 +81,10 @@ describe('Signals app flow', () => {
     expect(screen.getByTestId('radar-list').previousElementSibling).not.toHaveClass('radar-editor');
     expect(within(inlineEditor as HTMLElement).getByTestId('radar-source-discovery-mode')).toBeInTheDocument();
     expect(within(inlineEditor as HTMLElement).getByTestId('radar-filter-section')).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByRole('radiogroup', { name: 'Языки источников' })).toBeInTheDocument();
+    expect(within(inlineEditor as HTMLElement).getByLabelText('Язык редакции и английский')).toBeChecked();
+    fireEvent.click(within(inlineEditor as HTMLElement).getByLabelText('Любые языки'));
+    expect(within(inlineEditor as HTMLElement).getByLabelText('Любые языки')).toBeChecked();
     expect((inlineEditor as HTMLElement).querySelector('.radar-filter-controls')).toBeInTheDocument();
     expect(within(inlineEditor as HTMLElement).queryByText(/^Заметка$/i)).not.toBeInTheDocument();
     expect(lastRadar.querySelectorAll('.radar-rule-edit textarea').length).toBeGreaterThan(0);

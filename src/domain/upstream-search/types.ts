@@ -49,6 +49,8 @@ export type RadarRunOperationKind =
   | 'readUrl'
   | 'importDocument'
   | 'metadataOnly'
+  | 'signalExtraction'
+  | 'signalScoring'
   | 'skip';
 
 export interface RadarRunBudget {
@@ -62,6 +64,11 @@ export interface RadarRunBudget {
   usedExternalQueries: number;
   usedUrlReads: number;
   usedFoundMaterials: number;
+  maxProviderInputChars?: number;
+  maxProviderInputTokens?: number;
+  maxResultsPerQuery?: number;
+  usedProviderInputChars?: number;
+  usedProviderInputTokens?: number;
 }
 
 export interface RadarRunOperation {
@@ -77,6 +84,14 @@ export interface RadarRunOperation {
   foundMaterialIds: string[];
   skippedReason?: string;
   error?: string;
+  providerInput?: Record<string, unknown>;
+  payloadBudget?: Record<string, unknown>;
+  inputStats?: Record<string, unknown>;
+  payloadStats?: Record<string, unknown>;
+  messageCharCount?: number;
+  providerUsage?: Record<string, unknown>;
+  selectedModel?: string;
+  maxResults?: number;
 }
 
 export interface RadarSearchQuery {
@@ -90,6 +105,7 @@ export interface RadarSearchQuery {
   family?: string;
   evidenceType?: string;
   priority?: number;
+  queryLanguage?: string;
 }
 
 export interface RadarSearchIntent {
@@ -103,6 +119,7 @@ export interface RadarSearchIntent {
   rationale: string;
   priority: number;
   queryTerms: string[];
+  queryLanguage?: string;
 }
 
 export interface RadarSkippedSearchIntent {
@@ -113,6 +130,7 @@ export interface RadarSkippedSearchIntent {
   intentId?: string;
   intentType?: string;
   family?: string;
+  queryLanguage?: string;
 }
 
 export interface RadarSearchCampaignTrace {
@@ -147,6 +165,27 @@ export interface RadarSearchPlan {
   };
   trace?: RadarSearchCampaignTrace;
   skippedIntentDetails?: RadarSkippedSearchIntent[];
+  languageContext?: RadarLanguageContextTrace;
+  languageCoverageGaps?: Array<{ language: string; reason: string }>;
+}
+
+export interface RadarLanguageContextTrace {
+  projectId: string;
+  editorialLanguage: string;
+  sourceLanguagePolicy: 'editorialOnly' | 'editorialAndEnglish' | 'any';
+  queryLanguages: string[];
+  allowedSourceLanguages: string[];
+  allowUnknownSourceLanguage: boolean;
+  fallbackReason?: string;
+}
+
+export interface RadarSourceLanguageTrace {
+  language: string;
+  confidence: string;
+  mixed: boolean;
+  reasonCodes: string[];
+  allowed?: boolean;
+  eligibilityReason?: string;
 }
 
 export interface RadarRawSearchResult {
@@ -160,20 +199,114 @@ export interface RadarRawSearchResult {
   score: number;
   duplicateKey: string;
   provider: string;
+  intentId?: string;
+  family?: string;
+  evidenceType?: string;
+  query?: string;
+  candidateId?: string;
+  duplicateGroupId?: string;
+  dimensionScores?: RadarSearchResultDimensionScores;
+  queryLanguage?: string;
+  sourceLanguage?: RadarSourceLanguageTrace;
 }
 
-export interface RadarReadSelection {
+export interface RadarSearchResultDimensionScores {
+  relevance: number;
+  evidenceFit: number;
+  projectFit: number;
+  sourceQuality: number;
+  novelty: number;
+  noiseRisk: number;
+  total: number;
+  reasonCodes: string[];
+  explanation: string;
+}
+
+export interface RadarReadDecision {
   rawResultId: string;
+  candidateId?: string;
+  duplicateGroupId?: string;
+  status?: 'selected' | 'rejected' | 'duplicate' | 'invalid' | 'deferredByBudget';
   url: string;
   reason: string;
   score: number;
+  families?: string[];
+  evidenceTypes?: string[];
+  domain?: string;
+  duplicateRawResultIds?: string[];
+  queryIds?: string[];
+  intentIds?: string[];
+  sourceLanguage?: RadarSourceLanguageTrace;
 }
 
-export interface RadarReadRejection {
+export type RadarReadSelection = RadarReadDecision;
+export type RadarReadRejection = RadarReadDecision;
+
+export interface RadarSearchDuplicateGroup {
+  id: string;
+  representativeCandidateId: string;
+  candidateIds: string[];
+  rawResultIds: string[];
+  queryIds: string[];
+  intentIds: string[];
+  families: string[];
+  evidenceTypes: string[];
+  domains: string[];
+  matchReasons: string[];
+}
+
+export interface RadarSearchTriageCandidate {
+  id: string;
   rawResultId: string;
+  sourceHandleId: string;
+  queryId: string;
+  intentId: string;
+  family: string;
+  evidenceType: string;
+  title: string;
   url: string;
-  reason: string;
-  score: number;
+  canonicalUrl: string;
+  snippet: string;
+  domain: string;
+  provider: string;
+  fingerprint: string;
+  valid: boolean;
+  invalidReason?: string;
+  scores?: RadarSearchResultDimensionScores | null;
+  sourceLanguage?: RadarSourceLanguageTrace;
+}
+
+export interface RadarSearchReadOutcome {
+  rawResultId: string;
+  candidateId: string;
+  duplicateGroupId?: string;
+  status: 'succeeded' | 'failed' | 'notRun';
+  materialId?: string;
+  readable: boolean;
+  reason?: string;
+}
+
+export interface RadarSearchTriageReport {
+  policyVersion: string;
+  candidates: RadarSearchTriageCandidate[];
+  duplicateGroups: RadarSearchDuplicateGroup[];
+  readPlan: {
+    maxReads: number;
+    qualityFloor: number;
+    requiredFamilies: string[];
+    selectedCandidateIds: string[];
+    decisions: RadarReadDecision[];
+    coveredFamilies: string[];
+    readCoverageGaps: Array<{ family: string; reason: string }>;
+  };
+  readCoverage: {
+    requiredFamilies: string[];
+    coveredFamilies: string[];
+  };
+  readCoverageGaps: Array<{ family: string; reason: string }>;
+  readOutcomes: RadarSearchReadOutcome[];
+  decisionCounts: Record<string, number>;
+  languageContext?: RadarLanguageContextTrace;
 }
 
 export interface RadarBenchmarkReport {
@@ -210,6 +343,59 @@ export interface RadarRun {
   selectedForRead?: RadarReadSelection[];
   rejectedBeforeRead?: RadarReadRejection[];
   benchmarkReport?: RadarBenchmarkReport;
+  searchTriage?: RadarSearchTriageReport;
+  signalExtraction?: RadarSignalExtractionReport;
+  signalScoring?: RadarSignalScoringReport;
+  languageContext?: RadarLanguageContextTrace;
+}
+
+export interface RadarSignalScoringReport {
+  version: number;
+  runId: string;
+  status: 'succeeded' | 'inconclusive' | 'notRun';
+  revision: number;
+  signalIds: string[];
+  evaluations: Array<Record<string, unknown>>;
+  providerAttempts: Array<Record<string, unknown>>;
+  dossier?: Record<string, unknown>;
+  dossiers?: Array<Record<string, unknown>>;
+  batchCount?: number;
+  unresolvedSettingRefCount?: number;
+  unresolvedEvidenceRefCount?: number;
+  decisionCoverageComplete?: boolean;
+}
+
+export type RadarMaterialExtractionDecision =
+  | 'signalProducing'
+  | 'insufficient'
+  | 'duplicate'
+  | 'corroborating'
+  | 'contradiction'
+  | 'noise'
+  | 'extractionFailed';
+
+export interface RadarSignalExtractionReport {
+  status: 'succeeded' | 'partial' | 'failed' | 'notRun';
+  revision: number;
+  revisions?: Array<{ revision: number; status: string }>;
+  retryOutcome?: 'succeeded' | 'partial' | 'failed' | 'notRun';
+  preservedPreviousSignalIds?: string[];
+  materialDecisions: Array<{
+    materialId: string;
+    decision: RadarMaterialExtractionDecision;
+    reasonCodes: string[];
+    signalIds: string[];
+  }>;
+  decisionCounts?: Record<string, number>;
+  signalIds?: string[];
+  signalCount?: number;
+  providerAttempts?: Array<Record<string, unknown>>;
+  groundingViolations?: Array<Record<string, unknown>>;
+  warnings?: string[];
+  dossier?: Record<string, unknown>;
+  decisionCoverageComplete?: boolean;
+  unresolvedEvidenceHandleCount?: number;
+  createdDownstreamArtifacts?: Record<string, number>;
 }
 
 export type FoundMaterialType =
@@ -238,4 +424,25 @@ export interface FoundMaterial {
   status: FoundMaterialStatus;
   warnings: string[];
   provenanceLabel: string;
+  sourceLanguage?: RadarSourceLanguageTrace;
+  contentFragments?: Array<{
+    id: string;
+    ordinal: number;
+    text: string;
+    startChar: number;
+    endChar: number;
+    hash: string;
+    kind: string;
+  }>;
+  discoveryTrace?: {
+    rawResultIds: string[];
+    queryIds: string[];
+    intentIds: string[];
+    families: string[];
+    evidenceTypes: string[];
+    duplicateGroupId?: string;
+    decisionReason?: string;
+    queryLanguage?: string;
+    sourceLanguage?: RadarSourceLanguageTrace;
+  };
 }

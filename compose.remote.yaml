@@ -1,0 +1,86 @@
+services:
+  redis:
+    ports: !reset []
+    cpus: 0.25
+    mem_limit: 256m
+
+  backend:
+    env_file: !override
+      - ${GLAVRED_REMOTE_RUNTIME_ENV_FILE:-./var/remote/glavred.runtime.env}
+    environment:
+      GLAVRED_API_HOST: 0.0.0.0
+      GLAVRED_API_PORT: 8000
+      GLAVRED_CORS_ORIGINS: http://localhost:5176,http://127.0.0.1:5176
+      GLAVRED_DEV_AUTH_PASSWORD_FILE: /run/secrets/glavred_dev_auth_password
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+      OPENROUTER_HTTP_REFERER: http://localhost:5176
+      REDIS_URL: redis://redis:6379/0
+      DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
+      SQLITE_JOURNAL_MODE: DELETE
+    ports: !override
+      - "127.0.0.1:${GLAVRED_REMOTE_API_PORT:-8000}:8000"
+    volumes: !override
+      - runtime:/app/var
+      - ${GLAVRED_REMOTE_SECRET_DIR:-/opt/glavred-secrets}/glavred_dev_auth_password:/run/secrets/glavred_dev_auth_password:ro
+      - ${GLAVRED_REMOTE_SECRET_DIR:-/opt/glavred-secrets}/openrouter_api_key:/run/secrets/openrouter_api_key:ro
+    cpus: 0.75
+    mem_limit: 1536m
+
+  worker:
+    env_file: !override
+      - ${GLAVRED_REMOTE_RUNTIME_ENV_FILE:-./var/remote/glavred.runtime.env}
+    environment:
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+      REDIS_URL: redis://redis:6379/0
+      DRAFT_RUN_DB_PATH: var/glavred-draft-runs.sqlite3
+      SQLITE_JOURNAL_MODE: DELETE
+    volumes: !override
+      - runtime:/app/var
+      - ${GLAVRED_REMOTE_SECRET_DIR:-/opt/glavred-secrets}/openrouter_api_key:/run/secrets/openrouter_api_key:ro
+    cpus: 1.5
+    mem_limit: 3g
+
+  frontend:
+    env_file: !override
+      - ${GLAVRED_REMOTE_RUNTIME_ENV_FILE:-./var/remote/glavred.runtime.env}
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports: !override
+      - "127.0.0.1:${GLAVRED_REMOTE_FRONTEND_PORT:-5176}:5173"
+    cpus: 0.5
+    mem_limit: 768m
+
+  qa:
+    profiles: ["qa"]
+    image: glavred-qa:latest
+    build:
+      context: .
+      dockerfile: docker/qa.Dockerfile
+    command: ["sleep", "infinity"]
+    network_mode: host
+    volumes:
+      - artifacts:/app/var
+    cpus: 2.5
+    mem_limit: 5g
+
+  qa-live:
+    profiles: ["qa"]
+    image: glavred-qa:latest
+    env_file:
+      - ${GLAVRED_REMOTE_RUNTIME_ENV_FILE:-./var/remote/glavred.runtime.env}
+    environment:
+      GLAVRED_DEV_AUTH_PASSWORD_FILE: /run/secrets/glavred_dev_auth_password
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+    command: ["sleep", "infinity"]
+    network_mode: host
+    volumes:
+      - artifacts:/app/var
+      - runtime:/runtime-var:ro
+      - ${GLAVRED_REMOTE_SECRET_DIR:-/opt/glavred-secrets}/glavred_dev_auth_password:/run/secrets/glavred_dev_auth_password:ro
+      - ${GLAVRED_REMOTE_SECRET_DIR:-/opt/glavred-secrets}/openrouter_api_key:/run/secrets/openrouter_api_key:ro
+    cpus: 2.5
+    mem_limit: 5g
+
+volumes:
+  runtime:
+  artifacts:

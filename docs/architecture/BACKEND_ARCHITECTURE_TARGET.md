@@ -271,6 +271,15 @@ Implemented operation safety repair:
     `skippedIntents[]`, and adds campaign trace fields for source strategy, intent
     coverage, budget skips, and the rule that raw found material does not own
     topic/fabula decisions.
+- Upstream search-result triage and provider budgets:
+  - Slice `2.17.4.6.2` splits normalization, duplicate grouping, deterministic quality
+    assessment, read allocation, read execution, payload construction, and run budget
+    policy into named upstream owners;
+  - `openWebQuery` uses an upstream direct budget profile and the shared
+    provider-neutral final-message guard, while DraftRun-specific dossier runtime
+    remains under `backend.app.drafting`;
+  - architecture smoke rejects a future upstream web-search provider call outside the
+    governed operation owner.
 
 ## Context Ownership
 

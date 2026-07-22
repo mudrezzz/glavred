@@ -28,6 +28,34 @@ adds the project dashboard and lifecycle UX. Frontend runtime still keeps
 `LocalPortfolioStore` as fallback, but first tries `BackendPortfolioStore`:
 authenticated sessions load backend projects/workspaces, `401` shows the login
 panel, and network failure keeps the local demo portfolio.
+
+Logout is an authentication boundary, not a workspace persistence action. The UI
+must switch to `loginRequired` immediately, request `/api/auth/logout` with cookies,
+and invalidate earlier load/save callbacks. A late autosave failure must never move a
+logged-out client back to `localFallback` or reveal the previous account workspace.
+Both the project dashboard topbar and the opened-project account switcher expose the
+same logout command.
+
+With the Docker stack running, verify both real logout surfaces and account switching
+with `npm run test:auth-session`. The smoke requires `/api/users/me=401` after each
+logout, so a visual transition without cookie invalidation cannot pass.
+
+Workspace integrity is stricter than network fallback. A stored workspace with
+probable mojibake returns controlled `409`; an unsafe write returns `422` with
+`workspace-text-integrity-failed`. The frontend stops autosave and shows a blocking
+integrity state. Do not use PowerShell `Invoke-RestMethod` for a complete workspace
+`GET -> PUT` cycle. Use:
+
+```bash
+python scripts/workspace_utf8_client.py --project-id project-ai-design-patterns --cycles 10
+python scripts/check_workspace_integrity.py --fail-on-error
+```
+
+The client reads credentials from `.env`, preserves UTF-8, and compares semantic
+hashes without printing the workspace or secrets. For a damaged local database, run
+`python scripts/recover_workspace_database.py --project-id project-ai-design-patterns`
+first in dry-run mode, preserve its backup, and add `--apply` only after the report
+confirms that clean projects remain untouched.
 Legacy `glavred.workspace.v1` storage is migrated into one default project; fresh
 local reset seeds two users and three project containers. After login, users land on
 the project dashboard; they enter a project cabinet explicitly through `Открыть
@@ -76,13 +104,90 @@ normalization in `src/domain/upstream-search`, local deterministic orchestration
 through `src/infrastructure/radarRunClient.ts` and falls back to the local contract
 run if the backend is unavailable. The backend runner may create `RadarRun`,
 `searchPlan`, raw results, selected/rejected URL-read decisions, and `FoundMaterial`,
-but it must not create `SourceSignal`, `PostCandidate`, plan slots, or DraftRuns.
+then pass readable fragments to the dedicated extraction owner. Extraction may create
+only unreviewed `SourceSignal` candidates with exact evidence handles; it must not
+approve them or create `PostCandidate`, plan slots, or DraftRuns.
 `searchPlan` is now an enriched provider-free campaign payload: old `queries[]` and
 `skippedIntents[]` remain compatible, while `intents[]`, `sourceStrategy`,
 `trace`, and `skippedIntentDetails[]` explain query families, evidence coverage,
 source eligibility, and budget skips before provider search runs.
 Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
 URL reading belongs behind the public URL reader port.
+
+Radar language is an explicit bounded contract. The frontend passes only project id
+and `BlogProject.language`; `RadarLanguageContextFactory` combines it with
+`RadarDefinition.sourceLanguagePolicy`. Compatibility `searchPlan.language` means
+editorial language, while every intent and query has its own `queryLanguage`.
+`editorialAndEnglish` distributes existing query families across the editorial
+language and English without adding provider operations. A confidently detected
+forbidden source language is not read; `unknown` and `mixed` continue with a trace
+warning.
+
+Extraction localizes only editorial interpretation fields. Never translate or
+rewrite `sourceTitle` or exact `evidenceRefs.quote` values. New backend extraction
+signals enter the workspace as `reviewStatus=candidate`; automatic utility scoring
+then builds a bounded project profile and signal dossier. Do not call the legacy
+TypeScript filter evaluator while merging them. Signal cards must resolve every
+evidence handle to an external source URL and a `/radar-runs` detail link; confidence
+describes extraction reliability, not editorial utility.
+
+Signal utility is backend-owned. `ProjectEditorialOpportunityProfileFactory` projects
+only bounded active settings and history fingerprints; `SignalUtilityScoringService`
+performs batch provider recovery under direct input/message budgets; the deterministic
+decision policy owns `recommended`, `reviewWithCaution`, `notRecommended`, and
+`inconclusive`. A blocking rejection requires a proven conflict with an active
+blocking filter. Manual rescore reuses saved signals/materials and must not add search,
+read, or extraction operations.
+
+The canonical report is `SignalUtilityReport v2`. Keep its ownership layers separate:
+
+- `radarCriteria` comes only from enabled radar filters and preserves filter mode;
+- `projectCriteria` comes from retained author, audience, positioning, goal, topic and
+  prohibition settings;
+- `qualityChecks` comes from `SignalTypeSemanticsRegistry`, not from project settings;
+- `SignalRelationshipReport` is independent from project utility and never defaults
+  an unverified pair to low duplicate risk.
+
+The scoring dossier assigns short `signalKey`, `criterionKey`, and `evidenceKeys`
+aliases for provider output. Resolve them through `SignalUtilityPayloadMapper`; never
+recover missing identities from array position and never accept an unknown alias.
+
+Do not treat a non-empty `mechanism` or `outcome` as proof. Result support must remain
+typed as observed, reported, capability-only, expected, missing or not applicable.
+Do not render `settingId`, `materialId` or `fragmentId` as user evidence: resolve them
+to the saved setting statement, source title/domain, exact quote, source URL and trace
+link. Canonical duplicate grouping is presentation-only; original signals and evidence
+must remain in persisted trace.
+
+Human review is independent from utility recommendation. Use the authenticated review
+endpoint with `expectedReviewRevision`; reject, archive, and correct require a reason.
+Correction can update only title, summary, and author comment, preserves evidence, and
+triggers a new utility revision. Legacy client evaluations are diagnostic history,
+never a current backend verdict.
+
+Search-result triage is deterministic and backend-owned. Keep normalization,
+duplicate grouping, quality assessment, read allocation, read execution, and payload
+construction in their role-owned modules under `backend/app/upstream/application`.
+Every raw result must receive exactly one terminal decision in `run.searchTriage`.
+The read caps are `1/2/4` for `smoke/standard/full`; a result below the quality floor
+or in an unsupported format must not consume a read slot. A read failure creates a
+failed operation and at most a `metadataOnly` material, never a readable success.
+
+`openWebQuery` is governed like other provider-heavy operations: build the typed
+input, run `UpstreamProviderInputBudgetGate`, build messages, then run the shared
+`ProviderMessageBudgetGuard`. Record direct `providerInput`, `payloadBudget`,
+`messageCharCount`, and provider usage on the operation. The current per-call caps are
+1,000 query characters, 1,500 provider-input characters, 4,000 serialized-message
+characters, and about 1,000 local input tokens. Do not use provider-reported web-tool
+prompt tokens as a substitute for the direct local budget: OpenRouter may add its own
+retrieval context. Preserve that value as cost telemetry and handle production limits
+in the search-control layer.
+
+Run the focused regression with:
+
+```powershell
+python -m pytest backend/tests/test_upstream_search_result_triage_v2.py backend/tests/test_upstream_provider_input_budget.py backend/tests/test_public_url_reader.py
+```
 
 Before treating radar search as reliable, keep one golden upstream benchmark small
 and repeatable. The first scenario is
@@ -636,21 +741,39 @@ tokens and other secrets must be redacted before persistence.
 
 ## Commands
 
-Start the full Dockerized local stack:
+Validate and start the remote Docker test runtime:
 
-```bash
-docker compose up --build
+```powershell
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py sync-secrets
+python scripts/remote_docker_runtime.py build
+python scripts/remote_docker_runtime.py up
+python scripts/remote_docker_runtime.py ps
 ```
 
-This starts:
+This starts the Compose project `glavred` on the Docker daemon behind
+`ssh://flowise`:
 
-- `backend`: FastAPI on `http://localhost:8000`, with `./var` mounted for local
-  SQLite AI run audit data.
-- `frontend`: Vite on `http://localhost:5176`, configured to call the backend through
-  `VITE_API_BASE_URL=http://localhost:8000`.
+- `backend`: FastAPI bound to remote loopback port `8000`;
+- `frontend`: Vite bound to remote loopback port `5176`;
+- `worker`: Celery on the Glavred queue;
+- `redis`: reachable only inside the Glavred network;
+- `qa`: a clean on-demand Playwright/Python/Node test image without live runtime
+  settings or secrets;
+- `qa-live`: the same image with sanitized runtime settings, read-only secret files,
+  and read-only runtime-state access for authenticated/live checks.
 
-Docker Compose reads local secrets from `.env`, but `.env` is ignored by Git and
-excluded from the Docker build context by `.dockerignore`.
+Use `python scripts/remote_docker_runtime.py tunnel-command` and run its output in a
+separate terminal to expose UI/API locally. The CLI keeps the Docker host and Compose
+project explicit, checks ownership of ports `5176/8000`, serializes stateful commands,
+and must be used instead of direct Compose commands. Never change the global Docker
+context or run a global prune on the shared host.
+
+`sync-secrets` reads local `.env`, writes a secret-free ignored runtime env, and sends
+only allowlisted secret values over SSH stdin. The complete `.env` is never uploaded.
+Provider and dev-auth secrets are mounted read-only and consumed through
+`OPENROUTER_API_KEY_FILE` and `GLAVRED_DEV_AUTH_PASSWORD_FILE`. Do not print Compose
+interpolation, container environment, or remote secret contents.
 
 Install dependencies:
 
@@ -671,29 +794,34 @@ Start the backend:
 npm run dev:backend
 ```
 
-Run tests:
+Run tests in the remote QA image:
 
-```bash
-npm test
+```powershell
+python scripts/remote_docker_runtime.py test --suite frontend
+python scripts/remote_docker_runtime.py test --suite backend
+python scripts/remote_docker_runtime.py test --suite architecture
+python scripts/remote_docker_runtime.py test --suite design
+python scripts/remote_docker_runtime.py test --suite visual
+python scripts/remote_docker_runtime.py test --suite smoke
+python scripts/remote_docker_runtime.py test --suite auth
+python scripts/remote_docker_runtime.py test --suite workspace-integrity
+python scripts/remote_docker_runtime.py test --suite live-radar
+python scripts/remote_docker_runtime.py test --suite full
 ```
 
-Run backend tests:
+If a fresh provider-backed RadarRun was persisted but the browser assertions failed
+afterward, repeat only the acceptance layer with:
 
-```bash
-npm run test:backend
+```powershell
+python scripts/remote_docker_runtime.py test --suite live-radar --reuse-live-run
 ```
 
-Run build smoke test:
+This mode selects the latest successful saved run and may still execute the explicit
+manual rescore covered by the scenario. It does not satisfy a slice's fresh-live-run
+requirement on its own.
 
-```bash
-npm run smoke
-```
-
-Run React architecture guardrails:
-
-```bash
-npm run test:architecture
-```
+Local test commands may be used for narrow diagnosis, but they are not acceptance
+evidence. Local Docker requires an explicit user request.
 
 Run browser visual smoke checks for operational UI guardrails:
 
@@ -701,11 +829,41 @@ Run browser visual smoke checks for operational UI guardrails:
 npm run test:visual
 ```
 
+`test:visual` includes `connected-signals-smoke.mjs`: real FastAPI, temporary SQLite,
+dev-password login, `/api/users/me = 200`, and five viewport widths. The scenario
+fails on CORS errors, backend unavailability, or `localFallback`; fixture-only checks
+remain useful but do not prove persisted workspace behavior.
+
 Run structural design-system checks for cabinet layout contracts:
 
 ```bash
 npm run test:design
 ```
+
+Diagnose a saved RadarRun signal-extraction revision:
+
+```bash
+python scripts/analyze_radar_signal_extraction.py \
+  --project-id project-ai-design-patterns \
+  --run-id <RadarRun ID> \
+  --format markdown
+```
+
+Set `UPSTREAM_SIGNAL_EXTRACTION_MODEL` to select the extraction model. When empty,
+the backend falls back to `DRAFT_REVIEW_MODEL`, then `OPENROUTER_DEFAULT_MODEL`.
+`OPENROUTER_BACKUP_MODEL` remains the backup attempt. Never print `.env` secrets in
+diagnostics.
+
+The extraction operation receives only radar scope, active rules, enabled filter
+references, material metadata and bounded `contentFragments`. It must not receive a
+full workspace, full page text, topics, fabulas, content plan, publication history or
+old operation envelopes. Primary, repair and backup each need a direct current-call
+budget plus the final serialized-message guard.
+
+`POST /api/radar-runs/{runId}/signal-extraction` reuses persisted fragments. It must
+not execute new search or URL-read operations. A successful revision replaces only
+signals from that run; a failed retry preserves the previous successful revision.
+Retrieval and extraction statuses are independent.
 
 Refresh wiki screenshots:
 

@@ -1,0 +1,36 @@
+{
+  "sliceId": "2.17.4.6.2",
+  "scenarioId": "benchmark-industrial-ai-maintenance-cases",
+  "before": {
+    "startedAt": "2026-07-13T16:46:20.637272+00:00",
+    "completedAt": "2026-07-13T16:49:39.247837+00:00",
+    "rawResultCount": 55,
+    "selectedReadCount": 2,
+    "readableMaterialWithoutWarningsCount": 1,
+    "benchmarkStatus": "warning"
+  },
+  "after": {
+    "startedAt": "2026-07-13T17:36:18.883031+00:00",
+    "completedAt": "2026-07-13T17:39:26.501851+00:00",
+    "elapsedSeconds": 187.812,
+    "rawResultCount": 52,
+    "terminalDecisionCount": 52,
+    "duplicateGroupCount": 35,
+    "selectedReadCount": 2,
+    "readableMaterialCount": 2,
+    "metadataOnlyMaterialCount": 0,
+    "distinctSelectedDomainCount": 2,
+    "acceptedNoiseCount": 0,
+    "benchmarkStatus": "warning",
+    "providerHealth": "ok",
+    "traceComplete": true,
+    "searchOperationCount": 3,
+    "directlyBudgetedOperationCount": 3,
+    "messageCharCount": 1185,
+    "localApproxTokenEstimate": 297,
+    "providerReportedTotalTokens": 76112,
+    "providerReportedWebSearchRequests": 11,
+    "budgetIncidentCount": 0
+  },
+  "verdict": "passed-with-existing-campaign-coverage-warning"
+}

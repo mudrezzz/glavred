@@ -8,6 +8,7 @@ describe('ProjectDashboardView', () => {
   it('renders dashboard in the cabinet app shell with owner profile in sidebar footer', () => {
     const portfolio = createDemoPortfolio();
     const activeProjects = getAccessibleProjects(portfolio).slice(0, 1);
+    const onLogout = vi.fn().mockResolvedValue(undefined);
 
     render(
       <ProjectDashboardView
@@ -18,7 +19,7 @@ describe('ProjectDashboardView', () => {
         portfolio={portfolio}
         onArchiveProject={vi.fn()}
         onCreateProject={vi.fn()}
-        onLogout={vi.fn()}
+        onLogout={onLogout}
         onOpenProject={vi.fn()}
         onRenameProject={vi.fn()}
       />
@@ -47,7 +48,8 @@ describe('ProjectDashboardView', () => {
 
     const ownerFooter = screen.getByTestId('project-dashboard-owner');
     expect(ownerFooter).toHaveTextContent('Владелец профиля');
-    expect(within(ownerFooter).getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
+    expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
   it('opens, creates, renames, and archives projects', async () => {
@@ -67,7 +69,7 @@ describe('ProjectDashboardView', () => {
         portfolio={portfolio}
         onArchiveProject={onArchiveProject}
         onCreateProject={onCreateProject}
-        onLogout={vi.fn()}
+        onLogout={vi.fn().mockResolvedValue(undefined)}
         onOpenProject={onOpenProject}
         onRenameProject={onRenameProject}
       />
@@ -95,6 +97,8 @@ describe('ProjectDashboardView', () => {
     fireEvent.click(screen.getAllByLabelText('Действия проекта')[0]);
     fireEvent.click(screen.getAllByRole('button', { name: 'В архив' })[0]);
     await waitFor(() => expect(onArchiveProject).toHaveBeenCalledWith(activeProjects[0].id));
+
+    expect(screen.getByRole('button', { name: 'Выйти' })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Открыть кабинет' })[0]);
     expect(onOpenProject).toHaveBeenCalledWith(activeProjects[0].id);

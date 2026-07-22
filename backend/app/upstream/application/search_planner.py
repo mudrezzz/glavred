@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from backend.app.upstream.application.search_intent_planner import SearchIntentPlanner
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class UpstreamSearchPlanBuilder:
@@ -25,12 +26,14 @@ class UpstreamSearchPlanBuilder:
         handles: list[dict[str, Any]],
         budget: dict[str, int],
         workspace: dict[str, Any],
+        language_context: RadarLanguageContext | None = None,
     ) -> dict[str, Any]:
         return self._planner.build(
             radar=radar,
             handles=handles,
             budget=budget,
             workspace=workspace,
+            language_context=language_context,
         ).to_payload()
 
 
@@ -40,12 +43,14 @@ def build_search_plan(
     handles: list[dict[str, Any]],
     budget: dict[str, int],
     workspace: dict[str, Any],
+    language_context: RadarLanguageContext | None = None,
 ) -> dict[str, Any]:
     return UpstreamSearchPlanBuilder().build(
         radar=radar,
         handles=handles,
         budget=budget,
         workspace=workspace,
+        language_context=language_context,
     )
 
 

@@ -19,8 +19,9 @@ export function useWorkspaceController() {
     backendStatus,
     changeAuthorNotes,
     createProject,
-    login,
-    logout,
+    integrityError,
+    login: backendLogin,
+    logout: backendLogout,
     patchEditorialSetup,
     patchWorkspace,
     portfolio,
@@ -48,7 +49,7 @@ export function useWorkspaceController() {
     setWorkspace,
     workspace
   });
-  const signalsActions = useSignalsWorkspaceActions({ setToast, setWorkspace, workspace });
+  const signalsActions = useSignalsWorkspaceActions({ activeProject, setToast, setWorkspace, workspace });
   const postCandidateActions = usePostCandidateWorkspaceActions({ setToast, setWorkspace });
   const productionActions = useProductionFlowActions({ patchWorkspace, workspace });
 
@@ -73,6 +74,16 @@ export function useWorkspaceController() {
     setPortfolioMode('projectDashboard');
   }
 
+  async function login(email: string, password: string) {
+    setPortfolioMode('projectDashboard');
+    await backendLogin(email, password);
+  }
+
+  async function logout() {
+    setPortfolioMode('projectDashboard');
+    await backendLogout();
+  }
+
   return {
     accessibleProjects,
     active,
@@ -83,6 +94,7 @@ export function useWorkspaceController() {
     authError,
     backendStatus,
     createProject,
+    integrityError,
     editorialModelTab,
     memoryTab,
     portfolio,

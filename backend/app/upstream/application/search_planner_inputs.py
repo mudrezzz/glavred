@@ -7,6 +7,7 @@ Architecture doc: docs/architecture/BACKEND_ARCHITECTURE_TARGET.md
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -67,6 +68,14 @@ class SearchPlannerInputPolicy:
 
     def query_terms(self, base_query: str, suffix: str) -> list[str]:
         return self.clean_query(f"{base_query} {suffix}").split()[:16]
+
+    def query_for_language(self, *, base_query: str, suffix: str, language: str) -> str:
+        tokens = base_query.split()
+        if language == "ru":
+            selected = [item for item in tokens if re.search(r"[\u0400-\u052f]", item)]
+        else:
+            selected = [item for item in tokens if re.search(r"[a-zA-Z]", item) and not re.search(r"[\u0400-\u052f]", item)]
+        return self.clean_query(" ".join([*selected[:12], suffix]))
 
     def clean_query(self, value: str) -> str:
         return " ".join(value.split())[:240]

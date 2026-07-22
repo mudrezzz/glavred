@@ -18,6 +18,7 @@ export type RadarTraceDetail = {
   id: string;
   title: string;
   kicker: string;
+  lifecycleStatus?: string;
   fields: RadarTraceField[];
   items: RadarTraceItem[];
   jsonPayload: unknown;
@@ -62,8 +63,18 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
     ...(bundle.run.searchPlan?.sourceStrategy || bundle.sourceHandles.length > 0 ? [sourceStrategyDetail(bundle)] : []),
     operationsDetail(bundle),
     ...(rawResults.length > 0 ? [rawResultsDetail(bundle)] : []),
+    ...(bundle.run.searchTriage ? [triageQualityDetail(bundle)] : []),
+    ...(bundle.run.searchTriage?.duplicateGroups?.some((group) => group.candidateIds.length > 1)
+      ? [duplicateGroupsDetail(bundle)]
+      : []),
+    ...(bundle.run.searchTriage ? [readPlanDetail(bundle)] : []),
     ...(selected.length > 0 || rejected.length > 0 ? [readSelectionDetail(bundle)] : []),
     ...(bundle.foundMaterials.length > 0 || bundle.run.foundMaterialIds.length > 0 ? [foundMaterialsDetail(bundle)] : []),
+    ...(bundle.foundMaterials.some((material) => (material.contentFragments ?? []).length > 0)
+      ? [evidenceFragmentsDetail(bundle)]
+      : []),
+    ...(bundle.run.signalExtraction ? [signalExtractionDetail(bundle)] : []),
+    ...(bundle.run.signalScoring ? [signalScoringDetail(bundle)] : []),
     ...(bundle.benchmarkReport ? [benchmarkDetail(bundle.benchmarkReport)] : []),
     ...(warnings > 0 ? [warningsDetail(bundle)] : []),
     rawDetail(bundle)
@@ -97,6 +108,7 @@ function summaryFields(bundle: RadarRunTraceBundle): RadarTraceField[] {
     { label: 'Сырые результаты', value: String(run.rawResults?.length ?? 0) },
     { label: 'Чтение', value: `${selected}/${rejected}` },
     { label: 'Материалы', value: String(bundle.foundMaterials.length) },
+    { label: 'Сигналы', value: String(bundle.sourceSignals.length) },
     { label: 'Источник', value: bundle.source }
   ];
 }
@@ -132,6 +144,11 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
     fields: compactFields([
       ['Strategy', plan?.strategy],
       ['Language', plan?.language],
+      ['Редакционный язык', plan?.languageContext?.editorialLanguage],
+      ['Политика языков источников', plan?.languageContext?.sourceLanguagePolicy],
+      ['Языки запросов', plan?.languageContext?.queryLanguages?.join(', ')],
+      ['Пробелы языкового покрытия', plan?.languageCoverageGaps?.map((gap) => `${gap.language}: ${gap.reason}`).join('\n')],
+      ['Причина fallback', plan?.languageContext?.fallbackReason],
       ['Planner version', plan?.trace?.plannerVersion],
       ['Ownership boundary', plan?.trace?.ownershipBoundary],
       ['Queries', plan?.queries.length],
@@ -145,7 +162,7 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         title: intent.label,
         body: [intent.evidenceType, intent.sourceHandleTitle, intent.rationale].filter(Boolean).join('\n'),
         status: intent.intentType,
-        meta: compactFields([['Priority', intent.priority], ['Handle', intent.sourceHandleId]])
+        meta: compactFields([['Priority', intent.priority], ['Handle', intent.sourceHandleId], ['Язык запроса', intent.queryLanguage]])
       })),
       ...(plan?.queries ?? []).map((query) => ({
         id: query.id,
@@ -153,7 +170,7 @@ function searchPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         title: query.label,
         body: query.query,
         status: query.evidenceType,
-        meta: compactFields([['Intent', query.intentId ?? query.intent], ['Rationale', query.rationale]])
+        meta: compactFields([['Intent', query.intentId ?? query.intent], ['Язык запроса', query.queryLanguage], ['Rationale', query.rationale]])
       })),
       ...(plan?.skippedIntentDetails ?? []).map((skip) => ({
         id: skip.id,
@@ -215,10 +232,137 @@ function operationsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
         ['Handle', operation.sourceHandleId],
         ['Started', operation.startedAt],
         ['Completed', operation.completedAt],
-        ['Materials', operation.foundMaterialIds.join(', ')]
+        ['Materials', operation.foundMaterialIds?.join(', ')],
+        ['Model', operation.selectedModel],
+        ['Message chars', operation.messageCharCount],
+        ['Provider usage', operation.providerUsage]
       ])
     })),
     jsonPayload: bundle.run.operations
+  };
+}
+
+function triageQualityDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const triage = bundle.run.searchTriage!;
+  return {
+    id: 'triage-quality',
+    title: 'Оценка результатов',
+    kicker: triage.policyVersion,
+    fields: compactFields([
+      ['Кандидаты', triage.candidates.length],
+      ['Порог качества', triage.readPlan.qualityFloor],
+      ['Выбрано', triage.decisionCounts.selected],
+      ['Ниже порога', triage.decisionCounts.rejected],
+      ['Дубли', triage.decisionCounts.duplicate],
+      ['Отложено бюджетом', triage.decisionCounts.deferredByBudget],
+      ['Некорректные', triage.decisionCounts.invalid]
+    ]),
+    items: triage.candidates.map((candidate) => ({
+      id: `triage-${candidate.id}`,
+      label: candidate.family || 'результат',
+      title: candidate.title,
+      body: candidate.scores?.explanation || candidate.invalidReason || candidate.url,
+      status: candidate.valid ? `score ${candidate.scores?.total ?? 0}` : 'invalid',
+      meta: compactFields([
+        ['Релевантность', candidate.scores?.relevance],
+        ['Тип доказательства', candidate.scores?.evidenceFit],
+        ['Проект', candidate.scores?.projectFit],
+        ['Качество источника', candidate.scores?.sourceQuality],
+        ['Новизна', candidate.scores?.novelty],
+        ['Риск шума', candidate.scores?.noiseRisk],
+        ['Домен', candidate.domain],
+        ['Язык источника', candidate.sourceLanguage?.language],
+        ['Уверенность языка', candidate.sourceLanguage?.confidence],
+        ['Допущен политикой', candidate.sourceLanguage?.allowed],
+        ['Решение по языку', candidate.sourceLanguage?.eligibilityReason],
+        ['Сигналы', candidate.scores?.reasonCodes?.join(', ')]
+      ])
+    })),
+    jsonPayload: {
+      policyVersion: triage.policyVersion,
+      candidates: triage.candidates,
+      decisionCounts: triage.decisionCounts
+    }
+  };
+}
+
+function duplicateGroupsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const groups = bundle.run.searchTriage!.duplicateGroups;
+  const duplicates = groups.filter((group) => group.candidateIds.length > 1);
+  return {
+    id: 'duplicate-groups',
+    title: 'Группы дублей',
+    kicker: `${duplicates.length} групп с дублями`,
+    fields: compactFields([
+      ['Все группы', groups.length],
+      ['Группы с дублями', duplicates.length],
+      ['Объединено результатов', duplicates.reduce((total, group) => total + group.rawResultIds.length, 0)]
+    ]),
+    items: duplicates.map((group) => ({
+      id: group.id,
+      label: group.matchReasons.join(', '),
+      title: `${group.rawResultIds.length} результатов`,
+      body: group.domains.join('\n'),
+      status: 'duplicate',
+      meta: compactFields([
+        ['Представитель', group.representativeCandidateId],
+        ['Запросы', group.queryIds.join(', ')],
+        ['Направления', group.families.join(', ')],
+        ['Типы доказательств', group.evidenceTypes.join(', ')]
+      ])
+    })),
+    jsonPayload: groups
+  };
+}
+
+function readPlanDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const triage = bundle.run.searchTriage!;
+  const plan = triage.readPlan;
+  return {
+    id: 'read-plan',
+    title: 'План чтения',
+    kicker: `${plan.selectedCandidateIds.length}/${plan.maxReads} выбрано`,
+    fields: compactFields([
+      ['Лимит чтения', plan.maxReads],
+      ['Порог качества', plan.qualityFloor],
+      ['Обязательные направления', plan.requiredFamilies.join(', ')],
+      ['Покрытые направления', plan.coveredFamilies.join(', ')],
+      ['Пробелы покрытия', plan.readCoverageGaps.map((gap) => `${gap.family}: ${gap.reason}`).join('\n')],
+      ['Успешно прочитано', triage.readOutcomes.filter((item) => item.readable).length],
+      ['Ошибки чтения', triage.readOutcomes.filter((item) => item.status === 'failed').length]
+    ]),
+    items: [
+      ...plan.decisions.map((decision) => ({
+        id: `plan-${decision.rawResultId}`,
+        label: decision.status || 'decision',
+        title: decision.reason,
+        body: decision.url,
+        status: decision.status,
+        meta: compactFields([
+          ['Балл', decision.score],
+          ['Направления', decision.families?.join(', ')],
+          ['Доказательства', decision.evidenceTypes?.join(', ')],
+          ['Группа дублей', decision.duplicateGroupId]
+        ])
+      })),
+      ...triage.readOutcomes.map((outcome) => ({
+        id: `outcome-${outcome.rawResultId}`,
+        label: 'исход чтения',
+        title: outcome.readable ? 'Страница прочитана' : 'Страница не прочитана',
+        body: outcome.reason || outcome.materialId || '',
+        status: outcome.status,
+        meta: compactFields([
+          ['Материал', outcome.materialId],
+          ['Группа дублей', outcome.duplicateGroupId]
+        ])
+      }))
+    ],
+    jsonPayload: {
+      readPlan: plan,
+      readCoverage: triage.readCoverage,
+      readCoverageGaps: triage.readCoverageGaps,
+      readOutcomes: triage.readOutcomes
+    }
   };
 }
 
@@ -235,7 +379,14 @@ function rawResultsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
       title: result.title,
       body: [result.url, result.snippet].filter(Boolean).join('\n'),
       status: `score ${result.score}`,
-      meta: compactFields([['Query', result.queryId], ['Provider', result.provider], ['Duplicate key', result.duplicateKey]])
+      meta: compactFields([
+        ['Query', result.queryId],
+        ['Язык запроса', result.queryLanguage],
+        ['Язык источника', result.sourceLanguage?.language],
+        ['Уверенность языка', result.sourceLanguage?.confidence],
+        ['Provider', result.provider],
+        ['Duplicate key', result.duplicateKey]
+      ])
     })),
     jsonPayload: rawResults
   };
@@ -273,18 +424,183 @@ function foundMaterialsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
   return {
     id: 'found-materials',
     title: 'Найденные материалы',
-    kicker: `${bundle.foundMaterials.length} materials`,
-    fields: compactFields([['Found material ids', bundle.run.foundMaterialIds.join(', ')]]),
+    kicker: `${bundle.foundMaterials.length} материалов`,
+    fields: compactFields([['Идентификаторы материалов', bundle.run.foundMaterialIds.join(', ')]]),
     items: bundle.foundMaterials.map((material) => ({
       id: material.id,
       label: material.type,
       title: material.title,
       body: [material.locator, material.summary || material.snippet].filter(Boolean).join('\n'),
       status: material.status,
-      meta: compactFields([['Handle', material.sourceHandleId], ['Provenance', material.provenanceLabel], ['Warnings', material.warnings.join(', ')]])
+      meta: compactFields([
+        ['Источник', material.sourceHandleId],
+        ['Происхождение', material.provenanceLabel],
+        ['Предупреждения', material.warnings.join(', ')],
+        ['Сырые результаты', material.discoveryTrace?.rawResultIds.join(', ')],
+        ['Запросы', material.discoveryTrace?.queryIds.join(', ')],
+        ['Направления', material.discoveryTrace?.families.join(', ')],
+        ['Типы доказательств', material.discoveryTrace?.evidenceTypes.join(', ')],
+        ['Группа дублей', material.discoveryTrace?.duplicateGroupId],
+        ['Причина выбора', material.discoveryTrace?.decisionReason]
+      ])
     })),
     jsonPayload: bundle.foundMaterials
   };
+}
+
+function evidenceFragmentsDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const fragments = bundle.foundMaterials.flatMap((material) =>
+    (material.contentFragments ?? []).map((fragment) => ({ material, fragment }))
+  );
+  return {
+    id: 'evidence-fragments',
+    title: 'Доказательные фрагменты',
+    kicker: `${fragments.length} сохранено`,
+    fields: compactFields([
+      ['Материалы с фрагментами', new Set(fragments.map((item) => item.material.id)).size],
+      ['Всего фрагментов', fragments.length]
+    ]),
+    items: fragments.map(({ material, fragment }) => ({
+      id: fragment.id,
+      label: fragment.kind,
+      title: material.title,
+      body: fragment.text,
+      status: 'evidence',
+      meta: compactFields([
+        ['Материал', material.id],
+        ['Смещение', `${fragment.startChar}-${fragment.endChar}`],
+        ['Hash', fragment.hash]
+      ])
+    })),
+    jsonPayload: fragments.map(({ material, fragment }) => ({ materialId: material.id, ...fragment }))
+  };
+}
+
+function signalExtractionDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const report = bundle.run.signalExtraction!;
+  const attempts = report.providerAttempts ?? [];
+  return {
+    id: 'signal-extraction',
+    title: 'Извлечение сигналов',
+    kicker: `${report.status}, ревизия ${report.revision}`,
+    lifecycleStatus: report.status,
+    fields: compactFields([
+      ['Статус', report.status],
+      ['Ревизия', report.revision],
+      ['Результат повтора', report.retryOutcome],
+      ['Сохранены сигналы прошлой ревизии', report.preservedPreviousSignalIds?.length],
+      ['Материалы обработаны', report.materialDecisions.length],
+      ['Сигналы-кандидаты', bundle.sourceSignals.length],
+      ['Полное покрытие решений', report.decisionCoverageComplete],
+      ['Неразрешенные evidence handles', report.unresolvedEvidenceHandleCount],
+      ['Grounding violations', report.groundingViolations?.length ?? 0],
+      ['Попытки провайдера', attempts.length],
+      ['Предупреждения', report.warnings?.join(', ')]
+    ]),
+    items: [
+      ...bundle.sourceSignals.map((signal) => ({
+        id: signal.id,
+        label: signal.type,
+        title: signal.title,
+        body: [signal.summary, signal.uncertainty, ...(signal.limitations ?? [])].filter(Boolean).join('\n'),
+        status: signal.confidence ?? 'candidate',
+        meta: compactFields([
+          ['Механизм', signal.mechanism],
+          ['Результат', signal.outcome],
+          ['Evidence refs', signal.evidenceRefs?.map((ref) => `${ref.materialId}/${ref.fragmentId}`).join('\n')]
+        ])
+      })),
+      ...report.materialDecisions.map((decision) => ({
+        id: `decision-${decision.materialId}`,
+        label: 'решение по материалу',
+        title: decision.materialId,
+        body: decision.reasonCodes.join(', '),
+        status: decision.decision,
+        meta: compactFields([['Сигналы', decision.signalIds.join(', ')]])
+      })),
+      ...attempts.map((attempt, index) => ({
+        id: `attempt-${index}`,
+        label: String(attempt.attemptLabel ?? 'attempt'),
+        title: String(attempt.model ?? 'provider'),
+        body: String(attempt.error ?? ''),
+        status: String(attempt.status ?? ''),
+        meta: compactFields([
+          ['AiRun', attempt.aiRunId],
+          ['Размер сообщений', attempt.messageCharCount],
+          ['Repair context', attempt.repairContextCharCount],
+          ['Usage', attempt.providerUsage],
+          ['Usage status', attempt.providerUsageStatus]
+        ])
+      }))
+    ],
+    jsonPayload: { report, sourceSignals: bundle.sourceSignals }
+  };
+}
+
+function signalScoringDetail(bundle: RadarRunTraceBundle): RadarTraceDetail {
+  const report = bundle.run.signalScoring!;
+  const attempts = report.providerAttempts ?? [];
+  return {
+    id: 'signal-scoring',
+    title: 'Редакционная полезность',
+    kicker: `${report.status}, ревизия ${report.revision}`,
+    lifecycleStatus: report.status,
+    fields: compactFields([
+      ['Статус', report.status],
+      ['Ревизия', report.revision],
+      ['Сигналов оценено', report.signalIds.length],
+      ['Полное покрытие решений', report.decisionCoverageComplete],
+      ['Неразрешенные настройки', report.unresolvedSettingRefCount],
+      ['Неразрешенные доказательства', report.unresolvedEvidenceRefCount],
+      ['Попытки провайдера', attempts.length]
+    ]),
+    items: [
+      ...bundle.sourceSignals.map((signal) => ({
+        id: `utility-${signal.id}`,
+        label: signal.reviewStatus ?? 'candidate',
+        title: signal.title,
+        body: signalUtilityTraceSummary(signal),
+        status: signal.utilityReport?.recommendation ?? 'unscored',
+        meta: compactFields([
+          ['Utility revision', signal.utilityRevision],
+          ['Review revision', signal.reviewRevision],
+          ['Review events', signal.reviewHistory?.length ?? 0],
+          ['Relationship status', signal.relationshipReport?.status ?? signal.utilityReport?.relationshipReport?.status],
+          ['Canonical signal', signal.relationshipReport?.canonicalSignalId ?? signal.utilityReport?.relationshipReport?.canonicalSignalId]
+        ])
+      })),
+      ...attempts.map((attempt, index) => ({
+        id: `scoring-attempt-${index}`,
+        label: String(attempt.attemptLabel ?? 'attempt'),
+        title: String(attempt.model ?? 'provider'),
+        body: String(attempt.error ?? ''),
+        status: String(attempt.status ?? ''),
+        meta: compactFields([
+          ['AiRun', attempt.aiRunId],
+          ['Размер сообщений', attempt.messageCharCount],
+          ['Repair context', attempt.repairContextCharCount],
+          ['Usage', attempt.providerUsage]
+        ])
+      }))
+    ],
+    jsonPayload: { report, sourceSignals: bundle.sourceSignals }
+  };
+}
+
+function signalUtilityTraceSummary(signal: RadarRunTraceBundle['sourceSignals'][number]): string {
+  const utility = signal.utilityReport;
+  if (!utility) return '';
+  if (utility.version < 2) return utility.dimensions.map((item) => `${item.dimension}: ${item.summary}`).join('\n');
+  return [
+    ...(utility.radarCriteria ?? []).map((item) => `Радар · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.projectCriteria ?? []).map((item) => `Проект · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.qualityChecks ?? [])
+      .filter((item) => item.applicable)
+      .map((item) => `Система · ${item.title} · ${item.verdict}: ${item.summary}`),
+    ...(utility.relationshipReport?.relations ?? [])
+      .filter((item) => item.kind !== 'distinct')
+      .map((item) => `Связь · ${item.kind}: ${item.summary}`)
+  ].join('\n');
 }
 
 function benchmarkDetail(report: NonNullable<RadarRunTraceBundle['benchmarkReport']>): RadarTraceDetail {
@@ -355,6 +671,7 @@ function budgetValue(value: RadarTraceBudget): string {
 }
 
 function timelineStatus(detail: RadarTraceDetail): string {
+  if (detail.lifecycleStatus) return detail.lifecycleStatus;
   if (detail.id === 'warnings-errors' && detail.items.some((item) => item.label === 'error')) return 'failed';
   if (detail.id === 'warnings-errors' && detail.items.length > 0) return 'warn';
   if (detail.items.some((item) => item.status === 'failed')) return 'failed';

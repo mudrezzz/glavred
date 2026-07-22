@@ -5,6 +5,7 @@ import type {
   SourceSignal,
   WorkspaceState
 } from '../../domain/editorialWorkspace';
+import type { BlogProject } from '../../domain/portfolio/types';
 import { FoundSignalsTab } from './FoundSignalsTab';
 import { PostCandidatesPreviewTab } from './PostCandidatesPreviewTab';
 import { RadarsTab } from './RadarsTab';
@@ -13,6 +14,7 @@ import { SignalsTabs } from './SignalsTabs';
 import { useSignalsController } from './useSignalsController';
 
 export function SignalsView({
+  project,
   workspace,
   onSaveRadar,
   onDeleteRadar,
@@ -21,6 +23,9 @@ export function SignalsView({
   onApproveSignal,
   onRejectSignal,
   onArchiveSignal,
+  onReopenSignal,
+  onRestoreSignal,
+  onRescoreSignal,
   onCorrectSignal,
   onApprovePostCandidate,
   onEditPostCandidate,
@@ -28,6 +33,7 @@ export function SignalsView({
   onCreateInsight,
   onPlan
 }: {
+  project: BlogProject;
   workspace: WorkspaceState;
   onSaveRadar: (radar: RadarDefinition, isNew: boolean) => void;
   onDeleteRadar: (radar: RadarDefinition) => void;
@@ -36,6 +42,9 @@ export function SignalsView({
   onApproveSignal: (signal: SourceSignal) => void;
   onRejectSignal: (signal: SourceSignal) => void;
   onArchiveSignal: (signal: SourceSignal) => void;
+  onReopenSignal: (signal: SourceSignal) => void;
+  onRestoreSignal: (signal: SourceSignal) => void;
+  onRescoreSignal: (signal: SourceSignal) => void;
   onCorrectSignal: (signal: SourceSignal, patch: Partial<SourceSignal>) => void;
   onApprovePostCandidate: (candidate: PostCandidate) => void;
   onEditPostCandidate: (candidate: PostCandidate, patch: PostCandidateEditPatch) => void;
@@ -64,11 +73,15 @@ export function SignalsView({
 
       {controller.tab === 'signals' && (
         <FoundSignalsTab
+          projectId={project.id}
           workspace={workspace}
           controller={controller}
           onApproveSignal={onApproveSignal}
           onRejectSignal={onRejectSignal}
           onArchiveSignal={onArchiveSignal}
+          onReopenSignal={onReopenSignal}
+          onRestoreSignal={onRestoreSignal}
+          onRescoreSignal={onRescoreSignal}
           onCreateInsight={onCreateInsight}
           onPlan={onPlan}
         />

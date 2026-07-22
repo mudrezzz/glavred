@@ -45,6 +45,13 @@ Implement one small, complete, tested, documented product increment.
   proven otherwise. Do not rewrite localized UI/test strings from mojibake output;
   use stable ASCII anchors, JSON/AST-aware reads, browser/UI assertions, or an
   explicit UTF-8-aware read path before editing localized text.
+- Never roundtrip a full portfolio workspace with PowerShell `Invoke-RestMethod`.
+  Use `python scripts/workspace_utf8_client.py` or an application-owned migration,
+  then compare semantic hashes. Full payloads and damaged text stay out of logs.
+- A slice that changes persisted workspace behavior or its user-facing rendering
+  needs an authenticated browser proof against real FastAPI and temporary SQLite.
+  `401`, CORS failure, backend unavailability, or `localFallback` invalidates that
+  proof even when fixture-only visual tests pass.
 - Follow OOP and single-responsibility principles.
 - Comment non-obvious code and tests.
 - Do not expand scope unless required for the slice to work.
@@ -88,11 +95,10 @@ Implement one small, complete, tested, documented product increment.
   provider `.complete_json(` calls in bounded application modules.
 - If a backend slice changes environment variables, update `.env.example`,
   developer docs, and architecture smoke checks. Never commit real `.env` secrets.
-- For live provider proof in this repo, use `.env` as the source of OpenRouter
-  configuration without printing secret values. Check presence/behavior, not the key
-  text. If Glavred is not running in Docker, start `docker compose up -d --build`;
-  other projects already running in Docker are not a reason to skip the Glavred
-  compose stack.
+- Use `.agents/skills/remote-docker-testing/SKILL.md` for every test, Docker operation,
+  authenticated browser acceptance, and live provider proof. Local test execution is
+  not acceptance evidence, and local Glavred Docker is forbidden unless the user
+  explicitly requests it.
 - For drafting/backend slices, read ADRs
   `2026-06-19-drafting-uses-queued-agentic-runs` and
   `2026-06-20-drafting-quality-requires-source-ledger-and-post-contract` before

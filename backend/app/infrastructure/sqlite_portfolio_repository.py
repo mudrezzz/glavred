@@ -9,11 +9,17 @@ from typing import Any
 
 from backend.app.domain.portfolio import BlogProject, ProjectMembership, Session, UserAccount, WorkspaceSnapshot
 from backend.app.infrastructure.sqlite_portfolio_seed import ensure_seeded, seed_workspace
+from backend.app.infrastructure.sqlite_runtime import SqliteConnectionFactory
 
 
 class SQLitePortfolioRepository:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        connection_factory: SqliteConnectionFactory | None = None,
+    ) -> None:
         self._db_path = Path(db_path)
+        self._connection_factory = connection_factory or SqliteConnectionFactory()
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._ensure_schema()
 
@@ -211,6 +217,8 @@ class SQLitePortfolioRepository:
                     payload TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE INDEX IF NOT EXISTS idx_workspace_snapshots_project_latest
+                    ON workspace_snapshots(project_id, created_at DESC, id DESC);
                 CREATE TABLE IF NOT EXISTS sessions (
                     token TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -220,10 +228,8 @@ class SQLitePortfolioRepository:
                 """
             )
 
-    def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+    def _connect(self):
+        return self._connection_factory.open(self._db_path, operation="portfolioRepository")
 
 
 def _now() -> str:

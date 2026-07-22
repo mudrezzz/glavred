@@ -1,6 +1,35 @@
 from pathlib import Path
+import sqlite3
 
 from backend.tests.portfolio_test_helpers import login_portfolio, portfolio_client
+
+
+def test_workspace_latest_snapshot_lookup_has_covering_index(tmp_path: Path) -> None:
+    client = portfolio_client(tmp_path)
+    login_portfolio(client, "founder@example.test")
+
+    with sqlite3.connect(tmp_path / "portfolio.sqlite3") as connection:
+        index = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?",
+            ("idx_workspace_snapshots_project_latest",),
+        ).fetchone()
+
+    assert index is not None
+    assert "project_id, created_at DESC, id DESC" in index[0]
+
+
+def test_portfolio_components_are_reused_across_requests(tmp_path: Path) -> None:
+    client = portfolio_client(tmp_path)
+    login_portfolio(client, "founder@example.test")
+    repository = client.app.state.portfolio_repository
+    auth_service = client.app.state.portfolio_auth_service
+
+    assert client.get("/api/users/me").status_code == 200
+    assert client.get("/api/projects?includeArchived=true").status_code == 200
+
+    assert client.app.state.portfolio_repository is repository
+    assert client.app.state.portfolio_auth_service is auth_service
+    assert client.app.state.portfolio_service is not None
 
 
 def test_login_succeeds_for_seeded_user_and_sets_cookie(tmp_path: Path) -> None:

@@ -140,7 +140,10 @@ class SqliteConnectionFactory:
     def _apply_pragmas(self, connection: sqlite3.Connection) -> None:
         connection.execute(f"PRAGMA busy_timeout = {self._busy_timeout_ms}")
         connection.execute("PRAGMA foreign_keys = ON")
-        connection.execute(f"PRAGMA journal_mode = {self._journal_mode}")
+        current_mode_row = connection.execute("PRAGMA journal_mode").fetchone()
+        current_mode = str(current_mode_row[0]).upper() if current_mode_row else ""
+        if current_mode != self._journal_mode:
+            connection.execute(f"PRAGMA journal_mode = {self._journal_mode}")
         connection.execute("PRAGMA synchronous = NORMAL")
 
 

@@ -1,0 +1,64 @@
+{
+  "sliceId": "2.17.4.7.0.2",
+  "runId": "radar-run-ai-pattern-radar-industrial-cases-3",
+  "projectId": "project-ai-design-patterns",
+  "retrievalStatus": "succeeded",
+  "benchmarkStatus": "warning",
+  "extractionRevision": 4,
+  "extractionStatus": "succeeded",
+  "materialCount": 2,
+  "signalCount": 3,
+  "decisionCoverageComplete": true,
+  "unresolvedEvidenceRefCount": 0,
+  "acceptedSignalGroundingViolationCount": 0,
+  "recoveredAttemptGroundingViolationCount": 1,
+  "languageContext": {
+    "editorialLanguage": "ru",
+    "sourceLanguagePolicy": "editorialAndEnglish",
+    "queryLanguages": ["ru", "en"]
+  },
+  "queryFamilyLanguages": {
+    "broadDiscovery": "ru",
+    "caseExample": "en",
+    "benchmarkPaper": "en"
+  },
+  "localizedEnglishSourceSignalCount": 3,
+  "providerAttempts": [
+    {
+      "attemptLabel": "primary",
+      "status": "failed",
+      "failureClass": "grounding-validation",
+      "providerInputCharEstimate": 10636,
+      "messageCharCount": 11972,
+      "repairContextCharCount": 0,
+      "inputTokens": 3165,
+      "outputTokens": 1007,
+      "totalTokens": 4172,
+      "budgetIncidents": []
+    },
+    {
+      "attemptLabel": "repair",
+      "status": "accepted",
+      "providerInputCharEstimate": 10973,
+      "messageCharCount": 12337,
+      "repairContextCharCount": 304,
+      "inputTokens": 3262,
+      "outputTokens": 933,
+      "totalTokens": 4195,
+      "budgetIncidents": []
+    }
+  ],
+  "providerUsageTotals": {
+    "inputTokens": 6427,
+    "outputTokens": 1940,
+    "totalTokens": 8367
+  },
+  "uiProof": {
+    "authenticatedBackend": true,
+    "persistedByUi": true,
+    "unscoredCandidateState": true,
+    "originalSourceUrl": true,
+    "deepTraceLink": true,
+    "localizedRadarPresentation": true
+  }
+}

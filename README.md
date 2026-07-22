@@ -65,12 +65,16 @@ typed web queries through OpenRouter web search when configured, deduplicates ra
 results, selects diverse URLs to read, and stores normalized found material plus
 warnings. If the backend is unavailable, the UI falls back to the local contract run.
 The expanded radar keeps configuration under `Настройка` and diagnostics under
-`Трасса запуска`. This still does not create reviewed `SourceSignal` or
-`PostCandidate` records. `DraftRun` stays downstream and should consume an approved
-candidate/brief rather than discover the first post idea itself.
-The next diagnostic layer adds one golden radar benchmark for `Опытный цех
-«Сборочная»` plus a dedicated RadarRun trace page before the full three-project
-benchmark corpus.
+`Трасса запуска`. Readable materials now retain bounded evidence fragments and enter
+backend-owned extraction. The result is zero or more unreviewed `SourceSignal`
+candidates with exact evidence refs, uncertainty, terminal material decisions,
+provider attempts and direct token/message budget proof. Extraction can be repeated
+from saved fragments without repeating search or URL reads. It still does not create
+`PostCandidate`, plan, or `DraftRun` records; project-specific signal scoring and the
+review lifecycle are the next upstream slice. `DraftRun` stays downstream and should
+consume an approved candidate/brief rather than discover the first post idea itself.
+The diagnostics layer includes the industrial-AI golden radar, the dedicated
+RadarRun trace page, live executed-coverage verdict and signal-extraction diagnosis.
 `Кандидаты постов` is now the first working candidate layer: approved signals become
 2-3 deterministic assemblies of signal, topic, fabula, audience, value, goal, platform,
 confidence, and risks. Candidate format was removed because fabula already owns the
@@ -228,19 +232,33 @@ Before committing roadmap changes, run `check`, `render`, `export`, and
 
 ## Quick Start
 
-Run the full local stack with Docker:
+Run the isolated test stack on the `flowise` Docker host:
 
-```bash
-docker compose up --build
+```powershell
+python scripts/remote_docker_runtime.py doctor
+python scripts/remote_docker_runtime.py sync-secrets
+python scripts/remote_docker_runtime.py build
+python scripts/remote_docker_runtime.py up
+python scripts/remote_docker_runtime.py tunnel-command
 ```
 
-Then open `http://localhost:5176`. The backend is published at
-`http://localhost:8000`, Redis is published at `localhost:6379`, and local AI/DraftRun
-audit data is written under `var/`.
-Docker Compose reads local secrets from `.env`; `.env` is ignored by Git and is not
-copied into the Docker build context.
+Run the printed SSH tunnel in a separate terminal, then open
+`http://localhost:5176`. The API is available through the same tunnel at
+`http://localhost:8000`; Redis is not published on the remote host. The helper sends
+the current local source tree, including uncommitted changes, to the remote Docker
+daemon. It does not upload `.env`; allowlisted secrets are installed as protected,
+read-only files. Do not switch the global Docker context.
 
-Run without Docker:
+Run acceptance suites through the same owner, for example:
+
+```powershell
+python scripts/remote_docker_runtime.py test --suite backend
+python scripts/remote_docker_runtime.py test --suite full
+```
+
+Local Docker is not an acceptance path and may only be used when explicitly requested.
+
+For lightweight local editing and interactive development without Docker:
 
 ```bash
 npm install

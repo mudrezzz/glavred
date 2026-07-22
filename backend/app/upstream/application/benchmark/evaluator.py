@@ -48,14 +48,34 @@ class RadarBenchmarkEvaluator:
         executed_evidence_types = {str(item.get("evidenceType")) for item in executed_queries if item.get("evidenceType")}
         evaluation_families = executed_families if evaluation_mode == "live" else planned_families
         evaluation_evidence_types = executed_evidence_types if evaluation_mode == "live" else planned_evidence_types
-        selected_domains = {self._domain(str(item.get("url") or "")) for item in selected if isinstance(item, dict)}
+        read_outcomes = (
+            run.get("searchTriage", {}).get("readOutcomes", [])
+            if isinstance(run.get("searchTriage"), dict)
+            else []
+        )
+        readable_raw_ids = {
+            str(item.get("rawResultId") or "")
+            for item in read_outcomes
+            if isinstance(item, dict) and item.get("readable") is True
+        }
+        readable_selected = (
+            [item for item in selected if str(item.get("rawResultId") or "") in readable_raw_ids]
+            if read_outcomes
+            else selected
+        )
+        readable_materials = [item for item in found_materials if item.get("status") != "metadataOnly"]
+        selected_domains = {
+            self._domain(str(item.get("url") or ""))
+            for item in readable_selected
+            if isinstance(item, dict)
+        }
         missing = self._policy.missing_expectations(
             scenario=scenario,
             intent_families=evaluation_families,
             evidence_types=evaluation_evidence_types,
             raw_results=raw_results,
-            selected=selected,
-            found_materials=found_materials,
+            selected=readable_selected,
+            found_materials=readable_materials,
             selected_domains=selected_domains,
         )
         trace_complete = self._policy.trace_complete(run)
@@ -101,9 +121,10 @@ class RadarBenchmarkEvaluator:
             "intentCount": len(search_plan.get("intents", [])),
             "queryCount": len(search_plan.get("queries", [])),
             "rawResultCount": len(raw_results),
-            "selectedReadCount": len(selected),
+            "selectedReadCount": len(readable_selected),
             "rejectedBeforeReadCount": len(rejected),
-            "foundMaterialCount": len(found_materials),
+            "foundMaterialCount": len(readable_materials),
+            "metadataOnlyMaterialCount": len(found_materials) - len(readable_materials),
             "distinctSelectedDomainCount": len(selected_domains),
         }
         return RadarBenchmarkReport(

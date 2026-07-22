@@ -15,6 +15,9 @@ paths, API fields, identifiers, commit messages, and exact status values.
 
 Turn an approved blog-project blueprint into consistent Glavred project data. Keep the blueprint as the planning source, write UTF-8 fixtures/docs first, then refresh backend-visible snapshots through safe application paths.
 
+Run fixture, workspace-integrity, Docker, and browser acceptance through
+`.agents/skills/remote-docker-testing/SKILL.md`; local Docker is not acceptance proof.
+
 ## Required Context
 
 Before editing, read:
@@ -46,6 +49,9 @@ For the blueprint checklist, read `references/blueprint-checklist.md`.
 ## Non-Negotiable Guards
 
 - Never patch Cyrillic demo content directly into SQLite through inline shell commands.
+- Never roundtrip a complete workspace through PowerShell `Invoke-RestMethod`; use
+  `python scripts/workspace_utf8_client.py` or an application-owned migration and
+  verify its semantic hash.
 - Never trust mojibake terminal output as proof of corrupted data; verify with UTF-8-aware reads.
 - Do not set canonical audience on `PublicationChannel`.
 - Do not rely only on `EditorialModel.author/audience/goals`; UI-visible Publisher blocks and DraftRun context must be backed by `editorialRules`.

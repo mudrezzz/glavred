@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from backend.app.upstream.application.search_campaign_trace import SearchCampaignTraceBuilder
+from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_planner_inputs import SearchPlannerInputPolicy
 from backend.app.upstream.application.search_query_family_policy import SearchQueryFamilyPolicy
 from backend.app.upstream.domain.search_campaign import (
@@ -18,6 +19,7 @@ from backend.app.upstream.domain.search_campaign import (
     SearchQuery,
     SkippedSearchIntent,
 )
+from backend.app.upstream.domain.radar_language import RadarLanguageContext
 
 
 class SearchIntentPlanner:
@@ -27,10 +29,12 @@ class SearchIntentPlanner:
         family_policy: SearchQueryFamilyPolicy | None = None,
         trace_builder: SearchCampaignTraceBuilder | None = None,
         input_policy: SearchPlannerInputPolicy | None = None,
+        language_factory: RadarLanguageContextFactory | None = None,
     ) -> None:
         self._family_policy = family_policy or SearchQueryFamilyPolicy()
         self._trace_builder = trace_builder or SearchCampaignTraceBuilder()
         self._input_policy = input_policy or SearchPlannerInputPolicy()
+        self._language_factory = language_factory or RadarLanguageContextFactory()
 
     def build(
         self,
@@ -39,12 +43,23 @@ class SearchIntentPlanner:
         handles: list[dict[str, Any]],
         budget: dict[str, int],
         workspace: dict[str, Any],
+        language_context: RadarLanguageContext | None = None,
     ) -> SearchPlan:
-        language = self._input_policy.workspace_language(workspace)
+        language_context = language_context or self._language_factory.build(
+            project_context=None,
+            workspace=workspace,
+            radar=radar,
+        )
+        language = language_context.editorial_language
         research_depth = self._input_policy.research_depth(radar=radar, workspace=workspace)
+        include_freshness = self._input_policy.needs_freshness(
+            radar=radar,
+            workspace=workspace,
+            research_depth=research_depth,
+        )
         families = self._family_policy.families(
             language=language,
-            include_freshness=self._input_policy.needs_freshness(radar=radar, workspace=workspace, research_depth=research_depth),
+            include_freshness=include_freshness,
         )
         source_eligibility = [self._input_policy.source_eligibility(handle) for handle in handles]
         intents: list[SearchIntent] = []
@@ -76,6 +91,17 @@ class SearchIntentPlanner:
 
             base_query = self._input_policy.base_query(radar=radar, handle=handle, workspace=workspace)
             for family in families:
+                query_language = language_context.query_language_for(family.family)
+                query_family = self._family_policy.for_family(
+                    family.family,
+                    language=query_language,
+                    include_freshness=include_freshness,
+                )
+                query_text = self._input_policy.query_for_language(
+                    base_query=base_query,
+                    suffix=query_family.suffix,
+                    language=query_language,
+                )
                 intent = SearchIntent(
                     id=f"intent-{len(intents) + 1}",
                     intent_type=family.intent_type,
@@ -86,7 +112,8 @@ class SearchIntentPlanner:
                     source_handle_title=str(handle.get("title") or handle.get("locator") or handle.get("id") or ""),
                     rationale=self._intent_rationale(radar=radar, family_label=family.label, language=language),
                     priority=family.priority,
-                    query_terms=self._input_policy.query_terms(base_query, family.suffix),
+                    query_terms=query_text.split()[:16],
+                    query_language=query_language,
                 )
                 intents.append(intent)
                 if len(queries) >= max_queries:
@@ -97,6 +124,7 @@ class SearchIntentPlanner:
                             intent_id=intent.id,
                             intent_type=intent.intent_type,
                             family=intent.family,
+                            query_language=query_language,
                             reason="budget-max-external-queries",
                             rationale=f"External query budget {max_queries} was exhausted before this intent could run.",
                         )
@@ -112,8 +140,9 @@ class SearchIntentPlanner:
                         evidence_type=intent.evidence_type,
                         priority=intent.priority,
                         label=intent.label,
-                        query=self._input_policy.clean_query(f"{base_query} {family.suffix}"),
+                        query=query_text,
                         rationale=intent.rationale,
+                        query_language=query_language,
                     )
                 )
 
@@ -126,12 +155,20 @@ class SearchIntentPlanner:
                 )
             )
 
+        executed_languages = list(dict.fromkeys(item.query_language for item in queries))
+        language_coverage_gaps = [
+            {"language": item, "reason": "budget-max-external-queries"}
+            for item in language_context.query_languages
+            if item not in executed_languages
+        ]
         source_strategy = self._trace_builder.source_strategy(source_eligibility)
         trace = self._trace_builder.build(
             radar=radar,
             workspace=workspace,
             handles=handles,
             language=language,
+            language_context=language_context,
+            language_coverage_gaps=language_coverage_gaps,
             research_depth=research_depth,
             budget=budget,
             source_eligibility=source_eligibility,
@@ -147,6 +184,8 @@ class SearchIntentPlanner:
             skipped_intents=skipped,
             source_strategy=source_strategy,
             trace=trace,
+            language_context=language_context.to_payload(),
+            language_coverage_gaps=language_coverage_gaps,
         )
 
     def _intent_rationale(self, *, radar: dict[str, Any], family_label: str, language: str) -> str:

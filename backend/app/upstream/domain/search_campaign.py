@@ -23,6 +23,7 @@ class SearchIntent:
     rationale: str
     priority: int
     query_terms: list[str] = field(default_factory=list)
+    query_language: str = "ru"
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -36,6 +37,7 @@ class SearchIntent:
             "rationale": self.rationale,
             "priority": self.priority,
             "queryTerms": self.query_terms,
+            "queryLanguage": self.query_language,
         }
 
 
@@ -51,6 +53,7 @@ class SearchQuery:
     label: str
     query: str
     rationale: str
+    query_language: str = "ru"
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -64,6 +67,7 @@ class SearchQuery:
             "label": self.label,
             "query": self.query,
             "rationale": self.rationale,
+            "queryLanguage": self.query_language,
         }
 
 
@@ -76,6 +80,7 @@ class SkippedSearchIntent:
     intent_id: str | None = None
     intent_type: str | None = None
     family: str | None = None
+    query_language: str | None = None
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -91,6 +96,8 @@ class SkippedSearchIntent:
             payload["intentType"] = self.intent_type
         if self.family:
             payload["family"] = self.family
+        if self.query_language:
+            payload["queryLanguage"] = self.query_language
         return payload
 
 
@@ -125,6 +132,8 @@ class SearchPlan:
     skipped_intents: list[SkippedSearchIntent]
     source_strategy: dict[str, Any]
     trace: SearchCampaignTrace
+    language_context: dict[str, Any] = field(default_factory=dict)
+    language_coverage_gaps: list[dict[str, Any]] = field(default_factory=list)
 
     def to_payload(self) -> dict[str, Any]:
         skipped_reasons = _unique([item.reason for item in self.skipped_intents])
@@ -137,6 +146,8 @@ class SearchPlan:
             "sourceStrategy": self.source_strategy,
             "trace": self.trace.to_payload(),
             "skippedIntentDetails": [item.to_payload() for item in self.skipped_intents],
+            "languageContext": self.language_context,
+            "languageCoverageGaps": self.language_coverage_gaps,
         }
 
 

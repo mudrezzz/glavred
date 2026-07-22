@@ -37,7 +37,9 @@ def test_search_intent_planner_language_changes_query_text_not_intent_taxonomy()
 
     assert [intent["intentType"] for intent in en_plan["intents"][:3]] == [intent["intentType"] for intent in ru_plan["intents"][:3]]
     assert "case study" in en_plan["queries"][1]["query"]
-    assert "кейс" in ru_plan["queries"][1]["query"]
+    assert ru_plan["queries"][0]["queryLanguage"] == "ru"
+    assert ru_plan["queries"][1]["queryLanguage"] == "en"
+    assert "case study" in ru_plan["queries"][1]["query"]
 
 
 def test_search_intent_planner_records_query_budget_and_source_skips() -> None:

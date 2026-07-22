@@ -1,76 +1,34 @@
 import {
-  approveSignal,
   addRadar,
-  archiveSignal,
-  correctSignal,
   deleteRadar,
-  evaluateSignalAgainstRadarFilters,
-  rejectSignal,
   toggleRadarStatus,
   updateRadar,
-  type AuthorNote,
   type RadarDefinition,
-  type SourceSignal,
   type WorkspaceState
 } from '../domain/editorialWorkspace';
-import {
-  createAuthorMemoryEvent,
-  inferAuthorPositionAssertions
-} from '../application/editorialServices';
+import type { BlogProject } from '../domain/portfolio/types';
 import { runLocalRadar } from '../application/upstreamRadarRunService';
 import { runExternalRadar } from '../infrastructure/radarRunClient';
+import { applyRadarRunWorkspaceResult } from './radarRunWorkspacePatches';
+import { createSourceSignalReviewActions } from './sourceSignalReviewActions';
 import type { WorkspaceSetter } from './useWorkspacePersistence';
 
 type SignalsWorkspaceActionsParams = {
+  activeProject: BlogProject;
   setToast: (message: string) => void;
   setWorkspace: WorkspaceSetter;
   workspace: WorkspaceState;
 };
 
-export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }: SignalsWorkspaceActionsParams) {
-  function applySignalUpdate(nextSignal: SourceSignal, message: string, selectAsCurrent = false) {
-    setWorkspace((current) => {
-      const sourceSignals = current.sourceSignals.map((signal) =>
-        signal.id === nextSignal.id ? nextSignal : signal
-      );
-      return {
-        ...current,
-        sourceSignal: selectAsCurrent ? nextSignal : current.sourceSignal,
-        sourceSignals,
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setToast(message);
-  }
-
-  function approveSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(approveSignal(signal), 'Сигнал утвержден и выбран для production-flow', true);
-  }
-
-  function rejectSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(rejectSignal(signal), 'Сигнал отклонен');
-  }
-
-  function archiveSourceSignal(signal: SourceSignal) {
-    applySignalUpdate(archiveSignal(signal), 'Сигнал отправлен в архив');
-  }
+export function useSignalsWorkspaceActions({ activeProject, setToast, setWorkspace, workspace }: SignalsWorkspaceActionsParams) {
+  const signalReview = createSourceSignalReviewActions({ activeProject, setToast, setWorkspace });
 
   function saveRadar(nextRadar: RadarDefinition, isNew: boolean) {
     setWorkspace((current) => {
       const radars = isNew ? addRadar(current.radars, nextRadar) : updateRadar(current.radars, nextRadar);
-      const sourceSignals = current.sourceSignals.map((signal) =>
-        signal.radarId === nextRadar.id ? evaluateSignalAgainstRadarFilters(signal, nextRadar, { ...current, radars }) : signal
-      );
-      const sourceSignal =
-        current.sourceSignal.radarId === nextRadar.id
-          ? sourceSignals.find((signal) => signal.id === current.sourceSignal.id) ?? current.sourceSignal
-          : current.sourceSignal;
-
       return {
         ...current,
         radars,
-        sourceSignal,
-        sourceSignals,
         updatedAt: new Date().toISOString()
       };
     });
@@ -98,61 +56,20 @@ export function useSignalsWorkspaceActions({ setToast, setWorkspace, workspace }
 
   async function runRadar(radar: RadarDefinition) {
     try {
-      const result = await runExternalRadar(workspace, radar.id);
-      setWorkspace((current) => ({
-        ...current,
-        radars: current.radars.map((item) => (item.id === radar.id ? result.radar : item)),
-        radarRuns: [result.run, ...current.radarRuns],
-        foundMaterials: [...result.foundMaterials, ...current.foundMaterials],
-        updatedAt: new Date().toISOString()
-      }));
-      setToast('Радар запущен: внешний поиск добавлен в трассу');
+      const result = await runExternalRadar(workspace, radar.id, {
+        projectId: activeProject.id,
+        editorialLanguage: activeProject.language
+      });
+      setWorkspace((current) => applyRadarRunWorkspaceResult(current, result, { prependRun: true }));
+      setToast(`Радар завершен: найдено сигналов-кандидатов ${result.sourceSignals.length}`);
     } catch {
       setWorkspace((current) => runLocalRadar(current, radar.id));
       setToast('Backend-поиск недоступен: создан локальный contract-run');
     }
   }
 
-  function correctSourceSignal(signal: SourceSignal, patch: Partial<SourceSignal>) {
-    const nextSignal = correctSignal(signal, patch);
-    setWorkspace((current) => {
-      const correctionNote: AuthorNote = {
-        id: `note-signal-correction-${signal.id}-${Date.now()}`,
-        type: 'manualCorrection',
-        title: `Правка сигнала: ${signal.title}`,
-        body:
-          nextSignal.authorCorrection ||
-          'Автор уточнил, как этот сигнал связан с темой, фабулой или ценностью.',
-        sourceUrl: '',
-        tags: ['signal-correction'],
-        attachments: [],
-        capturedAt: new Date().toISOString(),
-        targetType: 'evidence',
-        targetId: signal.id,
-        targetTitle: signal.title
-      };
-      const authorNotes = [correctionNote, ...current.authorNotes];
-      const authorMemoryEvents = authorNotes.map(createAuthorMemoryEvent);
-      return {
-        ...current,
-        sourceSignals: current.sourceSignals.map((candidate) =>
-          candidate.id === nextSignal.id ? nextSignal : candidate
-        ),
-        sourceSignal: current.sourceSignal.id === nextSignal.id ? nextSignal : current.sourceSignal,
-        authorNotes,
-        authorMemoryEvents,
-        authorPositionAssertions: inferAuthorPositionAssertions(authorNotes, authorMemoryEvents),
-        updatedAt: new Date().toISOString()
-      };
-    });
-    setToast('Правка сигнала добавлена в память автора');
-  }
-
   return {
-    approveSourceSignal,
-    archiveSourceSignal,
-    correctSourceSignal,
-    rejectSourceSignal,
+    ...signalReview,
     removeRadar,
     runRadar,
     saveRadar,

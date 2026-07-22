@@ -131,7 +131,7 @@ describe('three-blog benchmark demo portfolio', () => {
     const ai = portfolio.workspacesByProjectId['project-ai-design-patterns'];
 
     expect(ai.projectProfile.name).toBe('Опытный цех «Сборочная»');
-    expect(ai.projectProfile.description).toContain('industrial AI patterns');
+    expect(ai.projectProfile.description).toContain('промышленных AI-паттернах');
     expect(ai.editorialModel.author).toContain('руководитель опытного цеха');
     expect(ai.editorialModel.goals.join(' ')).toContain('Привлекать клиентов');
     expect(ai.editorialModel.goals.join(' ')).toContain('industrial AI patterns');

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchRadarRunTrace, type RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
+import { fetchRadarRunTrace, retryRadarRunSignalExtraction, type RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
 import { Icon } from '../../shared/ui/Icon';
 import {
   buildRadarRunTraceViewModel,
@@ -17,6 +17,7 @@ export function RadarRunTracePage() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialRunId = params.get('runId') ?? '';
   const projectId = params.get('projectId') ?? undefined;
+  const preferredDetailId = params.get('detailId') ?? undefined;
   const [runId, setRunId] = useState(initialRunId);
   const [trace, setTrace] = useState<RadarRunTraceBundle | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
@@ -69,24 +70,53 @@ export function RadarRunTracePage() {
       </section>
 
       {status === 'failed' ? <div className="card empty-state ai-run-error">{error}</div> : null}
-      {trace ? <RadarRunTraceDetails trace={trace} /> : status !== 'failed' ? (
+      {trace ? <RadarRunTraceDetails preferredDetailId={preferredDetailId} trace={trace} /> : status !== 'failed' ? (
         <section className="card empty-state">Трассировка появится здесь после запроса.</section>
       ) : null}
     </main>
   );
 }
 
-function RadarRunTraceDetails({ trace }: { trace: RadarRunTraceBundle }) {
-  const viewModel = useMemo(() => buildRadarRunTraceViewModel(trace), [trace]);
-  const [selectedDetailId, setSelectedDetailId] = useState(viewModel.initialDetailId);
+function RadarRunTraceDetails({ preferredDetailId, trace }: { preferredDetailId?: string; trace: RadarRunTraceBundle }) {
+  const [currentTrace, setCurrentTrace] = useState(trace);
+  const [retryStatus, setRetryStatus] = useState<'idle' | 'loading' | 'failed'>('idle');
+  const viewModel = useMemo(() => buildRadarRunTraceViewModel(currentTrace), [currentTrace]);
+  const initialDetailId = preferredDetailId && viewModel.details.some((detail) => detail.id === preferredDetailId)
+    ? preferredDetailId
+    : viewModel.initialDetailId;
+  const [selectedDetailId, setSelectedDetailId] = useState(initialDetailId);
   const selectedDetail = viewModel.details.find((detail) => detail.id === selectedDetailId) ?? viewModel.details[0];
 
   useEffect(() => {
-    setSelectedDetailId(viewModel.initialDetailId);
-  }, [viewModel.initialDetailId]);
+    setSelectedDetailId(
+      preferredDetailId && viewModel.details.some((detail) => detail.id === preferredDetailId)
+        ? preferredDetailId
+        : viewModel.initialDetailId
+    );
+  }, [preferredDetailId, viewModel]);
+
+  useEffect(() => setCurrentTrace(trace), [trace]);
+
+  async function retryExtraction() {
+    setRetryStatus('loading');
+    try {
+      setCurrentTrace(await retryRadarRunSignalExtraction(currentTrace));
+      setRetryStatus('idle');
+      setSelectedDetailId('signal-extraction');
+    } catch {
+      setRetryStatus('failed');
+    }
+  }
 
   return (
     <section className="ai-run-details radar-run-details" aria-label="RadarRun trace details">
+      <div className="radar-run-trace-actions">
+        <button className="btn btn-sec btn-sm" type="button" disabled={retryStatus === 'loading'} onClick={() => void retryExtraction()}>
+          <Icon name="reset" size={16} />
+          {retryStatus === 'loading' ? 'Повторяем извлечение' : 'Повторить извлечение сигналов'}
+        </button>
+        {retryStatus === 'failed' ? <span className="muted">Повтор извлечения не выполнен. Проверьте backend trace.</span> : null}
+      </div>
       <RadarRunTraceSummary viewModel={viewModel} />
       <div className="ai-run-workbench radar-run-workbench">
         <RadarRunTimeline

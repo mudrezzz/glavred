@@ -273,9 +273,10 @@ def _add_executed_query(run: dict, *, family: str, evidence_type: str) -> None:
             "foundMaterialIds": [],
         }
     )
+    raw_result_id = f"{run['id']}-raw-{query['id']}-1"
     run["rawResults"].append(
         {
-            "id": f"{run['id']}-raw-{query['id']}-1",
+            "id": raw_result_id,
             "sourceHandleId": query["sourceHandleId"],
             "queryId": query["id"],
             "title": f"{family} result",
@@ -287,3 +288,24 @@ def _add_executed_query(run: dict, *, family: str, evidence_type: str) -> None:
             "provider": "recorded",
         }
     )
+    triage = run.get("searchTriage")
+    if isinstance(triage, dict):
+        decision = {
+            "rawResultId": raw_result_id,
+            "candidateId": f"search-candidate-{family}",
+            "duplicateGroupId": f"duplicate-group-{family}",
+            "status": "deferredByBudget",
+            "reason": "url-read-budget",
+            "score": 80,
+            "url": f"https://{family.lower()}.example/source",
+            "families": [family],
+            "evidenceTypes": [evidence_type],
+            "domain": f"{family.lower()}.example",
+            "duplicateRawResultIds": [raw_result_id],
+            "queryIds": [query["id"]],
+            "intentIds": [intent["id"]],
+        }
+        triage["readPlan"]["decisions"].append(decision)
+        triage["decisionCounts"]["deferredByBudget"] += 1
+        triage["decisionCounts"]["total"] += 1
+        run["rejectedBeforeRead"].append(decision)

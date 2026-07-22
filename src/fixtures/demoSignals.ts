@@ -78,6 +78,7 @@ export const demoRadarsWithFilters: RadarDefinition[] = demoRadars.map((radar) =
   if (radar.id === 'radar-author-memory') {
     return {
       ...radar,
+      sourceLanguagePolicy: 'editorialAndEnglish',
       sourceDiscoveryMode: 'specifiedAndAdditional',
       filters: createDefaultRadarEditorialFilters(radar.id, ['positioning', 'topics'])
     };
@@ -86,6 +87,7 @@ export const demoRadarsWithFilters: RadarDefinition[] = demoRadars.map((radar) =
   if (radar.id === 'radar-archive') {
     return {
       ...radar,
+      sourceLanguagePolicy: 'editorialAndEnglish',
       sourceDiscoveryMode: 'specifiedOnly',
       filters: createDefaultRadarEditorialFilters(radar.id, ['forbiddenTopics', 'topics'])
     };
@@ -94,6 +96,7 @@ export const demoRadarsWithFilters: RadarDefinition[] = demoRadars.map((radar) =
   if (radar.id === 'radar-external-sources') {
     return {
       ...radar,
+      sourceLanguagePolicy: 'editorialAndEnglish',
       sourceDiscoveryMode: 'specifiedAndAdditional',
       filters: createDefaultRadarEditorialFilters(radar.id, ['audience', 'positioning', 'forbiddenTopics']).map((filter) =>
         filter.dimension === 'positioning' ? { ...filter, mode: 'seekTension' } : filter
@@ -103,6 +106,7 @@ export const demoRadarsWithFilters: RadarDefinition[] = demoRadars.map((radar) =
 
   return {
     ...radar,
+    sourceLanguagePolicy: 'editorialAndEnglish',
     sourceDiscoveryMode: 'autonomous',
     filters: createDefaultRadarEditorialFilters(radar.id, ['goals', 'topics'])
   };

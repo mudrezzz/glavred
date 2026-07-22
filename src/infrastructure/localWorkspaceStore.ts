@@ -2,7 +2,6 @@ import { createDemoWorkspace } from '../fixtures/demoWorkspace';
 import {
   completeTopicFabulaMatrix,
   createDefaultRadarEditorialFilters,
-  evaluateSignalAgainstRadarFilters,
   getValidatorRunScore,
   getValidatorRunStatus,
   normalizeContentPlanSettings,
@@ -138,14 +137,18 @@ export function normalizeWorkspace(saved: Partial<WorkspaceState>): WorkspaceSta
     updatedAt: saved.updatedAt ?? demo.updatedAt
   });
   const radars = baseRadars.map((radar) => attachRadarSourceHandles(radar, sourceRegistry));
-  const sourceSignal = normalizeSourceSignal(saved.sourceSignal ?? demo.sourceSignal, demo.sourceSignal);
-  const sourceSignals = (saved.sourceSignals ?? demo.sourceSignals).map((signal) => {
-    const normalizedSignal = normalizeSourceSignal(signal, sourceSignal);
-    const radar = radars.find((candidate) => candidate.id === normalizedSignal.radarId);
-    return radar
-      ? evaluateSignalAgainstRadarFilters(normalizedSignal, radar, { ...demo, ...saved, radars } as WorkspaceState)
-      : normalizedSignal;
-  });
+  const demoSignalsById = new Map(demo.sourceSignals.map((signal) => [signal.id, signal]));
+  const selectedSignalSource = saved.sourceSignal ?? demo.sourceSignal;
+  const sourceSignal = normalizeSourceSignal(
+    selectedSignalSource,
+    demoSignalsById.get(selectedSignalSource.id) ?? selectedSignalSource
+  );
+  const sourceSignals = removeCrossRunSignalContamination(
+    (saved.sourceSignals ?? demo.sourceSignals).map((signal) =>
+      normalizeSourceSignal(signal, demoSignalsById.get(signal.id) ?? signal)
+    ),
+    saved.radarRuns ?? demo.radarRuns
+  );
   const activeSection = normalizeWorkspaceSection(saved.activeSection);
   const postCandidates = (saved.postCandidates ?? []).map((candidate) => normalizePostCandidate(candidate));
   const postCandidate = saved.postCandidate ? normalizePostCandidate(saved.postCandidate) : null;
@@ -272,6 +275,16 @@ function normalizePostVisual(visual: NonNullable<WorkspaceState['postVisual']>):
 }
 
 function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): SourceSignal {
+  const declaredLegacy = signal.legacyIntegrityStatus === 'needsReExtraction';
+  const currentContract = !declaredLegacy && Boolean(signal.editorialLanguage && signal.utilityReport);
+  const legacyUtilityEvaluation = !currentContract && (signal.filterStatus || (signal.filterEvaluations ?? []).length > 0)
+    ? {
+        status: signal.filterStatus,
+        evaluations: signal.filterEvaluations ?? [],
+        source: 'legacy-client-keyword-evaluator' as const,
+        canonical: false as const
+      }
+    : signal.legacyUtilityEvaluation;
   return {
     ...fallback,
     ...signal,
@@ -290,31 +303,76 @@ function normalizeSourceSignal(signal: SourceSignal, fallback: SourceSignal): So
     suggestedTopicId: signal.suggestedTopicId ?? fallback.suggestedTopicId,
     suggestedFabulaId: signal.suggestedFabulaId ?? fallback.suggestedFabulaId,
     suggestedValue: signal.suggestedValue ?? fallback.suggestedValue ?? '',
-    duplicateRisk: signal.duplicateRisk ?? fallback.duplicateRisk ?? 'low',
+    duplicateRisk: signal.duplicateRisk,
     authorCorrection: signal.authorCorrection ?? fallback.authorCorrection ?? '',
-    filterEvaluations: signal.filterEvaluations ?? fallback.filterEvaluations ?? [],
-    filterStatus: signal.filterStatus ?? fallback.filterStatus ?? 'passed'
+    filterEvaluations: currentContract ? signal.filterEvaluations ?? [] : undefined,
+    filterStatus: currentContract ? signal.filterStatus : undefined,
+    utilityReport: currentContract ? signal.utilityReport : undefined,
+    relationshipReport: currentContract
+      ? signal.relationshipReport ?? signal.utilityReport?.relationshipReport ?? undefined
+      : undefined,
+    utilityRevision: currentContract ? signal.utilityRevision : undefined,
+    reviewRevision: signal.reviewRevision ?? 0,
+    reviewHistory: signal.reviewHistory ?? [],
+    legacyIntegrityStatus: currentContract ? signal.legacyIntegrityStatus ?? 'current' : 'needsReExtraction',
+    legacyUtilityEvaluation
   };
 }
 
+function removeCrossRunSignalContamination(signals: SourceSignal[], runs: WorkspaceState['radarRuns']): SourceSignal[] {
+  const radarByRunId = new Map(runs.map((run) => [run.id, run.radarId]));
+  return signals.map((signal) => {
+    const runRadarId = signal.radarRunId ? radarByRunId.get(signal.radarRunId) : undefined;
+    if (!runRadarId || !signal.radarId || runRadarId === signal.radarId) return signal;
+    return {
+      ...signal,
+      radarRunId: undefined,
+      utilityReport: undefined,
+      relationshipReport: undefined,
+      utilityRevision: undefined,
+      legacyIntegrityStatus: 'needsReExtraction'
+    };
+  });
+}
+
 function normalizeRadar(radar: RadarDefinition): RadarDefinition {
+  const localizedRadar = localizeLegacyIndustrialRadar(radar);
   const sourceDiscoveryMode =
-    radar.sourceDiscoveryMode ??
-    (radar.sources && radar.sources.length > 0 ? 'specifiedAndAdditional' : 'autonomous');
+    localizedRadar.sourceDiscoveryMode ??
+    (localizedRadar.sources && localizedRadar.sources.length > 0 ? 'specifiedAndAdditional' : 'autonomous');
   return {
-    ...radar,
+    ...localizedRadar,
     sourceDiscoveryMode,
-    filters: radar.filters ?? createDefaultRadarEditorialFilters(radar.id, []),
-    rules: radar.rules ?? [
+    sourceLanguagePolicy: localizedRadar.sourceLanguagePolicy ?? 'editorialAndEnglish',
+    filters: localizedRadar.filters ?? createDefaultRadarEditorialFilters(localizedRadar.id, []),
+    rules: localizedRadar.rules ?? [
       {
-        id: `rule-${radar.id}`,
+        id: `rule-${localizedRadar.id}`,
         operator: 'and',
         negate: false,
-        statement: radar.scope,
+        statement: localizedRadar.scope,
         status: 'active'
       }
     ],
-    sources: radar.sources ?? []
+    sources: localizedRadar.sources ?? []
+  };
+}
+
+function localizeLegacyIndustrialRadar(radar: RadarDefinition): RadarDefinition {
+  if (radar.id !== 'ai-pattern-radar-industrial-cases' || radar.title !== 'Industrial AI cases') return radar;
+  return {
+    ...radar,
+    title: 'Промышленные AI-кейсы',
+    scope: 'Публичные кейсы industrial AI, материалы по ТОиР/EAM, инженерные блоги и технические заметки вендоров с достаточной детализацией.',
+    filters: (radar.filters ?? []).map((filter) =>
+      filter.id === 'ai-pattern-radar-industrial-cases-filter-industrial'
+        ? {
+            ...filter,
+            instruction: 'Сигнал должен быть полезен для разбора паттернов industrial AI, ТОиР/EAM, Decision Intelligence, гибридного AI или открытой книги паттернов.'
+          }
+        : filter
+    ),
+    notes: 'Контрольный радар для мастерской промышленных AI-паттернов «Сборочная».'
   };
 }
 
