@@ -13,6 +13,8 @@ from backend.app.upstream.application.search_campaign_trace import SearchCampaig
 from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_planner_inputs import SearchPlannerInputPolicy
 from backend.app.upstream.application.search_query_family_policy import SearchQueryFamilyPolicy
+from backend.app.upstream.application.search_requirement_allocator import SearchRequirementQueryAllocator
+from backend.app.upstream.application.search_requirement_profile import RadarSearchRequirementProfileFactory
 from backend.app.upstream.domain.search_campaign import (
     SearchIntent,
     SearchPlan,
@@ -30,11 +32,15 @@ class SearchIntentPlanner:
         trace_builder: SearchCampaignTraceBuilder | None = None,
         input_policy: SearchPlannerInputPolicy | None = None,
         language_factory: RadarLanguageContextFactory | None = None,
+        requirement_factory: RadarSearchRequirementProfileFactory | None = None,
+        requirement_allocator: SearchRequirementQueryAllocator | None = None,
     ) -> None:
         self._family_policy = family_policy or SearchQueryFamilyPolicy()
         self._trace_builder = trace_builder or SearchCampaignTraceBuilder()
         self._input_policy = input_policy or SearchPlannerInputPolicy()
         self._language_factory = language_factory or RadarLanguageContextFactory()
+        self._requirement_factory = requirement_factory or RadarSearchRequirementProfileFactory()
+        self._requirement_allocator = requirement_allocator or SearchRequirementQueryAllocator()
 
     def build(
         self,
@@ -57,15 +63,22 @@ class SearchIntentPlanner:
             workspace=workspace,
             research_depth=research_depth,
         )
-        families = self._family_policy.families(
+        profile = self._requirement_factory.build(radar)
+        available_families = self._family_policy.families(
             language=language,
             include_freshness=include_freshness,
+        )
+        family_by_id = {item.family: item for item in available_families}
+        ordered_family_ids = self._requirement_allocator.order_families(
+            available_families=list(family_by_id),
+            profile=profile,
         )
         source_eligibility = [self._input_policy.source_eligibility(handle) for handle in handles]
         intents: list[SearchIntent] = []
         queries: list[SearchQuery] = []
         skipped: list[SkippedSearchIntent] = []
         max_queries = max(0, int(budget.get("maxExternalQueries", 0)))
+        normalized_query_texts: set[str] = set()
 
         for eligibility, handle in zip(source_eligibility, handles, strict=False):
             if eligibility["strategy"] == "skipped":
@@ -89,8 +102,17 @@ class SearchIntentPlanner:
                 )
                 continue
 
-            base_query = self._input_policy.base_query(radar=radar, handle=handle, workspace=workspace)
-            for family in families:
+            for family_index, family_id in enumerate(ordered_family_ids):
+                family = family_by_id[family_id]
+                requirements = self._requirement_allocator.requirements_for_family(family.family, profile)
+                requirement_ids = tuple(item.id for item in requirements)
+                requirement_terms = list(dict.fromkeys(term for item in requirements for term in item.terms))[:16]
+                source_hints = tuple(dict.fromkeys(hint for item in requirements for hint in item.source_hints))[:8]
+                base_query = self._input_policy.base_query(
+                    radar=radar,
+                    handle=handle,
+                    requirement_terms=requirement_terms,
+                )
                 query_language = language_context.query_language_for(family.family)
                 query_family = self._family_policy.for_family(
                     family.family,
@@ -111,11 +133,30 @@ class SearchIntentPlanner:
                     source_handle_id=str(handle.get("id") or ""),
                     source_handle_title=str(handle.get("title") or handle.get("locator") or handle.get("id") or ""),
                     rationale=self._intent_rationale(radar=radar, family_label=family.label, language=language),
-                    priority=family.priority,
+                    priority=family_index + 1,
                     query_terms=query_text.split()[:16],
                     query_language=query_language,
+                    requirement_ids=requirement_ids,
+                    evidence_target=family.evidence_type,
+                    source_hints=source_hints,
                 )
                 intents.append(intent)
+                normalized_query = " ".join(query_text.casefold().split())
+                if normalized_query in normalized_query_texts:
+                    skipped.append(
+                        SkippedSearchIntent(
+                            id=f"skip-intent-{len(skipped) + 1}",
+                            source_handle_id=intent.source_handle_id,
+                            intent_id=intent.id,
+                            intent_type=intent.intent_type,
+                            family=intent.family,
+                            query_language=query_language,
+                            requirement_ids=requirement_ids,
+                            reason="duplicate-query-text",
+                            rationale="Normalized query text duplicates an earlier planned query.",
+                        )
+                    )
+                    continue
                 if len(queries) >= max_queries:
                     skipped.append(
                         SkippedSearchIntent(
@@ -125,6 +166,7 @@ class SearchIntentPlanner:
                             intent_type=intent.intent_type,
                             family=intent.family,
                             query_language=query_language,
+                            requirement_ids=requirement_ids,
                             reason="budget-max-external-queries",
                             rationale=f"External query budget {max_queries} was exhausted before this intent could run.",
                         )
@@ -143,8 +185,12 @@ class SearchIntentPlanner:
                         query=query_text,
                         rationale=intent.rationale,
                         query_language=query_language,
+                        requirement_ids=requirement_ids,
+                        evidence_target=family.evidence_type,
+                        source_hints=source_hints,
                     )
                 )
+                normalized_query_texts.add(normalized_query)
 
         if not intents and not skipped:
             skipped.append(
@@ -162,6 +208,21 @@ class SearchIntentPlanner:
             if item not in executed_languages
         ]
         source_strategy = self._trace_builder.source_strategy(source_eligibility)
+        executed_requirement_ids = [
+            requirement_id
+            for query in queries
+            for requirement_id in query.requirement_ids
+        ]
+        uncovered_required = [
+            {
+                "requirementId": requirement_id,
+                "reason": "budget-max-external-queries" if max_queries > 0 else "external-query-budget-zero",
+            }
+            for requirement_id in self._requirement_allocator.uncovered_required_ids(
+                profile=profile,
+                executed_family_requirements=executed_requirement_ids,
+            )
+        ]
         trace = self._trace_builder.build(
             radar=radar,
             workspace=workspace,
@@ -177,7 +238,7 @@ class SearchIntentPlanner:
             skipped=skipped,
         )
         return SearchPlan(
-            strategy="deterministic-search-campaign-v2",
+            strategy="deterministic-search-campaign-v3",
             language=language,
             intents=intents,
             queries=queries,
@@ -186,6 +247,8 @@ class SearchIntentPlanner:
             trace=trace,
             language_context=language_context.to_payload(),
             language_coverage_gaps=language_coverage_gaps,
+            requirement_profile=profile.to_payload(),
+            uncovered_required_search_requirements=uncovered_required,
         )
 
     def _intent_rationale(self, *, radar: dict[str, Any], family_label: str, language: str) -> str:

@@ -23,6 +23,7 @@ from backend.app.upstream.application.benchmark.scenarios import (
     get_golden_radar_benchmark_scenarios,
 )
 from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
+from backend.app.upstream.application.search_opportunity_report import SearchOpportunityCoverageReportBuilder
 
 
 class RadarBenchmarkRunner:
@@ -46,6 +47,18 @@ class RadarBenchmarkRunner:
             openrouter_validator=OpenRouterConfigValidator(),
         )
         result = service.run(workspace=workspace, radar_id=scenario.radar_id)
+        source_signals = fixture.source_signals(
+            run_id=str(result["run"]["id"]),
+            radar_id=scenario.radar_id,
+            found_materials=result["foundMaterials"],
+        )
+        opportunity = SearchOpportunityCoverageReportBuilder().build(
+            run=result["run"],
+            found_materials=result["foundMaterials"],
+            source_signals=source_signals,
+        ).to_payload()
+        result["run"]["searchOpportunityCoverage"] = opportunity
+        result["sourceSignals"] = source_signals
         return self._report(scenario=scenario, workspace=workspace, result=result)
 
     def _report(
@@ -62,6 +75,8 @@ class RadarBenchmarkRunner:
             workspace=workspace,
             result=result,
             evaluation_mode="recorded",
+            source_signals=result.get("sourceSignals") or [],
+            search_opportunity=result["run"].get("searchOpportunityCoverage") or {},
         )
 
 

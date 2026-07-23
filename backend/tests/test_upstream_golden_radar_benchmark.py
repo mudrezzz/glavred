@@ -29,7 +29,13 @@ def test_golden_radar_benchmark_passes_with_recorded_fixture() -> None:
     assert payload["counters"]["foundMaterialCount"] >= 2
     assert payload["counters"]["distinctSelectedDomainCount"] >= 2
     assert payload["plannedCoverage"]["queryFamilies"]["missing"] == []
-    assert "limitationCritique" in payload["executedCoverage"]["queryFamilies"]["missing"]
+    assert payload["executedCoverage"]["queryFamilies"]["missing"] == []
+    assert payload["usefulYield"]["counts"]["reviewEligibleCount"] == 2
+    assert payload["usefulYield"]["recommendationDistribution"] == {
+        "notRecommended": 1,
+        "recommended": 1,
+        "reviewWithCaution": 1,
+    }
 
 
 def test_golden_radar_benchmark_reports_campaign_trace_and_rejections() -> None:
@@ -44,7 +50,9 @@ def test_golden_radar_benchmark_reports_campaign_trace_and_rejections() -> None:
         "limitationCritique",
     }
     assert len(plan["trace"]["intentCoverage"]) == len(plan["intents"])
-    assert plan["trace"]["ownershipBoundary"].startswith("Search campaign may use topics and fabulas")
+    assert plan["trace"]["ownershipBoundary"].startswith("Search uses only bounded radar requirements")
+    assert plan["requirementProfile"]["requirements"]
+    assert plan["uncoveredRequiredSearchRequirements"] == []
     assert any(item["reason"] == "duplicate-url" for item in run["rejectedBeforeRead"])
     assert any("vendor.example" in item["url"] for item in run["rejectedBeforeRead"])
     assert all("vendor pricing" not in material["summary"].lower() for material in report.found_materials)

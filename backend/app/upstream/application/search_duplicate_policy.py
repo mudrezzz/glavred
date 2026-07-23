@@ -75,6 +75,9 @@ class SearchDuplicateGroupingPolicy:
                     evidence_types=self._unique(item.evidence_type for item in ordered),
                     domains=self._unique(item.domain for item in ordered),
                     match_reasons=tuple(reasons or ["unique-result"]),
+                    requirement_ids=self._unique(
+                        requirement_id for item in ordered for requirement_id in item.requirement_ids
+                    ),
                 )
             )
         return sorted(result, key=lambda item: item.id)

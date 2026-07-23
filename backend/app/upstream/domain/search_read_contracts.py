@@ -41,6 +41,7 @@ class SearchReadDecision:
     source_language_mixed: bool = False
     source_language_reason_codes: tuple[str, ...] = ()
     source_language_eligibility_reason: str | None = None
+    requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -64,6 +65,7 @@ class SearchReadDecision:
                 "reasonCodes": list(self.source_language_reason_codes),
                 "eligibilityReason": self.source_language_eligibility_reason,
             },
+            "requirementIds": list(self.requirement_ids),
         }
 
 
@@ -76,6 +78,8 @@ class SearchReadPlan:
     decisions: tuple[SearchReadDecision, ...]
     covered_families: tuple[str, ...]
     coverage_gaps: tuple[dict[str, str], ...]
+    required_requirement_ids: tuple[str, ...] = ()
+    covered_requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -86,6 +90,8 @@ class SearchReadPlan:
             "decisions": [item.to_payload() for item in self.decisions],
             "coveredFamilies": list(self.covered_families),
             "readCoverageGaps": [dict(item) for item in self.coverage_gaps],
+            "requiredRequirementIds": list(self.required_requirement_ids),
+            "coveredRequirementIds": list(self.covered_requirement_ids),
         }
 
 

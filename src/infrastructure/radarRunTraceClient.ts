@@ -21,6 +21,7 @@ export type RadarBenchmarkTraceReport = {
   unacceptableNoiseHits?: string[];
   inconclusiveReasons?: string[];
   traceComplete?: boolean;
+  usefulYield?: RadarRun['searchOpportunityCoverage'];
 };
 
 export type RadarRunTraceBundle = {

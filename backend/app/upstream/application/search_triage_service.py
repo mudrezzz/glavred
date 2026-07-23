@@ -69,12 +69,14 @@ class SearchResultTriageService:
         }
         duplicate_groups = self._duplicate_policy.group(candidates, scores)
         required_families = self._required_families(search_plan)
+        required_requirement_ids = self._required_requirement_ids(search_plan)
         read_plan = self._read_allocator.allocate(
             candidates=candidates,
             scores=scores,
             duplicate_groups=duplicate_groups,
             max_reads=max_reads,
             required_families=required_families,
+            required_requirement_ids=required_requirement_ids,
         )
         report = SearchTriageReport(
             policy_version=self.POLICY_VERSION,
@@ -105,6 +107,7 @@ class SearchResultTriageService:
                 "score": score_by_raw[str(raw.get("id"))].total,
                 "dimensionScores": score_by_raw[str(raw.get("id"))].to_payload(),
                 "sourceLanguage": candidate_by_raw[str(raw.get("id"))].to_payload()["sourceLanguage"],
+                "requirementIds": list(candidate_by_raw[str(raw.get("id"))].requirement_ids),
             }
             for raw in raw_results
         )
@@ -141,7 +144,11 @@ class SearchResultTriageService:
         )
 
     def _required_families(self, search_plan: dict[str, Any]) -> list[str]:
-        intents = [item for item in search_plan.get("intents", []) if isinstance(item, dict)]
+        required_ids = set(self._required_requirement_ids(search_plan))
+        intents = [
+            item for item in search_plan.get("intents", [])
+            if isinstance(item, dict) and (not required_ids or required_ids.intersection(item.get("requirementIds") or []))
+        ]
         ordered = sorted(intents, key=lambda item: (int(item.get("priority") or 999), str(item.get("family") or "")))
         families = [str(item.get("family") or "") for item in ordered]
         if not families:
@@ -151,6 +158,14 @@ class SearchResultTriageService:
                 if isinstance(item, dict)
             ]
         return list(dict.fromkeys(item for item in families if item))
+
+    def _required_requirement_ids(self, search_plan: dict[str, Any]) -> list[str]:
+        profile = search_plan.get("requirementProfile") if isinstance(search_plan.get("requirementProfile"), dict) else {}
+        return [
+            str(item.get("id"))
+            for item in profile.get("requirements", [])
+            if isinstance(item, dict) and item.get("role") == "required" and item.get("id")
+        ]
 
     def _project_context(self, *, workspace: dict[str, Any], radar: dict[str, Any]) -> str:
         profile = workspace.get("projectProfile") if isinstance(workspace.get("projectProfile"), dict) else {}

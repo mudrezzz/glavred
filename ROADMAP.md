@@ -8560,7 +8560,7 @@ Status:
 
 ### Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark
 
-- Status: Ready
+- Status: Done
 - Goal: Связать типизированные требования радара с фактически исполняемыми поисковыми запросами и доказать, что контрольный радар дает полезный редакционный выход, а не повторяющийся нулевой yield.
 - User value: Редактор понимает, какие требования фильтров радар пытался покрыть поиском, где именно потерялась полезность — в запросе, чтении, extraction или scoring — и почему новый запуск стоит потраченного бюджета.
 - AS IS sources:
@@ -8632,6 +8632,72 @@ Status:
   - `2.17.4.7.1.1 -> Done`; then `2.17.4.8 -> Ready`.
 - Risks:
   - Optimizing for positive yield can weaken filters. Golden constraints require honest rejections and prohibit fabricated or weak signals from being promoted merely to avoid zero output.
+- Completed: 2026-07-23
+
+### Slice 2.17.4.7.1.1.1: Evidence-Target Coverage and Source Posture Consistency Repair
+
+- Status: Ready
+- Goal: Make evidence delivery and source-credibility semantics internally consistent before candidate assembly consumes signal utility reports.
+- User value: Editors can trust that a covered search requirement produced usable evidence and that first-party claims are not presented as independent proof.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - Active Radar-to-Candidate TO BE and accepted live evidence for `radar-run-ai-pattern-radar-industrial-cases-2`.
+- TO BE necessity:
+  - Required because requirement-coverage states, read allocation, source-posture classification, utility verdicts, and useful-yield semantics change.
+  - Extend the active TO BE before runtime work with evidence-delivery stages and one canonical source-credibility policy.
+- Change intent:
+  - Distinguish query execution from evidence discovery, reading, signal use, and corroboration.
+  - Prevent a first-party or vendor claim from receiving a reliability verdict that conflicts with the system source-posture check.
+  - Use the unchanged read cap for the strongest combination of core case evidence and independent corroboration when suitable results exist.
+- Preserved AS IS invariants:
+  - Search requirements remain provider-free and derived from active radar filters.
+  - Search, triage, reading, extraction, scoring, and human review remain separate stages.
+  - Search/provider call counts, read caps, provider-input caps, message caps, HTTP API compatibility, and SQLite schema remain unchanged.
+  - Missing corroboration produces caution or an explicit gap; it never fabricates support or weakens filters.
+- Changed AS IS invariants:
+  - Requirement coverage exposes `planned`, `queryExecuted`, `resultFound`, `selectedForRead`, `readableEvidence`, `usedBySignal`, and `corroborated` stages where applicable.
+  - Source posture is classified by one backend-owned policy as `independent`, `corroborated`, `firstParty`, `vendor`, or `unknown`.
+  - Utility criteria and system quality checks are reconciled by a deterministic consistency policy.
+- Scope:
+  - Add typed evidence-delivery coverage and unresolved-stage reasons to search opportunity diagnostics.
+  - Update read allocation so a suitable independent or benchmark result above the quality floor competes explicitly for the bounded read plan instead of being hidden behind query-executed coverage.
+  - Add deterministic source-ownership/posture signals from source domain, publisher/product relationship, provenance, and corroborating materials; provider output may add evidence but cannot override deterministic conflicts silently.
+  - Reconcile `radarCriteria.sourceCredibility`, `qualityChecks.sourcePosture`, recommendation, and benchmark verdict.
+  - Replay the iFactory power-plant signal and the independent/vendor golden corpus.
+- Out of scope:
+  - Increasing search calls or read caps.
+  - Cross-run search memory, LLM query expansion, candidate assembly, plan handoff, or DraftRun.
+- Definition of Done:
+  - Query execution alone never counts as delivered evidence.
+  - Every searchable requirement reports the furthest completed evidence-delivery stage and a reason when it stops.
+  - Every selected material and signal resolves to requirement, query, raw result, read decision, material, and fragment with zero unresolved handles.
+  - A first-party product case is classified `firstParty` or `vendor`, never `independent` or unsupported `unknown` when ownership is deterministically resolvable.
+  - `radarCriteria.sourceCredibility` and `qualityChecks.sourcePosture` cannot present contradictory pass/caution semantics.
+  - A vendor-reported outcome without independent corroboration remains `reported`, carries visible caution, and cannot receive `recommended` solely from its own metrics.
+  - Within the standard read cap, a suitable independent/benchmark result above the quality floor is selected alongside the core case when available; otherwise the missing corroboration is an explicit coverage gap.
+  - `SearchOpportunityCoverageReport.status=sufficient` cannot rely on false evidence-delivery coverage; optional gaps remain visible without becoming fabricated failures.
+  - The iFactory replay keeps the useful industrial signal but reports first-party posture, reported outcome, missing corroboration, and no reliability contradiction.
+  - Recorded fixtures distinguish independent report, vendor case, corroborated claim, unrelated source, and unresolved ownership.
+  - Search/provider call counts, read caps, provider-input caps, and message caps do not increase.
+  - No `PostCandidate`, plan slot, or DraftRun is created.
+  - AS IS/TO BE and relevant PDFs are updated and verified.
+- Tests:
+  - Requirement-stage transitions and unresolved-stage reasons.
+  - Read allocation with case plus independent evidence, unavailable corroboration, quality-floor rejection, cap pressure, and permutation invariance.
+  - Source posture for first-party, vendor, independent, corroborated, and unknown sources.
+  - Utility consistency, recommendation, benchmark, API compatibility, trace UI, recorded replay, and one authenticated live RadarRun.
+  - Remote backend/frontend/architecture/design/visual/smoke checks, PDF sanity, roadmap checks, and `git diff --check`.
+- Docs and demo:
+  - Update RadarRun/upstream AS IS, active TO BE, developer/user guides, trace explanations, and industrial benchmark evidence.
+- Completion transition:
+  - `2.17.4.7.1.1.1 -> Done`; then `2.17.4.6.6.0 -> Ready`; keep `2.17.4.8` in `Backlog`.
+- Risks:
+  - Over-prioritizing independent sources can suppress useful first-party implementation detail. Preserve both claim usefulness and source posture instead of banning vendor evidence.
+- Proof evidence:
+  - Recorded iFactory, independent, vendor, corroborated, and unresolved-owner fixtures plus one authenticated live RadarRun and human-readable trace screenshots.
+- AS IS update outcome:
+  - Expected AS IS updated; regenerate RadarRun/upstream PDFs after accepted runtime proof.
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -8690,6 +8756,8 @@ Status:
   - Update upstream AS IS/TO BE, SAO, developer/user guides, candidate review UI, and the three-project demo benchmark.
 - Risks:
   - Assembly pressure can create plausible but unsupported post ideas. Evidence preservation, proof requirements, visible rejections, and human approval are mandatory.
+- Priority dependency (2026-07-23):
+  - Keep this slice in `Backlog` until `2.17.4.7.1.1.1` and `2.17.4.6.6.0` are `Done`; candidate assembly must not amplify contradictory source credibility or unbounded provider cost.
 
 ### Slice 2.17.4.8.1: Candidate Ranking and Plan Handoff
 
@@ -8924,6 +8992,8 @@ Status:
   - Provider failure does not block deterministic search.
 - Risks:
   - LLM may add noisy or over-broad queries; require accepted/rejected query suggestions in trace.
+- Priority dependency (2026-07-23):
+  - Do not promote this slice before `2.17.4.6.6.0` is `Done`; adding an LLM query-expansion call before actual provider-cost controls would increase an already expensive RadarRun path.
 
 ### Slice 2.17.4.6.6: Search Memory, Refresh Policy, and Production Controls
 
@@ -8969,6 +9039,77 @@ Status:
 - Risks:
   - Search memory can hide useful rediscoveries; keep manual reset/reconsider path.
   - Persisting too much raw provider output can create noise; keep retention policy explicit and project-scoped.
+- Sequencing update (2026-07-23):
+  - Immediate actual provider-cost and extraction-attempt controls are split into `2.17.4.6.6.0` and run before candidate assembly.
+  - This parent slice retains cross-run search memory, refresh policy, cache reuse, retry/backoff, and broader production controls.
+
+### Slice 2.17.4.6.6.0: Radar Provider Cost Guard and Extraction Attempt Efficiency
+
+- Status: Backlog
+- Goal: Bound provider-owned web-search cost and reduce avoidable extraction retries without weakening search coverage or evidence checks.
+- User value: Radar runs remain affordable and predictable while preserving useful-signal quality and complete diagnostics.
+- AS IS sources:
+  - `docs/architecture/RADAR_RUN_PIPELINE_AS_IS.md`.
+  - `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`.
+  - Active Radar-to-Candidate TO BE and cost evidence from `radar-run-ai-pattern-radar-industrial-cases-2`.
+- TO BE necessity:
+  - Required because actual provider-usage budgets, cost-aware stop behavior, search-adapter parameters, recovery policy, and run verdict semantics change.
+  - Extend the active TO BE before runtime work with local-input versus provider-owned usage boundaries and cost-per-useful-output diagnostics.
+- Change intent:
+  - Prevent tiny local prompts from being reported as efficient when provider-owned web-search context makes the run expensive.
+  - Stop optional work when the actual run budget is exhausted and make required coverage lost to cost explicit.
+  - Reduce repeated extraction attempts through error-specific repair and model/profile evidence rather than weaker validation.
+- Preserved AS IS invariants:
+  - Deterministic requirement planning remains canonical and required search directions are not silently removed.
+  - Existing query/provider-input/message caps remain direct and enforced before calls.
+  - Provider failures, budget stops, and quality failures remain separate diagnostics.
+  - Search results and source claims are not promoted merely to improve cost-per-signal metrics.
+- Changed AS IS invariants:
+  - RadarRun owns configured actual provider-token/cost ceilings in addition to local message estimates.
+  - Campaign orchestration can stop remaining optional operations after actual usage crosses the configured ceiling and records structured skipped coverage.
+  - Extraction recovery records whether repair corrected the prior error class and exposes avoidable retry cost.
+- Scope:
+  - Add per-operation and per-run provider-reported token/cost profiles for search, extraction, and scoring.
+  - Add cost-aware continuation policy after each completed provider call; a single over-ceiling call remains visible and blocks optional follow-up calls.
+  - Audit and tune supported OpenRouter web-search depth/context/result parameters without increasing query count.
+  - Record provider-returned result count versus requested result count and explain overflow.
+  - Add `tokensPerReadableMaterial`, `tokensPerExtractedSignal`, `tokensPerReviewEligibleSignal`, and cost distribution to diagnostics.
+  - Make extraction repair context error-specific, bounded, and unable to repeat an already rejected language/grounding defect silently.
+  - Benchmark primary/repair/backup model roles for extraction while preserving the existing safe fallback order unless evidence supports a change.
+  - Keep broader cross-run search memory, refresh, and cache reuse in parent Slice `2.17.4.6.6`.
+- Out of scope:
+  - Weakening grounding/language validation, increasing read caps, adding LLM query expansion, or implementing full search memory.
+  - Candidate assembly, plan handoff, or DraftRun.
+- Definition of Done:
+  - Every search, extraction, and scoring attempt reports local message size, actual provider input/output/total tokens, cost when available, and usage availability status.
+  - Standard RadarRun has an explicit actual provider-usage ceiling; crossing it prevents subsequent optional provider calls and produces structured `provider-usage-budget-exceeded` coverage reasons.
+  - A single provider call that exceeds the remaining ceiling cannot be hidden as a clean efficiency result.
+  - Requested versus returned search-result counts are trace-visible and provider overflow does not expand later prompts or read calls.
+  - Recorded stress tests prove bounded local input and deterministic stop behavior under large provider-reported usage.
+  - Extraction repair receives only the relevant validation errors and does not repeat a rejected full answer or ungrounded values.
+  - Accepted live proof preserves all required query families, zero accepted noise, complete lineage, and at least one review-eligible signal.
+  - Accepted live actual provider usage is at least 30% below the approximately 124.4k-token `radar-run-ai-pattern-radar-industrial-cases-2` reference, or the run is not accepted as cost-improved.
+  - Search/extraction/scoring quality and grounding benchmark constraints do not regress to obtain the reduction.
+  - Cost per readable material and review-eligible signal is shown in the technical trace and comparison evidence.
+  - No provider call occurs after a blocked local gate or cost-aware stop decision.
+  - Slice `2.17.4.6.4` remains blocked from priority execution until this guard is complete.
+  - AS IS/TO BE and relevant PDFs are updated and verified.
+- Tests:
+  - Provider usage present/missing, per-call and cumulative ceilings, single-call overshoot, required versus optional stop behavior, and deterministic reason codes.
+  - Search-depth/result-parameter adapter tests and provider-overflow fixtures.
+  - Extraction primary/repair/backup error-class, budget, and quality-preservation tests.
+  - Recorded cost benchmark, one authenticated live comparison, full remote regression, architecture/design/visual/smoke, PDF, roadmap, and diff checks.
+- Docs and demo:
+  - Update RadarRun/upstream AS IS, active TO BE, provider diagnostics, developer/user guides, and industrial benchmark cost report.
+- Completion transition:
+  - `2.17.4.6.6.0 -> Done`; then `2.17.4.8 -> Ready`.
+  - Parent `2.17.4.6.6` retains cross-run memory, refresh, cache, retry/backoff, and broader production controls.
+- Risks:
+  - Provider-reported usage is known only after a call. The policy can stop later work and tune adapter depth, but cannot retroactively prevent one unexpectedly expensive call.
+- Proof evidence:
+  - Recorded usage/overflow fixtures and a live comparison against adar-run-ai-pattern-radar-industrial-cases-2, including quality, coverage, token, and cost reports.
+- AS IS update outcome:
+  - Expected AS IS updated; regenerate RadarRun/upstream PDFs after accepted runtime proof.
 
 ### Slice 2.17.4.6.1.3.10: DraftRun Tool-Mediated Context Access Pilot
 
@@ -9343,6 +9484,7 @@ Status:
 - Slice 2.17.4.7.0.2: Radar Language Policy and Signal Evidence Presentation. Completed 2026-07-17.
 - Slice 2.17.4.7.1: Signal Editorial Scoring, Explainability and Relationship Integrity. Completed 2026-07-22.
 - Slice 2.17.4.7.1.0.1: Remote Docker Test Runtime and Skill Guardrails. Completed 2026-07-22.
+- Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark. Completed 2026-07-23.
 
 
 ## Blocked Items
@@ -9371,4 +9513,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark`.
+Implement `Slice 2.17.4.7.1.1.1: Evidence-Target Coverage and Source Posture Consistency Repair`.

@@ -24,6 +24,9 @@ class SearchIntent:
     priority: int
     query_terms: list[str] = field(default_factory=list)
     query_language: str = "ru"
+    requirement_ids: tuple[str, ...] = ()
+    evidence_target: str = ""
+    source_hints: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -38,6 +41,9 @@ class SearchIntent:
             "priority": self.priority,
             "queryTerms": self.query_terms,
             "queryLanguage": self.query_language,
+            "requirementIds": list(self.requirement_ids),
+            "evidenceTarget": self.evidence_target or self.evidence_type,
+            "sourceHints": list(self.source_hints),
         }
 
 
@@ -54,6 +60,9 @@ class SearchQuery:
     query: str
     rationale: str
     query_language: str = "ru"
+    requirement_ids: tuple[str, ...] = ()
+    evidence_target: str = ""
+    source_hints: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -68,6 +77,9 @@ class SearchQuery:
             "query": self.query,
             "rationale": self.rationale,
             "queryLanguage": self.query_language,
+            "requirementIds": list(self.requirement_ids),
+            "evidenceTarget": self.evidence_target or self.evidence_type,
+            "sourceHints": list(self.source_hints),
         }
 
 
@@ -81,6 +93,7 @@ class SkippedSearchIntent:
     intent_type: str | None = None
     family: str | None = None
     query_language: str | None = None
+    requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -98,6 +111,8 @@ class SkippedSearchIntent:
             payload["family"] = self.family
         if self.query_language:
             payload["queryLanguage"] = self.query_language
+        if self.requirement_ids:
+            payload["requirementIds"] = list(self.requirement_ids)
         return payload
 
 
@@ -134,6 +149,8 @@ class SearchPlan:
     trace: SearchCampaignTrace
     language_context: dict[str, Any] = field(default_factory=dict)
     language_coverage_gaps: list[dict[str, Any]] = field(default_factory=list)
+    requirement_profile: dict[str, Any] = field(default_factory=dict)
+    uncovered_required_search_requirements: list[dict[str, Any]] = field(default_factory=list)
 
     def to_payload(self) -> dict[str, Any]:
         skipped_reasons = _unique([item.reason for item in self.skipped_intents])
@@ -148,6 +165,8 @@ class SearchPlan:
             "skippedIntentDetails": [item.to_payload() for item in self.skipped_intents],
             "languageContext": self.language_context,
             "languageCoverageGaps": self.language_coverage_gaps,
+            "requirementProfile": self.requirement_profile,
+            "uncoveredRequiredSearchRequirements": self.uncovered_required_search_requirements,
         }
 
 

@@ -19,7 +19,7 @@ from backend.app.upstream.application.external_run_budget import UpstreamRadarRu
 from backend.app.upstream.application.external_run_payloads import UpstreamRadarPayloadFactory
 from backend.app.upstream.application.external_run_result_policy import ExternalRunResultPolicy
 from backend.app.upstream.application.external_search_operations import OpenWebQueryOperationRunner
-from backend.app.upstream.application.radar_benchmark_reporter import RadarRunBenchmarkReporter
+from backend.app.upstream.application.radar_run_quality_reporter import RadarRunQualityReporter
 from backend.app.upstream.application.radar_language_context import RadarLanguageContextFactory
 from backend.app.upstream.application.search_planner import build_search_plan
 from backend.app.upstream.application.search_triage_service import SearchResultTriageService
@@ -54,7 +54,7 @@ class UpstreamRadarExternalRunService:
             read_runner=RadarUrlReadOperationRunner(url_reader=url_reader),
             search_runner=search_runner,
         )
-        self._benchmark_reporter = RadarRunBenchmarkReporter()
+        self._quality_reporter = RadarRunQualityReporter()
         self._triage_service = SearchResultTriageService()
         self._language_contexts = RadarLanguageContextFactory()
         self._signal_lifecycle = RadarSignalLifecycleCoordinator(
@@ -144,13 +144,6 @@ class UpstreamRadarExternalRunService:
             "searchTriage": triage_report.to_payload(),
             "languageContext": language_context.to_payload(),
         }
-        self._benchmark_reporter.attach_if_matching(
-            workspace=workspace,
-            project_id=language_context.project_id or None,
-            radar_id=radar_id,
-            run=run,
-            found_materials=batch.found_materials,
-        )
         signals = self._signal_lifecycle.process_materials(
             workspace=workspace,
             radar=radar,
@@ -158,6 +151,14 @@ class UpstreamRadarExternalRunService:
             materials=batch.found_materials,
             language_context=language_context,
             project_context=project_context,
+        )
+        self._quality_reporter.attach(
+            workspace=workspace,
+            project_id=language_context.project_id or None,
+            radar_id=radar_id,
+            run=run,
+            found_materials=batch.found_materials,
+            source_signals=signals["sourceSignals"],
         )
         run["completedAt"] = self._payloads.now_iso()
         return {
@@ -175,12 +176,14 @@ class UpstreamRadarExternalRunService:
         force_retry: bool,
         project_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return self._signal_lifecycle.retry_extraction(
+        result = self._signal_lifecycle.retry_extraction(
             workspace=workspace,
             run_id=run_id,
             force_retry=force_retry,
             project_context=project_context,
         )
+        self._attach_retry_quality(workspace=workspace, result=result, project_context=project_context)
+        return result
 
     def retry_signal_scoring(
         self,
@@ -189,10 +192,34 @@ class UpstreamRadarExternalRunService:
         run_id: str,
         project_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        return self._signal_lifecycle.retry_scoring(
+        result = self._signal_lifecycle.retry_scoring(
             workspace=workspace,
             run_id=run_id,
             project_context=project_context,
+        )
+        self._attach_retry_quality(workspace=workspace, result=result, project_context=project_context)
+        return result
+
+    def _attach_retry_quality(
+        self,
+        *,
+        workspace: dict[str, Any],
+        result: dict[str, Any],
+        project_context: dict[str, Any] | None,
+    ) -> None:
+        run = result["run"]
+        found_ids = set(run.get("foundMaterialIds") or [])
+        materials = [
+            item for item in workspace.get("foundMaterials", [])
+            if isinstance(item, dict) and (item.get("radarRunId") == run.get("id") or item.get("id") in found_ids)
+        ]
+        self._quality_reporter.attach(
+            workspace=workspace,
+            project_id=str((project_context or {}).get("projectId") or "") or None,
+            radar_id=str(run.get("radarId") or ""),
+            run=run,
+            found_materials=materials,
+            source_signals=result.get("sourceSignals") or [],
         )
 
 def _resolve_handles(workspace: dict[str, Any], radar: dict[str, Any]) -> list[dict[str, Any]]:

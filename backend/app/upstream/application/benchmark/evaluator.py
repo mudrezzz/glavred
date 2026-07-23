@@ -30,6 +30,8 @@ class RadarBenchmarkEvaluator:
         workspace: dict[str, Any] | None = None,
         result: dict[str, Any] | None = None,
         evaluation_mode: BenchmarkEvaluationMode = "recorded",
+        source_signals: list[dict[str, Any]] | None = None,
+        search_opportunity: dict[str, Any] | None = None,
     ) -> RadarBenchmarkReport:
         search_plan = run.get("searchPlan", {}) if isinstance(run.get("searchPlan"), dict) else {}
         raw_results = run.get("rawResults", []) if isinstance(run.get("rawResults"), list) else []
@@ -84,6 +86,12 @@ class RadarBenchmarkEvaluator:
         noise_hits = self._policy.accepted_noise_hits(scenario=scenario, found_materials=found_materials)
         leaks = self._policy.downstream_leaks(workspace=workspace or {}, result=result or {}) if evaluation_mode == "recorded" else []
         warnings = []
+        search_opportunity = search_opportunity or (
+            run.get("searchOpportunityCoverage")
+            if isinstance(run.get("searchOpportunityCoverage"), dict)
+            else {}
+        )
+        source_signals = source_signals or []
         optional_base_families = executed_families if evaluation_mode == "live" else planned_families
         optional_missing = sorted(set(scenario.optional_intent_families).difference(optional_base_families))
         if optional_missing:
@@ -117,6 +125,16 @@ class RadarBenchmarkEvaluator:
             inconclusive=inconclusive,
             provider_health=provider_health,
         )
+        opportunity_status = str(search_opportunity.get("status") or "")
+        if evaluation_mode == "live" and opportunity_status == "zeroYield":
+            missing.append("review-eligible-signal-yield")
+            status = "failed"
+        elif opportunity_status == "partial":
+            warnings.append("useful-signal-yield-partial")
+            if status == "passed":
+                status = "warning"
+        elif opportunity_status == "inconclusive" and status != "failed":
+            status = "inconclusive"
         counters = {
             "intentCount": len(search_plan.get("intents", [])),
             "queryCount": len(search_plan.get("queries", [])),
@@ -126,6 +144,8 @@ class RadarBenchmarkEvaluator:
             "foundMaterialCount": len(readable_materials),
             "metadataOnlyMaterialCount": len(found_materials) - len(readable_materials),
             "distinctSelectedDomainCount": len(selected_domains),
+            "sourceSignalCount": len(source_signals),
+            "reviewEligibleSignalCount": int((search_opportunity.get("counts") or {}).get("reviewEligibleCount") or 0),
         }
         return RadarBenchmarkReport(
             scenario_id=scenario.id,
@@ -163,6 +183,7 @@ class RadarBenchmarkEvaluator:
             trace_complete=trace_complete,
             run=run,
             found_materials=found_materials,
+            useful_yield=search_opportunity,
         )
 
     def _domain(self, url: str) -> str:
@@ -197,11 +218,15 @@ def evaluate_live_radar_run(
     scenario: RadarBenchmarkScenario,
     run: dict[str, Any],
     found_materials: list[dict[str, Any]],
+    source_signals: list[dict[str, Any]] | None = None,
+    search_opportunity: dict[str, Any] | None = None,
 ) -> RadarBenchmarkReport:
     return RadarBenchmarkEvaluator().evaluate(
         scenario=scenario,
         run=run,
         found_materials=found_materials,
+        source_signals=source_signals,
+        search_opportunity=search_opportunity,
         evaluation_mode="live",
     )
 

@@ -158,6 +158,7 @@ class RadarUrlReadOperationRunner:
             "intentIds": list(selection.get("intentIds") or ([raw.get("intentId")] if raw.get("intentId") else [])),
             "families": list(selection.get("families") or ([raw.get("family")] if raw.get("family") else [])),
             "evidenceTypes": list(selection.get("evidenceTypes") or ([raw.get("evidenceType")] if raw.get("evidenceType") else [])),
+            "requirementIds": list(selection.get("requirementIds") or raw.get("requirementIds") or []),
             "duplicateGroupId": selection.get("duplicateGroupId"),
             "decisionReason": selection.get("reason"),
             "queryLanguage": raw.get("queryLanguage"),

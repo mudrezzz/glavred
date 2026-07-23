@@ -50,10 +50,10 @@ def test_three_source_language_policies_change_queries_and_eligibility_without_e
 
     assert [item["queryLanguage"] for item in plans["editorialOnly"]["queries"]] == ["ru"] * 5
     assert [item["queryLanguage"] for item in plans["editorialAndEnglish"]["queries"]] == [
-        "ru", "en", "en", "en", "ru"
+        "ru", "en", "en", "ru", "en"
     ]
     assert [item["queryLanguage"] for item in plans["any"]["queries"]] == [
-        "ru", "en", "en", "en", "ru"
+        "ru", "en", "en", "ru", "en"
     ]
     assert all(len(plan["queries"]) == 5 for plan in plans.values())
     assert plans["editorialOnly"]["languageContext"]["allowedSourceLanguages"] == ["ru"]

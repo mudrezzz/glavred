@@ -62,6 +62,8 @@ class SearchTriageReport:
             "readCoverage": {
                 "requiredFamilies": list(self.read_plan.required_families),
                 "coveredFamilies": list(self.read_plan.covered_families),
+                "requiredRequirementIds": list(self.read_plan.required_requirement_ids),
+                "coveredRequirementIds": list(self.read_plan.covered_requirement_ids),
             },
             "readCoverageGaps": [dict(item) for item in self.read_plan.coverage_gaps],
             "readOutcomes": [item.to_payload() for item in self.read_outcomes],

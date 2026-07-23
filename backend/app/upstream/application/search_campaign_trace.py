@@ -37,7 +37,7 @@ class SearchCampaignTraceBuilder:
         skipped: list[SkippedSearchIntent],
     ) -> SearchCampaignTrace:
         return SearchCampaignTrace(
-            planner_version="deterministic-search-campaign-v2",
+            planner_version="deterministic-search-campaign-v3",
             input_summary=self._input_summary(
                 radar=radar,
                 workspace=workspace,
@@ -55,7 +55,7 @@ class SearchCampaignTraceBuilder:
             },
             source_eligibility=source_eligibility,
             skipped_reasons=self._unique([item.reason for item in skipped]),
-            ownership_boundary="Search campaign may use topics and fabulas as context, but raw FoundMaterial does not own topic or fabula decisions.",
+            ownership_boundary="Search uses only bounded radar requirements; project utility remains a later scoring decision.",
         )
 
     def source_strategy(self, source_eligibility: list[dict[str, Any]]) -> dict[str, Any]:
@@ -111,6 +111,7 @@ class SearchCampaignTraceBuilder:
                 "evidenceType": intent.evidence_type,
                 "queryLanguage": intent.query_language,
                 "sourceHandleId": intent.source_handle_id,
+                "requirementIds": list(intent.requirement_ids),
                 "queryCount": queries_by_intent[intent.id],
                 "skippedCount": skipped_by_intent[intent.id],
                 "status": "queryPlanned" if queries_by_intent[intent.id] else "skipped",

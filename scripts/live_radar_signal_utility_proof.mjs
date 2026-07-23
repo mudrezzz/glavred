@@ -28,12 +28,29 @@ async function readDevPassword() {
 }
 
 async function login(page, baseUrl) {
+  const browserErrors = [];
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') browserErrors.push(message.text());
+  });
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: 'Войти' }).waitFor();
-  await page.getByLabel('Email').fill('founder@example.test');
-  await page.getByLabel('Пароль').fill(password);
+  const emailInput = page.locator('input[type="email"]');
+  try {
+    await emailInput.waitFor({ timeout: 30_000 });
+  } catch (error) {
+    const diagnosticPath = path.join(proofDir, 'login-failure.png');
+    await page.screenshot({ path: diagnosticPath, fullPage: true });
+    const bodyText = ((await page.locator('body').innerText().catch(() => '')) ?? '').replace(/\s+/gu, ' ').trim();
+    throw new Error(
+      `Login form did not render at ${baseUrl}. `
+      + `body=${bodyText.slice(0, 500)} browserErrors=${browserErrors.join(' | ').slice(0, 1000)}`,
+      { cause: error }
+    );
+  }
+  await emailInput.fill('founder@example.test');
+  await page.locator('input[type="password"]').fill(password);
   const me = page.waitForResponse((response) => response.url().endsWith('/api/users/me') && response.status() === 200);
-  await page.getByRole('button', { name: 'Войти' }).click();
+  await page.locator('button[type="submit"]').click();
   await me;
   await page.locator('[data-testid="project-dashboard"]').waitFor({ timeout: 90_000 });
   const owner = page.locator('[data-testid="project-dashboard-owner"]');

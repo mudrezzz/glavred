@@ -25,10 +25,14 @@ class UpstreamRadarPayloadFactory:
     def raw_result(self, run_id: str, query: dict[str, Any], citation: Any, index: int) -> dict[str, Any]:
         original_url = str(citation.url or "")
         url, invalid_reason = self._normalizer.canonical_url(original_url)
-        title = self._normalizer.bounded_text(str(citation.title or url), self._normalizer.TITLE_LIMIT)
-        snippet = self._normalizer.bounded_text(str(citation.snippet or ""), self._normalizer.SNIPPET_LIMIT)
         normalized = self._normalizer.normalize(
-            {"id": f"{run_id}-raw-{query['id']}-{index + 1}", "url": url, "title": title, "snippet": snippet},
+            {
+                "id": f"{run_id}-raw-{query['id']}-{index + 1}",
+                "url": url,
+                "title": str(citation.title or url),
+                "snippet": str(citation.snippet or ""),
+                **({"invalidReason": invalid_reason} if invalid_reason else {}),
+            },
             query=query,
         )
         return {
@@ -38,16 +42,24 @@ class UpstreamRadarPayloadFactory:
             "intentId": query.get("intentId"),
             "family": query.get("family"),
             "evidenceType": query.get("evidenceType"),
+            "evidenceTarget": query.get("evidenceTarget") or query.get("evidenceType"),
+            "requirementIds": list(query.get("requirementIds") or []),
+            "sourceHints": list(query.get("sourceHints") or []),
             "queryLanguage": query.get("queryLanguage"),
             "query": self._normalizer.bounded_text(str(query.get("query") or ""), 1000),
-            "title": title,
+            "title": normalized.title,
             "url": url,
-            "snippet": snippet,
+            "snippet": normalized.snippet,
             "domain": normalized.domain,
             "sourceLanguage": normalized.to_payload()["sourceLanguage"],
             "duplicateKey": url,
             "provider": "openrouter:web_search",
-            **({"invalidReason": invalid_reason} if invalid_reason else {}),
+            **({"invalidReason": normalized.invalid_reason} if normalized.invalid_reason else {}),
+            **(
+                {"textIntegrity": normalized.to_payload()["textIntegrity"]}
+                if normalized.text_integrity_issues
+                else {}
+            ),
         }
 
     def material_from_read(

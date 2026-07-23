@@ -22,6 +22,14 @@ class SearchResultNormalizer:
     SNIPPET_LIMIT = 1200
     DIAGNOSTIC_LIMIT = 320
     _TRACKING_KEYS = {"gclid", "fbclid", "ref"}
+    _LATIN_MOJIBAKE = ("Ã", "Â", "Ð", "Ñ", "â€", "ï¿½")
+    _CYRILLIC_MOJIBAKE = (
+        "Рђ", "Р‘", "Р’", "Р“", "Р”", "Р•", "Р–", "Р—", "Р", "Р™",
+        "Рљ", "Р›", "Рњ", "Рќ", "Рћ", "Рџ", "Р ", "РЎ", "Рў", "РЈ",
+        "Р¤", "РҐ", "Р¦", "Р§", "РЁ", "Р©", "Р­", "Р®", "РЇ", "СЃ",
+        "С‚", "СЂ", "Сѓ", "С„", "С…", "С†", "С‡", "С€", "С‰", "СЊ",
+        "С‹", "СЌ", "СЋ", "СЏ", "В«", "В»", "вЂ",
+    )
 
     def __init__(self, language_inspector: SourceLanguageInspector | None = None) -> None:
         self._languages = language_inspector or SourceLanguageInspector()
@@ -33,6 +41,10 @@ class SearchResultNormalizer:
         invalid_reason = str(raw_result.get("invalidReason") or invalid_reason or "") or None
         title = self.bounded_text(str(raw_result.get("title") or canonical_url or raw_url), self.TITLE_LIMIT)
         snippet = self.bounded_text(str(raw_result.get("snippet") or ""), self.SNIPPET_LIMIT)
+        title, snippet, integrity_issues = self._sanitize_provider_text(title=title, snippet=snippet)
+        if integrity_issues:
+            invalid_reason = invalid_reason or "provider-result-text-integrity-failed"
+        title = title or canonical_url or raw_url
         source_language = self._languages.inspect(title, snippet)
         query_payload = query or {}
         query_id = str(raw_result.get("queryId") or query_payload.get("id") or "")
@@ -62,6 +74,10 @@ class SearchResultNormalizer:
             source_language_confidence=source_language.confidence,
             source_language_mixed=source_language.mixed,
             source_language_reason_codes=source_language.reason_codes,
+            requirement_ids=tuple(
+                str(item) for item in (raw_result.get("requirementIds") or query_payload.get("requirementIds") or []) if item
+            ),
+            text_integrity_issues=integrity_issues,
         )
 
     def canonical_url(self, value: str) -> tuple[str, str | None]:
@@ -111,6 +127,36 @@ class SearchResultNormalizer:
     def _fingerprint_text(self, value: str) -> str:
         lowered = value.casefold()
         return " ".join(re.findall(r"[\w]+", lowered, flags=re.UNICODE))
+
+    def _sanitize_provider_text(
+        self, *, title: str, snippet: str,
+    ) -> tuple[str, str, tuple[dict[str, Any], ...]]:
+        issues: list[dict[str, Any]] = []
+        safe_values: dict[str, str] = {"title": title, "snippet": snippet}
+        for field, value in tuple(safe_values.items()):
+            reason = self._text_integrity_reason(value)
+            if reason is None:
+                continue
+            issues.append(
+                {
+                    "field": field,
+                    "reasonCode": reason,
+                    "charCount": len(value),
+                    "valueHash": sha256(value.encode("utf-8")).hexdigest()[:20],
+                }
+            )
+            safe_values[field] = ""
+        return safe_values["title"], safe_values["snippet"], tuple(issues)
+
+    def _text_integrity_reason(self, value: str) -> str | None:
+        if "\ufffd" in value:
+            return "unicode-replacement-character"
+        if re.search(r"\?{4,}", value):
+            return "question-mark-replacement-text"
+        if any(marker in value for marker in self._LATIN_MOJIBAKE):
+            return "probable-mojibake"
+        marker_count = sum(value.count(marker) for marker in self._CYRILLIC_MOJIBAKE)
+        return "probable-mojibake" if marker_count >= 3 else None
 
 
 __all__ = ("SearchResultNormalizer",)

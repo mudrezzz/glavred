@@ -22,6 +22,7 @@ from backend.app.infrastructure.sqlite_ai_run_repository import SqliteAiRunRepos
 from backend.app.upstream.application.legacy_signal_integrity import LegacySignalIntegrityPolicy
 from backend.app.upstream.application.signal_review_lifecycle import SourceSignalReviewLifecyclePolicy
 from backend.app.upstream.application.signal_utility_service import SignalUtilityScoringService
+from backend.app.upstream.application.radar_run_quality_reporter import RadarRunQualityReporter
 from backend.app.upstream.domain.signal_review import SourceSignalReviewCommand, SourceSignalReviewError
 
 router = APIRouter()
@@ -87,6 +88,14 @@ def rescore_signals(
         previous_report=run.get("signalScoring") if isinstance(run.get("signalScoring"), dict) else None,
     )
     updated_run = _run_with_scoring(run, result)
+    RadarRunQualityReporter().attach(
+        workspace=workspace,
+        project_id=project_id,
+        radar_id=str(updated_run.get("radarId") or ""),
+        run=updated_run,
+        found_materials=_run_materials(workspace, updated_run),
+        source_signals=result["sourceSignals"],
+    )
     workspace["radarRuns"] = _replace(workspace.get("radarRuns"), updated_run)
     workspace["sourceSignals"] = _merge_signals(workspace.get("sourceSignals"), result["sourceSignals"])
     portfolio.save_workspace(user, project_id, workspace)
@@ -148,6 +157,14 @@ def review_signal(
             )
             updated_signal = _find(result["sourceSignals"], signal_id) or updated_signal
             updated_run = _run_with_scoring(run, result)
+            RadarRunQualityReporter().attach(
+                workspace=workspace,
+                project_id=project_id,
+                radar_id=str(updated_run.get("radarId") or ""),
+                run=updated_run,
+                found_materials=_run_materials(workspace, updated_run),
+                source_signals=result["sourceSignals"],
+            )
             workspace["radarRuns"] = _replace(workspace.get("radarRuns"), updated_run)
             workspace["sourceSignals"] = _merge_signals(workspace.get("sourceSignals"), result["sourceSignals"])
             scoring_report = result["signalScoringReport"]
@@ -200,6 +217,14 @@ def _run_with_scoring(run: dict[str, Any], result: dict[str, Any]) -> dict[str, 
         "operations": operations,
         "budget": {**dict(run.get("budget") or {}), "usedOperations": len(operations)},
     }
+
+
+def _run_materials(workspace: dict[str, Any], run: dict[str, Any]) -> list[dict[str, Any]]:
+    found_ids = set(run.get("foundMaterialIds") or [])
+    return [
+        item for item in workspace.get("foundMaterials", [])
+        if isinstance(item, dict) and (item.get("radarRunId") == run.get("id") or item.get("id") in found_ids)
+    ]
 
 
 __all__ = ("router",)

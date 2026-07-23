@@ -341,6 +341,38 @@ def test_stress_dossier_is_compacted_inside_each_execution_mode_budget() -> None
         assert repair.fields["messageCharCount"] <= profile.max_message_chars
 
 
+def test_attempt_contract_requires_exact_quotes_grounded_numbers_and_editorial_language() -> None:
+    material = english_readable_material()
+    profile = UpstreamProviderBudgetProfileRegistry().resolve(
+        operation_id="signalExtraction", execution_mode="standard"
+    )
+    dossier = SignalExtractionDossierFactory().build(
+        context=SignalExtractionContextFactory().build(workspace=workspace(), radar=radar()),
+        materials=[material],
+        profile=profile,
+    )
+
+    request = SignalExtractionAttemptRequestBuilder().build(
+        dossier=dossier,
+        profile=profile,
+        label="primary",
+        model="recorded-model",
+        repair_errors=[],
+    )
+
+    contract = dossier.provider_input["extractionContract"]
+    assert contract["groundingRules"] == {
+        "evidenceQuote": "exact-contiguous-fragment-substring",
+        "editorialNumbersAndDates": "must-occur-in-signal-evidence-quotes",
+        "invalidSignal": "omit-instead-of-relaxing-contract",
+    }
+    system_prompt = request.messages[0]["content"]
+    assert "точную непрерывную подстроку" in system_prompt
+    assert "Каждое число и каждая дата" in system_prompt
+    assert "не возвращай этот signal" in system_prompt
+    assert request.fields["messageCharCount"] <= profile.max_message_chars
+
+
 def test_recorded_golden_signal_extraction_benchmark_passes_all_cases() -> None:
     report = run_signal_extraction_golden_benchmark()
     assert report["status"] == "passed"
@@ -418,6 +450,20 @@ def test_total_localization_failure_creates_no_mixed_language_signal() -> None:
     assert result["signalExtractionReport"]["materialDecisions"][0]["reasonCodes"] == [
         "editorial-language-not-satisfied"
     ]
+
+
+def test_repair_context_reduces_retry_surface_without_weakening_language_or_grounding() -> None:
+    context = SignalExtractionAttemptRequestBuilder()._repair_context(
+        [
+            "signal-0-editorial-language-not-satisfied:limitations[0]:ru",
+            "grounding:number-or-date-not-grounded:16",
+        ],
+        max_chars=1200,
+    )
+
+    assert "не более одного сильнейшего сигнала" in context
+    assert "законченную фразу на editorialLanguage" in context
+    assert "Не используй числа и даты" in context
 
 
 def test_two_quotes_from_one_fragment_receive_unique_evidence_ids() -> None:

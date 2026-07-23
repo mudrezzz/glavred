@@ -22,6 +22,8 @@ class RadarRunBenchmarkReporter:
         radar_id: str,
         run: dict[str, Any],
         found_materials: list[dict[str, Any]],
+        source_signals: list[dict[str, Any]] | None = None,
+        search_opportunity: dict[str, Any] | None = None,
     ) -> None:
         scenario = find_golden_radar_benchmark_scenario(
             project_id=project_id or self._project_id(workspace),
@@ -32,6 +34,8 @@ class RadarRunBenchmarkReporter:
                 scenario=scenario,
                 run=run,
                 found_materials=found_materials,
+                source_signals=source_signals or [],
+                search_opportunity=search_opportunity or {},
             ).to_payload()
 
     def _project_id(self, workspace: dict[str, Any]) -> str | None:

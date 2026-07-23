@@ -54,6 +54,32 @@ class RecordedRadarFixture:
             text=str(record.get("text") or ""),
         )
 
+    def source_signals(
+        self,
+        *,
+        run_id: str,
+        radar_id: str,
+        found_materials: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        records = self._payload.get("sourceSignals", [])
+        result: list[dict[str, Any]] = []
+        for index, item in enumerate(records):
+            if not isinstance(item, dict) or not found_materials:
+                continue
+            material = found_materials[min(index, len(found_materials) - 1)]
+            fragments = [fragment for fragment in material.get("contentFragments", []) if isinstance(fragment, dict)]
+            if not fragments:
+                continue
+            result.append({
+                "id": str(item.get("id") or f"recorded-signal-{index + 1}"),
+                "radarRunId": run_id,
+                "radarId": radar_id,
+                "title": str(item.get("title") or f"Recorded signal {index + 1}"),
+                "evidenceRefs": [{"materialId": material["id"], "fragmentId": fragments[0]["id"]}],
+                "utilityReport": {"recommendation": str(item.get("recommendation") or "inconclusive")},
+            })
+        return result
+
     def _family_for_query(self, query: str) -> str:
         lower = query.lower()
         if "case study" in lower or "implementation example" in lower:
@@ -70,8 +96,6 @@ class RecordedRadarFixture:
 class RecordedRadarSearchAdapter:
     def __init__(self, fixture: RecordedRadarFixture) -> None:
         self._fixture = fixture
-        self._families_by_call = ("broadDiscovery", "caseExample", "benchmarkPaper", "limitationCritique", "ossTooling")
-        self._call_count = 0
 
     def search(self, **kwargs: Any) -> OpenRouterWebSearchResult:
         query = str(kwargs.get("query") or "")
@@ -84,11 +108,6 @@ class RecordedRadarSearchAdapter:
         )
 
     def _family_for_call(self, query: str) -> str:
-        if self._call_count < len(self._families_by_call):
-            family = self._families_by_call[self._call_count]
-            self._call_count += 1
-            return family
-        self._call_count += 1
         return self._fixture._family_for_query(query)
 
 

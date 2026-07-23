@@ -132,6 +132,15 @@ The current Signals UI separates extraction confidence, backend utility recommen
 and reversible human status; the accepted scoring/review proof is recorded in
 `docs/evidence/radar-runs/2.17.4.7.1/`.
 
+Slice `2.17.4.7.1.1` connects the industrial radar's enabled filters to actual search
+requirements. In the run trace, inspect `Что требовалось найти` before the query list
+and `Полезный выход` after scoring. The first block proves which configured filters
+were searched or explicitly marked scoring-only; the second proves how many readable
+materials became signals, how many were review-eligible, and where a zero-yield run
+first failed. The accepted remote live proof and comparison with
+`radar-run-ai-pattern-radar-industrial-cases-9` are stored in
+`docs/evidence/radar-runs/2.17.4.7.1.1/`.
+
 New and reworked benchmark projects should be created through
 `$project-blueprint-creation`. The workflow starts from an approved project blueprint,
 updates UTF-8 source fixtures/docs, runs project blueprint validation, and only then

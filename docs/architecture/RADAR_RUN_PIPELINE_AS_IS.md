@@ -1,6 +1,6 @@
 # RadarRun Pipeline AS IS
 
-Current as of Slice `2.17.4.7.1`.
+Current as of Slice `2.17.4.7.1.1`.
 
 This document is the factual runtime contract for the current RadarRun pipeline. It
 describes what the product does today, what evidence proves it, and which boundaries
@@ -66,7 +66,8 @@ why the contract remained valid, the slice is not ready to close.
 | `SourceHandle` | Project-scoped descriptor for a source that may be searchable, readable-only, paused, or needs review. | Provider execution, signal approval, candidate ranking. |
 | `RadarDefinition` | User-facing radar settings: scope, source handles, trigger rules, filters, source-language policy, execution mode, and budget caps. | Search result storage or downstream drafting. |
 | `RadarLanguageContext` | Bounded project/radar contract: canonical editorial language, source-language policy, query languages, allowed source languages, unknown-language policy, and legacy fallback reason. | Full project metadata, translation of evidence, or project-utility scoring. |
-| `SearchPlan` | Deterministic provider-free campaign plan with strategy, editorial language, per-intent/query language, language context, source strategy, budget, and skipped intents. | Provider calls or quality scoring. |
+| `RadarSearchRequirementProfile` | Bounded provider-free projection of every enabled radar filter into a required, optional, exclusion, tension, or explicit `notSearchApplicable` decision. | Full workspace, scoring verdicts, or provider execution. |
+| `SearchPlan` | Deterministic provider-free campaign plan with requirement profile, strategy, editorial language, per-intent/query language, language context, source strategy, budget, and uncovered/skipped requirements. | Provider calls or quality scoring. |
 | `SearchIntent` | One planned evidence direction such as broad discovery, case/example, benchmark/paper, OSS/tooling, limitation/critique, or freshness. | URL reading or material acceptance. |
 | `SearchQuery` | One provider-executable web-search query derived from an intent and eligible source strategy. | Search result quality judgment. |
 | `RadarRun` | One execution attempt: status, budget usage, operations, search plan, raw results, read decisions, material ids, extraction/scoring revisions, warnings, errors, and optional benchmark report. | Human signal approval, `PostCandidate`, plan slot, or `DraftRun` creation. |
@@ -82,14 +83,15 @@ why the contract remained valid, the slice is not ready to close.
 | `SignalUtilityReport` | Backend-owned dimension results, resolvable setting/evidence references, deterministic recommendation, warnings and provider proof. | Human approval or mutation of source evidence. |
 | `SourceSignalReviewEvent` | Immutable authenticated transition with actor, time, reason, revision and changed editorial fields. | Rewriting evidence, mechanism, outcome, limitations, or provenance. |
 | `RadarBenchmarkReport` | Recorded or live evaluation against a golden scenario. | Search execution or UI-side scoring. |
+| `SearchOpportunityCoverageReport` | End-to-end requirement coverage, lineage, material/signal/recommendation counts, useful-yield metrics, first failure stage, and remediation. | Human approval or weakening radar criteria to manufacture positive yield. |
 | `RadarRunTracePage` | Frontend read model for inspecting one run. | Recomputing live quality or mutating the run. |
 
 ## Runtime Topology
 
 ```mermaid
 flowchart TD
-    A[Project workspace, radar, source handles] --> B[SearchIntentPlanner]
-    B --> C[SearchPlan]
+    A[Project workspace, radar, source handles] --> B[RadarSearchRequirementProfile]
+    B --> C[Requirement-aware SearchIntentPlanner]
     C --> D[Budgeted OpenRouter web search]
     D --> E[Raw search results]
     E --> F[Normalization and duplicate groups]
@@ -103,9 +105,10 @@ flowchart TD
     M --> N[Grounding validation and SourceSignal candidates]
     N --> O[Bounded project profile and utility dossier]
     O --> P[Provider evaluation and deterministic recommendation]
-    P --> Q[Human review lifecycle]
+    P --> Q[SearchOpportunityCoverageReport]
     Q --> R[RadarBenchmarkReport]
-    R --> S[Workspace snapshot and trace page]
+    R --> S[Human review lifecycle]
+    S --> T[Workspace snapshot and trace page]
 ```
 
 The current implementation stores RadarRun and FoundMaterial data in the workspace
@@ -124,6 +127,8 @@ endpoint in this AS IS state.
    - needs review;
    - unavailable or unsupported.
 3. Build a deterministic `SearchPlan`:
+   - bounded requirement projection for every enabled radar filter;
+   - explicit scoring-only decisions for settings that have no honest search target;
    - source strategy;
    - campaign trace;
    - planned intents;
@@ -133,7 +138,9 @@ endpoint in this AS IS state.
    - skipped intents and reasons.
    Query families receive bounded query languages according to the radar policy;
    this allocation does not increase the number of provider operations.
-4. Apply `maxExternalQueries` and produce provider-executable `queries[]`.
+4. Allocate `maxExternalQueries` required-first, then by evidence diversity and
+   optional value. Persist requirement ids on every intent/query and record every
+   uncovered required requirement with a reason.
 5. Apply the direct `openWebQuery` input budget and final serialized-message guard.
 6. Run provider web-search operations for executable queries and record provider usage
    when OpenRouter returns it.
@@ -175,9 +182,13 @@ endpoint in this AS IS state.
 20. Persist utility revisions independently from the reversible human review status.
     Manual rescore reuses stored signals/materials and performs no search, read, or
     extraction operations.
-21. Attach `benchmarkReport` when the run matches a golden scenario.
-22. Persist the updated workspace snapshot.
-23. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
+21. Build `SearchOpportunityCoverageReport` from the persisted chain from requirement
+    through query, read, material, evidence fragment, signal and utility verdict.
+22. Attach or update `benchmarkReport` after extraction/scoring when the run matches a
+    golden scenario. A known high-fit zero eligible yield is a quality failure;
+    provider/runtime outages remain inconclusive.
+23. Persist the updated workspace snapshot.
+24. Render compact radar trace and, when opened, the dedicated `/radar-runs` trace
     page.
 
 ## Context Handoff and Execution Contract
@@ -189,8 +200,9 @@ workspace snapshot and in the run payload.
 | --- | --- | --- | --- |
 | Source eligibility | Project workspace, `RadarDefinition`, source handles | `searchPlan.sourceStrategy`, skipped source reasons | Trace shows searchable, readable-only, paused, and needs-review handles. |
 | Language context | Bounded `projectContext`, `BlogProject.language`, `RadarDefinition.sourceLanguagePolicy` | `languageContext`, per-intent/query language, fallback reason | Editorial and source languages remain separate; legacy fallback is visible and no full project enters provider input. |
-| Campaign planning | Radar scope, editorial language, topics/fabulas as context, publisher/editorial rules, source strategy, budget mode | `searchPlan.intents`, `queries`, `skippedIntentDetails`, language coverage gaps, campaign trace | Planned intents, query languages, skipped reasons, and language gaps are visible in `searchPlan`. |
-| Query budgeting | Planned intents, `maxExternalQueries` | Bounded `queries[]`, skipped intent reasons | Required directions skipped by budget appear as skipped coverage. |
+| Requirement projection | Enabled radar filters, bounded radar scope and language policy | `searchPlan.requirementProfile`, requirements, exclusions, tension directions, `notSearchApplicable` | Every enabled filter has one search role or an explicit scoring-only reason; full workspace/history are suppressed. |
+| Campaign planning | Requirement profile, bounded radar title/scope, language context, source strategy, budget mode | `searchPlan.intents`, `queries`, requirement handles, language coverage gaps, campaign trace | Required-first allocation, differentiated evidence targets, query languages and uncovered reasons are visible in `searchPlan`. |
+| Query budgeting | Requirement-aware intents, `maxExternalQueries` | Bounded `queries[]`, skipped intents, `uncoveredRequiredSearchRequirements` | Every required requirement is executed or has a trace-visible budget/source reason. |
 | Provider search | Executable `queries[]`, provider config, upstream budget profile | `RadarRunOperation`, provider citations, raw results | Direct `providerInput`, `payloadBudget`, `messageCharCount`, operation status, provider usage, errors, warnings, and provenance. |
 | Triage and dedupe | Bounded `rawResults[]`, read budget, project/search/language context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, language eligibility, dimension scores, one terminal decision per raw result, coverage, and gaps. |
 | URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
@@ -198,7 +210,8 @@ workspace snapshot and in the run payload.
 | Signal extraction | Readable materials, bounded radar/language context, extraction taxonomy | terminal material decisions, localized candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact original evidence, editorial-language validation, localization status, grounding incidents and downstream-leak counters. |
 | Signal utility scoring | Candidate signals, bounded project opportunity profile, active typed filters, evidence handles, bounded relationship candidates | Compact provider aliases resolved into `SignalUtilityReport v2`, `radarCriteria`, `projectCriteria`, type-aware `qualityChecks`, `SignalRelationshipReport`, scoring revision and terminal recommendation | Direct dossier/budget/message proof, provider attempts/usage, one result per retained criterion, resolvable signal/setting/evidence aliases, deterministic decision-policy result and no retrieval/extraction operations during rescore. |
 | Human signal review | Current signal, authenticated actor, expected review revision, action/reason and optional editorial patch | immutable review event, new review status/revision | Evidence hash-equivalence, actor/time/reason, optimistic concurrency and utility rescore after correction. |
-| Benchmark evaluation | Scenario, run, found materials | `benchmarkReport` | Recorded/live status, provider health, coverage, missing expectations, and noise hits. |
+| Useful-yield evaluation | Search plan, operations, triage/read artifacts, materials, fragments, signals and utility reports | `searchOpportunityCoverage` | Planned/executed requirements, complete lineage, counts, recommendation distribution, first failure stage and remediation. |
+| Benchmark evaluation | Scenario, run, found materials, signals and useful-yield report | `benchmarkReport` | Recorded/live status, provider health, coverage, useful yield, missing expectations, and noise hits. |
 
 ## Hard Output Boundaries
 
@@ -229,11 +242,14 @@ collapse it into a single "results" blob.
 | `searchPlan.strategy` | Campaign strategy chosen by the deterministic planner. | Explains why this run searched in this shape. |
 | `searchPlan.language` | Compatibility editorial-language field. | Keeps old readers working without hiding per-query language. |
 | `searchPlan.languageContext` | Editorial language, source policy, allowed/query languages, unknown-language rule and fallback reason. | Proves which language contract governed the run. |
+| `searchPlan.requirementProfile` | Bounded search projection of enabled radar filters and explicit scoring-only decisions. | Proves that search intent starts from configured criteria without sending the workspace. |
 | `searchPlan.intents[]` | Planned evidence directions. | Proves what the radar wanted to cover. |
+| `searchPlan.intents[].requirementIds` and `queries[].requirementIds` | Filter-derived requirements covered by each intent/query. | Preserves lineage from radar configuration to executed search. |
 | `searchPlan.intents[].queryLanguage` and `queries[].queryLanguage` | Actual language assigned to each planned/executable direction. | Proves that the query text and trace follow the selected policy. |
 | `searchPlan.queries[]` | Provider-executable queries. | Proves what could actually run under budget. |
 | `searchPlan.sourceStrategy` | Source handle eligibility and use. | Explains searchable versus readable-only sources. |
 | `searchPlan.skippedIntents[]` and `skippedIntentDetails[]` | Directions not executed and why. | Makes budget and source gaps visible. |
+| `searchPlan.uncoveredRequiredSearchRequirements[]` | Required filter-derived search evidence not covered by executable queries. | Prevents budget pressure from silently weakening the radar. |
 | `operations[]` | Provider and read operations. | Separates provider/runtime health from quality. |
 | `rawResults[]` | Normalized provider citations. | Shows what the provider returned before triage. |
 | `rawResults[].sourceLanguage` | Deterministic bounded source-language assessment. | Explains eligibility without sending or storing full pages in triage. |
@@ -255,6 +271,7 @@ collapse it into a single "results" blob.
 | `sourceSignals[].utilityReport.qualityChecks[]` | Type-aware grounding, mechanism/result support, source posture and freshness checks. | Separates system evidence hygiene from user-configured filters and distinguishes observed, reported, capability-only and expected outcomes. |
 | `sourceSignals[].relationshipReport` | Exact duplicate, same claim, related same-source claim, corroboration, contradiction, distinct or inconclusive relationships plus canonical signal id. | Replaces the unsupported default `duplicateRisk=low` and preserves provenance when aliases share one visible card. |
 | `sourceSignals[].reviewRevision` and `reviewHistory[]` | Current optimistic-concurrency revision and immutable human decisions. | Proves that automation did not silently approve or rewrite evidence. |
+| `run.searchOpportunityCoverage` | Requirement execution, family/evidence coverage, material/signal/verdict counts, useful yield, first failure stage, remediation and lineage integrity. | Explains positive, partial, zero and provider-inconclusive outcomes without fake precision. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
 
@@ -285,8 +302,8 @@ Status vocabulary:
 | `failed` | Provider was usable, but quality failed: required coverage/material/domain checks missed or accepted material contains known noise. |
 | `inconclusive` | Provider/runtime state prevents a fair quality verdict: provider disabled, missing configuration, rate limit, network failure, or no honest execution trace. |
 
-`passed` means the search actually covered enough of the golden scenario. It does not
-mean only that the plan looked good.
+`passed` means the search actually covered enough of the golden scenario and produced
+the expected useful output. It does not mean only that the plan looked good.
 
 ## Reading a RadarRun Trace
 
@@ -299,24 +316,28 @@ Use:
 The trace should be read in this order:
 
 1. Summary cards: status, budget, source coverage, material output, warnings/errors.
-2. Campaign plan: strategy, editorial and query languages, source-language policy,
+2. `What had to be found`: radar filters, search requirements, scoring-only settings,
+   requirement-aware queries and uncovered reasons.
+3. Campaign plan: strategy, editorial and query languages, source-language policy,
    source strategy, intent families, language gaps, and skipped intents.
-3. Operations: provider query and URL-read statuses.
-4. Search triage: result scores, duplicate groups, terminal decisions, read coverage,
+4. Operations: provider query and URL-read statuses.
+5. Search triage: result scores, duplicate groups, terminal decisions, read coverage,
    and gaps.
-5. Raw results: bounded provider citations before triage.
-6. Selected and rejected reads: what the run read and why every other result was
+6. Raw results: bounded provider citations before triage.
+7. Selected and rejected reads: what the run read and why every other result was
    rejected, duplicated, invalid, or deferred.
-7. Found materials and read outcomes: what became readable upstream material and what
+8. Found materials and read outcomes: what became readable upstream material and what
    remained metadata-only.
-8. Evidence fragments, extraction decisions, signal candidates, extraction/scoring
+9. Evidence fragments, extraction decisions, signal candidates, extraction/scoring
    provider attempts, message budgets and actual usage.
-9. Radar criteria, project criteria, type-aware quality checks, signal relationships,
+10. Radar criteria, project criteria, type-aware quality checks, signal relationships,
    recommendation, human status and review history. Product UI resolves handles to
    setting text, source title/domain, exact quote and links; raw ids remain trace-only.
-10. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
+11. `Useful output`: material/signal/recommendation counts, first failure stage,
+    remediation and lineage integrity.
+12. Benchmark report: whether the golden scenario verdict is `passed`, `warning`,
    `failed`, or `inconclusive`.
-11. Raw JSON fallback when a legacy/minimal run lacks richer fields.
+13. Raw JSON fallback when a legacy/minimal run lacks richer fields.
 
 ## Known AS IS Limitations
 
@@ -338,8 +359,6 @@ These are current facts, not target architecture:
   local RadarRun input. OpenRouter may report much larger prompt-token usage because
   its web-search tool adds provider-owned retrieval context; production cost controls
   and reuse belong to Slice `2.17.4.6.6`.
-- Query family wording can still be too similar across broad discovery, case/example,
-  and benchmark/paper directions.
 - Source-language inspection is deliberately deterministic and bounded. It reliably
   separates Russian, English, mixed, unknown, and other writing systems for current
   policy enforcement, but it is not a general linguistic classifier for every
@@ -351,8 +370,6 @@ These are current facts, not target architecture:
   exact/same-source evidence remains available during provider failure, while an
   ambiguous semantic pair stays `inconclusive`; cross-run relationship memory remains
   future work.
-- Search queries are not yet aligned one-to-one with every typed utility filter. That
-  useful-yield repair belongs to Slice `2.17.4.7.1.1`.
 - Successful extraction retry replaces the current signal revision. Stable IDs are
   preserved only when type and exact evidence handles still describe the same signal;
   semantically different model output receives new IDs instead of a false match.

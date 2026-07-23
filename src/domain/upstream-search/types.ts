@@ -106,6 +106,9 @@ export interface RadarSearchQuery {
   evidenceType?: string;
   priority?: number;
   queryLanguage?: string;
+  requirementIds?: string[];
+  evidenceTarget?: string;
+  sourceHints?: string[];
 }
 
 export interface RadarSearchIntent {
@@ -120,6 +123,9 @@ export interface RadarSearchIntent {
   priority: number;
   queryTerms: string[];
   queryLanguage?: string;
+  requirementIds?: string[];
+  evidenceTarget?: string;
+  sourceHints?: string[];
 }
 
 export interface RadarSkippedSearchIntent {
@@ -131,6 +137,32 @@ export interface RadarSkippedSearchIntent {
   intentType?: string;
   family?: string;
   queryLanguage?: string;
+  requirementIds?: string[];
+}
+
+export interface RadarSearchRequirement {
+  id: string;
+  filterId: string;
+  dimension: string;
+  mode: 'mustMatch' | 'shouldMatch' | 'mustNotMatch' | 'seekTension';
+  role: 'required' | 'optional' | 'exclusion' | 'tension';
+  title: string;
+  statement: string;
+  priority: number;
+  queryFamilies: string[];
+  evidenceTypes: string[];
+  terms: string[];
+  sourceHints: string[];
+}
+
+export interface RadarSearchRequirementProfile {
+  version: string;
+  radarId: string;
+  requirements: RadarSearchRequirement[];
+  notSearchApplicable: Array<{ filterId: string; dimension: string; mode: string; reason: string }>;
+  retainedCounts: Record<string, number>;
+  trimmedCounts: Record<string, number>;
+  suppressedFields: string[];
 }
 
 export interface RadarSearchCampaignTrace {
@@ -167,6 +199,8 @@ export interface RadarSearchPlan {
   skippedIntentDetails?: RadarSkippedSearchIntent[];
   languageContext?: RadarLanguageContextTrace;
   languageCoverageGaps?: Array<{ language: string; reason: string }>;
+  requirementProfile?: RadarSearchRequirementProfile;
+  uncoveredRequiredSearchRequirements?: Array<{ requirementId: string; reason: string }>;
 }
 
 export interface RadarLanguageContextTrace {
@@ -208,6 +242,7 @@ export interface RadarRawSearchResult {
   dimensionScores?: RadarSearchResultDimensionScores;
   queryLanguage?: string;
   sourceLanguage?: RadarSourceLanguageTrace;
+  requirementIds?: string[];
 }
 
 export interface RadarSearchResultDimensionScores {
@@ -237,6 +272,7 @@ export interface RadarReadDecision {
   queryIds?: string[];
   intentIds?: string[];
   sourceLanguage?: RadarSourceLanguageTrace;
+  requirementIds?: string[];
 }
 
 export type RadarReadSelection = RadarReadDecision;
@@ -253,6 +289,7 @@ export interface RadarSearchDuplicateGroup {
   evidenceTypes: string[];
   domains: string[];
   matchReasons: string[];
+  requirementIds?: string[];
 }
 
 export interface RadarSearchTriageCandidate {
@@ -274,6 +311,7 @@ export interface RadarSearchTriageCandidate {
   invalidReason?: string;
   scores?: RadarSearchResultDimensionScores | null;
   sourceLanguage?: RadarSourceLanguageTrace;
+  requirementIds?: string[];
 }
 
 export interface RadarSearchReadOutcome {
@@ -298,10 +336,14 @@ export interface RadarSearchTriageReport {
     decisions: RadarReadDecision[];
     coveredFamilies: string[];
     readCoverageGaps: Array<{ family: string; reason: string }>;
+    requiredRequirementIds?: string[];
+    coveredRequirementIds?: string[];
   };
   readCoverage: {
     requiredFamilies: string[];
     coveredFamilies: string[];
+    requiredRequirementIds?: string[];
+    coveredRequirementIds?: string[];
   };
   readCoverageGaps: Array<{ family: string; reason: string }>;
   readOutcomes: RadarSearchReadOutcome[];
@@ -324,6 +366,28 @@ export interface RadarBenchmarkReport {
   unacceptableNoiseHits?: string[];
   inconclusiveReasons?: string[];
   traceComplete?: boolean;
+  usefulYield?: RadarSearchOpportunityCoverage;
+}
+
+export interface RadarSearchOpportunityCoverage {
+  version: string;
+  status: 'sufficient' | 'partial' | 'zeroYield' | 'inconclusive';
+  plannedRequirementIds: string[];
+  executedRequirementIds: string[];
+  uncoveredRequiredSearchRequirements: Array<{ requirementId: string; reason: string }>;
+  familyCoverage: { planned: string[]; executed: string[] };
+  evidenceCoverage: { planned: string[]; executed: string[] };
+  counts: Record<string, number>;
+  extractedSignalYield: { count: number; denominator: number; ratio: number };
+  reviewEligibleYield: { count: number; denominator: number; ratio: number };
+  rejectedYield: { count: number; denominator: number; ratio: number };
+  recommendationDistribution: Record<string, number>;
+  reasonDistribution: Record<string, number>;
+  firstFailureStage?: 'providerSearch' | 'triage' | 'read' | 'signalExtraction' | 'signalScoring' | null;
+  reasonCodes: string[];
+  remediation: string[];
+  lineage: Array<Record<string, unknown>>;
+  unresolvedHandles: Record<string, number>;
 }
 
 export interface RadarRun {
@@ -347,6 +411,7 @@ export interface RadarRun {
   signalExtraction?: RadarSignalExtractionReport;
   signalScoring?: RadarSignalScoringReport;
   languageContext?: RadarLanguageContextTrace;
+  searchOpportunityCoverage?: RadarSearchOpportunityCoverage;
 }
 
 export interface RadarSignalScoringReport {

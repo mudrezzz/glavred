@@ -123,7 +123,7 @@ def test_external_radar_run_api_returns_trace_contract_and_retries_without_retri
     payload = response.json()
     assert payload["run"]["searchPlan"]["queries"]
     assert payload["run"]["searchPlan"]["intents"]
-    assert payload["run"]["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v2"
+    assert payload["run"]["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v3"
     assert payload["run"]["selectedForRead"]
     assert payload["foundMaterials"][0]["title"] == "Read case"
     assert payload["foundMaterials"][0]["contentFragments"]

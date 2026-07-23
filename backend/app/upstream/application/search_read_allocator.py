@@ -40,6 +40,7 @@ class SearchReadBudgetAllocator:
         duplicate_groups: list[SearchDuplicateGroup],
         max_reads: int,
         required_families: list[str],
+        required_requirement_ids: list[str] | None = None,
     ) -> SearchReadPlan:
         candidate_by_id = {item.id: item for item in candidates}
         group_by_candidate = {
@@ -60,9 +61,31 @@ class SearchReadBudgetAllocator:
         ]
         selected: list[SearchResultCandidate] = []
 
+        uncovered_requirements = set(self._unique(required_requirement_ids or []))
+        while uncovered_requirements and len(selected) < max(0, max_reads):
+            choices = [
+                item
+                for item in eligible
+                if item not in selected
+                and uncovered_requirements.intersection(group_by_candidate[item.id].requirement_ids)
+            ]
+            if not choices:
+                break
+            choice = self._best_requirement_choice(
+                choices,
+                scores,
+                group_by_candidate,
+                selected,
+                uncovered_requirements,
+            )
+            selected.append(choice)
+            uncovered_requirements.difference_update(group_by_candidate[choice.id].requirement_ids)
+
         for family in self._unique(required_families):
             if len(selected) >= max(0, max_reads):
                 break
+            if any(family in group_by_candidate[item.id].families for item in selected):
+                continue
             choices = [
                 item
                 for item in eligible
@@ -113,6 +136,7 @@ class SearchReadBudgetAllocator:
                     duplicate_raw_result_ids=group.raw_result_ids if group else (candidate.raw_result_id,),
                     query_ids=group.query_ids if group else ((candidate.query_id,) if candidate.query_id else ()),
                     intent_ids=group.intent_ids if group else ((candidate.intent_id,) if candidate.intent_id else ()),
+                    requirement_ids=group.requirement_ids if group else candidate.requirement_ids,
                     source_language=candidate.source_language,
                     source_language_confidence=candidate.source_language_confidence,
                     source_language_mixed=candidate.source_language_mixed,
@@ -134,6 +158,19 @@ class SearchReadBudgetAllocator:
             covered_families=covered,
             quality_floor=self.QUALITY_FLOOR,
         )
+        covered_requirements = self._unique(
+            requirement_id
+            for candidate in selected
+            for requirement_id in group_by_candidate[candidate.id].requirement_ids
+        )
+        gaps.extend(
+            {
+                "requirementId": requirement_id,
+                "reason": "url-read-budget-or-no-eligible-result",
+            }
+            for requirement_id in self._unique(required_requirement_ids or [])
+            if requirement_id not in covered_requirements
+        )
         return SearchReadPlan(
             max_reads=max(0, max_reads),
             quality_floor=self.QUALITY_FLOOR,
@@ -142,6 +179,8 @@ class SearchReadBudgetAllocator:
             decisions=tuple(decisions),
             covered_families=tuple(covered),
             coverage_gaps=tuple(gaps),
+            required_requirement_ids=tuple(self._unique(required_requirement_ids or [])),
+            covered_requirement_ids=tuple(covered_requirements),
         )
 
     def decision_counts(self, plan: SearchReadPlan) -> dict[str, int]:
@@ -179,6 +218,25 @@ class SearchReadBudgetAllocator:
                 self._stable_key(item),
             ),
         )
+
+    def _best_requirement_choice(
+        self,
+        choices: list[SearchResultCandidate],
+        scores: dict[str, SearchResultDimensionScores],
+        groups: dict[str, SearchDuplicateGroup],
+        selected: list[SearchResultCandidate],
+        uncovered_requirements: set[str],
+    ) -> SearchResultCandidate:
+        best_coverage = max(
+            len(uncovered_requirements.intersection(groups[item.id].requirement_ids))
+            for item in choices
+        )
+        best_coverage_choices = [
+            item
+            for item in choices
+            if len(uncovered_requirements.intersection(groups[item.id].requirement_ids)) == best_coverage
+        ]
+        return self._best_choice(best_coverage_choices, scores, groups, selected)
 
     def _stable_key(self, candidate: SearchResultCandidate) -> tuple[str, str, str, str]:
         return (

@@ -23,6 +23,7 @@ from backend.app.upstream.application.external_run_service import UpstreamRadarE
 def test_live_good_run_passes_without_exact_url_matching() -> None:
     scenario = _scenario()
     run, found_materials = _recorded_run()
+    _add_executed_query(run, family="broadDiscovery", evidence_type="overview")
     _add_executed_query(run, family="ossTooling", evidence_type="ossTooling")
     _add_executed_query(run, family="limitationCritique", evidence_type="limitationCritique")
     run["rawResults"][0]["url"] = "https://different.example/live-result"
@@ -41,6 +42,9 @@ def test_live_planned_but_skipped_required_family_warns_instead_of_passing() -> 
     scenario = _scenario()
     run, found_materials = _recorded_run()
 
+    _add_executed_query(run, family="broadDiscovery", evidence_type="overview")
+    _add_executed_query(run, family="ossTooling", evidence_type="ossTooling")
+    _drop_executed_query(run, family="limitationCritique", keep_skip=True)
     report = evaluate_live_radar_run(scenario=scenario, run=run, found_materials=found_materials)
 
     assert report.status == "warning"
@@ -59,11 +63,7 @@ def test_live_planned_but_skipped_required_family_warns_instead_of_passing() -> 
 def test_live_required_family_missing_without_budget_skip_fails() -> None:
     scenario = _scenario()
     run, found_materials = _recorded_run()
-    run["searchPlan"]["skippedIntentDetails"] = [
-        item
-        for item in run["searchPlan"]["skippedIntentDetails"]
-        if item.get("family") != "limitationCritique"
-    ]
+    _drop_executed_query(run, family="limitationCritique", keep_skip=False)
 
     report = evaluate_live_radar_run(scenario=scenario, run=run, found_materials=found_materials)
 
@@ -166,11 +166,10 @@ def test_external_run_attaches_live_benchmark_report_for_matching_scenario() -> 
 
     assert report["scenarioId"] == scenario.id
     assert report["evaluationMode"] == "live"
-    assert report["status"] == "warning"
+    assert report["status"] == "inconclusive"
     assert report["providerHealth"] == "ok"
     assert report["plannedCoverage"]["queryFamilies"]["missing"] == []
-    assert "limitationCritique" in report["executedCoverage"]["queryFamilies"]["missing"]
-    assert any(item["value"] == "limitationCritique" for item in report["skippedRequiredCoverage"])
+    assert report["usefulYield"]["firstFailureStage"] == "signalExtraction"
     json.dumps(result)
 
 
@@ -215,6 +214,11 @@ def _recorded_run() -> tuple[dict, list[dict]]:
     result = _run_external_service(_scenario().workspace())
     run = deepcopy(result["run"])
     run.pop("benchmarkReport", None)
+    run["searchOpportunityCoverage"] = {
+        "status": "sufficient",
+        "counts": {"reviewEligibleCount": 1},
+        "firstFailureStage": None,
+    }
     return run, deepcopy(result["foundMaterials"])
 
 
@@ -235,6 +239,51 @@ def _run_external_service(workspace: dict, settings: BackendSettings | None = No
         openrouter_validator=OpenRouterConfigValidator(),
     )
     return service.run(workspace=workspace, radar_id=_scenario().radar_id)
+
+
+def _drop_executed_query(run: dict, *, family: str, keep_skip: bool) -> None:
+    plan = run["searchPlan"]
+    query = next(item for item in plan["queries"] if item.get("family") == family)
+    removed_raw_ids = {
+        str(item.get("id"))
+        for item in run["rawResults"]
+        if item.get("queryId") == query["id"] and item.get("id")
+    }
+    run["rawResults"] = [item for item in run["rawResults"] if item.get("queryId") != query["id"]]
+    run["operations"] = [item for item in run["operations"] if item.get("target") != query["query"]]
+    triage = run.get("searchTriage")
+    if isinstance(triage, dict):
+        read_plan = triage.get("readPlan") if isinstance(triage.get("readPlan"), dict) else {}
+        read_plan["decisions"] = [
+            item
+            for item in read_plan.get("decisions", [])
+            if str(item.get("rawResultId")) not in removed_raw_ids
+        ]
+        triage["decisionCounts"] = {
+            **triage.get("decisionCounts", {}),
+            "total": len(read_plan["decisions"]),
+        }
+        run["rejectedBeforeRead"] = [
+            item
+            for item in run.get("rejectedBeforeRead", [])
+            if str(item.get("rawResultId")) not in removed_raw_ids
+        ]
+    if keep_skip:
+        intent = next(item for item in plan["intents"] if item.get("family") == family)
+        plan["skippedIntentDetails"] = [
+            *[item for item in plan["skippedIntentDetails"] if item.get("family") != family],
+            {
+                "id": f"skip-{family}",
+                "intentId": intent["id"],
+                "family": family,
+                "reason": "budget-max-external-queries",
+                "rationale": "Fixture simulates an exhausted query budget.",
+            },
+        ]
+    else:
+        plan["skippedIntentDetails"] = [
+            item for item in plan["skippedIntentDetails"] if item.get("family") != family
+        ]
 
 
 def _add_executed_query(run: dict, *, family: str, evidence_type: str) -> None:

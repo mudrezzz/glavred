@@ -65,6 +65,16 @@ class RadarBenchmarkScenario:
                     "rules": [
                         {"statement": "Find industrial AI cases with implementation evidence, constraints, and operational outcomes."}
                     ],
+                    "filters": [
+                        {"id": "industrial-context", "dimension": "topics", "mode": "mustMatch", "enabled": True, "instruction": "Industrial AI implementation context."},
+                        {"id": "implementation-mechanism", "dimension": "mechanism", "mode": "mustMatch", "enabled": True, "instruction": "Concrete implementation mechanism and responsible roles."},
+                        {"id": "observable-outcome", "dimension": "observableOutcome", "mode": "mustMatch", "enabled": True, "instruction": "Observed operational outcome with evidence."},
+                        {"id": "source-credibility", "dimension": "sourceCredibility", "mode": "mustMatch", "enabled": True, "instruction": "Independent or corroborated source evidence."},
+                        {"id": "actionability", "dimension": "actionability", "mode": "shouldMatch", "enabled": True, "instruction": "Useful implementation practice."},
+                        {"id": "novelty", "dimension": "novelty", "mode": "shouldMatch", "enabled": True, "instruction": "New pattern or non-obvious constraint."},
+                        {"id": "promotional-noise", "dimension": "promotionalNoise", "mode": "mustNotMatch", "enabled": True, "instruction": "Exclude pricing and generic promotional AI claims."},
+                        {"id": "productive-tension", "dimension": "productiveTension", "mode": "seekTension", "enabled": True, "instruction": "Find limitations, failure modes, or credible counterarguments."},
+                    ],
                 }
             ],
             "radarRuns": [],
@@ -95,6 +105,7 @@ class RadarBenchmarkReport:
     trace_complete: bool = False
     run: dict[str, Any] = field(default_factory=dict)
     found_materials: list[dict[str, Any]] = field(default_factory=list)
+    useful_yield: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -113,6 +124,7 @@ class RadarBenchmarkReport:
             "inconclusiveReasons": self.inconclusive_reasons,
             "downstreamLeaks": self.downstream_leaks,
             "traceComplete": self.trace_complete,
+            "usefulYield": self.useful_yield,
         }
 
 
@@ -121,9 +133,9 @@ GOLDEN_RADAR_BENCHMARK_SCENARIOS = (
         id="benchmark-industrial-ai-maintenance-cases",
         project_id="project-ai-design-patterns",
         radar_id="ai-pattern-radar-industrial-cases",
-        expected_intent_families=("broadDiscovery", "caseExample", "benchmarkPaper", "limitationCritique"),
-        optional_intent_families=("ossTooling",),
-        expected_evidence_types=("overview", "caseExample", "benchmarkPaper", "limitationCritique"),
+        expected_intent_families=("caseExample", "benchmarkPaper", "limitationCritique"),
+        optional_intent_families=("broadDiscovery", "ossTooling"),
+        expected_evidence_types=("caseExample", "benchmarkPaper", "limitationCritique"),
         minimum_raw_results=5,
         minimum_selected_reads=2,
         minimum_found_materials=2,

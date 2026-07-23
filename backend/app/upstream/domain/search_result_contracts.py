@@ -36,6 +36,8 @@ class SearchResultCandidate:
     source_language_reason_codes: tuple[str, ...] = ()
     source_language_allowed: bool = True
     source_language_eligibility_reason: str | None = None
+    requirement_ids: tuple[str, ...] = ()
+    text_integrity_issues: tuple[dict[str, Any], ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -62,9 +64,15 @@ class SearchResultCandidate:
                 "allowed": self.source_language_allowed,
                 "eligibilityReason": self.source_language_eligibility_reason,
             },
+            "requirementIds": list(self.requirement_ids),
         }
         if self.invalid_reason:
             payload["invalidReason"] = self.invalid_reason
+        if self.text_integrity_issues:
+            payload["textIntegrity"] = {
+                "status": "rejected",
+                "issues": [dict(item) for item in self.text_integrity_issues],
+            }
         return payload
 
 
@@ -106,6 +114,7 @@ class SearchDuplicateGroup:
     evidence_types: tuple[str, ...]
     domains: tuple[str, ...]
     match_reasons: tuple[str, ...]
+    requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -119,6 +128,7 @@ class SearchDuplicateGroup:
             "evidenceTypes": list(self.evidence_types),
             "domains": list(self.domains),
             "matchReasons": list(self.match_reasons),
+            "requirementIds": list(self.requirement_ids),
         }
 
 

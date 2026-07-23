@@ -1,4 +1,5 @@
 import type { RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
+import { searchOpportunityTraceDetail, searchRequirementsTraceDetail } from './radarRunOpportunityTrace';
 
 export type RadarTraceField = {
   label: string;
@@ -60,6 +61,7 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
   const details = [
     overviewDetail(bundle),
     ...(bundle.run.searchPlan ? [searchPlanDetail(bundle)] : []),
+    ...(bundle.run.searchPlan?.requirementProfile ? [searchRequirementsTraceDetail(bundle)] : []),
     ...(bundle.run.searchPlan?.sourceStrategy || bundle.sourceHandles.length > 0 ? [sourceStrategyDetail(bundle)] : []),
     operationsDetail(bundle),
     ...(rawResults.length > 0 ? [rawResultsDetail(bundle)] : []),
@@ -75,6 +77,7 @@ export function buildRadarRunTraceViewModel(bundle: RadarRunTraceBundle): RadarR
       : []),
     ...(bundle.run.signalExtraction ? [signalExtractionDetail(bundle)] : []),
     ...(bundle.run.signalScoring ? [signalScoringDetail(bundle)] : []),
+    ...(bundle.run.searchOpportunityCoverage ? [searchOpportunityTraceDetail(bundle)] : []),
     ...(bundle.benchmarkReport ? [benchmarkDetail(bundle.benchmarkReport)] : []),
     ...(warnings > 0 ? [warningsDetail(bundle)] : []),
     rawDetail(bundle)

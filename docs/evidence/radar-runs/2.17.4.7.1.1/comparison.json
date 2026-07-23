@@ -1,0 +1,68 @@
+{
+  "checkedAt": "2026-07-23",
+  "projectId": "project-ai-design-patterns",
+  "radarId": "ai-pattern-radar-industrial-cases",
+  "baseline": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-9",
+    "runStatus": "partial",
+    "queryCount": 3,
+    "successfulSearchCount": 2,
+    "rawResultCount": 40,
+    "readableMaterialCount": 1,
+    "signalCount": 3,
+    "reviewEligibleCount": 3,
+    "knownProviderTotalTokens": 75474,
+    "knownUsageExcludesFailedSearch": true,
+    "searchMessageChars": 834
+  },
+  "accepted": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-2",
+    "runStatus": "succeeded",
+    "opportunityStatus": "sufficient",
+    "firstFailureStage": null,
+    "requirementCount": 8,
+    "executedSearchRequirementCount": 6,
+    "uncoveredRequiredCount": 0,
+    "queryFamilies": ["caseExample", "benchmarkPaper", "limitationCritique"],
+    "queryCount": 3,
+    "successfulSearchCount": 3,
+    "rawResultCount": 60,
+    "decisionCounts": {
+      "selected": 2,
+      "rejected": 10,
+      "duplicate": 10,
+      "invalid": 0,
+      "deferredByBudget": 38
+    },
+    "readableMaterialCount": 2,
+    "signalCount": 1,
+    "reviewEligibleCount": 1,
+    "recommendationDistribution": {"reviewWithCaution": 1},
+    "extractedSignalYield": {"count": 1, "denominator": 2, "ratio": 0.5},
+    "reviewEligibleYield": {"count": 1, "denominator": 1, "ratio": 1.0},
+    "unresolvedHandles": {"requirement": 0, "query": 0, "material": 0, "fragment": 0},
+    "acceptedNoiseCount": 0,
+    "searchMessageChars": 692,
+    "searchProviderTotalTokens": 106055,
+    "extraction": {
+      "attempts": 3,
+      "acceptedAttempt": "backup",
+      "maxMessageChars": 13697,
+      "messageCharCap": 16000,
+      "providerTotalTokens": 13255
+    },
+    "scoring": {
+      "attempts": 1,
+      "acceptedAttempt": "primary",
+      "messageChars": 17283,
+      "messageCharCap": 22000,
+      "providerTotalTokens": 5057
+    },
+    "knownProviderTotalTokens": 124367,
+    "budgetIncidents": 0,
+    "manualRescoreRevision": 2,
+    "reviewStatus": "approved",
+    "reviewRevision": 1,
+    "viewportOverflowChecks": [390, 1180, 1440, 1904, 2048]
+  }
+}

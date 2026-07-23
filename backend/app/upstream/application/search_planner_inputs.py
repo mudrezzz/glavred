@@ -52,18 +52,20 @@ class SearchPlannerInputPolicy:
         ).lower()
         return any(marker in haystack for marker in ("fresh", "recent", "news", "trend", "2026", "свеж", "новост", "тренд"))
 
-    def base_query(self, *, radar: dict[str, Any], handle: dict[str, Any], workspace: dict[str, Any]) -> str:
+    def base_query(
+        self,
+        *,
+        radar: dict[str, Any],
+        handle: dict[str, Any],
+        requirement_terms: list[str] | None = None,
+    ) -> str:
         parts = [
             str(handle.get("locator") or ""),
             str(handle.get("title") or ""),
             str(radar.get("title") or ""),
             str(radar.get("scope") or ""),
         ]
-        rules = radar.get("rules") if isinstance(radar.get("rules"), list) else []
-        parts.extend(str(rule.get("statement") or "") for rule in rules if isinstance(rule, dict))
-        parts.extend(self._entity_names(workspace.get("topics"), limit=2))
-        parts.extend(self._entity_names(workspace.get("fabulas"), limit=2))
-        parts.extend(self._publisher_rules(workspace))
+        parts.extend(requirement_terms or [])
         return self.clean_query(" ".join(part for part in parts if part))
 
     def query_terms(self, base_query: str, suffix: str) -> list[str]:
@@ -78,31 +80,14 @@ class SearchPlannerInputPolicy:
         return self.clean_query(" ".join([*selected[:12], suffix]))
 
     def clean_query(self, value: str) -> str:
-        return " ".join(value.split())[:240]
-
-    def _entity_names(self, items: Any, *, limit: int) -> list[str]:
-        if not isinstance(items, list):
-            return []
-        names: list[str] = []
-        for item in items:
-            if not isinstance(item, dict):
+        retained: list[str] = []
+        seen: set[str] = set()
+        for token in value.split():
+            normalized = re.sub(r"[^\w]+", "", token, flags=re.UNICODE).casefold()
+            if not normalized or normalized in seen:
                 continue
-            value = item.get("title") or item.get("name") or item.get("label")
-            if value:
-                names.append(str(value))
-            if len(names) >= limit:
-                break
-        return names
-
-    def _publisher_rules(self, workspace: dict[str, Any]) -> list[str]:
-        rules = workspace.get("publisherRules") if isinstance(workspace.get("publisherRules"), list) else []
-        values: list[str] = []
-        for rule in rules[:2]:
-            if isinstance(rule, dict):
-                values.append(str(rule.get("statement") or rule.get("title") or ""))
-            elif rule:
-                values.append(str(rule))
-        return [item for item in values if item]
-
+            seen.add(normalized)
+            retained.append(token)
+        return " ".join(retained)[:240]
 
 __all__ = ("SearchPlannerInputPolicy",)

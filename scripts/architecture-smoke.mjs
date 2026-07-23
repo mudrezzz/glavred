@@ -1737,6 +1737,18 @@ const UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH =
   "backend/app/upstream/application/signal_utility_attempt_request.py";
 const UPSTREAM_SIGNAL_UTILITY_TEST_PATH =
   "backend/tests/test_signal_utility_scoring.py";
+const UPSTREAM_SEARCH_REQUIREMENT_PROFILE_PATH =
+  "backend/app/upstream/application/search_requirement_profile.py";
+const UPSTREAM_SEARCH_REQUIREMENT_ALLOCATOR_PATH =
+  "backend/app/upstream/application/search_requirement_allocator.py";
+const UPSTREAM_SEARCH_INTENT_PLANNER_PATH =
+  "backend/app/upstream/application/search_intent_planner.py";
+const UPSTREAM_SEARCH_OPPORTUNITY_REPORT_PATH =
+  "backend/app/upstream/application/search_opportunity_report.py";
+const UPSTREAM_SEARCH_REQUIREMENT_TEST_PATH =
+  "backend/tests/test_radar_search_requirements.py";
+const UPSTREAM_SEARCH_OPPORTUNITY_TEST_PATH =
+  "backend/tests/test_search_opportunity_coverage.py";
 const SHARED_LLM_OPERATION_OWNER_PATHS = [
   SHARED_LLM_OPERATION_CONTRACT_PATH,
   "backend/app/shared/llm_operations/statuses.py",
@@ -3602,6 +3614,12 @@ const upstreamSignalExtractionTestSource = readText(UPSTREAM_SIGNAL_EXTRACTION_T
 const upstreamSignalUtilityDossierSource = readText(UPSTREAM_SIGNAL_UTILITY_DOSSIER_PATH);
 const upstreamSignalUtilityAttemptRequestSource = readText(UPSTREAM_SIGNAL_UTILITY_ATTEMPT_REQUEST_PATH);
 const upstreamSignalUtilityTestSource = readText(UPSTREAM_SIGNAL_UTILITY_TEST_PATH);
+const upstreamSearchRequirementProfileSource = readText(UPSTREAM_SEARCH_REQUIREMENT_PROFILE_PATH);
+const upstreamSearchRequirementAllocatorSource = readText(UPSTREAM_SEARCH_REQUIREMENT_ALLOCATOR_PATH);
+const upstreamSearchIntentPlannerSource = readText(UPSTREAM_SEARCH_INTENT_PLANNER_PATH);
+const upstreamSearchOpportunityReportSource = readText(UPSTREAM_SEARCH_OPPORTUNITY_REPORT_PATH);
+const upstreamSearchRequirementTestSource = readText(UPSTREAM_SEARCH_REQUIREMENT_TEST_PATH);
+const upstreamSearchOpportunityTestSource = readText(UPSTREAM_SEARCH_OPPORTUNITY_TEST_PATH);
 for (const fragment of [
   "class UpstreamProviderBudgetProfileRegistry",
   "max_provider_input_chars",
@@ -3701,6 +3719,60 @@ assert(
   upstreamSignalUtilityTestSource.includes("test_arcelor_vendor_case_is_review_with_caution_not_false_topic_rejection") &&
     upstreamSignalUtilityTestSource.includes("test_invalid_primary_uses_structured_repair_and_keeps_direct_budget_proof"),
   `${UPSTREAM_SIGNAL_UTILITY_TEST_PATH} must prove the industrial utility verdict and direct budget recovery.`
+);
+for (const fragment of [
+  "class RadarSearchRequirementProfileFactory",
+  "not_search_applicable",
+  "project-setting-is-scoring-only",
+  "MAX_FILTERS",
+  "MAX_STATEMENT_CHARS",
+]) {
+  assert(
+    upstreamSearchRequirementProfileSource.includes(fragment),
+    `${UPSTREAM_SEARCH_REQUIREMENT_PROFILE_PATH} is missing search-to-filter requirement fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class SearchRequirementQueryAllocator",
+  "uncovered_required_ids",
+  "_EVIDENCE_DIVERSITY_BONUS",
+]) {
+  assert(
+    upstreamSearchRequirementAllocatorSource.includes(fragment),
+    `${UPSTREAM_SEARCH_REQUIREMENT_ALLOCATOR_PATH} is missing required-first allocation fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "RadarSearchRequirementProfileFactory",
+  "SearchRequirementQueryAllocator",
+  "requirement_ids",
+  "uncovered_required_search_requirements",
+]) {
+  assert(
+    upstreamSearchIntentPlannerSource.includes(fragment),
+    `${UPSTREAM_SEARCH_INTENT_PLANNER_PATH} is missing requirement-aware planning fragment: ${fragment}`
+  );
+}
+for (const fragment of [
+  "class SearchOpportunityCoverageReportBuilder",
+  "first_failure_stage",
+  "review_eligible_yield",
+  "unresolved_handles",
+]) {
+  assert(
+    upstreamSearchOpportunityReportSource.includes(fragment),
+    `${UPSTREAM_SEARCH_OPPORTUNITY_REPORT_PATH} is missing useful-yield diagnostic fragment: ${fragment}`
+  );
+}
+assert(
+  upstreamSearchRequirementTestSource.includes("test_standard_industrial_plan_allocates_case_benchmark_and_critique_first") &&
+    upstreamSearchRequirementTestSource.includes("test_large_project_context_does_not_expand_search_provider_input"),
+  `${UPSTREAM_SEARCH_REQUIREMENT_TEST_PATH} must prove filter alignment and bounded search context.`
+);
+assert(
+  upstreamSearchOpportunityTestSource.includes("test_zero_yield_identifies_each_first_failure_stage") &&
+    upstreamSearchOpportunityTestSource.includes("test_unresolved_lineage_handles_are_counted_not_silently_ignored"),
+  `${UPSTREAM_SEARCH_OPPORTUNITY_TEST_PATH} must prove useful-yield diagnosis and lineage integrity.`
 );
 
 for (const backendFile of backendPythonFiles) {

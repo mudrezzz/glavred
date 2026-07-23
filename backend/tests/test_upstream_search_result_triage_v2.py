@@ -9,6 +9,7 @@ from backend.app.infrastructure.openrouter_web_search_adapter import (
     OpenRouterWebSearchResult,
 )
 from backend.app.settings import BackendSettings
+from backend.app.upstream.application.external_run_payloads import UpstreamRadarPayloadFactory
 from backend.app.upstream.application.external_run_service import UpstreamRadarExternalRunService
 from backend.app.upstream.application.search_result_normalization import SearchResultNormalizer
 from backend.app.upstream.application.search_triage_service import SearchResultTriageService
@@ -41,6 +42,30 @@ def test_normalization_caps_provider_fields_and_handles_long_russian_text() -> N
     assert len(candidate.title) == 300
     assert 1100 <= len(candidate.snippet) <= 1200
     assert len(candidate.query) <= 1000
+
+
+def test_provider_mojibake_is_suppressed_before_raw_result_persistence() -> None:
+    query_payload = {
+        **query("query-1", "caseExample"),
+        "sourceHandleId": "source-open-web",
+        "requirementIds": ["requirement-industrial-context"],
+    }
+    citation = OpenRouterWebSearchCitation(
+        title="Industrial maintenance implementation",
+        url="https://example.com/case",
+        snippet="РџСЂРѕРјС‹С€Р»РµРЅРЅС‹Р№ РєРµР№СЃ СЃ РїРѕРІСЂРµР¶РґРµРЅРЅС‹Рј С‚РµРєСЃС‚РѕРј",
+    )
+
+    raw = UpstreamRadarPayloadFactory().raw_result("run-1", query_payload, citation, 0)
+    result = triage([raw], plan=search_plan(query_payload), max_reads=1)
+
+    assert raw["snippet"] == ""
+    assert raw["invalidReason"] == "provider-result-text-integrity-failed"
+    assert raw["textIntegrity"]["status"] == "rejected"
+    assert raw["textIntegrity"]["issues"][0]["field"] == "snippet"
+    assert "valueHash" in raw["textIntegrity"]["issues"][0]
+    assert result.report.read_plan.decisions[0].status == "invalid"
+    assert result.report.read_plan.decisions[0].reason == "provider-result-text-integrity-failed"
 
 
 def test_triage_groups_tracking_and_content_duplicates_with_all_handles() -> None:
@@ -146,6 +171,44 @@ def test_coverage_allocator_never_promotes_below_quality_floor() -> None:
     assert {item["family"]: item["reason"] for item in result.report.read_plan.coverage_gaps}[
         "limitationCritique"
     ] == "below-quality-floor"
+
+
+def test_read_allocator_covers_overlapping_requirements_once_then_diversifies_evidence() -> None:
+    case_query = {
+        **query("query-case", "caseExample"),
+        "requirementIds": ["requirement-context", "requirement-mechanism", "requirement-result"],
+    }
+    report_query = {
+        **query("query-report", "benchmarkPaper"),
+        "requirementIds": ["requirement-source-quality"],
+    }
+    raw = [
+        raw_result(
+            "raw-case",
+            query_id="query-case",
+            url="https://cases.example/maintenance",
+            title="Industrial maintenance implementation case",
+            snippet="Manufacturing deployment with mechanism, operational data and measured results.",
+        ),
+        raw_result(
+            "raw-report",
+            query_id="query-report",
+            url="https://research.example/benchmark",
+            title="Independent industrial maintenance benchmark report",
+            snippet="Independent benchmark with measurements, limitations and operational evidence.",
+        ),
+    ]
+
+    result = triage(raw, plan=search_plan(case_query, report_query), max_reads=2)
+
+    selected = [item for item in result.report.read_plan.decisions if item.status == "selected"]
+    assert {item.families[0] for item in selected} == {"caseExample", "benchmarkPaper"}
+    assert set(result.report.read_plan.covered_requirement_ids) == {
+        "requirement-context",
+        "requirement-mechanism",
+        "requirement-result",
+        "requirement-source-quality",
+    }
 
 
 def test_read_allocator_rejects_unsupported_pdf_and_selects_readable_alternative() -> None:

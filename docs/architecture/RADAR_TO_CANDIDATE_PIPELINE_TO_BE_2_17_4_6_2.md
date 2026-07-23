@@ -2,8 +2,9 @@
 
 Status: Slices `2.17.4.6.2`, `2.17.4.7`, and `2.17.4.7.0.2` define the implemented
 retrieval, extraction, language, and evidence boundary. Slice `2.17.4.7.1` adds the
-approved project-utility scoring and human review lifecycle. Candidate assembly and
-ranking remain the next target and are not part of scoring.
+approved project-utility scoring and human review lifecycle. Slice `2.17.4.7.1.1`
+defines the approved search-requirement projection and useful-signal yield boundary.
+Candidate assembly and ranking remain the next target and are not part of scoring.
 
 AS IS sources:
 
@@ -34,7 +35,9 @@ budgeted projection with handles back to those artifacts.
 
 ```mermaid
 flowchart TD
-    A[SearchPlan] --> B[Budgeted openWebQuery]
+    R[Radar filters] --> Q[RadarSearchRequirementProfile]
+    Q --> A[Requirement-aware SearchPlan]
+    A --> B[Budgeted openWebQuery]
     B --> C[RawSearchResult]
     C --> D[Normalization]
     D --> E[Duplicate groups]
@@ -46,6 +49,7 @@ flowchart TD
     J --> K[SourceSignal]
     K --> L[Signal scoring dossier]
     L --> M[SignalScore]
+    M --> Y[SearchOpportunityCoverageReport]
     M --> N[Candidate assembly dossier]
     N --> O[PostCandidate]
 ```
@@ -55,12 +59,16 @@ Nodes through `FoundMaterial` are implemented by Slice `2.17.4.6.2`. Slice
 `2.17.4.7.1` implements `SourceSignal -> Signal scoring dossier -> SignalScore`
 and the human review lifecycle. Candidate assembly and ranking remain
 `NOT THIS SLICE` and must be implemented by their tracker-backed slices.
+Slice `2.17.4.7.1.1` inserts the deterministic requirement profile before
+`SearchPlan` and the useful-yield report after signal scoring. It does not add a
+provider call or change the downstream human-review boundary.
 
 ## 3. AS IS to TO BE Mapping
 
 | Item | Status | TO BE | Proof |
 | --- | --- | --- | --- |
-| Search campaign planning | UNCHANGED | Deterministic intents, queries, source strategy, and budget skips remain authoritative. | Existing planner tests and trace. |
+| Search requirement projection | NEW | Enabled radar filters become bounded required, optional, exclusion, tension, or explicitly non-search-applicable requirements. | Filter-mode, bounds, stable-id, and forbidden-context tests in Slice `2.17.4.7.1.1`. |
+| Search campaign planning | CHANGED vs AS IS | Deterministic intents and queries carry requirement handles and distinct evidence targets; required coverage is allocated before optional breadth. | Planner/allocation tests and trace in Slice `2.17.4.7.1.1`. |
 | Provider search | CHANGED vs AS IS | Every `openWebQuery` has a direct current-call budget and final serialized-message proof. | Operation trace, boundary tests, architecture smoke. |
 | Citation normalization | CHANGED vs AS IS | URL, title, and snippet are bounded and normalized without deleting meaningful query parameters. | Normalization tests. |
 | Duplicate handling | CHANGED vs AS IS | Stable duplicate groups retain all query, intent, family, and evidence handles. | Permutation and duplicate-group tests. |
@@ -79,6 +87,7 @@ and the human review lifecycle. Candidate assembly and ranking remain
 | Signal scoring | CHANGED vs AS IS | Backend-owned batch scoring receives a bounded signal dossier, validates setting/evidence references, and applies a deterministic recommendation policy. | Provider recovery, budget, golden corpus, replay, and live proof in Slice `2.17.4.7.1`. |
 | Human signal review | NEW | Utility recommendation and human status remain separate; reversible review events preserve actor, time, reason, revisions, and immutable evidence. | Lifecycle, optimistic-concurrency, API, and authenticated UI tests in Slice `2.17.4.7.1`. |
 | Legacy signal integrity | NEW | Old client-evaluated signals are explicitly marked for re-extraction and never displayed as current backend verdicts. | Legacy normalization and UI recovery tests in Slice `2.17.4.7.1`. |
+| Useful-signal yield | NEW | A post-scoring report connects search requirements to materials, signals, recommendations, and the first stage responsible for zero eligible output. | Recorded stage-failure fixtures, live comparison, and trace UI in Slice `2.17.4.7.1.1`. |
 | Candidate assembly and ranking | NOT THIS SLICE | Future assembly receives bounded approved-signal projections. | Slices `2.17.4.8` and `2.17.4.8.1`. |
 | Cross-run search memory | NOT THIS SLICE | Reuse of discovered results is owned by a separate durable memory policy. | Slice `2.17.4.6.6`. |
 
@@ -467,6 +476,45 @@ Relationship candidates reuse the existing scoring provider attempt and budget.
 They do not add an unbounded provider call or raise the current provider-input and
 serialized-message limits.
 
+### 8.7 Search requirements and useful-signal yield
+
+The deterministic `RadarSearchRequirementProfileFactory` projects every enabled
+radar filter into exactly one of these search roles:
+
+- `required` for `mustMatch` evidence that search can reasonably target;
+- `optional` for `shouldMatch` evidence;
+- `exclusion` for `mustNotMatch` noise or forbidden-source characteristics;
+- `tension` for `seekTension` criticism, limitations, or counter-evidence;
+- `notSearchApplicable` when the setting belongs only to project-utility scoring.
+
+The profile contains stable filter handles, bounded terms, evidence types, source
+hints, language policy, and priority. Full project settings, publications, fabulas,
+content plans, prior traces, and provider envelopes are never search-provider input.
+
+Each planned intent and executable query records `requirementIds`, one distinct
+`evidenceTarget`, bounded `sourceHints`, `queryLanguage`, and priority rationale.
+Allocation covers required requirements first, then distinct evidence types, then
+optional breadth. A required requirement that cannot execute is persisted in
+`uncoveredRequiredSearchRequirements` with the exact budget, source, language, or
+provider reason. Normalized duplicate required queries are invalid plan output.
+
+The standard industrial campaign prioritizes `caseExample`, `benchmarkPaper`, and
+`limitationCritique`; broad discovery and OSS/tooling are optional breadth. Smoke
+runs execute only the highest-priority eligible requirement and full runs may add the
+optional families. The existing provider-call and message limits do not increase.
+
+After extraction and scoring, `SearchOpportunityCoverageReport` records planned,
+executed, and uncovered requirements; family/evidence coverage; readable material,
+extracted signal, and recommendation counts; count/denominator/ratio yield values;
+recommendation and reason distributions; and the first failed stage. Review-eligible
+means `recommended` or `reviewWithCaution`; it never changes human review status.
+
+The first failed stage is deterministic: `providerSearch` when no query executed,
+`triage` when no usable result survived, `read` when no material was readable,
+`signalExtraction` when no signal was grounded, and `signalScoring` when signals exist
+but none are review-eligible. Provider/runtime unavailability is `inconclusive`.
+A zero-yield known high-fit benchmark is a quality failure, not a clean run.
+
 ## 9. Future Provider Context Rule
 
 Every future upstream provider-heavy stage must declare before implementation:
@@ -515,6 +563,14 @@ Slice `2.17.4.7.1` additionally stores `run.signalScoring`,
 review events. Manual scoring reuses stored signals/materials and performs no search,
 URL read, or extraction. Legacy heuristic results remain explicitly historical.
 
+Slice `2.17.4.7.1.1` additionally stores the bounded requirement profile inside
+`searchPlan`, requirement handles on intents and queries,
+`uncoveredRequiredSearchRequirements`, and `run.searchOpportunityCoverage`. Every
+selected material and scored signal resolves through requirement, query, raw result,
+read decision, material, and exact evidence fragment. Extraction/scoring retry
+rebuilds yield and benchmark reports from stored artifacts without repeating search
+or URL reading.
+
 ## 11. Success Criteria
 
 - Every raw result has one terminal decision.
@@ -557,6 +613,17 @@ URL read, or extraction. Legacy heuristic results remain explicitly historical.
   horizontal overflow at the supported five viewport widths.
 - Recorded and comparable live proof show no quality regression relative to the
   pre-change industrial-AI baseline.
+- Every enabled radar filter has a search role, and every required search requirement
+  is executed or explicitly uncovered with a concrete reason.
+- Required query families have semantically distinct query text, evidence targets,
+  and requirement handles; duplicate required queries are zero.
+- A known high-fit industrial corpus produces at least one `recommended`, one
+  `reviewWithCaution`, and one `notRecommended` result without accepting generic-news,
+  pricing, or model-leaderboard noise.
+- Zero useful yield names the first failed stage; provider unavailability remains
+  `inconclusive` and cannot hide a search/extraction/scoring quality failure.
+- Requirement projection and lineage do not raise provider-call, provider-input,
+  serialized-message, or total-run caps.
 
 ## 12. Implementation Status
 
@@ -571,6 +638,10 @@ URL read, or extraction. Legacy heuristic results remain explicitly historical.
   deterministic recommendation, human review lifecycle, legacy/UI integrity repair.
   `IMPLEMENTED`; accepted runtime proof is recorded in
   `docs/evidence/radar-runs/2.17.4.7.1/`.
+- Slice `2.17.4.7.1.1`: filter-to-search requirement projection, requirement-aware
+  allocation, end-to-end lineage, and useful-signal yield diagnostics. `IMPLEMENTED`;
+  accepted runtime proof is recorded in
+  `docs/evidence/radar-runs/2.17.4.7.1.1/`.
 - Candidate assembly, candidate ranking, and cross-run search memory: `NOT THIS SLICE`.
 
 ## 13. Implementation Proof
@@ -647,3 +718,26 @@ automated-risk thesis as `relatedSameSource`. Product UI hid raw handles, opened
 and trace links, and stayed within the page width at 390, 1180, 1440, 1904, and 2048
 pixels. Trace-safe evidence is committed in
 `docs/evidence/radar-runs/2.17.4.7.1/`.
+
+The accepted search-alignment proof on 2026-07-23 uses fresh RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-2`. Eight enabled radar filters received
+explicit search roles. Six searchable requirements were executed through three
+distinct `caseExample`, `benchmarkPaper`, and `limitationCritique` queries; no required
+requirement was left uncovered. The bounded read plan selected one implementation case
+and one limitation source, both reads succeeded, and one of the two materials produced
+a grounded Russian signal with recommendation `reviewWithCaution`.
+
+`SearchOpportunityCoverageReport.status=sufficient`, `firstFailureStage=null`, and
+all requirement, query, material, and fragment handles resolved. The run processed 60
+raw results into 2 selected, 10 rejected, 10 duplicate, and 38 budget-deferred
+decisions. Search/extraction/scoring message caps were unchanged and no budget incident
+occurred. Extraction required primary, repair, and accepted backup attempts because
+the first responses violated editorial-language and numeric-grounding rules; this
+provider cost remains visible rather than being reported as context efficiency.
+
+Compared with pre-slice RadarRun `radar-run-ai-pattern-radar-industrial-cases-9`, the
+new run replaced generic family labels with requirement-bearing queries, restored the
+previously uncovered limitation direction, completed all three search operations, and
+reported useful yield explicitly. Full trace-safe comparison, token accounting, and
+authenticated screenshots are committed in
+`docs/evidence/radar-runs/2.17.4.7.1.1/`.

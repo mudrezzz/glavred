@@ -11,7 +11,7 @@ def test_search_intent_planner_builds_typed_campaign_for_three_benchmark_shapes(
         for workspace in (industrial_en_workspace(), editorial_ru_workspace(), mixed_sources_workspace())
     ]
 
-    assert all(plan["strategy"] == "deterministic-search-campaign-v2" for plan in plans)
+    assert all(plan["strategy"] == "deterministic-search-campaign-v3" for plan in plans)
     assert all("intents" in plan and "trace" in plan and "sourceStrategy" in plan for plan in plans)
     assert plans[0]["intents"][0]["family"] == "broadDiscovery"
     assert plans[0]["queries"][0]["family"] == "broadDiscovery"
@@ -56,7 +56,7 @@ def test_search_intent_planner_records_query_budget_and_source_skips() -> None:
     assert "source-read-direct-only" in plan["skippedIntents"]
     assert "source-inactive" in plan["skippedIntents"]
     assert plan["trace"]["budgetLimits"]["maxExternalQueries"] == 1
-    assert plan["trace"]["ownershipBoundary"].startswith("Search campaign may use topics and fabulas as context")
+    assert plan["trace"]["ownershipBoundary"].startswith("Search uses only bounded radar requirements")
 
 
 def test_search_intent_planner_does_not_assign_topic_or_fabula_ownership() -> None:
@@ -73,6 +73,21 @@ def test_search_intent_planner_does_not_assign_topic_or_fabula_ownership() -> No
     assert "fabulaId" not in payload_text
     assert plan["trace"]["inputSummary"]["topicCount"] == 1
     assert plan["trace"]["inputSummary"]["fabulaCount"] == 1
+
+
+def test_search_intent_planner_deduplicates_repeated_query_terms() -> None:
+    workspace = industrial_en_workspace()
+    workspace["sourceRegistry"]["handles"][0]["locator"] = "industrial AI industrial AI"
+
+    plan = SearchIntentPlanner().build(
+        radar=workspace["radars"][0],
+        handles=workspace["sourceRegistry"]["handles"],
+        budget=budget(max_queries=3),
+        workspace=workspace,
+    ).to_payload()
+
+    normalized_queries = [item["query"].casefold().replace(",", "") for item in plan["queries"]]
+    assert all("industrial ai industrial ai" not in query_text for query_text in normalized_queries)
 
 
 def budget(*, max_queries: int = 6) -> dict[str, int]:

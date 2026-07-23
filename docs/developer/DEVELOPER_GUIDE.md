@@ -111,6 +111,12 @@ approve them or create `PostCandidate`, plan slots, or DraftRuns.
 `skippedIntents[]` remain compatible, while `intents[]`, `sourceStrategy`,
 `trace`, and `skippedIntentDetails[]` explain query families, evidence coverage,
 source eligibility, and budget skips before provider search runs.
+`RadarSearchRequirementProfileFactory` is the required boundary between enabled radar
+filters and query planning. It emits bounded requirements, exclusions, tension
+directions, and explicit scoring-only decisions. `SearchIntentPlanner` allocates
+required requirements first, then evidence diversity and optional directions, and
+persists `requirementIds` plus `uncoveredRequiredSearchRequirements`. Do not restore
+full topics, fabulas, publisher rules, publications, history, or trace to query input.
 Provider search belongs behind `backend/app/infrastructure/openrouter_web_search_adapter.py`;
 URL reading belongs behind the public URL reader port.
 
@@ -206,6 +212,12 @@ family or evidence type that appears only in planned intents but is skipped by t
 query budget is a diagnostic `warning`, not a clean `passed`; `skippedRequiredCoverage`
 records the skipped value and reason. Keep `coverage` as a compatibility summary, but
 do not use it alone as the live quality gate.
+After extraction/scoring, `SearchOpportunityCoverageReportBuilder` must rebuild the
+saved chain `requirement -> query -> material -> fragment -> signal -> recommendation`.
+The report owns count/denominator/ratio metrics, `reviewEligibleYield`, deterministic
+`firstFailureStage`, reason codes, remediation, and unresolved-handle counters. Search,
+extraction, and scoring retries must refresh this report and the benchmark from stored
+artifacts; extraction/scoring retries must not perform search or URL reads.
 Broader three-project evaluation belongs to the later benchmark corpus slice. Use
 `/radar-runs?runId=<id>` for full upstream diagnostics: the page resolves the run
 from local portfolio state first and backend portfolio snapshots second, then renders

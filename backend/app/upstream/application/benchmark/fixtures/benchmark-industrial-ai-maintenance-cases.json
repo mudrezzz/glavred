@@ -56,6 +56,11 @@
       }
     ]
   },
+  "sourceSignals": [
+    {"id": "recorded-industrial-case", "title": "Decision workbench implementation", "recommendation": "recommended"},
+    {"id": "recorded-vendor-case", "title": "Vendor case with operational evidence", "recommendation": "reviewWithCaution"},
+    {"id": "recorded-generic-claim", "title": "Generic unsupported AI claim", "recommendation": "notRecommended"}
+  ],
   "urlReads": {
     "https://industrial-ai.example/maintenance-workbench": {
       "title": "Industrial AI maintenance workbench patterns",

@@ -277,8 +277,13 @@ approves editorial artifacts automatically.
 - `RadarRun`: one executable attempt for a radar. It records status, budget, run
   operations, found material ids, skipped sources, and errors.
 - `SearchCampaignTrace`: provider-free explanation of the radar's query intents,
-  query families, evidence types, source eligibility, budget skips, and the boundary
-  that raw material does not own topic/fabula decisions.
+  filter-derived requirements, query families, evidence types, source eligibility,
+  uncovered required requirements, budget skips, and the boundary that raw material
+  does not own topic/fabula decisions.
+- `RadarSearchRequirementProfile`: bounded deterministic projection of every enabled
+  radar filter into required, optional, exclusion, tension, or explicit scoring-only
+  search applicability. It prevents query construction from depending on the full
+  workspace or publication history.
 - `RadarRunTrace`: implemented read-model page for one run id. It renders the search
   campaign, triage, read outcomes, evidence fragments, signal extraction attempts,
   budgets, material decisions, signal candidates and benchmark verdict without
@@ -298,6 +303,9 @@ approves editorial artifacts automatically.
   project opportunity profile and signal dossier, obtains semantic dimension evidence,
   validates all setting/evidence handles, and applies the deterministic categorical
   recommendation without changing source evidence or human status.
+- `SearchOpportunityCoverage`: implemented deterministic post-scoring report that
+  resolves requirement-to-query-to-material-to-signal lineage, counts review-eligible
+  output, identifies the first failed stage, and feeds the golden benchmark verdict.
 - `SourceSignalReviewLifecycle`: implemented authenticated and reversible human
   decision policy with optimistic revision checks. Correction can change only
   editorial title, summary and author comment; evidence and provenance are immutable.

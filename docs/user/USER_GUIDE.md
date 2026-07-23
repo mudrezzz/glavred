@@ -234,6 +234,14 @@ visible. Backend utility scoring shows a categorical recommendation and explains
 project criterion separately; no `PostCandidate`, plan slot, or DraftRun is created
 automatically.
 
+The technical trace now has two additional sections. `Что требовалось найти` shows
+how each enabled radar filter influenced the actual search, which queries covered it,
+and why a required direction was not executed. `Полезный выход` shows material,
+signal, and recommendation counts and names the first stage that caused a zero result.
+These are diagnostics, not a promise to manufacture a positive signal or weaken a
+filter. `recommended` and `reviewWithCaution` count as review-eligible; human approval
+remains a separate action.
+
 The first diagnostic layer uses one golden radar benchmark:
 `Опытный цех «Сборочная»` / industrial AI maintenance cases. For matching live runs,
 the backend attaches a benchmark verdict to the run. `passed` means the live search met

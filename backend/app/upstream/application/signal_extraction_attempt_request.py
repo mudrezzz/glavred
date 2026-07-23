@@ -100,7 +100,14 @@ class SignalExtractionAttemptRequestBuilder:
                     "Соблюдай fieldCharLimits из extractionContract. "
                     "Для каждого переданного material верни ровно одно materialDecision с materialId, decision и reasonCodes."
                     " Поля title, summary, uncertainty, mechanism, outcome и limitations пиши на editorialLanguage из extractionContract."
-                    " Не переводи source metadata и точные evidenceRefs.quote: цитата обязана дословно присутствовать во fragment text."
+                    " Не оставляй английский заголовок или английское предложение в редакционном поле, даже если источник английский."
+                    " Не переводи source metadata и evidenceRefs.quote. Каждую quote копируй как точную непрерывную подстроку fragment text:"
+                    " без многоточий, исправлений, перевода и нормализации пунктуации."
+                    " Каждое число и каждая дата из title, summary, uncertainty, mechanism, outcome и limitations"
+                    " обязаны дословно присутствовать хотя бы в одной evidenceRefs.quote этого signal."
+                    " Перед ответом проверь язык каждого редакционного поля, точность каждой quote и grounding всех чисел."
+                    " Если signal нельзя вернуть без нарушения хотя бы одного правила, не возвращай этот signal;"
+                    " не ослабляй правила и не выдумывай замену."
                 ),
             },
             {"role": "user", "content": json.dumps(provider_input, ensure_ascii=False, sort_keys=True)},
@@ -109,14 +116,29 @@ class SignalExtractionAttemptRequestBuilder:
     def _repair_context(self, errors: list[str], *, max_chars: int) -> str:
         if max_chars <= 0:
             return ""
-        corrections: list[str] = []
+        corrections: list[str] = [
+            "В исправленной попытке верни не более одного сильнейшего сигнала на material. "
+            "Каждое редакционное поле напиши как законченную фразу на editorialLanguage; "
+            "латиница допустима только в неизбежных названиях и коротких технических сокращениях.",
+            "Не используй числа и даты в редакционных полях, если тот же токен не скопирован "
+            "дословно в evidenceRefs.quote этого сигнала; безопаснее опустить неподтвержденное число.",
+        ]
         joined = " ".join(errors)
         if "editorial-language-not-satisfied" in joined:
-            corrections.append("Все редакционные поля перепиши на editorialLanguage; исходные цитаты не переводи.")
+            corrections.append(
+                "Все редакционные поля перепиши целиком на editorialLanguage; английский source title в них не сохраняй. "
+                "Исходные цитаты не переводи."
+            )
         if "quote-not-in-fragment" in joined:
-            corrections.append("Каждую evidenceRefs.quote скопируй дословно из указанного fragment text.")
+            corrections.append(
+                "Каждую evidenceRefs.quote скопируй как точную непрерывную подстроку указанного fragment text "
+                "без многоточий, перевода и изменения пунктуации."
+            )
         if "number-or-date-not-grounded" in joined:
-            corrections.append("Не используй число или дату, если их нет дословно в evidenceRefs.quote этого сигнала.")
+            corrections.append(
+                "Удаляй из всех редакционных полей число или дату, которых нет дословно в evidenceRefs.quote этого signal; "
+                "не пересчитывай и не меняй десятичный разделитель."
+            )
         if "missing-material-decision" in joined or "provider-did-not-return-decision" in joined:
             corrections.append("Верни ровно одно materialDecision для каждого переданного materialId.")
         payload = {

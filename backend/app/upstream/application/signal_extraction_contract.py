@@ -31,6 +31,11 @@ class SignalExtractionContractFactory:
             "editorialLanguage": editorial_language,
             "editorialLanguageFields": ["title", "summary", "uncertainty", "mechanism", "outcome", "limitations"],
             "preserveOriginalFields": ["sourceTitle", "evidenceRefs.quote"],
+            "groundingRules": {
+                "evidenceQuote": "exact-contiguous-fragment-substring",
+                "editorialNumbersAndDates": "must-occur-in-signal-evidence-quotes",
+                "invalidSignal": "omit-instead-of-relaxing-contract",
+            },
             "maxSignalsPerMaterial": 3,
             "preferZeroSignalsOverWeakClaims": True,
             "fieldCharLimits": {

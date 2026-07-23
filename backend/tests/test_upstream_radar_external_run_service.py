@@ -38,7 +38,9 @@ def test_external_radar_run_builds_search_plan_and_found_materials() -> None:
 
     assert run["searchPlan"]["queries"]
     assert run["searchPlan"]["intents"]
-    assert run["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v2"
+    assert run["searchPlan"]["trace"]["plannerVersion"] == "deterministic-search-campaign-v3"
+    assert run["searchPlan"]["requirementProfile"]["requirements"]
+    assert "searchOpportunityCoverage" in run
     assert run["searchPlan"]["sourceStrategy"]["searchableSourceHandleIds"] == ["source-open-web"]
     assert run["rawResults"]
     assert run["selectedForRead"]

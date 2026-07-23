@@ -1,6 +1,6 @@
 # Upstream Search and Signal Architecture
 
-Current as of Slice 2.17.4.6.
+Current as of Slice 2.17.4.7.1.1.
 
 ## Purpose
 
@@ -35,14 +35,16 @@ Minimum DoD inputs from this document and the dedicated RadarRun AS IS:
 
 - source eligibility: which `SourceHandle` records were searchable, readable-only,
   paused, or skipped;
-- `searchPlan`: strategy, language, intents, query families, evidence types, source
-  strategy, and budget limits;
+- `searchPlan`: filter-derived requirement profile, strategy, language, intents,
+  query families, evidence types, requirement handles, source strategy, uncovered
+  required requirements, and budget limits;
 - planned and executed coverage: `plannedCoverage`, `executedCoverage`, and
   `skippedRequiredCoverage`, not only the existence of good planned intents;
 - execution trace: query operations, raw results, selected URL reads, rejected-before-
   read results, warnings, and errors;
-- output boundary: `FoundMaterial` can be created by a radar run, but `SourceSignal`,
-  `PostCandidate`, plan slots, and `DraftRun` must not be created by upstream search;
+- output boundary: retrieval creates `FoundMaterial`; dedicated extraction may create
+  unreviewed `SourceSignal` candidates, but no upstream stage creates `PostCandidate`,
+  plan slots, or `DraftRun`;
 - benchmark verdict: when a matching scenario exists, `benchmarkReport` must explain
   whether the result is `passed`, `warning`, `failed`, or `inconclusive`.
 
@@ -86,12 +88,14 @@ Candidate assembly v2 remains a later slice.
 | `SourceHandle` | Project-owned source descriptor: type, title, locator, status, notes. | Search execution, scoring, post idea selection. |
 | `SourceRegistry` | The set of internal and external source handles available to a project. | Cross-project sources or global author memory. |
 | `RadarLanguageContext` | Canonical editorial language, source-language policy, actual query languages, allowed source languages, unknown-language rule, and legacy fallback reason. | Full project metadata or translation of source evidence. |
+| `RadarSearchRequirementProfile` | Bounded mapping of every enabled radar filter to required, optional, exclusion, tension, or explicit scoring-only search applicability. | Provider calls, utility verdicts, full workspace, publications, or fabulas. |
 | `RadarRun` | One execution attempt for a radar: status, budget, operations, found material ids, errors. | Final signal approval or post candidate approval. |
 | `RadarRunOperation` | One read/search/import operation inside a run. | Domain scoring or candidate ranking. |
 | `FoundMaterial` | Retrieved material with source/run provenance, title, URL or source ref, snippet/summary, bounded hashed fragments, capturedAt, warnings. | Topic/fabula assignment or approval. |
 | `SignalExtractionReport` | Versioned terminal decisions, provider attempts, grounding incidents, budgets, usage and signal ids. | Project usefulness scoring or final post candidate ranking. |
 | `SourceSignal` candidate | Evidence-backed extracted observation with uncertainty, reason codes and exact material/fragment handles. | Automatic approval or topic/fabula/audience/value ownership. |
 | `SignalUtilityReport` | Dimension-level editorial utility, setting/evidence refs, deterministic recommendation, provider proof and revision. | Human approval, evidence mutation, topic/fabula ownership, or draft quality. |
+| `SearchOpportunityCoverageReport` | Requirement execution, full requirement-to-verdict lineage, material/signal/recommendation counts, review-eligible yield, first failure stage and remediation. | Weakening filters or manufacturing positive signals. |
 | `SourceSignalReviewEvent` | Authenticated reversible human decision with revision, reason and changed editorial fields. | Automatic recommendation or evidence mutation. |
 | `CandidateAssemblyReport` | Accepted/rejected `Signal x Topic x Fabula` matches, candidate ranking, rationale, and risks. | DraftRun generation or publication variants. |
 
@@ -110,6 +114,11 @@ Candidate assembly v2 remains a later slice.
      mode, editorial filters, source-language policy, execution mode, and budget caps.
    - `RadarLanguageContext` assigns an actual language to each bounded query family
      without adding provider operations and records language coverage gaps.
+   - `RadarSearchRequirementProfileFactory` maps every enabled filter to an honest
+     search role or explicit scoring-only reason. Required requirements are allocated
+     before evidence diversity and optional directions within the existing call cap.
+   - Every intent/query carries requirement handles. Uncovered required requirements
+     remain visible instead of silently weakening the radar.
    - A `RadarRun` records what was attempted, skipped, failed, and found.
    - Runs may be manual, scheduled later, or deficit-driven later. V1 should start
      manual.
@@ -137,6 +146,9 @@ Candidate assembly v2 remains a later slice.
    - Recommendation never changes the human status. Review actions are authenticated,
      reversible and revision-checked; correction may change only editorial title,
      summary and author comment and then triggers a rescore.
+   - After scoring, deterministic opportunity coverage reconstructs the complete
+     lineage from radar requirement to utility verdict, counts review-eligible output,
+     and identifies the first failed stage for zero-yield runs.
 
 5. **Candidate assembly**
    - Candidate assembly evaluates `approved SourceSignal x active Topic x active Fabula`.
@@ -185,12 +197,16 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   snapshot and are visible in `Сигналы -> Радары`;
 - `Run radar` first tries the backend external runner and falls back to the local
   deterministic contract run when the backend is unavailable;
-- the backend external runner builds a deterministic typed search campaign from
-  radar settings, source handles, project language, topic/fabula context, publisher
-  rules, benchmark profile, research depth, and budget mode;
+- the backend external runner builds a deterministic typed search campaign from a
+  bounded projection of enabled radar filters, radar scope, source handles, project
+  language, benchmark profile, research depth, and budget mode; full topics, fabulas,
+  publisher rules, publications and trace do not enter query construction;
 - each external run records `searchPlan`, directly budgeted query operations, bounded
   raw search results, deterministic `searchTriage`, selected URL reads, every terminal
   rejected/duplicate/invalid/deferred decision, read outcomes, and found materials;
+- `searchPlan.requirementProfile`, requirement handles on intents/queries, and
+  `uncoveredRequiredSearchRequirements` prove whether configured filters influenced
+  executable search;
 - expanded radar rows keep configuration in an internal settings tab and run
   diagnostics in an internal run-trace tab;
 - URL read failures and unsupported binary formats are failed read outcomes and may
@@ -201,6 +217,8 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   produce an explicit failed/not-run extraction without rewriting successful search;
 - the retry API reuses persisted fragments, replaces only signals belonging to the
   same run and does not repeat search or reads;
+- extraction/scoring retries rebuild `searchOpportunityCoverage` and benchmark status
+  from stored artifacts without repeating search or URL reads;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
   keeps the first three candidates;
 - some compatibility fields such as `suggestedTopicId` and `suggestedFabulaId` may
@@ -218,6 +236,8 @@ The complete RadarRun trace contract lives in
 future upstream run should make the handoff readable:
 
 - what sources were eligible;
+- how every enabled radar filter became a search requirement, exclusion, tension
+  direction, or explicit scoring-only decision;
 - what search plan, query families, query intents, evidence types, and source
   strategy were built;
 - what query intents were skipped and why;
@@ -231,6 +251,8 @@ future upstream run should make the handoff readable:
 - which provider attempt was accepted, what grounding incidents were rejected, and
   whether direct input/message budgets were respected;
 - how signal scoring dimensions were decided;
+- which requirements reached materials/signals/verdicts, how many signals were
+  review-eligible, and which stage first caused zero yield;
 - why a topic/fabula candidate was accepted or rejected;
 - what human correction or approval changed.
 
@@ -245,8 +267,8 @@ corpus. `benchmark-industrial-ai-maintenance-cases` is implemented for `Опыт
 «Сборочная»`, bound to the industrial AI cases radar. It runs in recorded-fixture
 mode without network access and verifies the search campaign against expected query
 intents, evidence types, source diversity, selected reads, found materials,
-unacceptable noise, and the rule that no `SourceSignal`, `PostCandidate`, plan slot,
-or DraftRun is created.
+unacceptable noise, categorical utility distribution, useful-yield behavior, and the
+rule that no `PostCandidate`, plan slot, or DraftRun is created.
 
 Run the backend benchmark regression with:
 
@@ -344,6 +366,11 @@ python scripts/analyze_radar_signal_extraction.py --project-id <project-id> --ru
   recommendation, human-readable evidence resolution, non-destructive canonical
   signal relationships, reversible authenticated review and legacy integrity
   separation.
+- `2.17.4.7.1.1`: Search-to-Filter Alignment and Useful-Signal Yield Benchmark.
+  Done: bounded filter-to-requirement projection, required-first deterministic query
+  allocation, requirement lineage through read/material/signal/verdict, explicit
+  uncovered requirements, useful-yield and first-failure diagnostics, post-scoring
+  benchmark evaluation, retry-safe recomputation, trace UI, stress and live proof.
 - `2.17.4.8`: Signal x Topic x Fabula Candidate Assembly v2.
 - `2.17.4.9`: Signal Review and Candidate Workbench UX.
 

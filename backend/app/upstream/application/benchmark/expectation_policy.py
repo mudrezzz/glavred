@@ -53,13 +53,11 @@ class RadarBenchmarkExpectationPolicy:
 
     def downstream_leaks(self, *, workspace: dict[str, Any], result: dict[str, Any]) -> list[str]:
         leaks = []
-        if result.get("sourceSignals"):
-            leaks.append("sourceSignals")
         if result.get("postCandidates"):
             leaks.append("postCandidates")
         if result.get("draftRuns"):
             leaks.append("draftRuns")
-        for key in ("sourceSignals", "postCandidates", "contentPlanItems", "draftRuns"):
+        for key in ("postCandidates", "contentPlanItems", "draftRuns"):
             if workspace.get(key):
                 leaks.append(f"workspace-input:{key}")
         return leaks
