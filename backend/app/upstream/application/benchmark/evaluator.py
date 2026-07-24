@@ -184,6 +184,24 @@ class RadarBenchmarkEvaluator:
             run=run,
             found_materials=found_materials,
             useful_yield=search_opportunity,
+            delivered_coverage={
+                "version": search_opportunity.get("version"),
+                "deliveredRequirementIds": list(
+                    search_opportunity.get("deliveredRequirementIds") or []
+                ),
+                "requiredDeliveryGaps": list(
+                    search_opportunity.get("requiredDeliveryGaps") or []
+                ),
+                "optionalDeliveryGaps": list(
+                    search_opportunity.get("optionalDeliveryGaps") or []
+                ),
+            },
+            corroboration_gaps=[
+                item
+                for item in (search_opportunity.get("corroborationCoverage") or {}).get("gaps") or []
+                if isinstance(item, dict)
+            ],
+            source_posture_consistency=self._source_posture_consistency(source_signals),
         )
 
     def _domain(self, url: str) -> str:
@@ -211,6 +229,45 @@ class RadarBenchmarkEvaluator:
         }
         executed.update(str(item.get("queryId") or "") for item in raw_results if isinstance(item, dict))
         return {item for item in executed if item}
+
+    def _source_posture_consistency(
+        self,
+        source_signals: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        checked = 0
+        inconsistent: list[str] = []
+        for signal in source_signals:
+            report = signal.get("utilityReport")
+            if not isinstance(report, dict):
+                continue
+            criteria = [
+                item
+                for key in ("radarCriteria", "projectCriteria")
+                for item in report.get(key, [])
+                if isinstance(item, dict) and item.get("dimension") == "sourceCredibility"
+            ]
+            posture_checks = [
+                item
+                for item in report.get("qualityChecks", [])
+                if isinstance(item, dict) and item.get("checkId") == "source-posture"
+            ]
+            if not criteria or not posture_checks:
+                continue
+            checked += 1
+            details = posture_checks[0].get("details") or {}
+            ownership = str(
+                details.get("ownershipPosture")
+                or details.get("sourcePosture")
+                or "unknown"
+            )
+            criterion_passes = any(item.get("impact") == "pass" for item in criteria)
+            if ownership in {"vendor", "firstParty", "unknown"} and criterion_passes:
+                inconsistent.append(str(signal.get("id") or "unknown-signal"))
+        return {
+            "checkedSignalCount": checked,
+            "consistent": not inconsistent,
+            "inconsistentSignalIds": inconsistent,
+        }
 
 
 def evaluate_live_radar_run(

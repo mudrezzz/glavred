@@ -28,6 +28,10 @@ The upstream search and signal boundary for Slice 2.17.4.4 is documented in
 `docs/architecture/UPSTREAM_SEARCH_AND_SIGNAL_ARCHITECTURE.md`. It defines how
 `SourceRegistry`, `RadarRun`, `FoundMaterial`, `SourceSignal`, `SignalScore`, and
 `PostCandidateAssembly` cooperate before a post reaches planning or DraftRun.
+The evidence-delivery and source-posture boundary is recorded in
+`docs/adr/2026-07-23-radar-evidence-delivery-and-source-posture.md`: executed queries,
+supported evidence and delivered signals are separate stages, while publisher
+ownership and cross-source claim support are separate reliability axes.
 
 The SaaS blog portfolio concept for Slice 2.17.x is documented in
 `docs/architecture/SAAS_BLOG_PORTFOLIO_ARCHITECTURE.md`. It defines

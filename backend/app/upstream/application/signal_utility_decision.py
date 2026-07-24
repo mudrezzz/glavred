@@ -18,6 +18,9 @@ from backend.app.upstream.domain.signal_utility import (
     SignalUtilityRecommendation,
 )
 from backend.app.upstream.application.signal_type_semantics import SignalTypeSemanticsRegistry
+from backend.app.upstream.application.source_credibility_consistency import (
+    SourceCredibilityConsistencyPolicy,
+)
 from backend.app.upstream.application.signal_utility_criteria import SignalUtilityCriteriaPolicy
 
 
@@ -25,6 +28,7 @@ class SignalUtilityDecisionPolicy:
     def __init__(self) -> None:
         self._criteria = SignalUtilityCriteriaPolicy()
         self._semantics = SignalTypeSemanticsRegistry()
+        self._source_consistency = SourceCredibilityConsistencyPolicy()
 
     def evaluate(
         self,
@@ -40,6 +44,14 @@ class SignalUtilityDecisionPolicy:
             dimensions=dimensions,
         )
         quality_checks = self._semantics.quality_checks(signal)
+        radar_criteria = self._source_consistency.reconcile(
+            criteria=radar_criteria,
+            quality_checks=quality_checks,
+        )
+        project_criteria = self._source_consistency.reconcile(
+            criteria=project_criteria,
+            quality_checks=quality_checks,
+        )
         blocking = tuple(
             item.summary for item in (*radar_criteria, *project_criteria)
             if item.effect == SignalCriterionEffect.BLOCK

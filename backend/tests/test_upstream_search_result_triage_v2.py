@@ -68,6 +68,24 @@ def test_provider_mojibake_is_suppressed_before_raw_result_persistence() -> None
     assert result.report.read_plan.decisions[0].reason == "provider-result-text-integrity-failed"
 
 
+def test_read_material_normalizes_html_title_whitespace_before_persistence() -> None:
+    material = UpstreamRadarPayloadFactory().material_from_read(
+        material_id="material-1",
+        run_id="run-1",
+        source_handle_id="source-open-web",
+        title="Fallback title",
+        read=PublicUrlReadResult(
+            url="https://example.com/case",
+            final_url="https://example.com/case",
+            title="Case Study: Improving Asset Reliability with AI |             Andersen",
+            text="Industrial maintenance case with a reported operational result.",
+        ),
+        provenance="openrouter:web_search / example.com",
+    )
+
+    assert material["title"] == "Case Study: Improving Asset Reliability with AI | Andersen"
+
+
 def test_triage_groups_tracking_and_content_duplicates_with_all_handles() -> None:
     raw = [
         raw_result(
@@ -211,6 +229,69 @@ def test_read_allocator_covers_overlapping_requirements_once_then_diversifies_ev
     }
 
 
+def test_vendor_page_discovered_by_benchmark_query_does_not_cover_source_credibility() -> None:
+    benchmark_query = {
+        **query("query-report", "benchmarkPaper"),
+        "requirementIds": ["requirement-source-quality"],
+    }
+    raw = [
+        raw_result(
+            "raw-vendor",
+            query_id="query-report",
+            url="https://vendor.example/customer-story",
+            title="Our platform customer story",
+            snippet="Request a demo for our solution and read the customer story.",
+        ),
+    ]
+
+    result = triage(raw, plan=search_plan(benchmark_query), max_reads=1)
+    candidate = result.report.candidates[0]
+
+    assert candidate.requirement_ids == ("requirement-source-quality",)
+    assert candidate.supported_requirement_ids == ()
+    assert result.report.read_plan.covered_requirement_ids == ()
+
+
+def test_standard_read_plan_uses_second_slot_for_supported_independent_evidence() -> None:
+    case_query = {
+        **query("query-case", "caseExample"),
+        "requirementIds": ["requirement-context"],
+    }
+    report_query = {
+        **query("query-report", "benchmarkPaper"),
+        "requirementIds": ["requirement-source-quality"],
+    }
+    raw = [
+        raw_result(
+            "raw-case",
+            query_id="query-case",
+            url="https://ifactory.example/deployment",
+            title="Industrial maintenance implementation case",
+            snippet="Deployment mechanism with operational roles and reported downtime results.",
+        ),
+        raw_result(
+            "raw-report",
+            query_id="query-report",
+            url="https://ieee.org/industrial-maintenance-report",
+            title="Independent benchmark research report",
+            snippet="Independent research methodology, dataset, benchmark metrics and limitations.",
+        ),
+    ]
+
+    result = triage(raw, plan=search_plan(case_query, report_query), max_reads=2)
+    selected = {
+        item.raw_result_id: item.reason
+        for item in result.report.read_plan.decisions
+        if item.status == "selected"
+    }
+
+    assert set(selected) == {"raw-case", "raw-report"}
+    assert selected["raw-report"] in {
+        "required-evidence-priority",
+        "independent-evidence-priority",
+    }
+
+
 def test_read_allocator_rejects_unsupported_pdf_and_selects_readable_alternative() -> None:
     raw = [
         raw_result(
@@ -342,7 +423,42 @@ def query(query_id: str, family: str) -> dict[str, Any]:
 
 
 def search_plan(*queries: dict[str, Any]) -> dict[str, Any]:
+    requirement_ids = list(dict.fromkeys(
+        str(requirement_id)
+        for item in queries
+        for requirement_id in item.get("requirementIds", [])
+        if requirement_id
+    ))
     return {
+        "requirementProfile": {
+            "requirements": [
+                {
+                    "id": requirement_id,
+                    "role": "required",
+                    "mode": "mustMatch",
+                    "dimension": (
+                        "sourceCredibility"
+                        if "source-quality" in requirement_id
+                        else "mechanism"
+                        if "mechanism" in requirement_id
+                        else "observableOutcome"
+                        if "result" in requirement_id
+                        else "topics"
+                    ),
+                    "queryFamilies": [
+                        item["family"]
+                        for item in queries
+                        if requirement_id in item.get("requirementIds", [])
+                    ],
+                    "evidenceTypes": [
+                        item["evidenceType"]
+                        for item in queries
+                        if requirement_id in item.get("requirementIds", [])
+                    ],
+                }
+                for requirement_id in requirement_ids
+            ],
+        },
         "queries": list(queries),
         "intents": [
             {

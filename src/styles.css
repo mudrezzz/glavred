@@ -671,6 +671,25 @@
   font: var(--ui-xs);
 }
 
+.signal-source-posture {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(112px, max-content) minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.signal-source-posture dt {
+  color: var(--ink-600);
+  font: var(--ui-xs);
+}
+
+.signal-source-posture dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .criterion-verdict {
   flex: 0 0 auto;
   max-width: min(260px, 100%);

@@ -161,6 +161,13 @@ export interface SignalQualityCheck {
   classification?: string | null;
   applicable: boolean;
   evidenceRefs: Array<{ materialId: string; fragmentId: string }>;
+  details?: {
+    sourcePosture?: 'independent' | 'corroborated' | 'firstParty' | 'vendor' | 'unknown';
+    ownershipPosture?: 'independent' | 'firstParty' | 'vendor' | 'unknown';
+    claimSupport?: 'singleSource' | 'corroborated' | 'contradicted' | 'notChecked';
+    reasonCodes?: string[];
+    sourceDomains?: string[];
+  };
 }
 
 export interface SignalRelationship {

@@ -16,18 +16,30 @@ class FoundMaterialFragmentPolicy:
     MAX_FRAGMENTS = 8
     MAX_FRAGMENT_CHARS = 1200
 
-    def from_read_text(self, *, material_id: str, text: str) -> list[dict[str, Any]]:
+    def from_read_text(
+        self,
+        *,
+        material_id: str,
+        text: str,
+        focus_text: str | None = None,
+    ) -> list[dict[str, Any]]:
         normalized = " ".join(str(text).split())
         if not normalized:
             return []
         fragments: list[dict[str, Any]] = []
         cursor = 0
-        for ordinal, chunk in enumerate(self._chunks(normalized), start=1):
+        chunks = self._chunks(normalized)
+        selected_indexes = self._selected_indexes(chunks, focus_text)
+        for index in selected_indexes:
+            chunk = chunks[index]
+            ordinal = index + 1
             start = normalized.find(chunk, cursor)
             if start < 0:
-                start = cursor
+                start = normalized.find(chunk)
+            if start < 0:
+                start = 0
             end = start + len(chunk)
-            cursor = end
+            cursor = max(cursor, end)
             digest = hashlib.sha256(chunk.encode("utf-8")).hexdigest()
             fragments.append(
                 {
@@ -40,9 +52,39 @@ class FoundMaterialFragmentPolicy:
                     "kind": "text",
                 }
             )
-            if len(fragments) >= self.MAX_FRAGMENTS:
-                break
         return fragments
+
+    def _selected_indexes(
+        self,
+        chunks: list[str],
+        focus_text: str | None,
+    ) -> list[int]:
+        if len(chunks) <= self.MAX_FRAGMENTS or not focus_text:
+            return list(range(min(len(chunks), self.MAX_FRAGMENTS)))
+        focus_terms = self._terms(focus_text)
+        if not focus_terms:
+            return list(range(self.MAX_FRAGMENTS))
+        scored = [
+            (len(focus_terms.intersection(self._terms(chunk))), index)
+            for index, chunk in enumerate(chunks)
+        ]
+        selected = [
+            index
+            for score, index in sorted(scored, key=lambda item: (-item[0], item[1]))[
+                : self.MAX_FRAGMENTS
+            ]
+            if score > 0
+        ]
+        if not selected:
+            return list(range(self.MAX_FRAGMENTS))
+        return sorted(selected)
+
+    def _terms(self, value: str) -> set[str]:
+        return {
+            term
+            for term in re.findall(r"[\w]+", str(value).casefold(), flags=re.UNICODE)
+            if len(term) >= 4
+        }
 
     def legacy_summary(self, material: dict[str, Any]) -> list[dict[str, Any]]:
         summary = " ".join(str(material.get("summary") or "").split())[: self.MAX_FRAGMENT_CHARS]

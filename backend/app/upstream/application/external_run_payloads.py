@@ -72,6 +72,7 @@ class UpstreamRadarPayloadFactory:
         read: PublicUrlReadResult,
         provenance: str,
         discovery_trace: dict[str, Any] | None = None,
+        focus_text: str | None = None,
     ) -> dict[str, Any]:
         return self._material(
             material_id=material_id,
@@ -84,6 +85,7 @@ class UpstreamRadarPayloadFactory:
             warnings=[],
             provenance=provenance,
             discovery_trace=discovery_trace,
+            focus_text=focus_text,
         )
 
     def material_from_raw(
@@ -146,13 +148,14 @@ class UpstreamRadarPayloadFactory:
 
     def _material(self, **values: Any) -> dict[str, Any]:
         text = " ".join(str(values["text"]).split())
-        source_language = self._languages.inspect(str(values["title"]), text[:4000])
+        title = self._normalizer.bounded_text(str(values["title"]), self._normalizer.TITLE_LIMIT)
+        source_language = self._languages.inspect(title, text[:4000])
         payload = {
             "id": values["material_id"],
             "radarRunId": values["run_id"],
             "sourceHandleId": values["source_handle_id"],
             "type": "searchResult",
-            "title": values["title"],
+            "title": title,
             "locator": values["locator"],
             "snippet": text[:360].rstrip(),
             "summary": text[:1200].rstrip(),
@@ -166,6 +169,7 @@ class UpstreamRadarPayloadFactory:
             payload["contentFragments"] = self._fragments.from_read_text(
                 material_id=str(values["material_id"]),
                 text=text,
+                focus_text=values.get("focus_text"),
             )
         if values.get("discovery_trace"):
             payload["discoveryTrace"] = values["discovery_trace"]

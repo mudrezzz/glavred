@@ -62,6 +62,7 @@ class SignalQualityCheck:
     classification: str | None = None
     applicable: bool = True
     evidence_refs: tuple[dict[str, str], ...] = ()
+    details: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -74,6 +75,7 @@ class SignalQualityCheck:
             "classification": self.classification,
             "applicable": self.applicable,
             "evidenceRefs": list(self.evidence_refs),
+            "details": dict(self.details or {}),
         }
 
 

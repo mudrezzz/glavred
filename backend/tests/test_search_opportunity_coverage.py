@@ -11,7 +11,22 @@ def test_useful_yield_report_resolves_complete_requirement_to_signal_lineage() -
     assert report["status"] == "sufficient"
     assert report["firstFailureStage"] is None
     assert report["reviewEligibleYield"] == {"count": 1, "denominator": 1, "ratio": 1.0}
-    assert report["unresolvedHandles"] == {"requirement": 0, "query": 0, "material": 0, "fragment": 0}
+    assert report["version"] == "search-opportunity-coverage-v2"
+    assert report["deliveredRequirementIds"] == ["requirement-topic"]
+    assert report["requirementCoverage"][0]["furthestStage"] == "usedBySignal"
+    assert report["corroborationCoverage"]["gaps"] == [{
+        "signalId": "signal-1",
+        "reason": "corroboration-not-found",
+    }]
+    assert report["unresolvedHandles"] == {
+        "requirement": 0,
+        "query": 0,
+        "rawResult": 0,
+        "readDecision": 0,
+        "material": 0,
+        "fragment": 0,
+        "signal": 0,
+    }
     assert report["lineage"][-1]["requirementIds"] == ["requirement-topic"]
 
 
@@ -57,6 +72,41 @@ def test_unresolved_lineage_handles_are_counted_not_silently_ignored() -> None:
     assert report.unresolved_handles["fragment"] == 1
 
 
+def test_executed_query_without_result_is_not_delivered_evidence() -> None:
+    run = run_fixture()
+    run["rawResults"] = []
+    run["searchTriage"]["readPlan"]["decisions"] = []
+
+    report = SearchOpportunityCoverageReportBuilder().build(
+        run=run,
+        found_materials=[],
+        source_signals=[],
+    ).to_payload()
+
+    coverage = report["requirementCoverage"][0]
+    assert coverage["furthestStage"] == "queryExecuted"
+    assert coverage["delivered"] is False
+    assert coverage["stopReason"] == "no-result-found"
+    assert report["status"] == "zeroYield"
+
+
+def test_discovered_but_unsupported_result_stops_at_result_found() -> None:
+    run = run_fixture()
+    run["rawResults"][0]["supportedRequirementIds"] = []
+    run["searchTriage"]["readPlan"]["decisions"][0]["supportedRequirementIds"] = []
+
+    report = SearchOpportunityCoverageReportBuilder().build(
+        run=run,
+        found_materials=[],
+        source_signals=[],
+    ).to_payload()
+
+    coverage = report["requirementCoverage"][0]
+    assert coverage["furthestStage"] == "resultFound"
+    assert coverage["stopReason"] == "evidence-target-not-supported"
+    assert coverage["delivered"] is False
+
+
 def run_fixture() -> dict:
     return {
         "id": "run-1",
@@ -75,7 +125,22 @@ def run_fixture() -> dict:
             "uncoveredRequiredSearchRequirements": [],
         },
         "operations": [{"kind": "openWebQuery", "status": "succeeded", "target": "industrial AI case study"}],
-        "rawResults": [{"id": "raw-1", "queryId": "query-1"}],
+        "rawResults": [{
+            "id": "raw-1",
+            "queryId": "query-1",
+            "discoveredRequirementIds": ["requirement-topic"],
+            "supportedRequirementIds": ["requirement-topic"],
+        }],
+        "searchTriage": {
+            "readPlan": {
+                "decisions": [{
+                    "rawResultId": "raw-1",
+                    "status": "selected",
+                    "requirementIds": ["requirement-topic"],
+                    "supportedRequirementIds": ["requirement-topic"],
+                }],
+            },
+        },
         "signalExtraction": {"status": "succeeded"},
         "signalScoring": {"status": "succeeded"},
     }
@@ -87,8 +152,12 @@ def material_fixture() -> dict:
         "status": "found",
         "discoveryTrace": {
             "requirementIds": ["requirement-topic"],
+            "discoveredRequirementIds": ["requirement-topic"],
+            "supportedRequirementIds": ["requirement-topic"],
             "queryIds": ["query-1"],
             "rawResultIds": ["raw-1"],
+            "families": ["caseExample"],
+            "evidenceTypes": ["caseExample"],
         },
         "contentFragments": [{"id": "fragment-1", "text": "Evidence"}],
     }
@@ -98,5 +167,14 @@ def signal_fixture(recommendation: str) -> dict:
     return {
         "id": "signal-1",
         "evidenceRefs": [{"materialId": "material-1", "fragmentId": "fragment-1"}],
-        "utilityReport": {"recommendation": recommendation},
+        "utilityReport": {
+            "recommendation": recommendation,
+            "qualityChecks": [{
+                "checkId": "source-posture",
+                "details": {
+                    "ownershipPosture": "firstParty",
+                    "claimSupport": "singleSource",
+                },
+            }],
+        },
     }

@@ -98,6 +98,7 @@ class RadarSignalUtilityDiagnostics:
                 str(item.get("checkId") or ""): item
                 for item in quality_checks if isinstance(item, dict)
             }
+            source_details = (checks_by_id.get("source-posture") or {}).get("details") or {}
             signal_summaries.append({
                 "signalId": str(signal.get("id") or ""),
                 "title": str(signal.get("title") or "")[:180],
@@ -109,6 +110,8 @@ class RadarSignalUtilityDiagnostics:
                 ],
                 "resultSupport": (checks_by_id.get("outcome-support") or {}).get("classification"),
                 "sourcePosture": (checks_by_id.get("source-posture") or {}).get("classification"),
+                "sourceOwnership": source_details.get("ownershipPosture"),
+                "claimSupport": source_details.get("claimSupport"),
                 "relationshipStatus": relationship_status,
                 "canonicalSignalId": relationship.get("canonicalSignalId"),
             })
@@ -124,6 +127,11 @@ class RadarSignalUtilityDiagnostics:
             for item in report.get("evaluations") or []
             if isinstance(item, dict)
         }
+        opportunity = (
+            run.get("searchOpportunityCoverage")
+            if isinstance(run.get("searchOpportunityCoverage"), dict)
+            else {}
+        )
         return {
             "runId": run_id,
             "retrievalStatus": run.get("status"),
@@ -154,6 +162,15 @@ class RadarSignalUtilityDiagnostics:
             "reviewEventCount": review_events,
             "reviewStatuses": self._counts(signals, "reviewStatus"),
             "createdDownstreamArtifacts": report.get("createdDownstreamArtifacts") or {},
+            "evidenceDelivery": {
+                "version": opportunity.get("version"),
+                "status": opportunity.get("status"),
+                "deliveredRequirementIds": opportunity.get("deliveredRequirementIds") or [],
+                "requiredDeliveryGaps": opportunity.get("requiredDeliveryGaps") or [],
+                "optionalDeliveryGaps": opportunity.get("optionalDeliveryGaps") or [],
+                "corroborationCoverage": opportunity.get("corroborationCoverage") or {},
+                "unresolvedHandles": opportunity.get("unresolvedHandles") or {},
+            },
         }
 
     def markdown(self, report: dict[str, Any]) -> str:
@@ -181,6 +198,10 @@ class RadarSignalUtilityDiagnostics:
             f"- Неразрешенных relationship refs: {len(report['unresolvedRelationshipRefs'])}",
             f"- Review events: {report['reviewEventCount']}",
             f"- Review statuses: `{json.dumps(report['reviewStatuses'], ensure_ascii=False)}`",
+            f"- Delivery status: `{report['evidenceDelivery']['status']}` ({report['evidenceDelivery']['version'] or 'legacy'})",
+            f"- Доставлено требований: {len(report['evidenceDelivery']['deliveredRequirementIds'])}",
+            f"- Обязательных delivery gaps: {len(report['evidenceDelivery']['requiredDeliveryGaps'])}",
+            f"- Corroboration: `{json.dumps(report['evidenceDelivery']['corroborationCoverage'], ensure_ascii=False)}`",
             "",
             "## Provider и бюджет",
             f"- Пачек: {report['batchCount']}; попыток: {len(report['providerAttempts'])}",
@@ -191,7 +212,7 @@ class RadarSignalUtilityDiagnostics:
             "",
             "## Сигналы",
             *[
-                f"- `{item['signalId']}` — {item['title']} | `{item['recommendation']}` | результат `{item['resultSupport']}` | источник `{item['sourcePosture']}` | связи `{item['relationshipStatus']}`"
+                f"- `{item['signalId']}` — {item['title']} | `{item['recommendation']}` | результат `{item['resultSupport']}` | владелец `{item['sourceOwnership']}` | поддержка `{item['claimSupport']}` | связи `{item['relationshipStatus']}`"
                 for item in report["signalSummaries"]
             ],
         ])

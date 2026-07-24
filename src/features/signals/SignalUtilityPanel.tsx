@@ -169,11 +169,36 @@ function QualitySection({
               <span className={`sc criterion-verdict criterion-${check.effect}`}>{check.verdict}</span>
             </div>
             <p>{check.summary}</p>
+            {check.checkId === 'source-posture' ? <SourcePostureDetails check={check} /> : null}
             <CriterionEvidence projectId={projectId} signal={signal} refs={check.evidenceRefs} />
           </article>
         ))}
       </div>
     </section>
+  );
+}
+
+function SourcePostureDetails({ check }: { check: SignalQualityCheck }) {
+  const ownership = check.details?.ownershipPosture;
+  const support = check.details?.claimSupport;
+  if (!ownership && !support) return null;
+  const ownershipLabels = {
+    independent: 'Независимый источник',
+    firstParty: 'Первичный источник',
+    vendor: 'Источник поставщика',
+    unknown: 'Происхождение не установлено'
+  } as const;
+  const supportLabels = {
+    singleSource: 'Независимого подтверждения нет',
+    corroborated: 'Подтверждено несколькими независимыми источниками',
+    contradicted: 'Найдено противоречащее доказательство',
+    notChecked: 'Независимое подтверждение не проверено'
+  } as const;
+  return (
+    <dl className="signal-source-posture">
+      {ownership ? <><dt>Происхождение</dt><dd>{ownershipLabels[ownership]}</dd></> : null}
+      {support ? <><dt>Подтверждение</dt><dd>{supportLabels[support]}</dd></> : null}
+    </dl>
   );
 }
 

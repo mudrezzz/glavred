@@ -42,6 +42,7 @@ class SearchReadDecision:
     source_language_reason_codes: tuple[str, ...] = ()
     source_language_eligibility_reason: str | None = None
     requirement_ids: tuple[str, ...] = ()
+    supported_requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -66,6 +67,8 @@ class SearchReadDecision:
                 "eligibilityReason": self.source_language_eligibility_reason,
             },
             "requirementIds": list(self.requirement_ids),
+            "discoveredRequirementIds": list(self.requirement_ids),
+            "supportedRequirementIds": list(self.supported_requirement_ids),
         }
 
 

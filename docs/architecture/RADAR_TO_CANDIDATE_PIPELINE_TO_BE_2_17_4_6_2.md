@@ -4,6 +4,9 @@ Status: Slices `2.17.4.6.2`, `2.17.4.7`, and `2.17.4.7.0.2` define the implement
 retrieval, extraction, language, and evidence boundary. Slice `2.17.4.7.1` adds the
 approved project-utility scoring and human review lifecycle. Slice `2.17.4.7.1.1`
 defines the approved search-requirement projection and useful-signal yield boundary.
+Slice `2.17.4.7.1.1.1` repairs evidence-target delivery and makes source ownership,
+claim corroboration, utility criteria, and benchmark verdicts use one consistent
+backend-owned contract.
 Candidate assembly and ranking remain the next target and are not part of scoring.
 
 AS IS sources:
@@ -88,6 +91,8 @@ provider call or change the downstream human-review boundary.
 | Human signal review | NEW | Utility recommendation and human status remain separate; reversible review events preserve actor, time, reason, revisions, and immutable evidence. | Lifecycle, optimistic-concurrency, API, and authenticated UI tests in Slice `2.17.4.7.1`. |
 | Legacy signal integrity | NEW | Old client-evaluated signals are explicitly marked for re-extraction and never displayed as current backend verdicts. | Legacy normalization and UI recovery tests in Slice `2.17.4.7.1`. |
 | Useful-signal yield | NEW | A post-scoring report connects search requirements to materials, signals, recommendations, and the first stage responsible for zero eligible output. | Recorded stage-failure fixtures, live comparison, and trace UI in Slice `2.17.4.7.1.1`. |
+| Evidence-target delivery | CHANGED vs AS IS | Requirement coverage advances through `planned`, `queryExecuted`, `resultFound`, `selectedForRead`, `readableEvidence`, `usedBySignal`, and `corroborated`; query execution alone is not delivered evidence. | Stage-transition, lineage, allocation, replay, and live trace proof in Slice `2.17.4.7.1.1.1`. |
+| Source credibility consistency | CHANGED vs AS IS | One backend policy separates source ownership from claim support and reconciles source-credibility criteria, system checks, recommendations, and benchmark verdicts. | First-party/vendor/independent/corroborated fixtures and iFactory replay in Slice `2.17.4.7.1.1.1`. |
 | Candidate assembly and ranking | NOT THIS SLICE | Future assembly receives bounded approved-signal projections. | Slices `2.17.4.8` and `2.17.4.8.1`. |
 | Cross-run search memory | NOT THIS SLICE | Reuse of discovered results is owned by a separate durable memory policy. | Slice `2.17.4.6.6`. |
 
@@ -515,6 +520,49 @@ The first failed stage is deterministic: `providerSearch` when no query executed
 but none are review-eligible. Provider/runtime unavailability is `inconclusive`.
 A zero-yield known high-fit benchmark is a quality failure, not a clean run.
 
+### 8.8 Evidence-target delivery and source posture consistency
+
+Slice `2.17.4.7.1.1.1` distinguishes discovery lineage from evidence suitability.
+`discoveredRequirementIds` records which query requirements led to a result.
+`supportedRequirementIds` records which requirements the result's bounded
+title/snippet, evidence target, and deterministic quality signals can actually
+support. A vendor page returned by a benchmark query does not thereby become
+independent benchmark evidence.
+
+The bounded read allocator first selects the strongest result covering required core
+case evidence, then gives a suitable independent or benchmark result above the
+quality floor explicit competition for the next slot. Remaining slots maximize
+tension and optional evidence diversity. The `1/2/4` read caps and provider-call caps
+do not change. If corroborating evidence is unavailable, the allocator uses the slot
+for the next strongest eligible result and records the exact gap.
+
+Each searchable requirement has a typed delivery record with a furthest stage:
+`planned`, `queryExecuted`, `resultFound`, `selectedForRead`, `readableEvidence`,
+`usedBySignal`, or `corroborated`. It also stores resolvable query, raw-result,
+read-decision, material, fragment, and signal handles plus a deterministic stop
+reason. Required evidence is delivered only when a readable fragment is used by a
+review-eligible signal. Optional delivery and corroboration gaps remain visible but
+do not become fabricated required failures.
+
+Source credibility uses two independent axes:
+
+- ownership posture: `independent`, `firstParty`, `vendor`, or `unknown`;
+- claim support: `singleSource`, `corroborated`, `contradicted`, or `notChecked`.
+
+The compatibility value `sourcePosture=corroborated` is emitted only when materially
+independent evidence supports the same claim. Multiple URLs controlled by the same
+publisher are not corroboration. Domain/publisher identity, product or subject
+ownership, material provenance, and cross-material evidence are deterministic
+inputs. Provider semantic output may add evidence but cannot silently upgrade
+`firstParty` or `vendor` to `independent`.
+
+A deterministic consistency policy reconciles the source-credibility radar criterion
+with the source-posture system check before the final recommendation. A first-party
+or vendor-reported outcome without independent corroboration remains useful but
+carries caution and cannot become `recommended` only from its own reported metrics.
+Missing corroboration is not a blocking conflict unless an active blocking criterion
+explicitly requires it.
+
 ## 9. Future Provider Context Rule
 
 Every future upstream provider-heavy stage must declare before implementation:
@@ -570,6 +618,14 @@ selected material and scored signal resolves through requirement, query, raw res
 read decision, material, and exact evidence fragment. Extraction/scoring retry
 rebuilds yield and benchmark reports from stored artifacts without repeating search
 or URL reading.
+
+Slice `2.17.4.7.1.1.1` upgrades `run.searchOpportunityCoverage` to v2 with
+`requirementCoverage`, delivered requirement ids, required/optional delivery gaps,
+corroboration coverage, and planned/executed/readable/used-by-signal family and
+evidence coverage. Read decisions expose both discovery and supported requirement
+handles. Signal quality trace stores source ownership and claim-support metadata
+without exposing technical handles as user-facing evidence. Legacy v1 reports remain
+readable and are explicitly marked as not fully delivery-verified.
 
 ## 11. Success Criteria
 
@@ -642,6 +698,9 @@ or URL reading.
   allocation, end-to-end lineage, and useful-signal yield diagnostics. `IMPLEMENTED`;
   accepted runtime proof is recorded in
   `docs/evidence/radar-runs/2.17.4.7.1.1/`.
+- Slice `2.17.4.7.1.1.1`: evidence-target delivery stages and source-posture
+  consistency repair. `IMPLEMENTED`; accepted proof is recorded in
+  `docs/evidence/radar-runs/2.17.4.7.1.1.1/`.
 - Candidate assembly, candidate ranking, and cross-run search memory: `NOT THIS SLICE`.
 
 ## 13. Implementation Proof
@@ -741,3 +800,24 @@ previously uncovered limitation direction, completed all three search operations
 reported useful yield explicitly. Full trace-safe comparison, token accounting, and
 authenticated screenshots are committed in
 `docs/evidence/radar-runs/2.17.4.7.1.1/`.
+
+The accepted evidence-delivery proof on 2026-07-23 uses fresh RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-4`. The unchanged three-query campaign
+and two-read cap produced 34 raw results, two readable materials, and one
+review-eligible signal. The core implementation case came from
+`global.andersen.com`; an `arxiv.org` result independently competed for the second
+read slot instead of being hidden behind query-executed coverage.
+
+Coverage v2 delivered three required requirements with zero required gaps and kept
+four optional gaps explicit. Every requirement, query, raw result, read decision,
+material, fragment, and signal handle resolved. The independent arXiv material did
+not support the same concrete Andersen claim, so the report retained
+`corroboration-not-found` instead of fabricating corroboration.
+
+The accepted signal has ownership `firstParty`, claim support `singleSource`, and
+outcome support `reported`. Both the source-credibility criterion and the system
+source-posture check apply `caution`; the final recommendation is
+`reviewWithCaution` and the benchmark consistency check is true. Provider and read
+caps were unchanged, all message budgets passed, and no budget incident occurred.
+Full comparison, token accounting, and authenticated screenshots are committed in
+`docs/evidence/radar-runs/2.17.4.7.1.1.1/`.

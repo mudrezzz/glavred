@@ -170,6 +170,9 @@ def test_external_run_attaches_live_benchmark_report_for_matching_scenario() -> 
     assert report["providerHealth"] == "ok"
     assert report["plannedCoverage"]["queryFamilies"]["missing"] == []
     assert report["usefulYield"]["firstFailureStage"] == "signalExtraction"
+    assert "deliveredCoverage" in report
+    assert report["corroborationGaps"] == []
+    assert report["sourcePostureConsistency"]["consistent"] is True
     json.dumps(result)
 
 

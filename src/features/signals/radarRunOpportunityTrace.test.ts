@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RadarRunTraceBundle } from '../../infrastructure/radarRunTraceClient';
+import type { RadarSearchRequirement } from '../../domain/upstream-search/types';
 import { searchOpportunityTraceDetail, searchRequirementsTraceDetail } from './radarRunOpportunityTrace';
 import { enrichedRadarRun, radar, sourceHandle } from './radarRunTraceTestFixtures';
 
@@ -77,6 +78,89 @@ describe('radarRunOpportunityTrace', () => {
     expect(detail.fields).toContainEqual({ label: 'Первый проблемный этап', value: 'Оценка редакционной полезности' });
     expect(detail.items[0].title).toBe('0 из 1 сигналов можно передать редактору');
     expect(JSON.stringify(detail)).not.toContain('%');
+  });
+
+  it('shows delivered evidence stage and a human stop reason', () => {
+    const basePlan = enrichedRadarRun.searchPlan!;
+    const requirement: RadarSearchRequirement = {
+      id: 'requirement-source',
+      filterId: 'filter-source',
+      dimension: 'sourceCredibility',
+      mode: 'mustMatch',
+      role: 'required',
+      title: 'Надежность источника',
+      statement: 'Найти независимое подтверждение.',
+      priority: 100,
+      queryFamilies: ['benchmarkPaper'],
+      evidenceTypes: ['benchmarkPaper'],
+      terms: ['independent', 'report'],
+      sourceHints: []
+    };
+    const detail = searchRequirementsTraceDetail(traceBundle({
+      searchPlan: {
+        ...basePlan,
+        requirementProfile: {
+          version: 'radar-search-requirements-v1',
+          radarId: radar.id,
+          requirements: [requirement],
+          notSearchApplicable: [],
+          retainedCounts: { filters: 1 },
+          trimmedCounts: { filters: 0 },
+          suppressedFields: []
+        },
+        queries: basePlan.queries.map((query) => ({
+          ...query,
+          requirementIds: ['requirement-source']
+        })),
+        uncoveredRequiredSearchRequirements: []
+      },
+      searchOpportunityCoverage: {
+        version: 'search-opportunity-coverage-v2',
+        status: 'partial',
+        plannedRequirementIds: ['requirement-source'],
+        executedRequirementIds: ['requirement-source'],
+        uncoveredRequiredSearchRequirements: [],
+        familyCoverage: { planned: ['benchmarkPaper'], executed: ['benchmarkPaper'] },
+        evidenceCoverage: { planned: ['benchmarkPaper'], executed: ['benchmarkPaper'] },
+        counts: {},
+        extractedSignalYield: { count: 1, denominator: 1, ratio: 1 },
+        reviewEligibleYield: { count: 1, denominator: 1, ratio: 1 },
+        rejectedYield: { count: 0, denominator: 1, ratio: 0 },
+        recommendationDistribution: { reviewWithCaution: 1 },
+        reasonDistribution: {},
+        reasonCodes: [],
+        remediation: [],
+        lineage: [],
+        unresolvedHandles: {},
+        requirementCoverage: [{
+          requirementId: 'requirement-source',
+          role: 'required',
+          mode: 'mustMatch',
+          title: 'Надежность источника',
+          furthestStage: 'usedBySignal',
+          delivered: true,
+          stopReason: 'corroboration-not-found',
+          queryIds: ['query-1'],
+          rawResultIds: ['raw-1'],
+          supportedRawResultIds: ['raw-1'],
+          readDecisionRawResultIds: ['raw-1'],
+          materialIds: ['material-1'],
+          fragmentIds: ['fragment-1'],
+          signalIds: ['signal-1'],
+          corroboratingMaterialIds: []
+        }]
+      }
+    }));
+
+    expect(detail.items[0]?.meta).toContainEqual({
+      label: 'Доставка доказательства',
+      value: 'Доказательство использовано сигналом'
+    });
+    expect(detail.items[0]?.meta).toContainEqual({
+      label: 'Почему остановилось',
+      value: 'Независимое подтверждение не найдено'
+    });
+    expect(JSON.stringify(detail.items)).not.toContain('raw-1');
   });
 });
 

@@ -78,6 +78,13 @@ class SignalSourcePosture(StrEnum):
     UNKNOWN = "unknown"
 
 
+class SignalClaimSupport(StrEnum):
+    SINGLE_SOURCE = "singleSource"
+    CORROBORATED = "corroborated"
+    CONTRADICTED = "contradicted"
+    NOT_CHECKED = "notChecked"
+
+
 class SignalRelationshipKind(StrEnum):
     EXACT_DUPLICATE = "exactDuplicate"
     SAME_CLAIM = "sameClaim"

@@ -10,11 +10,21 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from backend.app.upstream.application.search_evidence_delivery import SearchEvidenceDeliveryPolicy
+from backend.app.upstream.application.search_opportunity_lineage import SearchOpportunityLineageBuilder
+from backend.app.upstream.application.search_opportunity_metrics import SearchOpportunityMetricsBuilder
+from backend.app.upstream.application.search_opportunity_status import SearchOpportunityStatusPolicy
 from backend.app.upstream.domain.search_opportunity import SearchOpportunityCoverageReport, YieldMetric
 
 
 class SearchOpportunityCoverageReportBuilder:
     REVIEW_ELIGIBLE = {"recommended", "reviewWithCaution"}
+
+    def __init__(self) -> None:
+        self._delivery = SearchEvidenceDeliveryPolicy()
+        self._lineage_builder = SearchOpportunityLineageBuilder()
+        self._metrics = SearchOpportunityMetricsBuilder()
+        self._status_policy = SearchOpportunityStatusPolicy()
 
     def build(
         self,
@@ -55,39 +65,78 @@ class SearchOpportunityCoverageReportBuilder:
         )
         eligible_count = sum(recommendations[item] for item in self.REVIEW_ELIGIBLE)
         rejected_count = recommendations["notRecommended"]
-        provider_inconclusive = self._provider_inconclusive(run, source_signals)
-        first_failure = self._first_failure(
+        requirement_coverage = self._delivery.build(
+            run=run,
+            requirements=requirements,
+            queries=queries,
+            executed_query_ids=executed_query_ids,
+            found_materials=found_materials,
+            source_signals=source_signals,
+        )
+        required_delivery_gaps = tuple(
+            {
+                "requirementId": item.requirement_id,
+                "furthestStage": item.furthest_stage,
+                "reason": item.stop_reason or "required-evidence-not-delivered",
+            }
+            for item in requirement_coverage
+            if item.role == "required" and not item.delivered
+        )
+        optional_delivery_gaps = tuple(
+            {
+                "requirementId": item.requirement_id,
+                "furthestStage": item.furthest_stage,
+                "reason": item.stop_reason or "optional-evidence-not-delivered",
+            }
+            for item in requirement_coverage
+            if item.role in {"optional", "tension"} and not item.delivered
+        )
+        provider_inconclusive = self._status_policy.provider_inconclusive(
+            run, source_signals
+        )
+        first_failure = self._status_policy.first_failure(
             executed_query_ids=executed_query_ids,
             raw_results=raw_results,
             readable_materials=readable_materials,
             signals=source_signals,
             eligible_count=eligible_count,
         )
-        status = self._status(
+        delivery_gaps = (*uncovered, *required_delivery_gaps)
+        status = self._status_policy.status(
             provider_inconclusive=provider_inconclusive,
             eligible_count=eligible_count,
             signal_count=len(source_signals),
-            uncovered=uncovered,
+            uncovered=delivery_gaps,
         )
-        reason_codes = self._reason_codes(status, first_failure, provider_inconclusive, uncovered)
-        lineage, unresolved = self._lineage(
+        reason_codes = self._status_policy.reason_codes(
+            status=status,
+            first_failure=first_failure,
+            provider_inconclusive=provider_inconclusive,
+            uncovered=delivery_gaps,
+        )
+        lineage, unresolved = self._lineage_builder.build(
+            run=run,
             requirements=requirements,
             queries=queries,
             raw_results=raw_results,
             found_materials=found_materials,
             source_signals=source_signals,
         )
-        family_planned = sorted({str(item.get("family")) for item in search_plan.get("intents", []) if isinstance(item, dict) and item.get("family")})
-        family_executed = sorted({str(queries[item].get("family")) for item in executed_query_ids if item in queries and queries[item].get("family")})
-        evidence_planned = sorted({str(item.get("evidenceTarget") or item.get("evidenceType")) for item in search_plan.get("intents", []) if isinstance(item, dict) and (item.get("evidenceTarget") or item.get("evidenceType"))})
-        evidence_executed = sorted({str(queries[item].get("evidenceTarget") or queries[item].get("evidenceType")) for item in executed_query_ids if item in queries and (queries[item].get("evidenceTarget") or queries[item].get("evidenceType"))})
+        family_coverage, evidence_coverage = self._metrics.coverage(
+            search_plan=search_plan,
+            queries=queries,
+            executed_query_ids=executed_query_ids,
+            readable_materials=readable_materials,
+            source_signals=source_signals,
+            review_eligible=self.REVIEW_ELIGIBLE,
+        )
         return SearchOpportunityCoverageReport(
             status=status,
             planned_requirement_ids=planned_requirements,
             executed_requirement_ids=tuple(sorted(executed_requirements)),
             uncovered_requirements=uncovered,
-            family_coverage={"planned": family_planned, "executed": family_executed},
-            evidence_coverage={"planned": evidence_planned, "executed": evidence_executed},
+            family_coverage=family_coverage,
+            evidence_coverage=evidence_coverage,
             counts={
                 "queryCount": len(executed_query_ids),
                 "rawResultCount": len(raw_results),
@@ -103,8 +152,17 @@ class SearchOpportunityCoverageReportBuilder:
             reason_distribution=dict(sorted(Counter(reason_codes).items())),
             first_failure_stage=first_failure,
             reason_codes=tuple(reason_codes),
-            remediation=tuple(self._remediation(first_failure, provider_inconclusive)),
+            remediation=tuple(
+                self._status_policy.remediation(first_failure, provider_inconclusive)
+            ),
             lineage=tuple(lineage),
+            requirement_coverage=requirement_coverage,
+            delivered_requirement_ids=tuple(
+                item.requirement_id for item in requirement_coverage if item.delivered
+            ),
+            required_delivery_gaps=required_delivery_gaps,
+            optional_delivery_gaps=optional_delivery_gaps,
+            corroboration_coverage=self._metrics.corroboration(source_signals),
             unresolved_handles=unresolved,
         )
 
@@ -114,54 +172,6 @@ class SearchOpportunityCoverageReportBuilder:
             if isinstance(item, dict) and item.get("kind") == "openWebQuery" and item.get("status") == "succeeded"
         }
         return {query_id for query_id, query in queries.items() if str(query.get("query")) in targets}
-
-    def _provider_inconclusive(self, run: dict[str, Any], source_signals: list[dict[str, Any]]) -> bool:
-        terminal_signals = bool(source_signals) and all(
-            str((item.get("utilityReport") or {}).get("recommendation") or "inconclusive") != "inconclusive"
-            for item in source_signals
-        )
-        reports = [run.get("signalExtraction"), run.get("signalScoring")]
-        if not terminal_signals and any(isinstance(report, dict) and report.get("status") in {"inconclusive", "notRun"} for report in reports):
-            return True
-        return any(
-            isinstance(item, dict)
-            and item.get("kind") == "openWebQuery"
-            and item.get("status") in {"failed", "skipped"}
-            and any(marker in str(item.get("error") or item.get("skippedReason") or "").lower() for marker in ("provider", "openrouter", "timeout", "not-configured"))
-            for item in run.get("operations", [])
-        )
-
-    def _first_failure(self, *, executed_query_ids, raw_results, readable_materials, signals, eligible_count):
-        if not executed_query_ids:
-            return "providerSearch"
-        if not raw_results:
-            return "triage"
-        if not readable_materials:
-            return "read"
-        if not signals:
-            return "signalExtraction"
-        if not eligible_count:
-            return "signalScoring"
-        return None
-
-    def _status(self, *, provider_inconclusive: bool, eligible_count: int, signal_count: int, uncovered) -> str:
-        if provider_inconclusive and eligible_count == 0:
-            return "inconclusive"
-        if eligible_count > 0 and not uncovered:
-            return "sufficient"
-        if eligible_count > 0 or signal_count > 0:
-            return "partial"
-        return "zeroYield"
-
-    def _reason_codes(self, status: str, first_failure: str | None, provider_inconclusive: bool, uncovered) -> list[str]:
-        reasons = [f"first-failure-{first_failure}" if first_failure else "review-eligible-signal-found"]
-        if uncovered:
-            reasons.append("required-search-requirement-uncovered")
-        if provider_inconclusive:
-            reasons.append("provider-runtime-inconclusive")
-        if status == "zeroYield":
-            reasons.append("zero-review-eligible-yield")
-        return reasons
 
     def _remediation(self, stage: str | None, provider_inconclusive: bool) -> list[str]:
         if provider_inconclusive:
@@ -173,51 +183,5 @@ class SearchOpportunityCoverageReportBuilder:
             "signalExtraction": ["Проверить доказательные фрагменты и решения extraction."],
             "signalScoring": ["Проверить blocking-критерии и причины utility verdict."],
         }.get(stage, [])
-
-    def _lineage(self, *, requirements, queries, raw_results, found_materials, source_signals):
-        raw_by_id = {str(item.get("id")): item for item in raw_results if item.get("id")}
-        material_by_id = {str(item.get("id")): item for item in found_materials if item.get("id")}
-        fragment_ids = {
-            str(fragment.get("id"))
-            for material in found_materials
-            for fragment in material.get("contentFragments", [])
-            if isinstance(fragment, dict) and fragment.get("id")
-        }
-        unresolved = Counter({"requirement": 0, "query": 0, "material": 0, "fragment": 0})
-        lineage: list[dict[str, Any]] = []
-        for material in found_materials:
-            trace = material.get("discoveryTrace") if isinstance(material.get("discoveryTrace"), dict) else {}
-            requirement_ids = [str(item) for item in trace.get("requirementIds", []) if item]
-            query_ids = [str(item) for item in trace.get("queryIds", []) if item]
-            unresolved["requirement"] += sum(item not in requirements for item in requirement_ids)
-            unresolved["query"] += sum(item not in queries for item in query_ids)
-            lineage.append({
-                "kind": "material",
-                "materialId": material.get("id"),
-                "requirementIds": requirement_ids,
-                "queryIds": query_ids,
-                "rawResultIds": [item for item in trace.get("rawResultIds", []) if str(item) in raw_by_id],
-            })
-        for signal in source_signals:
-            refs = [item for item in signal.get("evidenceRefs", []) if isinstance(item, dict)]
-            material_ids = [str(item.get("materialId")) for item in refs if item.get("materialId")]
-            signal_requirement_ids = sorted({
-                str(requirement_id)
-                for material_id in material_ids
-                for requirement_id in (material_by_id.get(material_id, {}).get("discoveryTrace") or {}).get("requirementIds", [])
-                if requirement_id
-            })
-            unresolved["material"] += sum(item not in material_by_id for item in material_ids)
-            unresolved["fragment"] += sum(str(item.get("fragmentId")) not in fragment_ids for item in refs if item.get("fragmentId"))
-            lineage.append({
-                "kind": "signal",
-                "signalId": signal.get("id"),
-                "requirementIds": signal_requirement_ids,
-                "materialIds": material_ids,
-                "fragmentIds": [str(item.get("fragmentId")) for item in refs if item.get("fragmentId")],
-                "recommendation": (signal.get("utilityReport") or {}).get("recommendation"),
-            })
-        return lineage, dict(unresolved)
-
 
 __all__ = ("SearchOpportunityCoverageReportBuilder",)

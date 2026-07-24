@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from collections import Counter
 
+from backend.app.upstream.application.search_read_candidate_selector import SearchReadCandidateSelector
 from backend.app.upstream.application.search_read_coverage import SearchReadCoverageGapPolicy
+from backend.app.upstream.application.search_read_decision_factory import SearchReadDecisionFactory
 from backend.app.upstream.application.search_result_readability import SearchResultReadabilityPolicy
 from backend.app.upstream.domain.search_triage_contracts import (
     SearchDuplicateGroup,
-    SearchReadDecision,
     SearchReadPlan,
     SearchResultCandidate,
     SearchResultDimensionScores,
@@ -31,6 +32,8 @@ class SearchReadBudgetAllocator:
     ) -> None:
         self._readability = readability or SearchResultReadabilityPolicy()
         self._coverage_gaps = coverage_gaps or SearchReadCoverageGapPolicy(self._readability)
+        self._decision_factory = SearchReadDecisionFactory(self._readability)
+        self._selector = SearchReadCandidateSelector(self.DIVERSITY_SCORE_WINDOW)
 
     def allocate(
         self,
@@ -41,6 +44,7 @@ class SearchReadBudgetAllocator:
         max_reads: int,
         required_families: list[str],
         required_requirement_ids: list[str] | None = None,
+        corroboration_requirement_ids: list[str] | None = None,
     ) -> SearchReadPlan:
         candidate_by_id = {item.id: item for item in candidates}
         group_by_candidate = {
@@ -60,6 +64,7 @@ class SearchReadBudgetAllocator:
             and self._readability.can_read(item)
         ]
         selected: list[SearchResultCandidate] = []
+        selection_reasons: dict[str, str] = {}
 
         uncovered_requirements = set(self._unique(required_requirement_ids or []))
         while uncovered_requirements and len(selected) < max(0, max_reads):
@@ -67,11 +72,13 @@ class SearchReadBudgetAllocator:
                 item
                 for item in eligible
                 if item not in selected
-                and uncovered_requirements.intersection(group_by_candidate[item.id].requirement_ids)
+                and uncovered_requirements.intersection(
+                    group_by_candidate[item.id].supported_requirement_ids
+                )
             ]
             if not choices:
                 break
-            choice = self._best_requirement_choice(
+            choice = self._selector.best_requirement(
                 choices,
                 scores,
                 group_by_candidate,
@@ -79,7 +86,30 @@ class SearchReadBudgetAllocator:
                 uncovered_requirements,
             )
             selected.append(choice)
-            uncovered_requirements.difference_update(group_by_candidate[choice.id].requirement_ids)
+            selection_reasons[choice.id] = "required-evidence-priority"
+            uncovered_requirements.difference_update(
+                group_by_candidate[choice.id].supported_requirement_ids
+            )
+
+        if len(selected) < max(0, max_reads):
+            corroboration_choices = [
+                item
+                for item in eligible
+                if item not in selected
+                and self._selector.supports(
+                    group_by_candidate[item.id],
+                    corroboration_requirement_ids or [],
+                )
+            ]
+            if corroboration_choices:
+                choice = self._selector.best(
+                    corroboration_choices,
+                    scores,
+                    group_by_candidate,
+                    selected,
+                )
+                selected.append(choice)
+                selection_reasons[choice.id] = "independent-evidence-priority"
 
         for family in self._unique(required_families):
             if len(selected) >= max(0, max_reads):
@@ -92,58 +122,26 @@ class SearchReadBudgetAllocator:
                 if item not in selected and family in group_by_candidate[item.id].families
             ]
             if choices:
-                selected.append(self._best_choice(choices, scores, group_by_candidate, selected))
+                choice = self._selector.best(choices, scores, group_by_candidate, selected)
+                selected.append(choice)
+                selection_reasons[choice.id] = "required-family-priority"
 
         while len(selected) < max(0, max_reads):
             choices = [item for item in eligible if item not in selected]
             if not choices:
                 break
-            selected.append(self._best_choice(choices, scores, group_by_candidate, selected))
+            choice = self._selector.best(choices, scores, group_by_candidate, selected)
+            selected.append(choice)
+            selection_reasons[choice.id] = "coverage-aware-best-result"
 
-        selected_ids = {item.id for item in selected}
-        decisions: list[SearchReadDecision] = []
-        for candidate in sorted(candidates, key=self._stable_key):
-            group = group_by_candidate.get(candidate.id)
-            score = scores.get(candidate.id)
-            total = score.total if score else 0
-            if not candidate.valid:
-                status, reason = "invalid", candidate.invalid_reason or "invalid-result"
-            elif group and candidate.id != group.representative_candidate_id:
-                status = "duplicate"
-                reason = "duplicate-url" if "canonical-url" in group.match_reasons else "duplicate-content"
-            elif not candidate.source_language_allowed:
-                status, reason = "rejected", candidate.source_language_eligibility_reason or "source-language-not-allowed"
-            elif not self._readability.can_read(candidate):
-                status, reason = "rejected", "unsupported-read-format"
-            elif candidate.id in selected_ids:
-                status, reason = "selected", "coverage-aware-best-result"
-            elif total < self.QUALITY_FLOOR:
-                status, reason = "rejected", "below-quality-floor"
-            else:
-                status, reason = "deferredByBudget", "url-read-budget"
-            decisions.append(
-                SearchReadDecision(
-                    raw_result_id=candidate.raw_result_id,
-                    candidate_id=candidate.id,
-                    duplicate_group_id=group.id if group else None,
-                    status=status,
-                    reason=reason,
-                    score=total,
-                    url=candidate.url,
-                    families=group.families if group else ((candidate.family,) if candidate.family else ()),
-                    evidence_types=group.evidence_types if group else ((candidate.evidence_type,) if candidate.evidence_type else ()),
-                    domain=candidate.domain,
-                    duplicate_raw_result_ids=group.raw_result_ids if group else (candidate.raw_result_id,),
-                    query_ids=group.query_ids if group else ((candidate.query_id,) if candidate.query_id else ()),
-                    intent_ids=group.intent_ids if group else ((candidate.intent_id,) if candidate.intent_id else ()),
-                    requirement_ids=group.requirement_ids if group else candidate.requirement_ids,
-                    source_language=candidate.source_language,
-                    source_language_confidence=candidate.source_language_confidence,
-                    source_language_mixed=candidate.source_language_mixed,
-                    source_language_reason_codes=candidate.source_language_reason_codes,
-                    source_language_eligibility_reason=candidate.source_language_eligibility_reason,
-                )
-            )
+        decisions = self._decision_factory.build(
+            candidates=candidates,
+            scores=scores,
+            groups=group_by_candidate,
+            selected=selected,
+            selection_reasons=selection_reasons,
+            quality_floor=self.QUALITY_FLOOR,
+        )
 
         covered = self._unique(
             family
@@ -161,7 +159,7 @@ class SearchReadBudgetAllocator:
         covered_requirements = self._unique(
             requirement_id
             for candidate in selected
-            for requirement_id in group_by_candidate[candidate.id].requirement_ids
+            for requirement_id in group_by_candidate[candidate.id].supported_requirement_ids
         )
         gaps.extend(
             {
@@ -193,58 +191,6 @@ class SearchReadBudgetAllocator:
             "deferredByBudget": counts["deferredByBudget"],
             "total": len(plan.decisions),
         }
-
-    def _best_choice(
-        self,
-        choices: list[SearchResultCandidate],
-        scores: dict[str, SearchResultDimensionScores],
-        groups: dict[str, SearchDuplicateGroup],
-        selected: list[SearchResultCandidate],
-    ) -> SearchResultCandidate:
-        best_score = max(scores[item.id].total for item in choices)
-        near = [item for item in choices if scores[item.id].total >= best_score - self.DIVERSITY_SCORE_WINDOW]
-        used_domains = {item.domain for item in selected if item.domain}
-        used_evidence = {
-            evidence
-            for item in selected
-            for evidence in groups[item.id].evidence_types
-        }
-        return min(
-            near,
-            key=lambda item: (
-                -int(bool(set(groups[item.id].evidence_types) - used_evidence)),
-                -int(bool(item.domain and item.domain not in used_domains)),
-                -scores[item.id].total,
-                self._stable_key(item),
-            ),
-        )
-
-    def _best_requirement_choice(
-        self,
-        choices: list[SearchResultCandidate],
-        scores: dict[str, SearchResultDimensionScores],
-        groups: dict[str, SearchDuplicateGroup],
-        selected: list[SearchResultCandidate],
-        uncovered_requirements: set[str],
-    ) -> SearchResultCandidate:
-        best_coverage = max(
-            len(uncovered_requirements.intersection(groups[item.id].requirement_ids))
-            for item in choices
-        )
-        best_coverage_choices = [
-            item
-            for item in choices
-            if len(uncovered_requirements.intersection(groups[item.id].requirement_ids)) == best_coverage
-        ]
-        return self._best_choice(best_coverage_choices, scores, groups, selected)
-
-    def _stable_key(self, candidate: SearchResultCandidate) -> tuple[str, str, str, str]:
-        return (
-            candidate.canonical_url,
-            candidate.title.casefold(),
-            candidate.query_id,
-            candidate.raw_result_id,
-        )
 
     def _unique(self, values) -> list[str]:
         return list(dict.fromkeys(str(item) for item in values if item))

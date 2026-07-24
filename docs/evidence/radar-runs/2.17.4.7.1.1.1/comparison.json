@@ -1,0 +1,84 @@
+{
+  "checkedAt": "2026-07-23",
+  "projectId": "project-ai-design-patterns",
+  "radarId": "ai-pattern-radar-industrial-cases",
+  "baseline": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-2",
+    "runStatus": "succeeded",
+    "queryCount": 3,
+    "readCap": 2,
+    "rawResultCount": 60,
+    "readableMaterialCount": 2,
+    "signalCount": 1,
+    "opportunityStatus": "sufficient",
+    "knownProviderTotalTokens": 124367,
+    "knownLimitation": "Executed queries could be reported as evidence coverage and source credibility could contradict source posture."
+  },
+  "accepted": {
+    "runId": "radar-run-ai-pattern-radar-industrial-cases-4",
+    "runStatus": "succeeded",
+    "queryCount": 3,
+    "readCap": 2,
+    "rawResultCount": 34,
+    "selectedForReadCount": 2,
+    "readableMaterialCount": 2,
+    "signalCount": 1,
+    "coverageVersion": "search-opportunity-coverage-v2",
+    "opportunityStatus": "sufficient",
+    "firstFailureStage": null,
+    "deliveredRequirementCount": 3,
+    "requiredDeliveryGapCount": 0,
+    "optionalDeliveryGapCount": 4,
+    "unresolvedHandles": {
+      "requirement": 0,
+      "query": 0,
+      "rawResult": 0,
+      "readDecision": 0,
+      "material": 0,
+      "fragment": 0,
+      "signal": 0
+    },
+    "selectedEvidence": [
+      {
+        "domain": "global.andersen.com",
+        "role": "core implementation case",
+        "selectionReason": "required-evidence-priority",
+        "supportedRequirementCount": 3
+      },
+      {
+        "domain": "arxiv.org",
+        "role": "independent benchmark candidate",
+        "selectionReason": "independent-evidence-priority",
+        "supportedRequirementCount": 2
+      }
+    ],
+    "signal": {
+      "title": "Улучшение надежности активов с помощью AI в Andersen Consulting",
+      "recommendation": "reviewWithCaution",
+      "sourceOwnership": "firstParty",
+      "claimSupport": "singleSource",
+      "outcomeSupport": "reported",
+      "sourceCredibilityEffect": "caution",
+      "sourcePostureConsistency": true,
+      "corroborationGap": "corroboration-not-found"
+    },
+    "providerUsage": {
+      "searchTotalTokens": 48287,
+      "extractionTotalTokens": 12297,
+      "scoringTotalTokens": 5030,
+      "knownTotalTokens": 65614
+    },
+    "messageBudgets": {
+      "searchMessageChars": [207, 201, 284],
+      "extractionMessageChars": [12750, 14029, 13524],
+      "extractionMessageCap": 16000,
+      "scoringMessageChars": 17394,
+      "scoringMessageCap": 22000,
+      "budgetIncidentCount": 0
+    },
+    "manualRescoreRevision": 2,
+    "reviewStatus": "approved",
+    "reviewRevision": 1,
+    "viewportOverflowChecks": [390, 1180, 1440, 1904, 2048]
+  }
+}

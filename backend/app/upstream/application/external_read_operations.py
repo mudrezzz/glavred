@@ -86,6 +86,7 @@ class RadarUrlReadOperationRunner:
                 read=read,
                 provenance=f"{raw['provider']} / {raw['domain']}",
                 discovery_trace=discovery_trace,
+                focus_text=str(raw.get("snippet") or ""),
             )
             read_operation = self._operation(
                 run_id=run_id,
@@ -159,6 +160,18 @@ class RadarUrlReadOperationRunner:
             "families": list(selection.get("families") or ([raw.get("family")] if raw.get("family") else [])),
             "evidenceTypes": list(selection.get("evidenceTypes") or ([raw.get("evidenceType")] if raw.get("evidenceType") else [])),
             "requirementIds": list(selection.get("requirementIds") or raw.get("requirementIds") or []),
+            "discoveredRequirementIds": list(
+                selection.get("discoveredRequirementIds")
+                or selection.get("requirementIds")
+                or raw.get("discoveredRequirementIds")
+                or raw.get("requirementIds")
+                or []
+            ),
+            "supportedRequirementIds": list(
+                selection.get("supportedRequirementIds")
+                or raw.get("supportedRequirementIds")
+                or []
+            ),
             "duplicateGroupId": selection.get("duplicateGroupId"),
             "decisionReason": selection.get("reason"),
             "queryLanguage": raw.get("queryLanguage"),

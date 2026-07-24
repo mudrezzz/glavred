@@ -217,8 +217,14 @@ The current app already has `RadarDefinition`, `SourceSignal`, `PostCandidate`, 
   produce an explicit failed/not-run extraction without rewriting successful search;
 - the retry API reuses persisted fragments, replaces only signals belonging to the
   same run and does not repeat search or reads;
-- extraction/scoring retries rebuild `searchOpportunityCoverage` and benchmark status
-  from stored artifacts without repeating search or URL reads;
+- extraction/scoring retries rebuild `searchOpportunityCoverage v2` and benchmark
+  status from stored artifacts without repeating search or URL reads;
+- query lineage (`discoveredRequirementIds`) is distinct from semantic evidence fit
+  (`supportedRequirementIds`); only supported evidence advances requirement delivery
+  through read, fragment, signal and optional corroboration stages;
+- source reliability uses one backend-owned assessment with independent ownership and
+  claim-support axes, so first-party/vendor evidence cannot conflict with the
+  source-credibility criterion or become independent merely through provider wording;
 - `createPostCandidates` currently does approved-signal x topic/fabula pairing and
   keeps the first three candidates;
 - some compatibility fields such as `suggestedTopicId` and `suggestedFabulaId` may
@@ -251,8 +257,9 @@ future upstream run should make the handoff readable:
 - which provider attempt was accepted, what grounding incidents were rejected, and
   whether direct input/message budgets were respected;
 - how signal scoring dimensions were decided;
-- which requirements reached materials/signals/verdicts, how many signals were
-  review-eligible, and which stage first caused zero yield;
+- which requirements stopped at planned/query/result/read/material/signal/
+  corroboration, how many signals were review-eligible, and which exact reason
+  prevented delivery;
 - why a topic/fabula candidate was accepted or rejected;
 - what human correction or approval changed.
 
@@ -281,6 +288,15 @@ same scenario expectations, but not by exact URL matching. The live evaluator wr
 `run.benchmarkReport` when the project/radar match the golden scenario. Detailed
 planned/executed coverage rules live in the dedicated RadarRun AS IS contract. The
 status vocabulary is:
+
+The accepted evidence-delivery and source-posture proof for Slice
+`2.17.4.7.1.1.1` is RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-4`. It preserves the three-query and
+two-read limits, resolves the complete requirement-to-signal lineage, distinguishes
+the first-party implementation case from the independent benchmark candidate, and
+keeps missing same-claim corroboration explicit. The trace-safe report and
+authenticated screenshots live in
+`docs/evidence/radar-runs/2.17.4.7.1.1.1/`.
 
 Backend ownership after Slice `2.17.4.6.0.12` is intentionally split: the external
 run service orchestrates the campaign, `OpenWebQueryOperationRunner` owns one

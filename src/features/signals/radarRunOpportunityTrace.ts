@@ -16,6 +16,28 @@ const failureLabels: Record<string, string> = {
   signalScoring: 'Оценка редакционной полезности'
 };
 
+const deliveryStageLabels: Record<string, string> = {
+  planned: 'Запланировано',
+  queryExecuted: 'Запрос выполнен',
+  resultFound: 'Результат найден',
+  selectedForRead: 'Выбрано для чтения',
+  readableEvidence: 'Материал прочитан',
+  usedBySignal: 'Доказательство использовано сигналом',
+  corroborated: 'Подтверждено независимым материалом'
+};
+
+const deliveryReasonLabels: Record<string, string> = {
+  'provider-search-not-executed': 'Поисковый запрос не был выполнен',
+  'no-result-found': 'Поиск не вернул результатов',
+  'evidence-target-not-supported': 'Результаты не поддерживают требуемый тип доказательства',
+  'below-quality-floor': 'Результаты не прошли минимальный порог качества',
+  'url-read-budget': 'Результат не поместился в бюджет чтения',
+  'not-selected-for-read': 'Результат уступил более сильным материалам',
+  'read-failed': 'Материал не удалось прочитать',
+  'evidence-not-used-by-review-eligible-signal': 'Прочитанный материал не дал подходящего сигнала',
+  'corroboration-not-found': 'Независимое подтверждение не найдено'
+};
+
 export function searchRequirementsTraceDetail(bundle: RadarRunTraceBundle) {
   const plan = bundle.run.searchPlan;
   const profile = plan?.requirementProfile;
@@ -23,6 +45,10 @@ export function searchRequirementsTraceDetail(bundle: RadarRunTraceBundle) {
     (plan?.uncoveredRequiredSearchRequirements ?? []).map((item) => [item.requirementId, item.reason])
   );
   const queryByRequirement = new Map<string, RadarSearchQuery[]>();
+  const coverageByRequirement = new Map(
+    (bundle.run.searchOpportunityCoverage?.requirementCoverage ?? [])
+      .map((item) => [item.requirementId, item])
+  );
   for (const query of plan?.queries ?? []) {
     for (const requirementId of query.requirementIds ?? []) {
       queryByRequirement.set(requirementId, [...(queryByRequirement.get(requirementId) ?? []), query]);
@@ -41,16 +67,32 @@ export function searchRequirementsTraceDetail(bundle: RadarRunTraceBundle) {
     items: [
       ...(profile?.requirements ?? []).map((requirement) => {
         const queries = queryByRequirement.get(requirement.id) ?? [];
+        const coverage = coverageByRequirement.get(requirement.id);
         return {
           id: `search-requirement-${requirement.id}`,
           label: roleLabels[requirement.role] ?? requirement.role,
           title: requirement.title,
           body: requirement.statement,
-          status: uncovered.has(requirement.id) ? 'skipped' : queries.length > 0 ? 'succeeded' : 'planned',
+          status: uncovered.has(requirement.id)
+            ? 'skipped'
+            : coverage?.delivered
+              ? 'succeeded'
+              : coverage
+                ? 'partial'
+                : queries.length > 0 ? 'planned' : 'skipped',
           meta: [
             { label: 'Режим', value: requirement.mode },
             { label: 'Цель доказательства', value: requirement.evidenceTypes.join(', ') || 'не задана' },
-            { label: 'Запросы', value: queries.map((query) => query.query).join(' · ') || uncovered.get(requirement.id) || 'не требуется' }
+            { label: 'Запросы', value: queries.map((query) => query.query).join(' · ') || uncovered.get(requirement.id) || 'не требуется' },
+            ...(coverage ? [
+              { label: 'Доставка доказательства', value: deliveryStageLabels[coverage.furthestStage] ?? coverage.furthestStage },
+              { label: 'Материалы', value: String(coverage.materialIds.length) },
+              { label: 'Сигналы', value: String(coverage.signalIds.length) },
+              ...(coverage.stopReason ? [{
+                label: 'Почему остановилось',
+                value: deliveryReasonLabels[coverage.stopReason] ?? coverage.stopReason
+              }] : [])
+            ] : [])
           ]
         };
       }),

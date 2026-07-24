@@ -182,8 +182,10 @@ endpoint in this AS IS state.
 20. Persist utility revisions independently from the reversible human review status.
     Manual rescore reuses stored signals/materials and performs no search, read, or
     extraction operations.
-21. Build `SearchOpportunityCoverageReport` from the persisted chain from requirement
-    through query, read, material, evidence fragment, signal and utility verdict.
+21. Build `SearchOpportunityCoverageReport v2` from the persisted chain from
+    requirement through query, result, read decision, material, evidence fragment,
+    signal and utility verdict. Query discovery and semantic evidence support are
+    separate; each requirement records its furthest delivery stage and stop reason.
 22. Attach or update `benchmarkReport` after extraction/scoring when the run matches a
     golden scenario. A known high-fit zero eligible yield is a quality failure;
     provider/runtime outages remain inconclusive.
@@ -204,14 +206,14 @@ workspace snapshot and in the run payload.
 | Campaign planning | Requirement profile, bounded radar title/scope, language context, source strategy, budget mode | `searchPlan.intents`, `queries`, requirement handles, language coverage gaps, campaign trace | Required-first allocation, differentiated evidence targets, query languages and uncovered reasons are visible in `searchPlan`. |
 | Query budgeting | Requirement-aware intents, `maxExternalQueries` | Bounded `queries[]`, skipped intents, `uncoveredRequiredSearchRequirements` | Every required requirement is executed or has a trace-visible budget/source reason. |
 | Provider search | Executable `queries[]`, provider config, upstream budget profile | `RadarRunOperation`, provider citations, raw results | Direct `providerInput`, `payloadBudget`, `messageCharCount`, operation status, provider usage, errors, warnings, and provenance. |
-| Triage and dedupe | Bounded `rawResults[]`, read budget, project/search/language context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, language eligibility, dimension scores, one terminal decision per raw result, coverage, and gaps. |
+| Triage and dedupe | Bounded `rawResults[]`, read budget, project/search/language context | `searchTriage`, `selectedForRead`, `rejectedBeforeRead` | Stable duplicate groups, separate discovered/supported requirement handles, evidence-target fit, one terminal decision per raw result, coverage, and gaps. |
 | URL read | Selected reads, supported-format policy, URL reader adapter | read outcomes, readable or `metadataOnly` material | URL-read operation status, `readable`, failure reason, and material warnings. |
 | Material output | Search/read payloads | `FoundMaterial`, `contentFragments`, `foundMaterialIds` | Workspace contains the material, bounded fragments retain offsets/hash, and run links it by id. |
 | Signal extraction | Readable materials, bounded radar/language context, extraction taxonomy | terminal material decisions, localized candidate `SourceSignal`, extraction revision | Direct dossier/budget/message proof, provider attempts, exact original evidence, editorial-language validation, localization status, grounding incidents and downstream-leak counters. |
-| Signal utility scoring | Candidate signals, bounded project opportunity profile, active typed filters, evidence handles, bounded relationship candidates | Compact provider aliases resolved into `SignalUtilityReport v2`, `radarCriteria`, `projectCriteria`, type-aware `qualityChecks`, `SignalRelationshipReport`, scoring revision and terminal recommendation | Direct dossier/budget/message proof, provider attempts/usage, one result per retained criterion, resolvable signal/setting/evidence aliases, deterministic decision-policy result and no retrieval/extraction operations during rescore. |
+| Signal utility scoring | Candidate signals, bounded project opportunity profile, active typed filters, evidence handles, bounded relationship candidates | Compact provider aliases resolved into `SignalUtilityReport v2`, canonical source ownership/claim support, reconciled criteria, scoring revision and terminal recommendation | Direct dossier/budget/message proof, provider attempts/usage, source-credibility consistency, resolvable aliases, deterministic decision-policy result and no retrieval/extraction operations during rescore. |
 | Human signal review | Current signal, authenticated actor, expected review revision, action/reason and optional editorial patch | immutable review event, new review status/revision | Evidence hash-equivalence, actor/time/reason, optimistic concurrency and utility rescore after correction. |
-| Useful-yield evaluation | Search plan, operations, triage/read artifacts, materials, fragments, signals and utility reports | `searchOpportunityCoverage` | Planned/executed requirements, complete lineage, counts, recommendation distribution, first failure stage and remediation. |
-| Benchmark evaluation | Scenario, run, found materials, signals and useful-yield report | `benchmarkReport` | Recorded/live status, provider health, coverage, useful yield, missing expectations, and noise hits. |
+| Useful-yield evaluation | Search plan, operations, triage/read artifacts, materials, fragments, signals and utility reports | `searchOpportunityCoverage` | Seven-stage requirement delivery, complete lineage, required/optional gaps, corroboration, counts, first failure stage and remediation. |
+| Benchmark evaluation | Scenario, run, found materials, signals and useful-yield report | `benchmarkReport` | Recorded/live status, delivered coverage, corroboration gaps, source-posture consistency, provider health and noise hits. |
 
 ## Hard Output Boundaries
 
@@ -252,6 +254,7 @@ collapse it into a single "results" blob.
 | `searchPlan.uncoveredRequiredSearchRequirements[]` | Required filter-derived search evidence not covered by executable queries. | Prevents budget pressure from silently weakening the radar. |
 | `operations[]` | Provider and read operations. | Separates provider/runtime health from quality. |
 | `rawResults[]` | Normalized provider citations. | Shows what the provider returned before triage. |
+| `rawResults[].discoveredRequirementIds` and `supportedRequirementIds` | Query lineage versus deterministic evidence-target fit. | Prevents a result from covering a requirement merely because it appeared in that query. |
 | `rawResults[].sourceLanguage` | Deterministic bounded source-language assessment. | Explains eligibility without sending or storing full pages in triage. |
 | `searchTriage` | Versioned candidates, scores, duplicate groups, read plan, coverage gaps, decisions, counts, and read outcomes. | Proves that no result disappeared and explains why each read slot was allocated. |
 | `selectedForRead[]` | Raw results chosen for URL reading. | Shows read-budget choices. |
@@ -271,7 +274,8 @@ collapse it into a single "results" blob.
 | `sourceSignals[].utilityReport.qualityChecks[]` | Type-aware grounding, mechanism/result support, source posture and freshness checks. | Separates system evidence hygiene from user-configured filters and distinguishes observed, reported, capability-only and expected outcomes. |
 | `sourceSignals[].relationshipReport` | Exact duplicate, same claim, related same-source claim, corroboration, contradiction, distinct or inconclusive relationships plus canonical signal id. | Replaces the unsupported default `duplicateRisk=low` and preserves provenance when aliases share one visible card. |
 | `sourceSignals[].reviewRevision` and `reviewHistory[]` | Current optimistic-concurrency revision and immutable human decisions. | Proves that automation did not silently approve or rewrite evidence. |
-| `run.searchOpportunityCoverage` | Requirement execution, family/evidence coverage, material/signal/verdict counts, useful yield, first failure stage, remediation and lineage integrity. | Explains positive, partial, zero and provider-inconclusive outcomes without fake precision. |
+| `run.searchOpportunityCoverage` | Requirement delivery stages, required/optional gaps, family/evidence coverage at executed/readable/used stages, corroboration and lineage integrity. | Prevents executed search from masquerading as delivered evidence and explains where delivery stopped. |
+| `sourceSignals[].utilityReport.qualityChecks[source-posture]` | Ownership posture and independent claim-support posture. | Keeps publisher interest separate from corroboration and reconciles source-credibility criteria. |
 | `warnings[]` and `errors[]` | Runtime and quality warnings/errors. | Prevents silent degradation. |
 | `benchmarkReport` | Golden scenario verdict when available. | Gives a stable quality signal for matching runs. |
 
@@ -304,6 +308,17 @@ Status vocabulary:
 
 `passed` means the search actually covered enough of the golden scenario and produced
 the expected useful output. It does not mean only that the plan looked good.
+
+The accepted Slice `2.17.4.7.1.1.1` proof is RadarRun
+`radar-run-ai-pattern-radar-industrial-cases-4`. With the unchanged three search
+calls and two-read cap, it delivered three required requirements with zero required
+delivery gaps. The read plan selected a first-party implementation case and an
+independent benchmark candidate. The latter did not support the same concrete claim,
+so corroboration remained explicitly absent. The accepted signal therefore reports
+`firstParty`, `singleSource`, and `reported`, with matching caution semantics in both
+the source-credibility criterion and the system source-posture check. Complete
+comparison evidence is stored in
+`docs/evidence/radar-runs/2.17.4.7.1.1.1/`.
 
 ## Reading a RadarRun Trace
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import urlparse
 
 from backend.app.upstream.domain.signal_utility import (
     SignalCriterionEffect,
@@ -17,6 +16,8 @@ from backend.app.upstream.domain.signal_utility import (
     SignalResultSupport,
     SignalSourcePosture,
 )
+from backend.app.upstream.application.source_posture import SourcePosturePolicy
+from backend.app.upstream.domain.source_posture import SourcePostureAssessment
 
 
 class SignalTypeSemanticsRegistry:
@@ -26,11 +27,14 @@ class SignalTypeSemanticsRegistry:
     OUTCOME_TYPES = frozenset({"case", "practice", "change", "problemFailureMode", "eventFact"})
     FRESHNESS_TYPES = frozenset({"eventFact", "change", "dataPoint"})
 
+    def __init__(self, source_posture: SourcePosturePolicy | None = None) -> None:
+        self._source_posture_policy = source_posture or SourcePosturePolicy()
+
     def quality_checks(self, signal: dict[str, Any]) -> tuple[SignalQualityCheck, ...]:
         evidence_refs = self._evidence_refs(signal)
         signal_type = str(signal.get("type") or "")
         result_support = self._result_support(signal, signal_type)
-        source_posture = self._source_posture(signal)
+        source_posture = self._source_posture_policy.assess(signal)
         return (
             self._grounding(evidence_refs),
             self._mechanism(signal, signal_type, evidence_refs),
@@ -118,9 +122,10 @@ class SignalTypeSemanticsRegistry:
 
     def _source(
         self,
-        posture: SignalSourcePosture,
+        assessment: SourcePostureAssessment,
         refs: tuple[dict[str, str], ...],
     ) -> SignalQualityCheck:
+        posture = assessment.effective_posture
         pass_postures = {SignalSourcePosture.INDEPENDENT, SignalSourcePosture.CORROBORATED}
         summaries = {
             SignalSourcePosture.INDEPENDENT: "Источник классифицирован как независимый от описываемого решения.",
@@ -138,6 +143,7 @@ class SignalTypeSemanticsRegistry:
             summary=summaries[posture],
             classification=posture.value,
             evidence_refs=refs,
+            details=assessment.to_payload(),
         )
 
     def _freshness(self, signal: dict[str, Any], signal_type: str) -> SignalQualityCheck:
@@ -169,23 +175,6 @@ class SignalTypeSemanticsRegistry:
         if any(token in text for token in ("рекомендац", "поддержк", "диагност", "выдает", "формирует", "enabling", "supports")) and not any(char.isdigit() for char in text):
             return SignalResultSupport.CAPABILITY_ONLY
         return SignalResultSupport.REPORTED
-
-    def _source_posture(self, signal: dict[str, Any]) -> SignalSourcePosture:
-        codes = {str(item).casefold() for item in signal.get("reasonCodes") or []}
-        if "source-independent" in codes:
-            return SignalSourcePosture.INDEPENDENT
-        if "source-first-party" in codes:
-            return SignalSourcePosture.FIRST_PARTY
-        if "source-vendor" in codes or "vendor-only" in codes:
-            return SignalSourcePosture.VENDOR
-        domains = {
-            urlparse(str(item.get("sourceUrl") or "")).hostname
-            for item in signal.get("evidence") or []
-            if isinstance(item, dict) and item.get("sourceUrl")
-        }
-        if len({item for item in domains if item}) > 1:
-            return SignalSourcePosture.CORROBORATED
-        return SignalSourcePosture.UNKNOWN
 
     def _evidence_refs(self, signal: dict[str, Any]) -> tuple[dict[str, str], ...]:
         return tuple(

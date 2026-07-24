@@ -8636,7 +8636,7 @@ Status:
 
 ### Slice 2.17.4.7.1.1.1: Evidence-Target Coverage and Source Posture Consistency Repair
 
-- Status: Ready
+- Status: Done
 - Goal: Make evidence delivery and source-credibility semantics internally consistent before candidate assembly consumes signal utility reports.
 - User value: Editors can trust that a covered search requirement produced usable evidence and that first-party claims are not presented as independent proof.
 - AS IS sources:
@@ -8698,6 +8698,7 @@ Status:
   - Recorded iFactory, independent, vendor, corroborated, and unresolved-owner fixtures plus one authenticated live RadarRun and human-readable trace screenshots.
 - AS IS update outcome:
   - Expected AS IS updated; regenerate RadarRun/upstream PDFs after accepted runtime proof.
+- Completed: 2026-07-23
 
 ### Slice 2.17.4.8: Signal x Topic x Fabula Candidate Assembly v2
 
@@ -9045,7 +9046,7 @@ Status:
 
 ### Slice 2.17.4.6.6.0: Radar Provider Cost Guard and Extraction Attempt Efficiency
 
-- Status: Backlog
+- Status: Ready
 - Goal: Bound provider-owned web-search cost and reduce avoidable extraction retries without weakening search coverage or evidence checks.
 - User value: Radar runs remain affordable and predictable while preserving useful-signal quality and complete diagnostics.
 - AS IS sources:
@@ -9485,6 +9486,7 @@ Status:
 - Slice 2.17.4.7.1: Signal Editorial Scoring, Explainability and Relationship Integrity. Completed 2026-07-22.
 - Slice 2.17.4.7.1.0.1: Remote Docker Test Runtime and Skill Guardrails. Completed 2026-07-22.
 - Slice 2.17.4.7.1.1: Search-to-Filter Alignment and Useful-Signal Yield Benchmark. Completed 2026-07-23.
+- Slice 2.17.4.7.1.1.1: Evidence-Target Coverage and Source Posture Consistency Repair. Completed 2026-07-23.
 
 
 ## Blocked Items
@@ -9513,4 +9515,4 @@ Status:
 
 ## Next Recommended Task
 
-Implement `Slice 2.17.4.7.1.1.1: Evidence-Target Coverage and Source Posture Consistency Repair`.
+Implement `Slice 2.17.4.6.6.0: Radar Provider Cost Guard and Extraction Attempt Efficiency`.

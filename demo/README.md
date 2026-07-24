@@ -287,6 +287,14 @@ planner created a required direction but the query budget skipped it, the report
 stores the reason in `skippedRequiredCoverage` and the verdict should be `warning`
 unless another hard quality failure is present.
 
+Slice `2.17.4.7.1.1.1` adds the evidence-delivery benchmark. The trace distinguishes
+a result discovered by a query from a result that actually supports that query's
+evidence target, then follows it through read, fragment, signal and corroboration.
+The benchmark also checks that source ownership and claim support agree with the
+utility recommendation. The industrial case may stay useful as
+`reviewWithCaution`; it must not be presented as independently verified when only the
+first-party or vendor report was read.
+
 The standalone sidebar item `Фабулы` is removed. Editorial fabulas are edited inside
 `Редакционная модель -> Фабулы`. A concrete `Фабула поста` is still part of production:
 approve a plan slot and Glavred automatically creates the editorial work item plus

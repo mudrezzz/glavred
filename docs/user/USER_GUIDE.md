@@ -236,11 +236,19 @@ automatically.
 
 The technical trace now has two additional sections. `Что требовалось найти` shows
 how each enabled radar filter influenced the actual search, which queries covered it,
-and why a required direction was not executed. `Полезный выход` shows material,
+how far the evidence reached (`Запрос выполнен`, `Материал прочитан`,
+`Доказательство использовано сигналом`) and why delivery stopped. A completed query
+alone is not shown as proof. `Полезный выход` shows material,
 signal, and recommendation counts and names the first stage that caused a zero result.
 These are diagnostics, not a promise to manufacture a positive signal or weaken a
 filter. `recommended` and `reviewWithCaution` count as review-eligible; human approval
 remains a separate action.
+
+In a signal card, `Происхождение` says whether the material is independent,
+first-party, vendor-owned or unresolved. `Подтверждение` separately says whether the
+same claim is supported by another independent publisher. A useful first-party case
+can remain available for review, but its reported result is marked with caution until
+independent corroboration exists.
 
 The first diagnostic layer uses one golden radar benchmark:
 `Опытный цех «Сборочная»` / industrial AI maintenance cases. For matching live runs,

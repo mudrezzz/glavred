@@ -37,6 +37,7 @@ class SearchResultCandidate:
     source_language_allowed: bool = True
     source_language_eligibility_reason: str | None = None
     requirement_ids: tuple[str, ...] = ()
+    supported_requirement_ids: tuple[str, ...] = ()
     text_integrity_issues: tuple[dict[str, Any], ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
@@ -65,6 +66,8 @@ class SearchResultCandidate:
                 "eligibilityReason": self.source_language_eligibility_reason,
             },
             "requirementIds": list(self.requirement_ids),
+            "discoveredRequirementIds": list(self.requirement_ids),
+            "supportedRequirementIds": list(self.supported_requirement_ids),
         }
         if self.invalid_reason:
             payload["invalidReason"] = self.invalid_reason
@@ -115,6 +118,7 @@ class SearchDuplicateGroup:
     domains: tuple[str, ...]
     match_reasons: tuple[str, ...]
     requirement_ids: tuple[str, ...] = ()
+    supported_requirement_ids: tuple[str, ...] = ()
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -129,6 +133,8 @@ class SearchDuplicateGroup:
             "domains": list(self.domains),
             "matchReasons": list(self.match_reasons),
             "requirementIds": list(self.requirement_ids),
+            "discoveredRequirementIds": list(self.requirement_ids),
+            "supportedRequirementIds": list(self.supported_requirement_ids),
         }
 
 

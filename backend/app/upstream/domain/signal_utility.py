@@ -14,6 +14,7 @@ from backend.app.upstream.domain.signal_utility_explainability import SignalQual
 from backend.app.upstream.domain.signal_utility_types import (
     SignalCriterionEffect,
     SignalCriterionOrigin,
+    SignalClaimSupport,
     SignalRelationshipKind,
     SignalResultSupport,
     SignalSourcePosture,
@@ -163,6 +164,7 @@ __all__ = (
     "SignalUtilityStatus",
     "SignalCriterionEffect",
     "SignalCriterionOrigin",
+    "SignalClaimSupport",
     "SignalQualityCheck",
     "SignalRelationship",
     "SignalRelationshipKind",

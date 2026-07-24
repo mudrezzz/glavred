@@ -69,6 +69,33 @@ def test_fragment_policy_creates_stable_bounded_hashes_and_offsets() -> None:
     assert all(len(item["hash"]) == 64 for item in first)
 
 
+def test_fragment_policy_uses_search_focus_to_retain_late_case_evidence() -> None:
+    policy = FoundMaterialFragmentPolicy()
+    navigation = " ".join(
+        f"Раздел навигации {index} каталог продуктов и форма запроса демонстрации."
+        for index in range(180)
+    )
+    evidence = (
+        "После внедрения процесса планирования число отказов сократилось вдвое. "
+        "Предприятие сообщило об экономии 360 000 евро в год и снижении простоев."
+    )
+    text = f"{navigation} {evidence}"
+
+    fragments = policy.from_read_text(
+        material_id="material-focused",
+        text=text,
+        focus_text=evidence,
+    )
+
+    assert len(fragments) <= policy.MAX_FRAGMENTS
+    assert any("360 000 евро" in item["text"] for item in fragments)
+    normalized = " ".join(text.split())
+    assert all(
+        normalized[item["startChar"] : item["endChar"]] == item["text"]
+        for item in fragments
+    )
+
+
 def test_valid_primary_creates_grounded_candidate_and_terminal_decisions() -> None:
     material = readable_material()
     fragment = material["contentFragments"][0]

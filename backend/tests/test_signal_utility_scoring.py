@@ -320,6 +320,7 @@ def test_project_model_author_audience_goals_and_prohibitions_are_referenceable_
 def test_recorded_golden_signal_utility_benchmark_covers_all_terminal_recommendations() -> None:
     strong = {**arcelor_signal(), "id": "signal-independent", "source": "Independent engineering report"}
     strong["evidence"][0]["sourceTitle"] = "Independent engineering report"
+    strong["evidence"][0]["sourceUrl"] = "https://ieee.org/industrial-maintenance-report"
     strong["reasonCodes"] = ["source-independent", "outcome-observed"]
     scenarios = [
         (strong, utility_payload_for("signal-independent", "matched"), "recommended"),

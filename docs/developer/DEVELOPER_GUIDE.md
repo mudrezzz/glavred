@@ -218,6 +218,17 @@ The report owns count/denominator/ratio metrics, `reviewEligibleYield`, determin
 `firstFailureStage`, reason codes, remediation, and unresolved-handle counters. Search,
 extraction, and scoring retries must refresh this report and the benchmark from stored
 artifacts; extraction/scoring retries must not perform search or URL reads.
+Coverage v2 distinguishes `discoveredRequirementIds` from
+`supportedRequirementIds`. A query hit is not evidence delivery until a supported
+result is selected, read, resolved to a fragment and used by a review-eligible
+signal. Preserve the seven delivery stages and deterministic stop reasons in replay
+and retry paths.
+
+Source reliability must go through `SourcePosturePolicy`. Ownership
+(`independent`, `firstParty`, `vendor`, `unknown`) and claim support
+(`singleSource`, `corroborated`, `contradicted`, `notChecked`) are separate. Do not
+derive corroboration from two URLs owned by the same publisher, and do not let
+provider reason codes override deterministic publisher ownership.
 Broader three-project evaluation belongs to the later benchmark corpus slice. Use
 `/radar-runs?runId=<id>` for full upstream diagnostics: the page resolves the run
 from local portfolio state first and backend portfolio snapshots second, then renders

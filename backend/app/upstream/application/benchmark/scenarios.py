@@ -106,6 +106,9 @@ class RadarBenchmarkReport:
     run: dict[str, Any] = field(default_factory=dict)
     found_materials: list[dict[str, Any]] = field(default_factory=list)
     useful_yield: dict[str, Any] = field(default_factory=dict)
+    delivered_coverage: dict[str, Any] = field(default_factory=dict)
+    corroboration_gaps: list[dict[str, Any]] = field(default_factory=list)
+    source_posture_consistency: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -125,6 +128,9 @@ class RadarBenchmarkReport:
             "downstreamLeaks": self.downstream_leaks,
             "traceComplete": self.trace_complete,
             "usefulYield": self.useful_yield,
+            "deliveredCoverage": self.delivered_coverage,
+            "corroborationGaps": self.corroboration_gaps,
+            "sourcePostureConsistency": self.source_posture_consistency,
         }
 
 
